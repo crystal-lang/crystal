@@ -153,20 +153,32 @@ module Crystal
     #     end
     #
     # That is, cache the regex in a global variable.
+    #
+    # Only do this for regex literals that don't contain interpolation.
+    #
+    # If there's an interpolation, expand to: Regex.new(interpolation, flags)
     def expand(node : RegexLiteral)
-      key = {node.value, node.modifiers}
-      index = @regexes.index key
-      unless index
-        index = @regexes.length
-        @regexes << key
-      end
+      node_value = node.value
+      case node_value
+      when StringLiteral
+        string = node_value.value
 
-      global_name = "$Regex:#{index}"
-      temp_name = @program.new_temp_var_name
-      first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-      regex = Call.new(Path.global("Regex"), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers)] of ASTNode)
-      second_assign = Assign.new(Global.new(global_name), regex)
-      If.new(first_assign, Var.new(temp_name), second_assign)
+        key = {string, node.modifiers}
+        index = @regexes.index key
+        unless index
+          index = @regexes.length
+          @regexes << key
+        end
+
+        global_name = "$Regex:#{index}"
+        temp_name = @program.new_temp_var_name
+        first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
+        regex = Call.new(Path.global("Regex"), "new", [StringLiteral.new(string), NumberLiteral.new(node.modifiers)] of ASTNode)
+        second_assign = Assign.new(Global.new(global_name), regex)
+        If.new(first_assign, Var.new(temp_name), second_assign)
+      else
+        Call.new(Path.global("Regex"), "new", [node_value, NumberLiteral.new(node.modifiers)] of ASTNode)
+      end
     end
 
     def expand(node)

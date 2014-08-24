@@ -8,7 +8,6 @@ module Crystal
     property :line_number
     property :column_number
     property :filename
-    property :regex_modifiers
     property :string_state
     property :macro_state
 
@@ -35,7 +34,6 @@ module Crystal
       @number_kind = :i32
       @line_number = 0
       @column_number = 0
-      @regex_modifiers = 0
       @string_state = StringState.default
       @macro_state = MacroState.default
     end
@@ -62,7 +60,6 @@ module Crystal
       @line_number = other.line_number
       @column_number = other.column_number
       @filename = other.filename
-      @regex_modifiers = other.regex_modifiers
       @string_state = other.string_state
       @macro_state = other.macro_state
     end

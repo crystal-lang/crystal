@@ -303,6 +303,10 @@ module Crystal
     def initialize(@value, @modifiers = 0)
     end
 
+    def accept_children(visitor)
+      @value.accept visitor
+    end
+
     def clone_without_location
       RegexLiteral.new(@value, @modifiers)
     end

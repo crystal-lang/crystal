@@ -782,7 +782,12 @@ module Crystal
 
     def visit(node : RegexLiteral)
       @str << "/"
-      @str << node.value
+      case exp = node.value
+      when StringLiteral
+        @str << exp.value.inspect[1 .. -2]
+      when StringInterpolation
+        visit_interpolation exp, &.replace('/', "\\/")
+      end
       @str << "/"
       @str << "i" if (node.modifiers & Regex::IGNORE_CASE) != 0
       @str << "m" if (node.modifiers & Regex::MULTILINE) != 0

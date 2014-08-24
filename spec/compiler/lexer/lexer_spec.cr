@@ -113,10 +113,6 @@ def it_lexes_symbols(symbols)
   end
 end
 
-def it_lexes_regex(regex, exepcted_value = regex[1, regex.length - 2])
-  it_lexes regex, :REGEX, exepcted_value
-end
-
 def it_lexes_global_match(globals)
   globals.each do |global|
     it_lexes global, :GLOBAL_MATCH, global[1, global.length - 1].to_i
@@ -209,11 +205,6 @@ describe "Lexer" do
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123", "$~"]
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\""]
-  it_lexes_regex "//", ""
-  it_lexes_regex "/foo/"
-  it_lexes_regex "/foo\\/bar/", "foo/bar"
-  it_lexes_regex "/\\//", "/"
-  it_lexes_regex "/foo\\sbar/", "foo\\sbar"
   it_lexes_global_match ["$1", "$10"]
 
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"

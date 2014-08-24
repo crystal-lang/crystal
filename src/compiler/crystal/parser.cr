@@ -736,8 +736,6 @@ module Crystal
         parse_symbol_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
-      when :REGEX
-        node_and_next_token RegexLiteral.new(@token.value.to_s, @token.regex_modifiers)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
       when :GLOBAL_MATCH
@@ -1301,6 +1299,8 @@ module Crystal
 
       string_state = @token.string_state
       is_backtick = string_state.end == '`'
+      is_regex = string_state.end == '/'
+      modifiers = 0
 
       check :STRING_START
 
@@ -1318,10 +1318,19 @@ module Crystal
           next_string_token(string_state)
           string_state = @token.string_state
         when :STRING_END
+          if is_regex
+            modifiers = consume_regex_modifiers
+          end
           next_token
           break
         when :EOF
-          raise "Unterminated string literal"
+          if is_backtick
+            raise "Unterminated command"
+          elsif is_regex
+            raise "Unterminated regular expression"
+          else
+            raise "Unterminated string literal"
+          end
         else
           next_token_skip_space_or_newline
           exp = parse_expression
@@ -1353,9 +1362,34 @@ module Crystal
 
       if is_backtick
         result = Call.new(nil, "`", [result] of ASTNode)
+      elsif is_regex
+        result = RegexLiteral.new(result, modifiers)
       end
 
       result
+    end
+
+    def consume_regex_modifiers
+      modifiers = 0
+      while true
+        case current_char
+        when 'i'
+          modifiers |= Regex::IGNORE_CASE
+          next_char
+        when 'm'
+          modifiers |= Regex::MULTILINE
+          next_char
+        when 'x'
+          modifiers |= Regex::EXTENDED
+          next_char
+        else
+          if 'a' <= current_char.downcase <= 'z'
+            raise "unknown regex option: #{current_char}"
+          end
+          break
+        end
+      end
+      modifiers
     end
 
     def parse_string_without_interpolation

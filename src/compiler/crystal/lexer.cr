@@ -229,52 +229,8 @@ module Crystal
         elsif char.whitespace? || char == '\0' || char == ';'
           @token.type = :"/"
         elsif @wants_regex
-          start = current_pos
-          string_buffer = StringIO.new(20)
-
-          while true
-            case char
-            when '\\'
-              if peek_next_char == '/'
-                string_buffer << '/'
-                next_char
-              else
-                string_buffer << char
-              end
-            when '/'
-              next_char
-              break
-            when '\0'
-              raise "unterminated regular expression", line, column
-            else
-              string_buffer << char
-            end
-            char = next_char
-          end
-
-          modifiers = 0
-          while true
-            case current_char
-            when 'i'
-              modifiers |= Regex::IGNORE_CASE
-              next_char
-            when 'm'
-              modifiers |= Regex::MULTILINE
-              next_char
-            when 'x'
-              modifiers |= Regex::EXTENDED
-              next_char
-            else
-              if 'a' <= current_char.downcase <= 'z'
-                raise "unknown regex option: #{current_char}"
-              end
-              break
-            end
-          end
-
-          @token.type = :REGEX
-          @token.regex_modifiers = modifiers
-          @token.value = string_buffer.to_s
+          @token.type = :STRING_START
+          @token.string_state = Token::StringState.new('/', '/', 0)
         else
           @token.type = :"/"
         end
@@ -1376,7 +1332,13 @@ module Crystal
 
       case current_char
       when '\0'
-        raise "unterminated string literal", @line_number, @column_number
+        if string_end == '`'
+          raise "unterminated command", @line_number, @column_number
+        elsif string_end == '/'
+          raise "unterminated regular expression", @line_number, @column_number
+        else
+          raise "unterminated string literal", @line_number, @column_number
+        end
       when string_end
         next_char
         if string_open_count == 0
@@ -1392,33 +1354,40 @@ module Crystal
         @token.value = string_nest.to_s
         @token.string_state = @token.string_state.with_open_count_delta(+1)
       when '\\'
-        case char = next_char
-        when 'n'
-          string_token_escape_value "\n"
-        when 'r'
-          string_token_escape_value "\r"
-        when 't'
-          string_token_escape_value "\t"
-        when 'v'
-          string_token_escape_value "\v"
-        when 'f'
-          string_token_escape_value "\f"
-        when 'e'
-          string_token_escape_value "\e"
-        when 'u'
-          value = consume_string_unicode_escape
+        if string_end == '/'
+          char = next_char
           next_char
           @token.type = :STRING
-          @token.value = value
-        when '0', '1', '2', '3', '4', '5', '6', '7', '8'
-          char_value = consume_octal_escape(char)
-          next_char
-          @token.type = :STRING
-          @token.value = char_value.chr.to_s
+          @token.value = "\\#{char}"
         else
-          @token.type = :STRING
-          @token.value = current_char.to_s
-          next_char
+          case char = next_char
+          when 'n'
+            string_token_escape_value "\n"
+          when 'r'
+            string_token_escape_value "\r"
+          when 't'
+            string_token_escape_value "\t"
+          when 'v'
+            string_token_escape_value "\v"
+          when 'f'
+            string_token_escape_value "\f"
+          when 'e'
+            string_token_escape_value "\e"
+          when 'u'
+            value = consume_string_unicode_escape
+            next_char
+            @token.type = :STRING
+            @token.value = value
+          when '0', '1', '2', '3', '4', '5', '6', '7', '8'
+            char_value = consume_octal_escape(char)
+            next_char
+            @token.type = :STRING
+            @token.value = char_value.chr.to_s
+          else
+            @token.type = :STRING
+            @token.value = current_char.to_s
+            next_char
+          end
         end
       when '#'
         if peek_next_char == '{'

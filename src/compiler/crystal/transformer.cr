@@ -403,6 +403,7 @@ module Crystal
     end
 
     def transform(node : RegexLiteral)
+      node.value = node.value.transform(self)
       node
     end
 

@@ -171,7 +171,7 @@ describe "Parser" do
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", [3.int32] of ASTNode), "+", [Call.new(4.int32, "/", [5.int32] of ASTNode)] of ASTNode)
   it_parses "2 * (3 + 4)", Call.new(2.int32, "*", [Call.new(3.int32, "+", [4.int32] of ASTNode)] of ASTNode)
   it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
-  it_parses "1 + /foo/", Call.new(1.int32, "+", [RegexLiteral.new("foo")] of ASTNode)
+  it_parses "1 + /foo/", Call.new(1.int32, "+", [RegexLiteral.new(StringLiteral.new("foo"))] of ASTNode)
   it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
   it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
@@ -609,11 +609,13 @@ describe "Parser" do
   it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Union.new(["Foo".path, "Bar".path] of ASTNode))
   it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
 
-  it_parses "/foo/", RegexLiteral.new("foo")
-  it_parses "/foo/i", RegexLiteral.new("foo", Regex::IGNORE_CASE)
-  it_parses "/foo/m", RegexLiteral.new("foo", Regex::MULTILINE)
-  it_parses "/foo/x", RegexLiteral.new("foo", Regex::EXTENDED)
-  it_parses "/foo/imximx", RegexLiteral.new("foo", Regex::IGNORE_CASE | Regex::MULTILINE | Regex::EXTENDED)
+  it_parses "/foo/", RegexLiteral.new(StringLiteral.new("foo"))
+  it_parses "/foo/i", RegexLiteral.new(StringLiteral.new("foo"), Regex::IGNORE_CASE)
+  it_parses "/foo/m", RegexLiteral.new(StringLiteral.new("foo"), Regex::MULTILINE)
+  it_parses "/foo/x", RegexLiteral.new(StringLiteral.new("foo"), Regex::EXTENDED)
+  it_parses "/foo/imximx", RegexLiteral.new(StringLiteral.new("foo"), Regex::IGNORE_CASE | Regex::MULTILINE | Regex::EXTENDED)
+  it_parses "/fo\\so/", RegexLiteral.new(StringLiteral.new("fo\\so"))
+  it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", [2.int32] of ASTNode)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", [2.int32] of ASTNode)
@@ -623,7 +625,7 @@ describe "Parser" do
 
   it_parses "$1", Call.new(Call.new(Global.new("$~"), "not_nil!"), "[]", [1.int32] of ASTNode)
   it_parses "foo $1", Call.new(nil, "foo", [Call.new(Call.new(Global.new("$~"), "not_nil!"), "[]", [1.int32] of ASTNode)] of ASTNode)
-  it_parses "foo /a/", Call.new(nil, "foo", [RegexLiteral.new("a")] of ASTNode)
+  it_parses "foo /a/", Call.new(nil, "foo", [RegexLiteral.new(StringLiteral.new("a"))] of ASTNode)
 
   it_parses "foo out x; x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]
   it_parses "foo(out x); x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]

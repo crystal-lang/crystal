@@ -392,4 +392,26 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:EOF)
   end
+
+  it "lexes regex string" do
+    lexer = Lexer.new(%(/hello/))
+
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+    token.string_state.end.should eq('/')
+    token.string_state.nest.should eq('/')
+    token.string_state.open_count.should eq(0)
+
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
+    token.type.should eq(:STRING)
+    token.value.should eq("hello")
+
+    token = lexer.next_string_token(string_state)
+    token.type.should eq(:STRING_END)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
 end
