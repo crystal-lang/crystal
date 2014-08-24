@@ -197,4 +197,15 @@ describe "Type inference: lib" do
       C.foo 1, Foo.new
       ", "converted Foo invoking to_unsafe, but Bar is not a primitive type"
   end
+
+  it "allows passing splat to C fun" do
+    assert_type(%(
+      lib C
+        fun foo(x : Int32, y : Float64, ...) : Float64
+      end
+
+      t = {1, 2.5, 3, 4}
+      C.foo *t
+      )) { float64 }
+  end
 end

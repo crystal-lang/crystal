@@ -422,6 +422,8 @@ module Crystal
     end
 
     def recalculate_lib_call(obj_type)
+      replace_splats
+
       old_target_defs = @target_defs
 
       untyped_def = obj_type.lookup_first_def(name, false)

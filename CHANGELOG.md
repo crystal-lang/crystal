@@ -13,6 +13,7 @@
 * Added `%r(...)` for regular expression literals.
 * Allow interpolations in regular expresion literals.
 * Compiling with `--release` sets a `release` flag that you can test with `ifdef`.
+* Allow passing splats to C functions
 
 ## 0.4.3 (2014-08-14)
 
