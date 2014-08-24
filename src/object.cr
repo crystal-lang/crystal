@@ -7,6 +7,10 @@ class Object
     self == other
   end
 
+  def =~(other)
+    nil
+  end
+
   # Returns a string representation of this object.
   #
   # Classes must usually **not** override this method. Instead,
