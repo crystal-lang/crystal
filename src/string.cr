@@ -377,7 +377,7 @@ class String
 
         buffer << byte_slice(byte_offset, index - byte_offset)
         str = match[0]
-        buffer << yield str
+        buffer << yield str, match
         byte_offset = index + str.bytesize
       end
 

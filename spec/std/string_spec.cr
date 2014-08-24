@@ -369,10 +369,17 @@ describe "String" do
   end
 
   it "replaces with regex and block" do
-    actual = "foo booor booooz".replace(/o+/) do |match|
-      "#{match}#{match.length}"
+    actual = "foo booor booooz".replace(/o+/) do |str|
+      "#{str}#{str.length}"
     end
     actual.should eq("foo2 booo3r boooo4z")
+  end
+
+  it "replaces with regex and block with group" do
+    actual = "foo booor booooz".replace(/(o+).*?(o+)/) do |str, match|
+      "#{match[1].length}#{match[2].length}"
+    end
+    actual.should eq("f23r b31z")
   end
 
   it "replaces with regex and string" do
