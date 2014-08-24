@@ -728,8 +728,8 @@ module Crystal
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value as Char)
-      when :STRING, :STRING_START
-        parse_string
+      when :STRING, :DELIMITER_START
+        parse_delimiter
       when :STRING_ARRAY_START
         parse_string_array
       when :SYMBOL_ARRAY_START
@@ -1292,20 +1292,18 @@ module Crystal
       FunPointer.new(obj, name, types)
     end
 
-    def parse_string
+    def parse_delimiter
       if @token.type == :STRING
         return node_and_next_token StringLiteral.new(@token.value.to_s)
       end
 
-      string_state = @token.string_state
-      is_backtick = string_state.end == '`'
-      is_regex = string_state.end == '/'
+      delimiter_state = @token.delimiter_state
       modifiers = 0
 
-      check :STRING_START
+      check :DELIMITER_START
 
-      next_string_token(string_state)
-      string_state = @token.string_state
+      next_string_token(delimiter_state)
+      delimiter_state = @token.delimiter_state
 
       pieces = [] of ASTNode | String
       has_interpolation = false
@@ -1315,18 +1313,19 @@ module Crystal
         when :STRING
           pieces << @token.value.to_s
 
-          next_string_token(string_state)
-          string_state = @token.string_state
-        when :STRING_END
-          if is_regex
+          next_string_token(delimiter_state)
+          delimiter_state = @token.delimiter_state
+        when :DELIMITER_END
+          if delimiter_state.kind == :regex
             modifiers = consume_regex_modifiers
           end
           next_token
           break
         when :EOF
-          if is_backtick
+          case delimiter_state.kind
+          when :command
             raise "Unterminated command"
-          elsif is_regex
+          when :regex
             raise "Unterminated regular expression"
           else
             raise "Unterminated string literal"
@@ -1346,8 +1345,8 @@ module Crystal
             raise "Unterminated string interpolation"
           end
 
-          next_string_token(string_state)
-          string_state = @token.string_state
+          next_string_token(delimiter_state)
+          delimiter_state = @token.delimiter_state
         end
       end
 
@@ -1360,9 +1359,10 @@ module Crystal
         result = StringLiteral.new pieces.join
       end
 
-      if is_backtick
+      case delimiter_state.kind
+      when :command
         result = Call.new(nil, "`", [result] of ASTNode)
-      elsif is_regex
+      when :regex
         result = RegexLiteral.new(result, modifiers)
       end
 
@@ -1393,7 +1393,7 @@ module Crystal
     end
 
     def parse_string_without_interpolation
-      string = parse_string
+      string = parse_delimiter
       if string.is_a?(StringLiteral)
         string.value
       else
@@ -1574,7 +1574,7 @@ module Crystal
 
     def parse_require
       next_token_skip_space
-      check :STRING_START
+      check :DELIMITER_START
       string = parse_string_without_interpolation { "interpolation not allowed in require" }
 
       skip_space
@@ -2680,7 +2680,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
         # Nothing
       when :"*"
         unless current_char.ident_start?
@@ -3336,7 +3336,7 @@ module Crystal
         when :IDENT, :CONST
           real_name = @token.value.to_s
           next_token_skip_space_or_newline
-        when :STRING_START
+        when :DELIMITER_START
           real_name = parse_string_without_interpolation { "interpolation not allowed in fun name" }
           skip_space
         else

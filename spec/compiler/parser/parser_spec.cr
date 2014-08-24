@@ -616,6 +616,7 @@ describe "Parser" do
   it_parses "/foo/imximx", RegexLiteral.new(StringLiteral.new("foo"), Regex::IGNORE_CASE | Regex::MULTILINE | Regex::EXTENDED)
   it_parses "/fo\\so/", RegexLiteral.new(StringLiteral.new("fo\\so"))
   it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
+  it_parses "%r(foo(bar))", RegexLiteral.new(StringLiteral.new("foo(bar)"))
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", [2.int32] of ASTNode)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", [2.int32] of ASTNode)
@@ -784,6 +785,7 @@ describe "Parser" do
   it_parses "`foo`", Call.new(nil, "`", ["foo".string] of ASTNode)
   it_parses "`foo\#{1}bar`", Call.new(nil, "`", [StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode)] of ASTNode)
   it_parses "`foo\\``", Call.new(nil, "`", ["foo`".string] of ASTNode)
+  it_parses "%x(`which(foo)`)", Call.new(nil, "`", ["`which(foo)`".string] of ASTNode)
 
   it_parses "def `(cmd); 1; end", Def.new("`", ["cmd".arg], 1.int32)
 

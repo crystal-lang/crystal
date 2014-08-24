@@ -8,24 +8,24 @@ module Crystal
     property :line_number
     property :column_number
     property :filename
-    property :string_state
+    property :delimiter_state
     property :macro_state
 
-    record(MacroState, whitespace, nest, string_state, beginning_of_line, yields) do
+    record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields) do
       def self.default
         MacroState.new(true, 0, nil, true, false)
       end
     end
 
-    record StringState, nest, :end, open_count
+    record DelimiterState, kind, nest, :end, open_count
 
-    struct StringState
+    struct DelimiterState
       def self.default
-        StringState.new('\0', '\0', 0)
+        DelimiterState.new(:string, '\0', '\0', 0)
       end
 
       def with_open_count_delta(delta)
-        StringState.new(@nest, @end, @open_count + delta)
+        DelimiterState.new(@kind, @nest, @end, @open_count + delta)
       end
     end
 
@@ -34,7 +34,7 @@ module Crystal
       @number_kind = :i32
       @line_number = 0
       @column_number = 0
-      @string_state = StringState.default
+      @delimiter_state = DelimiterState.default
       @macro_state = MacroState.default
     end
 
@@ -60,7 +60,7 @@ module Crystal
       @line_number = other.line_number
       @column_number = other.column_number
       @filename = other.filename
-      @string_state = other.string_state
+      @delimiter_state = other.delimiter_state
       @macro_state = other.macro_state
     end
 
