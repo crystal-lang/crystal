@@ -7,6 +7,11 @@
 * `String#length` returns the number of characters, while `String#bytesize` return the number of bytes (previously `length` returned the number of bytes and `bytesize` didn't exist).
 * `String#[](index)` now returns a `Char` instead of an `UInt8`, where index is counted in characters. There's also `String#byte_at(index)`.
 * Removed the `\x` escape sequence in char and string literals. Use `\u` instead.
+* `initialize` methods are now protected.
+* Added `IO#gets_to_end`.
+* Added backticks (`...`) and `%x(...)` for command execution.
+* Added `%r(...)` for regular expression literals.
+* Allow interpolations in regular expresion literals.
 
 ## 0.4.3 (2014-08-14)
 
