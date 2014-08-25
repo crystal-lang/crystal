@@ -395,6 +395,7 @@ module Crystal
     def lib_flags(mod)
       libs = mod.library_names
       String.build do |flags|
+        flags << ".build/libgc.a -lpthread"
         if libs.length > 0
           libs.reverse_each do |libname|
             if libname =~ /^`(.*)`$/
