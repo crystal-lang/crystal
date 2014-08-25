@@ -32,10 +32,20 @@ You can use a backslash followed by at most three digits to denote a code point 
 '\1'   # code point 1
 ```
 
-You can use a backslash followed by an `x` and hexadecimal characters to denote a code point written in hexadecimal:
+You can use a backslash followed by an `u` and four hexadecimal characters to denote a unicode codepoint written:
 
 ``` ruby
-'\x41' # == 'A'
+'\u0041' # == 'A'
+```
+
+Or you can use curly braces and specify up to four hexadecimal numbers:
+
+``` ruby
+'\u{41}' # == 'A'
 ```
 
 You can get a `Char`'s code point by invoking the `ord` method on it.
+
+``` ruby
+'A'.ord #=> 65
+```

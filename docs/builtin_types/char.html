@@ -32,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="4.4" data-basepath=".." data-revision="1409007483963">
+    <div class="book" data-github="manastech/crystal" data-level="4.4" data-basepath=".." data-revision="1409008174383">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1459,10 +1459,15 @@
 <span class="hljs-string">'\12'</span>  <span class="hljs-comment"># == '\n'</span>
 <span class="hljs-string">'\1'</span>   <span class="hljs-comment"># code point 1</span>
 </code></pre>
-<p>You can use a backslash followed by an <code>x</code> and hexadecimal characters to denote a code point written in hexadecimal:</p>
-<pre><code class="lang-ruby"><span class="hljs-string">'\x41'</span> <span class="hljs-comment"># == 'A'</span>
+<p>You can use a backslash followed by an <code>u</code> and four hexadecimal characters to denote a unicode codepoint written:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">'\u0041'</span> <span class="hljs-comment"># == 'A'</span>
+</code></pre>
+<p>Or you can use curly braces and specify up to four hexadecimal numbers:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">'\u{41}'</span> <span class="hljs-comment"># == 'A'</span>
 </code></pre>
 <p>You can get a <code>Char</code>&#39;s code point by invoking the <code>ord</code> method on it.</p>
+<pre><code class="lang-ruby"><span class="hljs-string">'A'</span>.ord <span class="hljs-comment">#=&gt; 65</span>
+</code></pre>
 
                     
                     </section>
