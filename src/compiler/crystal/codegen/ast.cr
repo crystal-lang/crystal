@@ -198,6 +198,7 @@ module Crystal
           end
           if uses_block_arg
             str << ", " if needs_self_type || args.length > 0
+            str << "&"
             block_arg.not_nil!.type.llvm_name(str)
           end
           str << ">"

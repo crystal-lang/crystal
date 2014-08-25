@@ -461,4 +461,18 @@ describe "Code gen: fun" do
       foo
       )).to_i.should eq(2)
   end
+
+  it "passes block to another function (bug: mangling of both methods was the same)" do
+    run(%(
+      def foo(&block : ->)
+        foo(block)
+      end
+
+      def foo(block)
+        1
+      end
+
+      foo { }
+      )).to_i.should eq(1)
+  end
 end
