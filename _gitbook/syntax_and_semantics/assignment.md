@@ -3,9 +3,16 @@
 Assignment is done with the equal (`=`) character.
 
 ``` ruby
+# Assigns to a local variable
 local = 1
+
+# Assigns to an instance variable
 @instance = 2
+
+# Assigns to a class variable
 @@class = 3
+
+# Assigns to a global variable
 $global = 4
 ```
 
@@ -35,6 +42,12 @@ objects.[]=(2, 3)
 
 # The above can be written as:
 objects[2] = 3
+
+# Not assignment-related, but also syntax sugar:
+objects.[](2, 3)
+
+# The above can be written as:
+objects[2, 3]
 ```
 
 The `=` operator syntax sugar is also available to setters and indexers. Note that `||` and `&&` use the `[]?` method to check for key prescence.

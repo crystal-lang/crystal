@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1405515406126
+# Revision 1409007483964
 
 CACHE:
 index.html
@@ -23,6 +23,7 @@ syntax_and_semantics/case.html
 syntax_and_semantics/classes_and_methods.html
 syntax_and_semantics/comments.html
 syntax_and_semantics/control_expressions.html
+syntax_and_semantics/default_and_named_arguments.html
 syntax_and_semantics/everything_is_an_object.html
 syntax_and_semantics/generics.html
 syntax_and_semantics/global_variables.html
@@ -35,12 +36,12 @@ syntax_and_semantics/and.html
 syntax_and_semantics/local_variables.html
 syntax_and_semantics/macro_methods.html
 syntax_and_semantics/macros.html
-syntax_and_semantics/method_overloading.html
 syntax_and_semantics/methods_and_instance_variables.html
 syntax_and_semantics/multiple_assignment.html
 syntax_and_semantics/new,_initialize_and_allocate.html
 syntax_and_semantics/next.html
 syntax_and_semantics/or.html
+syntax_and_semantics/overloading.html
 syntax_and_semantics/ternary_if.html
 syntax_and_semantics/the_program.html
 syntax_and_semantics/thread_local.html

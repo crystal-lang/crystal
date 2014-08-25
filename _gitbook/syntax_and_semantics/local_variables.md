@@ -1,6 +1,6 @@
 # Local variables
 
-Local variables start with lowercase letters or underscore. They are declared when you first assign them a value.
+Local variables start with lowercase letters. They are declared when you first assign them a value.
 
 ``` ruby
 name = "Crystal"
@@ -18,3 +18,5 @@ var = "Hello"
 var = 1
 # At this point 'var' is an Int32
 ```
+
+Underscores are allowed at the beginning of a variable name, but these names are reserved for the compiler, so their use is not recommended (and it also makes the code uglier to read).

@@ -35,7 +35,8 @@
        * [Classes and methods](syntax_and_semantics/classes_and_methods.md)
            * [new, initialize and allocate](syntax_and_semantics/new,_initialize_and_allocate.md)
            * [Methods and instance variables](syntax_and_semantics/methods_and_instance_variables.md)
-           * [Method overloading](syntax_and_semantics/method_overloading.md)
+           * [Overloading](syntax_and_semantics/overloading.md)
+           * [Default and named arguments](syntax_and_semantics/default_and_named_arguments.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Instace variables type inference](syntax_and_semantics/instace_variables_type_inference.md)
        * Inheritance

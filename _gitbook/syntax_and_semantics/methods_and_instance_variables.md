@@ -23,6 +23,7 @@ john = Person.new "John"
 peter = Person.new "Peter"
 
 john.age #=> 0
+
 john.become_older
 john.age #=> 1
 

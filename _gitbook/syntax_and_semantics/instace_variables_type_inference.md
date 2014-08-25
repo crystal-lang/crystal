@@ -114,7 +114,7 @@ That is, the compiler does global type inference and tells you whenever you make
 
 If you do want to have different `Person` types, one with `@name` being an `Int32` and one with `@name` being a `String`, you must use [generics](generics.html).
 
-Finally, any instance variable not assigned in any `initlialize` will be considered as also having the type `Nil`:
+Finally, if an instance variable is not assigned in all of the `initialize` defined in a class, it will be considered as also having the type `Nil`:
 
 ``` ruby
 class Person

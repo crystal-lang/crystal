@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>The Program | Crystal Programming Language</title>
+        <title>Default and named arguments | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,10 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/classes_and_methods.html" />
+    <link rel="next" href="../syntax_and_semantics/type_restrictions.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/everything_is_an_object.html" />
+    <link rel="prev" href="../syntax_and_semantics/overloading.html" />
     
 
         
@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.6.2" data-basepath=".." data-revision="1409007483963">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.3.4" data-basepath=".." data-revision="1409007483963">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +118,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/the_program.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/default_and_named_arguments.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1328,7 +1328,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 66.66666666666667%;min-width: 64.58333333333333%;"></div>
+        <div class="inner" style="width: 77.08333333333333%;min-width: 75%;"></div>
     </div>
     <div class="chapters">
     
@@ -1398,15 +1398,15 @@
     
         <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 66.66666666666667%;"></a>
     
-        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter  " data-progress="3.6.3" style="left: 68.75%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 68.75%;"></a>
     
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter  " data-progress="3.6.3.1" style="left: 70.83333333333333%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 70.83333333333333%;"></a>
     
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter  " data-progress="3.6.3.2" style="left: 72.91666666666667%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 72.91666666666667%;"></a>
     
-        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter  " data-progress="3.6.3.3" style="left: 75%;"></a>
+        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter done " data-progress="3.6.3.3" style="left: 75%;"></a>
     
-        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter  " data-progress="3.6.3.4" style="left: 77.08333333333333%;"></a>
+        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter done " data-progress="3.6.3.4" style="left: 77.08333333333333%;"></a>
     
         <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter  " data-progress="3.6.3.5" style="left: 79.16666666666667%;"></a>
     
@@ -1435,49 +1435,39 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_42">
+                    <section class="normal" id="section-gitbook_22">
                     
-                        <h1 id="the-program">The Program</h1>
-<p>The program is a global object in which you can define methods and file-local variables.</p>
-<pre><code class="lang-ruby"><span class="hljs-comment"># Defines a method in the program</span>
-<span class="hljs-function"><span class="hljs-keyword">def</span> </span>add(x, y)
-  x + y
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Invokes the add method in the program</span>
-add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
-</code></pre>
-<p>When invoking a method without a receiver, like <code>add(1, 2)</code>, if the method is not found in the current type or any of its ancestors then it will be searched in the program.</p>
-<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>add(x, y)
-  x + y
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>bar
-    <span class="hljs-comment"># invokes the program's add method</span>
-    add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
-
-    <span class="hljs-comment"># invokes Foo's baz method</span>
-    baz(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>baz(x, y)
-    x * y
+                        <h1 id="default-and-named-arguments">Default and named arguments</h1>
+<p>A method can specify default values for the last arguments:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>become_older(by = <span class="hljs-number">1</span>)
+    <span class="hljs-variable">@age</span> += by
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
-</code></pre>
-<p>Variables declared in a program are not visible inside methods:</p>
-<pre><code class="lang-ruby">x = <span class="hljs-number">1</span>
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> </span>add(y)
-  x + y <span class="hljs-comment"># error: undefined local variable or method 'x'</span>
+john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>
+john.age <span class="hljs-comment">#=&gt; 0</span>
+
+john.become_older
+john.age <span class="hljs-comment">#=&gt; 1</span>
+
+john.become_older <span class="hljs-number">2</span>
+john.age <span class="hljs-comment">#=&gt; 3</span>
+</code></pre>
+<p>To specify the values of arguments that have default values you can also use their names in the invocation:</p>
+<pre><code class="lang-ruby">john.become_older <span class="hljs-symbol">by:</span> <span class="hljs-number">5</span>
+</code></pre>
+<p>When the method has many default arguments the order of the names in the invocation doesn&#39;t matter, and some names can be ommited:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method(x, y = <span class="hljs-number">1</span>, z = <span class="hljs-number">2</span>, w = <span class="hljs-number">3</span>)
+  <span class="hljs-comment"># do something...</span>
 <span class="hljs-keyword">end</span>
 
-add(<span class="hljs-number">2</span>)
+some_method <span class="hljs-number">10</span> <span class="hljs-comment"># x = 10, y = 1, z = 2, w = 3</span>
+some_method <span class="hljs-number">10</span>, <span class="hljs-symbol">z:</span> <span class="hljs-number">10</span> <span class="hljs-comment"># x = 10, y = 1, z = 10, w = 3</span>
+some_method <span class="hljs-number">10</span>, <span class="hljs-symbol">w:</span> <span class="hljs-number">1</span>, <span class="hljs-symbol">y:</span> <span class="hljs-number">2</span>, <span class="hljs-symbol">z:</span> <span class="hljs-number">3</span> <span class="hljs-comment"># x = 10, y = 2, z = 3, w = 1</span>
 </code></pre>
-<p>Parenthesis in method invocations are optional:</p>
-<pre><code class="lang-ruby">add <span class="hljs-number">1</span>, <span class="hljs-number">2</span> <span class="hljs-comment"># same as add(1, 2)</span>
-</code></pre>
+<p>Note that in the above example you can&#39;t use <code>x</code>&#39;s name, as it doesn&#39;t have a default value.</p>
+<p>In this way, default arguments and named arguments are related to each other: when you specify default arguments you are also allowing the caller to use their names. Be wise and choose good names.</p>
 
                     
                     </section>
@@ -1487,10 +1477,10 @@ add(<span class="hljs-number">2</span>)
         </div>
 
         
-        <a href="../syntax_and_semantics/everything_is_an_object.html" class="navigation navigation-prev " aria-label="Previous page: Everything is an object"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/overloading.html" class="navigation navigation-prev " aria-label="Previous page: Overloading"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/classes_and_methods.html" class="navigation navigation-next " aria-label="Next page: Classes and methods"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" class="navigation navigation-next " aria-label="Next page: Type restrictions"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

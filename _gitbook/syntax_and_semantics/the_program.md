@@ -12,7 +12,7 @@ end
 add(1, 2)
 ```
 
-When invoking a method without a receiver, like `add(1, 2)`, if the method is not found in the current type then it will be searched in the program.
+When invoking a method without a receiver, like `add(1, 2)`, if the method is not found in the current type or any of its ancestors then it will be searched in the program.
 
 ```ruby
 def add(x, y)
@@ -44,4 +44,10 @@ def add(y)
 end
 
 add(2)
+```
+
+Parenthesis in method invocations are optional:
+
+```ruby
+add 1, 2 # same as add(1, 2)
 ```

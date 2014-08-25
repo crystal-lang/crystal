@@ -60,7 +60,7 @@ end
 # d :: Int32 | Nil
 ```
 
-Note that if a variable is declared inside one of the branches but not in the other one, at the end of the if it will also contain the `Nil` type.
+Note that if a variable is declared inside one of the branches but not in the other one, at the end of the `if` it will also contain the `Nil` type.
 
 Inside an `if`'s branch the type of a variable is the one it got assigned in that branch, or the one that it had before the branch if it was not reassigned:
 
