@@ -1,4 +1,4 @@
-lib LibGC
+lib LibGC("gc")
   fun init = GC_init
   fun malloc = GC_malloc(size : UInt32) : Void*
   fun malloc_atomic = GC_malloc_atomic(size : UInt32) : Void*
