@@ -1,5 +1,6 @@
 # Summary
 
+* [Introduction](README.md)
 * [Installation](installation/README.md)
    * [On Mac OSX using Homebrew](installation/on_mac_osx_using_homebrew.md)
    * [From a tar.gz](installation/from_a_targz.md)
@@ -38,6 +39,7 @@
            * [Overloading](syntax_and_semantics/overloading.md)
            * [Default and named arguments](syntax_and_semantics/default_and_named_arguments.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
+           * [Visibility](syntax_and_semantics/visibility.md)
            * [Instace variables type inference](syntax_and_semantics/instace_variables_type_inference.md)
        * Inheritance
        * Modules

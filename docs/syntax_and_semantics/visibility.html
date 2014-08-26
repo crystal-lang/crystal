@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Everything is an object | Crystal Programming Language</title>
+        <title>Visibility | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,10 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/the_program.html" />
+    <link rel="next" href="../syntax_and_semantics/instace_variables_type_inference.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/types_and_methods.html" />
+    <link rel="prev" href="../syntax_and_semantics/type_restrictions.html" />
     
 
         
@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.6.1" data-basepath=".." data-revision="1409071556633">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.3.6" data-basepath=".." data-revision="1409071556633">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +118,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/everything_is_an_object.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/visibility.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1344,7 +1344,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 63.265306122448976%;min-width: 61.224489795918366%;"></div>
+        <div class="inner" style="width: 79.59183673469387%;min-width: 77.55102040816327%;"></div>
     </div>
     <div class="chapters">
     
@@ -1412,21 +1412,21 @@
     
         <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 63.265306122448976%;"></a>
     
-        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter  " data-progress="3.6.2" style="left: 65.3061224489796%;"></a>
+        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 65.3061224489796%;"></a>
     
-        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter  " data-progress="3.6.3" style="left: 67.34693877551021%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 67.34693877551021%;"></a>
     
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter  " data-progress="3.6.3.1" style="left: 69.38775510204081%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 69.38775510204081%;"></a>
     
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter  " data-progress="3.6.3.2" style="left: 71.42857142857143%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 71.42857142857143%;"></a>
     
-        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter  " data-progress="3.6.3.3" style="left: 73.46938775510205%;"></a>
+        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter done " data-progress="3.6.3.3" style="left: 73.46938775510205%;"></a>
     
-        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter  " data-progress="3.6.3.4" style="left: 75.51020408163265%;"></a>
+        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter done " data-progress="3.6.3.4" style="left: 75.51020408163265%;"></a>
     
-        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter  " data-progress="3.6.3.5" style="left: 77.55102040816327%;"></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter done " data-progress="3.6.3.5" style="left: 77.55102040816327%;"></a>
     
-        <a href="../syntax_and_semantics/visibility.html" title="Visibility" class="chapter  " data-progress="3.6.3.6" style="left: 79.59183673469387%;"></a>
+        <a href="../syntax_and_semantics/visibility.html" title="Visibility" class="chapter done " data-progress="3.6.3.6" style="left: 79.59183673469387%;"></a>
     
         <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter  " data-progress="3.6.3.7" style="left: 81.63265306122449%;"></a>
     
@@ -1453,16 +1453,71 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_23">
+                    <section class="normal" id="section-gitbook_49">
                     
-                        <h1 id="everything-is-an-object">Everything is an object</h1>
-<p>In Crystal everything is an object. The definition of an object boils down to these points:</p>
-<ul>
-<li>It has a type</li>
-<li>It can respond to some methods</li>
-</ul>
-<p>This is everything you can know about an object: its type and whether it responds to some method.</p>
-<p>An object&#39;s internal state, if any, can only be queried by invoking methods.</p>
+                        <h1 id="visibility">Visibility</h1>
+<p>Methods are public by default: the compiler will always let you invoke them. Because public is the default there is no <code>public</code> keyword.</p>
+<p>Methods can be marked as <code>private</code> or <code>protected</code>.</p>
+<p>A <code>private</code> method can only be inovked without a receiver, that is, without something before the dot:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  private <span class="hljs-function"><span class="hljs-keyword">def</span> </span>say(message)
+    puts message
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>say_hello
+    say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># OK, no receiver</span>
+    <span class="hljs-keyword">self</span>.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># Error, self is a receiver</span>
+
+    other = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"Other"</span>
+    other.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># Error, other is a receiver</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Note that <code>private</code> methods are visible by subclasses:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Person</span></span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>say_bye
+    say <span class="hljs-string">"bye"</span> <span class="hljs-comment"># OK</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>A <code>protected</code> method can only be invoked on instances of the same type as the current type:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  protected <span class="hljs-function"><span class="hljs-keyword">def</span> </span>say(message)
+    puts message
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>say_hello
+    say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># OK, implicit self is a Person</span>
+    <span class="hljs-keyword">self</span>.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># OK, self is a Person</span>
+
+    other = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"Other"</span>
+    other.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># OK, other is a Person</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Animal</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>make_a_person_talk
+    person = <span class="hljs-constant">Person</span>.new
+    person.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># Error, person is a Person</span>
+                       <span class="hljs-comment"># but current type is an Animal</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+one_more = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"One more"</span>
+one_more.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># Error, one_more is a Person</span>
+                     <span class="hljs-comment"># but current type is the Program</span>
+</code></pre>
+<p>A <code>protected</code> class method can be invoked from an instance method and the other way around:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  protected <span class="hljs-function"><span class="hljs-keyword">def</span> </span><span class="hljs-keyword">self</span>.say(message)
+    puts message
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>say_hello
+    <span class="hljs-constant">Person</span>.say <span class="hljs-string">"hello"</span> <span class="hljs-comment"># OK</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
 
                     
                     </section>
@@ -1472,10 +1527,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/types_and_methods.html" class="navigation navigation-prev " aria-label="Previous page: Types and methods"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" class="navigation navigation-prev " aria-label="Previous page: Type restrictions"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/the_program.html" class="navigation navigation-next " aria-label="Next page: The Program"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/instace_variables_type_inference.html" class="navigation navigation-next " aria-label="Next page: Instace variables type inference"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
