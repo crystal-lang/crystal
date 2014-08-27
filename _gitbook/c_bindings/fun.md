@@ -58,6 +58,7 @@ The valid types to use in C bindings are:
 * Primitive types (`Int8`, ..., `Int64`, `UInt8`, ..., `UInt64`, `Float32`, `Float64`)
 * Pointer types (`Pointer(Int32)`, which can also be written as `Int32*`)
 * Static arrays (`StaticArray(Int32, 8)`, which can also be written as `Int32[8]`)
+* Function types (`Function(Int32, Int32)`, which can also be written as `Int32 -> Int32`)
 * Other `struct`, `union`, `enum`, `type` or `alias` declared previously.
 
 **Note:** The C `char` type is `UInt8` in Crystal, so a `char*` or a `const char*` is `UInt8*`.
