@@ -309,7 +309,7 @@ class Game
   # This method could be cleaned up with some way to iterate
   # from, for example,  x = 0 to y = 20 and from x = 20 to y = 0
   # with the same x.to(y) do |i| call
-  def movable_tiles direction, drow, dcol
+  def movable_tiles direction, drow, dcol, &block
     case direction
     when :up
       movable_tiles_action 0.upto(@grid.size-1), 0.upto(@grid.size-1)
@@ -321,9 +321,6 @@ class Game
       movable_tiles_action 0.upto(@grid.size-1), (@grid.size-1).downto(0)
     else
       raise ArgumentError.new "Unknown direction #{direction}"
-       # Makes the parser happy, through the macro it doesn't realize that the method
-       # takes a block
-      yield 0, 0, 0
     end
   end
 
