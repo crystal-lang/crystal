@@ -74,6 +74,7 @@
    * [C bindings](c_bindings/README.md)
        * [lib](c_bindings/lib.md)
        * [fun](c_bindings/fun.md)
+           * [out](c_bindings/out.md)
        * [struct](c_bindings/struct.md)
        * [union](c_bindings/union.md)
 * [Built-in types](builtin_types/README.md)
