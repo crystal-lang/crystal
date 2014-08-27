@@ -52,7 +52,7 @@ lib LLVMIntrinsics
 end
 ```
 
-This can also be used to give shorter, nicer names to C functions, as these tend to be long and usually be prefixed with the library name, but in Crystal you must always prefix them with the `lib` name, so it's the same.
+This can also be used to give shorter, nicer names to C functions, as these tend to be long and usually be prefixed with the library name.
 
 The valid types to use in C bindings are:
 * Primitive types (`Int8`, ..., `Int64`, `UInt8`, ..., `UInt64`, `Float32`, `Float64`)
