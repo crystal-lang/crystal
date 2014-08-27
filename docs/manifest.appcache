@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1409071556633
+# Revision 1409150374197
 
 CACHE:
 index.html
@@ -8,6 +8,9 @@ builtin_types/bool.html
 builtin_types/char.html
 builtin_types/floating_point_types.html
 builtin_types/integer_types.html
+c_bindings/README.html
+c_bindings/fun.html
+c_bindings/lib.html
 installation/README.html
 installation/from_a_targz.html
 installation/from_source_repository.html

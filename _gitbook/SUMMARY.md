@@ -71,7 +71,9 @@
    * Compile-time flags
    * [Macros](syntax_and_semantics/macros.md)
        * [Macro methods](syntax_and_semantics/macro_methods.md)
-   * C bindings
+   * [C bindings](c_bindings/README.md)
+       * [lib](c_bindings/lib.md)
+       * [fun](c_bindings/fun.md)
 * [Built-in types](builtin_types/README.md)
    * [Bool](builtin_types/bool.md)
    * [Integer types](builtin_types/integer_types.md)
