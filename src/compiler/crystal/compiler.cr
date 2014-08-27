@@ -378,7 +378,12 @@ module Crystal
 
     def system(command)
       puts command if verbose
-      ::system(command)
+      exit_code = ::system(command)
+      if exit_code != 0
+        print "Error: ".colorize.red.bold
+        puts "execution of command failed with code: #{exit_code}: `#{command}`".colorize.bright
+        exit 3
+      end
     end
 
     def timing(label)
