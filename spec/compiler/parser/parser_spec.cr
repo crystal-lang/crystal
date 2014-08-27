@@ -532,6 +532,7 @@ describe "Parser" do
   it_parses "lib C; type A : B*; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
   it_parses "lib C; type A : B**; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)
   it_parses "lib C; type A : B.class; end", LibDef.new("C", [TypeDef.new("A", Metaclass.new("B".path))] of ASTNode)
+  it_parses "lib C; type A = B; end", LibDef.new("C", [TypeDef.new("A", "B".path)] of ASTNode)
   it_parses "lib C; struct Foo; end end", LibDef.new("C", [StructDef.new("Foo")] of ASTNode)
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", [StructDef.new("Foo", [Arg.new("x", restriction: "Int".path), Arg.new("y", restriction: "Float".path)])] of ASTNode)
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", [StructDef.new("Foo", [Arg.new("x", restriction: "Int".path.pointer_of)])] of ASTNode)

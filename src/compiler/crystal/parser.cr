@@ -3490,8 +3490,11 @@ module Crystal
       name_column_number = @token.column_number
       next_token_skip_space_or_newline
 
-      check :":"
-      next_token_skip_space_or_newline
+      if @token.type == :":" || @token.type == :"="
+        next_token_skip_space_or_newline
+      else
+        unexpected_token
+      end
 
       type = parse_single_type
 
