@@ -80,6 +80,7 @@
        * [union](c_bindings/union.md)
        * [enum](c_bindings/enum.md)
        * [variable](c_bindings/variable.md)
+       * [constant](c_bindings/constant.md)
        * [type](c_bindings/type.md)
        * [alias](c_bindings/alias.md)
        * [callbacks](c_bindings/callbacks.md)
