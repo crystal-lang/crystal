@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1409242828634
+# Revision 1409260685714
 
 CACHE:
 index.html
@@ -8,17 +8,22 @@ builtin_types/bool.html
 builtin_types/char.html
 builtin_types/floating_point_types.html
 builtin_types/integer_types.html
+builtin_types/nil.html
+builtin_types/reference.html
+builtin_types/struct.html
+builtin_types/symbol.html
+builtin_types/value.html
 installation/README.html
 installation/from_a_targz.html
 installation/from_source_repository.html
 installation/on_mac_osx_using_homebrew.html
-overview/README.html
 syntax_and_semantics/is_a.html
+overview/README.html
+syntax_and_semantics/README.html
 syntax_and_semantics/as_a_suffix.html
 syntax_and_semantics/as_an_expression.html
-syntax_and_semantics/README.html
-syntax_and_semantics/break.html
 syntax_and_semantics/assignment.html
+syntax_and_semantics/break.html
 syntax_and_semantics/c_bindings/lib.html
 syntax_and_semantics/c_bindings/README.html
 syntax_and_semantics/c_bindings/callbacks.html
@@ -32,12 +37,13 @@ syntax_and_semantics/c_bindings/to_unsafe.html
 syntax_and_semantics/c_bindings/type.html
 syntax_and_semantics/c_bindings/union.html
 syntax_and_semantics/c_bindings/variable.html
-syntax_and_semantics/case.html
 syntax_and_semantics/classes_and_methods.html
+syntax_and_semantics/case.html
 syntax_and_semantics/comments.html
 syntax_and_semantics/control_expressions.html
 syntax_and_semantics/default_and_named_arguments.html
 syntax_and_semantics/everything_is_an_object.html
+syntax_and_semantics/finalize.html
 syntax_and_semantics/generics.html
 syntax_and_semantics/global_variables.html
 syntax_and_semantics/if.html
@@ -55,6 +61,7 @@ syntax_and_semantics/new,_initialize_and_allocate.html
 syntax_and_semantics/next.html
 syntax_and_semantics/or.html
 syntax_and_semantics/overloading.html
+syntax_and_semantics/structs.html
 syntax_and_semantics/ternary_if.html
 syntax_and_semantics/the_program.html
 syntax_and_semantics/thread_local.html

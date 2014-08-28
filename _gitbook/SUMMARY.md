@@ -41,10 +41,11 @@
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Visibility](syntax_and_semantics/visibility.md)
            * [Instace variables type inference](syntax_and_semantics/instace_variables_type_inference.md)
-       * Inheritance
+           * Inheritance
+           * [finalize](syntax_and_semantics/finalize.md)
        * Modules
        * [Generics](syntax_and_semantics/generics.md)
-       * Structs
+       * [Structs](syntax_and_semantics/structs.md)
        * Constants
        * Blocks, functions and closures
            * Function literal
@@ -85,15 +86,16 @@
        * [alias](syntax_and_semantics/c_bindings/alias.md)
        * [callbacks](syntax_and_semantics/c_bindings/callbacks.md)
 * [Built-in types](builtin_types/README.md)
+   * [Nil](builtin_types/nil.md)
    * [Bool](builtin_types/bool.md)
    * [Integer types](builtin_types/integer_types.md)
    * [Floating point types](builtin_types/floating_point_types.md)
    * [Char](builtin_types/char.md)
    * String
-   * Symbol
-   * Reference
-   * Nil
-   * Struct
+   * [Symbol](builtin_types/symbol.md)
+   * [Reference](builtin_types/reference.md)
+   * [Value](builtin_types/value.md)
+   * [Struct](builtin_types/struct.md)
    * Pointer
    * StaticArray
    * Tuple
