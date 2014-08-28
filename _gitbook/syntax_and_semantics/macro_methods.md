@@ -25,6 +25,12 @@ class ASTNode
   # Returns a BoolLiteral whose value is true if this node
   # is not equal to the other node
   def !=(other); end
+
+  # Returns a BoolLiteral that is true when this ASTNode
+  # is truthy. Falsey AST nodes are just NilLiteral or
+  # a BoolLiteral with a false value: every other ASTNode
+  # is truthy.
+  def !; end
 end
 
 class ArrayLiteral < ASTNode
@@ -97,9 +103,11 @@ class StringLiteral < ASTNode
   # with all "::" replaced by "_"
   def identify; end
 
+  def length; end
+
   # Similar to String#lines,
   # but returns an ArrayLiteral of StringLiteral
-  def length; end
+  def lines; end
 
   # Similar to String#split(divider),
   # but returns an ArrayLiteral of StringLiteral.

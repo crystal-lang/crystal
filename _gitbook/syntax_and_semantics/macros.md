@@ -87,7 +87,7 @@ end
 getter name
 ```
 
-The `id` method in macros get rid of the colon from symbol literals and get rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke `getter` like this:
+The `id` method in macros gets rid of the colon from symbol literals and gets rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke `getter` like this:
 
 ``` ruby
 getter "name"
