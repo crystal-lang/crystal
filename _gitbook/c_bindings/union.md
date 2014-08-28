@@ -4,9 +4,15 @@ A `union` declaration inside a `lib` declares a C union:
 
 ```ruby
 lib U
+  # In C:
+  #
+  #  union TimeZone {
+  #    int some_int;
+  #    int some_float;
+  #  };
   union IntOrFloat
-    int : Int32
-    float : Float64
+    some_int : Int32
+    some_float : Float64
   end
 end
 ```
@@ -25,26 +31,26 @@ To avoid this initialization you can use `::`:
 
 ```ruby
 value :: U::IntOrFlaot
-value.int #=> some garbage value
+value.some_int #=> some garbage value
 ```
 
 You can set and get its properties:
 
 ```ruby
 value = U::IntOrFloat.new
-value.int = 1
-value.int #=> 1
-value.float #=> 4.94066e-324
+value.some_int = 1
+value.some_int #=> 1
+value.some_float #=> 4.94066e-324
 ```
 
 A C union is passed by value (as a copy) to functions and methods, and also passed by value when it is returned from a method:
 
 ```ruby
 def change_it(value)
-  value.int = 1
+  value.some_int = 1
 end
 
 value = U::IntOrFloat.new
 change_it value
-value.int #=> 0
+value.some_int #=> 0
 ```

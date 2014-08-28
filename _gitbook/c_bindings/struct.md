@@ -4,6 +4,12 @@ A `struct` declaration inside a `lib` declares a C struct.
 
 ```ruby
 lib C
+  # In C:
+  #
+  #  struct TimeZone {
+  #    int minutes_west;
+  #    int dst_time;
+  #  };
   struct TimeZone
     minutes_west : Int32
     dst_time     : Int32

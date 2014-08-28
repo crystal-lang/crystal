@@ -77,6 +77,8 @@
            * [out](c_bindings/out.md)
        * [struct](c_bindings/struct.md)
        * [union](c_bindings/union.md)
+       * [enum](c_bindings/enum.md)
+       * [type](c_bindings/type.md)
 * [Built-in types](builtin_types/README.md)
    * [Bool](builtin_types/bool.md)
    * [Integer types](builtin_types/integer_types.md)

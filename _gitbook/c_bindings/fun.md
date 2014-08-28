@@ -4,6 +4,7 @@ A `fun` declaration inside a `lib` binds to a C function.
 
 ```ruby
 lib C
+  # In C: double cos(double x)
   fun cos(value : Float64) : Float64
 end
 ```
