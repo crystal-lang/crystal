@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.6.2" data-basepath=".." data-revision="1409165487811">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.2" data-basepath=".." data-revision="1409199259630">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1629,6 +1629,22 @@ add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>baz(x, y)
     x * y
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>If you want to invoke the program&#39;s method, even though the current type defines a method with the same name, prefix the call with <code>::</code>:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>baz(x, y)
+  x + y
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>bar
+    baz(<span class="hljs-number">4</span>, <span class="hljs-number">2</span>) <span class="hljs-comment">#=&gt; 2</span>
+    <span class="hljs-symbol">:</span><span class="hljs-symbol">:baz</span>(<span class="hljs-number">4</span>, <span class="hljs-number">2</span>) <span class="hljs-comment">#=&gt; 6</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>baz(x, y)
+    x - y
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>

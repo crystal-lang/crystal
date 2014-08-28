@@ -34,6 +34,25 @@ class Foo
 end
 ```
 
+If you want to invoke the program's method, even though the current type defines a method with the same name, prefix the call with `::`:
+
+```ruby
+def baz(x, y)
+  x + y
+end
+
+class Foo
+  def bar
+    baz(4, 2) #=> 2
+    ::baz(4, 2) #=> 6
+  end
+
+  def baz(x, y)
+    x - y
+  end
+end
+```
+
 Variables declared in a program are not visible inside methods:
 
 ``` ruby
