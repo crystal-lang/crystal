@@ -35,6 +35,16 @@ end
 C.srand(1_u32)
 ```
 
+You can bind to variadic functions:
+
+```ruby
+lib X
+  fun varaidic(value : Int32, ...) : Int32
+end
+
+X.variadic(1, 2, 3, 4)
+```
+
 Note that there are no implicit conversions (except `to_unsafe`, explained later) when invoking a C function: you must pass the exact type that is expected. For integers and floats you can use the various `to_...` methods.
 
 Because method names in Crystal must start with a lowercase letter, `fun` names must also start with a lowercase letter. If you need to bind to a C function that starts with a capital letter you can give the function another name for Crystal:
@@ -61,5 +71,7 @@ The valid types to use in C bindings are:
 * Static arrays (`StaticArray(Int32, 8)`, which can also be written as `Int32[8]`)
 * Function types (`Function(Int32, Int32)`, which can also be written as `Int32 -> Int32`)
 * Other `struct`, `union`, `enum`, `type` or `alias` declared previously.
+* `Void`: the absence of a return value.
+* `NoReturn`: similar to `Void`, but the compiler understands that no code can be executed after that invocation.
 
 **Note:** The C `char` type is `UInt8` in Crystal, so a `char*` or a `const char*` is `UInt8*`.

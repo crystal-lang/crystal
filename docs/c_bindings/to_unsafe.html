@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Floating point types | Crystal Programming Language</title>
+        <title>to_unsafe | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,10 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../builtin_types/char.html" />
+    <link rel="next" href="../c_bindings/struct.html" />
     
     
-    <link rel="prev" href="../builtin_types/integer_types.html" />
+    <link rel="prev" href="../c_bindings/out.html" />
     
 
         
@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="4.3" data-basepath=".." data-revision="1409241507042">
+    <div class="book" data-github="manastech/crystal" data-level="3.14.2.2" data-basepath=".." data-revision="1409241507042">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +118,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/builtin_types/floating_point_types.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/c_bindings/to_unsafe.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1540,7 +1540,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 98.36065573770492%;min-width: 96.72131147540983%;"></div>
+        <div class="inner" style="width: 80.32786885245902%;min-width: 78.68852459016394%;"></div>
     </div>
     <div class="chapters">
     
@@ -1644,27 +1644,27 @@
     
         <a href="../c_bindings/to_unsafe.html" title="to_unsafe" class="chapter done " data-progress="3.14.2.2" style="left: 80.32786885245902%;"></a>
     
-        <a href="../c_bindings/struct.html" title="struct" class="chapter done " data-progress="3.14.3" style="left: 81.9672131147541%;"></a>
+        <a href="../c_bindings/struct.html" title="struct" class="chapter  " data-progress="3.14.3" style="left: 81.9672131147541%;"></a>
     
-        <a href="../c_bindings/union.html" title="union" class="chapter done " data-progress="3.14.4" style="left: 83.60655737704919%;"></a>
+        <a href="../c_bindings/union.html" title="union" class="chapter  " data-progress="3.14.4" style="left: 83.60655737704919%;"></a>
     
-        <a href="../c_bindings/enum.html" title="enum" class="chapter done " data-progress="3.14.5" style="left: 85.24590163934427%;"></a>
+        <a href="../c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 85.24590163934427%;"></a>
     
-        <a href="../c_bindings/variable.html" title="variable" class="chapter done " data-progress="3.14.6" style="left: 86.88524590163935%;"></a>
+        <a href="../c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 86.88524590163935%;"></a>
     
-        <a href="../c_bindings/type.html" title="type" class="chapter done " data-progress="3.14.7" style="left: 88.52459016393442%;"></a>
+        <a href="../c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.7" style="left: 88.52459016393442%;"></a>
     
-        <a href="../c_bindings/alias.html" title="alias" class="chapter done " data-progress="3.14.8" style="left: 90.1639344262295%;"></a>
+        <a href="../c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.8" style="left: 90.1639344262295%;"></a>
     
-        <a href="../c_bindings/callbacks.html" title="callbacks" class="chapter done " data-progress="3.14.9" style="left: 91.80327868852459%;"></a>
+        <a href="../c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.9" style="left: 91.80327868852459%;"></a>
     
-        <a href="../builtin_types/README.html" title="Built-in types" class="chapter done new-chapter" data-progress="4" style="left: 93.44262295081967%;"></a>
+        <a href="../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 93.44262295081967%;"></a>
     
-        <a href="../builtin_types/bool.html" title="Bool" class="chapter done " data-progress="4.1" style="left: 95.08196721311475%;"></a>
+        <a href="../builtin_types/bool.html" title="Bool" class="chapter  " data-progress="4.1" style="left: 95.08196721311475%;"></a>
     
-        <a href="../builtin_types/integer_types.html" title="Integer types" class="chapter done " data-progress="4.2" style="left: 96.72131147540983%;"></a>
+        <a href="../builtin_types/integer_types.html" title="Integer types" class="chapter  " data-progress="4.2" style="left: 96.72131147540983%;"></a>
     
-        <a href="../builtin_types/floating_point_types.html" title="Floating point types" class="chapter done " data-progress="4.3" style="left: 98.36065573770492%;"></a>
+        <a href="../builtin_types/floating_point_types.html" title="Floating point types" class="chapter  " data-progress="4.3" style="left: 98.36065573770492%;"></a>
     
         <a href="../builtin_types/char.html" title="Char" class="chapter  " data-progress="4.4" style="left: 100%;"></a>
     
@@ -1673,28 +1673,38 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_5">
+                    <section class="normal" id="section-gitbook_15">
                     
-                        <h1 id="floating-point-types">Floating point types</h1>
-<p>There are two floating point types, <code>Float32</code> and <code>Float64</code>, which correspond to the <a href="http://en.wikipedia.org/wiki/Single_precision_floating-point_format" target="_blank">binary32</a> and <a href="http://en.wikipedia.org/wiki/Double_precision_floating-point_format" target="_blank">binary64</a> types defined by IEEE.</p>
-<p>A floating point literal is an optional <code>+</code> or <code>-</code> sign, followed by  a sequence of numbers or underscores, followed by a dot, followed by numbers or underscores, followed by an optional exponent suffix, followed by an optional type suffix. If no suffix is present, the literal&#39;s type is <code>Float64</code>.</p>
-<pre><code class="lang-ruby"><span class="hljs-number">1.0</span>      <span class="hljs-comment"># Float64</span>
-<span class="hljs-number">1.0_</span>f32  <span class="hljs-comment"># Float32</span>
-<span class="hljs-number">1_</span>f32    <span class="hljs-comment"># Float32</span>
+                        <h1 id="to_unsafe">to_unsafe</h1>
+<p>If a type defines a <code>to_unsafe</code> method, when passing it to C the value returned by this method will be passed. For example:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">C</span>
+  fun exit(status <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>) <span class="hljs-symbol">:</span> <span class="hljs-constant">NoReturn</span>
+<span class="hljs-keyword">end</span>
 
-<span class="hljs-number">1</span>e1<span class="hljs-number">0</span>     <span class="hljs-comment"># Float64</span>
-<span class="hljs-number">1.5</span>e1<span class="hljs-number">0</span>   <span class="hljs-comment"># Float64</span>
-<span class="hljs-number">1.5</span>e-<span class="hljs-number">7</span>   <span class="hljs-comment"># Float64</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">IntWrapper</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span>)
+  <span class="hljs-keyword">end</span>
 
-+<span class="hljs-number">1.3</span>     <span class="hljs-comment"># Float64</span>
--<span class="hljs-number">0</span>.<span class="hljs-number">5</span>     <span class="hljs-comment"># Float64</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>to_unsafe
+    <span class="hljs-variable">@value</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+wrapper = <span class="hljs-constant">IntWrapper</span>.new(<span class="hljs-number">1</span>)
+<span class="hljs-constant">C</span>.exit(wrapper) <span class="hljs-comment"># wrapper is not an Int32, but its to_unsafe</span>
+                <span class="hljs-comment"># method is, so wrapper.to_unsafe</span>
+                <span class="hljs-comment"># is passed instead</span>
 </code></pre>
-<p>The underscore <code>_</code> before the suffix is optional.</p>
-<p>Underscores can be used to make some numbers more readable:</p>
-<pre><code class="lang-ruby"><span class="hljs-number">1_000_000.111_111</span> <span class="hljs-comment"># better than 1000000.111111</span>
+<p>This is very useful for defining wrappers of C types without having to explicitly transform them to their wrapped values.</p>
+<p>For example, the <code>String</code> class implements <code>to_unsafe</code> to return <code>UInt8*</code>:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">C</span>
+  fun printf(format <span class="hljs-symbol">:</span> <span class="hljs-constant">UInt8</span>*, ...) <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+<span class="hljs-keyword">end</span>
+
+a = <span class="hljs-number">1</span>
+b = <span class="hljs-number">2</span>
+<span class="hljs-constant">C</span>.printf <span class="hljs-string">"%d + %d = %d\n"</span>, a, b, a + b
 </code></pre>
-<p>You can convert a float to some integer type using these methods: <code>to_i8</code>, <code>to_i16</code>, <code>to_i32</code>, <code>to_i64</code>, <code>to_u8</code>, <code>to_u16</code>, <code>to_u32</code>, <code>to_u64</code>. There are also <code>to_i</code> and <code>to_u</code>, which are just synonims of <code>to_i32</code> and <code>to_u32</code> respectively. All of these truncate the decimal part.</p>
-<p>To convert a float to another floating point type you can use these methods: <code>to_f32</code> and <code>to_f64</code>. There is also <code>to_f</code>, which is just a synonim of <code>to_f64</code>.</p>
 
                     
                     </section>
@@ -1704,10 +1714,10 @@
         </div>
 
         
-        <a href="../builtin_types/integer_types.html" class="navigation navigation-prev " aria-label="Previous page: Integer types"><i class="fa fa-angle-left"></i></a>
+        <a href="../c_bindings/out.html" class="navigation navigation-prev " aria-label="Previous page: out"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../builtin_types/char.html" class="navigation navigation-next " aria-label="Next page: Char"><i class="fa fa-angle-right"></i></a>
+        <a href="../c_bindings/struct.html" class="navigation navigation-next " aria-label="Next page: struct"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
