@@ -1,17 +1,26 @@
 struct Number
-  def step(limit, by = 1)
+  def step(limit = nil, by = 1)
     x = self
-    if by > 0
-      while x <= limit
-        yield x
-        x += by
+
+    if limit
+      if by > 0
+        while x <= limit
+          yield x
+          x += by
+        end
+      elsif by < 0
+        while x >= limit
+          yield x
+          x += by
+        end
       end
-    elsif by < 0
-      while x >= limit
+    else
+      while true
         yield x
         x += by
       end
     end
+
     self
   end
 
