@@ -1,14 +1,15 @@
 CACHE MANIFEST
-# Revision 1409260685714
+# Revision 1409321547209
 
 CACHE:
 index.html
+builtin_types/nil.html
 builtin_types/README.html
-builtin_types/bool.html
 builtin_types/char.html
 builtin_types/floating_point_types.html
 builtin_types/integer_types.html
-builtin_types/nil.html
+builtin_types/bool.html
+builtin_types/pointer.html
 builtin_types/reference.html
 builtin_types/struct.html
 builtin_types/symbol.html
@@ -17,9 +18,10 @@ installation/README.html
 installation/from_a_targz.html
 installation/from_source_repository.html
 installation/on_mac_osx_using_homebrew.html
-syntax_and_semantics/is_a.html
 overview/README.html
+syntax_and_semantics/instace_variables_type_inference.html
 syntax_and_semantics/README.html
+syntax_and_semantics/and.html
 syntax_and_semantics/as_a_suffix.html
 syntax_and_semantics/as_an_expression.html
 syntax_and_semantics/assignment.html
@@ -37,9 +39,10 @@ syntax_and_semantics/c_bindings/to_unsafe.html
 syntax_and_semantics/c_bindings/type.html
 syntax_and_semantics/c_bindings/union.html
 syntax_and_semantics/c_bindings/variable.html
-syntax_and_semantics/classes_and_methods.html
 syntax_and_semantics/case.html
+syntax_and_semantics/classes_and_methods.html
 syntax_and_semantics/comments.html
+syntax_and_semantics/constants.html
 syntax_and_semantics/control_expressions.html
 syntax_and_semantics/default_and_named_arguments.html
 syntax_and_semantics/everything_is_an_object.html
@@ -50,8 +53,9 @@ syntax_and_semantics/if.html
 syntax_and_semantics/if_var.html
 syntax_and_semantics/if_varis_a.html
 syntax_and_semantics/if_varresponds_to.html
-syntax_and_semantics/instace_variables_type_inference.html
-syntax_and_semantics/and.html
+syntax_and_semantics/inheritance.html
+syntax_and_semantics/alias.html
+syntax_and_semantics/is_a.html
 syntax_and_semantics/local_variables.html
 syntax_and_semantics/macro_methods.html
 syntax_and_semantics/macros.html
@@ -70,6 +74,7 @@ syntax_and_semantics/type_restrictions.html
 syntax_and_semantics/types_and_methods.html
 syntax_and_semantics/unless.html
 syntax_and_semantics/until.html
+syntax_and_semantics/virtual_and_abstract_types.html
 syntax_and_semantics/visibility.html
 syntax_and_semantics/while.html
 gitbook/app.js

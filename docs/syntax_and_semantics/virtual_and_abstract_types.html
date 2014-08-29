@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Macros | Crystal Programming Language</title>
+        <title>Virtual and abstract types | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,8 +19,10 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/macro_methods.html" />
+    <link rel="next" href="../syntax_and_semantics/finalize.html" />
     
+    
+    <link rel="prev" href="../syntax_and_semantics/inheritance.html" />
     
 
         
@@ -32,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1409321547208">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.3.8.1" data-basepath=".." data-revision="1409321547208">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -116,7 +118,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/macros.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/virtual_and_abstract_types.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1680,7 +1682,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 66.21621621621621%;min-width: 64.86486486486487%;"></div>
+        <div class="inner" style="width: 56.75675675675676%;min-width: 55.4054054054054%;"></div>
     </div>
     <div class="chapters">
     
@@ -1770,19 +1772,19 @@
     
         <a href="../syntax_and_semantics/virtual_and_abstract_types.html" title="Virtual and abstract types" class="chapter done " data-progress="3.6.3.8.1" style="left: 56.75675675675676%;"></a>
     
-        <a href="../syntax_and_semantics/finalize.html" title="finalize" class="chapter done " data-progress="3.6.3.9" style="left: 58.108108108108105%;"></a>
+        <a href="../syntax_and_semantics/finalize.html" title="finalize" class="chapter  " data-progress="3.6.3.9" style="left: 58.108108108108105%;"></a>
     
-        <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter done " data-progress="3.6.5" style="left: 59.45945945945946%;"></a>
+        <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter  " data-progress="3.6.5" style="left: 59.45945945945946%;"></a>
     
-        <a href="../syntax_and_semantics/structs.html" title="Structs" class="chapter done " data-progress="3.6.6" style="left: 60.810810810810814%;"></a>
+        <a href="../syntax_and_semantics/structs.html" title="Structs" class="chapter  " data-progress="3.6.6" style="left: 60.810810810810814%;"></a>
     
-        <a href="../syntax_and_semantics/constants.html" title="Constants" class="chapter done " data-progress="3.6.7" style="left: 62.16216216216216%;"></a>
+        <a href="../syntax_and_semantics/constants.html" title="Constants" class="chapter  " data-progress="3.6.7" style="left: 62.16216216216216%;"></a>
     
-        <a href="../syntax_and_semantics/alias.html" title="alias" class="chapter done " data-progress="3.6.9" style="left: 63.513513513513516%;"></a>
+        <a href="../syntax_and_semantics/alias.html" title="alias" class="chapter  " data-progress="3.6.9" style="left: 63.513513513513516%;"></a>
     
-        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter done " data-progress="3.7.1" style="left: 64.86486486486487%;"></a>
+        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter  " data-progress="3.7.1" style="left: 64.86486486486487%;"></a>
     
-        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter done " data-progress="3.13" style="left: 66.21621621621621%;"></a>
+        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter  " data-progress="3.13" style="left: 66.21621621621621%;"></a>
     
         <a href="../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter  " data-progress="3.13.1" style="left: 67.56756756756756%;"></a>
     
@@ -1839,82 +1841,61 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_57">
+                    <section class="normal" id="section-gitbook_73">
                     
-                        <h1 id="macros">Macros</h1>
-<p>Macros allow generating code at compile time.</p>
-<p>For example, this is the source code of the <code>getter</code> macro:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
-    @{{name.id}}
+                        <h1 id="virtual-and-abstract-types">Virtual and abstract types</h1>
+<p>When a variable&#39;s type combines different types under the same hierarchy, its type becomes a <strong>virtual type</strong>. This applies to every class except for <code>Reference</code>. An example:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Animal</span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dog</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Animal</span></span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>talk
+    <span class="hljs-string">"Woof!"</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Cat</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Animal</span></span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>talk
+    <span class="hljs-string">"Miau"</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-comment"># Expands to:</span>
-  <span class="hljs-comment">#</span>
-  <span class="hljs-comment">#   def name</span>
-  <span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
-  <span class="hljs-comment">#   end</span>
-  getter <span class="hljs-symbol">:name</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>To understand the simple macro above we need to understand what&#39;s inside a <code>macro</code>&#39;s body, what are its arguments and what we can do with them.</p>
-<p>A <code>macro</code>&#39;s body consists of a sequence of characters that can contain macro interpolations (<code>{{...}}</code>) and macro controls (<code>{% ... %}</code>). This is a perfectly valid macro:</p>
-<pre><code class="lang-ruby">macro foo(really)
-  <span class="hljs-constant">I</span> can write whataver <span class="hljs-constant">I</span> want here (well... <span class="hljs-keyword">not</span> {{really}})
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>This means that a <code>macro</code>&#39;s body is not parsed using a regular Crystal parser. This also means that you can use macro interpolations and macro controls anywhere inside a <code>macro</code>&#39;s body, which gives you greater flexibility.</p>
-<p>So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are <code>def</code>, <code>class</code>, <code>if</code>. The only ending is <code>end</code>. This rule is because you will probably want to generate Crystal code with macros. Remmeber this rule, because it will allow you to trick the macro parser for your benefit:</p>
-<pre><code class="lang-ruby">macro define_foo(kind)
-  {{kind.id}} <span class="hljs-constant">Foo</span>
+  getter pet
 
-  <span class="hljs-comment"># We can't use a simple "end", because Crystal will think</span>
-  <span class="hljs-comment"># the macro ends here</span>
-  {{<span class="hljs-symbol">:end</span>.id}}
-<span class="hljs-keyword">end</span>
-
-define_foo <span class="hljs-symbol">:struct</span>
-</code></pre>
-<p>(don&#39;t worry, you will almost never have to do something like the above)</p>
-<p>Macros are executed at compile time, and receive <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">AST nodes</a>. Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.</p>
-<p>So, in the <code>getter</code> example, the macro receives a <code>SymbolLiteral</code> node. If we consider this alternative definition:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name}}
-    @{{name}}
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@name</span>, <span class="hljs-variable">@pet</span>)
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-comment"># Generates:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment">#   def :name</span>
-<span class="hljs-comment">#     @:name</span>
-<span class="hljs-comment">#   end</span>
-getter <span class="hljs-symbol">:name</span>
+john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>, <span class="hljs-constant">Dog</span>.new
+peter = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"Peter"</span>, <span class="hljs-constant">Cat</span>.new
 </code></pre>
-<p>We can see that the result we got is not what we expected. This is because we pasted the <code>SymbolLiteral</code> in the macro, and as we can see in the <code>getter :name</code> invocation, it contains a colon (<code>:</code>) before it.</p>
-<p>To get rid of the colon, we can invoke <code>id</code> on it before interpolating it:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
-    @{{name.id}}
-  <span class="hljs-keyword">end</span>
+<p>If you compile the above program with <code>--hierarchy</code> you will see this for <code>Person</code>:</p>
+<pre><code>- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : String
+            @pet : Animal+
+</code></pre><p>You can see that <code>@pet</code> is <code>Animal+</code>. The <code>+</code> means it&#39;s a virtual type: because a <code>Dog</code> and a <code>Cat</code> were assigned to <code>@pet</code>, instead of having the type be <code>Dog | Cat</code> the compiler simplified it to <code>Animal+</code>, meaning &quot;any class that inhertis from <code>Animal</code>, including <code>Animal</code>&quot;.</p>
+<p>The compiler will always do this for classes under the same hierarchy: it will find the first superclass that&#39;s not <code>Reference</code> from which all types inherit from. If it can&#39;t find one, the type union remains.</p>
+<p>The real reason the compiler does this is to be able to compile programs faster by not creating all kinds of different similar unions, also making the generated code smaller in size. But, on the other hand, it makes sense: classes under the same hierarchy should behave in a similar way.</p>
+<p>Lets make John&#39;s pet talk:</p>
+<pre><code class="lang-ruby">john.pet.talk <span class="hljs-comment"># Error: undefined method 'talk' for Animal</span>
+</code></pre>
+<p>We get an error because the compiler now treats <code>@pet</code> as an <code>Animal+</code>, which includes <code>Animal</code>. And since it can&#39;t find a <code>talk</code> method on it, it errors.</p>
+<p>What the compiler doesn&#39;t know is that for us, <code>Animal</code> will never be instantiated as it doesn&#39;t make sense to instantiate one. We have a way to tell the compiler so by marking the class as <code>abstract</code>:</p>
+<pre><code class="lang-ruby">abstract <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Animal</span></span>
 <span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Generates:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment">#   def name</span>
-<span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
-<span class="hljs-comment">#   end</span>
-getter name
 </code></pre>
-<p>The <code>id</code> method in macros gets rid of the colon from symbol literals and gets rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke <code>getter</code> like this:</p>
-<pre><code class="lang-ruby">getter <span class="hljs-string">"name"</span>
+<p>Now the code compiles:</p>
+<pre><code class="lang-ruby">john.pet.talk <span class="hljs-comment">#=&gt; "Woof!"</span>
 </code></pre>
-<p>And also like this:</p>
-<pre><code class="lang-ruby">getter name
+<p>Marking a class as abstract will also prevent us from creating an instance of it:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">Animal</span>.new <span class="hljs-comment"># Error: can't instantiate abstract class Animal</span>
 </code></pre>
-<p>This is because macro arguments are never evaluated, so it doesn&#39;t matter what <code>name</code> means here: for the macro it will only be some AST node.</p>
+<p>Note that virtual types only apply to classes, never to structs.</p>
 
                     
                     </section>
@@ -1924,8 +1905,10 @@ getter name
         </div>
 
         
+        <a href="../syntax_and_semantics/inheritance.html" class="navigation navigation-prev " aria-label="Previous page: Inheritance"><i class="fa fa-angle-left"></i></a>
         
-        <a href="../syntax_and_semantics/macro_methods.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Macro methods"><i class="fa fa-angle-right"></i></a>
+        
+        <a href="../syntax_and_semantics/finalize.html" class="navigation navigation-next " aria-label="Next page: finalize"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

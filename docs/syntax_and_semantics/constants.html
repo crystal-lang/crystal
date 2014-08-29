@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Macros | Crystal Programming Language</title>
+        <title>Constants | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,8 +19,8 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/macro_methods.html" />
     
+    <link rel="prev" href="../syntax_and_semantics/structs.html" />
     
 
         
@@ -32,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1409321547208">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.7" data-basepath=".." data-revision="1409321547208">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -116,7 +116,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/macros.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/constants.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1680,7 +1680,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 66.21621621621621%;min-width: 64.86486486486487%;"></div>
+        <div class="inner" style="width: 62.16216216216216%;min-width: 60.810810810810814%;"></div>
     </div>
     <div class="chapters">
     
@@ -1778,11 +1778,11 @@
     
         <a href="../syntax_and_semantics/constants.html" title="Constants" class="chapter done " data-progress="3.6.7" style="left: 62.16216216216216%;"></a>
     
-        <a href="../syntax_and_semantics/alias.html" title="alias" class="chapter done " data-progress="3.6.9" style="left: 63.513513513513516%;"></a>
+        <a href="../syntax_and_semantics/alias.html" title="alias" class="chapter  " data-progress="3.6.9" style="left: 63.513513513513516%;"></a>
     
-        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter done " data-progress="3.7.1" style="left: 64.86486486486487%;"></a>
+        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter  " data-progress="3.7.1" style="left: 64.86486486486487%;"></a>
     
-        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter done " data-progress="3.13" style="left: 66.21621621621621%;"></a>
+        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter  " data-progress="3.13" style="left: 66.21621621621621%;"></a>
     
         <a href="../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter  " data-progress="3.13.1" style="left: 67.56756756756756%;"></a>
     
@@ -1839,82 +1839,32 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_57">
+                    <section class="normal" id="section-gitbook_41">
                     
-                        <h1 id="macros">Macros</h1>
-<p>Macros allow generating code at compile time.</p>
-<p>For example, this is the source code of the <code>getter</code> macro:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
-    @{{name.id}}
+                        <h1 id="constants">Constants</h1>
+<p>Constants can be declared at the top level or inside other types. They must start with a capital letter:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">PI</span> = <span class="hljs-number">3.14</span>
+
+<span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Earth</span></span>
+  <span class="hljs-constant">RADIUS</span> = <span class="hljs-number">6_371_000</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">PI</span> <span class="hljs-comment">#=&gt; 3.14</span>
+<span class="hljs-constant">Earth::RADIUS</span> = <span class="hljs-number">6_371_000</span>
+</code></pre>
+<p>Although not enforced by the compiler, constants are usually named with all capital letters and underscores to separate words.</p>
+<p>A constant definition can invoke methods and have complex logic:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">TEN</span> = <span class="hljs-keyword">begin</span>
+  a = <span class="hljs-number">0</span>
+  <span class="hljs-keyword">while</span> a &lt; <span class="hljs-number">10</span>
+    a += <span class="hljs-number">1</span>
   <span class="hljs-keyword">end</span>
+  a
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-comment"># Expands to:</span>
-  <span class="hljs-comment">#</span>
-  <span class="hljs-comment">#   def name</span>
-  <span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
-  <span class="hljs-comment">#   end</span>
-  getter <span class="hljs-symbol">:name</span>
-<span class="hljs-keyword">end</span>
+<span class="hljs-constant">TEN</span> <span class="hljs-comment">#=&gt; 10</span>
 </code></pre>
-<p>To understand the simple macro above we need to understand what&#39;s inside a <code>macro</code>&#39;s body, what are its arguments and what we can do with them.</p>
-<p>A <code>macro</code>&#39;s body consists of a sequence of characters that can contain macro interpolations (<code>{{...}}</code>) and macro controls (<code>{% ... %}</code>). This is a perfectly valid macro:</p>
-<pre><code class="lang-ruby">macro foo(really)
-  <span class="hljs-constant">I</span> can write whataver <span class="hljs-constant">I</span> want here (well... <span class="hljs-keyword">not</span> {{really}})
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>This means that a <code>macro</code>&#39;s body is not parsed using a regular Crystal parser. This also means that you can use macro interpolations and macro controls anywhere inside a <code>macro</code>&#39;s body, which gives you greater flexibility.</p>
-<p>So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are <code>def</code>, <code>class</code>, <code>if</code>. The only ending is <code>end</code>. This rule is because you will probably want to generate Crystal code with macros. Remmeber this rule, because it will allow you to trick the macro parser for your benefit:</p>
-<pre><code class="lang-ruby">macro define_foo(kind)
-  {{kind.id}} <span class="hljs-constant">Foo</span>
-
-  <span class="hljs-comment"># We can't use a simple "end", because Crystal will think</span>
-  <span class="hljs-comment"># the macro ends here</span>
-  {{<span class="hljs-symbol">:end</span>.id}}
-<span class="hljs-keyword">end</span>
-
-define_foo <span class="hljs-symbol">:struct</span>
-</code></pre>
-<p>(don&#39;t worry, you will almost never have to do something like the above)</p>
-<p>Macros are executed at compile time, and receive <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">AST nodes</a>. Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.</p>
-<p>So, in the <code>getter</code> example, the macro receives a <code>SymbolLiteral</code> node. If we consider this alternative definition:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name}}
-    @{{name}}
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Generates:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment">#   def :name</span>
-<span class="hljs-comment">#     @:name</span>
-<span class="hljs-comment">#   end</span>
-getter <span class="hljs-symbol">:name</span>
-</code></pre>
-<p>We can see that the result we got is not what we expected. This is because we pasted the <code>SymbolLiteral</code> in the macro, and as we can see in the <code>getter :name</code> invocation, it contains a colon (<code>:</code>) before it.</p>
-<p>To get rid of the colon, we can invoke <code>id</code> on it before interpolating it:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
-    @{{name.id}}
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Generates:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment">#   def name</span>
-<span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
-<span class="hljs-comment">#   end</span>
-getter name
-</code></pre>
-<p>The <code>id</code> method in macros gets rid of the colon from symbol literals and gets rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke <code>getter</code> like this:</p>
-<pre><code class="lang-ruby">getter <span class="hljs-string">"name"</span>
-</code></pre>
-<p>And also like this:</p>
-<pre><code class="lang-ruby">getter name
-</code></pre>
-<p>This is because macro arguments are never evaluated, so it doesn&#39;t matter what <code>name</code> means here: for the macro it will only be some AST node.</p>
+<p>If a constant is not used its initializer is never included in the final executable.</p>
 
                     
                     </section>
@@ -1924,8 +1874,8 @@ getter name
         </div>
 
         
+        <a href="../syntax_and_semantics/structs.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Structs"><i class="fa fa-angle-left"></i></a>
         
-        <a href="../syntax_and_semantics/macro_methods.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Macro methods"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

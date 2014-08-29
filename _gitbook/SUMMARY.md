@@ -41,16 +41,17 @@
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Visibility](syntax_and_semantics/visibility.md)
            * [Instace variables type inference](syntax_and_semantics/instace_variables_type_inference.md)
-           * Inheritance
+           * [Inheritance](syntax_and_semantics/inheritance.md)
+               * [Virtual and abstract types](syntax_and_semantics/virtual_and_abstract_types.md)
            * [finalize](syntax_and_semantics/finalize.md)
        * Modules
        * [Generics](syntax_and_semantics/generics.md)
        * [Structs](syntax_and_semantics/structs.md)
-       * Constants
+       * [Constants](syntax_and_semantics/constants.md)
        * Blocks, functions and closures
            * Function literal
            * Function pointer
-       * alias
+       * [alias](syntax_and_semantics/alias.md)
    * Type reflection
        * [is_a?](syntax_and_semantics/is_a.md)
        * responds_to?
@@ -96,7 +97,7 @@
    * [Reference](builtin_types/reference.md)
    * [Value](builtin_types/value.md)
    * [Struct](builtin_types/struct.md)
-   * Pointer
+   * [Pointer](builtin_types/pointer.md)
    * StaticArray
    * Tuple
    * Range

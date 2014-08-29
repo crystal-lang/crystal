@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Macros | Crystal Programming Language</title>
+        <title>Pointer | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,8 +19,8 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/macro_methods.html" />
     
+    <link rel="prev" href="../builtin_types/struct.html" />
     
 
         
@@ -32,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1409321547208">
+    <div class="book" data-github="manastech/crystal" data-level="4.11" data-basepath=".." data-revision="1409321547208">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -116,7 +116,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/macros.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/builtin_types/pointer.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1680,7 +1680,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 66.21621621621621%;min-width: 64.86486486486487%;"></div>
+        <div class="inner" style="width: 100%;min-width: 98.64864864864865%;"></div>
     </div>
     <div class="chapters">
     
@@ -1784,137 +1784,108 @@
     
         <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter done " data-progress="3.13" style="left: 66.21621621621621%;"></a>
     
-        <a href="../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter  " data-progress="3.13.1" style="left: 67.56756756756756%;"></a>
+        <a href="../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter done " data-progress="3.13.1" style="left: 67.56756756756756%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/README.html" title="C bindings" class="chapter  " data-progress="3.14" style="left: 68.91891891891892%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/README.html" title="C bindings" class="chapter done " data-progress="3.14" style="left: 68.91891891891892%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/lib.html" title="lib" class="chapter  " data-progress="3.14.1" style="left: 70.27027027027027%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/lib.html" title="lib" class="chapter done " data-progress="3.14.1" style="left: 70.27027027027027%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/fun.html" title="fun" class="chapter  " data-progress="3.14.2" style="left: 71.62162162162163%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/fun.html" title="fun" class="chapter done " data-progress="3.14.2" style="left: 71.62162162162163%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/out.html" title="out" class="chapter  " data-progress="3.14.2.1" style="left: 72.97297297297297%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/out.html" title="out" class="chapter done " data-progress="3.14.2.1" style="left: 72.97297297297297%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/to_unsafe.html" title="to_unsafe" class="chapter  " data-progress="3.14.2.2" style="left: 74.32432432432432%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/to_unsafe.html" title="to_unsafe" class="chapter done " data-progress="3.14.2.2" style="left: 74.32432432432432%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/struct.html" title="struct" class="chapter  " data-progress="3.14.3" style="left: 75.67567567567568%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/struct.html" title="struct" class="chapter done " data-progress="3.14.3" style="left: 75.67567567567568%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/union.html" title="union" class="chapter  " data-progress="3.14.4" style="left: 77.02702702702703%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/union.html" title="union" class="chapter done " data-progress="3.14.4" style="left: 77.02702702702703%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 78.37837837837837%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter done " data-progress="3.14.5" style="left: 78.37837837837837%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 79.72972972972973%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter done " data-progress="3.14.6" style="left: 79.72972972972973%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 81.08108108108108%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter done " data-progress="3.14.7" style="left: 81.08108108108108%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 82.43243243243244%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter done " data-progress="3.14.8" style="left: 82.43243243243244%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 83.78378378378379%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter done " data-progress="3.14.9" style="left: 83.78378378378379%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 85.13513513513513%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter done " data-progress="3.14.10" style="left: 85.13513513513513%;"></a>
     
-        <a href="../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 86.48648648648648%;"></a>
+        <a href="../builtin_types/README.html" title="Built-in types" class="chapter done new-chapter" data-progress="4" style="left: 86.48648648648648%;"></a>
     
-        <a href="../builtin_types/nil.html" title="Nil" class="chapter  " data-progress="4.1" style="left: 87.83783783783784%;"></a>
+        <a href="../builtin_types/nil.html" title="Nil" class="chapter done " data-progress="4.1" style="left: 87.83783783783784%;"></a>
     
-        <a href="../builtin_types/bool.html" title="Bool" class="chapter  " data-progress="4.2" style="left: 89.1891891891892%;"></a>
+        <a href="../builtin_types/bool.html" title="Bool" class="chapter done " data-progress="4.2" style="left: 89.1891891891892%;"></a>
     
-        <a href="../builtin_types/integer_types.html" title="Integer types" class="chapter  " data-progress="4.3" style="left: 90.54054054054055%;"></a>
+        <a href="../builtin_types/integer_types.html" title="Integer types" class="chapter done " data-progress="4.3" style="left: 90.54054054054055%;"></a>
     
-        <a href="../builtin_types/floating_point_types.html" title="Floating point types" class="chapter  " data-progress="4.4" style="left: 91.89189189189189%;"></a>
+        <a href="../builtin_types/floating_point_types.html" title="Floating point types" class="chapter done " data-progress="4.4" style="left: 91.89189189189189%;"></a>
     
-        <a href="../builtin_types/char.html" title="Char" class="chapter  " data-progress="4.5" style="left: 93.24324324324324%;"></a>
+        <a href="../builtin_types/char.html" title="Char" class="chapter done " data-progress="4.5" style="left: 93.24324324324324%;"></a>
     
-        <a href="../builtin_types/symbol.html" title="Symbol" class="chapter  " data-progress="4.7" style="left: 94.5945945945946%;"></a>
+        <a href="../builtin_types/symbol.html" title="Symbol" class="chapter done " data-progress="4.7" style="left: 94.5945945945946%;"></a>
     
-        <a href="../builtin_types/reference.html" title="Reference" class="chapter  " data-progress="4.8" style="left: 95.94594594594595%;"></a>
+        <a href="../builtin_types/reference.html" title="Reference" class="chapter done " data-progress="4.8" style="left: 95.94594594594595%;"></a>
     
-        <a href="../builtin_types/value.html" title="Value" class="chapter  " data-progress="4.9" style="left: 97.29729729729729%;"></a>
+        <a href="../builtin_types/value.html" title="Value" class="chapter done " data-progress="4.9" style="left: 97.29729729729729%;"></a>
     
-        <a href="../builtin_types/struct.html" title="Struct" class="chapter  " data-progress="4.10" style="left: 98.64864864864865%;"></a>
+        <a href="../builtin_types/struct.html" title="Struct" class="chapter done " data-progress="4.10" style="left: 98.64864864864865%;"></a>
     
-        <a href="../builtin_types/pointer.html" title="Pointer" class="chapter  " data-progress="4.11" style="left: 100%;"></a>
+        <a href="../builtin_types/pointer.html" title="Pointer" class="chapter done " data-progress="4.11" style="left: 100%;"></a>
     
     </div>
 </div>
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_57">
+                    <section class="normal" id="section-gitbook_8">
                     
-                        <h1 id="macros">Macros</h1>
-<p>Macros allow generating code at compile time.</p>
-<p>For example, this is the source code of the <code>getter</code> macro:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
-    @{{name.id}}
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
+                        <h1 id="pointer">Pointer</h1>
+<p>The <code>Pointer(T)</code> type is a generic, built-in, low-level, <strong>unsafe</strong> type. It&#39;s used to interface with C and to implement some data structures efficiently, like <code>Array</code> and <code>Hash</code>.</p>
+<p>You don&#39;t generally deal with pointers unless you are in one of the situations described above, and you are encouraged to limit their use as much as possible because of their unsafeness.</p>
+<p>You can allocate some heap memory with <code>malloc</code>:</p>
+<pre><code class="lang-ruby"><span class="hljs-comment"># Allocate ten ints in the heap and get a pointer</span>
+<span class="hljs-comment"># to the first one.</span>
+pointer = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">10</span>)
+</code></pre>
+<p>Memory allocated like this will be garbage collected when nobody referts to any part of it.</p>
+<p>You can get and set the value a pointer points to with <code>value</code> and <code>value=</code>.</p>
+<pre><code class="lang-ruby">pointer = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">10</span>)
+pointer.value = <span class="hljs-number">1</span>
+pointer.value <span class="hljs-comment">#=&gt; 1</span>
+</code></pre>
+<p>You can make the pointer point to another value by using the <code>+</code> method:</p>
+<pre><code class="lang-ruby">first = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">10</span>)
+first.value = <span class="hljs-number">1</span>
 
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-comment"># Expands to:</span>
-  <span class="hljs-comment">#</span>
-  <span class="hljs-comment">#   def name</span>
-  <span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
-  <span class="hljs-comment">#   end</span>
-  getter <span class="hljs-symbol">:name</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>To understand the simple macro above we need to understand what&#39;s inside a <code>macro</code>&#39;s body, what are its arguments and what we can do with them.</p>
-<p>A <code>macro</code>&#39;s body consists of a sequence of characters that can contain macro interpolations (<code>{{...}}</code>) and macro controls (<code>{% ... %}</code>). This is a perfectly valid macro:</p>
-<pre><code class="lang-ruby">macro foo(really)
-  <span class="hljs-constant">I</span> can write whataver <span class="hljs-constant">I</span> want here (well... <span class="hljs-keyword">not</span> {{really}})
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>This means that a <code>macro</code>&#39;s body is not parsed using a regular Crystal parser. This also means that you can use macro interpolations and macro controls anywhere inside a <code>macro</code>&#39;s body, which gives you greater flexibility.</p>
-<p>So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are <code>def</code>, <code>class</code>, <code>if</code>. The only ending is <code>end</code>. This rule is because you will probably want to generate Crystal code with macros. Remmeber this rule, because it will allow you to trick the macro parser for your benefit:</p>
-<pre><code class="lang-ruby">macro define_foo(kind)
-  {{kind.id}} <span class="hljs-constant">Foo</span>
+second = first + <span class="hljs-number">1</span>
+second.value = <span class="hljs-number">3</span>
+second.value <span class="hljs-comment">#=&gt; 3</span>
 
-  <span class="hljs-comment"># We can't use a simple "end", because Crystal will think</span>
-  <span class="hljs-comment"># the macro ends here</span>
-  {{<span class="hljs-symbol">:end</span>.id}}
-<span class="hljs-keyword">end</span>
+first.value <span class="hljs-comment">#=&gt; 1</span>
+</code></pre>
+<p>The <code>+</code> method moves the pointer taking the type it points to into account. In the above example the pointer moved four bytes, because an <code>Int32</code> is represented by four bytes.</p>
+<p>You can create a pointer to a given address with <code>new</code>:</p>
+<pre><code class="lang-ruby">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">0x108213fc0</span>)
+</code></pre>
+<p>You can ask a pointer&#39;s address with <code>address</code>:</p>
+<pre><code class="lang-ruby">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">0x108213fc0</span>)
+ptr.address <span class="hljs-comment">#=&gt; 0x108213fc0</span>
+</code></pre>
+<p>You can invoke <code>realloc</code> on a pointer to get a pointer that points to more/less memory, possibly reusing existing memory:</p>
+<pre><code class="lang-ruby">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">10</span>)
+another_ptr = ptr.realloc(<span class="hljs-number">20</span>)
+</code></pre>
+<p>The standard library adds lots of methods to <code>Pointer</code> to make it easier to work with it:</p>
+<pre><code class="lang-ruby">pointer = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">10</span>)
+pointer[<span class="hljs-number">0</span>] = <span class="hljs-number">1</span>
+pointer[<span class="hljs-number">0</span>] <span class="hljs-comment">#=&gt; 1</span>
 
-define_foo <span class="hljs-symbol">:struct</span>
+pointer[<span class="hljs-number">1</span>] = <span class="hljs-number">3</span>
+pointer[<span class="hljs-number">1</span>] <span class="hljs-comment">#=&gt; 3</span>
 </code></pre>
-<p>(don&#39;t worry, you will almost never have to do something like the above)</p>
-<p>Macros are executed at compile time, and receive <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">AST nodes</a>. Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.</p>
-<p>So, in the <code>getter</code> example, the macro receives a <code>SymbolLiteral</code> node. If we consider this alternative definition:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name}}
-    @{{name}}
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Generates:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment">#   def :name</span>
-<span class="hljs-comment">#     @:name</span>
-<span class="hljs-comment">#   end</span>
-getter <span class="hljs-symbol">:name</span>
-</code></pre>
-<p>We can see that the result we got is not what we expected. This is because we pasted the <code>SymbolLiteral</code> in the macro, and as we can see in the <code>getter :name</code> invocation, it contains a colon (<code>:</code>) before it.</p>
-<p>To get rid of the colon, we can invoke <code>id</code> on it before interpolating it:</p>
-<pre><code class="lang-ruby">macro getter(name)
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
-    @{{name.id}}
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Generates:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment">#   def name</span>
-<span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
-<span class="hljs-comment">#   end</span>
-getter name
-</code></pre>
-<p>The <code>id</code> method in macros gets rid of the colon from symbol literals and gets rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke <code>getter</code> like this:</p>
-<pre><code class="lang-ruby">getter <span class="hljs-string">"name"</span>
-</code></pre>
-<p>And also like this:</p>
-<pre><code class="lang-ruby">getter name
-</code></pre>
-<p>This is because macro arguments are never evaluated, so it doesn&#39;t matter what <code>name</code> means here: for the macro it will only be some AST node.</p>
+<p>Moving the pointer outside the memory it allocated and getting/setting its value is undefined behaviour and will probably cause a segmentation fault. The standard library provides a <code>Slice</code> type that is a struct with a length and a pointer, with index bounds check, making it safer to deal with pointers (but also a bit slower).</p>
 
                     
                     </section>
@@ -1924,8 +1895,8 @@ getter name
         </div>
 
         
+        <a href="../builtin_types/struct.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Struct"><i class="fa fa-angle-left"></i></a>
         
-        <a href="../syntax_and_semantics/macro_methods.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Macro methods"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
