@@ -280,4 +280,17 @@ describe "Code gen: struct" do
       a.y + a.x.value.y
       )).to_i.should eq(3)
   end
+
+  it "allows using named arguments for new" do
+    run(%(
+      lib C
+        struct Point
+          x, y : Int32
+        end
+      end
+
+      point = C::Point.new x: 1, y: 2
+      point.x + point.y
+      )).to_i.should eq(3)
+  end
 end

@@ -919,8 +919,15 @@ module Crystal
 
       instance_type = obj_type.instance_type.remove_typedef
 
-      if node.name == "new" && instance_type.is_a?(FunInstanceType)
-        return special_fun_type_new_call(node, instance_type)
+      if node.name == "new"
+        case instance_type
+        when FunInstanceType
+          return special_fun_type_new_call(node, instance_type)
+        when CStructOrUnionType
+          if named_args = node.named_args
+            return special_struct_or_union_new_with_named_args(node, instance_type, named_args)
+          end
+        end
       end
 
       false
@@ -954,6 +961,47 @@ module Crystal
 
       node.bind_to fun_literal
       node.expanded = fun_literal
+
+      true
+    end
+
+    # Rewrite:
+    #
+    #     C::Struct.new arg0: value0, argN: value0
+    #
+    # To:
+    #
+    #   temp = C::Struct.new
+    #   temp.arg0 = value0
+    #   temp.argN = valueN
+    #   temp
+    def special_struct_or_union_new_with_named_args(node, type, named_args)
+      exps = [] of ASTNode
+
+      temp_name = @mod.new_temp_var_name
+
+      new_call = Call.new(node.obj, "new")
+      new_call.location = node.location
+
+      new_assign = Assign.new(Var.new(temp_name), new_call)
+      exps << new_assign
+
+      named_args.each do |named_arg|
+        assign_call = Call.new(Var.new(temp_name), "#{named_arg.name}=", [named_arg.value] of ASTNode)
+        if loc = named_arg.location
+          assign_call.location = loc
+          assign_call.name_column_number = loc.column_number
+        end
+        exps << assign_call
+      end
+
+      exps << Var.new(temp_name)
+
+      expanded = Expressions.new(exps)
+      expanded.accept self
+
+      node.bind_to expanded
+      node.expanded = expanded
 
       true
     end

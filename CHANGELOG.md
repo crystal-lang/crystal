@@ -14,6 +14,8 @@
 * Allow interpolations in regular expresion literals.
 * Compiling with `--release` sets a `release` flag that you can test with `ifdef`.
 * Allow passing splats to C functions
+* A C type can now be declared like `type Name = Type` (`type Name : Type` will be deprecated).
+* Now a C struct/union type can be created with named arguments.
 
 ## 0.4.3 (2014-08-14)
 
