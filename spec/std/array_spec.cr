@@ -261,10 +261,25 @@ describe "Array" do
     end
 
     it "inserts with negative index" do
-      a = [1, 3, 4]
+      a = [1, 2, 3]
       expected = [1, 2, 3, 4]
-      a.insert(-2, 2).should eq(expected)
+      a.insert(-1, 4).should eq(expected)
       a.should eq(expected)
+    end
+
+    it "inserts with negative index (2)" do
+      a = [1, 2, 3]
+      expected = [4, 1, 2, 3]
+      a.insert(-4, 4).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "inserts out of range" do
+      a = [1, 3, 4]
+
+      expect_raises IndexOutOfBounds do
+        a.insert(4, 1)
+      end
     end
   end
 
@@ -630,5 +645,11 @@ describe "Array" do
       ary << ary
       ary.to_s.should eq("[[...]]")
     end
+  end
+
+  it "updates value" do
+    a = [1, 2, 3]
+    a.update(1) { |x| x * 2 }
+    a.should eq([1, 4, 3])
   end
 end

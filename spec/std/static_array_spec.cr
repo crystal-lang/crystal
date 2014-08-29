@@ -67,4 +67,13 @@ describe "StaticArray" do
     a[1].should eq(3)
     a[2].should eq(4)
   end
+
+
+  it "updates value" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.update(1) { |x| x * 2 }
+    a[0].should eq(1)
+    a[1].should eq(4)
+    a[2].should eq(3)
+  end
 end

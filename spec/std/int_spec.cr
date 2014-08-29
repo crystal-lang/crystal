@@ -120,4 +120,12 @@ describe "Int" do
       #18446744073709551615_u64.to_s.should eq("18446744073709551615")
     end
   end
+
+  describe "step" do
+    it "steps through limit" do
+      passed = false
+      1.step(1) { |x| passed = true }
+      fail "expected step to pass through 1" unless passed
+    end
+  end
 end

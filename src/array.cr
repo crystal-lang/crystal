@@ -63,8 +63,7 @@ class Array(T)
   end
 
   def []=(index : Int, value : T)
-    index += length if index < 0
-    raise IndexOutOfBounds.new if index >= length || index < 0
+    index = check_index_out_of_bounds index
     @buffer[index] = value
   end
 
@@ -81,6 +80,11 @@ class Array(T)
   def [](start : Int, count : Int)
     count = Math.min(count, length)
     Array(T).new(count) { |i| @buffer[start + i] }
+  end
+
+  def update(index : Int)
+    index = check_index_out_of_bounds index
+    buffer[index] = yield buffer[index]
   end
 
   def push(value : T)
@@ -182,7 +186,15 @@ class Array(T)
 
   def insert(index : Int, obj : T)
     check_needs_resize
-    index += length if index < 0
+
+    if index < 0
+      index += length + 1
+    end
+
+    unless 0 <= index <= length
+      raise IndexOutOfBounds.new
+    end
+
     (@buffer + index + 1).move_from(@buffer + index, length - index)
     @buffer[index] = obj
     @length += 1
@@ -190,8 +202,7 @@ class Array(T)
   end
 
   def delete_at(index : Int)
-    index += length if index < 0
-    raise IndexOutOfBounds.new if index < 0 || index >= length
+    index = check_index_out_of_bounds index
 
     elem = @buffer[index]
     (@buffer + index).move_from(@buffer + index + 1, length - index - 1)
@@ -644,5 +655,13 @@ class Array(T)
     end
     quicksort!(a, (r - a) + 1)
     quicksort!(l, (a + n) - l)
+  end
+
+  private def check_index_out_of_bounds(index)
+    index += length if index < 0
+    unless 0 <= index < length
+      raise IndexOutOfBounds.new
+    end
+    index
   end
 end

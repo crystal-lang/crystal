@@ -20,21 +20,18 @@ struct StaticArray(T, N)
   end
 
   def [](index : Int)
-    index += length if index < 0
-    unless 0 <= index < length
-      raise IndexOutOfBounds.new
-    end
-
+    index = check_index_out_of_bounds index
     buffer[index]
   end
 
   def []=(index : Int, value : T)
-    index += length if index < 0
-    unless 0 <= index < length
-      raise IndexOutOfBounds.new
-    end
-
+    index = check_index_out_of_bounds index
     buffer[index] = value
+  end
+
+  def update(index : Int)
+    index = check_index_out_of_bounds index
+    buffer[index] = yield buffer[index]
   end
 
   def length
@@ -73,5 +70,13 @@ struct StaticArray(T, N)
     io << "["
     join ", ", io, &.inspect(io)
     io << "]"
+  end
+
+  private def check_index_out_of_bounds(index)
+    index += length if index < 0
+    unless 0 <= index < length
+      raise IndexOutOfBounds.new
+    end
+    index
   end
 end

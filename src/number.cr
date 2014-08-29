@@ -1,15 +1,15 @@
 struct Number
-  def step(limit, step = 1)
+  def step(limit, by = 1)
     x = self
-    if step > 0 && self < limit
+    if by > 0
       while x <= limit
         yield x
-        x += step
+        x += by
       end
-    elsif step < 0 && self > limit
+    elsif by < 0
       while x >= limit
         yield x
-        x += step
+        x += by
       end
     end
     self
