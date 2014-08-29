@@ -2686,6 +2686,10 @@ module Crystal
         unless current_char.ident_start?
           return nil
         end
+      when :"::"
+        if current_char.whitespace?
+          return nil
+        end
       else
         return nil
       end

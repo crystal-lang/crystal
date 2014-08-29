@@ -442,6 +442,7 @@ describe "Parser" do
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode))
   it_parses "puts a unless true", Unless.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode))
   it_parses "puts a while true", While.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode), run_once: true)
+  it_parses "puts ::foo", Call.new(nil, "puts", [Call.new(nil, "foo", global: true)] of ASTNode)
 
   { {"break", Break}, {"return", Return}, {"next", Next} }.each do |tuple|
     keyword, klass = tuple
