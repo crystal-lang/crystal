@@ -70,7 +70,8 @@
        * instance_sizeof
        * declare var
    * Exception handling
-   * Compile-time flags
+   * [Compile-time flags](syntax_and_semantics/compile_time_flags.md)
+       * [Cross-compilation](syntax_and_semantics/cross-compilation.md)
    * [Macros](syntax_and_semantics/macros.md)
        * [Macro methods](syntax_and_semantics/macro_methods.md)
    * [C bindings](syntax_and_semantics/c_bindings/README.md)

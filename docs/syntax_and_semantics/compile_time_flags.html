@@ -1,10 +1,10 @@
 <!DOCTYPE HTML>
-<html lang="en-US" manifest="../../manifest.appcache">
+<html lang="en-US" manifest="../manifest.appcache">
     
     <head>
         
         <meta charset="UTF-8">
-        <title>union | Crystal Programming Language</title>
+        <title>Compile-time flags | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -12,17 +12,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
-        <link rel="shortcut icon" href="../../gitbook/images/favicon.ico" type="image/x-icon">
+        <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
         
     
     
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../../syntax_and_semantics/c_bindings/enum.html" />
+    <link rel="next" href="../syntax_and_semantics/cross-compilation.html" />
     
-    
-    <link rel="prev" href="../../syntax_and_semantics/c_bindings/struct.html" />
     
 
         
@@ -30,11 +28,11 @@
     <body>
         
         
-<link rel="stylesheet" href="../../gitbook/style.css">
+<link rel="stylesheet" href="../gitbook/style.css">
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.14.4" data-basepath="../.." data-revision="1409433529836">
+    <div class="book" data-github="manastech/crystal" data-level="3.12" data-basepath=".." data-revision="1409433529836">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -89,7 +87,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-spinner fa-spin"></i>
-        <a href="../../" >Crystal Programming Language</a>
+        <a href="../" >Crystal Programming Language</a>
     </h1>
 </div>
 
@@ -118,7 +116,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/c_bindings/union.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/compile_time_flags.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -132,7 +130,7 @@
         <li class="chapter " data-level="0" data-path="index.html">
             
                 
-                    <a href="../../index.html">
+                    <a href="../index.html">
                         <i class="fa fa-check"></i>
                         
                          Introduction
@@ -146,7 +144,7 @@
         <li class="chapter " data-level="1" data-path="installation/README.html">
             
                 
-                    <a href="../../installation/README.html">
+                    <a href="../installation/README.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.</b>
@@ -163,7 +161,7 @@
         <li class="chapter " data-level="1.1" data-path="installation/on_mac_osx_using_homebrew.html">
             
                 
-                    <a href="../../installation/on_mac_osx_using_homebrew.html">
+                    <a href="../installation/on_mac_osx_using_homebrew.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.1.</b>
@@ -179,7 +177,7 @@
         <li class="chapter " data-level="1.2" data-path="installation/from_a_targz.html">
             
                 
-                    <a href="../../installation/from_a_targz.html">
+                    <a href="../installation/from_a_targz.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.2.</b>
@@ -195,7 +193,7 @@
         <li class="chapter " data-level="1.3" data-path="installation/from_source_repository.html">
             
                 
-                    <a href="../../installation/from_source_repository.html">
+                    <a href="../installation/from_source_repository.html">
                         <i class="fa fa-check"></i>
                         
                             <b>1.3.</b>
@@ -216,7 +214,7 @@
         <li class="chapter " data-level="2" data-path="overview/README.html">
             
                 
-                    <a href="../../overview/README.html">
+                    <a href="../overview/README.html">
                         <i class="fa fa-check"></i>
                         
                             <b>2.</b>
@@ -232,7 +230,7 @@
         <li class="chapter " data-level="3" data-path="syntax_and_semantics/README.html">
             
                 
-                    <a href="../../syntax_and_semantics/README.html">
+                    <a href="../syntax_and_semantics/README.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.</b>
@@ -249,7 +247,7 @@
         <li class="chapter " data-level="3.1" data-path="syntax_and_semantics/comments.html">
             
                 
-                    <a href="../../syntax_and_semantics/comments.html">
+                    <a href="../syntax_and_semantics/comments.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.1.</b>
@@ -265,7 +263,7 @@
         <li class="chapter " data-level="3.2" data-path="syntax_and_semantics/local_variables.html">
             
                 
-                    <a href="../../syntax_and_semantics/local_variables.html">
+                    <a href="../syntax_and_semantics/local_variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.2.</b>
@@ -281,7 +279,7 @@
         <li class="chapter " data-level="3.3" data-path="syntax_and_semantics/global_variables.html">
             
                 
-                    <a href="../../syntax_and_semantics/global_variables.html">
+                    <a href="../syntax_and_semantics/global_variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.3.</b>
@@ -298,7 +296,7 @@
         <li class="chapter " data-level="3.3.1" data-path="syntax_and_semantics/thread_local.html">
             
                 
-                    <a href="../../syntax_and_semantics/thread_local.html">
+                    <a href="../syntax_and_semantics/thread_local.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.3.1.</b>
@@ -319,7 +317,7 @@
         <li class="chapter " data-level="3.4" data-path="syntax_and_semantics/assignment.html">
             
                 
-                    <a href="../../syntax_and_semantics/assignment.html">
+                    <a href="../syntax_and_semantics/assignment.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.4.</b>
@@ -336,7 +334,7 @@
         <li class="chapter " data-level="3.4.1" data-path="syntax_and_semantics/multiple_assignment.html">
             
                 
-                    <a href="../../syntax_and_semantics/multiple_assignment.html">
+                    <a href="../syntax_and_semantics/multiple_assignment.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.4.1.</b>
@@ -357,7 +355,7 @@
         <li class="chapter " data-level="3.5" data-path="syntax_and_semantics/control_expressions.html">
             
                 
-                    <a href="../../syntax_and_semantics/control_expressions.html">
+                    <a href="../syntax_and_semantics/control_expressions.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.</b>
@@ -374,7 +372,7 @@
         <li class="chapter " data-level="3.5.1" data-path="syntax_and_semantics/truthy_and_falsey_values.html">
             
                 
-                    <a href="../../syntax_and_semantics/truthy_and_falsey_values.html">
+                    <a href="../syntax_and_semantics/truthy_and_falsey_values.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.1.</b>
@@ -390,7 +388,7 @@
         <li class="chapter " data-level="3.5.2" data-path="syntax_and_semantics/if.html">
             
                 
-                    <a href="../../syntax_and_semantics/if.html">
+                    <a href="../syntax_and_semantics/if.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.</b>
@@ -407,7 +405,7 @@
         <li class="chapter " data-level="3.5.2.1" data-path="syntax_and_semantics/as_a_suffix.html">
             
                 
-                    <a href="../../syntax_and_semantics/as_a_suffix.html">
+                    <a href="../syntax_and_semantics/as_a_suffix.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.1.</b>
@@ -423,7 +421,7 @@
         <li class="chapter " data-level="3.5.2.2" data-path="syntax_and_semantics/as_an_expression.html">
             
                 
-                    <a href="../../syntax_and_semantics/as_an_expression.html">
+                    <a href="../syntax_and_semantics/as_an_expression.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.2.</b>
@@ -439,7 +437,7 @@
         <li class="chapter " data-level="3.5.2.3" data-path="syntax_and_semantics/ternary_if.html">
             
                 
-                    <a href="../../syntax_and_semantics/ternary_if.html">
+                    <a href="../syntax_and_semantics/ternary_if.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.3.</b>
@@ -455,7 +453,7 @@
         <li class="chapter " data-level="3.5.2.4" data-path="syntax_and_semantics/if_var.html">
             
                 
-                    <a href="../../syntax_and_semantics/if_var.html">
+                    <a href="../syntax_and_semantics/if_var.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.4.</b>
@@ -471,7 +469,7 @@
         <li class="chapter " data-level="3.5.2.5" data-path="syntax_and_semantics/if_varis_a.html">
             
                 
-                    <a href="../../syntax_and_semantics/if_varis_a.html">
+                    <a href="../syntax_and_semantics/if_varis_a.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.5.</b>
@@ -487,7 +485,7 @@
         <li class="chapter " data-level="3.5.2.6" data-path="syntax_and_semantics/if_varresponds_to.html">
             
                 
-                    <a href="../../syntax_and_semantics/if_varresponds_to.html">
+                    <a href="../syntax_and_semantics/if_varresponds_to.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.2.6.</b>
@@ -508,7 +506,7 @@
         <li class="chapter " data-level="3.5.3" data-path="syntax_and_semantics/unless.html">
             
                 
-                    <a href="../../syntax_and_semantics/unless.html">
+                    <a href="../syntax_and_semantics/unless.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.3.</b>
@@ -524,7 +522,7 @@
         <li class="chapter " data-level="3.5.4" data-path="syntax_and_semantics/case.html">
             
                 
-                    <a href="../../syntax_and_semantics/case.html">
+                    <a href="../syntax_and_semantics/case.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.4.</b>
@@ -540,7 +538,7 @@
         <li class="chapter " data-level="3.5.5" data-path="syntax_and_semantics/while.html">
             
                 
-                    <a href="../../syntax_and_semantics/while.html">
+                    <a href="../syntax_and_semantics/while.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.5.</b>
@@ -557,7 +555,7 @@
         <li class="chapter " data-level="3.5.5.1" data-path="syntax_and_semantics/break.html">
             
                 
-                    <a href="../../syntax_and_semantics/break.html">
+                    <a href="../syntax_and_semantics/break.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.5.1.</b>
@@ -573,7 +571,7 @@
         <li class="chapter " data-level="3.5.5.2" data-path="syntax_and_semantics/next.html">
             
                 
-                    <a href="../../syntax_and_semantics/next.html">
+                    <a href="../syntax_and_semantics/next.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.5.2.</b>
@@ -594,7 +592,7 @@
         <li class="chapter " data-level="3.5.6" data-path="syntax_and_semantics/until.html">
             
                 
-                    <a href="../../syntax_and_semantics/until.html">
+                    <a href="../syntax_and_semantics/until.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.6.</b>
@@ -610,7 +608,7 @@
         <li class="chapter " data-level="3.5.7" data-path="syntax_and_semantics/and.html">
             
                 
-                    <a href="../../syntax_and_semantics/and.html">
+                    <a href="../syntax_and_semantics/and.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.7.</b>
@@ -626,7 +624,7 @@
         <li class="chapter " data-level="3.5.8" data-path="syntax_and_semantics/or.html">
             
                 
-                    <a href="../../syntax_and_semantics/or.html">
+                    <a href="../syntax_and_semantics/or.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.5.8.</b>
@@ -647,7 +645,7 @@
         <li class="chapter " data-level="3.6" data-path="syntax_and_semantics/types_and_methods.html">
             
                 
-                    <a href="../../syntax_and_semantics/types_and_methods.html">
+                    <a href="../syntax_and_semantics/types_and_methods.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.</b>
@@ -664,7 +662,7 @@
         <li class="chapter " data-level="3.6.1" data-path="syntax_and_semantics/everything_is_an_object.html">
             
                 
-                    <a href="../../syntax_and_semantics/everything_is_an_object.html">
+                    <a href="../syntax_and_semantics/everything_is_an_object.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.1.</b>
@@ -680,7 +678,7 @@
         <li class="chapter " data-level="3.6.2" data-path="syntax_and_semantics/the_program.html">
             
                 
-                    <a href="../../syntax_and_semantics/the_program.html">
+                    <a href="../syntax_and_semantics/the_program.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.2.</b>
@@ -696,7 +694,7 @@
         <li class="chapter " data-level="3.6.3" data-path="syntax_and_semantics/classes_and_methods.html">
             
                 
-                    <a href="../../syntax_and_semantics/classes_and_methods.html">
+                    <a href="../syntax_and_semantics/classes_and_methods.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.</b>
@@ -713,7 +711,7 @@
         <li class="chapter " data-level="3.6.3.1" data-path="syntax_and_semantics/new,_initialize_and_allocate.html">
             
                 
-                    <a href="../../syntax_and_semantics/new,_initialize_and_allocate.html">
+                    <a href="../syntax_and_semantics/new,_initialize_and_allocate.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.1.</b>
@@ -729,7 +727,7 @@
         <li class="chapter " data-level="3.6.3.2" data-path="syntax_and_semantics/methods_and_instance_variables.html">
             
                 
-                    <a href="../../syntax_and_semantics/methods_and_instance_variables.html">
+                    <a href="../syntax_and_semantics/methods_and_instance_variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.2.</b>
@@ -745,7 +743,7 @@
         <li class="chapter " data-level="3.6.3.3" data-path="syntax_and_semantics/overloading.html">
             
                 
-                    <a href="../../syntax_and_semantics/overloading.html">
+                    <a href="../syntax_and_semantics/overloading.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.3.</b>
@@ -761,7 +759,7 @@
         <li class="chapter " data-level="3.6.3.4" data-path="syntax_and_semantics/default_and_named_arguments.html">
             
                 
-                    <a href="../../syntax_and_semantics/default_and_named_arguments.html">
+                    <a href="../syntax_and_semantics/default_and_named_arguments.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.4.</b>
@@ -777,7 +775,7 @@
         <li class="chapter " data-level="3.6.3.5" data-path="syntax_and_semantics/type_restrictions.html">
             
                 
-                    <a href="../../syntax_and_semantics/type_restrictions.html">
+                    <a href="../syntax_and_semantics/type_restrictions.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.5.</b>
@@ -793,7 +791,7 @@
         <li class="chapter " data-level="3.6.3.6" data-path="syntax_and_semantics/visibility.html">
             
                 
-                    <a href="../../syntax_and_semantics/visibility.html">
+                    <a href="../syntax_and_semantics/visibility.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.6.</b>
@@ -809,7 +807,7 @@
         <li class="chapter " data-level="3.6.3.7" data-path="syntax_and_semantics/instace_variables_type_inference.html">
             
                 
-                    <a href="../../syntax_and_semantics/instace_variables_type_inference.html">
+                    <a href="../syntax_and_semantics/instace_variables_type_inference.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.7.</b>
@@ -825,7 +823,7 @@
         <li class="chapter " data-level="3.6.3.8" data-path="syntax_and_semantics/inheritance.html">
             
                 
-                    <a href="../../syntax_and_semantics/inheritance.html">
+                    <a href="../syntax_and_semantics/inheritance.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.8.</b>
@@ -842,7 +840,7 @@
         <li class="chapter " data-level="3.6.3.8.1" data-path="syntax_and_semantics/virtual_and_abstract_types.html">
             
                 
-                    <a href="../../syntax_and_semantics/virtual_and_abstract_types.html">
+                    <a href="../syntax_and_semantics/virtual_and_abstract_types.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.8.1.</b>
@@ -863,7 +861,7 @@
         <li class="chapter " data-level="3.6.3.9" data-path="syntax_and_semantics/finalize.html">
             
                 
-                    <a href="../../syntax_and_semantics/finalize.html">
+                    <a href="../syntax_and_semantics/finalize.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.3.9.</b>
@@ -892,7 +890,7 @@
         <li class="chapter " data-level="3.6.5" data-path="syntax_and_semantics/generics.html">
             
                 
-                    <a href="../../syntax_and_semantics/generics.html">
+                    <a href="../syntax_and_semantics/generics.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.5.</b>
@@ -908,7 +906,7 @@
         <li class="chapter " data-level="3.6.6" data-path="syntax_and_semantics/structs.html">
             
                 
-                    <a href="../../syntax_and_semantics/structs.html">
+                    <a href="../syntax_and_semantics/structs.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.6.</b>
@@ -924,7 +922,7 @@
         <li class="chapter " data-level="3.6.7" data-path="syntax_and_semantics/constants.html">
             
                 
-                    <a href="../../syntax_and_semantics/constants.html">
+                    <a href="../syntax_and_semantics/constants.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.7.</b>
@@ -970,7 +968,7 @@
         <li class="chapter " data-level="3.6.9" data-path="syntax_and_semantics/alias.html">
             
                 
-                    <a href="../../syntax_and_semantics/alias.html">
+                    <a href="../syntax_and_semantics/alias.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.6.9.</b>
@@ -1000,7 +998,7 @@
         <li class="chapter " data-level="3.7.1" data-path="syntax_and_semantics/is_a.html">
             
                 
-                    <a href="../../syntax_and_semantics/is_a.html">
+                    <a href="../syntax_and_semantics/is_a.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.7.1.</b>
@@ -1161,7 +1159,7 @@
         <li class="chapter " data-level="3.12" data-path="syntax_and_semantics/compile_time_flags.html">
             
                 
-                    <a href="../../syntax_and_semantics/compile_time_flags.html">
+                    <a href="../syntax_and_semantics/compile_time_flags.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.12.</b>
@@ -1178,7 +1176,7 @@
         <li class="chapter " data-level="3.12.1" data-path="syntax_and_semantics/cross-compilation.html">
             
                 
-                    <a href="../../syntax_and_semantics/cross-compilation.html">
+                    <a href="../syntax_and_semantics/cross-compilation.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.12.1.</b>
@@ -1199,7 +1197,7 @@
         <li class="chapter " data-level="3.13" data-path="syntax_and_semantics/macros.html">
             
                 
-                    <a href="../../syntax_and_semantics/macros.html">
+                    <a href="../syntax_and_semantics/macros.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.13.</b>
@@ -1216,7 +1214,7 @@
         <li class="chapter " data-level="3.13.1" data-path="syntax_and_semantics/macro_methods.html">
             
                 
-                    <a href="../../syntax_and_semantics/macro_methods.html">
+                    <a href="../syntax_and_semantics/macro_methods.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.13.1.</b>
@@ -1237,7 +1235,7 @@
         <li class="chapter " data-level="3.14" data-path="syntax_and_semantics/c_bindings/README.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/README.html">
+                    <a href="../syntax_and_semantics/c_bindings/README.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.</b>
@@ -1254,7 +1252,7 @@
         <li class="chapter " data-level="3.14.1" data-path="syntax_and_semantics/c_bindings/lib.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/lib.html">
+                    <a href="../syntax_and_semantics/c_bindings/lib.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.1.</b>
@@ -1270,7 +1268,7 @@
         <li class="chapter " data-level="3.14.2" data-path="syntax_and_semantics/c_bindings/fun.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/fun.html">
+                    <a href="../syntax_and_semantics/c_bindings/fun.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.2.</b>
@@ -1287,7 +1285,7 @@
         <li class="chapter " data-level="3.14.2.1" data-path="syntax_and_semantics/c_bindings/out.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/out.html">
+                    <a href="../syntax_and_semantics/c_bindings/out.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.2.1.</b>
@@ -1303,7 +1301,7 @@
         <li class="chapter " data-level="3.14.2.2" data-path="syntax_and_semantics/c_bindings/to_unsafe.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/to_unsafe.html">
+                    <a href="../syntax_and_semantics/c_bindings/to_unsafe.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.2.2.</b>
@@ -1324,7 +1322,7 @@
         <li class="chapter " data-level="3.14.3" data-path="syntax_and_semantics/c_bindings/struct.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/struct.html">
+                    <a href="../syntax_and_semantics/c_bindings/struct.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.3.</b>
@@ -1340,7 +1338,7 @@
         <li class="chapter " data-level="3.14.4" data-path="syntax_and_semantics/c_bindings/union.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/union.html">
+                    <a href="../syntax_and_semantics/c_bindings/union.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.4.</b>
@@ -1356,7 +1354,7 @@
         <li class="chapter " data-level="3.14.5" data-path="syntax_and_semantics/c_bindings/enum.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/enum.html">
+                    <a href="../syntax_and_semantics/c_bindings/enum.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.5.</b>
@@ -1372,7 +1370,7 @@
         <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variable.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/variable.html">
+                    <a href="../syntax_and_semantics/c_bindings/variable.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.6.</b>
@@ -1388,7 +1386,7 @@
         <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constant.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/constant.html">
+                    <a href="../syntax_and_semantics/c_bindings/constant.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.7.</b>
@@ -1404,7 +1402,7 @@
         <li class="chapter " data-level="3.14.8" data-path="syntax_and_semantics/c_bindings/type.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/type.html">
+                    <a href="../syntax_and_semantics/c_bindings/type.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.8.</b>
@@ -1420,7 +1418,7 @@
         <li class="chapter " data-level="3.14.9" data-path="syntax_and_semantics/c_bindings/alias.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/alias.html">
+                    <a href="../syntax_and_semantics/c_bindings/alias.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.9.</b>
@@ -1436,7 +1434,7 @@
         <li class="chapter " data-level="3.14.10" data-path="syntax_and_semantics/c_bindings/callbacks.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/callbacks.html">
+                    <a href="../syntax_and_semantics/c_bindings/callbacks.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.10.</b>
@@ -1462,7 +1460,7 @@
         <li class="chapter " data-level="4" data-path="builtin_types/README.html">
             
                 
-                    <a href="../../builtin_types/README.html">
+                    <a href="../builtin_types/README.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.</b>
@@ -1479,7 +1477,7 @@
         <li class="chapter " data-level="4.1" data-path="builtin_types/nil.html">
             
                 
-                    <a href="../../builtin_types/nil.html">
+                    <a href="../builtin_types/nil.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.1.</b>
@@ -1495,7 +1493,7 @@
         <li class="chapter " data-level="4.2" data-path="builtin_types/bool.html">
             
                 
-                    <a href="../../builtin_types/bool.html">
+                    <a href="../builtin_types/bool.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.2.</b>
@@ -1511,7 +1509,7 @@
         <li class="chapter " data-level="4.3" data-path="builtin_types/integer_types.html">
             
                 
-                    <a href="../../builtin_types/integer_types.html">
+                    <a href="../builtin_types/integer_types.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.3.</b>
@@ -1527,7 +1525,7 @@
         <li class="chapter " data-level="4.4" data-path="builtin_types/floating_point_types.html">
             
                 
-                    <a href="../../builtin_types/floating_point_types.html">
+                    <a href="../builtin_types/floating_point_types.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.4.</b>
@@ -1543,7 +1541,7 @@
         <li class="chapter " data-level="4.5" data-path="builtin_types/char.html">
             
                 
-                    <a href="../../builtin_types/char.html">
+                    <a href="../builtin_types/char.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.5.</b>
@@ -1567,7 +1565,7 @@
         <li class="chapter " data-level="4.7" data-path="builtin_types/symbol.html">
             
                 
-                    <a href="../../builtin_types/symbol.html">
+                    <a href="../builtin_types/symbol.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.7.</b>
@@ -1583,7 +1581,7 @@
         <li class="chapter " data-level="4.8" data-path="builtin_types/reference.html">
             
                 
-                    <a href="../../builtin_types/reference.html">
+                    <a href="../builtin_types/reference.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.8.</b>
@@ -1599,7 +1597,7 @@
         <li class="chapter " data-level="4.9" data-path="builtin_types/value.html">
             
                 
-                    <a href="../../builtin_types/value.html">
+                    <a href="../builtin_types/value.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.9.</b>
@@ -1615,7 +1613,7 @@
         <li class="chapter " data-level="4.10" data-path="builtin_types/struct.html">
             
                 
-                    <a href="../../builtin_types/struct.html">
+                    <a href="../builtin_types/struct.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.10.</b>
@@ -1631,7 +1629,7 @@
         <li class="chapter " data-level="4.11" data-path="builtin_types/pointer.html">
             
                 
-                    <a href="../../builtin_types/pointer.html">
+                    <a href="../builtin_types/pointer.html">
                         <i class="fa fa-check"></i>
                         
                             <b>4.11.</b>
@@ -1712,210 +1710,224 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 77.63157894736842%;min-width: 76.3157894736842%;"></div>
+        <div class="inner" style="width: 64.47368421052632%;min-width: 63.1578947368421%;"></div>
     </div>
     <div class="chapters">
     
-        <a href="../../index.html" title="Introduction" class="chapter done new-chapter" data-progress="0" style="left: 0%;"></a>
+        <a href="../index.html" title="Introduction" class="chapter done new-chapter" data-progress="0" style="left: 0%;"></a>
     
-        <a href="../../installation/README.html" title="Installation" class="chapter done new-chapter" data-progress="1" style="left: 1.3157894736842106%;"></a>
+        <a href="../installation/README.html" title="Installation" class="chapter done new-chapter" data-progress="1" style="left: 1.3157894736842106%;"></a>
     
-        <a href="../../installation/on_mac_osx_using_homebrew.html" title="On Mac OSX using Homebrew" class="chapter done " data-progress="1.1" style="left: 2.6315789473684212%;"></a>
+        <a href="../installation/on_mac_osx_using_homebrew.html" title="On Mac OSX using Homebrew" class="chapter done " data-progress="1.1" style="left: 2.6315789473684212%;"></a>
     
-        <a href="../../installation/from_a_targz.html" title="From a tar.gz" class="chapter done " data-progress="1.2" style="left: 3.9473684210526314%;"></a>
+        <a href="../installation/from_a_targz.html" title="From a tar.gz" class="chapter done " data-progress="1.2" style="left: 3.9473684210526314%;"></a>
     
-        <a href="../../installation/from_source_repository.html" title="From source repository" class="chapter done " data-progress="1.3" style="left: 5.2631578947368425%;"></a>
+        <a href="../installation/from_source_repository.html" title="From source repository" class="chapter done " data-progress="1.3" style="left: 5.2631578947368425%;"></a>
     
-        <a href="../../overview/README.html" title="Overview" class="chapter done new-chapter" data-progress="2" style="left: 6.578947368421052%;"></a>
+        <a href="../overview/README.html" title="Overview" class="chapter done new-chapter" data-progress="2" style="left: 6.578947368421052%;"></a>
     
-        <a href="../../syntax_and_semantics/README.html" title="Syntax and semantics" class="chapter done new-chapter" data-progress="3" style="left: 7.894736842105263%;"></a>
+        <a href="../syntax_and_semantics/README.html" title="Syntax and semantics" class="chapter done new-chapter" data-progress="3" style="left: 7.894736842105263%;"></a>
     
-        <a href="../../syntax_and_semantics/comments.html" title="Comments" class="chapter done " data-progress="3.1" style="left: 9.210526315789474%;"></a>
+        <a href="../syntax_and_semantics/comments.html" title="Comments" class="chapter done " data-progress="3.1" style="left: 9.210526315789474%;"></a>
     
-        <a href="../../syntax_and_semantics/local_variables.html" title="Local variables" class="chapter done " data-progress="3.2" style="left: 10.526315789473685%;"></a>
+        <a href="../syntax_and_semantics/local_variables.html" title="Local variables" class="chapter done " data-progress="3.2" style="left: 10.526315789473685%;"></a>
     
-        <a href="../../syntax_and_semantics/global_variables.html" title="Global variables" class="chapter done " data-progress="3.3" style="left: 11.842105263157896%;"></a>
+        <a href="../syntax_and_semantics/global_variables.html" title="Global variables" class="chapter done " data-progress="3.3" style="left: 11.842105263157896%;"></a>
     
-        <a href="../../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter done " data-progress="3.3.1" style="left: 13.157894736842104%;"></a>
+        <a href="../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter done " data-progress="3.3.1" style="left: 13.157894736842104%;"></a>
     
-        <a href="../../syntax_and_semantics/assignment.html" title="Assignment" class="chapter done " data-progress="3.4" style="left: 14.473684210526315%;"></a>
+        <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter done " data-progress="3.4" style="left: 14.473684210526315%;"></a>
     
-        <a href="../../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter done " data-progress="3.4.1" style="left: 15.789473684210526%;"></a>
+        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter done " data-progress="3.4.1" style="left: 15.789473684210526%;"></a>
     
-        <a href="../../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter done " data-progress="3.5" style="left: 17.105263157894736%;"></a>
+        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter done " data-progress="3.5" style="left: 17.105263157894736%;"></a>
     
-        <a href="../../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter done " data-progress="3.5.1" style="left: 18.42105263157895%;"></a>
+        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter done " data-progress="3.5.1" style="left: 18.42105263157895%;"></a>
     
-        <a href="../../syntax_and_semantics/if.html" title="if" class="chapter done " data-progress="3.5.2" style="left: 19.736842105263158%;"></a>
+        <a href="../syntax_and_semantics/if.html" title="if" class="chapter done " data-progress="3.5.2" style="left: 19.736842105263158%;"></a>
     
-        <a href="../../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter done " data-progress="3.5.2.1" style="left: 21.05263157894737%;"></a>
+        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter done " data-progress="3.5.2.1" style="left: 21.05263157894737%;"></a>
     
-        <a href="../../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter done " data-progress="3.5.2.2" style="left: 22.36842105263158%;"></a>
+        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter done " data-progress="3.5.2.2" style="left: 22.36842105263158%;"></a>
     
-        <a href="../../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter done " data-progress="3.5.2.3" style="left: 23.68421052631579%;"></a>
+        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter done " data-progress="3.5.2.3" style="left: 23.68421052631579%;"></a>
     
-        <a href="../../syntax_and_semantics/if_var.html" title="if var" class="chapter done " data-progress="3.5.2.4" style="left: 25%;"></a>
+        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter done " data-progress="3.5.2.4" style="left: 25%;"></a>
     
-        <a href="../../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter done " data-progress="3.5.2.5" style="left: 26.31578947368421%;"></a>
+        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter done " data-progress="3.5.2.5" style="left: 26.31578947368421%;"></a>
     
-        <a href="../../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter done " data-progress="3.5.2.6" style="left: 27.63157894736842%;"></a>
+        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter done " data-progress="3.5.2.6" style="left: 27.63157894736842%;"></a>
     
-        <a href="../../syntax_and_semantics/unless.html" title="unless" class="chapter done " data-progress="3.5.3" style="left: 28.94736842105263%;"></a>
+        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter done " data-progress="3.5.3" style="left: 28.94736842105263%;"></a>
     
-        <a href="../../syntax_and_semantics/case.html" title="case" class="chapter done " data-progress="3.5.4" style="left: 30.263157894736842%;"></a>
+        <a href="../syntax_and_semantics/case.html" title="case" class="chapter done " data-progress="3.5.4" style="left: 30.263157894736842%;"></a>
     
-        <a href="../../syntax_and_semantics/while.html" title="while" class="chapter done " data-progress="3.5.5" style="left: 31.57894736842105%;"></a>
+        <a href="../syntax_and_semantics/while.html" title="while" class="chapter done " data-progress="3.5.5" style="left: 31.57894736842105%;"></a>
     
-        <a href="../../syntax_and_semantics/break.html" title="break" class="chapter done " data-progress="3.5.5.1" style="left: 32.89473684210526%;"></a>
+        <a href="../syntax_and_semantics/break.html" title="break" class="chapter done " data-progress="3.5.5.1" style="left: 32.89473684210526%;"></a>
     
-        <a href="../../syntax_and_semantics/next.html" title="next" class="chapter done " data-progress="3.5.5.2" style="left: 34.21052631578947%;"></a>
+        <a href="../syntax_and_semantics/next.html" title="next" class="chapter done " data-progress="3.5.5.2" style="left: 34.21052631578947%;"></a>
     
-        <a href="../../syntax_and_semantics/until.html" title="until" class="chapter done " data-progress="3.5.6" style="left: 35.526315789473685%;"></a>
+        <a href="../syntax_and_semantics/until.html" title="until" class="chapter done " data-progress="3.5.6" style="left: 35.526315789473685%;"></a>
     
-        <a href="../../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter done " data-progress="3.5.7" style="left: 36.8421052631579%;"></a>
+        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter done " data-progress="3.5.7" style="left: 36.8421052631579%;"></a>
     
-        <a href="../../syntax_and_semantics/or.html" title="||" class="chapter done " data-progress="3.5.8" style="left: 38.1578947368421%;"></a>
+        <a href="../syntax_and_semantics/or.html" title="||" class="chapter done " data-progress="3.5.8" style="left: 38.1578947368421%;"></a>
     
-        <a href="../../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter done " data-progress="3.6" style="left: 39.473684210526315%;"></a>
+        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter done " data-progress="3.6" style="left: 39.473684210526315%;"></a>
     
-        <a href="../../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 40.78947368421053%;"></a>
+        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 40.78947368421053%;"></a>
     
-        <a href="../../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 42.10526315789474%;"></a>
+        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 42.10526315789474%;"></a>
     
-        <a href="../../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 43.421052631578945%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 43.421052631578945%;"></a>
     
-        <a href="../../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 44.73684210526316%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 44.73684210526316%;"></a>
     
-        <a href="../../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 46.05263157894737%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 46.05263157894737%;"></a>
     
-        <a href="../../syntax_and_semantics/overloading.html" title="Overloading" class="chapter done " data-progress="3.6.3.3" style="left: 47.36842105263158%;"></a>
+        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter done " data-progress="3.6.3.3" style="left: 47.36842105263158%;"></a>
     
-        <a href="../../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter done " data-progress="3.6.3.4" style="left: 48.68421052631579%;"></a>
+        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter done " data-progress="3.6.3.4" style="left: 48.68421052631579%;"></a>
     
-        <a href="../../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter done " data-progress="3.6.3.5" style="left: 50%;"></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter done " data-progress="3.6.3.5" style="left: 50%;"></a>
     
-        <a href="../../syntax_and_semantics/visibility.html" title="Visibility" class="chapter done " data-progress="3.6.3.6" style="left: 51.31578947368421%;"></a>
+        <a href="../syntax_and_semantics/visibility.html" title="Visibility" class="chapter done " data-progress="3.6.3.6" style="left: 51.31578947368421%;"></a>
     
-        <a href="../../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter done " data-progress="3.6.3.7" style="left: 52.63157894736842%;"></a>
+        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter done " data-progress="3.6.3.7" style="left: 52.63157894736842%;"></a>
     
-        <a href="../../syntax_and_semantics/inheritance.html" title="Inheritance" class="chapter done " data-progress="3.6.3.8" style="left: 53.94736842105263%;"></a>
+        <a href="../syntax_and_semantics/inheritance.html" title="Inheritance" class="chapter done " data-progress="3.6.3.8" style="left: 53.94736842105263%;"></a>
     
-        <a href="../../syntax_and_semantics/virtual_and_abstract_types.html" title="Virtual and abstract types" class="chapter done " data-progress="3.6.3.8.1" style="left: 55.26315789473684%;"></a>
+        <a href="../syntax_and_semantics/virtual_and_abstract_types.html" title="Virtual and abstract types" class="chapter done " data-progress="3.6.3.8.1" style="left: 55.26315789473684%;"></a>
     
-        <a href="../../syntax_and_semantics/finalize.html" title="finalize" class="chapter done " data-progress="3.6.3.9" style="left: 56.578947368421055%;"></a>
+        <a href="../syntax_and_semantics/finalize.html" title="finalize" class="chapter done " data-progress="3.6.3.9" style="left: 56.578947368421055%;"></a>
     
-        <a href="../../syntax_and_semantics/generics.html" title="Generics" class="chapter done " data-progress="3.6.5" style="left: 57.89473684210526%;"></a>
+        <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter done " data-progress="3.6.5" style="left: 57.89473684210526%;"></a>
     
-        <a href="../../syntax_and_semantics/structs.html" title="Structs" class="chapter done " data-progress="3.6.6" style="left: 59.21052631578947%;"></a>
+        <a href="../syntax_and_semantics/structs.html" title="Structs" class="chapter done " data-progress="3.6.6" style="left: 59.21052631578947%;"></a>
     
-        <a href="../../syntax_and_semantics/constants.html" title="Constants" class="chapter done " data-progress="3.6.7" style="left: 60.526315789473685%;"></a>
+        <a href="../syntax_and_semantics/constants.html" title="Constants" class="chapter done " data-progress="3.6.7" style="left: 60.526315789473685%;"></a>
     
-        <a href="../../syntax_and_semantics/alias.html" title="alias" class="chapter done " data-progress="3.6.9" style="left: 61.8421052631579%;"></a>
+        <a href="../syntax_and_semantics/alias.html" title="alias" class="chapter done " data-progress="3.6.9" style="left: 61.8421052631579%;"></a>
     
-        <a href="../../syntax_and_semantics/is_a.html" title="is_a?" class="chapter done " data-progress="3.7.1" style="left: 63.1578947368421%;"></a>
+        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter done " data-progress="3.7.1" style="left: 63.1578947368421%;"></a>
     
-        <a href="../../syntax_and_semantics/compile_time_flags.html" title="Compile-time flags" class="chapter done " data-progress="3.12" style="left: 64.47368421052632%;"></a>
+        <a href="../syntax_and_semantics/compile_time_flags.html" title="Compile-time flags" class="chapter done " data-progress="3.12" style="left: 64.47368421052632%;"></a>
     
-        <a href="../../syntax_and_semantics/cross-compilation.html" title="Cross-compilation" class="chapter done " data-progress="3.12.1" style="left: 65.78947368421052%;"></a>
+        <a href="../syntax_and_semantics/cross-compilation.html" title="Cross-compilation" class="chapter  " data-progress="3.12.1" style="left: 65.78947368421052%;"></a>
     
-        <a href="../../syntax_and_semantics/macros.html" title="Macros" class="chapter done " data-progress="3.13" style="left: 67.10526315789474%;"></a>
+        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter  " data-progress="3.13" style="left: 67.10526315789474%;"></a>
     
-        <a href="../../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter done " data-progress="3.13.1" style="left: 68.42105263157895%;"></a>
+        <a href="../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter  " data-progress="3.13.1" style="left: 68.42105263157895%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/README.html" title="C bindings" class="chapter done " data-progress="3.14" style="left: 69.73684210526316%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/README.html" title="C bindings" class="chapter  " data-progress="3.14" style="left: 69.73684210526316%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/lib.html" title="lib" class="chapter done " data-progress="3.14.1" style="left: 71.05263157894737%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/lib.html" title="lib" class="chapter  " data-progress="3.14.1" style="left: 71.05263157894737%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/fun.html" title="fun" class="chapter done " data-progress="3.14.2" style="left: 72.36842105263158%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/fun.html" title="fun" class="chapter  " data-progress="3.14.2" style="left: 72.36842105263158%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/out.html" title="out" class="chapter done " data-progress="3.14.2.1" style="left: 73.6842105263158%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/out.html" title="out" class="chapter  " data-progress="3.14.2.1" style="left: 73.6842105263158%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/to_unsafe.html" title="to_unsafe" class="chapter done " data-progress="3.14.2.2" style="left: 75%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/to_unsafe.html" title="to_unsafe" class="chapter  " data-progress="3.14.2.2" style="left: 75%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/struct.html" title="struct" class="chapter done " data-progress="3.14.3" style="left: 76.3157894736842%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/struct.html" title="struct" class="chapter  " data-progress="3.14.3" style="left: 76.3157894736842%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/union.html" title="union" class="chapter done " data-progress="3.14.4" style="left: 77.63157894736842%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/union.html" title="union" class="chapter  " data-progress="3.14.4" style="left: 77.63157894736842%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 78.94736842105263%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 78.94736842105263%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 80.26315789473684%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 80.26315789473684%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 81.57894736842105%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 81.57894736842105%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 82.89473684210526%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 82.89473684210526%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 84.21052631578948%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 84.21052631578948%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 85.52631578947368%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 85.52631578947368%;"></a>
     
-        <a href="../../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 86.84210526315789%;"></a>
+        <a href="../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 86.84210526315789%;"></a>
     
-        <a href="../../builtin_types/nil.html" title="Nil" class="chapter  " data-progress="4.1" style="left: 88.15789473684211%;"></a>
+        <a href="../builtin_types/nil.html" title="Nil" class="chapter  " data-progress="4.1" style="left: 88.15789473684211%;"></a>
     
-        <a href="../../builtin_types/bool.html" title="Bool" class="chapter  " data-progress="4.2" style="left: 89.47368421052632%;"></a>
+        <a href="../builtin_types/bool.html" title="Bool" class="chapter  " data-progress="4.2" style="left: 89.47368421052632%;"></a>
     
-        <a href="../../builtin_types/integer_types.html" title="Integer types" class="chapter  " data-progress="4.3" style="left: 90.78947368421052%;"></a>
+        <a href="../builtin_types/integer_types.html" title="Integer types" class="chapter  " data-progress="4.3" style="left: 90.78947368421052%;"></a>
     
-        <a href="../../builtin_types/floating_point_types.html" title="Floating point types" class="chapter  " data-progress="4.4" style="left: 92.10526315789474%;"></a>
+        <a href="../builtin_types/floating_point_types.html" title="Floating point types" class="chapter  " data-progress="4.4" style="left: 92.10526315789474%;"></a>
     
-        <a href="../../builtin_types/char.html" title="Char" class="chapter  " data-progress="4.5" style="left: 93.42105263157895%;"></a>
+        <a href="../builtin_types/char.html" title="Char" class="chapter  " data-progress="4.5" style="left: 93.42105263157895%;"></a>
     
-        <a href="../../builtin_types/symbol.html" title="Symbol" class="chapter  " data-progress="4.7" style="left: 94.73684210526316%;"></a>
+        <a href="../builtin_types/symbol.html" title="Symbol" class="chapter  " data-progress="4.7" style="left: 94.73684210526316%;"></a>
     
-        <a href="../../builtin_types/reference.html" title="Reference" class="chapter  " data-progress="4.8" style="left: 96.05263157894737%;"></a>
+        <a href="../builtin_types/reference.html" title="Reference" class="chapter  " data-progress="4.8" style="left: 96.05263157894737%;"></a>
     
-        <a href="../../builtin_types/value.html" title="Value" class="chapter  " data-progress="4.9" style="left: 97.36842105263158%;"></a>
+        <a href="../builtin_types/value.html" title="Value" class="chapter  " data-progress="4.9" style="left: 97.36842105263158%;"></a>
     
-        <a href="../../builtin_types/struct.html" title="Struct" class="chapter  " data-progress="4.10" style="left: 98.6842105263158%;"></a>
+        <a href="../builtin_types/struct.html" title="Struct" class="chapter  " data-progress="4.10" style="left: 98.6842105263158%;"></a>
     
-        <a href="../../builtin_types/pointer.html" title="Pointer" class="chapter  " data-progress="4.11" style="left: 100%;"></a>
+        <a href="../builtin_types/pointer.html" title="Pointer" class="chapter  " data-progress="4.11" style="left: 100%;"></a>
     
     </div>
 </div>
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_36">
+                    <section class="normal" id="section-gitbook_41">
                     
-                        <h1 id="union">union</h1>
-<p>A <code>union</code> declaration inside a <code>lib</code> declares a C union:</p>
-<pre><code class="lang-ruby">lib <span class="hljs-constant">U</span>
-  <span class="hljs-comment"># In C:</span>
-  <span class="hljs-comment">#</span>
-  <span class="hljs-comment">#  union TimeZone {</span>
-  <span class="hljs-comment">#    int some_int;</span>
-  <span class="hljs-comment">#    int some_float;</span>
-  <span class="hljs-comment">#  };</span>
-  union <span class="hljs-constant">IntOrFloat</span>
-    some_int <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
-    some_float <span class="hljs-symbol">:</span> <span class="hljs-constant">Float64</span>
+                        <h1 id="compile-time-flags">Compile-time flags</h1>
+<p>Types, methods and generally any part of your code can be conditionally defined based on some flags available at compile time. These flags are by default the result of executing <code>uname -m -s</code>, split by whitespace and lowercased.</p>
+<pre><code class="lang-bash">$ uname -m <span class="hljs-operator">-s</span>
+Darwin x86_64
+
+<span class="hljs-comment"># so the flags are: darwin, x86_64</span>
+</code></pre>
+<p>Additionally, if a program is compiled with <code>--release</code>, the <code>release</code> flag will be true.</p>
+<p>You can test these flags with <code>ifdef</code>:</p>
+<pre><code class="lang-ruby">ifdef x86_64
+  <span class="hljs-comment"># some specific code for 64 bits platforms</span>
+<span class="hljs-keyword">else</span>
+  <span class="hljs-comment"># some specific code for non-64 bits platforms</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>You can use <code>&amp;&amp;</code>, <code>||</code> and <code>|</code>:</p>
+<pre><code class="lang-ruby">ifdef linux &amp;&amp; x86_64
+  <span class="hljs-comment"># some specific code for linux 64 bits</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>These flags are generally used to conditionally in C bindings to conditionally define types and functions. For example the very well known <code>size_t</code> type is defined like this in Crystal:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">C</span>
+  ifdef x86_64
+    <span class="hljs-keyword">alias</span> <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">UInt64</span>
+  <span class="hljs-keyword">else</span>
+    <span class="hljs-keyword">alias</span> <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">UInt32</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>To create an instance of a union use <code>new</code>:</p>
-<pre><code class="lang-ruby">value = <span class="hljs-constant">U::IntOrFloat</span>.new
-</code></pre>
-<p>This allocates the union on the stack.</p>
-<p>A C union starts with all its fields set to &quot;zero&quot;: integers and floats start at zero, pointers start with an address of zero, etc.</p>
-<p>To avoid this initialization you can use <code>::</code>:</p>
-<pre><code class="lang-ruby">value <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span> <span class="hljs-constant">U::IntOrFlaot</span>
-value.some_int <span class="hljs-comment">#=&gt; some garbage value</span>
-</code></pre>
-<p>You can set and get its properties:</p>
-<pre><code class="lang-ruby">value = <span class="hljs-constant">U::IntOrFloat</span>.new
-value.some_int = <span class="hljs-number">1</span>
-value.some_int <span class="hljs-comment">#=&gt; 1</span>
-value.some_float <span class="hljs-comment">#=&gt; 4.94066e-324</span>
-</code></pre>
-<p>A C union is passed by value (as a copy) to functions and methods, and also passed by value when it is returned from a method:</p>
-<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>change_it(value)
-  value.some_int = <span class="hljs-number">1</span>
-<span class="hljs-keyword">end</span>
+<p><strong>Note:</strong> conditionally defining fields of a C struct or union is not currently supported. The whole type definition must be defined separately.</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">C</span>
+  struct <span class="hljs-constant">SomeStruct</span>
+    <span class="hljs-comment"># Eror: the next line gives a parser error</span>
+    ifdef linux
+      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+    <span class="hljs-keyword">else</span>
+      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int64</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
 
-value = <span class="hljs-constant">U::IntOrFloat</span>.new
-change_it value
-value.some_int <span class="hljs-comment">#=&gt; 0</span>
+  <span class="hljs-comment"># OK</span>
+  ifdef linux
+    struct <span class="hljs-constant">SomeStruct</span>
+      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">else</span>
+    struct <span class="hljs-constant">SomeStruct</span>
+      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int64</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 </code></pre>
+<p>This restriction might be lifted in the future.</p>
 
                     
                     </section>
@@ -1925,24 +1937,22 @@ value.some_int <span class="hljs-comment">#=&gt; 0</span>
         </div>
 
         
-        <a href="../../syntax_and_semantics/c_bindings/struct.html" class="navigation navigation-prev " aria-label="Previous page: struct"><i class="fa fa-angle-left"></i></a>
         
-        
-        <a href="../../syntax_and_semantics/c_bindings/enum.html" class="navigation navigation-next " aria-label="Next page: enum"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/cross-compilation.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Cross-compilation"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
 
         
-<script src="../../gitbook/jsrepl/jsrepl.js" id="jsrepl-script"></script>
-<script src="../../gitbook/app.js"></script>
+<script src="../gitbook/jsrepl/jsrepl.js" id="jsrepl-script"></script>
+<script src="../gitbook/app.js"></script>
 
     
     <script src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
     
-    <script src="../../gitbook/plugins/gitbook-plugin-mathjax/plugin.js"></script>
+    <script src="../gitbook/plugins/gitbook-plugin-mathjax/plugin.js"></script>
     
 
 <script>
