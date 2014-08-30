@@ -178,10 +178,10 @@ class Game
   def initialize
     @drawer = Drawer.new
     @grid = [
-      [:empty, :empty, :empty, :empty] of Int32|Symbol,
-      [:empty, :empty, :empty, :empty] of Int32|Symbol,
-      [:empty, :empty, :empty, :empty] of Int32|Symbol,
-      [:empty, :empty, :empty, :empty] of Int32|Symbol
+      [nil, nil, nil, nil] of Int32?,
+      [nil, nil, nil, nil] of Int32?,
+      [nil, nil, nil, nil] of Int32?,
+      [nil, nil, nil, nil] of Int32?,
     ]
 
     insert_tile
@@ -220,14 +220,14 @@ class Game
   def insert_tile
     value = rand > 0.8 ? 4 : 2
 
-    empty_cells = @grid.map(&.count(:empty)).sum
+    empty_cells = @grid.map(&.count &.nil?).sum
 
     fill_cell = empty_cells > 1 ? rand(empty_cells-1)+1 : 1
 
     empty_cell_count = 0
 
     each_cell_with_index do |tile, row, col|
-      empty_cell_count += 1 if tile == :empty
+      empty_cell_count += 1 unless tile
 
       if empty_cell_count == fill_cell
         @grid[row][col] = value
@@ -273,9 +273,9 @@ class Game
     while modified
       modified = false
       movable_tiles(direction, drow, dcol) do |tile, row, col|
-        if @grid[row+drow][col+dcol] == :empty
+        unless @grid[row+drow][col+dcol]
           @grid[row+drow][col+dcol] = tile
-          @grid[row][col] = :empty
+          @grid[row][col] = nil
           modified = true
         end
       end
@@ -285,7 +285,7 @@ class Game
   def merge_tiles direction, drow, dcol
     movable_tiles(direction, drow, dcol) do |tile, row, col|
       if @grid[row+drow][col+dcol] == tile
-        @grid[row][col] = :empty
+        @grid[row][col] = nil
         @grid[row+drow][col+dcol] = tile*2
       end
     end
@@ -293,7 +293,8 @@ class Game
 
   def movable_tiles direction, drow, dcol
     max = @grid.size-1
-    from_row, to_row, from_column, to_column = case direction
+    from_row, to_row, from_column, to_column =
+      case direction
       when :up, :left
         {0, max, 0, max}
       when :down, :right
@@ -304,9 +305,9 @@ class Game
     from_row.to(to_row) do |row|
       from_column.to(to_column) do |col|
         tile = @grid[row][col]
-        next if tile == :empty || to_border?(direction, row, col, drow, dcol)
-        # The guard is always true, just prevent the caller from having to do that.
-        yield tile, row, col if tile.is_a? Int
+        if tile && !to_border?(direction, row, col, drow, dcol)
+          yield tile, row, col
+        end
       end
     end
   end
@@ -315,8 +316,8 @@ class Game
     drow, dcol = offsets_for direction
 
     movable_tiles(direction, drow, dcol) do |tile, row, col|
-      return true if @grid[row+drow][col+dcol] == tile ||
-                     @grid[row+drow][col+dcol] == :empty
+      target_tile = @grid[row+drow][col+dcol]
+      return true if !target_tile || target_tile == tile
     end
 
     false
