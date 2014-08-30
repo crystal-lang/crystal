@@ -286,41 +286,28 @@ class Game
     movable_tiles(direction, drow, dcol) do |tile, row, col|
       if @grid[row+drow][col+dcol] == tile
         @grid[row][col] = :empty
-         # crystal doesn't see the next in movable_tiles or doesn't know that :empty is
-         # only Symbol value, so we need to guard here. However the condition is always true
-        @grid[row+drow][col+dcol] = tile*2 if tile.is_a? Int
+        @grid[row+drow][col+dcol] = tile*2
       end
     end
   end
 
-  macro movable_tiles_action(rows, cols)
-    {{rows}} do |row|
-      {{cols}} do |col|
+  def movable_tiles direction, drow, dcol
+    max = @grid.size-1
+    from_row, to_row, from_column, to_column = case direction
+      when :up, :left
+        {0, max, 0, max}
+      when :down, :right
+        {max, 0, max, 0}
+      else
+        raise ArgumentError.new "Unknown direction #{direction}"
+      end
+    from_row.to(to_row) do |row|
+      from_column.to(to_column) do |col|
         tile = @grid[row][col]
-        if tile == :empty || to_border?(direction, row, col, drow, dcol)
-          next
-        end
-
-        yield tile, row, col
+        next if tile == :empty || to_border?(direction, row, col, drow, dcol)
+        # The guard is always true, just prevent the caller from having to do that.
+        yield tile, row, col if tile.is_a? Int
       end
-    end
-  end
-
-  # This method could be cleaned up with some way to iterate
-  # from, for example,  x = 0 to y = 20 and from x = 20 to y = 0
-  # with the same x.to(y) do |i| call
-  def movable_tiles direction, drow, dcol, &block
-    case direction
-    when :up
-      movable_tiles_action 0.upto(@grid.size-1), 0.upto(@grid.size-1)
-    when :down
-      movable_tiles_action (@grid.size-1).downto(0), 0.upto(@grid.size-1)
-    when :left
-      movable_tiles_action 0.upto(@grid.size-1), 0.upto(@grid.size-1)
-    when :right
-      movable_tiles_action 0.upto(@grid.size-1), (@grid.size-1).downto(0)
-    else
-      raise ArgumentError.new "Unknown direction #{direction}"
     end
   end
 
