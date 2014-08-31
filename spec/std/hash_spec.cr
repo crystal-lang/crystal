@@ -217,6 +217,11 @@ describe "Hash" do
     hash.should eq({1 => 'a', 2 => 'b', 3 => 'c'})
   end
 
+  it "gets first" do
+    h = {1 => 2, 3 => 4}
+    h.first.should eq({1, 2})
+  end
+
   it "gets first key" do
     h = {1 => 2, 3 => 4}
     h.first_key.should eq(1)
@@ -284,6 +289,12 @@ describe "Hash" do
   it "gets hash entries as tuples" do
     h = {1 => "hello", 2 => "bye"}
     h.entries.should eq([{1, "hello"}, {2, "bye"}])
+  end
+
+  it "clears" do
+    h = {1 => 2, 3 => 4}
+    h.clear
+    h.empty?.should be_true
   end
 
   class Breaker

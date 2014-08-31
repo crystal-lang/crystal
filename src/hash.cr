@@ -220,6 +220,11 @@ class Hash(K, V)
     hash
   end
 
+  def first
+    first = @first.not_nil!
+    {first.key, first.value}
+  end
+
   def first_key
     @first.not_nil!.key
   end
@@ -252,6 +257,14 @@ class Hash(K, V)
     else
       yield
     end
+  end
+
+  def clear
+    @buckets_length.times do |i|
+      @buckets[i] = nil
+    end
+    @length = 0
+    self
   end
 
   def ==(other : Hash)
