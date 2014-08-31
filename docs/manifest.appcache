@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1409433529837
+# Revision 1409520021337
 
 CACHE:
 index.html
@@ -62,14 +62,15 @@ syntax_and_semantics/local_variables.html
 syntax_and_semantics/macro_methods.html
 syntax_and_semantics/macros.html
 syntax_and_semantics/methods_and_instance_variables.html
+syntax_and_semantics/modules.html
 syntax_and_semantics/multiple_assignment.html
 syntax_and_semantics/new,_initialize_and_allocate.html
 syntax_and_semantics/next.html
 syntax_and_semantics/or.html
-syntax_and_semantics/overloading.html
 syntax_and_semantics/structs.html
-syntax_and_semantics/ternary_if.html
+syntax_and_semantics/overloading.html
 syntax_and_semantics/the_program.html
+syntax_and_semantics/ternary_if.html
 syntax_and_semantics/thread_local.html
 syntax_and_semantics/truthy_and_falsey_values.html
 syntax_and_semantics/type_restrictions.html

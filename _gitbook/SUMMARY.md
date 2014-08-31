@@ -44,7 +44,7 @@
            * [Inheritance](syntax_and_semantics/inheritance.md)
                * [Virtual and abstract types](syntax_and_semantics/virtual_and_abstract_types.md)
            * [finalize](syntax_and_semantics/finalize.md)
-       * Modules
+       * [Modules](syntax_and_semantics/modules.md)
        * [Generics](syntax_and_semantics/generics.md)
        * [Structs](syntax_and_semantics/structs.md)
        * [Constants](syntax_and_semantics/constants.md)

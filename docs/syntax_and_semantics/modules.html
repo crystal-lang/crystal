@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>unless | Crystal Programming Language</title>
+        <title>Modules | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,10 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/case.html" />
+    <link rel="next" href="../syntax_and_semantics/generics.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/if_varresponds_to.html" />
+    <link rel="prev" href="../syntax_and_semantics/finalize.html" />
     
 
         
@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.5.3" data-basepath=".." data-revision="1409520021337">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.4" data-basepath=".." data-revision="1409520021337">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +118,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/unless.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/modules.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1720,7 +1720,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 28.571428571428573%;min-width: 27.272727272727273%;"></div>
+        <div class="inner" style="width: 57.142857142857146%;min-width: 55.84415584415584%;"></div>
     </div>
     <div class="chapters">
     
@@ -1770,49 +1770,49 @@
     
         <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter done " data-progress="3.5.3" style="left: 28.571428571428573%;"></a>
     
-        <a href="../syntax_and_semantics/case.html" title="case" class="chapter  " data-progress="3.5.4" style="left: 29.87012987012987%;"></a>
+        <a href="../syntax_and_semantics/case.html" title="case" class="chapter done " data-progress="3.5.4" style="left: 29.87012987012987%;"></a>
     
-        <a href="../syntax_and_semantics/while.html" title="while" class="chapter  " data-progress="3.5.5" style="left: 31.16883116883117%;"></a>
+        <a href="../syntax_and_semantics/while.html" title="while" class="chapter done " data-progress="3.5.5" style="left: 31.16883116883117%;"></a>
     
-        <a href="../syntax_and_semantics/break.html" title="break" class="chapter  " data-progress="3.5.5.1" style="left: 32.467532467532465%;"></a>
+        <a href="../syntax_and_semantics/break.html" title="break" class="chapter done " data-progress="3.5.5.1" style="left: 32.467532467532465%;"></a>
     
-        <a href="../syntax_and_semantics/next.html" title="next" class="chapter  " data-progress="3.5.5.2" style="left: 33.76623376623377%;"></a>
+        <a href="../syntax_and_semantics/next.html" title="next" class="chapter done " data-progress="3.5.5.2" style="left: 33.76623376623377%;"></a>
     
-        <a href="../syntax_and_semantics/until.html" title="until" class="chapter  " data-progress="3.5.6" style="left: 35.064935064935064%;"></a>
+        <a href="../syntax_and_semantics/until.html" title="until" class="chapter done " data-progress="3.5.6" style="left: 35.064935064935064%;"></a>
     
-        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter  " data-progress="3.5.7" style="left: 36.36363636363637%;"></a>
+        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter done " data-progress="3.5.7" style="left: 36.36363636363637%;"></a>
     
-        <a href="../syntax_and_semantics/or.html" title="||" class="chapter  " data-progress="3.5.8" style="left: 37.66233766233766%;"></a>
+        <a href="../syntax_and_semantics/or.html" title="||" class="chapter done " data-progress="3.5.8" style="left: 37.66233766233766%;"></a>
     
-        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter  " data-progress="3.6" style="left: 38.96103896103896%;"></a>
+        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter done " data-progress="3.6" style="left: 38.96103896103896%;"></a>
     
-        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter  " data-progress="3.6.1" style="left: 40.25974025974026%;"></a>
+        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 40.25974025974026%;"></a>
     
-        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter  " data-progress="3.6.2" style="left: 41.55844155844156%;"></a>
+        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 41.55844155844156%;"></a>
     
-        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter  " data-progress="3.6.3" style="left: 42.857142857142854%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 42.857142857142854%;"></a>
     
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter  " data-progress="3.6.3.1" style="left: 44.15584415584416%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 44.15584415584416%;"></a>
     
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter  " data-progress="3.6.3.2" style="left: 45.45454545454545%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 45.45454545454545%;"></a>
     
-        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter  " data-progress="3.6.3.3" style="left: 46.753246753246756%;"></a>
+        <a href="../syntax_and_semantics/overloading.html" title="Overloading" class="chapter done " data-progress="3.6.3.3" style="left: 46.753246753246756%;"></a>
     
-        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter  " data-progress="3.6.3.4" style="left: 48.05194805194805%;"></a>
+        <a href="../syntax_and_semantics/default_and_named_arguments.html" title="Default and named arguments" class="chapter done " data-progress="3.6.3.4" style="left: 48.05194805194805%;"></a>
     
-        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter  " data-progress="3.6.3.5" style="left: 49.35064935064935%;"></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter done " data-progress="3.6.3.5" style="left: 49.35064935064935%;"></a>
     
-        <a href="../syntax_and_semantics/visibility.html" title="Visibility" class="chapter  " data-progress="3.6.3.6" style="left: 50.64935064935065%;"></a>
+        <a href="../syntax_and_semantics/visibility.html" title="Visibility" class="chapter done " data-progress="3.6.3.6" style="left: 50.64935064935065%;"></a>
     
-        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter  " data-progress="3.6.3.7" style="left: 51.94805194805195%;"></a>
+        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter done " data-progress="3.6.3.7" style="left: 51.94805194805195%;"></a>
     
-        <a href="../syntax_and_semantics/inheritance.html" title="Inheritance" class="chapter  " data-progress="3.6.3.8" style="left: 53.246753246753244%;"></a>
+        <a href="../syntax_and_semantics/inheritance.html" title="Inheritance" class="chapter done " data-progress="3.6.3.8" style="left: 53.246753246753244%;"></a>
     
-        <a href="../syntax_and_semantics/virtual_and_abstract_types.html" title="Virtual and abstract types" class="chapter  " data-progress="3.6.3.8.1" style="left: 54.54545454545455%;"></a>
+        <a href="../syntax_and_semantics/virtual_and_abstract_types.html" title="Virtual and abstract types" class="chapter done " data-progress="3.6.3.8.1" style="left: 54.54545454545455%;"></a>
     
-        <a href="../syntax_and_semantics/finalize.html" title="finalize" class="chapter  " data-progress="3.6.3.9" style="left: 55.84415584415584%;"></a>
+        <a href="../syntax_and_semantics/finalize.html" title="finalize" class="chapter done " data-progress="3.6.3.9" style="left: 55.84415584415584%;"></a>
     
-        <a href="../syntax_and_semantics/modules.html" title="Modules" class="chapter  " data-progress="3.6.4" style="left: 57.142857142857146%;"></a>
+        <a href="../syntax_and_semantics/modules.html" title="Modules" class="chapter done " data-progress="3.6.4" style="left: 57.142857142857146%;"></a>
     
         <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter  " data-progress="3.6.5" style="left: 58.44155844155844%;"></a>
     
@@ -1885,25 +1885,100 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_74">
+                    <section class="normal" id="section-gitbook_61">
                     
-                        <h1 id="unless">unless</h1>
-<p>An <code>unless</code> evaluates the then branch if its condition is <em>falsey</em>, and evaluates the <code>else branch</code>, if there’s any, otherwise. That is, it behaves in the opposite way of an <code>if</code>:</p>
-<pre><code class="lang-ruby"><span class="hljs-keyword">unless</span> some_condition
-  then_expression
-<span class="hljs-keyword">else</span>
-  else_expression
+                        <h1 id="modules">Modules</h1>
+<p>Modules serve two purposes:</p>
+<ul>
+<li>as namespaces for defining other types, methods and constants</li>
+<li>as partial types that can be mixed in other types</li>
+</ul>
+<p>An example of a module as a namespace:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Curses</span></span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Window</span></span>
+  <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-comment"># The above is the same as:</span>
-<span class="hljs-keyword">if</span> some_condition
-  else_expression
-<span class="hljs-keyword">else</span>
-  then_expression
+<span class="hljs-constant">Curses::Window</span>.new
+</code></pre>
+<p>Library authors are advised to put their definitions inside a module to avoid name clashes. The standard library usually doesn&#39;t have a namespace as its types and methods are very common, to avoid writing long names.</p>
+<p>To use a module as a partial type you use <code>include</code> or <code>extend</code>.</p>
+<p>An <code>include</code> makes a type include methods defined in that module as instance methods:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">ItemsLength</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>length
+    items.length
+  <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-comment"># Can also be written as a suffix</span>
-close_door <span class="hljs-keyword">unless</span> door_closed?
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Items</span></span>
+  <span class="hljs-keyword">include</span> <span class="hljs-constant">ItemsLength</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>items
+    [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+items = <span class="hljs-constant">Items</span>.new
+items.length <span class="hljs-comment">#=&gt; 3</span>
+</code></pre>
+<p>In the above example, it is as if we pasted the <code>length</code> method from the module into the <code>Items</code> class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are <strong>prepended</strong> to this list. When a method is not found in a type it is looked up in this list.</p>
+<p>A <code>module</code> can include other modules, so when a method is not found in it it will be looked up in the included modules.</p>
+<p>An <code>extend</code> makes a type include methods defined in that module as class methods:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">SomeLength</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>length
+    <span class="hljs-number">3</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Items</span></span>
+  extend <span class="hljs-constant">SomeLength</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Items</span>.length <span class="hljs-comment">#=&gt; 3</span>
+</code></pre>
+<p>Both <code>include</code> and <code>extend</code> make constants defined in the module avialble to the including/extending type.</p>
+<p>Both of them can be used at the top level to avoid writing a namespace over and over (although the chances of name clashes increase):</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">SomeModule</span></span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SomeType</span></span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method
+    <span class="hljs-number">1</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">include</span> <span class="hljs-constant">SomeModule</span>
+
+<span class="hljs-constant">SomeType</span>.new <span class="hljs-comment"># OK, same as SomeModule::SomeType</span>
+some_method  <span class="hljs-comment"># OK, same as SomeModule.some_method</span>
+</code></pre>
+<p>A common pattern for modules is <code>extend self</code>:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Base64</span></span>
+  extend <span class="hljs-keyword">self</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>encode64(string)
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>decode64(string)
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>In this way a module can be used as a namespace:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">Base64</span>.encode64 <span class="hljs-string">"hello"</span> <span class="hljs-comment">#=&gt; "aGVsbG8="</span>
+</code></pre>
+<p>But also it can be included in the program and its methods can be invoked without a namespace:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">include</span> <span class="hljs-constant">Base64</span>
+
+encode64 <span class="hljs-string">"hello"</span> <span class="hljs-comment">#=&gt; "aGVsbG8="</span>
+</code></pre>
+<p>For this to be useful the method name should have some reference to the module, otherwise chances of name clashes are high.</p>
+<p>A module cannot be instantiated:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Moo</span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Moo</span>.new <span class="hljs-comment"># undefined method 'new' for Moo:Class</span>
 </code></pre>
 
                     
@@ -1914,10 +1989,10 @@ close_door <span class="hljs-keyword">unless</span> door_closed?
         </div>
 
         
-        <a href="../syntax_and_semantics/if_varresponds_to.html" class="navigation navigation-prev " aria-label="Previous page: if var.responds_to?(...)"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/finalize.html" class="navigation navigation-prev " aria-label="Previous page: finalize"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/case.html" class="navigation navigation-next " aria-label="Next page: case"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/generics.html" class="navigation navigation-next " aria-label="Next page: Generics"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
