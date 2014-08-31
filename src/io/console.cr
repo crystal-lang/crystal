@@ -169,46 +169,65 @@ end
 
 struct CFileIO
   def cooked
-    before = tc_mode
-    begin
-      cooked!
+    preserving_tc_mode("can't set IO#cooked") do |mode|
+      cooked_from_tc_mode!
       yield self
-    ensure
-      self.tc_mode = before
     end
   end
 
   def cooked!
-    mode = Pointer(Termios::Struct).malloc 1_u64
-    mode.value.iflag |= Termios::IFlag::BRKINT |
-                        Termios::IFlag::ISTRIP |
-                        Termios::IFlag::ICRNL  |
-                        Termios::IFlag::IXON
-    mode.value.oflag |= Termios::OFlag::OPOST
-    mode.value.lflag |= Termios::LFlag::ECHO   |
-                        Termios::LFlag::ECHOE  |
-                        Termios::LFlag::ECHOK  |
-                        Termios::LFlag::ECHONL |
-                        Termios::LFlag::ICANON |
-                        Termios::LFlag::ISIG   |
-                        Termios::LFlag::IEXTEN
-    self.tc_mode = mode
+    if Termios.tcgetattr(fd, out mode) != 0
+      raise Errno.new "can't set IO#cooked!"
+    end
+    cooked_from_tc_mode!
+  end
+
+  macro cooked_from_tc_mode!
+    mode.iflag |= Termios::IFlag::BRKINT |
+                  Termios::IFlag::ISTRIP |
+                  Termios::IFlag::ICRNL  |
+                  Termios::IFlag::IXON
+    mode.oflag |= Termios::OFlag::OPOST
+    mode.lflag |= Termios::LFlag::ECHO   |
+                  Termios::LFlag::ECHOE  |
+                  Termios::LFlag::ECHOK  |
+                  Termios::LFlag::ECHONL |
+                  Termios::LFlag::ICANON |
+                  Termios::LFlag::ISIG   |
+                  Termios::LFlag::IEXTEN
+    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, pointerof(mode))
   end
 
   def raw
-    before = tc_mode
-    begin
-      raw!
+    preserving_tc_mode("can't set IO#raw") do |mode|
+      raw_from_tc_mode!
       yield self
-    ensure
-      self.tc_mode = before
     end
   end
 
   def raw!
-    mode = Pointer(Termios::Struct).malloc 1_u64
-    Termios.cfmakeraw(mode)
-    self.tc_mode = mode
+    if Termios.tcgetattr(fd, out mode) != 0
+      raise Errno.new "can't set IO#raw!"
+    end
+
+    raw_from_tc_mode!
+  end
+
+  macro raw_from_tc_mode!
+    Termios.cfmakeraw(pointerof(mode))
+    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, pointerof(mode))
+  end
+
+  private def preserving_tc_mode(msg)
+    if Termios.tcgetattr(fd, out mode) != 0
+      raise Errno.new msg
+    end
+    before = mode
+    begin
+      yield mode
+    ensure
+      Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, pointerof(before))
+    end
   end
 
   def read_nonblock(length)
@@ -229,15 +248,5 @@ struct CFileIO
     ensure
       C.fcntl(fd, C::FCNTL::F_SETFL, before)
     end
-  end
-
-  protected def tc_mode
-    mode = Pointer(Termios::Struct).malloc 1_u64
-    Termios.tcgetattr(fd, mode)
-    mode
-  end
-
-  protected def tc_mode=(mode)
-    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
   end
 end
