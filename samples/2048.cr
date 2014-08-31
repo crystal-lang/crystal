@@ -192,8 +192,10 @@ class Game
     draw
 
     until won? || lost?
-      insert_tile if execute_action read_action
-      draw
+      if execute_action read_action
+        insert_tile
+        draw
+      end
     end
 
     if won?
