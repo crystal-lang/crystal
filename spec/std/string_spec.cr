@@ -251,6 +251,12 @@ describe "String" do
     end
   end
 
+  describe "byte_index" do
+    assert { "foo".byte_index('o'.ord).should eq(1) }
+    assert { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
+    assert { "foo".byte_index('a'.ord).should be_nil }
+  end
+
   describe "includes?" do
     describe "by char" do
       assert { "foo".includes?('o').should be_true }

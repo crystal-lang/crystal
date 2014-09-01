@@ -520,6 +520,15 @@ class String
     last_index
   end
 
+  def byte_index(byte : Int, offset = 0)
+    offset.upto(bytesize - 1) do |i|
+      if cstr[i] == byte
+        return i
+      end
+    end
+    nil
+  end
+
   def includes?(c : Char)
     !!index(c)
   end
