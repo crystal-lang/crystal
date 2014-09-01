@@ -483,6 +483,19 @@ class Array(T)
     self
   end
 
+  def rindex(value)
+    rindex { |elem| elem == value }
+  end
+
+  def rindex
+    (length - 1).downto(0) do |i|
+      if yield @buffer[i]
+        return i
+      end
+    end
+    nil
+  end
+
   def ==(other : Array)
     equals?(other) { |x, y| x == y }
   end

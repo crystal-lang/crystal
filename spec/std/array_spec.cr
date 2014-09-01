@@ -134,6 +134,20 @@ describe "Array" do
     end
   end
 
+  describe "rindex" do
+    it "performs without a block" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex(3).should eq(5)
+      a.rindex(7).should be_nil
+    end
+
+    it "performs with a block" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex { |i| i > 1 }.should eq(6)
+      a.rindex { |i| i > 6 }.should be_nil
+    end
+  end
+
   describe "delete_at" do
     it "deletes positive index" do
       a = [1, 2, 3, 4]
