@@ -299,24 +299,35 @@ module Crystal
           @llc_flags_changed = llc_flags_changed
 
           msg = multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
-          target_triple = Crystal::TargetMachine::DEFAULT.triple
+          target_triple = target_machine.triple
+
+          jobs_count = 0
 
           timing(msg) do
-            threads = Array.new(@n_threads) do
-              Thread.new do
-                while unit = mutex.synchronize { units.shift? }
-                  unit.llvm_mod.target = target_triple
-                  ifdef x86_64
-                    unit.llvm_mod.data_layout = DataLayout64
-                  else
-                    unit.llvm_mod.data_layout = DataLayout32
-                  end
-                  unit.write_bitcode if multithreaded
-                  unit.compile
+            while unit = units.pop?
+              fork do
+                unit.llvm_mod.target = target_triple
+                ifdef x86_64
+                  unit.llvm_mod.data_layout = DataLayout64
+                else
+                  unit.llvm_mod.data_layout = DataLayout32
                 end
+                unit.write_bitcode if multithreaded
+                unit.compile
+              end
+
+              jobs_count += 1
+
+              if jobs_count >= @n_threads
+                C.waitpid(-1, out stat_loc, 0)
+                jobs_count -= 1
               end
             end
-            threads.each &.join
+
+            while jobs_count > 0
+              C.waitpid(-1, out stat_loc, 0)
+              jobs_count -= 1
+            end
           end
 
           timing("Codegen (clang)") do
@@ -350,6 +361,10 @@ module Crystal
         puts "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues".colorize.bright
         exit 2
       end
+    end
+
+    def target_machine
+      @target_machine ||= @release ? Crystal::TargetMachine::RELEASE : Crystal::TargetMachine::DEFAULT
     end
 
     def open_browser(node)
@@ -478,8 +493,7 @@ module Crystal
           elsif compiler.uses_gcc
             system "#{compiler.llc} #{bc_name} -filetype=obj -o #{o_name} #{compiler.llc_flags}"
           else
-            system "#{compiler.clang} -c #{bc_name} -o #{o_name}"
-            # Crystal::TargetMachine::DEFAULT.emit_obj_to_file @llvm_mod, o_name
+            compiler.target_machine.emit_obj_to_file @llvm_mod, o_name
           end
         end
 

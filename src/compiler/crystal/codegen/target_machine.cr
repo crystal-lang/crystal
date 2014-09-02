@@ -3,13 +3,22 @@ require "../program"
 
 module Crystal
   module TargetMachine
+    TARGET_TRIPLE = guess_target_triple
     DEFAULT = default_target_machine
+    RELEASE = release_target_machine
 
     private def self.default_target_machine
       LLVM.init_x86
 
       target = LLVM::Target.first
-      target.create_target_machine(guess_target_triple).not_nil!
+      target.create_target_machine(TARGET_TRIPLE, opt_level: LibLLVM::CodeGenOptLevel::None).not_nil!
+    end
+
+    private def self.release_target_machine
+      LLVM.init_x86
+
+      target = LLVM::Target.first
+      target.create_target_machine(TARGET_TRIPLE, opt_level: LibLLVM::CodeGenOptLevel::Aggressive).not_nil!
     end
 
     private def self.guess_target_triple
