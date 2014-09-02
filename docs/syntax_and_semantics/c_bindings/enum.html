@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.14.5" data-basepath="../.." data-revision="1409520021337">
+    <div class="book" data-github="manastech/crystal" data-level="3.14.5" data-basepath="../.." data-revision="1409663194220">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1920,14 +1920,25 @@
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>As you can see, some basic math is allowed for a member value: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>&amp;</code>, <code>|</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code> and <code>%</code>.</p>
-<p>The type of an enum member is <code>Int32</code> by defualt, but you can change it:</p>
+<p>The type of an enum member is <code>Int32</code> by defualt, even if you specify a different type in a constant value:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">X</span>
+  enum <span class="hljs-constant">SomeEnum</span>
+    <span class="hljs-constant">A</span> = <span class="hljs-number">1_</span>u32
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">X::SomeEnum</span> <span class="hljs-comment">#=&gt; 1_i32</span>
+</code></pre>
+<p>However, you can change this default type:</p>
 <pre><code class="lang-ruby">lib <span class="hljs-constant">X</span>
   enum <span class="hljs-constant">SomeEnum</span> &lt; <span class="hljs-constant">Int8</span>
-    <span class="hljs-constant">Zero</span>
+    <span class="hljs-constant">Zero</span>,
+    <span class="hljs-constant">Two</span> = <span class="hljs-number">2</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
 <span class="hljs-constant">X::SomeEnum::Zero</span> <span class="hljs-comment">#=&gt; 1_i8</span>
+<span class="hljs-constant">X::SomeEnum::Two</span>  <span class="hljs-comment">#=&gt; 2_i8</span>
 </code></pre>
 <p>You can use an enum as a type in a <code>fun</code> argument or <code>struct</code> or <code>union</code> members:</p>
 <pre><code class="lang-ruby">lib <span class="hljs-constant">X</span>
