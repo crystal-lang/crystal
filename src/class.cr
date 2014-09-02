@@ -4,9 +4,11 @@ class Class
   end
 
   macro def to_s(io) : Nil
-    # If we are Foo, the name is "Foo:Class",
-    # so we remove the ":Class" part
-    io << {{@class_name[0 .. -7]}}
+    class_name = {{@class_name}}
+    if class_name.ends_with?(":Class")
+      class_name = class_name[0 .. -7]
+    end
+    io << class_name
     nil
   end
 end

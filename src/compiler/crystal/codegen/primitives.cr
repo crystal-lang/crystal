@@ -392,11 +392,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_class(node, target_def, call_args)
-    codegen_primitive_class_with_type(node.type, call_args[0])
+    value = call_args.first? || llvm_self(node.type)
+    codegen_primitive_class_with_type(node.type, value)
   end
 
   def codegen_primitive_class_with_type(node_type : VirtualMetaclassType, value)
-    load aggregate_index(value, 0)
+    load value
   end
 
   def codegen_primitive_class_with_type(node_type : TupleInstanceType, value)

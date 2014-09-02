@@ -402,4 +402,22 @@ describe "Code gen: class" do
       Foo.new.x
       )).to_i.should eq(1)
   end
+
+  it "codegens class method" do
+    build(%(
+      Int32.class
+      ))
+  end
+
+  it "codegens virtual class method" do
+    build(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).class
+      ))
+  end
 end
