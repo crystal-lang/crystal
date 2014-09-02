@@ -1537,15 +1537,21 @@ module Crystal
           enum_base_type = @mod.int32
         end
 
+        enum_type = CEnumType.new(@mod, current_type, node.name, enum_base_type)
+
+        @types.push enum_type
         counter = 0
         node.constants.each do |constant|
           if default_value = constant.default_value
             counter = interpret_enum_value(default_value)
           end
           constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
+          enum_type.add_constant constant
           counter += 1
         end
-        node.c_enum_type = current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, enum_base_type, node.constants)
+        @types.pop
+
+        node.c_enum_type = current_type.types[node.name] = enum_type
       end
       false
     end
@@ -1581,6 +1587,16 @@ module Crystal
       when "<<" then left << right
       when ">>" then left >> right
       when "%"  then left % right
+      else
+        node.raise "invalid enum constant value"
+      end
+    end
+
+    def interpret_enum_value(node : Path)
+      type = resolve_ident(node)
+      case type
+      when Const
+        interpret_enum_value(type.value)
       else
         node.raise "invalid enum constant value"
       end

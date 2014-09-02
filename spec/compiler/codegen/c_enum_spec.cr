@@ -44,4 +44,33 @@ describe "Code gen: enum" do
         ").to_i.should eq(test_case[1])
     end
   end
+
+  it "codegens enum that refers to another enum constant" do
+    run("
+      lib Foo
+        enum Bar
+          A = 1
+          B = A + 1
+          C = B + 1
+        end
+      end
+
+      Foo::Bar::C
+      ").to_i.should eq(3)
+  end
+
+  it "codegens enum that refers to another constant" do
+    run("
+      lib Foo
+        X = 10
+        enum Bar
+          A = X
+          B = A + 1
+          C = B + 1
+        end
+      end
+
+      Foo::Bar::C
+      ").to_i.should eq(12)
+  end
 end

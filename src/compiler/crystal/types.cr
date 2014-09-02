@@ -418,6 +418,30 @@ module Crystal
     def initialize(@program, @container)
       @types = {} of String => Type
     end
+
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(type_id)
+
+      if lookup_in_container
+        already_looked_up.add(type_id)
+      end
+
+      type = self
+      names.each do |name|
+        type = type.types[name]?
+        break unless type
+      end
+
+      return type if type
+
+      parents.try &.each do |parent|
+        match = parent.lookup_type(names, already_looked_up, false)
+        return match if match
+      end
+
+      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
+    end
+
   end
 
   abstract class NamedType < ContainedType
@@ -885,29 +909,6 @@ module Crystal
 
     def implements?(other_type)
       super || parents.any? &.implements?(other_type)
-    end
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
-
-      if lookup_in_container
-        already_looked_up.add(type_id)
-      end
-
-      type = self
-      names.each do |name|
-        type = type.types[name]?
-        break unless type
-      end
-
-      return type if type
-
-      parents.each do |parent|
-        match = parent.lookup_type(names, already_looked_up, false)
-        return match if match
-      end
-
-      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
     end
 
     def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
@@ -2174,12 +2175,12 @@ module Crystal
   class CEnumType < NamedType
     getter base_type
 
-    def initialize(program, container, name, @base_type, constants)
+    def initialize(program, container, name, @base_type)
       super(program, container, name)
+    end
 
-      constants.each do |constant|
-        @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
-      end
+    def add_constant(constant)
+      @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
     end
 
     def c_enum?
