@@ -754,8 +754,14 @@ describe "Parser" do
 
   it_parses "@:Foo", Attribute.new("Foo")
   it_parses "@:Foo\n@:Bar", [Attribute.new("Foo"), Attribute.new("Bar")] of ASTNode
+  it_parses "@[Foo]", Attribute.new("Foo")
+  it_parses "@[Foo()]", Attribute.new("Foo")
+  it_parses "@[Foo(1)]", Attribute.new("Foo", [1.int32] of ASTNode)
+  it_parses "@[Foo(\"hello\")]", Attribute.new("Foo", ["hello".string] of ASTNode)
+  it_parses "@[Foo(1, foo: 2)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
 
   it_parses "lib C\n@:Bar;end", LibDef.new("C", Attribute.new("Bar"))
+  it_parses "lib C\n@[Bar]; end", LibDef.new("C", Attribute.new("Bar"))
 
   it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
 

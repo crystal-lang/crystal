@@ -456,8 +456,11 @@ module Crystal
         scan_number current_pos
       when '@'
         start = current_pos
-        if next_char == ':'
+        case next_char
+        when ':'
           next_char :"@:"
+        when '['
+          next_char :"@["
         else
           class_var = false
           if current_char == '@'

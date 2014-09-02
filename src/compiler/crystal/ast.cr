@@ -1765,19 +1765,26 @@ module Crystal
 
   class Attribute < ASTNode
     property :name
+    property :args
+    property :named_args
 
-    def initialize(@name)
+    def initialize(@name, @args = [] of ASTNode, @named_args = nil)
+    end
+
+    def accept_children(visitor)
+      @args.each &.accept visitor
+      @named_args.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Attribute.new(name)
+      Attribute.new(name, @args.clone, @named_args.clone)
     end
 
     def self.any?(attributes, name)
       attributes.try &.any? { |attr| attr.name == name }
     end
 
-    def_equals_and_hash name
+    def_equals_and_hash name, args, named_args
   end
 
   # A macro expression, surrounded by {{ ... }}

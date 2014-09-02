@@ -722,6 +722,8 @@ module Crystal
       when :"->"
         parse_fun_literal
       when :"@:"
+        parse_attribute_deprecated_syntax
+      when :"@["
         parse_attribute
       when :NUMBER
         @wants_regex = false
@@ -858,6 +860,44 @@ module Crystal
     end
 
     def parse_attribute
+      location = @token.location
+      next_token_skip_space
+      check :CONST
+      name = @token.value.to_s
+      next_token_skip_space
+
+      args = [] of ASTNode
+      named_args = nil
+
+      if @token.type == :"("
+        open(:attribute) do
+          next_token_skip_space
+          while @token.type != :")"
+            if @token.type == :IDENT && current_char == ':'
+              named_args = parse_named_args
+              check :")"
+              break
+            else
+              args << parse_call_arg
+            end
+
+            skip_space_or_newline
+            if @token.type == :","
+              next_token_skip_space_or_newline
+            end
+          end
+          next_token_skip_space
+        end
+      end
+      check :"]"
+      next_token_skip_space
+
+      attribute = Attribute.new(name, args, named_args)
+      attribute.location = location
+      attribute
+    end
+
+    def parse_attribute_deprecated_syntax
       location = @token.location
       next_token_skip_space
       check :CONST
@@ -3275,6 +3315,8 @@ module Crystal
     def parse_lib_body_exp_without_location
       case @token.type
       when :"@:"
+        parse_attribute_deprecated_syntax
+      when :"@["
         parse_attribute
       when :IDENT
         case @token.value
@@ -3733,6 +3775,8 @@ module Crystal
           raise "unterminated tuple literal", unclosed.location
         when :call
           raise "unterminated call", unclosed.location
+        when :attribute
+          raise "unterminated attribute", unclosed.location
         end
       end
 

@@ -1176,8 +1176,28 @@ module Crystal
     end
 
     def visit(node : Attribute)
-      @str << "@:"
+      @str << "@["
       @str << node.name
+      if !node.args.empty? || node.named_args
+        @str << "("
+        printed_arg = false
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+          printed_arg = true
+        end
+        if named_args = node.named_args
+          @str << ", " if printed_arg
+          named_args.each do |named_arg|
+            @str << named_arg.name
+            @str << ": "
+            named_arg.value.accept self
+            printed_arg = true
+          end
+        end
+        @str << ")"
+      end
+      @str << "]"
       false
     end
 

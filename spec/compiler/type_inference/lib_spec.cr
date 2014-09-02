@@ -208,4 +208,85 @@ describe "Type inference: lib" do
       C.foo *t
       )) { float64 }
   end
+
+  it "errors if applying wrong attribute" do
+    assert_error %(
+      @[Bar]
+      lib Foo
+      end
+      ),
+      "illegal attribute for lib, valid attributes are: Link"
+  end
+
+  it "errors if missing link arguments" do
+    assert_error %(
+      @[Link]
+      lib Foo
+      end
+      ),
+      "missing link arguments: must at least specify a library name"
+  end
+
+  it "errors if first argument is not a string" do
+    assert_error %(
+      @[Link(1)]
+      lib Foo
+      end
+      ),
+      "'lib' link argument must be a String"
+  end
+
+  it "errors if second argument is not a string" do
+    assert_error %(
+      @[Link("foo", 1)]
+      lib Foo
+      end
+      ),
+      "'ldflags' link argument must be a String"
+  end
+
+  it "errors if third argument is not a bool" do
+    assert_error %(
+      @[Link("foo", "bar", 1)]
+      lib Foo
+      end
+      ),
+      "'static' link argument must be a Bool"
+  end
+
+  it "errors if too many link arguments" do
+    assert_error %(
+      @[Link("foo", "bar", true, false)]
+      lib Foo
+      end
+      ),
+      "wrong number of link arguments (4 for 1..3)"
+  end
+
+  it "errors if unknown named arg" do
+    assert_error %(
+      @[Link(boo: "bar")]
+      lib Foo
+      end
+      ),
+      "unkonwn link argument: 'boo' (valid arguments are 'lib', 'ldflags' and 'static')"
+  end
+
+  it "errors if lib already specified with positional argument" do
+    assert_error %(
+      @[Link("foo", lib: "bar")]
+      lib Foo
+      end
+      ),
+      "'lib' link argument already specified"
+  end
+
+  it "errors if lib named arg is not a String" do
+    assert_error %(
+      @[Link(lib: 1)]
+      lib Foo
+      end
+      ),
+      "'lib' link argument must be a String"
+  end
 end

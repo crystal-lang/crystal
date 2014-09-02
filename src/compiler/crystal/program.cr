@@ -325,8 +325,12 @@ module Crystal
     def library_names
       libs = [] of String
       @types.each do |name, type|
-        if type.is_a?(LibType) && (libname = type.libname)
-          libs << libname
+        next unless type.is_a?(LibType)
+
+        type.link_attributes.try &.each do |attr|
+          if libname = attr.lib
+            libs << libname
+          end
         end
       end
       libs
