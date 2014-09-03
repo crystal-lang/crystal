@@ -4,7 +4,7 @@ struct LLVM::TargetMachine
 
   def data_layout
     layout = LibLLVM.get_target_machine_data(self)
-    layout ? TargetDataLayout.new(layout) : nil
+    layout ? TargetData.new(layout) : nil
   end
 
   def triple

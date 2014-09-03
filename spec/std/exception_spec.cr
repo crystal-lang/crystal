@@ -8,10 +8,13 @@ describe "Exception" do
     end
   end
 
-  it "allocates enough space for backtrace frames" do
+  pending "allocates enough space for backtrace frames" do
     begin
       ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName.foo
     rescue ex
+      ex.backtrace.each do |bt|
+        puts bt
+      end
       ex.backtrace.any? {|x| x.includes? "ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName" }.should be_true
     end
   end

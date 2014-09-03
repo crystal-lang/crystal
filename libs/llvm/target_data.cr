@@ -1,4 +1,4 @@
-struct LLVM::TargetDataLayout
+struct LLVM::TargetData
   def initialize(@unwrap)
   end
 

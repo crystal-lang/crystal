@@ -35,6 +35,13 @@ struct LLVM::Module
     end
   end
 
+  def print_to_file(filename)
+    if LibLLVM.print_module_to_file(self, filename, out error_msg) != 0
+      raise String.new(error_msg)
+    end
+    self
+  end
+
   def new_function_pass_manager
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end

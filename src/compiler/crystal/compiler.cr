@@ -13,10 +13,8 @@ module Crystal
     DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
     getter config
-    getter llc
     getter opt
     getter clang
-    getter llvm_dis
     getter dump_ll
     getter debug
     property release
@@ -50,10 +48,8 @@ module Crystal
       @verbose = false
 
       @config = LLVMConfig.new
-      @llc = @config.bin "llc"
       @opt = @config.bin "opt"
       @clang = @config.bin "clang"
-      @llvm_dis = @config.bin "llvm-dis"
 
       check_clang_or_gcc
     end
@@ -367,6 +363,9 @@ module Crystal
 
     def optimize(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
+      if data_layout = target_machine.data_layout
+        fun_pass_manager.add_target_data data_layout
+      end
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
 
@@ -376,6 +375,9 @@ module Crystal
     def module_pass_manager
       @module_pass_manager ||= begin
         mod_pass_manager = LLVM::ModulePassManager.new
+        if data_layout = target_machine.data_layout
+          mod_pass_manager.add_target_data data_layout
+        end
         pass_manager_builder.populate mod_pass_manager
         mod_pass_manager
       end
@@ -514,23 +516,13 @@ module Crystal
         if must_compile
           File.rename(bc_name_new, bc_name)
           if compiler.release
-            # compiler.optimize @llvm_mod
-            system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
-            system "#{compiler.llc} #{bc_name_opt} -o #{s_name} #{compiler.llc_flags}"
-            system "#{compiler.clang} -c #{s_name} -o #{o_name}"
-          elsif compiler.uses_gcc
-            system "#{compiler.llc} #{bc_name} -filetype=obj -o #{o_name} #{compiler.llc_flags}"
-          else
-            compiler.target_machine.emit_obj_to_file @llvm_mod, o_name
+            compiler.optimize @llvm_mod
           end
+          compiler.target_machine.emit_obj_to_file @llvm_mod, o_name
         end
 
         if compiler.dump_ll
-          if compiler.release
-            system "#{compiler.llvm_dis} #{bc_name_opt} -o #{ll_name}"
-          else
-            system "#{compiler.llvm_dis} #{bc_name} -o #{ll_name}"
-          end
+          llvm_mod.print_to_file ll_name
         end
       end
 
