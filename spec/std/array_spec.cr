@@ -601,7 +601,7 @@ describe "Array" do
 
     describe "when no block is provided" do
       describe "and the arrays have different typed elements" do
-        it "returns a tuple of paired elements" do
+        it "returns an array of paired elements (tuples)" do
           a, b = [1, 2, 3], ["a", "b", "c"]
           r = a.zip(b)
           r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
