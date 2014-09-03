@@ -12,14 +12,11 @@ module Crystal
     DataLayout32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
     DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
-    getter config
-    getter clang
     getter dump_ll
     getter debug
     property release
     getter target_flags_changed
     getter cross_compile
-    getter uses_gcc
     getter verbose
     getter! output_dir
     property output_filename
@@ -43,26 +40,7 @@ module Crystal
       @n_threads = 8.to_i32
       @browser = false
       @single_module = false
-      @uses_gcc = false
       @verbose = false
-
-      @config = LLVMConfig.new
-      @clang = @config.bin "clang"
-
-      check_clang_or_gcc
-    end
-
-    def check_clang_or_gcc
-      unless File.exists?(@clang)
-        clang = Program.exec "which gcc"
-        if clang
-          @clang = clang
-          @uses_gcc = true
-        else
-          puts "Could not find a C compiler. Install clang (3.3) or gcc."
-          exit 1
-        end
-      end
     end
 
     def process_options(options = ARGV)
@@ -271,7 +249,7 @@ module Crystal
 
           target_machine.emit_obj_to_file llvm_mod, o_name
 
-          puts "clang #{o_name} -o #{output_filename} #{lib_flags(program)}"
+          puts "cc #{o_name} -o #{output_filename} #{lib_flags(program)}"
         else
           multithreaded = LLVM.start_multithreaded
 
@@ -289,7 +267,7 @@ module Crystal
             @target_flags_changed = previous_target_flags != current_target_flags
           end
 
-          msg = multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
+          msg = multithreaded ? "Codegen (bc+obj)" : "Codegen (obj)"
           target_triple = target_machine.triple
 
           jobs_count = 0
@@ -322,7 +300,7 @@ module Crystal
           end
 
           timing("Codegen (clang)") do
-            system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
+            system "cc -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
           end
 
           File.open(target_flags_filename, "w") do |file|
@@ -445,7 +423,8 @@ module Crystal
             if libname =~ /^`(.*)`$/
               cmd = $1
               if @cross_compile
-                flags << " `#{cmd} | tr '\\n' ' '`"
+                flags << " "
+                flags << libname
               else
                 cmdout = system2(cmd)
                 if $exit == 0
