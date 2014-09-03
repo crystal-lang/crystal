@@ -11,7 +11,7 @@ module Crystal
     def initialize(@program)
       @indents = [] of Bool
       @printed = Set(Type).new
-      @llvm_typer = LLVMTyper.new
+      @llvm_typer = LLVMTyper.new(@program)
     end
 
     def execute

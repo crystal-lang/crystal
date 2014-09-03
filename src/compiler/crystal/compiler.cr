@@ -13,13 +13,11 @@ module Crystal
     DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
     getter config
-    getter opt
     getter clang
     getter dump_ll
     getter debug
     property release
-    getter llc_flags
-    getter llc_flags_changed
+    getter target_flags_changed
     getter cross_compile
     getter uses_gcc
     getter verbose
@@ -36,10 +34,11 @@ module Crystal
       @debug = false
       @release = false
       @output_filename = nil
-      @llc_flags = nil
       @command = nil
       @cross_compile = nil
-      @llc_flags_changed = true
+      @target_triple = nil
+      @mcpu = nil
+      @target_flags_changed = true
       @prelude = "prelude"
       @n_threads = 8.to_i32
       @browser = false
@@ -48,7 +47,6 @@ module Crystal
       @verbose = false
 
       @config = LLVMConfig.new
-      @opt = @config.bin "opt"
       @clang = @config.bin "clang"
 
       check_clang_or_gcc
@@ -127,8 +125,8 @@ module Crystal
         opts.on("--ll", "Dump ll to .crystal directory") do
           @dump_ll = true
         end
-        opts.on("--llc ", "Additional flags to pass to llc") do |llc_flags|
-          @llc_flags = llc_flags
+        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
+          @mcpu = cpu
         end
         opts.on("--no-build", "Disable build output") do
           @no_build = true
@@ -156,6 +154,9 @@ module Crystal
         end
         opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
           @n_threads = n_threads.to_i
+        end
+        opts.on("--target TRIPLE", "Target triple") do |triple|
+          @target_triple = triple
         end
         opts.on("-v", "--version", "Print Crystal version") do
           puts "Crystal #{Crystal.version_string}"
@@ -190,7 +191,7 @@ module Crystal
       end
 
       begin
-        program = Program.new
+        program = Program.new(target_machine)
         if cross_compile = @cross_compile
           program.flags = cross_compile
         end
@@ -255,19 +256,22 @@ module Crystal
         object_names = units.map &.object_name
 
         if @cross_compile
-          compilation_unit = units.first
-          compilation_unit_bc_name = "#{output_filename}.bc"
-          compilation_unit_s_name = "#{output_filename}.s"
+          llvm_mod = units.first.llvm_mod
+          o_name = "#{output_filename}.o"
 
           if program.has_flag?("x86_64")
-            compilation_unit.llvm_mod.data_layout = DataLayout64
+            llvm_mod.data_layout = DataLayout64
           else
-            compilation_unit.llvm_mod.data_layout = DataLayout32
+            llvm_mod.data_layout = DataLayout32
           end
 
-          compilation_unit.write_bitcode compilation_unit_bc_name
-          system "#{opt} #{compilation_unit_bc_name} -O3 -o #{compilation_unit_bc_name}" if @release
-          puts "llc #{compilation_unit_bc_name} #{llc_flags} -o #{compilation_unit_s_name} && clang #{compilation_unit_s_name} -o #{output_filename} #{lib_flags(program)}"
+          if @release
+            optimize llvm_mod
+          end
+
+          target_machine.emit_obj_to_file llvm_mod, o_name
+
+          puts "clang #{o_name} -o #{output_filename} #{lib_flags(program)}"
         else
           multithreaded = LLVM.start_multithreaded
 
@@ -278,19 +282,12 @@ module Crystal
             end
           end
 
-          llc_flags_filename = "#{output_dir}/llc_flags"
-          if File.exists?(llc_flags_filename)
-            previous_llc_flags = File.read(llc_flags_filename).strip
-            if previous_llc_flags.empty?
-              llc_flags_changed = !!@llc_flags
-            else
-              llc_flags_changed = @llc_flags != previous_llc_flags
-            end
-          else
-            llc_flags_changed = !!@llc_flags
+          current_target_flags = "#{@target_triple}|#{@mcpu}"
+          target_flags_filename = "#{output_dir}/target_flags"
+          if File.exists?(target_flags_filename)
+            previous_target_flags = File.read(target_flags_filename).strip
+            @target_flags_changed = previous_target_flags != current_target_flags
           end
-
-          @llc_flags_changed = llc_flags_changed
 
           msg = multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
           target_triple = target_machine.triple
@@ -328,12 +325,8 @@ module Crystal
             system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
           end
 
-          if @llc_flags
-            File.open(llc_flags_filename, "w") do |file|
-              file.puts @llc_flags
-            end
-          else
-            system "rm -rf #{llc_flags_filename}"
+          File.open(target_flags_filename, "w") do |file|
+            file.puts current_target_flags
           end
 
           if @run
@@ -358,7 +351,10 @@ module Crystal
     end
 
     def target_machine
-      @target_machine ||= @release ? Crystal::TargetMachine::RELEASE : Crystal::TargetMachine::DEFAULT
+      @target_machine ||= begin
+        triple = @target_triple || TargetMachine::HOST_TARGET_TRIPLE
+        TargetMachine.create(triple, @mcpu || "", @release)
+      end
     end
 
     def optimize(llvm_mod)
@@ -499,14 +495,12 @@ module Crystal
         output_dir = compiler.output_dir
         bc_name = bc_name()
         bc_name_new = bc_name_new()
-        bc_name_opt = "#{output_dir}/#{@name}.opt.bc"
-        s_name = "#{output_dir}/#{@name}.s"
         o_name = object_name()
         ll_name = "#{output_dir}/#{@name}.ll"
 
         must_compile = true
 
-        if !compiler.llc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
+        if !compiler.target_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           if FileUtils.cmp(bc_name, bc_name_new)
             File.delete bc_name_new
             must_compile = false

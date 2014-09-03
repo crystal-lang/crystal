@@ -344,4 +344,5 @@ lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2>
   fun initialize_code_gen = LLVMInitializeCodeGen(r : PassRegistryRef)
   fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
   fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
+  fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
 end

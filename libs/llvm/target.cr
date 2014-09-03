@@ -1,4 +1,12 @@
 struct LLVM::Target
+  def self.each
+    target = LibLLVM.get_first_target
+    while target
+      yield Target.new target
+      target = LibLLVM.get_next_target target
+    end
+  end
+
   def self.first
     Target.new LibLLVM.get_first_target
   end

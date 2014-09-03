@@ -10,7 +10,7 @@ module Crystal
 
     alias TypeCache = Hash(Type, LibLLVM::TypeRef)
 
-    def initialize
+    def initialize(program)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
       @arg_cache = TypeCache.new
@@ -18,7 +18,7 @@ module Crystal
       @embedded_cache = TypeCache.new
       @embedded_c_cache = TypeCache.new
 
-      machine = Crystal::TargetMachine::DEFAULT
+      machine = program.target_machine
       @layout = machine.data_layout.not_nil!
       @landing_pad_type = LLVM.struct_type([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end

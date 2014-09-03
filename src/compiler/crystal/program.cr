@@ -11,10 +11,11 @@ module Crystal
 
     getter symbols
     getter global_vars
+    getter target_machine
     property vars
     property literal_expander
 
-    def initialize
+    def initialize(@target_machine = TargetMachine::DEFAULT)
       super(self, self, "main")
 
       @unions = {} of Array(Int32) => Type
@@ -328,7 +329,7 @@ module Crystal
         next unless type.is_a?(LibType)
 
         type.link_attributes.try &.each do |attr|
-          if libname = attr.lib
+          if (libname = attr.lib || attr.ldflags)
             libs << libname
           end
         end

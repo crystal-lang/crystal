@@ -3,25 +3,19 @@ require "../program"
 
 module Crystal
   module TargetMachine
-    TARGET_TRIPLE = guess_target_triple
-    DEFAULT = default_target_machine
-    RELEASE = release_target_machine
+    HOST_TARGET_TRIPLE = guess_host_target_triple
+    DEFAULT = create(HOST_TARGET_TRIPLE, false)
 
-    private def self.default_target_machine
+    def self.create(target_triple, cpu, release)
       LLVM.init_x86
 
-      target = LLVM::Target.first
-      target.create_target_machine(TARGET_TRIPLE, opt_level: LibLLVM::CodeGenOptLevel::None).not_nil!
-    end
-
-    private def self.release_target_machine
-      LLVM.init_x86
+      opt_level = release ? LibLLVM::CodeGenOptLevel::Aggressive : LibLLVM::CodeGenOptLevel::None
 
       target = LLVM::Target.first
-      target.create_target_machine(TARGET_TRIPLE, opt_level: LibLLVM::CodeGenOptLevel::Aggressive).not_nil!
+      target.create_target_machine(target_triple, cpu: cpu, opt_level: opt_level).not_nil!
     end
 
-    private def self.guess_target_triple
+    private def self.guess_host_target_triple
       # Some uname -m -s -r samples:
       #
       #   Linux 3.15.3-tinycore64 x86_64
