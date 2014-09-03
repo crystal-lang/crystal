@@ -35,6 +35,10 @@ struct LLVM::Module
     end
   end
 
+  def new_function_pass_manager
+    FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
+  end
+
   def to_unsafe
     @unwrap
   end

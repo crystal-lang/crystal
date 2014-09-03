@@ -23,4 +23,13 @@ struct LLVM::FunctionCollection
     func = LibLLVM.get_named_function(@mod, name)
     func ? Function.new(func) : nil
   end
+
+  def each
+    f = LibLLVM.get_first_function(@mod)
+    while f
+      yield LLVM::Function.new f
+      f = LibLLVM.get_next_function(f)
+    end
+    self
+  end
 end

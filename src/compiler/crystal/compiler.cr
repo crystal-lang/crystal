@@ -282,8 +282,6 @@ module Crystal
             end
           end
 
-          mutex = Mutex.new
-
           llc_flags_filename = "#{output_dir}/llc_flags"
           if File.exists?(llc_flags_filename)
             previous_llc_flags = File.read(llc_flags_filename).strip
@@ -365,6 +363,35 @@ module Crystal
 
     def target_machine
       @target_machine ||= @release ? Crystal::TargetMachine::RELEASE : Crystal::TargetMachine::DEFAULT
+    end
+
+    def optimize(llvm_mod)
+      fun_pass_manager = llvm_mod.new_function_pass_manager
+      pass_manager_builder.populate fun_pass_manager
+      fun_pass_manager.run llvm_mod
+
+      module_pass_manager.run llvm_mod
+    end
+
+    def module_pass_manager
+      @module_pass_manager ||= begin
+        mod_pass_manager = LLVM::ModulePassManager.new
+        pass_manager_builder.populate mod_pass_manager
+        mod_pass_manager
+      end
+    end
+
+    def pass_manager_builder
+      @pass_manager_builder ||= begin
+        registry = LLVM::PassRegistry.instance
+        registry.initialize_all
+
+        builder = LLVM::PassManagerBuilder.new
+        builder.opt_level = 3
+        builder.size_level = 0
+        builder.use_inliner_with_threshold = 275
+        builder
+      end
     end
 
     def open_browser(node)
@@ -487,6 +514,7 @@ module Crystal
         if must_compile
           File.rename(bc_name_new, bc_name)
           if compiler.release
+            # compiler.optimize @llvm_mod
             system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
             system "#{compiler.llc} #{bc_name_opt} -o #{s_name} #{compiler.llc_flags}"
             system "#{compiler.clang} -c #{s_name} -o #{o_name}"
