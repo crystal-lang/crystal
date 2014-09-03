@@ -590,6 +590,26 @@ describe "Array" do
     end
   end
 
+  describe "zip" do
+    describe "when a block is provided" do
+      it "yields pairs of self's elements and passed array" do
+        a, b, r = [1, 2, 3], [4, 5, 6], ""
+        a.zip(b) { |x, y| r += "#{x}:#{y}," }
+        r.should eq("1:4,2:5,3:6,")
+      end
+    end
+
+    describe "when no block is provided" do
+      describe "and the arrays have different typed elements" do
+        it "returns a tuple of paired elements" do
+          a, b = [1, 2, 3], ["a", "b", "c"]
+          r = a.zip(b)
+          r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
+        end
+      end
+    end
+  end
+
   describe "swap" do
     it "swaps" do
       a = [1, 2, 3]
