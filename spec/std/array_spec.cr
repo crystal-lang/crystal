@@ -590,6 +590,20 @@ describe "Array" do
     end
   end
 
+  describe "zip" do
+    it "yields pairs of self's elements with those of the passed array, when a block is given" do
+      a, b, r = [1, 2, 3], [4, 5, 6], ""
+      a.zip(b) { |x, y| r += "#{x}:#{y}," }
+      r.should eq("1:4,2:5,3:6,")
+    end
+
+    it "returns an array of paired elements, when no block is given" do
+      a, b = [1, 2, 3], [4, 5, 6]
+      r = a.zip(b)
+      r.should eq([[1, 4], [2, 5], [3, 6]])
+    end
+  end
+
   describe "swap" do
     it "swaps" do
       a = [1, 2, 3]

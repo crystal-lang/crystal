@@ -472,6 +472,12 @@ class Array(T)
     end
   end
 
+  def zip(other : Array)
+    pairs = [] of Array(T)
+    zip(other) { |x, y| pairs << [x, y] }
+    pairs
+  end
+
   def swap(index0, index1)
     index0 += length if index0 < 0
     index1 += length if index1 < 0
