@@ -1,5 +1,6 @@
 ## Next
 
+* Fixed [#193](https://github.com/manastech/crystal/issues/193): allow initializing an enum value with another's one.
 * The `record` macro is now variadic, so instead of `record Vec3, [x, y, z]` write `record Vec3, x, y, z`.
 * The `def_equals`, `def_hash` and `def_equals_and_hash` macros are now variadic.
 * The `property`, `getter` and `setter` macros are now variadic.
@@ -16,6 +17,7 @@
 * Allow passing splats to C functions
 * A C type can now be declared like `type Name = Type` (`type Name : Type` will be deprecated).
 * Now a C struct/union type can be created with named arguments.
+* New attributes syntax: `@[Attr(...)`] instead of `@:Attr`. The old syntax will be deprecated in a future release.
 
 ## 0.4.3 (2014-08-14)
 
