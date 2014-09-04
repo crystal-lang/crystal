@@ -740,8 +740,10 @@ module Crystal
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
-      when :GLOBAL_MATCH
-        node_and_next_token Call.new(Call.new(Global.new("$~"), "not_nil!"), "[]", [NumberLiteral.new(@token.value.to_s)] of ASTNode)
+      when :GLOBAL_MATCH_DATA
+        node_and_next_token Call.new(Path.new("MatchData", global: true), "last")
+      when :GLOBAL_MATCH_DATA_INDEX
+        node_and_next_token Call.new(Call.new(Path.new("MatchData", global: true), "last"), "[]", [NumberLiteral.new(@token.value.to_s)] of ASTNode)
       when :IDENT
         case @token.value
         when :begin
@@ -2720,7 +2722,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH_DATA, :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
         # Nothing
       when :"*"
         unless current_char.ident_start?

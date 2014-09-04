@@ -113,9 +113,9 @@ def it_lexes_symbols(symbols)
   end
 end
 
-def it_lexes_global_match(globals)
+def it_lexes_global_match_data_index(globals)
   globals.each do |global|
-    it_lexes global, :GLOBAL_MATCH, global[1, global.length - 1].to_i
+    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.length - 1].to_i
   end
 end
 
@@ -203,9 +203,11 @@ describe "Lexer" do
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
-  it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123", "$~"]
+  it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\""]
-  it_lexes_global_match ["$1", "$10"]
+  it_lexes_global_match_data_index ["$1", "$10"]
+
+  it_lexes "$~", :GLOBAL_MATCH_DATA
 
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"

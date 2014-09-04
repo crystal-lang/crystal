@@ -25,7 +25,7 @@ class HTTP::Request
   def self.from_io(io)
     request_line = io.gets.not_nil!
     request_line =~ /\A(\w+)\s([^\s]+)\s(HTTP\/\d\.\d)\r?\n\Z/
-    method, path, http_version = $1, $2, $3
+    method, path, http_version = MatchData.last[1], MatchData.last[2], MatchData.last[3]
 
     HTTP.parse_headers_and_body(io) do |headers, body|
       return new method, path, headers, body

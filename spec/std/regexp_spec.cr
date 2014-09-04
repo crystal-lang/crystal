@@ -4,47 +4,47 @@ require "spec"
 describe "Regex" do
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
-    $~.not_nil!.length.should eq(2)
-    $1.should eq("oo")
-    $2.should eq("ba")
+    MatchData.last.length.should eq(2)
+    MatchData.last[1].should eq("oo")
+    MatchData.last[2].should eq("ba")
   end
 
   it "matches with === and captures" do
     "foo" =~ /foo/
     (/f(o+)(bar?)/ === "fooba").should be_true
-    $~.not_nil!.length.should eq(2)
-    $1.should eq("oo")
-    $2.should eq("ba")
+    MatchData.last.length.should eq(2)
+    MatchData.last[1].should eq("oo")
+    MatchData.last[2].should eq("ba")
   end
 
   it "raises if outside match range with []" do
     "foo" =~ /foo/
     expect_raises IndexOutOfBounds do
-      $1
+      MatchData.last[1]
     end
   end
 
   it "raises if outside match range with begin" do
     "foo" =~ /foo/
     expect_raises IndexOutOfBounds do
-      $1
+      MatchData.last[1]
     end
   end
 
   it "capture named group" do
     ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-    $~.not_nil!["g1"].should eq("oo")
-    $~.not_nil!["g2"].should eq("ba")
+    MatchData.last["g1"].should eq("oo")
+    MatchData.last["g2"].should eq("ba")
   end
 
   it "capture empty group" do
     ("foo" =~ /(?<g1>.*)foo/).should eq(0)
-    $~.not_nil!["g1"].should eq("")
+    MatchData.last["g1"].should eq("")
   end
 
   it "raises exception when named group doesn't exist" do
     ("foo" =~ /foo/).should eq(0)
-    expect_raises ArgumentError  { $~.not_nil!["group"] }
+    expect_raises ArgumentError  { MatchData.last["group"] }
   end
 
   it "matches multiline" do

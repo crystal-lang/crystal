@@ -49,4 +49,15 @@ class MatchData
   private def check_index_out_of_bounds(index)
     raise IndexOutOfBounds.new if index > @length
   end
+
+  def self.last=(@@last : MatchData?)
+  end
+
+  def self.last?
+    @@last
+  end
+
+  def self.last
+    last?.not_nil!
+  end
 end

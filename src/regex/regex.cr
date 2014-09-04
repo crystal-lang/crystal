@@ -20,9 +20,9 @@ class Regex
     ovector = Pointer(Int32).malloc(ovector_size * 4)
     ret = PCRE.exec(@re, nil, str, str.bytesize, pos, options, ovector, ovector_size)
     if ret > 0
-      $~ = MatchData.new(self, @re, str, pos, ovector, @captures)
+      MatchData.last = MatchData.new(self, @re, str, pos, ovector, @captures)
     else
-      nil
+      MatchData.last = nil
     end
   end
 

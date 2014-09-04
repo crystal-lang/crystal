@@ -482,15 +482,14 @@ module Crystal
         next_char
         if current_char == '~'
           next_char
-          @token.type = :GLOBAL
-          @token.value = "$~"
+          @token.type = :GLOBAL_MATCH_DATA
         elsif current_char.digit?
           number = current_char - '0'
           while (char = next_char).digit?
             number *= 10
             number += char - '0'
           end
-          @token.type = :GLOBAL_MATCH
+          @token.type = :GLOBAL_MATCH_DATA_INDEX
           @token.value = number
         elsif current_char.ident_start?
           while next_char.ident_part?
