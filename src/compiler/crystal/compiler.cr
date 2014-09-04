@@ -11,6 +11,7 @@ module Crystal
 
     DataLayout32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
     DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+    LIBRARY_PATH = ["/usr/lib", "/usr/local/lib"]
 
     getter dump_ll
     getter debug
@@ -424,8 +425,10 @@ module Crystal
           end
 
           if libname = attr.lib
-            if libflags = pkg_config_flags(libname)
+            if libflags = pkg_config_flags(libname, attr.static?)
               flags << " " << libflags
+            elsif attr.static? && (static_lib = find_static_lib(libname))
+              flags << " " << static_lib
             else
               flags << " -l" << libname
             end
@@ -438,10 +441,32 @@ module Crystal
       end
     end
 
-    def pkg_config_flags(libname)
+    def pkg_config_flags(libname, static)
       if ::system("pkg-config #{libname}") == 0
-        system2("pkg-config #{libname} --libs").join ' '
+        if static
+          flags = [] of String
+          system2("pkg-config #{libname} --libs --static").first.split.each do |cfg|
+            if cfg.starts_with?("-L")
+              LIBRARY_PATH << cfg[2 .. -1]
+            elsif cfg.starts_with?("-l")
+              flags << (find_static_lib(cfg[2 .. -1]) || cfg)
+            else
+              flags << cfg
+            end
+          end
+          flags.join " "
+        else
+          system2("pkg-config #{libname} --libs").first
+        end
       end
+    end
+
+    def find_static_lib(libname)
+      LIBRARY_PATH.each do |libdir|
+        static_lib = "#{libdir}/lib#{libname}.a"
+        return static_lib if File.exists?(static_lib)
+      end
+      nil
     end
 
     class CompilationUnit
