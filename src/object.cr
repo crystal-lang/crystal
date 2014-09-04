@@ -85,6 +85,15 @@ class Object
     {% end %}
   end
 
+  macro getter?(*names)
+    {% for name in names %}
+      def {{name.id}}?
+        @{{name.id}}
+      end
+    {% end %}
+  end
+
+
   macro setter(*names)
     {% for name in names %}
       def {{name.id}}=(@{{name.id}})
@@ -104,6 +113,14 @@ class Object
     # TODO: use argify
     {% for name in names %}
       getter! {{name}}
+      setter {{name}}
+    {% end %}
+  end
+
+  macro property?(*names)
+    # TODO: use argify
+    {% for name in names %}
+      getter? {{name}}
       setter {{name}}
     {% end %}
   end
