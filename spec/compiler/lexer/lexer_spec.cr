@@ -207,7 +207,8 @@ describe "Lexer" do
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\""]
   it_lexes_global_match_data_index ["$1", "$10"]
 
-  it_lexes "$~", :GLOBAL_MATCH_DATA
+  it_lexes "$~", :"$~"
+  it_lexes "$?", :"$?"
 
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"

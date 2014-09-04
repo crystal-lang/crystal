@@ -480,10 +480,14 @@ module Crystal
       when '$'
         start = current_pos
         next_char
-        if current_char == '~'
+        case current_char
+        when '~'
           next_char
-          @token.type = :GLOBAL_MATCH_DATA
-        elsif current_char.digit?
+          @token.type = :"$~"
+        when '?'
+          next_char
+          @token.type = :"$?"
+        when .digit?
           number = current_char - '0'
           while (char = next_char).digit?
             number *= 10
@@ -491,7 +495,7 @@ module Crystal
           end
           @token.type = :GLOBAL_MATCH_DATA_INDEX
           @token.value = number
-        elsif current_char.ident_start?
+        when .ident_start?
           while next_char.ident_part?
             # Nothing to do
           end

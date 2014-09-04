@@ -39,6 +39,17 @@ struct Process::Status
 
   def initialize(@pid)
   end
+
+  def self.last=(@@last : Status?)
+  end
+
+  def self.last?
+    @@last
+  end
+
+  def self.last
+    last?.not_nil!
+  end
 end
 
 def exec(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
