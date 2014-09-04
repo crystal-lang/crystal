@@ -156,7 +156,7 @@ class File < FileDescriptorIO
     end
   end
 
-  def self.open(filename, mode)
+  def self.open(filename, mode = "r")
     file = File.new filename, mode
     begin
       yield file
