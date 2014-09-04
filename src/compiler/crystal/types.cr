@@ -218,7 +218,7 @@ module Crystal
     end
 
     def types
-      raise "Bug: #{self} doesn't implement types"
+      {} of String => Type
     end
 
     def parents
@@ -2251,10 +2251,6 @@ module Crystal
 
     def virtual_type
       instance_type.virtual_type.metaclass
-    end
-
-    def types
-      raise "MetaclassType doesn't have types"
     end
 
     def to_s(io)
