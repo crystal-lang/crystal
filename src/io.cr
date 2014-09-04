@@ -39,6 +39,7 @@ lib C
   fun dup2(fd : Int32, fd2 : Int32) : Int32
   fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SizeT
   fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT)
+  fun pipe(filedes : Int32[2]*) : Int32
 
   # In fact lseek's offset is off_t, but it matches the definition of size_t
   fun lseek(fd : Int32, offset : C::SizeT, whence : Int32) : Int32
@@ -58,6 +59,22 @@ module IO
 
   def write(slice : Slice(UInt8))
     write slice, slice.length
+  end
+
+  def self.pipe
+    if C.pipe(out pipe_fds) != 0
+      raise Errno.new("Could not create pipe")
+    end
+
+    {FileDescriptorIO.new(pipe_fds[0]), FileDescriptorIO.new(pipe_fds[1])}
+  end
+
+  def reopen(other)
+    if C.dup2(self.fd, other.fd) == -1
+      raise Errno.new("Could not reopen file descriptor")
+    end
+
+    other
   end
 
   # Writes the given object into this IO.
