@@ -274,7 +274,7 @@ describe "Lexer" do
   it "lexes __LINE__" do
     lexer = Lexer.new "__LINE__"
     token = lexer.next_token
-    token.type.should eq(:INT)
+    token.type.should eq(:NUMBER)
     token.value.should eq(1)
   end
 

@@ -843,7 +843,8 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :INT
+                @token.type = :NUMBER
+                @token.number_kind = :i32
                 @token.value = @line_number
                 return @token
               end

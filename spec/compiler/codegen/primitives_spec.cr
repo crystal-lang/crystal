@@ -63,4 +63,11 @@ describe "Code gen: primitives" do
       a.foo.to_i
       ").to_i.should eq(1)
   end
+
+  it "codegens __LINE__" do
+    run("
+
+      __LINE__
+      ").to_i.should eq(3)
+  end
 end
