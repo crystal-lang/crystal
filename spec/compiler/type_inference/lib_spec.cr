@@ -254,22 +254,31 @@ describe "Type inference: lib" do
       "'static' link argument must be a Bool"
   end
 
-  it "errors if too many link arguments" do
+  it "errors if foruth argument is not a bool" do
     assert_error %(
-      @[Link("foo", "bar", true, false)]
+      @[Link("foo", "bar", true, 1)]
       lib Foo
       end
       ),
-      "wrong number of link arguments (4 for 1..3)"
+      "'framework' link argument must be a String"
   end
 
-  it "errors if unknown named arg" do
+  it "errors if too many link arguments" do
+    assert_error %(
+      @[Link("foo", "bar", true, "Cocoa", 1)]
+      lib Foo
+      end
+      ),
+      "wrong number of link arguments (5 for 1..4)"
+  end
+
+it "errors if unknown named arg" do
     assert_error %(
       @[Link(boo: "bar")]
       lib Foo
       end
       ),
-      "unkonwn link argument: 'boo' (valid arguments are 'lib', 'ldflags' and 'static')"
+      "unkonwn link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do

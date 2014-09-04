@@ -426,6 +426,10 @@ module Crystal
           if libname = attr.lib
             flags << " -l" << libname
           end
+
+          if framework = attr.framework
+            flags << " -framework " << framework
+          end
         end
       end
     end

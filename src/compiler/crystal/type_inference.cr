@@ -1436,6 +1436,7 @@ module Crystal
         lib_name = nil
         lib_ldflags = nil
         lib_static = false
+        lib_framework = nil
         count = 0
 
         args.each do |arg|
@@ -1455,8 +1456,13 @@ module Crystal
               arg.raise "'static' link argument must be a Bool"
             end
             lib_static = arg.value
+          when 3
+            unless arg.is_a?(StringLiteral)
+              arg.raise "'framework' link argument must be a String"
+            end
+            lib_framework = arg.value
           else
-            attr.raise "wrong number of link arguments (#{args.length} for 1..3)"
+            attr.raise "wrong number of link arguments (#{args.length} for 1..4)"
           end
 
           count += 1
@@ -1490,12 +1496,20 @@ module Crystal
               named_arg.raise "'static' link argument must be a Bool"
             end
             lib_static = value.value
+          when "framework"
+            if count > 3
+              named_arg.raise "'framework' link argument already specified"
+            end
+            unless value.is_a?(StringLiteral)
+              named_arg.raise "'framework' link argument must be a String"
+            end
+            lib_framework = value.value
           else
-            named_arg.raise "unkonwn link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags' and 'static')"
+            named_arg.raise "unkonwn link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
           end
         end
 
-        LinkAttribute.new(lib_name, lib_ldflags, lib_static)
+        LinkAttribute.new(lib_name, lib_ldflags, lib_static, lib_framework)
       end
     end
 
