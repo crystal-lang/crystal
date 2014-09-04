@@ -11,7 +11,6 @@ module Crystal
 
     DataLayout32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
     DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
-    LIBRARY_PATH = ["/usr/lib", "/usr/local/lib"]
 
     getter dump_ll
     getter debug
@@ -214,6 +213,8 @@ module Crystal
 
         return if @no_build
 
+        lib_flags = lib_flags(program)
+
         llvm_modules = timing("Codegen (crystal)") do
           program.build node, debug: @debug, single_module: @single_module || @release || @cross_compile
         end
@@ -250,7 +251,7 @@ module Crystal
 
           target_machine.emit_obj_to_file llvm_mod, o_name
 
-          puts "cc #{o_name} -o #{output_filename} #{lib_flags(program)}"
+          puts "cc #{o_name} -o #{output_filename} #{lib_flags}"
         else
           multithreaded = LLVM.start_multithreaded
 
@@ -301,7 +302,7 @@ module Crystal
           end
 
           timing("Codegen (clang)") do
-            system "cc -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
+            system "cc -o #{output_filename} #{object_names.join " "} #{lib_flags}"
           end
 
           File.open(target_flags_filename, "w") do |file|
@@ -417,6 +418,8 @@ module Crystal
     end
 
     def lib_flags(mod)
+      library_path = ["/usr/lib", "/usr/local/lib"]
+
       String.build do |flags|
         mod.link_attributes.reverse_each do |attr|
           if ldflags = attr.ldflags
@@ -425,9 +428,9 @@ module Crystal
           end
 
           if libname = attr.lib
-            if libflags = pkg_config_flags(libname, attr.static?)
+            if libflags = pkg_config_flags(libname, attr.static?, library_path)
               flags << " " << libflags
-            elsif attr.static? && (static_lib = find_static_lib(libname))
+            elsif attr.static? && (static_lib = find_static_lib(libname, library_path))
               flags << " " << static_lib
             else
               flags << " -l" << libname
@@ -441,15 +444,15 @@ module Crystal
       end
     end
 
-    def pkg_config_flags(libname, static)
+    def pkg_config_flags(libname, static, library_path)
       if ::system("pkg-config #{libname}") == 0
         if static
           flags = [] of String
           system2("pkg-config #{libname} --libs --static").first.split.each do |cfg|
             if cfg.starts_with?("-L")
-              LIBRARY_PATH << cfg[2 .. -1]
+              library_path << cfg[2 .. -1]
             elsif cfg.starts_with?("-l")
-              flags << (find_static_lib(cfg[2 .. -1]) || cfg)
+              flags << (find_static_lib(cfg[2 .. -1], library_path) || cfg)
             else
               flags << cfg
             end
@@ -461,8 +464,8 @@ module Crystal
       end
     end
 
-    def find_static_lib(libname)
-      LIBRARY_PATH.each do |libdir|
+    def find_static_lib(libname, library_path)
+      library_path.each do |libdir|
         static_lib = "#{libdir}/lib#{libname}.a"
         return static_lib if File.exists?(static_lib)
       end
