@@ -298,4 +298,14 @@ it "errors if unknown named arg" do
       ),
       "'lib' link argument must be a String"
   end
+
+  it "clears attributes after lib" do
+    assert_type(%(
+      @[Link("foo")]
+      lib Foo
+        fun foo
+      end
+      1
+      )) { int32 }
+  end
 end

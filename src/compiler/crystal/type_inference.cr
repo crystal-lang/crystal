@@ -1420,97 +1420,103 @@ module Crystal
       attributes = @attributes
       return unless attributes
 
-      attributes.map do |attr|
-        name = attr.name
-        args = attr.args
-        named_args = attr.named_args
-
-        if name != "Link"
-          attr.raise "illegal attribute for lib, valid attributes are: Link"
-        end
-
-        if args.empty? && !named_args
-          attr.raise "missing link arguments: must at least specify a library name"
-        end
-
-        lib_name = nil
-        lib_ldflags = nil
-        lib_static = false
-        lib_framework = nil
-        count = 0
-
-        args.each do |arg|
-          case count
-          when 0
-            unless arg.is_a?(StringLiteral)
-              arg.raise "'lib' link argument must be a String"
-            end
-            lib_name = arg.value
-          when 1
-            unless arg.is_a?(StringLiteral)
-              arg.raise "'ldflags' link argument must be a String"
-            end
-            lib_ldflags = arg.value
-          when 2
-            unless arg.is_a?(BoolLiteral)
-              arg.raise "'static' link argument must be a Bool"
-            end
-            lib_static = arg.value
-          when 3
-            unless arg.is_a?(StringLiteral)
-              arg.raise "'framework' link argument must be a String"
-            end
-            lib_framework = arg.value
-          else
-            attr.raise "wrong number of link arguments (#{args.length} for 1..4)"
-          end
-
-          count += 1
-        end
-
-        named_args.try &.each do |named_arg|
-          value = named_arg.value
-
-          case named_arg.name
-          when "lib"
-            if count > 0
-              named_arg.raise "'lib' link argument already specified"
-            end
-            unless value.is_a?(StringLiteral)
-              named_arg.raise "'lib' link argument must be a String"
-            end
-            lib_name = value.value
-          when "ldflags"
-            if count > 1
-              named_arg.raise "'ldflags' link argument already specified"
-            end
-            unless value.is_a?(StringLiteral)
-              named_arg.raise "'ldflags' link argument must be a String"
-            end
-            lib_ldflags = value.value
-          when "static"
-            if count > 2
-              named_arg.raise "'static' link argument already specified"
-            end
-            unless value.is_a?(BoolLiteral)
-              named_arg.raise "'static' link argument must be a Bool"
-            end
-            lib_static = value.value
-          when "framework"
-            if count > 3
-              named_arg.raise "'framework' link argument already specified"
-            end
-            unless value.is_a?(StringLiteral)
-              named_arg.raise "'framework' link argument must be a String"
-            end
-            lib_framework = value.value
-          else
-            named_arg.raise "unkonwn link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
-          end
-        end
-
-        LinkAttribute.new(lib_name, lib_ldflags, lib_static, lib_framework)
+      link_attributes = attributes.map do |attr|
+        link_attribute_from_node(attr)
       end
+      @attributes = nil
+      link_attributes
+    end
+
+    def link_attribute_from_node(attr)
+      name = attr.name
+      args = attr.args
+      named_args = attr.named_args
+
+      if name != "Link"
+        attr.raise "illegal attribute for lib, valid attributes are: Link"
+      end
+
+      if args.empty? && !named_args
+        attr.raise "missing link arguments: must at least specify a library name"
+      end
+
+      lib_name = nil
+      lib_ldflags = nil
+      lib_static = false
+      lib_framework = nil
+      count = 0
+
+      args.each do |arg|
+        case count
+        when 0
+          unless arg.is_a?(StringLiteral)
+            arg.raise "'lib' link argument must be a String"
+          end
+          lib_name = arg.value
+        when 1
+          unless arg.is_a?(StringLiteral)
+            arg.raise "'ldflags' link argument must be a String"
+          end
+          lib_ldflags = arg.value
+        when 2
+          unless arg.is_a?(BoolLiteral)
+            arg.raise "'static' link argument must be a Bool"
+          end
+          lib_static = arg.value
+        when 3
+          unless arg.is_a?(StringLiteral)
+            arg.raise "'framework' link argument must be a String"
+          end
+          lib_framework = arg.value
+        else
+          attr.raise "wrong number of link arguments (#{args.length} for 1..4)"
+        end
+
+        count += 1
+      end
+
+      named_args.try &.each do |named_arg|
+        value = named_arg.value
+
+        case named_arg.name
+        when "lib"
+          if count > 0
+            named_arg.raise "'lib' link argument already specified"
+          end
+          unless value.is_a?(StringLiteral)
+            named_arg.raise "'lib' link argument must be a String"
+          end
+          lib_name = value.value
+        when "ldflags"
+          if count > 1
+            named_arg.raise "'ldflags' link argument already specified"
+          end
+          unless value.is_a?(StringLiteral)
+            named_arg.raise "'ldflags' link argument must be a String"
+          end
+          lib_ldflags = value.value
+        when "static"
+          if count > 2
+            named_arg.raise "'static' link argument already specified"
+          end
+          unless value.is_a?(BoolLiteral)
+            named_arg.raise "'static' link argument must be a Bool"
+          end
+          lib_static = value.value
+        when "framework"
+          if count > 3
+            named_arg.raise "'framework' link argument already specified"
+          end
+          unless value.is_a?(StringLiteral)
+            named_arg.raise "'framework' link argument must be a String"
+          end
+          lib_framework = value.value
+        else
+          named_arg.raise "unkonwn link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+        end
+      end
+
+      LinkAttribute.new(lib_name, lib_ldflags, lib_static, lib_framework)
     end
 
     def visit(node : FunDef)
