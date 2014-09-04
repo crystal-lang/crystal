@@ -150,12 +150,11 @@ def exec(command, args = nil, output = nil : IO | Bool, input = nil : String | I
     end
   end
 
-  C.waitpid(pid, out exit_code, 0)
+  status.exit = Process.waitpid(pid)
 
   if output == true
     status.output = status_output.to_s
   end
 
-  status.exit = exit_code >> 8
   status
 end

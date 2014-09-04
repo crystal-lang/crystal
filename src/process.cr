@@ -59,6 +59,14 @@ module Process
     pid
   end
 
+  def waitpid(pid)
+    if C.waitpid(pid, out exit_code, 0) == -1
+      raise Errno.new("Error during waitpid")
+    end
+
+    exit_code >> 8
+  end
+
   record Tms, utime, stime, cutime, cstime
 
   def times
