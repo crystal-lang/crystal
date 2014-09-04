@@ -164,6 +164,18 @@ module Spec
     end
   end
 
+  class BeOkExpectation
+    def match(@value : T); end
+
+    def failure_message
+      "expected: #{@value.inspect} to be ok"
+    end
+
+    def negative_failure_message
+      "expected: #{@value.inspect} not to be ok"
+    end
+  end
+
   class CloseExpectation
     def initialize(@expected, @delta)
     end
@@ -217,6 +229,10 @@ end
 
 def be(value)
   Spec::BeExpectation.new value
+end
+
+def be_ok
+  Spec::BeOkExpectation.new
 end
 
 def be_true
