@@ -645,6 +645,7 @@ module Crystal
 
   class ClassVar < ASTNode
     property :name
+    property :attributes
 
     def initialize(@name)
     end

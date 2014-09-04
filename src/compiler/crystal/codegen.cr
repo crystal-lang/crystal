@@ -632,9 +632,9 @@ module Crystal
                 return false
               end
             when Global
-              get_global target.name, target.type
+              get_global target, target.name, target.type
             when ClassVar
-              get_global class_var_global_name(target), target.type
+              get_global target, class_var_global_name(target), target.type
             when Var
               # Can't assign void
               return if target.type.void?
@@ -656,13 +656,13 @@ module Crystal
       false
     end
 
-    def get_global(name, type)
+    def get_global(node, name, type)
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
 
         global_var = @mod.global_vars[name]?
-        thread_local = global_var.try &.has_attribute?("ThreadLocal")
+        thread_local = global_var.try(&.has_attribute?("ThreadLocal")) || node.has_attribute?("ThreadLocal")
 
         # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
@@ -715,15 +715,15 @@ module Crystal
     end
 
     def visit(node : Global)
-      read_global node.name.to_s, node.type
+      read_global node, node.name.to_s, node.type
     end
 
     def visit(node : ClassVar)
-      read_global class_var_global_name(node), node.type
+      read_global node, class_var_global_name(node), node.type
     end
 
-    def read_global(name, type)
-      @last = get_global name, type
+    def read_global(node, name, type)
+      @last = get_global node, name, type
       @last = to_lhs @last, type
     end
 

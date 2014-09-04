@@ -14,10 +14,12 @@ module Crystal
   end
 
   class TypeVisitor < Visitor
-    ValidGlobalAttributes = ["ThreadLocal"]
-    ValidExternalVarAttributes = ["ThreadLocal"]
-    ValidStructDefAttributes = ["Packed"]
-    ValidDefAttributes = ["AlwaysInline", "NoInline", "ReturnsTwice"]
+    ThreadLocalAttributes = %w(ThreadLocal)
+    ValidGlobalAttributes = ThreadLocalAttributes
+    ValidExternalVarAttributes = ThreadLocalAttributes
+    ValidClassVarAttributes = ThreadLocalAttributes
+    ValidStructDefAttributes = %w(Packed)
+    ValidDefAttributes = %w(AlwaysInline NoInline ReturnsTwice)
 
     getter mod
     property! scope
@@ -307,7 +309,11 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      node.bind_to lookup_class_var(node)
+      class_var = lookup_class_var(node)
+      check_valid_attributes class_var, ValidClassVarAttributes, "class variable"
+
+      node.attributes = class_var.attributes
+      node.bind_to class_var
     end
 
     def lookup_instance_var(node)
@@ -493,9 +499,12 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
+      var = lookup_class_var target, !!@typed_def
+      check_valid_attributes var, ValidClassVarAttributes, "class variable"
+
       value.accept self
 
-      var = lookup_class_var target, !!@typed_def
+      target.attributes = var.attributes
       target.bind_to var
 
       node.bind_to value

@@ -79,4 +79,24 @@ describe "Type inference: class var" do
       f.call
       ") { int32 }
   end
+
+  it "says illegal attribute for class var" do
+    assert_error %(
+      class Foo
+        @[Foo]
+        @@foo
+      end
+      ),
+      "illegal attribute"
+  end
+
+  it "says illegal attribute for class var assignment" do
+    assert_error %(
+      class Foo
+        @[Foo]
+        @@foo = 1
+      end
+      ),
+      "illegal attribute"
+  end
 end
