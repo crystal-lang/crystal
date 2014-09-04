@@ -323,30 +323,27 @@ module Crystal
       end
     end
 
-    def library_names
-      libs = [] of String
+    def link_attributes
+      attrs = [] of LinkAttribute
       @types.each do |name, type|
         next unless type.is_a?(LibType)
 
-        type.link_attributes.try &.each do |attr|
-          if (libname = attr.lib || attr.ldflags)
-            libs << libname
-          end
+        if link_attrs = type.link_attributes
+          attrs.concat link_attrs
         end
       end
-      libs
+      attrs
     end
 
     def load_libs
-      libs = library_names
-      if libs.length > 0
-        if has_flag?("darwin")
-          ext = "dylib"
-        else
-          ext = "so"
-        end
-        libs.each do |a_lib|
-          DL.dlopen "lib#{a_lib}.#{ext}"
+      if has_flag?("darwin")
+        ext = "dylib"
+      else
+        ext = "so"
+      end
+      link_attributes.each do |attr|
+        if libname = attr.lib
+          DL.dlopen "lib#{libname}.#{ext}"
         end
       end
     end

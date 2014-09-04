@@ -1954,18 +1954,6 @@ module Crystal
   end
 
   class LibType < ModuleType
-    class LinkAttribute
-      getter :lib
-      getter :ldflags
-
-      def initialize(@lib = nil, @ldflags = nil, @static = false)
-      end
-
-      def static?
-        @static
-      end
-    end
-
     getter :link_attributes
 
     def initialize(program, container, name, @link_attributes)

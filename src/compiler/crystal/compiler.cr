@@ -416,28 +416,15 @@ module Crystal
     end
 
     def lib_flags(mod)
-      libs = mod.library_names
       String.build do |flags|
-        if libs.length > 0
-          libs.reverse_each do |libname|
-            if libname =~ /^`(.*)`$/
-              cmd = $1
-              if @cross_compile
-                flags << " "
-                flags << libname
-              else
-                cmdout = system2(cmd)
-                if $exit == 0
-                  cmdout.each do |cmdoutline|
-                    flags << " #{cmdoutline}"
-                  end
-                else
-                  raise "Error executing command: #{cmd}"
-                end
-              end
-            else
-              flags << " -l" << libname
-            end
+        mod.link_attributes.reverse_each do |attr|
+          if ldflags = attr.ldflags
+            flags << " "
+            flags << ldflags
+          end
+
+          if libname = attr.lib
+            flags << " -l" << libname
           end
         end
       end
