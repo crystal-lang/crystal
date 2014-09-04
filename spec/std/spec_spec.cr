@@ -22,3 +22,29 @@ describe "Spec matchers" do
   end
 
 end
+
+describe "BeOkExpectation" do
+
+  describe "match" do
+    it "returns the value passed in" do
+      Spec::BeOkExpectation.new.match(42).should eq(42)
+    end
+  end
+
+  describe "failure_message" do
+    it "describes the reason for failure" do
+      exp = Spec::BeOkExpectation.new
+      exp.match("42")
+      exp.failure_message.should eq("expected: \"42\" to be ok")
+    end
+  end
+
+  describe "negative_failure_message" do
+    it "describes the reason for failure" do
+      exp = Spec::BeOkExpectation.new
+      exp.match("42")
+      exp.negative_failure_message.should eq("expected: \"42\" not to be ok")
+    end
+  end
+
+end
