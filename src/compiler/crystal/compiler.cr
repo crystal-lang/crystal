@@ -424,13 +424,23 @@ module Crystal
           end
 
           if libname = attr.lib
-            flags << " -l" << libname
+            if libflags = pkg_config_flags(libname)
+              flags << " " << libflags
+            else
+              flags << " -l" << libname
+            end
           end
 
           if framework = attr.framework
             flags << " -framework " << framework
           end
         end
+      end
+    end
+
+    def pkg_config_flags(libname)
+      if ::system("pkg-config #{libname}") == 0
+        system2("pkg-config #{libname} --libs").join ' '
       end
     end
 
