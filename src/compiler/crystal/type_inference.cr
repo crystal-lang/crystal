@@ -63,6 +63,7 @@ module Crystal
       @block_nest = 0
       @typeof_nest = 0
       @is_initialize = !!(typed_def && typed_def.name == "initialize")
+      @found_self_in_initialize_call = false
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
       @attributes  = nil
@@ -453,7 +454,7 @@ module Crystal
         simple_var.bind_to(target)
 
         used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
-        if used_ivars_in_calls_in_initialize.try(&.includes?(var_name)) || (@block_nest > 0 && !@vars.has_key?(var_name))
+        if @found_self_in_initialize_call || used_ivars_in_calls_in_initialize.try(&.includes?(var_name)) || (@block_nest > 0 && !@vars.has_key?(var_name))
           ivar = scope.lookup_instance_var(var_name)
           ivar.bind_to @mod.nil_var
         end
@@ -882,8 +883,10 @@ module Crystal
 
       node_obj = node.obj
       if !node_obj || (node_obj.is_a?(Var) && node_obj.name == "self")
-        ivars = gather_instance_vars_read node
-        if ivars
+        ivars, found_self = gather_instance_vars_read node
+        if found_self
+          @found_self_in_initialize_call = true
+        elsif ivars
           used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
           if used_ivars_in_calls_in_initialize
             @used_ivars_in_calls_in_initialize = used_ivars_in_calls_in_initialize | ivars
@@ -1017,8 +1020,11 @@ module Crystal
 
     class InstanceVarsCollector < Visitor
       getter ivars
+      getter found_self
 
       def initialize(@scope, @vars)
+        @found_self = false
+        @in_super = 0
       end
 
       def visit(node : InstanceVar)
@@ -1026,6 +1032,13 @@ module Crystal
           ivars = @ivars ||= Set(String).new
           ivars << node.name
         end
+      end
+
+      def visit(node : Var)
+        if @in_super == 0 && node.name == "self"
+          @found_self = true
+        end
+        false
       end
 
       def visit(node : Assign)
@@ -1047,7 +1060,17 @@ module Crystal
           end
         end
 
+        if node.name == "super"
+          @in_super += 1
+        end
+
         true
+      end
+
+      def end_visit(node : Call)
+        if node.name == "super"
+          @in_super -= 1
+        end
       end
 
       def visit(node : ASTNode)
@@ -1058,7 +1081,7 @@ module Crystal
     def gather_instance_vars_read(node)
       collector = InstanceVarsCollector.new(scope, @vars)
       node.accept collector
-      collector.ivars
+      {collector.ivars, collector.found_self}
     end
 
     def expand_macro(node)

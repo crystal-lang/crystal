@@ -68,6 +68,8 @@ module Crystal
     getter :modules
     getter :context
     getter :llvm_typer
+    getter :alloca_block
+    getter :entry_block
     property :last
 
     class LLVMVar
@@ -119,7 +121,6 @@ module Crystal
       @types_to_modules = {} of Type => LLVM::Module
 
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
-      @main_alloca_block = @alloca_block
 
       @in_lib = false
       @strings = {} of StringKey => LibLLVM::ValueRef
@@ -161,7 +162,7 @@ module Crystal
     end
 
     def wrap_builder(builder)
-      CrystalLLVMBuilder.new builder, self
+      CrystalLLVMBuilder.new builder, @mod.printf(@llvm_mod)
     end
 
     def define_symbol_table(llvm_mod)
@@ -203,10 +204,10 @@ module Crystal
 
       # If there are no instructions in the alloca block and the
       # const block, we just removed them (less noise)
-      if LLVM.first_instruction(@alloca_block)
-        br_block_chain [@alloca_block, @entry_block]
+      if LLVM.first_instruction(alloca_block)
+        br_block_chain({alloca_block, entry_block})
       else
-        LLVM.delete_basic_block(@alloca_block)
+        LLVM.delete_basic_block(alloca_block)
       end
 
       @unused_fun_defs.each do |node|
@@ -1010,7 +1011,7 @@ module Crystal
 
         position_at_end catch_block
         lp_ret_type = llvm_typer.landing_pad_type
-        lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LibLLVM::ValueRef
+        lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LibLLVM::ValueRef
         unwind_ex_obj = extract_value lp, 0
         ex_type_id = extract_value lp, 1
 
@@ -1358,7 +1359,7 @@ module Crystal
     def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
       if raises && (handler = @exception_handlers.try &.last?) && (catch_block = handler.catch_block)
         invoke_out_block = new_block "invoke_out"
-        @last = @builder.invoke func, call_args, invoke_out_block, catch_block
+        @last = builder.invoke func, call_args, invoke_out_block, catch_block
         position_at_end invoke_out_block
       else
         @last = call func, call_args
@@ -1429,7 +1430,7 @@ module Crystal
     end
 
     def define_main_function(name, arg_types, return_type)
-      old_builder = @builder
+      old_builder = self.builder
       old_llvm_mod = @llvm_mod
       old_fun = context.fun
       @llvm_mod = @main_mod
@@ -1450,7 +1451,7 @@ module Crystal
     end
 
     def type_id(value, type : NilableType)
-      @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
+      builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
     end
 
     def type_id(value, type : ReferenceUnionType | VirtualType)
@@ -1476,12 +1477,12 @@ module Crystal
     end
 
     def type_id(value, type : NilablePointerType)
-      @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.pointer_type)
+      builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.pointer_type)
     end
 
     def type_id(value, type : NilableFunType)
       fun_ptr = extract_value value, 0
-      @builder.select null_pointer?(fun_ptr), type_id(@mod.nil), type_id(type.fun_type)
+      builder.select null_pointer?(fun_ptr), type_id(@mod.nil), type_id(type.fun_type)
     end
 
     def type_id(value, type : MixedUnionType)
@@ -1588,17 +1589,17 @@ module Crystal
     def br_from_alloca_to_entry
       # If there are no instructions in the alloca we can delete
       # it and just keep the entry block (less noise).
-      if LLVM.first_instruction(@alloca_block)
-        br_block_chain({@alloca_block, @entry_block})
+      if LLVM.first_instruction(alloca_block)
+        br_block_chain({alloca_block, entry_block})
       else
-        LLVM.delete_basic_block(@alloca_block)
+        LLVM.delete_basic_block(alloca_block)
       end
     end
 
     def br_block_chain blocks
       old_block = insert_block
 
-      0.upto(blocks.count - 2) do |i|
+      0.upto(blocks.length - 2) do |i|
         position_at_end blocks[i]
         br blocks[i + 1]
       end
@@ -1647,7 +1648,7 @@ module Crystal
             is_arg = args.try &.any? { |arg| arg.name == var.name }
             next if is_arg
 
-            ptr = @builder.alloca llvm_type(var_type), name
+            ptr = builder.alloca llvm_type(var_type), name
             context.vars[name] = LLVMVar.new(ptr, var_type)
 
             # Assign default nil for variables that are bound to the nil variable
@@ -1737,12 +1738,12 @@ module Crystal
     end
 
     def alloca(type, name = "")
-      in_alloca_block { @builder.alloca type, name }
+      in_alloca_block { builder.alloca type, name }
     end
 
     def in_alloca_block
       old_block = insert_block
-      position_at_end @alloca_block
+      position_at_end alloca_block
       value = yield
       position_at_end old_block
       value
@@ -1772,7 +1773,7 @@ module Crystal
     end
 
     def printf(format, args = [] of LibLLVM::ValueRef)
-      call @mod.printf(@llvm_mod), [@builder.global_string_pointer(format)] + args
+      call @mod.printf(@llvm_mod), [builder.global_string_pointer(format)] + args
     end
 
     def allocate_aggregate(type)
@@ -1841,7 +1842,7 @@ module Crystal
         pointer = call malloc_fun, [size]
         bit_cast pointer, pointer_type(type)
       else
-        @builder.malloc type
+        builder.malloc type
       end
     end
 
@@ -1851,11 +1852,11 @@ module Crystal
         malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
         size = trunc(size_of(type), LLVM::Int32)
         count = trunc(count, LLVM::Int32)
-        size = @builder.mul size, count
+        size = builder.mul size, count
         pointer = call malloc_fun, [size]
         bit_cast pointer, pointer_type(type)
       else
-        @builder.array_malloc(type, count)
+        builder.array_malloc(type, count)
       end
     end
 

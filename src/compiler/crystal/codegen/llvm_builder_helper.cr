@@ -81,19 +81,19 @@ module Crystal
     end
 
     def and(value1, value2)
-      @builder.and value1, value2
+      builder.and value1, value2
     end
 
     def or(value1, value2)
-      @builder.or value1, value2
+      builder.or value1, value2
     end
 
     def not(value)
-      @builder.not value
+      builder.not value
     end
 
     def call(func, args)
-      @builder.call func, args
+      builder.call func, args
     end
 
     def bit_cast(value, type)
@@ -165,30 +165,30 @@ module Crystal
     end
 
     def extend_int(from_type, to_type, value)
-      from_type.signed? ? @builder.sext(value, llvm_type(to_type)) : @builder.zext(value, llvm_type(to_type))
+      from_type.signed? ? builder.sext(value, llvm_type(to_type)) : builder.zext(value, llvm_type(to_type))
     end
 
     def extend_float(to_type, value)
-      @builder.fpext value, llvm_type(to_type)
+      builder.fpext value, llvm_type(to_type)
     end
 
     def trunc_float(to_type, value)
-      @builder.fptrunc value, llvm_type(to_type)
+      builder.fptrunc value, llvm_type(to_type)
     end
 
     def int_to_float(from_type, to_type, value)
       if from_type.signed?
-        @builder.si2fp value, llvm_type(to_type)
+        builder.si2fp value, llvm_type(to_type)
       else
-        @builder.ui2fp value, llvm_type(to_type)
+        builder.ui2fp value, llvm_type(to_type)
       end
     end
 
     def float_to_int(from_type, to_type, value)
       if to_type.signed?
-        @builder.fp2si value, llvm_type(to_type)
+        builder.fp2si value, llvm_type(to_type)
       else
-        @builder.fp2ui value, llvm_type(to_type)
+        builder.fp2ui value, llvm_type(to_type)
       end
     end
 
@@ -201,7 +201,7 @@ module Crystal
     end
 
     def extract_value(value, index)
-      @builder.extract_value value, index
+      builder.extract_value value, index
     end
 
     def llvm_type(type)

@@ -576,4 +576,52 @@ describe "Type inference: initialize" do
       foo.x
       )) { int32 }
   end
+
+  it "marks instance variable as nilable in initialize if using self in method" do
+    assert_type("
+      class Foo
+        def initialize
+          do_something
+          @foo = 1
+        end
+
+        def foo
+          @foo
+        end
+
+        def do_something
+          Other.new(self)
+        end
+      end
+
+      class Other
+        def initialize(foo)
+        end
+      end
+
+      Foo.new.foo
+      ") { nilable int32 }
+  end
+
+  it "doesn't mark instance variable as nilable when using self in super" do
+    assert_type("
+      class Parent
+        def initialize(foo)
+        end
+      end
+
+      class Foo < Parent
+        def initialize
+          super(self)
+          @foo = 1
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      ") { int32 }
+  end
 end

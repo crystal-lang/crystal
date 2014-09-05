@@ -2,12 +2,12 @@ module Crystal
   class CrystalLLVMBuilder
     getter :end
 
-    def initialize(@builder, @codegen)
+    def initialize(@builder, @printf)
       @end = false
     end
 
     def llvm_nil
-      @codegen.llvm_nil
+      LLVM.int LLVM::Int1, 0
     end
 
     def ret
@@ -33,12 +33,16 @@ module Crystal
 
     def unreachable
       if ENV["UNREACHABLE"]? == "1"
-        @codegen.printf("Reached the unreachable!")
+        printf "Reached the unreachable!"
       end
       return if @end
       value = @builder.unreachable
       @end = true
       value
+    end
+
+    def printf(format, args = [] of LibLLVM::ValueRef)
+      call @printf, [global_string_pointer(format)] + args
     end
 
     def position_at_end(block)

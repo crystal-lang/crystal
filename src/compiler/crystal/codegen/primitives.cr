@@ -82,28 +82,28 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_binary_op(op, t1 : BoolType, t2 : BoolType, p1, p2)
     case op
-    when "==" then @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-    when "!=" then @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+    when "==" then builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+    when "!=" then builder.icmp LibLLVM::IntPredicate::NE, p1, p2
     else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
     case op
-    when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
-    when "<" then return @builder.icmp LibLLVM::IntPredicate::ULT, p1, p2
-    when "<=" then return @builder.icmp LibLLVM::IntPredicate::ULE, p1, p2
-    when ">" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
-    when ">=" then return @builder.icmp LibLLVM::IntPredicate::UGE, p1, p2
+    when "==" then return builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+    when "!=" then return builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+    when "<" then return builder.icmp LibLLVM::IntPredicate::ULT, p1, p2
+    when "<=" then return builder.icmp LibLLVM::IntPredicate::ULE, p1, p2
+    when ">" then return builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
+    when ">=" then return builder.icmp LibLLVM::IntPredicate::UGE, p1, p2
     else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
     case op
-    when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+    when "==" then return builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+    when "!=" then return builder.icmp LibLLVM::IntPredicate::NE, p1, p2
     else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
@@ -118,22 +118,22 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
 
     @last = case op
-            when "+" then @builder.add p1, p2
-            when "-" then @builder.sub p1, p2
-            when "*" then @builder.mul p1, p2
-            when "/", "unsafe_div" then t1.signed? ? @builder.sdiv(p1, p2) : @builder.udiv(p1, p2)
-            when "%" then t1.signed? ? @builder.srem(p1, p2) : @builder.urem(p1, p2)
-            when "<<" then @builder.shl(p1, p2)
-            when ">>" then t1.signed? ? @builder.ashr(p1, p2) : @builder.lshr(p1, p2)
+            when "+" then builder.add p1, p2
+            when "-" then builder.sub p1, p2
+            when "*" then builder.mul p1, p2
+            when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
+            when "%" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
+            when "<<" then builder.shl(p1, p2)
+            when ">>" then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
             when "|" then or(p1, p2)
             when "&" then and(p1, p2)
-            when "^" then @builder.xor(p1, p2)
-            when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-            when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
-            when "<" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLT : LibLLVM::IntPredicate::ULT), p1, p2
-            when "<=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLE : LibLLVM::IntPredicate::ULE), p1, p2
-            when ">" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
-            when ">=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGE : LibLLVM::IntPredicate::UGE), p1, p2
+            when "^" then builder.xor(p1, p2)
+            when "==" then return builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+            when "!=" then return builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+            when "<" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLT : LibLLVM::IntPredicate::ULT), p1, p2
+            when "<=" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLE : LibLLVM::IntPredicate::ULE), p1, p2
+            when ">" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
+            when ">=" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGE : LibLLVM::IntPredicate::UGE), p1, p2
             else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
 
@@ -162,16 +162,16 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
 
     @last = case op
-            when "+" then @builder.fadd p1, p2
-            when "-" then @builder.fsub p1, p2
-            when "*" then @builder.fmul p1, p2
-            when "/" then @builder.fdiv p1, p2
-            when "==" then return @builder.fcmp LibLLVM::RealPredicate::OEQ, p1, p2
-            when "!=" then return @builder.fcmp LibLLVM::RealPredicate::ONE, p1, p2
-            when "<" then return @builder.fcmp LibLLVM::RealPredicate::OLT, p1, p2
-            when "<=" then return @builder.fcmp LibLLVM::RealPredicate::OLE, p1, p2
-            when ">" then return @builder.fcmp LibLLVM::RealPredicate::OGT, p1, p2
-            when ">=" then return @builder.fcmp LibLLVM::RealPredicate::OGE, p1, p2
+            when "+" then builder.fadd p1, p2
+            when "-" then builder.fsub p1, p2
+            when "*" then builder.fmul p1, p2
+            when "/" then builder.fdiv p1, p2
+            when "==" then return builder.fcmp LibLLVM::RealPredicate::OEQ, p1, p2
+            when "!=" then return builder.fcmp LibLLVM::RealPredicate::ONE, p1, p2
+            when "<" then return builder.fcmp LibLLVM::RealPredicate::OLT, p1, p2
+            when "<=" then return builder.fcmp LibLLVM::RealPredicate::OLE, p1, p2
+            when ">" then return builder.fcmp LibLLVM::RealPredicate::OGT, p1, p2
+            when ">=" then return builder.fcmp LibLLVM::RealPredicate::OGE, p1, p2
             else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
@@ -221,7 +221,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
-    @builder.zext arg, llvm_type(to_type)
+    builder.zext arg, llvm_type(to_type)
   end
 
   def codegen_cast(from_type : SymbolType, to_type : IntegerType, arg)
@@ -282,7 +282,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     type = context.type as PointerInstanceType
 
     casted_ptr = cast_to_void_pointer(call_args[0])
-    size = @builder.mul call_args[1], llvm_size(type.element_type)
+    size = builder.mul call_args[1], llvm_size(type.element_type)
     reallocated_ptr = realloc casted_ptr, size
     cast_to_pointer reallocated_ptr, type.element_type
   end
@@ -425,8 +425,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       args[i] = upcast arg, fun_arg_type, target_def_arg_type
     end
 
-    fun_ptr = @builder.extract_value closure_ptr, 0
-    ctx_ptr = @builder.extract_value closure_ptr, 1
+    fun_ptr = builder.extract_value closure_ptr, 0
+    ctx_ptr = builder.extract_value closure_ptr, 1
 
     ctx_is_null_block = new_block "ctx_is_null"
     ctx_is_not_null_block = new_block "ctx_is_not_null"
@@ -450,20 +450,20 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_primitive_fun_closure(node, target_def, call_args)
     closure_ptr = call_args[0]
-    ctx_ptr = @builder.extract_value closure_ptr, 1
+    ctx_ptr = builder.extract_value closure_ptr, 1
     not_equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
   end
 
   def codegen_primitive_fun_pointer(node, target_def, call_args)
     closure_ptr = call_args[0]
-    @builder.extract_value closure_ptr, 0
+    builder.extract_value closure_ptr, 0
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
     p0 = ptr2int(call_args[0], LLVM::Int64)
     p1 = ptr2int(call_args[1], LLVM::Int64)
-    sub = @builder.sub p0, p1
-    @builder.exact_sdiv sub, ptr2int(gep(LLVM.pointer_null(type_of(call_args[0])), 1), LLVM::Int64)
+    sub = builder.sub p0, p1
+    builder.exact_sdiv sub, ptr2int(gep(LLVM.pointer_null(type_of(call_args[0])), 1), LLVM::Int64)
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)

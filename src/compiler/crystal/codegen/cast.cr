@@ -356,7 +356,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def store_bool_in_union(union_pointer, value)
     store type_id(value, @mod.bool), union_type_id(union_pointer)
-    bool_as_i64 = @builder.zext(value, llvm_type(@mod.int64))
+    bool_as_i64 = builder.zext(value, llvm_type(@mod.int64))
     casted_value_ptr = cast_to_pointer(union_value(union_pointer), @mod.int64)
     store bool_as_i64, casted_value_ptr
   end
