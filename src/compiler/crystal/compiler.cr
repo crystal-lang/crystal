@@ -15,7 +15,7 @@ module Crystal
     getter dump_ll
     getter debug
     property release
-    getter target_flags_changed
+    getter bc_flags_changed
     getter cross_compile
     getter verbose
     getter! output_dir
@@ -35,7 +35,7 @@ module Crystal
       @cross_compile = nil
       @target_triple = nil
       @mcpu = nil
-      @target_flags_changed = true
+      @bc_flags_changed = true
       @prelude = "prelude"
       @n_threads = 8.to_i32
       @browser = false
@@ -169,7 +169,8 @@ module Crystal
       end
 
       begin
-        program = Program.new(target_machine)
+        program = Program.new
+        program.target_machine = target_machine
         if cross_compile = @cross_compile
           program.flags = cross_compile
         end
@@ -262,11 +263,11 @@ module Crystal
             end
           end
 
-          current_target_flags = "#{@target_triple}|#{@mcpu}"
-          target_flags_filename = "#{output_dir}/target_flags"
-          if File.exists?(target_flags_filename)
-            previous_target_flags = File.read(target_flags_filename).strip
-            @target_flags_changed = previous_target_flags != current_target_flags
+          current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}"
+          bc_flags_filename = "#{output_dir}/bc_flags"
+          if File.exists?(bc_flags_filename)
+            previous_bc_flags = File.read(bc_flags_filename).strip
+            @bc_flags_changed = previous_bc_flags != current_bc_flags
           end
 
           msg = multithreaded ? "Codegen (bc+obj)" : "Codegen (obj)"
@@ -305,8 +306,8 @@ module Crystal
             system "cc -o #{output_filename} #{object_names.join " "} #{lib_flags}"
           end
 
-          File.open(target_flags_filename, "w") do |file|
-            file.puts current_target_flags
+          File.open(bc_flags_filename, "w") do |file|
+            file.puts current_bc_flags
           end
 
           if @run
@@ -507,7 +508,7 @@ module Crystal
 
         must_compile = true
 
-        if !compiler.target_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
+        if !compiler.bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           if FileUtils.cmp(bc_name, bc_name_new)
             File.delete bc_name_new
             must_compile = false

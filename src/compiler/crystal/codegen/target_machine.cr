@@ -4,7 +4,6 @@ require "../program"
 module Crystal
   module TargetMachine
     HOST_TARGET_TRIPLE = guess_host_target_triple
-    DEFAULT = create(HOST_TARGET_TRIPLE, "", false)
 
     def self.create(target_triple, cpu, release)
       LLVM.init_x86

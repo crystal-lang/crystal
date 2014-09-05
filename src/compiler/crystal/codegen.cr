@@ -40,8 +40,8 @@ module Crystal
       engine.run_function wrapper, [] of LibLLVM::GenericValueRef
     end
 
-    def build(node, single_module = false, debug = false, use_host_flags = false, llvm_mod = LLVM::Module.new("main_module"))
-      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, use_host_flags: false, llvm_mod: llvm_mod
+    def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"))
+      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod
       begin
         node.accept visitor
         visitor.finish
@@ -93,7 +93,7 @@ module Crystal
     record Handler, node, catch_block, vars
     record StringKey, mod, string
 
-    def initialize(@mod, @node, @single_module = false, @debug = false, @use_host_flags = false, @llvm_mod = LLVM::Module.new("main_module"))
+    def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"))
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)

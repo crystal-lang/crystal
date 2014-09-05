@@ -15,7 +15,7 @@ module Crystal
     property vars
     property literal_expander
 
-    def initialize(@target_machine = TargetMachine::DEFAULT)
+    def initialize
       super(self, self, "main")
 
       @unions = {} of Array(Int32) => Type
@@ -109,6 +109,12 @@ module Crystal
       @def_macros = [] of Def
 
       define_primitives
+    end
+
+    setter target_machine
+
+    def target_machine
+      @target_machine ||= TargetMachine.create("i686-unknown-linux", "", false)
     end
 
     def has_flag?(name)
