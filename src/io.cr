@@ -90,11 +90,17 @@ module IO
     self << obj
   end
 
-  # Writes the given object into this IO followed
-  # by a newline character.
+  # Writes the given string to this IO followed by a newline character
+  # unless the string already ends with one.
+  def puts(string : String)
+    self << string
+    puts unless string.ends_with?('\n')
+  end
+
+  # Writes the given object to this IO followed by a newline character.
   def puts(obj)
     self << obj
-    write_byte '\n'.ord.to_u8
+    puts
   end
 
   def puts
@@ -218,8 +224,13 @@ def print!(obj)
   nil
 end
 
-def puts(obj = "")
+def puts(obj)
   STDOUT.puts obj
+  nil
+end
+
+def puts
+  STDOUT.puts
   nil
 end
 

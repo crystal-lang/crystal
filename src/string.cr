@@ -812,6 +812,10 @@ class String
   def ends_with?(char : Char)
     return false unless bytesize > 0
 
+    if char.ord <= 127
+      return cstr[bytesize - 1] == char.ord
+    end
+
     bytes :: UInt8[4]
 
     count = 0
