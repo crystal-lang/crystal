@@ -311,8 +311,10 @@ module Crystal
           end
 
           if @run
-            unless system("#{output_filename} #{run_args.map(&.inspect).join " "}")
-              puts "Program terminated abnormally with error code: #{Process::Status.last.exit}"
+            # TODO: fix system to make output flush on newline if it's a tty
+            exit_status = C.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
+            if exit_status != 0
+              puts "Program terminated abnormally with error code: #{exit_status}"
             end
             File.delete output_filename
           end
