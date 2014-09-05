@@ -164,6 +164,34 @@ module Spec
     end
   end
 
+  class BeTruthyExpectation
+    def match(@value)
+      !!@value
+    end
+
+    def failure_message
+      "expected: #{@value.inspect} to be truthy"
+    end
+
+    def negative_failure_message
+      "expected: #{@value.inspect} not to be truthy"
+    end
+  end
+
+  class BeFalseyExpectation
+    def match(@value)
+      !@value
+    end
+
+    def failure_message
+      "expected: #{@value.inspect} to be falsey"
+    end
+
+    def negative_failure_message
+      "expected: #{@value.inspect} not to be falsey"
+    end
+  end
+
   class CloseExpectation
     def initialize(@expected, @delta)
     end
@@ -225,6 +253,14 @@ end
 
 def be_false
   eq false
+end
+
+def be_truthy
+  Spec::BeTruthyExpectation.new
+end
+
+def be_falsey
+  Spec::BeFalseyExpectation.new
 end
 
 def be_nil
