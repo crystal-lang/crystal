@@ -148,12 +148,16 @@ module Crystal
       @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
 
+      @unused_fun_defs = [] of FunDef
+
+      # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
+      # to avoid some memory being allocated with plain malloc.
+      codgen_well_known_functions @node
+
       alloca_vars @mod.vars, @mod
 
       declare_const(@mod.types["ARGC_UNSAFE"] as Const)
       declare_const(@mod.types["ARGV_UNSAFE"] as Const)
-
-      @unused_fun_defs = [] of FunDef
     end
 
     def wrap_builder(builder)
@@ -162,6 +166,32 @@ module Crystal
 
     def define_symbol_table(llvm_mod)
       llvm_mod.globals.add(LLVM.array_type(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
+    end
+
+    class CodegenWellKnownFunctions < Visitor
+      def initialize(@codegen)
+      end
+
+      def visit(node : Expressions)
+        true
+      end
+
+      def visit(node : FunDef)
+        case node.name
+        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME
+          @codegen.accept node
+        end
+        false
+      end
+
+      def visit(node : ASTNode)
+        false
+      end
+    end
+
+    def codgen_well_known_functions(node)
+      visitor = CodegenWellKnownFunctions.new(self)
+      node.accept visitor
     end
 
     def type
