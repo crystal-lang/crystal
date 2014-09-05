@@ -244,15 +244,19 @@ class String
   end
 
   def chomp
-    excess = 0
-    while (c = cstr[bytesize - 1 - excess].chr) == '\r' || c == '\n'
-      excess += 1
-    end
+    return self if bytesize == 0
 
-    if excess == 0
-      self
+    case cstr[bytesize - 1]
+    when '\n'.ord
+      if bytesize > 1 && cstr[bytesize - 2] == '\r'.ord
+        byte_slice 0, bytesize - 2
+      else
+        byte_slice 0, bytesize - 1
+      end
+    when '\r'.ord
+      byte_slice 0, bytesize - 1
     else
-      byte_slice 0, bytesize - excess
+      self
     end
   end
 

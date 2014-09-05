@@ -162,6 +162,8 @@ describe "String" do
     assert { "かたな\n".chomp.should eq("かたな") }
     assert { "かたな\r".chomp.should eq("かたな") }
     assert { "かたな\r\n".chomp.should eq("かたな") }
+    assert { "hello\n\n".chomp.should eq("hello\n") }
+    assert { "hello\r\n\n".chomp.should eq("hello\r\n") }
   end
 
   describe "strip" do
