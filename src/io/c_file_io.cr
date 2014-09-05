@@ -80,6 +80,10 @@ struct CFileIO
   def fd
     C.fileno(@file)
   end
+
+  def tty?
+    C.isatty(fd) == 1
+  end
 end
 
 ifdef windows

@@ -44,6 +44,7 @@ lib C
   # In fact lseek's offset is off_t, but it matches the definition of size_t
   fun lseek(fd : Int32, offset : C::SizeT, whence : Int32) : Int32
   fun close(fd : Int32) : Int32
+  fun isatty(fd : Int32) : Int32
 end
 
 module IO
@@ -187,6 +188,10 @@ module IO
   def write_byte(byte : UInt8)
     x = byte
     write Slice.new(pointerof(x), 1)
+  end
+
+  def tty?
+    false
   end
 end
 

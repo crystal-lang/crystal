@@ -40,4 +40,8 @@ class FileDescriptorIO
       raise Errno.new("Error closing file")
     end
   end
+
+  def tty?
+    C.isatty(fd) == 1
+  end
 end

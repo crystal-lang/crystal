@@ -24,6 +24,7 @@
 * Added `getter?` and `property?` macros to create methods that end with `?`.
 * Added a `CGI` module.
 * The compiler now only depends on `cc` for compiling (removed dependency to `llc`, `opt`, `llvm-dis` and `clang`).
+* Added `IO#tty?`.
 * Some bug fixes.
 
 ## 0.4.3 (2014-08-14)
