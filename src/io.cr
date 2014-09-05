@@ -217,20 +217,3 @@ def p(obj)
   puts
   obj
 end
-
-def system(command)
-  pid = fork do
-    # Redirect STDOUT to /dev/null
-    null = C.open("/dev/null", 1)
-    C.dup2(null, 1)
-
-    C.execl("/bin/sh", command, "-c", command, nil)
-  end
-
-  if pid == -1
-    raise Errno.new("Error executing system command '#{command}'")
-  end
-
-  C.waitpid(pid, out stat, 0)
-  stat
-end

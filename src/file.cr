@@ -1,7 +1,7 @@
 class File < FileDescriptorIO
   SEPARATOR = '/'
 
-  def initialize(filename, mode)
+  def initialize(filename, mode = "r")
     if mode.length == 0
       raise "invalid access mode #{mode}"
     end
@@ -157,6 +157,10 @@ class File < FileDescriptorIO
   end
 
   def self.open(filename, mode = "r")
+    new filename, mode
+  end
+
+  def self.open(filename, mode = "r")
     file = File.new filename, mode
     begin
       yield file
@@ -245,45 +249,3 @@ class File < FileDescriptorIO
 end
 
 require "file/stat"
-
-class Pipe
-  include IO
-
-  def self.open(command, mode)
-    pipe = new(command, mode)
-    begin
-      yield pipe
-    ensure
-      $exit = pipe.close
-    end
-  end
-
-  def initialize(command, mode)
-    @pipe = C.popen(command, mode)
-    unless @pipe
-      raise Errno.new("Error executing system command '#{command}'")
-    end
-  end
-
-  def read(slice : Slice(UInt8), count)
-    C.fread(slice.pointer(count), 1.to_sizet, count.to_sizet, @pipe)
-  end
-
-  def write(slice : Slice(UInt8), count)
-    C.fwrite(slice.pointer(count), 1.to_sizet, count.to_sizet, @pipe)
-  end
-
-  def close
-    C.pclose(@pipe)
-  end
-end
-
-def system2(command)
-  Pipe.open(command, "r") do |pipe|
-    output = [] of String
-    while line = pipe.gets
-      output << line.chomp
-    end
-    output
-  end
-end

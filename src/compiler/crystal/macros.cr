@@ -108,8 +108,8 @@ module Crystal
         end
       end
 
-      result = system2(command).join "\n"
-      {$exit == 0, result}
+      result = backtick(command)
+      {Process::Status.last.success?, result}
     end
 
     def compile(filename)
@@ -476,13 +476,13 @@ module Crystal
         end
         cmd = cmd.join " "
 
-        result = system2(cmd).join "\n"
-        if $exit == 0
+        result = backtick(cmd)
+        if Process::Status.last.success?
           @last = MacroId.new(result)
         elsif result.empty?
-          node.raise "error executing command: #{cmd}, got exit status #{$exit}"
+          node.raise "error executing command: #{cmd}, got exit status #{Process::Status.last.exit}"
         else
-          node.raise "error executing command: #{cmd}, got exit status #{$exit}:\n\n#{result}\n"
+          node.raise "error executing command: #{cmd}, got exit status #{Process::Status.last.exit}:\n\n#{result}\n"
         end
       end
 

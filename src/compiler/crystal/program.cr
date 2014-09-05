@@ -124,7 +124,7 @@ module Crystal
     end
 
     def host_flags
-      @host_flags ||= parse_flags(exec("uname -m -s").not_nil!)
+      @host_flags ||= parse_flags(backtick("uname -m -s"))
     end
 
     def parse_flags(flags_name)
@@ -137,16 +137,6 @@ module Crystal
 
     def add_flag(flag)
       flags.add(flag)
-    end
-
-    def self.exec(command)
-      Pipe.open(command, "r") do |pipe|
-        pipe.gets.try &.strip
-      end
-    end
-
-    def exec(command)
-      Program.exec(command)
     end
 
     def program

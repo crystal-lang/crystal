@@ -310,8 +310,9 @@ module Crystal
           end
 
           if @run
-            errcode = C.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
-            puts "Program terminated abnormally with error code: #{errcode}" if errcode != 0
+            unless system("#{output_filename} #{run_args.map(&.inspect).join " "}")
+              puts "Program terminated abnormally with error code: #{Process::Status.last.exit}"
+            end
             File.delete output_filename
           end
         end
@@ -398,12 +399,14 @@ module Crystal
 
     def system(command)
       puts command if verbose
-      exit_code = ::system(command)
-      if exit_code != 0
+
+      success = ::system(command)
+      unless success
         print "Error: ".colorize.red.bold
-        puts "execution of command failed with code: #{exit_code}: `#{command}`".colorize.bright
+        puts "execution of command failed with code: #{Process::Status.last.exit}: `#{command}`".colorize.bright
         exit 3
       end
+      success
     end
 
     def timing(label)
@@ -445,10 +448,10 @@ module Crystal
     end
 
     def pkg_config_flags(libname, static, library_path)
-      if ::system("pkg-config #{libname}") == 0
+      if ::system("pkg-config #{libname}")
         if static
           flags = [] of String
-          system2("pkg-config #{libname} --libs --static").first.split.each do |cfg|
+          backtick("pkg-config #{libname} --libs --static").split.each do |cfg|
             if cfg.starts_with?("-L")
               library_path << cfg[2 .. -1]
             elsif cfg.starts_with?("-l")
@@ -459,7 +462,7 @@ module Crystal
           end
           flags.join " "
         else
-          system2("pkg-config #{libname} --libs").first
+          backtick("pkg-config #{libname} --libs")
         end
       end
     end
@@ -493,10 +496,6 @@ module Crystal
 
       def write_bitcode(output_name)
         @llvm_mod.write_bitcode output_name
-      end
-
-      def system(command)
-        compiler.system command
       end
 
       def compile

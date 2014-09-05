@@ -40,6 +40,10 @@ struct Process::Status
   def initialize(@pid)
   end
 
+  def success?
+    @exit == 0
+  end
+
   def self.last=(@@last : Status?)
   end
 
@@ -167,5 +171,15 @@ def exec(command, args = nil, output = nil : IO | Bool, input = nil : String | I
     status.output = status_output.to_s
   end
 
+  Process::Status.last = status
+
   status
+end
+
+def system(command : String)
+  exec("/bin/sh", {"-c", command}, output: STDOUT).success?
+end
+
+def backtick(command : String)
+  exec("/bin/sh", {"-c", command}, output: true).output.not_nil!
 end

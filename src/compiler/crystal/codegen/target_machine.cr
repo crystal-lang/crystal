@@ -28,7 +28,7 @@ module Crystal
       #   x86_64-pc-linux-gnu
       #   i686-pc-linux-gnu
       #   x86_64-apple-darwin12.3.0
-      system, version, arch = Program.exec("uname -m -s -r").not_nil!.split
+      system, version, arch = backtick("uname -m -s -r").split
 
       case system
       when "Darwin"
