@@ -18,6 +18,13 @@
 * A C type can now be declared like `type Name = Type` (`type Name : Type` will be deprecated).
 * Now a C struct/union type can be created with named arguments.
 * New attributes syntax: `@[Attr(...)`] instead of `@:Attr`. The old syntax will be deprecated in a future release.
+* New link syntax for C libs: `@[Link("name")]` (uses `name` as `pkg-config name` if available or `-lname` instead), `@[Link(ldflags: "...")]` to pass raw flags to the linker, `@[Link("name", static: true)]` to try to find a static library first, and `@[Link(framework: "AppKit")]` (for Mac OSX).
+* Added an `exec` method to execute shell commands. Added the `system` and `backtick` similar to Ruby ones.
+* Added `be_truthy` and `be_falsey` spec matchers. Added `Array#zip` without a block. (thanks @mjgpy3)
+* Added `getter?` and `property?` macros to create methods that end with `?`.
+* Added a `CGI` module.
+* The compiler now only depends on `cc` for compiling (removed dependency to `llc`, `opt`, `llvm-dis` and `clang`).
+* Some bug fixes.
 
 ## 0.4.3 (2014-08-14)
 
