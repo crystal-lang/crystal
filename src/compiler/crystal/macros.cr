@@ -438,7 +438,7 @@ module Crystal
           execute_env(node)
         when "puts", "p"
           execute_puts(node)
-        when "system"
+        when "system", "`"
           execute_system(node)
         when "raise"
           execute_raise(node)
