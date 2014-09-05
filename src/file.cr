@@ -182,7 +182,7 @@ class File < FileDescriptorIO
 
   def self.each_line(filename)
     File.open(filename, "r") do |file|
-      while line = file.gets
+      file.each_line do |line|
         yield line
       end
     end

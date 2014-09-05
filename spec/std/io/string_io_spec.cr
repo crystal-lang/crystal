@@ -113,4 +113,21 @@ describe "StringIO" do
     io.read_char.should eq('語')
     io.read_char.should eq(nil)
   end
+
+  it "does each_line" do
+    io = StringIO.new("a\nbb\ncc")
+    counter = 0
+    io.each_line do |line|
+      case counter
+      when 0
+        line.should eq("a\n")
+      when 1
+        line.should eq("bb\n")
+      when 2
+        line.should eq("cc")
+      end
+      counter += 1
+    end
+    counter.should eq(3)
+  end
 end

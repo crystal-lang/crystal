@@ -193,6 +193,12 @@ module IO
   def tty?
     false
   end
+
+  def each_line
+    while line = gets
+      yield line
+    end
+  end
 end
 
 require "./io/*"
