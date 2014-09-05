@@ -13,6 +13,6 @@ describe "Compiler" do
 
     File.exists?(output_filename).should be_true
 
-    Program.exec("./#{output_filename}").should eq("Hello!")
+    backtick("./#{output_filename}").should eq("Hello!")
   end
 end
