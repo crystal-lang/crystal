@@ -1,62 +1,9 @@
 lib C
   fun execvp(file : UInt8*, argv : UInt8**) : Int32
-
-  type FdSet : Int32[32]
   fun select(nfds : Int32, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : Void*) : Int32
 end
 
-struct FdSet
-  NFDBITS = sizeof(Int32) * 8
-
-  def initialize
-    @fdset :: Int32[32]
-  end
-
-  def zero
-    @fdset.length.times do |i|
-      @fdset[i] = 0
-    end
-  end
-
-  def set(io)
-    @fdset[io.fd / NFDBITS] |= 1 << (io.fd % NFDBITS)
-  end
-
-  def is_set(io)
-    @fdset[io.fd / NFDBITS] & 1 << (io.fd % NFDBITS) != 0
-  end
-
-  def to_unsafe
-    pointerof(@fdset)
-  end
-end
-
-struct Process::Status
-  property pid
-  property exit
-  property input
-  property output
-
-  def initialize(@pid)
-  end
-
-  def success?
-    @exit == 0
-  end
-
-  def self.last=(@@last : Status?)
-  end
-
-  def self.last?
-    @@last
-  end
-
-  def self.last
-    last?.not_nil!
-  end
-end
-
-def exec(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
+def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
   argv = [command.cstr]
   if args
     args.each do |arg|
@@ -122,8 +69,8 @@ def exec(command, args = nil, output = nil : IO | Bool, input = nil : String | I
 
   while process_input || process_output
     nfds = 0
-    wfds = FdSet.new
-    rfds = FdSet.new
+    wfds = Process::FdSet.new
+    rfds = Process::FdSet.new
 
     if process_input
       wfds.set(process_input)
@@ -177,9 +124,9 @@ def exec(command, args = nil, output = nil : IO | Bool, input = nil : String | I
 end
 
 def system(command : String)
-  exec("/bin/sh", {"-c", command}, output: STDOUT).success?
+  Process.run("/bin/sh", {"-c", command}, output: STDOUT).success?
 end
 
 def backtick(command : String)
-  exec("/bin/sh", {"-c", command}, output: true).output.not_nil!
+  Process.run("/bin/sh", {"-c", command}, output: true).output.not_nil!
 end

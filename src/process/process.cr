@@ -28,21 +28,19 @@ lib C
 end
 
 module Process
-  extend self
-
-  def exit(status = 0)
+  def self.exit(status = 0)
     C.exit(status)
   end
 
-  def pid
+  def self.pid
     C.getpid()
   end
 
-  def ppid
+  def self.ppid
     C.getppid()
   end
 
-  def fork(&block)
+  def self.fork(&block)
     pid = self.fork()
 
     unless pid
@@ -53,13 +51,13 @@ module Process
     pid
   end
 
-  def fork()
+  def self.fork
     pid = C.fork
     pid = nil if pid == 0
     pid
   end
 
-  def waitpid(pid)
+  def self.waitpid(pid)
     if C.waitpid(pid, out exit_code, 0) == -1
       raise Errno.new("Error during waitpid")
     end
@@ -69,7 +67,7 @@ module Process
 
   record Tms, utime, stime, cutime, cstime
 
-  def times
+  def self.times
     hertz = C.sysconf(C::SC_CLK_TCK).to_f
     C.times(out tms)
     Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)
@@ -90,3 +88,5 @@ def sleep(seconds)
   end
   C.sleep seconds.to_u32
 end
+
+require "./*"
