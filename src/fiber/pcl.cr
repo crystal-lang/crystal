@@ -10,19 +10,19 @@ lib Pcl("pcl")
   fun co_set_data(cr : Coroutine, data : Void*) : Void*
 end
 
-$main_stackbottom = LibGC.stackbottom
-$main_stacktop = LibGC.stackbottom
-$first_fiber = nil
-$last_fiber = nil
-
 @:NoInline
 fun get_stack_top : Void*
   dummy :: Int32
   pointerof(dummy) as Void*
 end
 
+$main_stackbottom = LibGC.stackbottom
+$main_stacktop = get_stack_top
+$first_fiber = nil
+$last_fiber = nil
+
 class Fiber
-  STACK_SIZE = 32 * 1024
+  STACK_SIZE = 8 * 1024 * 1024
 
   property :stack_top
   property :stack_bottom
@@ -63,6 +63,7 @@ class Fiber
     end
   end
 
+  @:NoInline
   def resume(@arg = nil)
     if fiber = Fiber.current
       fiber.stack_top = get_stack_top
@@ -103,10 +104,12 @@ LibGC.set_push_other_roots -> do
   $prev_push_other_roots.call
 
   fiber = $first_fiber
-  while f = fiber
+  while fiber
     LibGC.push_all fiber.stack_top, fiber.stack_bottom
     fiber = fiber.next_fiber
   end
 
   LibGC.push_all $main_stacktop, $main_stackbottom
 end
+
+Pcl.co_thread_init
