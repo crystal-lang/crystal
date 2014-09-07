@@ -1,15 +1,14 @@
 #!/bin/bash
 
 function crossCompile() {
-  echo "Building $3.bc"
-  CMD=`bin/crystal src/compiler/crystal.cr --release --cross-compile "$1" --llc "-mcpu=$2" -o crystal-$3`
-  vagrant up $4
-  echo "Cross compiling crystal-$3"
-  vagrant ssh $4 -c "cd crystal; \
-    cp /vagrant/crystal-$3.bc .; \
-    export PATH=/home/vagrant/crystal/deps/llvm/bin:\$PATH; \
+  echo "Building $4"
+  CMD=`bin/crystal src/compiler/crystal.cr --release --cross-compile="$1" --mcpu="$2" --target="$3" -o crystal-$4`
+  vagrant up $5
+  echo "Cross compiling crystal-$4"
+  vagrant ssh $5 -c "cd crystal; \
+    cp /vagrant/crystal-$4.o .; \
     $CMD; \
-    cp crystal-$3 /vagrant/crystal-$3"
+    cp crystal-$4 /vagrant/crystal-$4"
 }
 
 function dist() {
@@ -26,11 +25,11 @@ function dist() {
 TAG=`git describe --tags --long | cut -d- -f 1`
 VERSION="$TAG"
 
-crossCompile "Linux i686" i686 linux32 precise32
-crossCompile "Linux x86_64" x86-64 linux64 precise64
+crossCompile "Linux i686" i686 i686-pc-linux-gnu linux32 precise32
+crossCompile "Linux x86_64" x86-64 x86_64-pc-linux-gnu linux64 precise64
 
 echo "Building crystal-darwin"
-bin/crystal src/compiler/crystal.cr --release --llc "-mcpu=x86-64" -o crystal-darwin
+bin/crystal src/compiler/crystal.cr --release --target="x86_64-apple-darwin13.3.0" --mcpu="x86-64" -o crystal-darwin
 
 echo "Uploading to S3"
 for target in darwin linux32 linux64; do
