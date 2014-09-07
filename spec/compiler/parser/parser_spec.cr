@@ -634,6 +634,9 @@ describe "Parser" do
   it_parses "$?", Call.new(Path.new(["Process", "Status"], global: true), "last")
   it_parses "foo $?", Call.new(nil, "foo", [Call.new(Path.new(["Process", "Status"], global: true), "last")] of ASTNode)
 
+  it_parses "$0", Path.new("PROGRAM_NAME", global: true)
+  it_parses "foo $0", Call.new(nil, "foo", [Path.new("PROGRAM_NAME", global: true)] of ASTNode)
+
   it_parses "foo out x; x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]
   it_parses "foo(out x); x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]
   it_parses "foo out @x; @x", [Call.new(nil, "foo", [Out.new("@x".instance_var)] of ASTNode), "@x".instance_var]

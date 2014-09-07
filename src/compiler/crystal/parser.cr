@@ -745,7 +745,12 @@ module Crystal
       when :"$?"
         node_and_next_token Call.new(Path.new(["Process", "Status"], global: true), "last")
       when :GLOBAL_MATCH_DATA_INDEX
-        node_and_next_token Call.new(Call.new(Path.new("MatchData", global: true), "last"), "[]", [NumberLiteral.new(@token.value.to_s)] of ASTNode)
+        value = @token.value
+        if value == 0
+          node_and_next_token Path.new("PROGRAM_NAME", global: true)
+        else
+          node_and_next_token Call.new(Call.new(Path.new("MatchData", global: true), "last"), "[]", [NumberLiteral.new(value as Int32)] of ASTNode)
+        end
       when :IDENT
         case @token.value
         when :begin
