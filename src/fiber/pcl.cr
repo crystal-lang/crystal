@@ -16,18 +16,18 @@ fun get_stack_top : Void*
   pointerof(dummy) as Void*
 end
 
-$main_stackbottom = LibGC.stackbottom
-$main_stacktop = get_stack_top
-$first_fiber = nil
-$last_fiber = nil
-
 class Fiber
   STACK_SIZE = 8 * 1024 * 1024
 
-  property :stack_top
-  property :stack_bottom
-  property :next_fiber
-  property :prev_fiber
+  @@main_stackbottom = LibGC.stackbottom
+  @@main_stacktop = get_stack_top
+  @@first_fiber = nil
+  @@last_fiber = nil
+
+  protected property :stack_top
+  protected property :stack_bottom
+  protected property :next_fiber
+  protected property :prev_fiber
 
   def initialize(&@proc)
     @stack = C.malloc(STACK_SIZE.to_u32)
@@ -36,11 +36,11 @@ class Fiber
     Pcl.co_set_data(@cr, self as Void*)
 
     @prev_fiber = nil
-    if last_fiber = $last_fiber
+    if last_fiber = @@last_fiber
       @prev_fiber = last_fiber
-      last_fiber.next_fiber = $last_fiber = self
+      last_fiber.next_fiber = @@last_fiber = self
     else
-      $first_fiber = $last_fiber = self
+      @@first_fiber = @@last_fiber = self
     end
   end
 
@@ -53,13 +53,13 @@ class Fiber
     if prev_fiber = @prev_fiber
       prev_fiber.next_fiber = @next_fiber
     else
-      $first_fiber = @next_fiber
+      @@first_fiber = @next_fiber
     end
 
     if next_fiber = @next_fiber
       next_fiber.prev_fiber = @prev_fiber
     else
-      $last_fiber = @prev_fiber
+      @@last_fiber = @prev_fiber
     end
   end
 
@@ -68,7 +68,7 @@ class Fiber
     if fiber = Fiber.current
       fiber.stack_top = get_stack_top
     else
-      $main_stacktop = get_stack_top
+      @@main_stacktop = get_stack_top
     end
 
     prev_stackbottom = LibGC.stackbottom
@@ -95,21 +95,21 @@ class Fiber
       nil
     end
   end
-end
 
-$prev_push_other_roots = LibGC.get_push_other_roots
+  @@prev_push_other_roots = LibGC.get_push_other_roots
 
-# This will push all fibers stacks whenever the GC wants to collect some memory
-LibGC.set_push_other_roots -> do
-  $prev_push_other_roots.call
+  # This will push all fibers stacks whenever the GC wants to collect some memory
+  LibGC.set_push_other_roots -> do
+    @@prev_push_other_roots.call
 
-  fiber = $first_fiber
-  while fiber
-    LibGC.push_all fiber.stack_top, fiber.stack_bottom
-    fiber = fiber.next_fiber
+    fiber = @@first_fiber
+    while fiber
+      LibGC.push_all fiber.stack_top, fiber.stack_bottom
+      fiber = fiber.next_fiber
+    end
+
+    LibGC.push_all @@main_stacktop, @@main_stackbottom
   end
 
-  LibGC.push_all $main_stacktop, $main_stackbottom
+  Pcl.co_thread_init
 end
-
-Pcl.co_thread_init
