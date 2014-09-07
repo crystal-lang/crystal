@@ -1010,8 +1010,10 @@ module Crystal
         else
           define_new_without_initialize(scope, arg_types)
         end
-      else
+      elsif matches.cover_all?
         define_new_with_initialize(scope, arg_types, matches)
+      else
+        raise_matches_not_found instance_type, "initialize", matches
       end
     end
 

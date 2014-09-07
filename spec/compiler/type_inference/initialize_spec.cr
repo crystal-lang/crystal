@@ -624,4 +624,17 @@ describe "Type inference: initialize" do
       Foo.new.foo
       ") { int32 }
   end
+
+  it "errors if found matches for initialize but doesn't cover all (bug #204)" do
+    assert_error "
+      class Foo
+        def initialize(x : Int32)
+        end
+      end
+
+      a = 1 > 0 ? nil : 1
+      Foo.new(a)
+      ",
+      "no overload matches"
+  end
 end
