@@ -387,7 +387,7 @@ module Crystal
         server.accept do |sock|
           if request = HTTP::Request.from_io(sock)
             html = browser.handle(request.path)
-            response = HTTP::Response.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/html"}, html)
+            response = HTTP::Response.new(200, html, {"Content-Type" => "text/html"})
             response.to_io sock
           end
         end

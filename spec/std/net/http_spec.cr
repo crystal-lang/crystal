@@ -85,15 +85,36 @@ describe "HTTP" do
     end
 
     it "serialize with body" do
-      response = HTTP::Response.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/plain", "Content-Length" => "5"}, "hello")
+      response = HTTP::Response.new(200, "hello", {"Content-Type" => "text/plain", "Content-Length" => "5"})
       io = StringIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end
 
     it "sets content length from body" do
-      response = HTTP::Response.new("HTTP/1.1", 200, "OK", {} of String => String, "hello")
+      response = HTTP::Response.new(200, "hello")
       response.headers["Content-Length"].should eq("5")
+    end
+
+    it "builds default not found" do
+      response = HTTP::Response.not_found
+      io = StringIO.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found")
+    end
+
+    it "builds default ok response" do
+      response = HTTP::Response.ok("text/plain", "Hello")
+      io = StringIO.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
+    end
+
+    it "builds default error response" do
+      response = HTTP::Response.error("text/plain", "Error!")
+      io = StringIO.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nError!")
     end
   end
 end
