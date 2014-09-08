@@ -135,4 +135,31 @@ describe "Type inference: const" do
       COCO
       ") { int32 }
   end
+
+  it "finds constant in module that includes module (#205)" do
+    assert_type(%(
+      module A
+        CONSTANT = true
+      end
+
+      module B
+        include A
+      end
+
+      B::CONSTANT
+      )) { bool }
+  end
+
+  it "finds constant in class that extends class (#205)" do
+    assert_type(%(
+      class A
+        CONSTANT = true
+      end
+
+      class B < A
+      end
+
+      B::CONSTANT
+      )) { bool }
+  end
 end

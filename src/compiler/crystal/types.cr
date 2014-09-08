@@ -209,6 +209,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_type"
     end
 
+    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
+      raise "Bug: #{self} doesn't implement lookup_type_in_parents"
+    end
+
     def lookup_similar_type_name(node : Path)
       (node.global ? program : self).lookup_similar_type_name(node.names)
     end
@@ -222,7 +226,7 @@ module Crystal
     end
 
     def parents
-      raise "Bug: #{self} doesn't implement parents"
+      nil
     end
 
     def superclass
@@ -427,21 +431,32 @@ module Crystal
       end
 
       type = self
-      names.each do |name|
-        type = type.types[name]?
+      names.each_with_index do |name, i|
+        next_type = type.types[name]?
+        if !next_type && i != 0
+          next_type = type.lookup_type_in_parents(names[i .. -1])
+        end
+        type = next_type
         break unless type
       end
 
       return type if type
 
-      parents.try &.each do |parent|
-        match = parent.lookup_type(names, already_looked_up, false)
-        return match if match
-      end
+      parent_match = lookup_type_in_parents(names, already_looked_up)
+      return parent_match if parent_match
 
       lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
     end
 
+    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
+      parents.try &.each do |parent|
+        match = parent.lookup_type(names, already_looked_up, lookup_in_container)
+        if match.is_a?(Type)
+          return match
+        end
+      end
+      nil
+    end
   end
 
   abstract class NamedType < ContainedType
@@ -1683,9 +1698,6 @@ module Crystal
     end
 
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
-      already_looked_up.add(type_id)
-
       if (names.length == 1) && (type_var = type_vars[names[0]]?)
         case type_var
         when Var
@@ -1695,24 +1707,7 @@ module Crystal
         end
       end
 
-      type = generic_class
-      names.each do |name|
-        type = type.types[name]?
-        break unless type
-      end
-
-      return type if type
-
-      parents.each do |parent|
-        match = parent.lookup_type(names, already_looked_up, false)
-        return match if match
-      end
-
-      if lookup_in_container && (sup_container = generic_class.container)
-        return sup_container.lookup_type(names, already_looked_up)
-      end
-
-      nil
+      generic_class.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
     def to_s(io)
