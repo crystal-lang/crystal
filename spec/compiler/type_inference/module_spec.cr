@@ -562,4 +562,24 @@ describe "Type inference: module" do
       Bar.new.foo(1 || "hello")
       )) { union_of(int32, string) }
   end
+
+  it "finds constant in generic module included in another module" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      class Baz
+        include Bar(Int32)
+      end
+
+      Baz.new.foo
+      )) { int32.metaclass }
+  end
 end

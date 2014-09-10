@@ -1913,12 +1913,9 @@ module Crystal
 
     delegate container, @module
     delegate name, @module
-    delegate parents, @module
     delegate defs, @module
     delegate macros, @module
     delegate implements?, @module
-    delegate lookup_matches, @module
-    delegate lookup_matches_without_parents, @module
     delegate lookup_defs, @module
     delegate lookup_defs_with_modules, @module
     delegate lookup_similar_def_name, @module
@@ -1940,11 +1937,22 @@ module Crystal
       @module.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
+    def parents
+      @parents ||= @module.parents.map do |t|
+        if t.is_a?(IncludedGenericModule)
+          IncludedGenericModule.new(program, t.module, self, t.mapping)
+        else
+          t
+        end
+      end
+    end
+
     def to_s(io)
       @module.to_s(io)
       io << "("
       @including_class.to_s(io)
       io << ")"
+      io << @mapping
     end
   end
 
