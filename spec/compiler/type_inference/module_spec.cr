@@ -582,4 +582,68 @@ describe "Type inference: module" do
       Baz.new.foo
       )) { int32.metaclass }
   end
+
+  it "calls super on included generic module" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        include Foo(Int32)
+
+        def foo
+          super
+        end
+      end
+
+      Bar.new.foo
+      )) { int32 }
+  end
+
+  it "calls super on included generic module and finds type var" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Bar(T)
+        include Foo(T)
+
+        def foo
+          super
+        end
+      end
+
+      Bar(Int32).new.foo
+      )) { int32.metaclass }
+  end
+
+  it "calls super on included generic module and finds type var (2)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+
+        def foo
+          super
+        end
+      end
+
+      class Baz(T)
+        include Bar(T)
+      end
+
+      Baz(Int32).new.foo
+      )) { int32.metaclass }
+  end
 end

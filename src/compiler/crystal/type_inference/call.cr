@@ -215,6 +215,7 @@ module Crystal
           lookup_arg_types = match.arg_types
         end
         match_owner = match.context.owner
+        def_instance_owner = self_type || match_owner
 
         if named_args = @named_args
           named_args_key = named_args.map { |named_arg| {named_arg.name, named_arg.value.type} }
@@ -223,10 +224,10 @@ module Crystal
         end
 
         def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_key)
-        typed_def = match_owner.lookup_def_instance def_instance_key if use_cache
+        typed_def = def_instance_owner.lookup_def_instance def_instance_key if use_cache
         unless typed_def
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
-          match_owner.add_def_instance(def_instance_key, typed_def) if use_cache
+          def_instance_owner.add_def_instance(def_instance_key, typed_def) if use_cache
           if return_type = typed_def.return_type
             typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner)
             mod.push_def_macro typed_def
@@ -373,8 +374,12 @@ module Crystal
       # TODO: do this better
       untyped_def = parent_visitor.untyped_def
       lookup = untyped_def.owner
-      if lookup.is_a?(VirtualType)
+
+      case lookup
+      when VirtualType
         parents = lookup.base_type.parents
+      when GenericType
+        parents = parent_visitor.typed_def.owner.parents
       else
         parents = lookup.parents
       end
