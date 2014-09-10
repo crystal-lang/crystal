@@ -12,7 +12,7 @@ macro record(name, *fields)
 end
 
 macro pp(exp)
-  puts "{{exp}} = #{ {{exp}}.inspect }"
+  puts "#{ {{exp.stringify}} } = #{ {{exp}}.inspect }"
 end
 
 macro assert_responds_to(var, method)
