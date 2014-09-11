@@ -3177,6 +3177,10 @@ module Crystal
           return true
         when :NUMBER
           return allow_int && @token.number_kind == :i32
+        when :IDENT
+          if @token.value == :typeof
+            return true
+          end
         end
 
         false
