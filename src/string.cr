@@ -343,7 +343,7 @@ class String
     end
   end
 
-  def replace(&block : Char -> String)
+  def replace(&block : Char -> _)
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         replacement = yield my_char

@@ -488,7 +488,7 @@ module Crystal
           if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
             nil
           else
-            char.ord.to_s
+            char.ord
           end
         end
       end
@@ -498,7 +498,7 @@ module Crystal
       end
 
       def write_bitcode(output_name)
-        @llvm_mod.write_bitcode output_name
+        @llvm_mod.write_bitcode output_name unless has_long_name?
       end
 
       def compile
@@ -510,7 +510,7 @@ module Crystal
 
         must_compile = true
 
-        if !compiler.bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
+        if !has_long_name? && !compiler.bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           if FileUtils.cmp(bc_name, bc_name_new)
             File.delete bc_name_new
             must_compile = false
@@ -518,7 +518,7 @@ module Crystal
         end
 
         if must_compile
-          File.rename(bc_name_new, bc_name)
+          File.rename(bc_name_new, bc_name) unless has_long_name?
           if compiler.release
             compiler.optimize @llvm_mod
           end
@@ -531,7 +531,11 @@ module Crystal
       end
 
       def object_name
-        "#{compiler.output_dir}/#{@name}.o"
+        if has_long_name?
+          "#{compiler.output_dir}/#{object_id}.o"
+        else
+          "#{compiler.output_dir}/#{@name}.o"
+        end
       end
 
       def bc_name
@@ -540,6 +544,10 @@ module Crystal
 
       def bc_name_new
         "#{compiler.output_dir}/#{@name}.new.bc"
+      end
+
+      def has_long_name?
+        @name.length >= 240
       end
     end
   end
