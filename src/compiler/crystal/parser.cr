@@ -883,7 +883,7 @@ module Crystal
           next_token_skip_space
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'
-              named_args = parse_named_args
+              named_args = parse_named_args(allow_newline: true)
               check :")"
               break
             else
@@ -2682,7 +2682,7 @@ module Crystal
             end
 
             if @token.type == :IDENT && current_char == ':'
-              named_args = parse_named_args
+              named_args = parse_named_args(allow_newline: true)
               check :")"
               next_token_skip_space
               return CallArgs.new args, nil, nil, named_args, false
@@ -2777,7 +2777,7 @@ module Crystal
       CallArgs.new args, nil, nil, nil, false
     end
 
-    def parse_named_args
+    def parse_named_args(allow_newline = false)
       named_args = [] of NamedArgument
       while true
         location = @token.location
@@ -2794,6 +2794,7 @@ module Crystal
         named_arg = NamedArgument.new(name, value)
         named_arg.location = location
         named_args << named_arg
+        skip_space_or_newline if allow_newline
         if @token.type == :","
           next_token_skip_space_or_newline
         else
