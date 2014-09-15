@@ -1647,7 +1647,7 @@ module Crystal
               whitespace = false
               beginning_of_line = true
             else
-              whitespace = char.whitespace? || char == ';'
+              whitespace = char.whitespace? || char == ';' || char == '(' || char == '[' || char == '{'
               if beginning_of_line && !whitespace
                 beginning_of_line = false
               end
