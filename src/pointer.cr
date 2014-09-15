@@ -44,7 +44,7 @@ class Pointer(T)
   end
 
   def memcmp(other : Pointer(T), count : Int)
-    C.memcmp(self as Void*, other as Void*, (count * sizeof(T)).to_sizet) == 0
+    C.memcmp(self as Void*, (other as Void*), C::SizeT.cast(count * sizeof(T)))
   end
 
   def swap(i, j)

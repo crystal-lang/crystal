@@ -128,4 +128,30 @@ describe "Int" do
       fail "expected step to pass through 1" unless passed
     end
   end
+
+  it "casts" do
+    Int8.cast(1).is_a?(Int8).should be_true
+    Int8.cast(1).should eq(1)
+
+    Int16.cast(1).is_a?(Int16).should be_true
+    Int16.cast(1).should eq(1)
+
+    Int32.cast(1).is_a?(Int32).should be_true
+    Int32.cast(1).should eq(1)
+
+    Int64.cast(1).is_a?(Int64).should be_true
+    Int64.cast(1).should eq(1)
+
+    UInt8.cast(1).is_a?(UInt8).should be_true
+    UInt8.cast(1).should eq(1)
+
+    UInt16.cast(1).is_a?(UInt16).should be_true
+    UInt16.cast(1).should eq(1)
+
+    UInt32.cast(1).is_a?(UInt32).should be_true
+    UInt32.cast(1).should eq(1)
+
+    UInt64.cast(1).is_a?(UInt64).should be_true
+    UInt64.cast(1).should eq(1)
+  end
 end

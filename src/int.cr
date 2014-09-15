@@ -1,4 +1,8 @@
 struct Int
+  def self.zero
+    cast(0)
+  end
+
   def +
     self
   end
@@ -160,30 +164,6 @@ struct Int
     io << str.to_s
   end
 
-  def to_modet
-    ifdef darwin
-      to_u16
-    elsif linux
-      to_u32
-    end
-  end
-
-  def to_sizet
-    ifdef x86_64
-      to_u64
-    else
-      to_u32
-    end
-  end
-
-  def to_timet
-    ifdef x86_64
-      to_i64
-    else
-      to_i32
-    end
-  end
-
   macro generate_to_s(capacity)
     def to_s
       String.new_with_capacity_and_length({{capacity}}) do |buffer|
@@ -229,6 +209,10 @@ struct Int8
     0_i8 - self
   end
 
+  def self.cast(value)
+    value.to_i8
+  end
+
   generate_to_s 5
 end
 
@@ -238,6 +222,10 @@ struct Int16
 
   def -
     0_i16 - self
+  end
+
+  def self.cast(value)
+    value.to_i16
   end
 
   generate_to_s 7
@@ -251,6 +239,10 @@ struct Int32
     0 - self
   end
 
+  def self.cast(value)
+    value.to_i32
+  end
+
   generate_to_s 12
 end
 
@@ -260,6 +252,10 @@ struct Int64
 
   def -
     0_i64 - self
+  end
+
+  def self.cast(value)
+    value.to_i64
   end
 
   generate_to_s 22
@@ -273,6 +269,10 @@ struct UInt8
     self
   end
 
+  def self.cast(value)
+    value.to_u8
+  end
+
   generate_to_s 5
 end
 
@@ -282,6 +282,10 @@ struct UInt16
 
   def abs
     self
+  end
+
+  def self.cast(value)
+    value.to_u16
   end
 
   generate_to_s 7
@@ -295,6 +299,10 @@ struct UInt32
     self
   end
 
+  def self.cast(value)
+    value.to_u32
+  end
+
   generate_to_s 12
 end
 
@@ -304,6 +312,10 @@ struct UInt64
 
   def abs
     self
+  end
+
+  def self.cast(value)
+    value.to_u64
   end
 
   generate_to_s 22

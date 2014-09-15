@@ -74,7 +74,7 @@ class Dir
   end
 
   def self.mkdir(path, mode=0777)
-    if C.mkdir(path, mode.to_modet) == -1
+    if C.mkdir(path, C::ModeT.cast(mode)) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0

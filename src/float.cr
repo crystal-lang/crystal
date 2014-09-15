@@ -1,4 +1,8 @@
 struct Float
+  def self.zero
+    cast(0)
+  end
+
   def +
     self
   end
@@ -40,6 +44,10 @@ struct Float32
   def to_s(io : IO)
     to_f64.to_s(io)
   end
+
+  def self.cast(value)
+    value.to_f32
+  end
 end
 
 struct Float64
@@ -73,5 +81,9 @@ struct Float64
     chars = StaticArray(UInt8, 22).new(0_u8)
     C.sprintf(chars, "%g", self)
     io.write(chars.to_slice, C.strlen(chars.buffer))
+  end
+
+  def self.cast(value)
+    value.to_f64
   end
 end

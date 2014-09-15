@@ -62,11 +62,11 @@ struct CFileIO
   end
 
   def read(slice : Slice(UInt8), count)
-    C.fread(slice.pointer(count), 1.to_sizet, count.to_sizet, @file)
+    C.fread(slice.pointer(count), C::SizeT.cast(1), C::SizeT.cast(count), @file)
   end
 
   def write(slice : Slice(UInt8), count)
-    C.fwrite(slice.pointer(count), 1.to_sizet, count.to_sizet, @file)
+    C.fwrite(slice.pointer(count), C::SizeT.cast(1), C::SizeT.cast(count), @file)
   end
 
   def flush

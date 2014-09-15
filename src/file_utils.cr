@@ -20,7 +20,7 @@ module FileUtils
       read2 = stream2.read buf2.to_slice
 
       return false if read1 != read2
-      return false if !buf1.buffer.memcmp(buf2.buffer, read1)
+      return false if buf1.buffer.memcmp(buf2.buffer, read1) != 0
       return true if read1 == 0
     end
   end

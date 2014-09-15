@@ -9,19 +9,19 @@ class FileDescriptorIO
   end
 
   def read(slice : Slice(UInt8), count)
-    C.read(@fd, slice.pointer(count), count.to_sizet)
+    C.read(@fd, slice.pointer(count), C::SizeT.cast(count))
   end
 
   def write(slice : Slice(UInt8), count)
-    C.write(@fd, slice.pointer(count), count.to_sizet)
+    C.write(@fd, slice.pointer(count), C::SizeT.cast(count))
   end
 
   def seek(amount, whence)
-    C.lseek(@fd, amount.to_sizet, whence)
+    C.lseek(@fd, C::SizeT.cast(amount), whence)
   end
 
   def tell
-    C.lseek(@fd, 0.to_sizet, C::SEEK_CUR)
+    C.lseek(@fd, C::SizeT.zero, C::SEEK_CUR)
   end
 
   def stat

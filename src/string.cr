@@ -410,13 +410,14 @@ class String
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
-    cstr.memcmp(other.cstr, bytesize)
+    cstr.memcmp(other.cstr, bytesize) == 0
   end
 
   def <=>(other : self)
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
-    cmp = C.memcmp(cstr as Void*, other.cstr as Void*, min_bytesize.to_sizet)
+
+    cmp = cstr.memcmp(other.cstr, bytesize)
     cmp == 0 ? (bytesize <=> other.bytesize) : cmp
   end
 
@@ -480,7 +481,7 @@ class String
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
       if reader.pos <= end_pos
-        if i >= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize)
+        if i >= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
           return i
         end
       else
@@ -516,7 +517,7 @@ class String
 
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
-      if i <= end_length && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize)
+      if i <= end_length && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
         last_index = i
       end
     end
@@ -624,7 +625,7 @@ class String
     i = 0
     stop = bytesize - separator.bytesize + 1
     while i < stop
-      if (buffer + i).memcmp(separator.cstr, separator_bytesize)
+      if (buffer + i).memcmp(separator.cstr, separator_bytesize) == 0
         ary.push byte_slice(byte_offset, i - byte_offset)
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
@@ -793,7 +794,7 @@ class String
 
   def starts_with?(str : String)
     return false if str.bytesize > bytesize
-    C.memcmp(cstr as Void*, str.cstr as Void*, str.bytesize.to_sizet) == 0
+    cstr.memcmp(str.cstr, str.bytesize) == 0
   end
 
   def starts_with?(char : Char)
@@ -806,7 +807,7 @@ class String
 
   def ends_with?(str : String)
     return false if str.bytesize > bytesize
-    C.memcmp((cstr + bytesize - str.bytesize) as Void*, str.cstr as Void*, str.bytesize.to_sizet) == 0
+    (cstr + bytesize - str.bytesize).memcmp(str.cstr, str.bytesize) == 0
   end
 
   def ends_with?(char : Char)

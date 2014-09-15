@@ -103,8 +103,8 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
         end
 
         if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, ABI::EH_REGISTER_0, exception_object.address.to_sizet)
-          ABI.unwind_set_gr(context, ABI::EH_REGISTER_1, exception_object.value.exception_type_id.to_sizet)
+          ABI.unwind_set_gr(context, ABI::EH_REGISTER_0, C::SizeT.cast(exception_object.address))
+          ABI.unwind_set_gr(context, ABI::EH_REGISTER_1, C::SizeT.cast(exception_object.value.exception_type_id))
           ABI.unwind_set_ip(context, start + cs_addr)
           # puts "install"
           return ABI::URC_INSTALL_CONTEXT
@@ -132,8 +132,8 @@ end
 
 def raise(ex : Exception)
   unwind_ex = Pointer(ABI::UnwindException).malloc(1)
-  unwind_ex.value.exception_class = 0.to_sizet
-  unwind_ex.value.exception_cleanup = 0.to_sizet
+  unwind_ex.value.exception_class = C::SizeT.zero
+  unwind_ex.value.exception_cleanup = C::SizeT.zero
   unwind_ex.value.exception_object = ex.object_id
   unwind_ex.value.exception_type_id = ex.crystal_type_id
   __crystal_raise(unwind_ex)

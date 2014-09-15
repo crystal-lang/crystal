@@ -38,4 +38,12 @@ describe "Float" do
       12.34_f64.to_s.should eq("12.34")
     end
   end
+
+  it "casts" do
+    Float32.cast(1_f64).is_a?(Float32).should be_true
+    Float32.cast(1_f64).should eq(1)
+
+    Float64.cast(1_f32).is_a?(Float64).should be_true
+    Float64.cast(1_f32).should eq(1)
+  end
 end

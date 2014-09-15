@@ -168,7 +168,7 @@ describe "Code gen: fun" do
       end
 
       ary = [3, 1, 4, 2]
-      C.qsort(ary.buffer as Void*, ary.length.to_sizet, sizeof(Int32).to_sizet, ->(a : Void*, b : Void*) {
+      C.qsort((ary.buffer as Void*), C::SizeT.cast(ary.length), C::SizeT.cast(sizeof(Int32)), ->(a : Void*, b : Void*) {
         a = a as Int32*
         b = b as Int32*
         a.value <=> b.value

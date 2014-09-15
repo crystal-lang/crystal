@@ -40,7 +40,7 @@ end
 class FileDescriptorIO
   def read(buffer : UInt8*, count)
     EventScheduler::INSTANCE.wait_fd_read(@fd)
-    C.read(@fd, buffer, count.to_sizet)
+    C.read(@fd, buffer, C::SizeT.cast(count))
   end
 end
 
