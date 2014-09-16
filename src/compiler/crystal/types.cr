@@ -130,6 +130,10 @@ module Crystal
       self
     end
 
+    def virtual_type!
+      self
+    end
+
     def instance_type
       self
     end
@@ -1321,10 +1325,12 @@ module Crystal
       if leaf? && !self.abstract
         self
       else
-        @virtual_type ||= begin
-          VirtualType.new(program, self)
-        end
+        virtual_type!
       end
+    end
+
+    def virtual_type!
+      @virtual_type ||= VirtualType.new(program, self)
     end
 
     def class?
@@ -2254,6 +2260,10 @@ module Crystal
 
     def virtual_type
       instance_type.virtual_type.metaclass
+    end
+
+    def virtual_type!
+      instance_type.virtual_type!.metaclass
     end
 
     def to_s(io)

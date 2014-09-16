@@ -448,4 +448,17 @@ describe "Code gen: class" do
       $x.foo
       )).to_i.should eq(1)
   end
+
+  it "makes .class always be a virtual type even if no subclasses" do
+    build(%(
+      class Foo
+      end
+
+      p = Pointer(Foo.class).malloc(1_u64)
+
+      class Bar < Foo
+        p.value = self
+      end
+      ))
+  end
 end

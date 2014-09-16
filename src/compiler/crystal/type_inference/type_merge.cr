@@ -214,7 +214,7 @@ module Crystal
   class VirtualMetaclassType
     def common_ancestor(other)
       common = instance_type.base_type.metaclass.common_ancestor(other)
-      common.try &.virtual_type
+      common.try &.virtual_type!
     end
   end
 end

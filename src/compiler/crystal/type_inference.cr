@@ -1815,7 +1815,7 @@ module Crystal
     end
 
     def end_visit(node : Metaclass)
-      node.type = node.name.type.virtual_type.metaclass
+      node.type = node.name.type.virtual_type!.metaclass
     end
 
     def check_type_in_type_args(type)
