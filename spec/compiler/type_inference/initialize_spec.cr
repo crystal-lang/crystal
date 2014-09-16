@@ -637,4 +637,24 @@ describe "Type inference: initialize" do
       ",
       "no overload matches"
   end
+
+  it "doesn't mark instance variable as nilable when using self.class" do
+    assert_type("
+      class Foo
+        def initialize
+          self.class.foo
+          @foo = 1
+        end
+
+        def foo
+          @foo
+        end
+
+        def self.foo
+        end
+      end
+
+      Foo.new.foo
+      ") { int32 }
+  end
 end

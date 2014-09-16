@@ -883,6 +883,12 @@ module Crystal
 
       node_obj = node.obj
       if !node_obj || (node_obj.is_a?(Var) && node_obj.name == "self")
+        # Special case: when calling self.class a class method will be invoked
+        # and there's no possibility of accessing instance vars, so we ignore this case.
+        if node.name == "class" && node.args.empty?
+          return
+        end
+
         ivars, found_self = gather_instance_vars_read node
         if found_self
           @found_self_in_initialize_call = true
