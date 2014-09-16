@@ -2000,9 +2000,11 @@ module Crystal
 
           a_else = parse_macro_body(start_line, start_column, macro_state)
 
-          check_ident :end
-          next_token_skip_space
-          check :"%}"
+          if check_end
+            check_ident :end
+            next_token_skip_space
+            check :"%}"
+          end
         when :elsif
           a_else = parse_macro_if(start_line, start_column, macro_state, false)
 
