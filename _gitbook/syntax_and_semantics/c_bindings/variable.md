@@ -20,7 +20,7 @@ A variable can be marked as thread local with an attribute:
 
 ```ruby
 lib C
-  :@ThreadLocal
+  @:ThreadLocal
   $errno = Int32
 end
 ```
