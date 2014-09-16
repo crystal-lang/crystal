@@ -726,4 +726,18 @@ describe "Type inference: class" do
       Foo.new.x
       )) { int32 }
   end
+
+  it "allows using self in class scope" do
+    assert_type(%(
+      class Foo
+        def self.foo
+          1
+        end
+
+        $x = self.foo
+      end
+
+      $x
+      )) { int32 }
+  end
 end

@@ -420,4 +420,32 @@ describe "Code gen: class" do
       (Foo.new || Bar.new).class
       ))
   end
+
+  it "allows using self in class scope" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+
+        $x = self.foo
+      end
+
+      $x
+      )).to_i.should eq(1)
+  end
+
+  it "allows using self in class scope" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+
+        $x = self
+      end
+
+      $x.foo
+      )).to_i.should eq(1)
+  end
 end

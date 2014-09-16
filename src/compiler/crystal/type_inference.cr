@@ -215,7 +215,12 @@ module Crystal
           @type_filters = not_nil_filter(node)
         end
       elsif node.name == "self"
-        node.raise "there's no self in this scope"
+        current_type = current_type()
+        if current_type.is_a?(Program)
+          node.raise "there's no self in this scope"
+        else
+          node.type = current_type.metaclass
+        end
       else
         node.raise "read before definition of '#{node.name}'"
       end

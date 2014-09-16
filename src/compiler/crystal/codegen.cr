@@ -739,7 +739,11 @@ module Crystal
       if var
         @last = downcast var.pointer, node.type, var.type, var.already_loaded
       elsif node.name == "self"
-        @last = downcast llvm_self_ptr, node.type, context.type, true
+        if node.type.metaclass?
+          @last = type_id(node.type)
+        else
+          @last = downcast llvm_self_ptr, node.type, context.type, true
+        end
       else
         node.raise "Bug: missing context var: #{node.name}"
       end
