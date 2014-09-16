@@ -1367,16 +1367,20 @@ module Crystal
 
     def run_hooks(type_with_hooks, current_type, kind, node)
       hooks = type_with_hooks.hooks
-      return unless hooks
+      if hooks
+        hooks.each do |hook|
+          next if hook.kind != kind
 
-      hooks.each do |hook|
-        next if hook.kind != kind
-
-        expanded = expand_macro(hook.macro, node) do
-          @mod.expand_macro current_type.instance_type, hook.macro.body
+          expanded = expand_macro(hook.macro, node) do
+            @mod.expand_macro current_type.instance_type, hook.macro.body
+          end
+          expanded.accept self
+          node.add_runtime_initializer(expanded)
         end
-        expanded.accept self
-        node.add_runtime_initializer(expanded)
+      end
+
+      if kind == :inherited && (superclass = type_with_hooks.instance_type.superclass)
+        run_hooks(superclass.metaclass, current_type, kind, node)
       end
     end
 

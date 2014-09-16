@@ -48,4 +48,23 @@ describe "Code gen: hooks" do
       $x
       ").to_i.should eq(1)
   end
+
+  it "does inherited macro recursively" do
+    run("
+      $x = 0
+      class Foo
+        macro inherited
+          $x += 1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Bar
+      end
+
+      $x
+      ").to_i.should eq(2)
+  end
 end
