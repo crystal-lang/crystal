@@ -657,4 +657,28 @@ describe "Type inference: initialize" do
       Foo.new.foo
       ") { int32 }
   end
+
+  it "doesn't mark instance variable as nilable when using self.class in method" do
+    assert_type("
+      class Foo
+        def initialize
+          bar
+          @foo = 1
+        end
+
+        def bar
+          self.class.foo
+        end
+
+        def foo
+          @foo
+        end
+
+        def self.foo
+        end
+      end
+
+      Foo.new.foo
+      ") { int32 }
+  end
 end

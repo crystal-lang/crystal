@@ -1053,6 +1053,13 @@ module Crystal
       end
 
       def visit(node : Call)
+        obj = node.obj
+
+        # Skip class method
+        if obj.is_a?(Var) && obj.name == "self" && node.name == "class" && node.args.empty?
+          return false
+        end
+
         visited = @visited
 
         node.target_defs.try &.each do |target_def|
