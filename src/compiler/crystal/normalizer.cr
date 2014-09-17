@@ -17,6 +17,7 @@ module Crystal
 
     def initialize(@program)
       @dead_code = false
+      @current_def = nil
     end
 
     def normalize(node)
@@ -263,6 +264,16 @@ module Crystal
     end
 
     def transform(node : Call)
+      # Copy enclosing def's args to super/previous_def without parenthesis
+      case node.name
+      when "super", "previous_def"
+        if node.args.empty? && !node.has_parenthesis && (current_def = @current_def)
+          current_def.args.each do |arg|
+            node.args.push Var.new(arg.name)
+          end
+        end
+      end
+
       # Convert 'a <= b <= c' to 'a <= b && b <= c'
       if comparison?(node.name) && (obj = node.obj) && obj.is_a?(Call) && comparison?(obj.name)
         case middle = obj.args.first
@@ -295,7 +306,9 @@ module Crystal
     end
 
     def transform(node : Def)
+      @current_def = node
       node = super
+      @current_def = nil
 
       # If the def has a block argument without a specification
       # and it doesn't use it, we remove it because it's useless

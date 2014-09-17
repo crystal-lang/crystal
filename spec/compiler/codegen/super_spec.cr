@@ -215,4 +215,26 @@ describe "Codegen: super" do
       f.call
       )).to_i.should eq(1)
   end
+
+  it "codegens super inside closure forwarding args" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+
+        def foo(z)
+          z + @x
+        end
+      end
+
+      class Bar < Foo
+        def foo(z)
+          ->(x : Int32) { x + super }
+        end
+      end
+
+      f = Bar.new(1).foo(2)
+      f.call(3)
+      )).to_i.should eq(6)
+  end
 end

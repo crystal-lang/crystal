@@ -367,22 +367,10 @@ module Crystal
     end
 
     def lookup_matches_in_super
-      if args.empty? && !has_parenthesis
-        copy_args_from_parent_typed_def
-      end
+      enclosing_def = enclosing_def()
 
       # TODO: do this better
-
-      # Check first if we are inside a fun
-      fun_literal_context = parent_visitor.fun_literal_context
-      if fun_literal_context.is_a?(Def)
-        untyped_def = fun_literal_context
-      else
-        untyped_def = parent_visitor.untyped_def
-      end
-
-      lookup = untyped_def.owner
-
+      lookup = enclosing_def.owner
       case lookup
       when VirtualType
         parents = lookup.base_type.parents
@@ -395,8 +383,8 @@ module Crystal
       if parents && parents.length > 0
         parents_length = parents.length
         parents.each_with_index do |parent, i|
-          if i == parents_length - 1 || parent.lookup_first_def(untyped_def.name, block)
-            return lookup_matches_in(parent, scope, untyped_def.name)
+          if i == parents_length - 1 || parent.lookup_first_def(enclosing_def.name, block)
+            return lookup_matches_in(parent, scope, enclosing_def.name)
           end
         end
       end
@@ -405,14 +393,11 @@ module Crystal
     end
 
     def lookup_previous_def_matches
-      untyped_def = parent_visitor.untyped_def
-      previous = untyped_def.previous
-      unless previous
-        raise "there is no previous definition of '#{untyped_def.name}'"
-      end
+      enclosing_def = enclosing_def()
 
-      if args.empty? && !has_parenthesis
-        copy_args_from_parent_typed_def
+      previous = enclosing_def.previous
+      unless previous
+        raise "there is no previous definition of '#{enclosing_def.name}'"
       end
 
       match = Match.new(previous, args.map(&.type), MatchContext.new(scope, scope))
@@ -424,13 +409,12 @@ module Crystal
       typed_defs
     end
 
-    def copy_args_from_parent_typed_def
-      parent_args = parent_visitor.typed_def.args
-      self.args = Array(ASTNode).new(parent_args.length)
-      parent_args.each do |arg|
-        var = Var.new(arg.name)
-        var.bind_to arg
-        self.args.push var
+    def enclosing_def
+      fun_literal_context = parent_visitor.fun_literal_context
+      if fun_literal_context.is_a?(Def)
+        fun_literal_context
+      else
+        parent_visitor.untyped_def
       end
     end
 

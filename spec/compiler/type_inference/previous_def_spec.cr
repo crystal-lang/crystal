@@ -83,4 +83,34 @@ describe "type inference: previous_def" do
       foo(1)
       )) { int32 }
   end
+
+  it "types previous def when inside fun" do
+    assert_type(%(
+      def foo
+        1
+      end
+
+      def foo
+        x = ->{ previous_def }
+        x.call
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "types previous def when inside fun and forwards args" do
+    assert_type(%(
+      def foo(z)
+        z
+      end
+
+      def foo(z)
+        x = ->{ previous_def }
+        x.call
+      end
+
+      foo(1)
+      )) { int32 }
+  end
 end

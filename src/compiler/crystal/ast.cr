@@ -865,6 +865,7 @@ module Crystal
       a_def.calls_initialize = calls_initialize
       a_def.uses_block_arg = uses_block_arg
       a_def.name_column_number = name_column_number
+      a_def.previous = previous
       a_def
     end
 

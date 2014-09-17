@@ -15,4 +15,19 @@ describe "codegen: previous_def" do
       foo
       )).to_i.should eq(2)
   end
+
+  it "codeges previous def when inside fun and forwards args" do
+    run(%(
+      def foo(z)
+        z + 1
+      end
+
+      def foo(z)
+        ->(x : Int32) { x + previous_def }
+      end
+
+      x = foo(2)
+      x.call(3)
+      )).to_i.should eq(6)
+  end
 end
