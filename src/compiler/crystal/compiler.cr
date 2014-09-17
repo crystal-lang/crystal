@@ -465,7 +465,7 @@ module Crystal
           end
           flags.join " "
         else
-          backtick("pkg-config #{libname} --libs")
+          backtick("pkg-config #{libname} --libs").chomp
         end
       end
     end
