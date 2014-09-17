@@ -1,5 +1,6 @@
 require "fiber"
 require "event"
+require "net/http"
 
 def spawn(&block)
   Fiber.new(&block).resume
@@ -50,6 +51,17 @@ class TCPServer
     previous_def
   end
 end
+
+class HTTP::Server
+  def listen
+    spawn { previous_def }
+  end
+
+  def handle_client(sock)
+    spawn { previous_def }
+  end
+end
+
 
 def sleep(time)
   EventScheduler::INSTANCE.wait_time(time)
