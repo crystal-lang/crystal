@@ -550,4 +550,16 @@ describe "Code gen: macro" do
       {{ Foo.abstract? }}
       )).to_b.should be_true
   end
+
+  it "can refer to @type" do
+    run(%(
+      class Foo
+        macro def foo : String
+          {{@type.name}}
+        end
+      end
+
+      Foo.new.foo
+      )).to_string.should eq("Foo")
+  end
 end

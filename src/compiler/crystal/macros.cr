@@ -548,12 +548,14 @@ module Crystal
           return @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
           return @last = MacroType.instance_vars(@scope)
-        when "@superclass"
-          return @last = MacroType.superclass(@scope)
         when "@length"
           if (scope = @scope).is_a?(TupleInstanceType)
             return @last = NumberLiteral.new(scope.tuple_types.length)
           end
+        when "@superclass"
+          return @last = MacroType.superclass(@scope)
+        when "@type"
+          return @last = MacroType.new(@scope)
         end
 
         node.raise "unknown macro instance var: '#{node.name}'"
