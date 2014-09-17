@@ -104,4 +104,34 @@ describe "Type inference: super" do
       Bar.new.foo(1)
       )) { int32 }
   end
+
+  it "errors no superclass method in top-level" do
+    assert_error %(
+      super
+      ), "there's no superclass in this scope"
+  end
+
+  it "errors no superclass method in top-level def" do
+    assert_error %(
+      def foo
+        super
+      end
+
+      foo
+      ), "there's no superclass in this scope"
+  end
+
+  it "errors no superclass method" do
+    assert_error %(
+      require "prelude"
+
+      class Foo
+        def foo(x)
+          super
+        end
+      end
+
+      Foo.new.foo(1)
+      ), "undefined method 'foo'"
+  end
 end

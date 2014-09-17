@@ -2687,7 +2687,7 @@ module Crystal
       defined = false
 
       base_type.subclasses.each do |subclass|
-        subclass = subclass as DefContainer
+        next unless subclass.is_a?(DefContainer)
 
         # First check if we can find the method
         existing_def = subclass.lookup_first_def(signature.name, signature.block)

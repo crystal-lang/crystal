@@ -267,10 +267,13 @@ module Crystal
       # Copy enclosing def's args to super/previous_def without parenthesis
       case node.name
       when "super", "previous_def"
-        if node.args.empty? && !node.has_parenthesis && (current_def = @current_def)
-          current_def.args.each do |arg|
-            node.args.push Var.new(arg.name)
+        if node.args.empty? && !node.has_parenthesis
+          if current_def = @current_def
+            current_def.args.each do |arg|
+              node.args.push Var.new(arg.name)
+            end
           end
+          node.has_parenthesis = true
         end
       end
 

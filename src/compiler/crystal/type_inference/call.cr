@@ -367,6 +367,10 @@ module Crystal
     end
 
     def lookup_matches_in_super
+      if scope.is_a?(Program)
+        raise "there's no superclass in this scope"
+      end
+
       enclosing_def = enclosing_def()
 
       # TODO: do this better
