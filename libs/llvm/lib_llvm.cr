@@ -1,13 +1,9 @@
 ifdef darwin
-  lib LibCpp("c++")
-  end
+  @[Link("c++")]
 end
-
-lib LibStdcpp("stdc++")
-end
-
-
-lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2> /dev/null) || (llvm-config --libs 2>/dev/null; llvm-config --ldflags 2>/dev/null)`")
+@[Link("stdc++")]
+@[Link(ldflags: "`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2> /dev/null) || (llvm-config --libs 2>/dev/null; llvm-config --ldflags 2>/dev/null)`")]
+lib LibLLVM
   type ContextRef : Void*
   type ModuleRef : Void*
   type TypeRef : Void*
