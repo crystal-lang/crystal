@@ -278,6 +278,10 @@ describe "MacroExpander" do
     it "executes string [Range] exclusive" do
       assert_macro "", %({{"hello"[1...-2]}}), [] of ASTNode, %("el")
     end
+
+    it "executes string chomp" do
+      assert_macro "", %({{"hello\n".chomp}}), [] of ASTNode, %("hello")
+    end
   end
 
   describe "array methods" do

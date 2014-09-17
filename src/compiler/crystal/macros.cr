@@ -729,6 +729,8 @@ module Crystal
         end
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
+      when "chomp"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.chomp) }
       when "downcase"
         interpret_argless_method(method, args) { StringLiteral.new(@value.downcase) }
       when "empty?"
