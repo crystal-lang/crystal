@@ -66,4 +66,23 @@ describe "Type inference: super" do
       Bar.new.foo
       ") { int32 }
   end
+
+  it "types super when inside fun" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          x = ->{ super }
+          x.call
+        end
+      end
+
+      Bar.new.foo
+      )) { int32 }
+  end
 end

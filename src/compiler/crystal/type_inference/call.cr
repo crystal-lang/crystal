@@ -372,7 +372,15 @@ module Crystal
       end
 
       # TODO: do this better
-      untyped_def = parent_visitor.untyped_def
+
+      # Check first if we are inside a fun
+      fun_literal_context = parent_visitor.fun_literal_context
+      if fun_literal_context.is_a?(Def)
+        untyped_def = fun_literal_context
+      else
+        untyped_def = parent_visitor.untyped_def
+      end
+
       lookup = untyped_def.owner
 
       case lookup

@@ -193,4 +193,26 @@ describe "Codegen: super" do
       c.add_def
       ").to_i.should eq(3)
   end
+
+  it "codegens super inside closure" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+
+        def foo
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          ->{ super }
+        end
+      end
+
+      f = Bar.new(1).foo
+      f.call
+      )).to_i.should eq(1)
+  end
 end
