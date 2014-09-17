@@ -38,9 +38,16 @@ class EventScheduler
 end
 
 class FileDescriptorIO
-  def read(buffer : UInt8*, count)
+  def read(slice : Slice(UInt8), count)
     EventScheduler::INSTANCE.wait_fd_read(@fd)
-    C.read(@fd, buffer, C::SizeT.cast(count))
+    previous_def
+  end
+end
+
+class TCPServer
+  def accept
+    EventScheduler::INSTANCE.wait_fd_read(@sock)
+    previous_def
   end
 end
 
