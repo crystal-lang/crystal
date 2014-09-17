@@ -327,7 +327,7 @@ module Crystal
 
     private def add_link_attributes(types, attrs)
       types.each_value do |type|
-        if type.is_a?(LibType) && (link_attrs = type.link_attributes)
+        if type.is_a?(LibType) && type.used? && (link_attrs = type.link_attributes)
           attrs.concat link_attrs
         end
 

@@ -1964,9 +1964,11 @@ module Crystal
 
   class LibType < ModuleType
     getter :link_attributes
+    property? :used
 
     def initialize(program, container, name, @link_attributes)
       super(program, container, name)
+      @used = false
     end
 
     def metaclass

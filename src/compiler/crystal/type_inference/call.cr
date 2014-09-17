@@ -438,6 +438,8 @@ module Crystal
       check_lib_out_args untyped_def
       return unless obj_and_args_types_set?
 
+      obj_type.used = true
+
       check_fun_args_types_match obj_type, untyped_def
 
       (untyped_def as External).used = true
