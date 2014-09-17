@@ -1,4 +1,4 @@
-## Next
+## 0.4.4 (2014-09-17)
 
 * Fixed [#193](https://github.com/manastech/crystal/issues/193): allow initializing an enum value with another's one.
 * The `record` macro is now variadic, so instead of `record Vec3, [x, y, z]` write `record Vec3, x, y, z`.
