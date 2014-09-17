@@ -52,18 +52,22 @@ class HTTP::Server
     io = BufferedIO.new(io)
 
     begin
-      begin
-        request = HTTP::Request.from_io(io)
-      rescue
-        # HACK: these lines can be removed once #171 is fixed
-        ssl_sock.try &.close if @ssl
-        sock.close
+      loop do
+        begin
+          request = HTTP::Request.from_io(io)
+        rescue
+          # HACK: these lines can be removed once #171 is fixed
+          ssl_sock.try &.close if @ssl
+          sock.close
 
-        return
+          return
+        end
+        response = @handler.call(request)
+        response.to_io io
+        io.flush
+
+        break unless request.keep_alive?
       end
-      response = @handler.call(request)
-      response.to_io io
-      io.flush
     ensure
       ssl_sock.try &.close if @ssl
       sock.close
