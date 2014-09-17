@@ -532,4 +532,22 @@ describe "Code gen: macro" do
       a
       )).to_i.should eq(3)
   end
+
+  it "can refer to abstract (1)" do
+    run(%(
+      class Foo
+      end
+
+      {{ Foo.abstract? }}
+      )).to_b.should be_false
+  end
+
+  it "can refer to abstract (2)" do
+    run(%(
+      abstract class Foo
+      end
+
+      {{ Foo.abstract? }}
+      )).to_b.should be_true
+  end
 end

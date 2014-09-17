@@ -949,6 +949,8 @@ module Crystal
   class MacroType
     def interpret(method, args, block, interpreter)
       case method
+      when "abstract?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.abstract) }
       when "name"
         interpret_argless_method(method, args) { StringLiteral.new(type.to_s) }
       when "instance_vars"
