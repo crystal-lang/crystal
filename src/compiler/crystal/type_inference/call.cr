@@ -404,6 +404,10 @@ module Crystal
         raise "there is no previous definition of '#{enclosing_def.name}'"
       end
 
+      unless scope.is_a?(Program)
+        parent_visitor.check_self_closured
+      end
+
       match = Match.new(previous, args.map(&.type), MatchContext.new(scope, scope))
       matches = Matches.new([match] of Match, true)
       typed_defs = instantiate matches, scope

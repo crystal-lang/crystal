@@ -30,4 +30,26 @@ describe "codegen: previous_def" do
       x.call(3)
       )).to_i.should eq(6)
   end
+
+  it "codegens previous def when inside fun with self" do
+    run(%(
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def bar
+          @x
+        end
+      end
+
+      class Foo
+        def bar
+          x = ->{ previous_def }
+        end
+      end
+
+      Foo.new.bar.call
+      )).to_i.should eq(1)
+  end
 end
