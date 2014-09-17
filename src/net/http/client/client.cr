@@ -1,4 +1,8 @@
 require "openssl"
+require "json"
+require "socket"
+require "uri"
+require "../common/common"
 
 class HTTP::Client
   def self.exec(host, port, request)

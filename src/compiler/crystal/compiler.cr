@@ -2,7 +2,7 @@ require "option_parser"
 require "thread"
 require "file_utils"
 require "socket"
-require "net/http"
+require "net/http/common/common"
 require "colorize"
 
 module Crystal

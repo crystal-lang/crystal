@@ -1,3 +1,5 @@
+require "common"
+
 class HTTP::Request
   getter method
   getter path

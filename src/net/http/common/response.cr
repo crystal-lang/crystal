@@ -1,3 +1,5 @@
+require "common"
+
 class HTTP::Response
   getter version
   getter status_code

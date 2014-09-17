@@ -1,3 +1,7 @@
+require "openssl"
+require "socket"
+require "../common/common"
+
 abstract class HTTP::Handler
   property :next
 
@@ -9,6 +13,8 @@ abstract class HTTP::Handler
     end
   end
 end
+
+require "./handlers/*"
 
 class HTTP::Server
   property ssl
