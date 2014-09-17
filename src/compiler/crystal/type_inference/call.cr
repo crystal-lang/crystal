@@ -788,6 +788,19 @@ module Crystal
       end
 
       defs = owner.lookup_defs(def_name)
+
+      # Another special case: initialize is only looked up one level,
+      # so we must find the first one defined.
+      while defs.empty? && def_name == "initialize"
+        new_owner = owner.superclass
+        if new_owner
+          defs = new_owner.lookup_defs(def_name)
+        else
+          defs = [] of Def
+          break
+        end
+      end
+
       obj = @obj
       if defs.empty?
         check_macro_wrong_number_of_arguments(def_name)
@@ -996,6 +1009,11 @@ module Crystal
 
     def define_new(scope, arg_types)
       instance_type = scope.instance_type
+      if instance_type.abstract
+        raise "can't instantiate abstract class #{scope}"
+      end
+
+      original_instance_type = instance_type
 
       if instance_type.is_a?(VirtualType)
         matches = define_new_recursive(instance_type.base_type, arg_types)
@@ -1005,6 +1023,23 @@ module Crystal
       # First check if this type has any initialize
       initializers = instance_type.lookup_defs_with_modules("initialize")
 
+      # Go up the type hierarchy until we find the first "initialize" defined
+      while initializers.empty?
+        instance_type = instance_type.superclass
+        if instance_type
+          initializers = instance_type.lookup_defs_with_modules("initialize")
+        else
+          if arg_types.empty?
+            initializers = [] of Def
+            instance_type = original_instance_type
+            break
+          else
+            # This will always raise, but we reuse the error message from this method
+            return define_new_without_initialize original_instance_type, arg_types
+          end
+        end
+      end
+
       signature = CallSignature.new("initialize", arg_types, block, named_args)
 
       if initializers.empty?
@@ -1013,6 +1048,9 @@ module Crystal
       else
         # Otherwise, use this type's initializers
         matches = instance_type.lookup_matches_with_modules signature
+        if matches.empty?
+          raise_matches_not_found original_instance_type, "initialize", matches
+        end
       end
 
       if matches.empty?
@@ -1026,26 +1064,18 @@ module Crystal
       elsif matches.cover_all?
         define_new_with_initialize(scope, arg_types, matches)
       else
-        raise_matches_not_found instance_type, "initialize", matches
+        raise_matches_not_found original_instance_type, "initialize", matches
       end
     end
 
     def define_new_without_initialize(scope, arg_types)
       defs = scope.instance_type.lookup_defs("initialize")
       if defs.length > 0
-        if scope.abstract
-          raise "can't instantiate abstract class #{scope}"
-        else
-          raise_matches_not_found scope.instance_type, "initialize"
-        end
+        raise_matches_not_found scope.instance_type, "initialize"
       end
 
       if defs.length == 0 && arg_types.length > 0
-        if scope.abstract
-          raise "can't instantiate abstract class #{scope}"
-        else
-          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
-        end
+        raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
       end
 
       new_def = Def.argless_new(scope.instance_type)

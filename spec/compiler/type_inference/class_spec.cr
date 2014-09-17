@@ -740,4 +740,19 @@ describe "Type inference: class" do
       $x
       )) { int32 }
   end
+
+  it "cant't use implicit initialize if defined in parent" do
+    assert_error %(
+      class Foo
+        def initialize(x)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new
+      ),
+      "wrong number of arguments for 'Bar#initialize' (0 for 1)"
+  end
 end
