@@ -283,4 +283,38 @@ describe "Code gen: method_missing" do
       Foo.new.coco
       ").to_string.should eq("Foo")
   end
+
+  it "does method_missing with assignment (bug)" do
+    run(%(
+      class Foo
+        macro method_missing(name, args, block)
+          x = {{args[0]}}
+          x
+        end
+      end
+
+      foo = Foo.new
+      foo.bar(1)
+      )).to_i.should eq(1)
+  end
+
+  it "does method_missing with assignment (2) (bug)" do
+    run(%(
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      class Foo
+        macro method_missing(name, args, block)
+          @x = {{args[0]}}
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.bar(1).to_i
+      )).to_i.should eq(1)
+  end
 end

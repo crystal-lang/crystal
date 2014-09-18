@@ -68,7 +68,7 @@ module Crystal
 
     def parse_macro_source(generated_source, the_macro, node, vars)
       begin
-        parser = Parser.new(generated_source, [vars])
+        parser = Parser.new(generated_source, [vars.dup])
         parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
         parser.visibility = node.visibility
         normalize(yield parser)
