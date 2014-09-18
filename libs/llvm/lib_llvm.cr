@@ -4,20 +4,20 @@ end
 @[Link("stdc++")]
 @[Link(ldflags: "`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2> /dev/null) || (llvm-config --libs 2>/dev/null; llvm-config --ldflags 2>/dev/null)`")]
 lib LibLLVM
-  type ContextRef : Void*
-  type ModuleRef : Void*
-  type TypeRef : Void*
-  type ValueRef : Void*
-  type BasicBlockRef : Void*
-  type BuilderRef : Void*
-  type ExecutionEngineRef : Void*
-  type GenericValueRef : Void*
-  type TargetRef : Void*
-  type TargetDataRef : Void*
-  type TargetMachineRef : Void*
-  type PassManagerBuilderRef : Void*
-  type PassManagerRef : Void*
-  type PassRegistryRef : Void*
+  type ContextRef = Void*
+  type ModuleRef = Void*
+  type TypeRef = Void*
+  type ValueRef = Void*
+  type BasicBlockRef = Void*
+  type BuilderRef = Void*
+  type ExecutionEngineRef = Void*
+  type GenericValueRef = Void*
+  type TargetRef = Void*
+  type TargetDataRef = Void*
+  type TargetMachineRef = Void*
+  type PassManagerBuilderRef = Void*
+  type PassManagerRef = Void*
+  type PassRegistryRef = Void*
 
   enum Attribute
     ZExt            =  1 << 0

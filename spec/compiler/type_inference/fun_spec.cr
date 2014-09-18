@@ -58,7 +58,7 @@ describe "Type inference: fun" do
   it "allows passing fun type if it is typedefed" do
     assert_type("
       lib C
-        type Callback : Int32 -> Int32
+        type Callback = Int32 -> Int32
         fun foo(x : Callback) : Float64
       end
 
@@ -176,7 +176,7 @@ describe "Type inference: fun" do
   it "allows passing nil as fun callback" do
     assert_type("
       lib C
-        type Cb : Int32 ->
+        type Cb = Int32 ->
         fun bla(Cb) : Int32
       end
 
@@ -333,7 +333,7 @@ describe "Type inference: fun" do
   it "allows new on fun type that is a typedef" do
     assert_type("
       lib C
-        type F : Int32 -> Int32
+        type F = Int32 -> Int32
       end
 
       C::F.new { |x| x + 1 }

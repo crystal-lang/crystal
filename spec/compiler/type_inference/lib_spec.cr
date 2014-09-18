@@ -66,7 +66,7 @@ describe "Type inference: lib" do
   end
 
   it "reports error on typedef type not primitive like" do
-    assert_error "lib Foo; type Foo : Reference; end",
+    assert_error "lib Foo; type Foo = Reference; end",
       "only primitive types"
   end
 

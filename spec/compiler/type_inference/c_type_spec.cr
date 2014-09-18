@@ -5,7 +5,7 @@ describe "Type inference: type" do
   it "can call methods of original type" do
     assert_type("
       lib Lib
-        type X : Void*
+        type X = Void*
         fun foo : X
       end
 
@@ -16,7 +16,7 @@ describe "Type inference: type" do
   it "can call methods of parent type" do
     assert_error("
       lib Lib
-        type X : Void*
+        type X = Void*
         fun foo : X
       end
 

@@ -1,6 +1,6 @@
 @[Link("pcl")]
 lib Pcl
-  type Coroutine : Void*
+  type Coroutine = Void*
 
   fun co_thread_init : Int32
   fun co_create(func : (Void* ->), data : Void*, stack : Void*, size : Int32) : Coroutine

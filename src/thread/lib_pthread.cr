@@ -1,9 +1,9 @@
 lib PThread
-  type Thread : Void*
-  type Mutex : Int64[8]
-  type MutexAttr : Void*
-  type Cond : Int64[8]
-  type CondAttr : Void*
+  type Thread = Void*
+  type Mutex = Int64[8]
+  type MutexAttr = Void*
+  type Cond = Int64[8]
+  type CondAttr = Void*
 
   fun create = pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*)
   fun exit = pthread_exit(value : Void*)

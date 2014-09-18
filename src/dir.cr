@@ -1,5 +1,5 @@
 lib C
-  type Dir : Void*
+  type Dir = Void*
 
   ifdef darwin
     struct DirEntry

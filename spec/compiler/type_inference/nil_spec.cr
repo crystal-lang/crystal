@@ -15,7 +15,7 @@ describe "Type inference: nil" do
   end
 
   it "can call a fun with nil for typedef pointer" do
-    assert_type("lib A; type Foo : Char*; fun a(c : Foo) : Int32; end; A.a(nil)") { int32 }
+    assert_type("lib A; type Foo = Char*; fun a(c : Foo) : Int32; end; A.a(nil)") { int32 }
   end
 
   it "marks instance variables as nil but doesn't explode on macros" do

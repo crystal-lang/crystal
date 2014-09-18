@@ -1,6 +1,6 @@
 @[Link("ncurses")]
 lib LibCurses
-  type Window : Void*
+  type Window = Void*
 
   $lines = LINES : Int32
   $cols = COLS : Int32

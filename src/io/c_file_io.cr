@@ -3,9 +3,9 @@ lib C
     struct IoBuf
       data : Int32[8]
     end
-    type File : IoBuf*
+    type File = IoBuf*
   else
-    type File : Void*
+    type File = Void*
   end
 
   fun fopen(filename : UInt8*, mode : UInt8*) : File

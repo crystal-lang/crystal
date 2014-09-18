@@ -1,7 +1,7 @@
 @[Link("xml2")]
 lib LibXML
-  type InputBuffer : Void*
-  type XmlTextReader : Void*
+  type InputBuffer = Void*
+  type XmlTextReader = Void*
 
   XML_READER_TYPE_NONE                   = 0
   XML_READER_TYPE_ELEMENT                = 1

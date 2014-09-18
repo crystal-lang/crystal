@@ -1,6 +1,6 @@
 @[Link("pcre")]
 lib PCRE
-  type Pcre : Void*
+  type Pcre = Void*
   fun compile = pcre_compile(pattern : UInt8*, options : Int32, errptr : UInt8**, erroffset : Int32*, tableptr : Void*) : Pcre
   fun exec = pcre_exec(code : Pcre, extra : Void*, subject : UInt8*, length : Int32, offset : Int32, options : Int32,
                 ovector : Int32*, ovecsize : Int32) : Int32

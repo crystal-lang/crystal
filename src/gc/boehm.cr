@@ -12,7 +12,7 @@ lib LibGC
   fun disable = GC_disable
   # fun set_handle_fork = GC_set_handle_fork(value : Int32)
 
-  type Finalizer : Void*, Void* ->
+  type Finalizer = Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int32
 

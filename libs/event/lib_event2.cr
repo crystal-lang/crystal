@@ -1,7 +1,7 @@
 @[Link("event")]
 lib LibEvent2
-  type EventBase : Void*
-  type Event : Void*
+  type EventBase = Void*
+  type Event = Void*
 
   enum EventLoopFlags
     EVLOOP_ONCE = 0x01

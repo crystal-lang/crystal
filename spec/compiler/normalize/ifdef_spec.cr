@@ -11,6 +11,6 @@ describe "Normalize: ifdef" do
   end
 
   it "keeps then if condition is true inside lib" do
-    assert_normalize "lib Foo; ifdef foo; type A : B; else; type A : D; end; end", "lib Foo\n  type A : B\nend", flags: "foo"
+    assert_normalize "lib Foo; ifdef foo; type A = B; else; type A = D; end; end", "lib Foo\n  type A : B\nend", flags: "foo"
   end
 end

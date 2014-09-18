@@ -533,11 +533,10 @@ describe "Parser" do
   it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", [FunDef.new("foo", [Arg.new("a", restriction: "Int".path.pointer_of.pointer_of)])] of ASTNode)
   it_parses "lib C; fun foo : Int*; end", LibDef.new("C", [FunDef.new("foo", return_type: "Int".path.pointer_of)] of ASTNode)
   it_parses "lib C; fun foo : Int**; end", LibDef.new("C", [FunDef.new("foo", return_type: "Int".path.pointer_of.pointer_of)] of ASTNode)
-  it_parses "lib C; type A : B; end", LibDef.new("C", [TypeDef.new("A", "B".path)] of ASTNode)
-  it_parses "lib C; type A : B*; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
-  it_parses "lib C; type A : B**; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)
-  it_parses "lib C; type A : B.class; end", LibDef.new("C", [TypeDef.new("A", Metaclass.new("B".path))] of ASTNode)
   it_parses "lib C; type A = B; end", LibDef.new("C", [TypeDef.new("A", "B".path)] of ASTNode)
+  it_parses "lib C; type A = B*; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
+  it_parses "lib C; type A = B**; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)
+  it_parses "lib C; type A = B.class; end", LibDef.new("C", [TypeDef.new("A", Metaclass.new("B".path))] of ASTNode)
   it_parses "lib C; struct Foo; end end", LibDef.new("C", [StructDef.new("Foo")] of ASTNode)
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", [StructDef.new("Foo", [Arg.new("x", restriction: "Int".path), Arg.new("y", restriction: "Float".path)])] of ASTNode)
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", [StructDef.new("Foo", [Arg.new("x", restriction: "Int".path.pointer_of)])] of ASTNode)
@@ -557,7 +556,7 @@ describe "Parser" do
   it_parses "lib C\n$errno = Foo : Int32\nend", LibDef.new("C", [ExternalVar.new("errno", "Int32".path, "Foo")] of ASTNode)
   it_parses "lib C\nalias Foo = Bar\nend", LibDef.new("C", [Alias.new("Foo", "Bar".path)] of ASTNode)
 
-  it_parses "lib C\nifdef foo\ntype A : B\nend\nend", LibDef.new("C", [IfDef.new("foo".var, TypeDef.new("A", "B".path))] of ASTNode)
+  it_parses "lib C\nifdef foo\ntype A = B\nend\nend", LibDef.new("C", [IfDef.new("foo".var, TypeDef.new("A", "B".path))] of ASTNode)
 
   it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", restriction: "Int32".path)], "Int64".path, body: "x".var)
 

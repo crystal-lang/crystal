@@ -64,7 +64,7 @@ describe "Type inference: pointer" do
   it "types nil or pointer type with typedef" do
     result = assert_type(%(
       lib C
-        type T : Void*
+        type T = Void*
         fun foo : T?
       end
       C.foo
@@ -90,7 +90,7 @@ describe "Type inference: pointer" do
   it "types pointer value on typedef" do
     assert_type(%(
       lib C
-        type Foo : Int32*
+        type Foo = Int32*
         fun foo : Foo
       end
 

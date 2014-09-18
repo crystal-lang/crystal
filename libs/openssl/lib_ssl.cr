@@ -2,9 +2,9 @@ require "lib_crypto"
 
 @[Link("ssl")]
 lib LibSSL
-  type SSLMethod : Void*
-  type SSLContext : Void*
-  type SSL : Void*
+  type SSLMethod = Void*
+  type SSLContext = Void*
+  type SSL = Void*
 
   enum SSLFileType
     PEM = 1
