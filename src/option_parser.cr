@@ -94,10 +94,10 @@ class OptionParser
   private def parse_flag(flag)
     case flag
     when /--(\S+)\s+\[\S+\]/
-      value = double_flag_value("--#{MatchData.last[1]}")
+      value = double_flag_value("--#{$1}")
       yield value if value
     when /--(\S+)(\s+|\=)(\S+)?/
-      value = double_flag_value("--#{MatchData.last[1]}", true)
+      value = double_flag_value("--#{$1}", true)
       yield value if value
     when /--\S+/
       flag_present?(flag) && yield ""

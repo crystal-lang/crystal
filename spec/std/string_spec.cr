@@ -325,8 +325,8 @@ describe "String" do
   describe "=~" do
     it "matches with group" do
       "foobar" =~ /(o+)ba(r?)/
-      MatchData.last[1].should eq("oo")
-      MatchData.last[2].should eq("r")
+      $1.should eq("oo")
+      $2.should eq("r")
     end
   end
 

@@ -37,7 +37,7 @@ class HTTP::Response
     status_line = io.gets.not_nil!
     status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*?)\r?\n\Z/
 
-    http_version, status_code, status_message = MatchData.last[1], MatchData.last[2].to_i, MatchData.last[3]
+    http_version, status_code, status_message = $1, $2.to_i, $3
 
     HTTP.parse_headers_and_body(io) do |headers, body|
       return new status_code, body, headers, status_message, http_version
