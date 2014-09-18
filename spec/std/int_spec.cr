@@ -116,8 +116,7 @@ describe "Int" do
       65535_u16.to_s.should eq("65535")
       4294967295_u32.to_s.should eq("4294967295")
 
-      # TODO: this fails, check why
-      #18446744073709551615_u64.to_s.should eq("18446744073709551615")
+      18446744073709551615_u64.to_s.should eq("18446744073709551615")
     end
   end
 
@@ -153,5 +152,10 @@ describe "Int" do
 
     UInt64.cast(1).is_a?(UInt64).should be_true
     UInt64.cast(1).should eq(1)
+  end
+
+  it "raises when divides by zero" do
+    expect_raises DivisionByZero { 1 / 0 }
+    (4 / 2).should eq(2)
   end
 end

@@ -11,14 +11,13 @@ struct Int
     self ^ -1
   end
 
-  # TODO: enable in next release
-  # def /(x : Int)
-  #   if x == 0
-  #     raise DivisionByZero.new
-  #   end
+  def /(x : Int)
+    if x == 0
+      raise DivisionByZero.new
+    end
 
-  #   unsafe_div x
-  # end
+    unsafe_div x
+  end
 
   def abs
     self >= 0 ? self : -self
