@@ -13,7 +13,8 @@ ifdef darwin
   end
 elsif linux
   ifdef x86_64
-    lib Unwind("unwind")
+    @[Link("unwind")]
+    lib Unwind
       CURSOR_SIZE = 140
       CONTEXT_SIZE = 128
 
@@ -26,7 +27,8 @@ elsif linux
       fun get_proc_name = _ULx86_64_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
     end
   else
-    lib Unwind("unwind")
+    @[Link("unwind")]
+    lib Unwind
       CURSOR_SIZE = 127
       CONTEXT_SIZE = 87
 

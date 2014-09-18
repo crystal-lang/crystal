@@ -1,4 +1,5 @@
-lib LibEvent2("event")
+@[Link("event")]
+lib LibEvent2
   type EventBase : Void*
   type Event : Void*
 

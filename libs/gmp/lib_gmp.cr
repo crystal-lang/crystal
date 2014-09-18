@@ -1,4 +1,5 @@
-lib LibGMP("gmp")
+@[Link("gmp")]
+lib LibGMP
   struct MPZ
     _mp_alloc : Int32
     _mp_size  : Int32

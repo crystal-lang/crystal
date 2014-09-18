@@ -1,4 +1,5 @@
-lib LibCurses("ncurses")
+@[Link("ncurses")]
+lib LibCurses
   type Window : Void*
 
   $lines = LINES : Int32

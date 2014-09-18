@@ -1,4 +1,5 @@
-lib LibXML("xml2")
+@[Link("xml2")]
+lib LibXML
   type InputBuffer : Void*
   type XmlTextReader : Void*
 

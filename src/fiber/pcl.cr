@@ -1,4 +1,5 @@
-lib Pcl("pcl")
+@[Link("pcl")]
+lib Pcl
   type Coroutine : Void*
 
   fun co_thread_init : Int32

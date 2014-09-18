@@ -1,6 +1,7 @@
 require "lib_crypto"
 
-lib LibSSL("ssl")
+@[Link("ssl")]
+lib LibSSL
   type SSLMethod : Void*
   type SSLContext : Void*
   type SSL : Void*

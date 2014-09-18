@@ -33,7 +33,8 @@ lib C
 end
 
 ifdef linux
-  lib Librt("rt")
+  @[Link("rt")]
+  lib Librt
     fun clock_gettime(clk_id : Int32, tp : C::TimeSpec*)
   end
 end

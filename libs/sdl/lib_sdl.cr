@@ -1,4 +1,9 @@
-lib LibSDL("SDL")
+@[Link("SDL")]
+@[Link("SDLMain")]
+ifdef darwin
+  @[Link(framework: "Cocoa")]
+end
+lib LibSDL
   INIT_TIMER       = 0x00000001_u32
   INIT_AUDIO       = 0x00000010_u32
   INIT_VIDEO       = 0x00000020_u32
@@ -141,14 +146,6 @@ lib LibSDL("SDL")
   fun show_cursor = SDL_ShowCursor(toggle : Int32) : Int32
   fun get_ticks = SDL_GetTicks : UInt32
   fun flip = SDL_Flip(screen : Surface*) : Int32
-end
-
-lib SDLMain("SDLMain")
-end
-
-ifdef darwin
-  lib LibCocoa("`echo \"-framework Cocoa\"`")
-  end
 end
 
 undef main

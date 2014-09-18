@@ -1,4 +1,7 @@
-lib C
+ifdef linux
+  @[Link("m")]
+end
+lib LibM
   fun acos(x : Float64) : Float64
   fun acosh(x : Float64) : Float64
   fun asin(x : Float64) : Float64
@@ -17,10 +20,6 @@ lib C
   fun tgamma(x : Float64) : Float64
 end
 
-ifdef linux
-  lib Libm("m"); end
-end
-
 module Math
   extend self
 
@@ -28,31 +27,31 @@ module Math
   PI = 3.14159265358979323846
 
   def acos(value)
-    C.acos(value.to_f64)
+    LibM.acos(value.to_f64)
   end
 
   def acosh(value)
-    C.acosh(value.to_f64)
+    LibM.acosh(value.to_f64)
   end
 
   def asin(value)
-    C.asin(value.to_f64)
+    LibM.asin(value.to_f64)
   end
 
   def asinh(value)
-    C.asinh(value.to_f64)
+    LibM.asinh(value.to_f64)
   end
 
   def atan(value)
-    C.atan(value.to_f64)
+    LibM.atan(value.to_f64)
   end
 
   def atan2(y, x)
-    C.atan2(y.to_f64, x.to_f64)
+    LibM.atan2(y.to_f64, x.to_f64)
   end
 
   def cbrt(value)
-    C.cbrt(value.to_f64)
+    LibM.cbrt(value.to_f64)
   end
 
   def cos(value : Float32)
@@ -68,11 +67,11 @@ module Math
   end
 
   def erf(value)
-    C.erf(value.to_f64)
+    LibM.erf(value.to_f64)
   end
 
   def erfc(value)
-    C.erfc(value.to_f64)
+    LibM.erfc(value.to_f64)
   end
 
   def exp(value : Float32)
@@ -88,15 +87,15 @@ module Math
   end
 
   def gamma(value)
-    C.tgamma(value.to_f64)
+    LibM.tgamma(value.to_f64)
   end
 
   def hypot(x, y)
-    C.hypot(x.to_f64, y.to_f64)
+    LibM.hypot(x.to_f64, y.to_f64)
   end
 
   def ldexp(flt, int : Int)
-    C.ldexp(flt.to_f64, int)
+    LibM.ldexp(flt.to_f64, int)
   end
 
   def log(value : Float32)
@@ -160,15 +159,15 @@ module Math
   end
 
   def sinh(value)
-    C.sinh(value.to_f64)
+    LibM.sinh(value.to_f64)
   end
 
   def tan(value)
-    C.tan(value.to_f64)
+    LibM.tan(value.to_f64)
   end
 
   def tanh(value)
-    C.tanh(value.to_f64)
+    LibM.tanh(value.to_f64)
   end
 
   def sqrt(value : Float32)

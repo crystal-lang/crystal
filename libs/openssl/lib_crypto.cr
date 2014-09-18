@@ -1,5 +1,5 @@
-lib LibCrypto("crypto")
-
+@[Link("crypto")]
+lib LibCrypto
   struct Bio
     method : Void*
     callback : (Void*, Int32, UInt8*, Int32, Int64, Int64) -> Int64

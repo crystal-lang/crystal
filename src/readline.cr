@@ -1,4 +1,5 @@
-lib LibReadline("readline")
+@[Link("readline")]
+lib LibReadline
   fun readline(prompt : UInt8*) : UInt8*
   fun add_history(line : UInt8*)
 end
