@@ -109,7 +109,7 @@ module Crystal
       end
 
       result = `#{command}`
-      {Process::Status.last.success?, result}
+      {$?.success?, result}
     end
 
     def compile(filename)
@@ -477,12 +477,12 @@ module Crystal
         cmd = cmd.join " "
 
         result = `#{cmd}`
-        if Process::Status.last.success?
+        if $?.success?
           @last = MacroId.new(result)
         elsif result.empty?
-          node.raise "error executing command: #{cmd}, got exit status #{Process::Status.last.exit}"
+          node.raise "error executing command: #{cmd}, got exit status #{$?.exit}"
         else
-          node.raise "error executing command: #{cmd}, got exit status #{Process::Status.last.exit}:\n\n#{result}\n"
+          node.raise "error executing command: #{cmd}, got exit status #{$?.exit}:\n\n#{result}\n"
         end
       end
 

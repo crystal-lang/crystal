@@ -406,7 +406,7 @@ module Crystal
       success = ::system(command)
       unless success
         print "Error: ".colorize.red.bold
-        puts "execution of command failed with code: #{Process::Status.last.exit}: `#{command}`".colorize.bright
+        puts "execution of command failed with code: #{$?.exit}: `#{command}`".colorize.bright
         exit 3
       end
       success
