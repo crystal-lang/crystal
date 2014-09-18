@@ -680,6 +680,9 @@ describe "Parser" do
   # This is useful for example when interpolating __FILE__ and __DIR__
   it_parses "\"foo\#{\"bar\"}baz\"", "foobarbaz".string
 
+  # When interpolating a single value translate it to a to_s call
+  it_parses "\"\#{1}\"", Call.new(1.int32, "to_s")
+
   it_parses "lib Foo\nend\nif true\nend", [LibDef.new("Foo"), If.new(true.bool)]
 
   it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32] of ASTNode)
@@ -809,6 +812,7 @@ describe "Parser" do
   it_parses "`foo\#{1}bar`", Call.new(nil, "`", [StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode)] of ASTNode)
   it_parses "`foo\\``", Call.new(nil, "`", ["foo`".string] of ASTNode)
   it_parses "%x(`which(foo)`)", Call.new(nil, "`", ["`which(foo)`".string] of ASTNode)
+  it_parses "`\#{1}`", Call.new(nil, "`", [Call.new(1.int32, "to_s")] of ASTNode)
 
   it_parses "def `(cmd); 1; end", Def.new("`", ["cmd".arg], 1.int32)
 

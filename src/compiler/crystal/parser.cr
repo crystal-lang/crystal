@@ -1407,7 +1407,11 @@ module Crystal
         pieces = pieces.map do |piece|
           piece.is_a?(String) ? StringLiteral.new(piece) : piece
         end
-        result = StringInterpolation.new(pieces)
+        if pieces.length == 1
+          result = Call.new(pieces.first, "to_s")
+        else
+          result = StringInterpolation.new(pieces)
+        end
       else
         result = StringLiteral.new pieces.join
       end
