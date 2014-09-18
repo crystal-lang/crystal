@@ -140,7 +140,8 @@ module IO
     (byte & 0x3f).to_u32
   end
 
-  def read_fully(buffer : UInt8*, count)
+  def read_fully(buffer : Slice(UInt8))
+    count = buffer.length
     while count > 0
       read_bytes = read(buffer, count)
       raise "Unexpected EOF" if read_bytes == 0
