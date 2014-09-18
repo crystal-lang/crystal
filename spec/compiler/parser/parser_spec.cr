@@ -379,6 +379,8 @@ describe "Parser" do
   it_parses "ifdef (!a || b) && c; 1; end", IfDef.new(And.new(Or.new(Not.new("a".var), "b".var), "c".var), 1.int32)
   it_parses "ifdef !(a || b) && c; 1; end", IfDef.new(And.new(Not.new(Or.new("a".var, "b".var)), "c".var), 1.int32)
 
+  it_parses "1 ifdef foo", IfDef.new("foo".var, 1.int32)
+
   it_parses "include Foo", Include.new("Foo".path)
   it_parses "include Foo\nif true; end", [Include.new("Foo".path), If.new(true.bool)]
   it_parses "extend Foo", Extend.new("Foo".path)

@@ -165,6 +165,10 @@ module Crystal
             next_token_skip_statement_end
             exp = parse_op_assign
             atomic = If.new(exp, atomic)
+          when :ifdef
+            next_token_skip_statement_end
+            exp = parse_flags_or
+            atomic = IfDef.new(exp, atomic)
           when :unless
             next_token_skip_statement_end
             exp = parse_op_assign
