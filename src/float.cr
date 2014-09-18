@@ -18,6 +18,7 @@ end
 
 struct Float32
   NAN = 0_f32 / 0_f32
+  INFINITY = 1_f32 / 0_f32
   MIN = -INFINITY
   MAX =  INFINITY
 
@@ -52,6 +53,7 @@ end
 
 struct Float64
   NAN = 0_f64 / 0_f64
+  INFINITY = 1_f64 / 0_f64
   MIN = -INFINITY
   MAX =  INFINITY
 
