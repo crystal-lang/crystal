@@ -475,4 +475,14 @@ describe "Code gen: fun" do
       foo { }
       )).to_i.should eq(1)
   end
+
+  it "codegens fun with union type that returns itself" do
+    run(%(
+      a = 1 || 1.5
+
+      foo = ->(x : Int32 | Float64) { x }
+      foo.call(a)
+      foo.call(a).to_i
+      )).to_i.should eq(1)
+  end
 end

@@ -434,7 +434,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     ctx_is_null = equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-    Phi.open(self, node, true) do |phi|
+    old_needs_value = @needs_value
+    @needs_value = true
+
+    phi_value = Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, fun_type)
@@ -446,6 +449,9 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, fun_type)
       phi.add value, node.type, true
     end
+
+    old_needs_value = @needs_value
+    phi_value
   end
 
   def codegen_primitive_fun_closure(node, target_def, call_args)

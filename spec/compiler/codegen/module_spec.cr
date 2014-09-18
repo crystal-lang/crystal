@@ -184,4 +184,47 @@ describe "Code gen: module" do
       p.value.foo
       )).to_i.should eq(2)
   end
+
+  it "declares proc with module type" do
+    run(%(
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar
+        include Moo
+      end
+
+      foo = ->(x : Moo) { x.moo }
+      foo.call(Bar.new)
+      )).to_i.should eq(1)
+  end
+
+  it "declares proc with module type and invoke it with two different types that return themselves" do
+    build(%(
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      struct Bar
+        include Moo
+      end
+
+      foo = ->(x : Moo) { x }
+      foo.call(Foo.new)
+      foo.call(Bar.new)
+      ))
+  end
 end
