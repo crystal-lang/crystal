@@ -18,6 +18,19 @@ describe "Base64" do
     end
   end
 
+  it "encodes byte slice" do
+    slice = Slice(UInt8).new(5) { 1_u8 }
+    Base64.encode64(slice).should eq("AQEBAQE=\n")
+    Base64.strict_encode64(slice).should eq("AQEBAQE=")
+  end
+
+  it "encodes static array" do
+    array :: StaticArray(UInt8, 5)
+    (0...5).each { |i| array[i] = 1_u8 }
+    Base64.encode64(array).should eq("AQEBAQE=\n")
+    Base64.strict_encode64(array).should eq("AQEBAQE=")
+  end
+
   describe "base" do
     eqs = {"Send reinforcements" => "U2VuZCByZWluZm9yY2VtZW50cw==\n",
            "Now is the time for all good coders\nto learn Crystal" => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",

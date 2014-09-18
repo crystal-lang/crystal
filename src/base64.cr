@@ -9,11 +9,12 @@ module Base64
 
   class Error < Exception; end
 
-  def encode64(str)
-    String.new_with_capacity_and_length(encode_size(str.bytesize, true)) do |buf|
+  def encode64(data)
+    data = to_slice(data)
+    String.new_with_capacity_and_length(encode_size(data.length, true)) do |buf|
       inc = 0
       appender = buf.appender
-      to_base64(str, CHARS_STD, true) do |byte|
+      to_base64(data, CHARS_STD, true) do |byte|
         appender << byte
         inc += 1
         if inc >= LINE_SIZE
@@ -28,26 +29,29 @@ module Base64
     end
   end
 
-  def strict_encode64(str : String)
-    String.new_with_capacity_and_length(encode_size(str.bytesize)) do |buf|
+  def strict_encode64(data)
+    data = to_slice(data)
+    String.new_with_capacity_and_length(encode_size(data.length)) do |buf|
       appender = buf.appender
-      to_base64(str, CHARS_STD, true) { |byte| appender << byte }
+      to_base64(data, CHARS_STD, true) { |byte| appender << byte }
       appender.count
     end
   end
 
-  def urlsafe_encode64(str)
-    String.new_with_capacity_and_length(encode_size(str.bytesize)) do |buf|
+  def urlsafe_encode64(data)
+    data = to_slice(data)
+    String.new_with_capacity_and_length(encode_size(data.length)) do |buf|
       appender = buf.appender
-      to_base64(str, CHARS_SAFE, false) { |byte| appender << byte }
+      to_base64(data, CHARS_SAFE, false) { |byte| appender << byte }
       appender.count
     end
   end
 
-  def decode64(str)
-    String.new_with_capacity_and_length(decode_size(str.bytesize)) do |buf|
+  def decode64(data)
+    data = to_slice(data)
+    String.new_with_capacity_and_length(decode_size(data.length)) do |buf|
       appender = buf.appender
-      from_base64(str) { |byte| appender << byte }
+      from_base64(data) { |byte| appender << byte }
       appender.count
     end
   end
@@ -60,6 +64,18 @@ module Base64
     decode64(str)
   end
 
+  private def to_slice(data : Slice(UInt8))
+    data
+  end
+
+  private def to_slice(data : StaticArray(UInt8, N))
+    data.to_slice
+  end
+
+  private def to_slice(data : String)
+    Slice(UInt8).new(data.cstr, data.bytesize)
+  end
+
   private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 6
     size += size / LINE_SIZE if new_lines
@@ -70,10 +86,10 @@ module Base64
     (str_size * 3 / 4.0).to_i + 6
   end
 
-  private def to_base64(str, chars, pad = false)
+  private def to_base64(data, chars, pad = false)
     bytes = chars.cstr
-    len = str.bytesize
-    cstr = str.cstr
+    len = data.length
+    cstr = data.pointer(len)
     i = 0
     while i < len - len % 3
       n = (cstr[i].to_u32 << 16) | (cstr[i + 1].to_u32 << 8) | (cstr[i + 2].to_u32)
@@ -86,7 +102,7 @@ module Base64
 
     pd = len % 3
     if pd == 1
-      n = (str.byte_at(i).to_u32 << 16)
+      n = (cstr[i].to_u32 << 16)
       yield bytes[(n >> 18) & 63]
       yield bytes[(n >> 12) & 63]
       if pad
@@ -94,7 +110,7 @@ module Base64
         yield PAD
       end
     elsif pd == 2
-      n = (str.byte_at(i).to_u32 << 16) | (str.byte_at(i + 1).to_u32 << 8)
+      n = (cstr[i].to_u32 << 16) | (cstr[i + 1].to_u32 << 8)
       yield bytes[(n >> 18) & 63]
       yield bytes[(n >> 12) & 63]
       yield bytes[(n >> 6) & 63]
@@ -102,11 +118,11 @@ module Base64
     end
   end
 
-  private def from_base64(str)
+  private def from_base64(data)
     buf = 0
     mod = 0
     dt = DECODE_TABLE.buffer
-    str.each_byte do |byte|
+    data.each do |byte|
       dec = dt[byte]
       if dec < 0
         next if dec == -2
