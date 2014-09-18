@@ -651,6 +651,8 @@ describe "Parser" do
   it_parses "{a: 1, b: 2}", HashLiteral.new(["a".symbol, "b".symbol] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(["a".symbol, 3.int32, "b".symbol] of ASTNode, [1.int32, 4.int32, 2.int32] of ASTNode)
   it_parses "{A: 1, 3 => 4, B: 2}", HashLiteral.new(["A".symbol, 3.int32, "B".symbol] of ASTNode, [1.int32, 4.int32, 2.int32] of ASTNode)
+  it_parses %({"foo": 1}), HashLiteral.new(["foo".string] of ASTNode, [1.int32] of ASTNode)
+  it_parses %({"foo": 1, "bar": 2}), HashLiteral.new(["foo".string, "bar".string] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
   it_parses "{} of Int => Double", HashLiteral.new([] of ASTNode, [] of ASTNode, "Int".path, "Double".path)
 

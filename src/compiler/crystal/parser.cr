@@ -1537,15 +1537,21 @@ module Crystal
           next_token
         else
           first_key = parse_op_assign
-          skip_space
           case @token.type
+          when :":"
+            if first_key.is_a?(StringLiteral)
+              # Nothing: it's a string key
+            else
+              check :"=>"
+            end
           when :","
             next_token_skip_space_or_newline
             return parse_tuple first_key, location
           when :"}"
             return parse_tuple first_key, location
+          else
+            check :"=>"
           end
-          check :"=>"
         end
         next_token_skip_space_or_newline
         parse_hash_literal first_key, location
@@ -1572,9 +1578,14 @@ module Crystal
             keys << SymbolLiteral.new(@token.value.to_s)
             next_token
           else
-            keys << parse_op_assign
+            key = parse_op_assign
+            keys << key
             skip_space_or_newline
-            check :"=>"
+            if @token.type == :":" && key.is_a?(StringLiteral)
+              # Nothing: it's a string key
+            else
+              check :"=>"
+            end
           end
           next_token_skip_space_or_newline
           values << parse_op_assign
