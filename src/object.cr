@@ -102,27 +102,18 @@ class Object
   end
 
   macro property(*names)
-    # TODO: use argify
-    {% for name in names %}
-      getter {{name}}
-      setter {{name}}
-    {% end %}
+    getter {{names.argify}}
+    setter {{names.argify}}
   end
 
   macro property!(*names)
-    # TODO: use argify
-    {% for name in names %}
-      getter! {{name}}
-      setter {{name}}
-    {% end %}
+    getter! {{names.argify}}
+    setter {{names.argify}}
   end
 
   macro property?(*names)
-    # TODO: use argify
-    {% for name in names %}
-      getter? {{name}}
-      setter {{name}}
-    {% end %}
+    getter? {{names.argify}}
+    setter {{names.argify}}
   end
 
   macro delegate(method, to)
