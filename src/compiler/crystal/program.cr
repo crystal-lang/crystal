@@ -130,7 +130,7 @@ module Crystal
     end
 
     def host_flags
-      @host_flags ||= parse_flags(backtick("uname -m -s"))
+      @host_flags ||= parse_flags(`uname -m -s`)
     end
 
     def parse_flags(flags_name)

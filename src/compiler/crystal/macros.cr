@@ -108,7 +108,7 @@ module Crystal
         end
       end
 
-      result = backtick(command)
+      result = `#{command}`
       {Process::Status.last.success?, result}
     end
 
@@ -476,7 +476,7 @@ module Crystal
         end
         cmd = cmd.join " "
 
-        result = backtick(cmd)
+        result = `#{cmd}`
         if Process::Status.last.success?
           @last = MacroId.new(result)
         elsif result.empty?

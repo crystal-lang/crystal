@@ -127,6 +127,6 @@ def system(command : String)
   Process.run("/bin/sh", {"-c", command}, output: STDOUT).success?
 end
 
-def backtick(command : String)
+def `(command)
   Process.run("/bin/sh", {"-c", command}, output: true).output.not_nil!
 end
