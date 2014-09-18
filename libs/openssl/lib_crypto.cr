@@ -53,4 +53,6 @@ lib LibCrypto
   fun md5_final = MD5_Final(md : UInt8*, c : MD5Context*) : Int32
   fun md5_transform = MD5_Transform(c : MD5Context*, b : UInt8*)
   fun md5 = MD5(data : UInt8*, lengh : C::SizeT, md : UInt8*) : UInt8*
+
+  fun sha1 = SHA1(data : UInt8*, length : C::SizeT, md : UInt8*) : UInt8*
 end
