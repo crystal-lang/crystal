@@ -695,17 +695,17 @@ module Crystal
       return nil unless name =~ SuggestableName
 
       if (defs = self.defs)
-        similar_name = SimilarName.new(name)
-        defs.each do |def_name, hash|
-          if def_name =~ SuggestableName
-            hash.each do |filter, overload|
-              if filter.max_length == args_length && filter.yields == !!block
-                similar_name.test(def_name)
+        best_match = SimilarName.find(name) do |similar_name|
+          defs.each do |def_name, hash|
+            if def_name =~ SuggestableName
+              hash.each do |filter, overload|
+                if filter.max_length == args_length && filter.yields == !!block
+                  similar_name.test(def_name)
+                end
               end
             end
           end
         end
-        best_match = similar_name.best_match
         return best_match if best_match
       end
 
@@ -942,11 +942,11 @@ module Crystal
         previous_type = type
         type = previous_type.types[name]?
         unless type
-          similar_name = SimilarName.new(name.downcase)
-          previous_type.types.each_key do |type_name|
-            similar_name.test(type_name.downcase, type_name)
+          best_match = SimilarName.find(name.downcase) do |similar_name|
+            previous_type.types.each_key do |type_name|
+              similar_name.test(type_name.downcase, type_name)
+            end
           end
-          best_match = similar_name.best_match
 
           if best_match
             return (names[0 ... idx] + [best_match]).join "::"

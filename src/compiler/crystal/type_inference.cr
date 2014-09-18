@@ -2821,16 +2821,12 @@ module Crystal
       end
     end
 
-    # TODO: use SimilarName
     def lookup_similar_var_name(name)
-      tolerance = (name.length / 5.0).ceil
-      # TODO: check this
-      @meta_vars.each_key do |var_name|
-        if levenshtein(var_name, name) <= tolerance
-          return var_name
+      SimilarName.find(name) do |similar_name|
+        @meta_vars.each_key do |var_name|
+          similar_name.test(var_name)
         end
       end
-      nil
     end
 
     def visit(node : And)

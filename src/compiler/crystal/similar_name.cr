@@ -25,12 +25,18 @@ module Crystal
       @best_entry.try &.value
     end
 
+    def self.find(name)
+      sn = new name
+      yield sn
+      sn.best_match
+    end
+
     def self.find(name, all_names)
-      similar = SimilarName.new(name)
-      all_names.each do |a_name|
-        similar.test(a_name)
+      SimilarName.find(name) do |similar|
+        all_names.each do |a_name|
+          similar.test(a_name)
+        end
       end
-      similar.best_match
     end
   end
 end
