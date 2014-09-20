@@ -62,6 +62,9 @@ module IO
     write slice, slice.length
   end
 
+  def flush
+  end
+
   def self.pipe
     if C.pipe(out pipe_fds) != 0
       raise Errno.new("Could not create pipe")

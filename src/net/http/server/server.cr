@@ -66,6 +66,10 @@ class HTTP::Server
         response.to_io io
         io.flush
 
+        if upgrade_handler = response.upgrade_handler
+          return upgrade_handler.call(io)
+        end
+
         break unless request.keep_alive?
       end
     ensure

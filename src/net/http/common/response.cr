@@ -6,6 +6,7 @@ class HTTP::Response
   getter status_message
   getter headers
   getter body
+  property upgrade_handler
 
   def initialize(@status_code, @body = nil, @headers = {} of String => String, status_message = nil, @version = "HTTP/1.1")
     @status_message = status_message || class.default_status_message_for(@status_code)
