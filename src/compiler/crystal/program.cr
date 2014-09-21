@@ -102,7 +102,7 @@ module Crystal
       @temp_var_counter = 0
       @type_id_counter = 1
       @nil_var = Var.new("<nil_var>", @nil)
-      @crystal_path = (ENV["CRYSTAL_PATH"]? || "").split(':')
+      @crystal_path = CrystalPath.new
       @vars = MetaVars.new
       @literal_expander = LiteralExpander.new self
       @macro_expander = MacroExpander.new self
@@ -228,95 +228,8 @@ module Crystal
       end
     end
 
-    def find_in_path(filename, relative_to_filename = nil)
-      result = find_in_path_internal(filename, relative_to_filename)
-      result = [result] if result.is_a?(String)
-      result
-    end
-
-    def find_in_path_internal(filename, relative_to_filename)
-      if File.exists?(filename) && filename[0] == '/'
-        return find_in_path_absolute filename
-      end
-
-      relative_to_filename = File.dirname(relative_to_filename) if relative_to_filename.is_a?(String)
-      find_in_path_relative_to_dir(filename, relative_to_filename, true)
-    end
-
-    def find_in_path_relative_to_dir(filename, relative_to, check_crystal_path)
-      if relative_to.is_a?(String) && ((single = filename.ends_with?("/*")) || (multi = filename.ends_with?("/**")))
-        filename_dir_index = filename.rindex('/').not_nil!
-        filename_dir = filename[0 .. filename_dir_index]
-        relative_dir = "#{relative_to}/#{filename_dir}"
-        files = [] of String
-        find_in_path_dir(relative_dir, files, multi)
-        return files
-      end
-
-      if relative_to.is_a?(String)
-        relative_filename = "#{relative_to}/#{filename}"
-        relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
-
-        if File.exists?(relative_filename_cr)
-          return find_in_path_absolute relative_filename_cr
-        end
-
-        if Dir.exists?(relative_filename)
-          return find_in_path_absolute("#{relative_filename}/#{filename}.cr")
-        end
-      end
-
-      if check_crystal_path
-        find_in_path_from_crystal_path filename, relative_to
-      else
-        nil
-      end
-    end
-
-    def find_in_path_dir(dir, files_accumulator, recursive)
-      files = [] of String
-      dirs = [] of String
-
-      Dir.list(dir) do |filename, type|
-        if type == C::DirType::DIR
-          if filename != "." && filename != ".." && recursive
-            dirs << filename
-          end
-        else
-          if filename.ends_with?(".cr")
-            files << "#{dir}/#{filename}"
-          end
-        end
-      end
-
-      files.sort!
-      dirs.sort!
-
-      files.each do |file|
-        files_accumulator << File.expand_path(file)
-      end
-
-      dirs.each do |subdir|
-        find_in_path_dir("#{dir}/#{subdir}", files_accumulator, recursive)
-      end
-    end
-
-    def find_in_path_absolute(filename)
-      filename = "#{Dir.working_directory}/#{filename}" unless filename.starts_with?('/')
-      File.expand_path(filename)
-    end
-
-    def find_in_path_from_crystal_path(filename, relative_to)
-      @crystal_path.each do |path|
-        required = find_in_path_relative_to_dir(filename, path, false)
-        return required if required
-      end
-
-      if relative_to
-        raise "can't find file '#{filename}' relative to '#{relative_to}'"
-      else
-        raise "can't find file '#{filename}'"
-      end
+    def find_in_path(filename, relative_to = nil)
+      @crystal_path.find filename, relative_to
     end
 
     def link_attributes

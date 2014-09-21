@@ -116,7 +116,7 @@ class File < FileDescriptorIO
   end
 
   def self.expand_path(path, dir = nil)
-    if path.starts_with?("~")
+    if path.starts_with?('~')
       home = ENV["HOME"]
       if path.length >= 2 && path[1] == '/'
         path = home + path[1..-1]
@@ -125,16 +125,16 @@ class File < FileDescriptorIO
       end
     end
 
-    unless path.starts_with?("/")
+    unless path.starts_with?('/')
       dir = dir ? expand_path(dir) : Dir.working_directory
-      path = dir + "/" + path
+      path = "#{dir}/#{path}"
     end
 
     ifdef windows
       path = path.tr("\\", "/")
     end
 
-    parts = path.split("/")
+    parts = path.split('/')
     was_letter = false
     first_slash = true
     items = [] of String
