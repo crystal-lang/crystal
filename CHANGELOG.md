@@ -1,3 +1,14 @@
+## Next
+
+* Define backtick (`) for command execution.
+* Allow string literals as keys in hash literals: `{"foo": "bar"} # :: Hash(String, String)`
+* Allow `ifdef` as a suffix.
+* Integer division by zero raises a `DivisionByZero` exception.
+* Link attributes are now only processed if a lib function is used.
+* Removed the `type Name : Type` syntax (use `type Name : Type` instead).
+* Removed the `lib Lib("libname"); end` syntax. Use `@[Link]` attribute instead.
+* Fixed some `require` issues.
+
 ## 0.4.4 (2014-09-17)
 
 * Fixed [#193](https://github.com/manastech/crystal/issues/193): allow initializing an enum value with another's one.
