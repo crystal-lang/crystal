@@ -1444,15 +1444,7 @@ module Crystal
     end
 
     def visit(node : LibDef)
-      if libname = node.libname
-        if libname.starts_with?('`') && libname.ends_with?('`')
-          link_attributes = [LinkAttribute.new(ldflags: libname)]
-        else
-          link_attributes = [LinkAttribute.new(lib: libname)]
-        end
-      else
-        link_attributes = process_link_attributes
-      end
+      link_attributes = process_link_attributes
 
       type = current_type.types[node.name]?
       if type

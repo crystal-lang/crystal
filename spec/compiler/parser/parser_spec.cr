@@ -519,7 +519,6 @@ describe "Parser" do
   it_parses "Foo::Bar", ["Foo", "Bar"].path
 
   it_parses "lib C\nend", LibDef.new("C")
-  it_parses "lib C(\"libc\")\nend", LibDef.new("C", libname: "libc")
   it_parses "lib C\nfun getchar\nend", LibDef.new("C", [FunDef.new("getchar")] of ASTNode)
   it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", [FunDef.new("getchar", varargs: true)] of ASTNode)
   it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)

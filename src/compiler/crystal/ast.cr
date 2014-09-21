@@ -1510,11 +1510,10 @@ module Crystal
 
   class LibDef < ASTNode
     property :name
-    property :libname
     property :body
     property :name_column_number
 
-    def initialize(@name, body = nil, @libname = nil, @name_column_number = 0)
+    def initialize(@name, body = nil, @name_column_number = 0)
       @body = Expressions.from body
     end
 
@@ -1523,7 +1522,7 @@ module Crystal
     end
 
     def clone_without_location
-      LibDef.new(@name, @body.clone, @libname, @name_column_number)
+      LibDef.new(@name, @body.clone, @name_column_number)
     end
 
     def_equals_and_hash @name, @libname, @body

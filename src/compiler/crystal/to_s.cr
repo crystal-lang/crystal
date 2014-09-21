@@ -897,11 +897,6 @@ module Crystal
       @str << keyword("lib")
       @str << " "
       @str << node.name
-      if node.libname
-        @str << "('"
-        @str << node.libname
-        @str << "')"
-      end
       @str << newline
       accept_with_indent(node.body)
       append_indent

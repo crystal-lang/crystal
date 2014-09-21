@@ -3308,25 +3308,14 @@ module Crystal
       check :CONST
       name = @token.value.to_s
       name_column_number = @token.column_number
-      next_token_skip_space
-
-      if @token.type == :"("
-        next_token_skip_space_or_newline
-        libname = parse_string_without_interpolation { "interpolation not allowed in lib name" }
-
-        skip_space_or_newline
-        check :")"
-        next_token_skip_statement_end
-      else
-        skip_statement_end
-      end
+      next_token_skip_statement_end
 
       body = parse_lib_body
 
       check_ident :end
       next_token_skip_space
 
-      LibDef.new name, body, libname, name_column_number
+      LibDef.new name, body, name_column_number
     end
 
     def parse_lib_body
