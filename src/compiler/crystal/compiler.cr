@@ -41,6 +41,7 @@ module Crystal
       @browser = false
       @single_module = false
       @verbose = false
+      @link_flags = nil
     end
 
     def process_options(options = ARGV)
@@ -102,6 +103,9 @@ module Crystal
         end
         opts.on("--ll", "Dump ll to .crystal directory") do
           @dump_ll = true
+        end
+        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |link_flags|
+          @link_flags = link_flags
         end
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
           @mcpu = cpu
@@ -252,7 +256,7 @@ module Crystal
 
           target_machine.emit_obj_to_file llvm_mod, o_name
 
-          puts "cc #{o_name} -o #{output_filename} #{lib_flags}"
+          puts "cc #{o_name} -o #{output_filename} #{lib_flags} #{@link_flags}"
         else
           multithreaded = LLVM.start_multithreaded
 
@@ -263,7 +267,7 @@ module Crystal
             end
           end
 
-          current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}"
+          current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}|#{@link_flags}"
           bc_flags_filename = "#{output_dir}/bc_flags"
           if File.exists?(bc_flags_filename)
             previous_bc_flags = File.read(bc_flags_filename).strip
@@ -303,7 +307,7 @@ module Crystal
           end
 
           timing("Codegen (clang)") do
-            system "cc -o #{output_filename} #{object_names.join " "} #{lib_flags}"
+            system "cc -o #{output_filename} #{object_names.join " "} #{lib_flags} #{@link_flags}"
           end
 
           File.open(bc_flags_filename, "w") do |file|
