@@ -1,6 +1,11 @@
 module Enumerable(T)
   def first
     each { |e| return e }
+    raise EmptyEnumerable.new
+  end
+
+  def first?
+    each { |e| return e }
     nil
   end
 

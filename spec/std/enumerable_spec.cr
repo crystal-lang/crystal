@@ -112,6 +112,28 @@ describe "Enumerable" do
     assert { [1, nil, 2, nil, 3].compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
+  describe "first" do
+    it "gets first" do
+      (1..3).first.should eq(1)
+    end
+
+    it "raises if enumerable empty" do
+      expect_raises EmptyEnumerable do
+        (1...1).first
+      end
+    end
+  end
+
+  describe "first?" do
+    it "gets first?" do
+      (1..3).first?.should eq(1)
+    end
+
+    it "returns nil if enumerable empty" do
+      (1...1).first?.should be_nil
+    end
+  end
+
   it "indexes by" do
     ["foo", "hello", "goodbye", "something"].index_by(&.length).should eq({
         3 => "foo",
