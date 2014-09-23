@@ -55,8 +55,7 @@ class OptionParser
     end
   end
 
-  def banner=(@banner)
-  end
+  setter banner
 
   def on(flag, description, &block : String ->)
     append_flag flag.to_s, description
@@ -154,19 +153,6 @@ class OptionParser
         value = arg[2 .. -1]
         raise MissingOption.new(flag) if raise_if_missing && value.empty?
         block.call value
-      end
-    end
-  end
-
-  private def each_arg_with_index
-    if double_dash_index = @double_dash_index
-      @args.each_with_index do |arg, index|
-        break if index == double_dash_index
-        yield arg, index
-      end
-    else
-      @args.each_with_index do |arg, index|
-        yield arg, index
       end
     end
   end
