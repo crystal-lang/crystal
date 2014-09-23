@@ -1346,14 +1346,13 @@ module Crystal
         scope.types[name] = type
       end
 
-      @types.push type
+      pushing_type(type) do
+        if created_new_type
+          run_hooks(superclass.metaclass, type, :inherited, node)
+        end
 
-      if created_new_type
-        run_hooks(superclass.metaclass, type, :inherited, node)
+        node.body.accept self
       end
-
-      node.body.accept self
-      @types.pop
 
       if created_new_type
         raise "Bug" unless type.is_a?(InheritableClass)
@@ -1407,9 +1406,9 @@ module Crystal
         scope.types[name] = type
       end
 
-      @types.push type
-      node.body.accept self
-      @types.pop
+      pushing_type(type) do
+        node.body.accept self
+      end
 
       node.type = @mod.nil
 
@@ -1453,9 +1452,10 @@ module Crystal
         type = LibType.new @mod, current_type, node.name, link_attributes
         current_type.types[node.name] = type
       end
-      @types.push type
-      node.body.accept self
-      @types.pop
+
+      pushing_type(type) do
+        node.body.accept self
+      end
 
       node.type = @mod.nil
 
@@ -1698,17 +1698,17 @@ module Crystal
 
         enum_type = CEnumType.new(@mod, current_type, node.name, enum_base_type)
 
-        @types.push enum_type
-        counter = 0
-        node.constants.each do |constant|
-          if default_value = constant.default_value
-            counter = interpret_enum_value(default_value)
+        pushing_type(enum_type) do
+          counter = 0
+          node.constants.each do |constant|
+            if default_value = constant.default_value
+              counter = interpret_enum_value(default_value)
+            end
+            constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
+            enum_type.add_constant constant
+            counter += 1
           end
-          constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
-          enum_type.add_constant constant
-          counter += 1
         end
-        @types.pop
 
         node.c_enum_type = current_type.types[node.name] = enum_type
       end
@@ -2863,6 +2863,12 @@ module Crystal
       node.expanded = expanded
       node.bind_to expanded
       false
+    end
+
+    def pushing_type(type)
+      @types.push type
+      yield
+      @types.pop
     end
 
     def visit(node : Unless)
