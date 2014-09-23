@@ -76,7 +76,7 @@ module Crystal
     end
 
     def process_options_internal(options)
-      inline_exp = nil
+      inline_exps = [] of String
       filenames = nil
       arguments = nil
 
@@ -91,8 +91,8 @@ module Crystal
         opts.on("-d", "--debug", "Add symbolic debug info") do
           @debug = true
         end
-        opts.on("-e 'command'", "One line script. Omit [programfile]") do |the_inline_exp|
-          inline_exp = the_inline_exp
+        opts.on("-e 'command'", "One line script. Several -e's allowed. Omit [programfile]") do |inline_exp|
+          inline_exps << inline_exp
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -105,7 +105,11 @@ module Crystal
           @dump_ll = true
         end
         opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |link_flags|
-          @link_flags = link_flags
+          if existing_link_flags = @link_flags
+            @link_flags = "#{existing_link_flags} #{link_flags}"
+          else
+            @link_flags = link_flags
+          end
         end
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
           @mcpu = cpu
@@ -152,7 +156,9 @@ module Crystal
           arguments = after
         end
       end
-      {option_parser, inline_exp, filenames.not_nil!, arguments.not_nil!}
+
+      inline_exp_result = inline_exps.empty? ? nil : inline_exps.join "\n"
+      {option_parser, inline_exp_result, filenames.not_nil!, arguments.not_nil!}
     end
 
     def compile(source : Source, run_args = [] of String)
