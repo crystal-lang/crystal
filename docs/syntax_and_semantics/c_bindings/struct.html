@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.14.3" data-basepath="../.." data-revision="1410827595689">
+    <div class="book" data-github="manastech/crystal" data-level="3.14.3" data-basepath="../.." data-revision="1411480250845">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1906,6 +1906,17 @@
 <pre><code class="lang-ruby">lib <span class="hljs-constant">C</span>
   struct <span class="hljs-constant">TimeZone</span>
     minutes_west, dst_time <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>To declare recursive structs you can forward-declare them:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">C</span>
+  <span class="hljs-comment"># This is a forward declaration</span>
+  struct <span class="hljs-constant">Node</span>
+  <span class="hljs-keyword">end</span>
+
+  struct <span class="hljs-constant">Node</span>
+    node <span class="hljs-symbol">:</span> <span class="hljs-constant">Node</span>*
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>

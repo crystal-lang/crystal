@@ -27,6 +27,20 @@ lib C
 end
 ```
 
+To declare recursive structs you can forward-declare them:
+
+```ruby
+lib C
+  # This is a forward declaration
+  struct Node
+  end
+
+  struct Node
+    node : Node*
+  end
+end
+```
+
 To create an instance of a struct use `new`:
 
 ```ruby
