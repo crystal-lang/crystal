@@ -39,7 +39,7 @@ class OptionParser
 
   def parse
     @handlers.each do |handler|
-      parse_flag(handler.flag, &handler.block)
+      process_handler handler
     end
 
     if unknown_args = @unknown_args
@@ -91,82 +91,70 @@ class OptionParser
     end
   end
 
-  private def parse_flag(flag)
+  private def process_handler(handler)
+    flag = handler.flag
+    block = handler.block
     case flag
     when /--(\S+)\s+\[\S+\]/
-      value = double_flag_value("--#{$1}")
-      yield value if value
+      process_double_flag("--#{$1}", block)
     when /--(\S+)(\s+|\=)(\S+)?/
-      value = double_flag_value("--#{$1}", true)
-      yield value if value
+      process_double_flag("--#{$1}", block, true)
     when /--\S+/
-      flag_present?(flag) && yield ""
+      process_flag_presence(flag, block)
     when /-(.)\s*\[\S+\]/
-      value = single_flag_value(flag[0 .. 1])
-      yield value if value
+      process_single_flag(flag[0 .. 1], block)
     when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
-      value = single_flag_value(flag[0 .. 1], true)
-      yield value if value
+      process_single_flag(flag[0 .. 1], block, true)
     else
-      flag_present?(flag) && yield ""
+      process_flag_presence(flag, block)
     end
   end
 
-  private def flag_present?(flag)
-    index = args_index(flag)
-    if index
+  private def process_flag_presence(flag, block)
+    while index = args_index(flag)
       delete_arg_at_index(index)
-      return true
+      block.call ""
     end
-
-    false
   end
 
-  private def double_flag_value(flag, raise_if_missing = false)
-    each_arg_with_index do |arg, index|
-      if arg.starts_with?(flag)
-        if arg.length == flag.length
-          delete_arg_at_index(index)
-          if index < args_length
-            return delete_arg_at_index(index)
-          else
-            if raise_if_missing
-              raise MissingOption.new(flag)
-            else
-              return nil
-            end
-          end
-        elsif arg[flag.length] == '='
-          delete_arg_at_index(index)
-          value = arg[flag.length + 1 .. -1]
-          if value.empty?
+  private def process_double_flag(flag, block, raise_if_missing = false)
+    while index = args_index { |arg| arg.starts_with?(flag) }
+      arg = @args[index]
+      if arg.length == flag.length
+        delete_arg_at_index(index)
+        if index < args_length
+          block.call delete_arg_at_index(index)
+        else
+          if raise_if_missing
             raise MissingOption.new(flag)
-          else
-            return value
           end
+        end
+      elsif arg[flag.length] == '='
+        delete_arg_at_index(index)
+        value = arg[flag.length + 1 .. -1]
+        if value.empty?
+          raise MissingOption.new(flag)
+        else
+          block.call value
         end
       end
     end
-    nil
   end
 
-  private def single_flag_value(flag, raise_if_missing = false)
-    index = args_index { |arg| arg.starts_with?(flag) }
-    if index
+  private def process_single_flag(flag, block, raise_if_missing = false)
+    while index = args_index { |arg| arg.starts_with?(flag) }
       arg = delete_arg_at_index(index)
       if arg.length == flag.length
         if index < args_length
-          delete_arg_at_index(index)
+          block.call delete_arg_at_index(index)
         else
           raise MissingOption.new(flag) if raise_if_missing
         end
       else
         value = arg[2 .. -1]
         raise MissingOption.new(flag) if raise_if_missing && value.empty?
-        value
+        block.call value
       end
-    else
-      nil
     end
   end
 

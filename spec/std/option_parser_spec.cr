@@ -161,6 +161,41 @@ describe "OptionParser" do
     end
   end
 
+  describe "multiple times" do
+    it "gets an existence flag multiple times" do
+      args = %w(-f -f -f)
+      count = 0
+      OptionParser.parse(args) do |opts|
+        opts.on("-f", "some flag") do
+          count += 1
+        end
+      end
+      count.should eq(3)
+    end
+
+    it "gets a single flag option multiple times" do
+      args = %w(-f 1 -f 2)
+      values = [] of String
+      OptionParser.parse(args) do |opts|
+        opts.on("-f VALUE", "some flag") do |value|
+          values << value
+        end
+      end
+      values.should eq(%w(1 2))
+    end
+
+    it "gets a double flag option multiple times" do
+      args = %w(--f 1 --f 2)
+      values = [] of String
+      OptionParser.parse(args) do |opts|
+        opts.on("--f VALUE", "some flag") do |value|
+          values << value
+        end
+      end
+      values.should eq(%w(1 2))
+    end
+  end
+
   describe "--" do
     it "ignores everything after -- with bool flag" do
       args = ["-f", "bar", "--", "baz", "qux", "-g"]
