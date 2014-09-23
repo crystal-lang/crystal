@@ -1659,10 +1659,7 @@ module Crystal
 
     def visit(node : StructDef)
       check_valid_attributes node, ValidStructDefAttributes, "struct"
-      true
-    end
 
-    def end_visit(node : StructDef)
       type = process_struct_or_union_def(node, CStructType) do |t|
         unless t.is_a?(CStructType)
           node.raise "#{node.name} is already defined as #{t.type_desc}"
@@ -1671,14 +1668,18 @@ module Crystal
       if node.has_attribute?("Packed")
         (type as CStructType).packed = true
       end
+
+      false
     end
 
-    def end_visit(node : UnionDef)
+    def visit(node : UnionDef)
       process_struct_or_union_def(node, CUnionType) do |t|
         unless t.is_a?(CUnionType)
           node.raise "#{node.name} is already defined as #{t.type_desc}"
         end
       end
+
+      false
     end
 
     def visit(node : EnumDef)
@@ -2545,12 +2546,14 @@ module Crystal
         type = current_type.types[node.name] = klass.new @mod, current_type, node.name
       end
 
-      fields = node.fields.map do |field|
-        field_type = check_primitive_like field.restriction.not_nil!
-        Var.new(field.name, field_type)
+      pushing_type(type) do
+        fields = node.fields.map do |field|
+          field.accept self
+          field_type = check_primitive_like field.restriction.not_nil!
+          Var.new(field.name, field_type)
+        end
+        type.vars = fields
       end
-
-      type.vars = fields
     end
 
     def check_valid_attributes(node, valid_attributes, desc)

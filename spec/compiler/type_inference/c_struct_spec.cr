@@ -135,4 +135,17 @@ describe "Type inference: struct" do
       ),
       "Foo is already defined as union"
   end
+
+  it "allows inline forward declaration" do
+    assert_type(%(
+      lib C
+        struct Node
+          next : Node*
+        end
+      end
+
+      node = C::Node.new
+      node.next
+      )) { pointer_of(types["C"].types["Node"]) }
+  end
 end
