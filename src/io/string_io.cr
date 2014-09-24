@@ -2,11 +2,11 @@ class StringIO
   include IO
 
   getter buffer
-  getter length
+  getter bytesize
 
   def initialize(capacity = 64)
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
-    @length = 0
+    @bytesize = 0
     @capacity = capacity
     @pos = 0
   end
@@ -18,42 +18,43 @@ class StringIO
   end
 
   def read(slice : Slice(UInt8), count)
-    count = Math.min(count, @length - @pos)
+    count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
     @pos += count
     count
   end
 
   def write(slice : Slice(UInt8), count)
-    new_length = length + count
-    if new_length > @capacity
-      resize_to_capacity(Math.pw2ceil(new_length))
+    new_bytesize = bytesize + count
+    if new_bytesize > @capacity
+      resize_to_capacity(Math.pw2ceil(new_bytesize))
     end
 
-    slice.copy_to(@buffer + @length, count)
-    @length += count
+    slice.copy_to(@buffer + @bytesize, count)
+    @bytesize += count
+    @length_unknown = true
 
     self
   end
 
   def clear
-    @length = 0
+    @bytesize = 0
   end
 
   def empty?
-    @length == 0
+    @bytesize == 0
   end
 
   def to_s
-    String.new @buffer, @length
+    String.new @buffer, @bytesize
   end
 
   def to_s(io)
-    io.write Slice.new(@buffer, @length)
+    io.write Slice.new(@buffer, @bytesize)
   end
 
   private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @length == @capacity
+    resize_to_capacity(@capacity * 2) if @bytesize == @capacity
   end
 
   private def resize_to_capacity(capacity)
