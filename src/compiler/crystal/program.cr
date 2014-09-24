@@ -66,10 +66,11 @@ module Crystal
       @static_array.allocated = true
 
       @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
-      @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
+      @string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
       @string.allocated = true
       @string.type_id = 1
 
+      @string.lookup_instance_var("@bytesize").set_type(@int32)
       @string.lookup_instance_var("@length").set_type(@int32)
       @string.lookup_instance_var("@c").set_type(@uint8)
 

@@ -23,6 +23,15 @@ module Crystal
       @landing_pad_type = LLVM.struct_type([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end
 
+    def llvm_string_type(bytesize)
+      LLVM.struct_type [
+        LLVM::Int32,                              # type_id
+        LLVM::Int32,                              # @bytesize
+        LLVM::Int32,                              # @length
+        LLVM.array_type(LLVM::Int8, bytesize + 1) # @c
+      ]
+    end
+
     def llvm_type(type)
       @cache[type] ||= create_llvm_type(type)
     end
