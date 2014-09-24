@@ -5,9 +5,9 @@ install:
   - brew install bdw-gc
   - brew install gmp
   - brew install libpcl
-  - brew tap manastech/crystal
-  - brew install crystal
+  - bin/crystal --setup
+  - curl "http://llvm.org/releases/3.5.0/clang+llvm-3.5.0-macosx-apple-darwin.tar.xz" | tar xz -C deps
 script:
-  - make spec
+  - PATH=$PATH:deps/clang+llvm-3.5.0-macosx-apple-darwin/bin make spec
 notifications:
   irc: "irc.freenode.net#crystal-lang"
