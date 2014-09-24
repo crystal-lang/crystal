@@ -1,4 +1,4 @@
-## Next
+## 0.4.5 (2014-09-24)
 
 * Define backtick (`) for command execution.
 * Allow string literals as keys in hash literals: `{"foo": "bar"} # :: Hash(String, String)`
@@ -8,6 +8,8 @@
 * Removed the `type Name : Type` syntax (use `type Name : Type` instead).
 * Removed the `lib Lib("libname"); end` syntax. Use `@[Link]` attribute instead.
 * Fixed some `require` issues.
+* String representation includes length.
+* Upgraded to LLVM 3.5.
 
 ## 0.4.4 (2014-09-17)
 
