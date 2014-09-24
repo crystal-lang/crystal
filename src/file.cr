@@ -174,8 +174,9 @@ class File < FileDescriptorIO
       file.seek 0, SEEK_END
       size = file.tell
       file.seek 0, SEEK_SET
-      String.new_with_length(size.to_i) do |buffer|
+      String.new(size.to_i) do |buffer|
         file.read Slice.new(buffer, size)
+        {size.to_i, 0}
       end
     end
   end

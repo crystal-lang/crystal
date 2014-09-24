@@ -164,11 +164,11 @@ struct Char
   end
 
   def to_s
-    String.new_with_capacity_and_length(4) do |buffer|
+    String.new(4) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
       appender << 0_u8
-      appender.count - 1
+      {appender.count - 1, 1}
     end
   end
 

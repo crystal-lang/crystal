@@ -135,35 +135,6 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts pointer to string (1)" do
-    run(%(
-      require "prelude"
-
-      c = Pointer(UInt8).malloc(11)
-      (c as Int32*).value = "".crystal_type_id
-      ((c as Int32*) + 1).value = 2
-      c[8] = 'h'.ord.to_u8
-      c[9] = 'i'.ord.to_u8
-      c[10] = '\0'.ord.to_u8
-      str = c as String
-      str.bytesize
-      )).to_i.should eq(2)
-  end
-
-  it "casts pointer to string (2)" do
-    run(%(
-      require "prelude"
-
-      c = Pointer(UInt8).malloc(11)
-      (c as Int32*).value = "".crystal_type_id
-      ((c as Int32*) + 1).value = 2
-      c[8] = 'h'.ord.to_u8
-      c[9] = 'i'.ord.to_u8
-      c[10] = '\0'.ord.to_u8
-      c as String
-      )).to_string.should eq("hi")
-  end
-
   it "casts to module" do
     run(%(
       require "prelude"

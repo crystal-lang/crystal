@@ -116,13 +116,14 @@ def get_id(m : UInt64)
 end
 
 def to_utf8(raw_sol)
-  String.new_with_length(50) do |buf|
+  String.new(50) do |buf|
     raw_sol.each do |m|
       id = get_id(m)
       50.times do |i|
         buf[i] = '0'.ord.to_u8 + id if bm(m, i) != 0
       end
     end
+    {50, 50}
   end
 end
 

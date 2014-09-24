@@ -11,7 +11,7 @@ module Base64
 
   def encode64(data)
     data = to_slice(data)
-    String.new_with_capacity_and_length(encode_size(data.length, true)) do |buf|
+    String.new(encode_size(data.length, true)) do |buf|
       inc = 0
       appender = buf.appender
       to_base64(data, CHARS_STD, true) do |byte|
@@ -25,34 +25,37 @@ module Base64
       if inc > 0
         appender << NL
       end
-      appender.count
+      count = appender.count
+      {count, count}
     end
   end
 
   def strict_encode64(data)
     data = to_slice(data)
-    String.new_with_capacity_and_length(encode_size(data.length)) do |buf|
+    String.new(encode_size(data.length)) do |buf|
       appender = buf.appender
       to_base64(data, CHARS_STD, true) { |byte| appender << byte }
-      appender.count
+      count = appender.count
+      {count, count}
     end
   end
 
   def urlsafe_encode64(data)
     data = to_slice(data)
-    String.new_with_capacity_and_length(encode_size(data.length)) do |buf|
+    String.new(encode_size(data.length)) do |buf|
       appender = buf.appender
       to_base64(data, CHARS_SAFE, false) { |byte| appender << byte }
-      appender.count
+      count = appender.count
+      {count, count}
     end
   end
 
   def decode64(data)
     data = to_slice(data)
-    String.new_with_capacity_and_length(decode_size(data.length)) do |buf|
+    String.new(decode_size(data.length)) do |buf|
       appender = buf.appender
       from_base64(data) { |byte| appender << byte }
-      appender.count
+      {appender.count, 0}
     end
   end
 

@@ -74,8 +74,10 @@ struct Float64
   end
 
   def to_s
-    String.new_with_capacity(22) do |buffer|
+    String.new(22) do |buffer|
       C.sprintf(buffer, "%g", self)
+      len = C.strlen(buffer)
+      {len, len}
     end
   end
 

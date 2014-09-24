@@ -10,6 +10,9 @@ lib C
 end
 
 class String
+  TYPE_ID = 1
+  HEADER_SIZE = sizeof({Int32, Int32, Int32})
+
   include Comparable(self)
 
   def self.new(slice : Slice(UInt8))
@@ -20,45 +23,20 @@ class String
     new(chars, C.strlen(chars))
   end
 
-  def self.new(chars : UInt8*, length)
-    str = GC.malloc_atomic((length + 9).to_u32) as UInt8*
-    (str as Int32*).value = "".crystal_type_id
-    ((str as Int32*) + 1).value = length
-    ((str as UInt8*) + 8).copy_from(chars, length)
-    ((str + length + 8) as UInt8*).value = 0_u8
-    str as String
-  end
-
-  def self.new_and_free(chars : UInt8*)
-    str = new(chars, C.strlen(chars))
-    C.free(chars as Void*)
-    str
-  end
-
-  def self.new_with_capacity(capacity)
-    new_with_capacity_and_length(capacity) do |buffer|
-      yield buffer
-      C.strlen(buffer)
+  def self.new(chars : UInt8*, bytesize, length = 0)
+    new(bytesize) do |buffer|
+      buffer.copy_from(chars, bytesize)
+      {bytesize, length}
     end
   end
 
-  def self.new_with_capacity_and_length(capacity)
-    str = GC.malloc_atomic((capacity + 9).to_u32) as UInt8*
+  def self.new(capacity)
+    str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
     buffer = (str as String).cstr
-    length = yield buffer
-    buffer[length] = 0_u8
-    (str as Int32*).value = "".crystal_type_id
-    ((str as Int32*) + 1).value = length
-    str as String
-  end
-
-  def self.new_with_length(length)
-    str = GC.malloc_atomic((length + 9).to_u32) as UInt8*
-    buffer = (str as String).cstr
-    yield buffer
-    buffer[length] = 0_u8
-    (str as Int32*).value = "".crystal_type_id
-    ((str as Int32*) + 1).value = length
+    bytesize, length = yield buffer
+    str_header = str as {Int32, Int32, Int32}*
+    str_header.value = {TYPE_ID, bytesize, length}
+    buffer[bytesize] = 0_u8
     str as String
   end
 
@@ -69,7 +47,7 @@ class String
   end
 
   def bytesize
-    @length
+    @bytesize
   end
 
   def to_i
@@ -165,8 +143,9 @@ class String
 
     if start_pos
       count = end_pos - start_pos
-      String.new_with_length(count) do |buffer|
+      String.new(count) do |buffer|
         buffer.copy_from(cstr + start_pos, count)
+        {count, 0}
       end
     else
       ""
@@ -180,8 +159,9 @@ class String
     count = bytesize - start if start + count > bytesize
 
     if 0 <= start < bytesize
-      String.new_with_length(count) do |buffer|
+      String.new(count) do |buffer|
         buffer.copy_from(cstr + start, count)
+        {count, 0}
       end
     else
       ""
@@ -430,9 +410,11 @@ class String
   end
 
   def +(other : self)
-    String.new_with_length(bytesize + other.bytesize) do |buffer|
+    size = bytesize + other.bytesize
+    String.new(size) do |buffer|
       buffer.copy_from(cstr, bytesize)
       (buffer + bytesize).copy_from(other.cstr, other.bytesize)
+      {size, 0}
     end
   end
 
@@ -440,13 +422,14 @@ class String
     if times <= 0 || bytesize == 0
       return ""
     elsif bytesize == 1
-      return String.new_with_length(times) do |buffer|
+      return String.new(times) do |buffer|
         Intrinsics.memset(buffer as Void*, cstr[0], times.to_u32, 0_u32, false)
+        {times, times}
       end
     end
 
     total_bytesize = bytesize * times
-    String.new_with_length(total_bytesize) do |buffer|
+    String.new(total_bytesize) do |buffer|
       buffer.copy_from(cstr, bytesize)
       n = bytesize
 
@@ -456,6 +439,7 @@ class String
       end
 
       (buffer + n).copy_from(buffer, total_bytesize - n)
+      {total_bytesize, @length * times}
     end
   end
 
@@ -688,7 +672,7 @@ class String
   end
 
   def reverse
-    String.new_with_length(bytesize) do |buffer|
+    String.new(bytesize) do |buffer|
       buffer += bytesize
       reader = CharReader.new(self)
       reader.each do |char|
@@ -699,6 +683,7 @@ class String
           i += 1
         end
       end
+      {@bytesize, @length}
     end
   end
 

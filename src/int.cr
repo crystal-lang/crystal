@@ -165,7 +165,7 @@ struct Int
 
   macro generate_to_s(capacity)
     def to_s
-      String.new_with_capacity_and_length({{capacity}}) do |buffer|
+      String.new({{capacity}}) do |buffer|
         to_s PointerIO.new(pointerof(buffer))
       end
     end
@@ -173,7 +173,7 @@ struct Int
     def to_s(io : IO)
       if self == 0
         io.write_byte '0'.ord.to_u8
-        return 1
+        return 1, 1
       end
 
       chars :: UInt8[{{capacity}}]
@@ -195,7 +195,7 @@ struct Int
 
       length = {{capacity}} - 1 - position
       io.write(chars.to_slice + position + 1, length)
-      length
+      {length, length}
     end
   end
 end

@@ -235,14 +235,14 @@ struct CFileIO
     C.fcntl(fd, C::FCNTL::F_SETFL, before | C::O_NONBLOCK)
 
     begin
-      String.new_with_capacity_and_length(length) do |buffer|
+      String.new(length) do |buffer|
         read_length = read Slice.new(buffer, length)
         if read_length == 0
           raise "read_nonblock: read nothing"
         elsif C.errno == C::EWOULDBLOCK
           raise Errno.new "exception in read_nonblock"
         else
-          read_length.to_i
+          {read_length.to_i, 0}
         end
       end
     ensure
