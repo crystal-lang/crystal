@@ -567,4 +567,25 @@ describe "String" do
     "foo".camelcase.should eq("Foo")
     "foo_bar".camelcase.should eq("FooBar")
   end
+
+  it "answers ascii_only?" do
+    "a".ascii_only?.should be_true
+    "あ".ascii_only?.should be_false
+
+    str = String.new(1) do |buffer|
+      buffer.value = 'a'.ord.to_u8
+      {1, 0}
+    end
+    str.ascii_only?.should be_true
+
+    str = String.new(4) do |buffer|
+      count = 0
+      'あ'.each_byte do |byte|
+        buffer[count] = byte
+        count += 1
+      end
+      {count, 0}
+    end
+    str.ascii_only?.should be_false
+  end
 end

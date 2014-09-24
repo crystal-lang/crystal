@@ -842,6 +842,10 @@ class String
   end
 
   def length
+    if @length > 0 || @bytesize == 0
+      return @length
+    end
+
     i = 0
     count = 0
 
@@ -861,7 +865,12 @@ class String
 
       count += 1
     end
-    count
+
+    @length = count
+  end
+
+  def ascii_only?
+    @bytesize == 0 || length == @bytesize
   end
 
   def to_s
