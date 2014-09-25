@@ -237,4 +237,22 @@ describe "Codegen: const" do
       Foo::BAR
       )).to_i.should eq(1)
   end
+
+  it "codegens constant that refers to another constant that is a struct" do
+    run(%(
+      struct Foo
+        X = Foo.new(1)
+        Y = X
+
+        def initialize(@value)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      Foo::Y.value
+      )).to_i.should eq(1)
+  end
 end

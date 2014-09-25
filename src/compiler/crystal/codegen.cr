@@ -908,12 +908,15 @@ module Crystal
           accept const.value
         end
 
+        if const.value.type.passed_by_value?
+          @last = load @last
+        end
+
         if LLVM.constant? @last
           LLVM.set_initializer global, @last
           LLVM.set_global_constant global, true
         else
           if const.value.type.passed_by_value?
-            @last = load @last
             LLVM.set_initializer global, LLVM.undef(llvm_type(const.value.type))
           else
             LLVM.set_initializer global, LLVM.null(type_of @last)
