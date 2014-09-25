@@ -13,7 +13,7 @@ class BufferedIO(T)
         fill_buffer if @buffer_rem.empty?
 
         if @buffer_rem.empty?
-          if buffer.length == 0
+          if buffer.bytesize == 0
             return nil
           else
             break

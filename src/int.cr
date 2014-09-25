@@ -156,8 +156,8 @@ struct Int
 
     # Reverse buffer
     buffer = str.buffer
-    init.upto(str.length / 2 + init - 1) do |i|
-      buffer.swap(i, str.length - i - 1 + init)
+    init.upto(str.bytesize / 2 + init - 1) do |i|
+      buffer.swap(i, str.bytesize - i - 1 + init)
     end
 
     io << str.to_s
