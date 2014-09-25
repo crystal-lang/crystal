@@ -210,7 +210,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def fun_literal_closure_ptr
     void_ptr = context.fun.get_param(0)
-    bit_cast void_ptr, LLVM.pointer_type(context.closure_type.not_nil!)
+    bit_cast void_ptr, context.closure_type.not_nil!.pointer
   end
 
   def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)

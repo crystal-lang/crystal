@@ -46,6 +46,11 @@ struct LLVM::Module
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
+  def to_s(io)
+    LLVM.to_io(LibLLVM.print_module_to_string(self), io)
+    self
+  end
+
   def to_unsafe
     @unwrap
   end

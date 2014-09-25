@@ -3,12 +3,12 @@ require "llvm"
 
 module Crystal
   class LLVMTyper
-    TYPE_ID_POINTER = LLVM.pointer_type(LLVM::Int32)
-    FUN_TYPE = LLVM.struct_type [LLVM::VoidPointer, LLVM::VoidPointer], "->"
+    TYPE_ID_POINTER = LLVM::Int32.pointer
+    FUN_TYPE = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
 
     getter landing_pad_type
 
-    alias TypeCache = Hash(Type, LibLLVM::TypeRef)
+    alias TypeCache = Hash(Type, LLVM::Type)
 
     def initialize(program)
       @cache = TypeCache.new
@@ -20,15 +20,15 @@ module Crystal
 
       machine = program.target_machine
       @layout = machine.data_layout.not_nil!
-      @landing_pad_type = LLVM.struct_type([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
+      @landing_pad_type = LLVM::Type.struct([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end
 
     def llvm_string_type(bytesize)
-      LLVM.struct_type [
+      LLVM::Type.struct [
         LLVM::Int32,                              # type_id
         LLVM::Int32,                              # @bytesize
         LLVM::Int32,                              # @length
-        LLVM.array_type(LLVM::Int8, bytesize + 1) # @c
+        LLVM::Int8.array(bytesize + 1) # @c
       ]
     end
 
@@ -57,7 +57,7 @@ module Crystal
     end
 
     def create_llvm_type(type : IntegerType)
-      LibLLVM.int_type(8 * type.bytes)
+      LLVM::Type.int(8 * type.bytes)
     end
 
     def create_llvm_type(type : FloatType)
@@ -79,7 +79,7 @@ module Crystal
     def create_llvm_type(type : InstanceVarContainer)
       final_type = llvm_struct_type(type)
       unless type.struct?
-        final_type = LLVM.pointer_type(final_type)
+        final_type = final_type.pointer
       end
       final_type
     end
@@ -99,20 +99,20 @@ module Crystal
     def create_llvm_type(type : PointerInstanceType)
       pointed_type = llvm_embedded_type type.element_type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
-      LLVM.pointer_type(pointed_type)
+      pointed_type.pointer
     end
 
     def create_llvm_type(type : StaticArrayInstanceType)
       pointed_type = llvm_embedded_type type.element_type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
-      LLVM.array_type(pointed_type, (type.size as NumberLiteral).value.to_i)
+      pointed_type.array (type.size as NumberLiteral).value.to_i
     end
 
     def create_llvm_type(type : TupleInstanceType)
-      LLVM.struct_type(type.llvm_name) do |a_struct|
+      LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
-        element_types = Array(LibLLVM::TypeRef).new(type.tuple_types.length)
+        element_types = Array(LLVM::Type).new(type.tuple_types.length)
         type.tuple_types.each do |tuple_type|
           element_types << llvm_embedded_type(tuple_type)
         end
@@ -141,7 +141,7 @@ module Crystal
     end
 
     def create_llvm_type(type : MixedUnionType)
-      LLVM.struct_type(type.llvm_name) do |a_struct|
+      LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
         max_size = 0
@@ -161,8 +161,8 @@ module Crystal
 
         max_size = 1 if max_size == 0
 
-        llvm_value_type = LLVM.array_type(LLVM::SizeT, max_size)
-        [LLVM::Int32, llvm_value_type] of LibLLVM::TypeRef
+        llvm_value_type = LLVM::SizeT.array(max_size)
+        [LLVM::Int32, llvm_value_type]
       end
     end
 
@@ -207,7 +207,7 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : InstanceVarContainer)
-      LLVM.struct_type(type.llvm_name) do |a_struct|
+      LLVM::Type.struct(type.llvm_name) do |a_struct|
         @struct_cache[type] = a_struct
 
         ivars = type.all_instance_vars
@@ -217,7 +217,7 @@ module Crystal
           ivars_length += 1
         end
 
-        element_types = Array(LibLLVM::TypeRef).new(ivars_length)
+        element_types = Array(LLVM::Type).new(ivars_length)
 
         unless type.struct?
           element_types.push LLVM::Int32 # For the type id
@@ -236,11 +236,11 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : CStructType)
-      LLVM.struct_type(type.llvm_name, type.packed) do |a_struct|
+      LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
         @struct_cache[type] = a_struct
 
         vars = type.vars
-        element_types = Array(LibLLVM::TypeRef).new(vars.length)
+        element_types = Array(LLVM::Type).new(vars.length)
         vars.each { |name, var| element_types.push llvm_embedded_c_type(var.type) }
         element_types
       end
@@ -261,7 +261,7 @@ module Crystal
         end
       end
 
-      LLVM.struct_type([max_type.not_nil!] of LibLLVM::TypeRef, type.llvm_name)
+      LLVM::Type.struct([max_type.not_nil!] of LLVM::Type, type.llvm_name)
     end
 
     def create_llvm_struct_type(type : Type)
@@ -278,7 +278,7 @@ module Crystal
 
     def create_llvm_arg_type(type : Type)
       if type.passed_by_value?
-        LLVM.pointer_type llvm_type(type)
+        llvm_type(type).pointer
       else
         llvm_type(type)
       end
@@ -355,22 +355,22 @@ module Crystal
     def closure_type(type : FunInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
       arg_types.insert(0, LLVM::VoidPointer)
-      LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
+      LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
     def fun_type(type : FunInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
-      LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
+      LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)
-      LLVM.struct_type("closure") do |a_struct|
-        elems = Array(LibLLVM::TypeRef).new(vars.length + (parent_llvm_type ? 1 : 0))
+      LLVM::Type.struct("closure") do |a_struct|
+        elems = Array(LLVM::Type).new(vars.length + (parent_llvm_type ? 1 : 0))
         vars.each do |var|
           elems << llvm_type(var.type)
         end
         if parent_llvm_type
-          elems << LLVM.pointer_type(parent_llvm_type)
+          elems << parent_llvm_type.pointer
         end
         if self_type
           elems << llvm_type(self_type)

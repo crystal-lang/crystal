@@ -37,11 +37,11 @@ struct LLVM::Function
   end
 
   def function_type
-    LibLLVM.get_element_type(LLVM.type_of(self))
+    Type.new LibLLVM.get_element_type(LLVM.type_of(self))
   end
 
   def return_type
-    LibLLVM.get_return_type(function_type)
+    Type.new LibLLVM.get_return_type(function_type)
   end
 
   def param_count
@@ -57,11 +57,17 @@ struct LLVM::Function
     param_count = LibLLVM.count_param_types(type)
     param_types = Pointer(LibLLVM::TypeRef).malloc(param_count)
     LibLLVM.get_param_types(type, param_types)
-    param_types.as_enumerable(param_count.to_i).to_a
+
+    Array.new(param_count.to_i) { |i| Type.new param_types[i] }
   end
 
   def varargs?
     LibLLVM.is_function_var_arg(function_type) != 0
+  end
+
+  def to_s(io)
+    LLVM.to_io(LibLLVM.print_value_to_string(self), io)
+    self
   end
 
   def to_unsafe

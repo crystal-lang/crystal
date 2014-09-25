@@ -25,10 +25,10 @@ module Crystal
     def evaluate(node)
       llvm_mod = build(node, single_module: true)[""]
       main = llvm_mod.functions[MAIN_NAME]
-      wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LibLLVM::TypeRef, main.return_type) do |func|
+      wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main.return_type) do |func|
         func.append_basic_block("entry") do |builder|
           argc = LLVM.int(LLVM::Int32, 0)
-          argv = LLVM.null(LLVM.pointer_type(LLVM::VoidPointer))
+          argv = LLVM.null(LLVM::VoidPointer.pointer)
           ret = builder.call(main, [argc, argv])
           node.type.void? ? builder.ret : builder.ret(ret)
         end
@@ -101,7 +101,7 @@ module Crystal
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
-      @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(LLVM::VoidPointer)], ret_type)
+      @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
 
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
@@ -166,7 +166,7 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod)
-      llvm_mod.globals.add(LLVM.array_type(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
+      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.count), "symbol_table"
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -1204,7 +1204,7 @@ module Crystal
     end
 
     def create_check_fun_is_not_closure_fun(fun_name)
-      define_main_function(fun_name, ([LLVMTyper::FUN_TYPE] of LibLLVM::TypeRef), LLVM::VoidPointer) do |func|
+      define_main_function(fun_name, [LLVMTyper::FUN_TYPE], LLVM::VoidPointer) do |func|
         param = func.get_param(0)
 
         fun_ptr = extract_value param, 0
@@ -1552,7 +1552,7 @@ module Crystal
         end
 
         if has_bool
-          value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
+          value = load(bit_cast union_value(@last), LLVM::Int1.pointer)
           is_bool = equal? type_id, type_id(@mod.bool)
           cond = and cond, not(and(is_bool, not(value)))
         end
@@ -1847,7 +1847,7 @@ module Crystal
         malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
         size = trunc(size_of(type), LLVM::Int32)
         pointer = call malloc_fun, [size]
-        bit_cast pointer, pointer_type(type)
+        bit_cast pointer, type.pointer
       else
         builder.malloc type
       end
@@ -1861,7 +1861,7 @@ module Crystal
         count = trunc(count, LLVM::Int32)
         size = builder.mul size, count
         pointer = call malloc_fun, [size]
-        bit_cast pointer, pointer_type(type)
+        bit_cast pointer, type.pointer
       else
         builder.array_malloc(type, count)
       end

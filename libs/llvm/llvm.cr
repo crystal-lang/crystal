@@ -20,7 +20,7 @@ module LLVM
   end
 
   def self.type_of(value)
-    LibLLVM.type_of(value)
+    Type.new LibLLVM.type_of(value)
   end
 
   def self.type_kind_of(value)
@@ -61,33 +61,6 @@ module LLVM
 
   def self.undef(type)
     LibLLVM.get_undef(type)
-  end
-
-  def self.pointer_type(element_type)
-    LibLLVM.pointer_type(element_type, 0_u32)
-  end
-
-  def self.function_type(arg_types, return_type, varargs = false)
-    LibLLVM.function_type(return_type, arg_types, arg_types.length.to_u32, varargs ? 1 : 0)
-  end
-
-  def self.struct_type(name : String, packed = false)
-    a_struct = LibLLVM.struct_create_named(Context.global, name)
-    element_types = yield a_struct
-    LibLLVM.struct_set_body(a_struct, element_types, element_types.length.to_u32, packed ? 1 : 0)
-    a_struct
-  end
-
-  def self.struct_type(element_types : Array, name = nil, packed = false)
-    if name
-      struct_type(name, packed) { element_types }
-    else
-      LibLLVM.struct_type(element_types, element_types.length.to_u32, packed ? 1 : 0)
-    end
-  end
-
-  def self.array_type(element_type, count)
-    LibLLVM.array_type(element_type, count.to_u32)
   end
 
   def self.int(type, value)
@@ -165,20 +138,26 @@ module LLVM
     String.new(chars).tap { LibLLVM.dispose_message(chars) }
   end
 
-  Void = LibLLVM.void_type
-  Int1 = LibLLVM.int_type(1)
-  Int8 = LibLLVM.int_type(8)
-  Int16 = LibLLVM.int_type(16)
-  Int32 = LibLLVM.int_type(32)
-  Int64 = LibLLVM.int_type(64)
-  Float = LibLLVM.float_type
-  Double = LibLLVM.double_type
+  def self.to_io(chars, io)
+    io.write Slice.new(chars, C.strlen(chars))
+    LibLLVM.dispose_message(chars)
+  end
 
-  VoidPointer = pointer_type(Int8)
+  Void = Type.void
+  Int1 = Type.int(1)
+  Int8 = Type.int(8)
+  Int16 = Type.int(16)
+  Int32 = Type.int(32)
+  Int64 = Type.int(64)
+  Float = Type.float
+  Double = Type.double
 
+  VoidPointer = Int8.pointer
+
+  # TODO: replace with constants after 0.5.0
   ifdef x86_64
-    SizeT = Int64
+    SizeT = Type.int(64) # Int64
   else
-    SizeT = Int32
+    SizeT = Type.int(32) # Int32
   end
 end

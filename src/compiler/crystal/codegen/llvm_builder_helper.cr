@@ -152,10 +152,6 @@ module Crystal
       bit_cast pointer, LLVM::VoidPointer
     end
 
-    def pointer_type(type)
-      LLVM.pointer_type(type)
-    end
-
     def size_of(type)
       LLVM.size_of type
     end
@@ -193,11 +189,11 @@ module Crystal
     end
 
     def cast_to(value, type)
-      bit_cast(value, llvm_type(type))
+      bit_cast value, llvm_type(type)
     end
 
     def cast_to_pointer(value, type)
-      bit_cast(value, pointer_type(llvm_type(type)))
+      bit_cast value, llvm_type(type).pointer
     end
 
     def extract_value(value, index)

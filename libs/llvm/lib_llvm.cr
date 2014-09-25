@@ -339,4 +339,7 @@ lib LibLLVM
   fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
   fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
   fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
+  fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
+  fun print_type_to_string = LLVMPrintTypeToString(ty : TypeRef) : UInt8*
+  fun print_value_to_string = LLVMPrintValueToString(v : ValueRef) : UInt8*
 end

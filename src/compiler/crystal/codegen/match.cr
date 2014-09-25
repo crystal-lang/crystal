@@ -44,7 +44,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def create_match_fun(name, type)
-    define_main_function(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
+    define_main_function(name, ([LLVM::Int32]), LLVM::Int1) do |func|
       type_id = func.get_param(0)
       create_match_fun_body(type, type_id)
     end
