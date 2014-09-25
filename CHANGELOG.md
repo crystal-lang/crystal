@@ -5,7 +5,7 @@
 * Allow `ifdef` as a suffix.
 * Integer division by zero raises a `DivisionByZero` exception.
 * Link attributes are now only processed if a lib function is used.
-* Removed the `type Name : Type` syntax (use `type Name : Type` instead).
+* Removed the `type Name : Type` syntax (use `type Name = Type` instead).
 * Removed the `lib Lib("libname"); end` syntax. Use `@[Link]` attribute instead.
 * Fixed some `require` issues.
 * String representation includes length.
