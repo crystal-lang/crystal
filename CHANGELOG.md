@@ -1,3 +1,7 @@
+## 0.5.0 (2014-09-24)
+
+* String overhaul, and optimizations
+
 ## 0.4.5 (2014-09-24)
 
 * Define backtick (`) for command execution.
