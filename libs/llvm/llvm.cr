@@ -160,6 +160,11 @@ module LLVM
     LibLLVM.delete_basic_block(block)
   end
 
+  def self.default_target_triple
+    chars = LibLLVM.get_default_target_triple
+    String.new(chars).tap { LibLLVM.dispose_message(chars) }
+  end
+
   Void = LibLLVM.void_type
   Int1 = LibLLVM.int_type(1)
   Int8 = LibLLVM.int_type(8)

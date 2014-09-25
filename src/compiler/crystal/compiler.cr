@@ -346,7 +346,7 @@ module Crystal
 
     def target_machine
       @target_machine ||= begin
-        triple = @target_triple || TargetMachine::HOST_TARGET_TRIPLE
+        triple = @target_triple || LLVM.default_target_triple
         TargetMachine.create(triple, @mcpu || "", @release)
       end
     end

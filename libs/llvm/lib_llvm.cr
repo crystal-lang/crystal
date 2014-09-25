@@ -338,4 +338,5 @@ lib LibLLVM
   fun initialize_target = LLVMInitializeTarget(r : PassRegistryRef)
   fun add_target_data = LLVMAddTargetData(td : TargetDataRef, pm : PassManagerRef)
   fun get_next_target = LLVMGetNextTarget(t : TargetRef) : TargetRef
+  fun get_default_target_triple = LLVMGetDefaultTargetTriple : UInt8*
 end
