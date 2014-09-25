@@ -3,13 +3,13 @@ struct LLVM::PhiTable
   getter values
 
   def initialize
-    @blocks = [] of LibLLVM::BasicBlockRef
-    @values = [] of LibLLVM::ValueRef
+    @blocks = [] of LLVM::BasicBlock
+    @values = [] of LLVM::Value
   end
 
   def add(block, value)
     @blocks << block
-    @values << value
+    @values << value.to_value
   end
 
   def empty?

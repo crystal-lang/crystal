@@ -163,7 +163,7 @@ lib LibLLVM
   fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : Attribute)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
-  fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : Int32);
+  fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : Int32)
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
@@ -259,6 +259,7 @@ lib LibLLVM
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
+  fun get_params = LLVMGetParams(fn : ValueRef, params : ValueRef*)
   fun get_pointer_to_global = LLVMGetPointerToGlobal(ee : ExecutionEngineRef, global : ValueRef) : Void*
   fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : UInt8*
@@ -300,11 +301,15 @@ lib LibLLVM
   fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
   fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
+  fun is_global_constant = LLVMIsGlobalConstant(global : ValueRef) : Int32
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
+  fun get_initializer = LLVMGetInitializer(global_var : ValueRef) : ValueRef
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
+  fun get_linkage = LLVMGetLinkage(global : ValueRef) : Linkage
   fun set_metadata = LLVMSetMetadata(value : ValueRef, kind_id : UInt32, node : ValueRef)
   fun set_target = LLVMSetTarget(mod : ModuleRef, triple : UInt8*)
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
+  fun is_thread_local = LLVMIsThreadLocal(global_var : ValueRef) : Int32
   fun set_value_name = LLVMSetValueName(val : ValueRef, name : UInt8*)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64

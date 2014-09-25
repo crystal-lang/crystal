@@ -41,7 +41,7 @@ module Crystal
       value
     end
 
-    def printf(format, args = [] of LibLLVM::ValueRef)
+    def printf(format, args = [] of LLVM::Value)
       call @printf, [global_string_pointer(format)] + args
     end
 

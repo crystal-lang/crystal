@@ -52,6 +52,26 @@ struct LLVM::Type
     new LibLLVM.function_type(return_type, (arg_types.buffer as LibLLVM::TypeRef*), arg_types.length.to_u32, varargs ? 1 : 0)
   end
 
+  def size
+    Value.new LibLLVM.size_of(self)
+  end
+
+  def kind
+    LibLLVM.get_type_kind(self)
+  end
+
+  def null
+    Value.new LibLLVM.const_null(self)
+  end
+
+  def null_pointer
+    Value.new LibLLVM.const_pointer_null(self)
+  end
+
+  def undef
+    Value.new LibLLVM.get_undef(self)
+  end
+
   def pointer
     Type.pointer self
   end
@@ -60,7 +80,7 @@ struct LLVM::Type
     Type.array self, count
   end
 
-  def to_s(io)
+  def inspect(io)
     LLVM.to_io(LibLLVM.print_type_to_string(self), io)
     self
   end

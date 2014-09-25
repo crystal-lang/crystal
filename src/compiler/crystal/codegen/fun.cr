@@ -28,13 +28,13 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def declare_fun(mangled_name, func)
     new_fun = @llvm_mod.functions.add(
       mangled_name,
-      func.param_types,
+      func.params.types,
       func.return_type,
       func.varargs?
     )
-    func.params.zip(new_fun.params) do |p1, p2|
-      val = LLVM.get_attribute(p1)
-      LLVM.add_attribute(p2, val) if val != 0
+    func.params.to_a.zip(new_fun.params.to_a) do |p1, p2|
+      val = p1.attributes
+      p2.add_attribute val if val != 0
     end
     new_fun
   end
@@ -71,7 +71,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         end
 
         if !is_fun_literal && self_type.passed_as_self?
-          context.vars["self"] = LLVMVar.new(context.fun.get_param(0), self_type, true)
+          context.vars["self"] = LLVMVar.new(context.fun.params.first, self_type, true)
         end
 
         if is_closure
@@ -175,13 +175,13 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
 
     args.each_with_index do |arg, i|
-      param = context.fun.get_param(i + offset)
-      LLVM.set_name param, arg.name
+      param = context.fun.params[i + offset]
+      param.name = arg.name
 
       # Set 'byval' attribute
       # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
       if arg.type.passed_by_value? && (is_closure || !(i == 0 && self_type.struct?))
-        LLVM.add_attribute param, LibLLVM::Attribute::ByVal
+        param.add_attribute LibLLVM::Attribute::ByVal
       end
     end
 
@@ -209,7 +209,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def fun_literal_closure_ptr
-    void_ptr = context.fun.get_param(0)
+    void_ptr = context.fun.params.first
     bit_cast void_ptr, context.closure_type.not_nil!.pointer
   end
 
@@ -218,7 +218,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
     target_def_vars = target_def.vars
     args.each_with_index do |arg, i|
-      param = context.fun.get_param(i + offset)
+      param = context.fun.params[i + offset]
       if !is_fun_literal && (i == 0 && self_type.passed_as_self?)
         # here self is already in context.vars
       else

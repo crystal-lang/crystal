@@ -22,7 +22,7 @@ module Crystal
     end
 
     def fun_metadatas
-      @fun_metadatas ||= {} of LLVM::Function => LibLLVM::ValueRef
+      @fun_metadatas ||= {} of LLVM::Function => LLVM::Value
     end
 
     def fun_metadata(a_fun, name, file, line)
@@ -72,7 +72,7 @@ module Crystal
 
     def file_descriptor(file)
       file ||= ""
-      @file_descriptor ||= {} of String | VirtualFile => LibLLVM::ValueRef
+      @file_descriptor ||= {} of String | VirtualFile => LLVM::Value
       @file_descriptor.not_nil![file] ||= metadata([
         41 + LLVMDebugVersion,                # Tag
         file_metadata(file)
@@ -82,7 +82,7 @@ module Crystal
     def file_metadata(file)
       file ||= ""
 
-      @file_metadata ||= {} of String | VirtualFile => LibLLVM::ValueRef
+      @file_metadata ||= {} of String | VirtualFile => LLVM::Value
       @file_metadata.not_nil![file] ||= begin
         realfile = case file
           when String then file
@@ -128,7 +128,7 @@ module Crystal
     end
 
     def type_metadata(type)
-      @type_metadata ||= {} of Type => LibLLVM::ValueRef
+      @type_metadata ||= {} of Type => LLVM::Value
       @type_metadata[type] ||= begin
         if type.integer?
           base_type(type.name, type.bits, type.signed? ? 5 : 7)
@@ -170,17 +170,17 @@ module Crystal
     def metadata args
       values = args.map do |value|
         case value
-        when String then LibLLVM.md_string(value, value.bytesize)
-        when Symbol then LibLLVM.md_string(value.to_s, value.to_s.bytesize)
+        when String then LLVM::Value.new LibLLVM.md_string(value, value.bytesize)
+        when Symbol then LLVM::Value.new LibLLVM.md_string(value.to_s, value.to_s.bytesize)
         when Number then int32(value)
         when Bool then int1(value ? 1 : 0)
-        when LibLLVM::ValueRef then value
-        when LLVM::Function then value.unwrap
-        when Nil then Pointer(Void).null as LibLLVM::ValueRef
+        when LLVM::Value then value
+        when LLVM::Function then LLVM::Value.new value.unwrap
+        when Nil then LLVM::Value.new(Pointer(Void).null as LibLLVM::ValueRef)
         else raise "Unsuported value type"
         end
       end
-      LibLLVM.md_node(values, values.length)
+      LLVM::Value.new LibLLVM.md_node((values.buffer as LibLLVM::ValueRef*), values.length)
     end
 
     def dbg_declare
@@ -201,7 +201,7 @@ module Crystal
     def emit_def_debug_metadata(target_def)
       unless target_def.name == MAIN_NAME
         if def_md = def_metadata(context.fun, target_def)
-          @subprograms[@llvm_mod] ||= [] of LibLLVM::ValueRef?
+          @subprograms[@llvm_mod] ||= [] of LLVM::Value?
           @subprograms[@llvm_mod] << def_md
         end
       end

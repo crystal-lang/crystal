@@ -103,7 +103,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value)
-    store LLVM.null(llvm_type(target_type)), target_pointer
+    store llvm_type(target_type).null, target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value)
@@ -269,7 +269,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def upcast_distinct(value, to_type : NilableType, from_type : NilType?)
-    LLVM.null(llvm_type(to_type))
+    llvm_type(to_type).null
   end
 
   def upcast_distinct(value, to_type : NilableType, from_type : Type)
@@ -277,7 +277,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def upcast_distinct(value, to_type : NilableReferenceUnionType, from_type : NilType?)
-    LLVM.null(llvm_type(to_type))
+    llvm_type(to_type).null
   end
 
   def upcast_distinct(value, to_type : NilableReferenceUnionType, from_type : Type)
@@ -297,7 +297,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def upcast_distinct(value, to_type : NilablePointerType, from_type : NilType)
-    LLVM.null(llvm_type(to_type))
+    llvm_type(to_type).null
   end
 
   def upcast_distinct(value, to_type : NilablePointerType, from_type : PointerInstanceType)

@@ -1,31 +1,10 @@
+require "value_methods"
+
 struct LLVM::Function
-  getter :unwrap
+  include LLVM::ValueMethods
 
-  def initialize(@unwrap)
-  end
-
-  def dump
-    LLVM.dump self
-  end
-
-  def append_basic_block(name)
-    LibLLVM.append_basic_block(self, name)
-  end
-
-  def append_basic_block(name)
-    block = append_basic_block(name)
-    builder = Builder.new
-    builder.position_at_end block
-    yield builder
-    block
-  end
-
-  def name
-    String.new LibLLVM.get_value_name(self)
-  end
-
-  def get_param(index)
-    LibLLVM.get_param(self, index)
+  def basic_blocks
+    BasicBlockCollection.new self
   end
 
   def linkage=(linkage)
@@ -37,40 +16,18 @@ struct LLVM::Function
   end
 
   def function_type
-    Type.new LibLLVM.get_element_type(LLVM.type_of(self))
+    Type.new LibLLVM.get_element_type(LibLLVM.type_of(self))
   end
 
   def return_type
     Type.new LibLLVM.get_return_type(function_type)
   end
 
-  def param_count
-    LibLLVM.count_param_types(function_type).to_i
-  end
-
-  def params
-    Array(LibLLVM::ValueRef).new(param_count) { |i| get_param(i) }
-  end
-
-  def param_types
-    type = function_type
-    param_count = LibLLVM.count_param_types(type)
-    param_types = Pointer(LibLLVM::TypeRef).malloc(param_count)
-    LibLLVM.get_param_types(type, param_types)
-
-    Array.new(param_count.to_i) { |i| Type.new param_types[i] }
-  end
-
   def varargs?
     LibLLVM.is_function_var_arg(function_type) != 0
   end
 
-  def to_s(io)
-    LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
-  end
-
-  def to_unsafe
-    @unwrap
+  def params
+    ParameterCollection.new self
   end
 end

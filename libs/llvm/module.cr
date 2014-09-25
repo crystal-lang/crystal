@@ -46,7 +46,7 @@ struct LLVM::Module
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
-  def to_s(io)
+  def inspect(io)
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
   end

@@ -254,7 +254,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     type = node.type as PointerInstanceType
     llvm_type = llvm_embedded_type(type.element_type)
     last = array_malloc(llvm_type, call_args[1])
-    memset last, int8(0), size_of(llvm_type)
+    memset last, int8(0), llvm_type.size
     last
   end
 
@@ -356,7 +356,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     store @last, var
 
     if node.type.fun?
-      @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM.null(LLVM::VoidPointer))
+      @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM::VoidPointer.null)
     end
 
     @last
@@ -369,7 +369,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     @last = load var
 
     if node.type.fun?
-      @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM.null(LLVM::VoidPointer))
+      @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM::VoidPointer.null)
     end
 
     @last
@@ -431,7 +431,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     ctx_is_null_block = new_block "ctx_is_null"
     ctx_is_not_null_block = new_block "ctx_is_not_null"
 
-    ctx_is_null = equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
+    ctx_is_null = equal? ctx_ptr, LLVM::VoidPointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
     old_needs_value = @needs_value
@@ -457,7 +457,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def codegen_primitive_fun_closure(node, target_def, call_args)
     closure_ptr = call_args[0]
     ctx_ptr = builder.extract_value closure_ptr, 1
-    not_equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
+    not_equal? ctx_ptr, LLVM::VoidPointer.null
   end
 
   def codegen_primitive_fun_pointer(node, target_def, call_args)
@@ -469,7 +469,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     p0 = ptr2int(call_args[0], LLVM::Int64)
     p1 = ptr2int(call_args[1], LLVM::Int64)
     sub = builder.sub p0, p1
-    builder.exact_sdiv sub, ptr2int(gep(LLVM.pointer_null(type_of(call_args[0])), 1), LLVM::Int64)
+    builder.exact_sdiv sub, ptr2int(gep(call_args[0].type.null_pointer, 1), LLVM::Int64)
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)

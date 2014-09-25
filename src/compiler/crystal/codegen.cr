@@ -26,9 +26,9 @@ module Crystal
       llvm_mod = build(node, single_module: true)[""]
       main = llvm_mod.functions[MAIN_NAME]
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main.return_type) do |func|
-        func.append_basic_block("entry") do |builder|
+        func.basic_blocks.append "entry"  do |builder|
           argc = LLVM.int(LLVM::Int32, 0)
-          argv = LLVM.null(LLVM::VoidPointer.pointer)
+          argv = LLVM::VoidPointer.pointer.null
           ret = builder.call(main, [argc, argv])
           node.type.void? ? builder.ret : builder.ret(ret)
         end
@@ -37,7 +37,7 @@ module Crystal
       llvm_mod.verify
 
       engine = LLVM::JITCompiler.new(llvm_mod)
-      engine.run_function wrapper, [] of LibLLVM::GenericValueRef
+      engine.run_function wrapper, [] of LLVM::GenericValue
     end
 
     def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"))
@@ -106,11 +106,11 @@ module Crystal
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
 
-      @argc = @main.get_param(0)
-      LLVM.set_name @argc, "argc"
+      @argc = @main.params[0]
+      @argc.name = "argc"
 
-      @argv = @main.get_param(1)
-      LLVM.set_name @argv, "argv"
+      @argv = @main.params[1]
+      @argv.name = "argv"
 
       builder = LLVM::Builder.new
       @builder = wrap_builder builder
@@ -123,16 +123,16 @@ module Crystal
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
 
       @in_lib = false
-      @strings = {} of StringKey => LibLLVM::ValueRef
+      @strings = {} of StringKey => LLVM::Value
       @symbols = {} of String => Int32
-      @symbol_table_values = [] of LibLLVM::ValueRef
+      @symbol_table_values = [] of LLVM::Value
       mod.symbols.each_with_index do |sym, index|
         @symbols[sym] = index
         @symbol_table_values << build_string_constant(sym, sym)
       end
 
       symbol_table = define_symbol_table @llvm_mod
-      LLVM.set_initializer symbol_table, LLVM.array(llvm_type(@mod.string), @symbol_table_values)
+      symbol_table.initializer = LLVM.array(llvm_type(@mod.string), @symbol_table_values)
 
       @last = llvm_nil
       @fun_literal_count = 0
@@ -146,7 +146,7 @@ module Crystal
 
       @empty_md_list = metadata([0])
 
-      @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
+      @subprograms = {} of LLVM::Module => Array(LLVM::Value?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
 
       @unused_fun_defs = [] of FunDef
@@ -204,10 +204,10 @@ module Crystal
 
       # If there are no instructions in the alloca block and the
       # const block, we just removed them (less noise)
-      if LLVM.first_instruction(alloca_block)
-        br_block_chain({alloca_block, entry_block})
+      if alloca_block.instructions.empty?
+        alloca_block.delete
       else
-        LLVM.delete_basic_block(alloca_block)
+        br_block_chain alloca_block, entry_block
       end
 
       @unused_fun_defs.each do |node|
@@ -357,7 +357,7 @@ module Crystal
       if is_closure
         ctx_ptr = bit_cast(context.closure_ptr.not_nil!, LLVM::VoidPointer)
       else
-        ctx_ptr = LLVM.null(LLVM::VoidPointer)
+        ctx_ptr = LLVM::VoidPointer.null
       end
       @last = make_fun node.type, fun_ptr, ctx_ptr
 
@@ -379,7 +379,7 @@ module Crystal
       if call_self && !owner.metaclass?
         ctx_ptr = bit_cast(call_self, LLVM::VoidPointer)
       else
-        ctx_ptr = LLVM.null(LLVM::VoidPointer)
+        ctx_ptr = LLVM::VoidPointer.null
       end
       @last = make_fun node.type, fun_ptr, ctx_ptr
 
@@ -697,19 +697,19 @@ module Crystal
 
         # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
-        LLVM.set_thread_local ptr, thread_local if thread_local
+        ptr.thread_local = true if thread_local
 
         if @llvm_mod == @main_mod
-          LLVM.set_initializer ptr, LLVM.null(llvm_type)
+          ptr.initializer = llvm_type.null
         else
-          LLVM.set_linkage ptr, LibLLVM::Linkage::External
+          ptr.linkage = LibLLVM::Linkage::External
 
           # Define it in main if it's not already defined
           main_ptr = @main_mod.globals[name]?
           unless main_ptr
             main_ptr = @main_mod.globals.add(llvm_type, name)
-            LLVM.set_initializer main_ptr, LLVM.null(llvm_type)
-            LLVM.set_thread_local main_ptr, thread_local if thread_local
+            main_ptr.initializer = llvm_type.null
+            main_ptr.thread_local = true if thread_local
           end
         end
       end
@@ -849,8 +849,8 @@ module Crystal
       var = @llvm_mod.globals[name]?
       unless var
         var = llvm_mod.globals.add(llvm_c_type(type), name)
-        LLVM.set_linkage var, LibLLVM::Linkage::External
-        LLVM.set_thread_local var if Attribute.any?(attributes, "ThreadLocal")
+        var.linkage = LibLLVM::Linkage::External
+        var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       end
       var
     end
@@ -912,14 +912,14 @@ module Crystal
           @last = load @last
         end
 
-        if LLVM.constant? @last
-          LLVM.set_initializer global, @last
-          LLVM.set_global_constant global, true
+        if @last.constant?
+          global.initializer = @last
+          global.global_constant = true
         else
           if const.value.type.passed_by_value?
-            LLVM.set_initializer global, LLVM.undef(llvm_type(const.value.type))
+            global.initializer = llvm_type(const.value.type).undef
           else
-            LLVM.set_initializer global, LLVM.null(type_of @last)
+            global.initializer = @last.type.null
           end
 
           store @last, global
@@ -1018,7 +1018,7 @@ module Crystal
 
         position_at_end catch_block
         lp_ret_type = llvm_typer.landing_pad_type
-        lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LibLLVM::ValueRef
+        lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
         unwind_ex_obj = extract_value lp, 0
         ex_type_id = extract_value lp, 1
 
@@ -1042,7 +1042,7 @@ module Crystal
               if a_rescue_name = a_rescue.name
                 context.vars = context.vars.dup
                 get_exception_fun = main_fun(GET_EXCEPTION_NAME)
-                exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
+                exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, get_exception_fun.params.first.type)]
                 exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
                 unless a_rescue.type.virtual?
                   exception = cast_to exception, a_rescue.type
@@ -1068,7 +1068,7 @@ module Crystal
         end
 
         raise_fun = main_fun(RAISE_NAME)
-        codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
+        codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, raise_fun.params.first.type)], true, @mod.no_return)
       end
 
       if node_ensure
@@ -1130,7 +1130,7 @@ module Crystal
       has_out = false
       target_def = node.target_def
       is_external = target_def.is_a?(External)
-      call_args = Array(LibLLVM::ValueRef).new(node.args.length + 1)
+      call_args = Array(LLVM::Value).new(node.args.length + 1)
       old_needs_value = @needs_value
 
       # First self.
@@ -1174,7 +1174,7 @@ module Crystal
 
           if is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
             # Nil to pointer
-            call_arg = LLVM.null(llvm_c_type(def_arg.type))
+            call_arg = llvm_c_type(def_arg.type).null
           else
             # Def argument might be missing if it's a variadic call
             call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
@@ -1199,13 +1199,13 @@ module Crystal
       check_fun_name = "~check_fun_is_not_closure"
       func = @main_mod.functions[check_fun_name]? || create_check_fun_is_not_closure_fun(check_fun_name)
       func = check_main_fun check_fun_name, func
-      value = call func, [value] of LibLLVM::ValueRef
+      value = call func, [value] of LLVM::Value
       bit_cast value, llvm_fun_type(type)
     end
 
     def create_check_fun_is_not_closure_fun(fun_name)
       define_main_function(fun_name, [LLVMTyper::FUN_TYPE], LLVM::VoidPointer) do |func|
-        param = func.get_param(0)
+        param = func.params.first
 
         fun_ptr = extract_value param, 0
         ctx_ptr = extract_value param, 1
@@ -1213,7 +1213,7 @@ module Crystal
         ctx_is_null_block = new_block "ctx_is_null"
         ctx_is_not_null_block = new_block "ctx_is_not_null"
 
-        ctx_is_null = equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
+        ctx_is_null = equal? ctx_ptr, LLVM::VoidPointer.null
         cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
         position_at_end ctx_is_null_block
@@ -1377,7 +1377,7 @@ module Crystal
 
       if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
         fun_ptr = bit_cast(@last, LLVM::VoidPointer)
-        ctx_ptr = LLVM.null(LLVM::VoidPointer)
+        ctx_ptr = LLVM::VoidPointer.null
         return @last = make_fun(target_def.type, fun_ptr, ctx_ptr)
       end
 
@@ -1432,7 +1432,7 @@ module Crystal
     end
 
     def make_nilable_fun(type)
-      null = LLVM.null(LLVM::VoidPointer)
+      null = LLVM::VoidPointer.null
       make_fun type, null, null
     end
 
@@ -1444,7 +1444,7 @@ module Crystal
 
       a_fun = @main_mod.functions.add(name, arg_types, return_type) do |func|
         context.fun = func
-        func.append_basic_block("entry") do |builder|
+        func.basic_blocks.append "entry" do |builder|
           @builder = wrap_builder builder
           yield func
         end
@@ -1596,14 +1596,14 @@ module Crystal
     def br_from_alloca_to_entry
       # If there are no instructions in the alloca we can delete
       # it and just keep the entry block (less noise).
-      if LLVM.first_instruction(alloca_block)
-        br_block_chain({alloca_block, entry_block})
+      if alloca_block.instructions.empty?
+        alloca_block.delete
       else
-        LLVM.delete_basic_block(alloca_block)
+        br_block_chain alloca_block, entry_block
       end
     end
 
-    def br_block_chain blocks
+    def br_block_chain *blocks
       old_block = insert_block
 
       0.upto(blocks.length - 2) do |i|
@@ -1615,7 +1615,7 @@ module Crystal
     end
 
     def new_block(name)
-      context.fun.append_basic_block(name)
+      context.fun.basic_blocks.append name
     end
 
     def new_blocks(*names)
@@ -1779,7 +1779,7 @@ module Crystal
       @exception_handlers = old_exception_handlers
     end
 
-    def printf(format, args = [] of LibLLVM::ValueRef)
+    def printf(format, args = [] of LLVM::Value)
       call @mod.printf(@llvm_mod), [builder.global_string_pointer(format)] + args
     end
 
@@ -1790,7 +1790,7 @@ module Crystal
       else
         @last = malloc struct_type
       end
-      memset @last, int8(0), size_of(struct_type)
+      memset @last, int8(0), struct_type.size
       type_ptr = @last
       run_instance_vars_initializers(type, type_ptr)
       @last = type_ptr
@@ -1845,7 +1845,7 @@ module Crystal
       @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
       if malloc_fun = @malloc_fun
         malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
-        size = trunc(size_of(type), LLVM::Int32)
+        size = trunc(type.size, LLVM::Int32)
         pointer = call malloc_fun, [size]
         bit_cast pointer, type.pointer
       else
@@ -1857,7 +1857,7 @@ module Crystal
       @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
       if malloc_fun = @malloc_fun
         malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
-        size = trunc(size_of(type), LLVM::Int32)
+        size = trunc(type.size, LLVM::Int32)
         count = trunc(count, LLVM::Int32)
         size = builder.mul size, count
         pointer = call malloc_fun, [size]
@@ -1922,14 +1922,14 @@ module Crystal
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
         global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name)
-        LLVM.set_linkage global, LibLLVM::Linkage::Private
-        LLVM.set_global_constant global, true
-        LLVM.set_initializer global, LLVM.struct([
-          type_id(@mod.string),
-          int32(str.bytesize),
-          int32(str.length),
-          LLVM.string(str)
-        ])
+        global.linkage = LibLLVM::Linkage::Private
+        global.global_constant = true
+        global.initializer = LLVM.struct [
+                               type_id(@mod.string),
+                               int32(str.bytesize),
+                               int32(str.length),
+                               LLVM.string(str),
+                             ]
         cast_to global, @mod.string
       end
     end

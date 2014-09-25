@@ -60,7 +60,7 @@ module Crystal
       gep ptr, int32(index0), name
     end
 
-    def gep(ptr, index0 : LibLLVM::ValueRef, name = "")
+    def gep(ptr, index0 : LLVM::Value, name = "")
       builder.inbounds_gep ptr, [index0], name
     end
 
@@ -68,7 +68,7 @@ module Crystal
       gep ptr, int32(index0), int32(index1), name
     end
 
-    def gep(ptr, index0 : LibLLVM::ValueRef, index1 : LibLLVM::ValueRef, name = "")
+    def gep(ptr, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
       builder.inbounds_gep ptr, [index0, index1], name
     end
 
@@ -144,20 +144,12 @@ module Crystal
       ret
     end
 
-    def ret(value : LibLLVM::ValueRef)
+    def ret(value)
       builder.ret value
     end
 
     def cast_to_void_pointer(pointer)
       bit_cast pointer, LLVM::VoidPointer
-    end
-
-    def size_of(type)
-      LLVM.size_of type
-    end
-
-    def type_of(value)
-      LLVM.type_of value
     end
 
     def extend_int(from_type, to_type, value)
@@ -229,11 +221,11 @@ module Crystal
     end
 
     def llvm_size(type)
-      size_of llvm_type(type)
+      llvm_type(type).size
     end
 
     def llvm_struct_size(type)
-      size_of llvm_struct_type(type)
+      llvm_struct_type(type).size
     end
   end
 end

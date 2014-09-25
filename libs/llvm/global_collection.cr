@@ -3,12 +3,12 @@ struct LLVM::GlobalCollection
   end
 
   def add(type, name)
-    LibLLVM.add_global(@mod, type, name)
+    Value.new LibLLVM.add_global(@mod, type, name)
   end
 
   def []?(name)
     global = LibLLVM.get_named_global(@mod, name)
-    global ? global : nil
+    global ? Value.new(global) : nil
   end
 
   def [](name)
