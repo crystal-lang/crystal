@@ -13,4 +13,8 @@ describe "ASTNode#to_s" do
   it "doesn't put parenthesis on call if it doesn't have parenthesis" do
     Parser.parse("foo(bar)").to_s.should eq("foo(bar)")
   end
+
+  it "puts parenthesis in ~" do
+    Parser.parse("(~1).foo").to_s.should eq("(~1).foo")
+  end
 end

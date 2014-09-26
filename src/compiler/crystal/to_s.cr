@@ -214,27 +214,30 @@ module Crystal
       end
 
       node_obj = node.obj
-      case node_obj
-      when Call
-        need_parens = node_obj.args.length > 0
-      when Assign
-        need_parens = true
-      when ArrayLiteral
-        need_parens = !!node_obj.of
-      when HashLiteral
-        need_parens = !!node_obj.of_key
-      else
-        need_parent = false
-      end
 
-      need_parens = (node_obj.is_a?(Call) && node_obj.args.length > 0) ||
+      need_parens =
+        case node_obj
+        when Call
+          case node_obj.args.length
+          when 0
+            !is_alpha(node_obj.name)
+          else
+            true
+          end
+        when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, StringInterpolation, Path, Generic
+          false
+        when ArrayLiteral
+          !!node_obj.of
+        when HashLiteral
+          !!node_obj.of_key
+        else
+          true
+        end
 
       @str << "::" if node.global
 
       if node_obj && (node.name == "[]" || node.name == "[]?")
-        @str << "(" if need_parens
-        node_obj.accept self
-        @str << ")" if need_parens
+        in_parenthesis(need_parens) { node_obj.accept self }
 
         @str << decorate_call(node, "[")
 
@@ -249,9 +252,7 @@ module Crystal
           @str << decorate_call(node, "]?")
         end
       elsif node_obj && node.name == "[]="
-        @str << "(" if need_parens
-        node_obj.accept self
-        @str << ")" if need_parens
+        in_parenthesis(need_parens) { node_obj.accept self }
 
         @str << decorate_call(node, "[")
 
@@ -263,13 +264,9 @@ module Crystal
         node.args[1].accept self
       elsif node_obj && !is_alpha(node.name) && node.args.length == 0
         @str << decorate_call(node, node.name)
-        @str << "("
-        node_obj.accept self
-        @str << ")"
+        in_parenthesis(need_parens) { node_obj.accept self }
       elsif node_obj && !is_alpha(node.name) && node.args.length == 1
-        @str << "(" if need_parens
-        node_obj.accept self
-        @str << ")" if need_parens
+        in_parenthesis(need_parens) { node_obj.accept self }
 
         @str << " "
         @str << decorate_call(node, node.name)
@@ -277,9 +274,7 @@ module Crystal
         node.args[0].accept self
       else
         if node_obj
-          @str << "(" if need_parens
-          node_obj.accept self
-          @str << ")" if need_parens
+          in_parenthesis(need_parens) { node_obj.accept self }
           @str << "."
         end
         if node.name.ends_with?('=')
@@ -294,27 +289,26 @@ module Crystal
 
           call_args_need_parens = !node.args.empty? || node.block_arg || node.named_args
 
-          @str << "(" if call_args_need_parens
-
-          printed_arg = false
-          node.args.each_with_index do |arg, i|
-            @str << ", " if printed_arg
-            arg.accept self
-            printed_arg = true
-          end
-          if named_args = node.named_args
-            named_args.each do |named_arg|
+          in_parenthesis(call_args_need_parens) do
+            printed_arg = false
+            node.args.each_with_index do |arg, i|
               @str << ", " if printed_arg
-              named_arg.accept self
+              arg.accept self
               printed_arg = true
             end
+            if named_args = node.named_args
+              named_args.each do |named_arg|
+                @str << ", " if printed_arg
+                named_arg.accept self
+                printed_arg = true
+              end
+            end
+            if block_arg = node.block_arg
+              @str << ", " if printed_arg
+              @str << "&"
+              block_arg.accept self
+            end
           end
-          if block_arg = node.block_arg
-            @str << ", " if printed_arg
-            @str << "&"
-            block_arg.accept self
-          end
-          @str << ")" if call_args_need_parens
         end
       end
       if block = node.block
@@ -322,6 +316,16 @@ module Crystal
         block.accept self
       end
       false
+    end
+
+    def in_parenthesis(need_parens)
+      if need_parens
+        @str << "("
+        yield
+        @str << ")"
+      else
+        yield
+      end
     end
 
     def visit(node : NamedArgument)
