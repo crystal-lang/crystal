@@ -216,4 +216,31 @@ describe "Code gen: cast" do
       end
       )).to_b.should be_true
   end
+
+  it "casts to base class making it virtual" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          1.5
+        end
+      end
+
+      bar = Bar.new
+      x = (bar as Foo).foo
+      x.to_i
+      )).to_i.should eq(1)
+  end
+
+  it "casts to bigger union" do
+    run(%(
+      x = 1.5 as Int32 | Float64
+      x.to_i
+      )).to_i.should eq(1)
+  end
 end

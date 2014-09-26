@@ -156,4 +156,41 @@ describe "Type inference: cast" do
       foo as Foo
       )) { (types["Foo"] as GenericClassType).instantiate([int32] of ASTNode | Type) }
   end
+
+  it "casts to base class making it virtual (1)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new as Foo
+      )) { types["Foo"].virtual_type! }
+  end
+
+  it "casts to base class making it virtual (2)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          'a'
+        end
+      end
+
+      bar = Bar.new
+      (bar as Foo).foo
+      )) { union_of(int32, char) }
+  end
+
+  it "casts to bigger union" do
+    assert_type(%(
+      1 as Int32 | Char
+      )) { union_of(int32, char) }
+  end
 end

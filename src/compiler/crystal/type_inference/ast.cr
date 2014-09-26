@@ -185,6 +185,9 @@ module Crystal
   end
 
   class Cast
+    property? upcast
+    @upcast = false
+
     def self.apply(node : ASTNode, type : Type)
       cast = Cast.new(node, Var.new("cast", type))
       cast.set_type(type)
@@ -200,7 +203,18 @@ module Crystal
       if obj_type.pointer? || to_type.pointer?
         self.type = to_type
       else
-        self.type = obj_type.filter_by(to_type)
+        filtered_type = obj_type.filter_by(to_type)
+
+        # If the filtered type didn't change it means that an
+        # upcast is being made, for example:
+        #
+        #   1 as Int32 | Float64
+        #   Bar.new as Foo # where Bar < Foo
+        if obj_type == filtered_type && obj_type != to_type && !to_type.is_a?(GenericClassType)
+          filtered_type = to_type.virtual_type
+          @upcast = true
+        end
+        self.type = filtered_type
       end
     end
   end

@@ -789,19 +789,22 @@ module Crystal
       elsif obj_type.pointer?
         @last = cast_to last_value, to_type
       else
-        resulting_type = obj_type.filter_by(to_type).not_nil!
+        resulting_type = node.type
+        if node.upcast?
+          @last = upcast last_value, resulting_type, obj_type
+        elsif obj_type != resulting_type
+          type_id = type_id last_value, obj_type
+          cmp = match_type_id obj_type, resulting_type, type_id
 
-        type_id = type_id last_value, obj_type
-        cmp = match_type_id obj_type, resulting_type, type_id
+          matches_block, doesnt_match_block = new_blocks "matches", "doesnt_match"
+          cond cmp, matches_block, doesnt_match_block
 
-        matches_block, doesnt_match_block = new_blocks "matches", "doesnt_match"
-        cond cmp, matches_block, doesnt_match_block
+          position_at_end doesnt_match_block
+          accept type_cast_exception_call(to_type)
 
-        position_at_end doesnt_match_block
-        accept type_cast_exception_call(to_type)
-
-        position_at_end matches_block
-        @last = downcast last_value, resulting_type, obj_type, true
+          position_at_end matches_block
+          @last = downcast last_value, resulting_type, obj_type, true
+        end
       end
 
       false
