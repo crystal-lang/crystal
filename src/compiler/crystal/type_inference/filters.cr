@@ -160,8 +160,11 @@ module Crystal
       resulting_types = other_types - types
       case resulting_types.length
       when 0
-        # TODO: should be nil?
-        other
+        if @filter.is_a?(NotNilFilter)
+          other
+        else
+          nil
+        end
       when 1
         resulting_types.first
       else

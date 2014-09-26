@@ -166,4 +166,27 @@ describe "Type inference: is_a?" do
       end
       ") { int32 }
   end
+
+  it "restricts type in else but lazily" do
+    assert_type("
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(1)
+      x = foo.x
+      if x.is_a?(Int32)
+        z = x + 1
+      else
+        z = x.foo_bar
+      end
+
+      z
+      ") { int32 }
+  end
 end

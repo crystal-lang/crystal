@@ -419,4 +419,27 @@ describe "Codegen: is_a?" do
       1.is_a?(Class)
       ").to_b.should be_false
   end
+
+  it "restricts type in else but lazily" do
+    run("
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(1)
+      x = foo.x
+      if x.is_a?(Int32)
+        z = x + 1
+      else
+        z = x.foo_bar
+      end
+
+      z
+      ").to_i.should eq(2)
+  end
 end
