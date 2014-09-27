@@ -1,3 +1,4 @@
+require "ast"
 require "visitor"
 
 module Crystal

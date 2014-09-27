@@ -1,4 +1,4 @@
-require "ast"
+require "../syntax/ast"
 require "set"
 require "colorize"
 

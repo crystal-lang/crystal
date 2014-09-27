@@ -1,4 +1,4 @@
-require "../ast"
+require "../syntax/ast"
 require "../types"
 require "../primitives"
 require "../similar_name"

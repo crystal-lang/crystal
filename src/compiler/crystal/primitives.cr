@@ -1,4 +1,4 @@
-require "ast"
+require "syntax/ast"
 require "llvm"
 require "types"
 require "program"

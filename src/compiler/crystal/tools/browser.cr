@@ -1,4 +1,5 @@
-require "to_s"
+require "../syntax/ast"
+require "../syntax/to_s"
 
 class Crystal::Browser
   def initialize(@node)

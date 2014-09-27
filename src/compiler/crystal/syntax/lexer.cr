@@ -1,20 +1,5 @@
 require "token"
-require "exception"
-require "char_reader"
-
-struct Char
-  def ident_start?
-    alpha? || self == '_'
-  end
-
-  def ident_part?
-    ident_start? || digit? || ord > 0x9F
-  end
-
-  def ident_part_or_end?
-    ident_part? || self == '?' || self == '!'
-  end
-end
+require "../exception"
 
 module Crystal
   class Lexer
@@ -326,9 +311,9 @@ module Crystal
         char = next_char
         if char == ':'
           next_char :"::"
-        elsif char.ident_start?
+        elsif ident_start?(char)
           start = current_pos
-          while next_char.ident_part?
+          while ident_part?(next_char)
             # Nothing to do
           end
           if current_char == '!' || current_char == '?'
@@ -467,8 +452,8 @@ module Crystal
             class_var = true
             next_char
           end
-          if current_char.ident_start?
-            while next_char.ident_part?
+          if ident_start?(current_char)
+            while ident_part?(next_char)
               # Nothing to do
             end
             @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
@@ -495,14 +480,16 @@ module Crystal
           end
           @token.type = :GLOBAL_MATCH_DATA_INDEX
           @token.value = number
-        when .ident_start?
-          while next_char.ident_part?
-            # Nothing to do
-          end
+        else
+          if ident_start?(current_char)
+            while ident_part?(next_char)
+              # Nothing to do
+            end
           @token.type = :GLOBAL
           @token.value = string_range(start)
-        else
-          unknown_token
+          else
+            unknown_token
+          end
         end
       when 'a'
         case next_char
@@ -611,7 +598,7 @@ module Crystal
             return check_ident_or_keyword(:if, start)
           end
         when 'n'
-          if peek_next_char.ident_part_or_end?
+          if ident_part_or_end?(peek_next_char)
             case next_char
             when 'c'
               if next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
@@ -819,7 +806,7 @@ module Crystal
           case next_char
           when 'D'
             if next_char == 'I' && next_char == 'R' next_char == '_' && next_char == '_'
-              if peek_next_char.ident_part_or_end?
+              if ident_part_or_end?(peek_next_char)
                 scan_ident(start)
               else
                 next_char
@@ -831,7 +818,7 @@ module Crystal
             end
           when 'F'
             if next_char == 'I' && next_char == 'L' && next_char == 'E' && next_char == '_' && next_char == '_'
-              if peek_next_char.ident_part_or_end?
+              if ident_part_or_end?(peek_next_char)
                 scan_ident(start)
               else
                 next_char
@@ -842,7 +829,7 @@ module Crystal
             end
           when 'L'
             if next_char == 'I' && next_char == 'N' && next_char == 'E' && next_char == '_' && next_char == '_'
-              if peek_next_char.ident_part_or_end?
+              if ident_part_or_end?(peek_next_char)
                 scan_ident(start)
               else
                 next_char
@@ -854,7 +841,7 @@ module Crystal
             end
           end
         else
-          unless current_char.ident_part?
+          unless ident_part?(current_char)
             @token.type = :UNDERSCORE
             return @token
           end
@@ -864,7 +851,7 @@ module Crystal
       else
         if 'A' <= current_char <= 'Z'
           start = current_pos
-          while next_char.ident_part?
+          while ident_part?(next_char)
             # Nothing to do
           end
           @token.type = :CONST
@@ -900,7 +887,7 @@ module Crystal
     end
 
     def check_ident_or_keyword(symbol, start)
-      if peek_next_char.ident_part_or_end?
+      if ident_part_or_end?(peek_next_char)
         scan_ident(start)
       else
         next_char
@@ -911,7 +898,7 @@ module Crystal
     end
 
     def scan_ident(start)
-      while current_char.ident_part?
+      while ident_part?(current_char)
         next_char
       end
       case current_char
@@ -1527,7 +1514,7 @@ module Crystal
         beginning_of_line = false
         case next_char
         when 'd'
-          if whitespace && !peek_next_char.ident_part_or_end?
+          if whitespace && !ident_part_or_end?(peek_next_char)
             if nest == 0
               next_char
               @token.type = :MACRO_END
@@ -1540,7 +1527,7 @@ module Crystal
             end
           end
         when 'u'
-          if !delimiter_state && whitespace && next_char == 'm' && !next_char.ident_part_or_end?
+          if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
             char = current_char
             nest += 1
             whitespace = true
@@ -1572,12 +1559,12 @@ module Crystal
               (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's') ||
               (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l')) ||
             (beginning_of_line && char == 'w' && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e')) &&
-            !next_char.ident_part_or_end?
+            !ident_part_or_end?(next_char)
           char = current_char
           nest += 1
           whitespace = true
           beginning_of_line = false
-        elsif !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !next_char.ident_part_or_end?
+        elsif !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(next_char)
           yields = true
           char = current_char
           whitespace = true
@@ -1945,6 +1932,18 @@ module Crystal
 
     def string_range(start_pos, end_pos)
       @reader.string.byte_slice(start_pos, end_pos - start_pos)
+    end
+
+    def ident_start?(char)
+      char.alpha? || char == '_'
+    end
+
+    def ident_part?(char)
+      ident_start?(char) || char.digit? || char.ord > 0x9F
+    end
+
+    def ident_part_or_end?(char)
+      ident_part?(char) || char == '?' || char == '!'
     end
 
     def skip_space

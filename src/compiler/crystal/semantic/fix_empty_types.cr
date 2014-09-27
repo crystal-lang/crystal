@@ -1,5 +1,5 @@
-require "../ast"
-require "../type_inference"
+require "../semantic/ast"
+require "../semantic/type_inference"
 
 module Crystal
   class Program

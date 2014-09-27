@@ -1,9 +1,9 @@
-require "parser"
-require "type_inference"
-require "visitor"
+require "../syntax/parser"
+require "../syntax/visitor"
+require "../semantic/type_inference"
 require "llvm"
-require "program"
-require "codegen/*"
+require "../program"
+require "./*"
 
 LLVM.init_x86
 

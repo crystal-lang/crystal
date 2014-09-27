@@ -12,11 +12,7 @@ module Crystal
     end
 
     def to_s(io)
-      filename.to_s(io)
-      io << ":"
-      line_number.to_s(io)
-      io << ":"
-      column_number.to_s(io)
+      io << filename << ":" << line_number << ":" << column_number
     end
   end
 end

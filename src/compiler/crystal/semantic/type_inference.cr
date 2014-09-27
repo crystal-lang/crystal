@@ -1,7 +1,7 @@
-require "program"
-require "visitor"
-require "ast"
-require "type_inference/*"
+require "../program"
+require "../syntax/ast"
+require "../syntax/visitor"
+require "./*"
 
 module Crystal
   class Program

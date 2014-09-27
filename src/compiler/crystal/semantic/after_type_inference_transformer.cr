@@ -1,6 +1,6 @@
-require "../ast"
+require "../syntax/ast"
+require "../syntax/transformer"
 require "../types"
-require "../transformer"
 
 module Crystal
   class Program

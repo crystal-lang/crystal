@@ -2,14 +2,14 @@ require "location"
 
 module Crystal
   class Token
-    property :type
-    property :value
-    property :number_kind
-    property :line_number
-    property :column_number
-    property :filename
-    property :delimiter_state
-    property :macro_state
+    property type
+    property value
+    property number_kind
+    property line_number
+    property column_number
+    property filename
+    property delimiter_state
+    property macro_state
 
     record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields) do
       def self.default

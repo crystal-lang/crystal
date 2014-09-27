@@ -1,5 +1,5 @@
-require "program"
-require "transformer"
+require "../program"
+require "../syntax/transformer"
 require "set"
 
 module Crystal

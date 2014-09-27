@@ -1,3 +1,5 @@
+require "ast"
+
 module Crystal
   class Visitor
     def visit_any(node)
