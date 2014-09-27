@@ -2,22 +2,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def assign(target_pointer, target_type, value_type, value)
     if target_type == value_type
       store to_rhs(value, target_type), target_pointer
-    # Hack until we fix it in the type inference
-    elsif value_type.is_a?(VirtualType) && value_type.base_type == target_type
-      # TODO: this should never happen, but it does. Sometimes we have:
-      #
-      #     def foo
-      #       yield e
-      #     end
-      #
-      #        foo do |x|
-      #     end
-      #
-      # with e's type a VirtualType and x's type its base type.
-      #
-      # I have no idea how to reproduce this, so this hack will remain here
-      # until we figure it out.
-      store cast_to(value, target_type), target_pointer
     else
       assign_distinct target_pointer, target_type, value_type, value
     end
