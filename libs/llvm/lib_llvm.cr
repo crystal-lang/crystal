@@ -274,6 +274,11 @@ lib LibLLVM
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
+  fun int1_type = LLVMInt1Type : TypeRef
+  fun int8_type = LLVMInt8Type : TypeRef
+  fun int16_type = LLVMInt16Type : TypeRef
+  fun int32_type = LLVMInt32Type : TypeRef
+  fun int64_type = LLVMInt64Type : TypeRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32

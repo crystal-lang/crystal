@@ -75,21 +75,21 @@ module LLVM
     LibLLVM.dispose_message(chars)
   end
 
-  Void = Type.void
-  Int1 = Type.int(1)
-  Int8 = Type.int(8)
-  Int16 = Type.int(16)
-  Int32 = Type.int(32)
-  Int64 = Type.int(64)
-  Float = Type.float
-  Double = Type.double
+  Void = Type.new LibLLVM.void_type
+  Int1 = Type.new LibLLVM.int1_type
+  Int8 = Type.new LibLLVM.int8_type
+  Int16 = Type.new LibLLVM.int16_type
+  Int32 = Type.new LibLLVM.int32_type
+  Int64 = Type.new LibLLVM.int64_type
+  Float = Type.new LibLLVM.float_type
+  Double = Type.new LibLLVM.double_type
 
   VoidPointer = Int8.pointer
 
   # TODO: replace with constants after 0.5.0
   ifdef x86_64
-    SizeT = Type.int(64) # Int64
+    SizeT = Type.new LibLLVM.int64_type # Int64
   else
-    SizeT = Type.int(32) # Int32
+    SizeT = Type.new LibLLVM.int32_type # Int32
   end
 end
