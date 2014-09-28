@@ -1,4 +1,4 @@
-require "virtual_file"
+require "macros/virtual_file"
 require "colorize"
 
 module Crystal
