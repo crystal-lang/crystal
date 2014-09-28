@@ -1,3 +1,4 @@
+@[Link("pthread")]
 @[Link("gc")]
 lib LibGC
   fun init = GC_init
