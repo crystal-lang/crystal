@@ -358,13 +358,7 @@ module Crystal
     end
 
     def lookup_class_var(node, bind_to_nil_if_non_existent = true)
-      scope = ((@typed_def && !@fun_literal_context) ? @scope : current_type).not_nil!
-      if scope.is_a?(MetaclassType)
-        owner = scope.class_var_owner
-      else
-        owner = scope
-      end
-      class_var_owner = owner as ClassVarContainer
+      class_var_owner = (@scope || current_type).class_var_owner as ClassVarContainer
 
       bind_to_nil = bind_to_nil_if_non_existent && !class_var_owner.has_class_var?(node.name)
 

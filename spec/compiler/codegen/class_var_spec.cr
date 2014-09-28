@@ -86,4 +86,18 @@ describe "Codegen: class var" do
       Foo.foo
       ").to_i.should eq(1)
   end
+
+  it "accesses class var from fun literal" do
+    run("
+      class Foo
+        @@a = 1
+
+        def self.foo
+          ->{ @@a }.call
+        end
+      end
+
+      Foo.foo
+      ").to_i.should eq(1)
+  end
 end

@@ -146,6 +146,10 @@ module Crystal
       self
     end
 
+    def class_var_owner
+      self
+    end
+
     def is_implicitly_converted_in_c_to?(expected_type)
       if self.nil_type? && (expected_type.pointer? || expected_type.fun?)
         # OK: nil will be sent as pointer
@@ -985,10 +989,6 @@ module Crystal
 
     def lookup_class_var(name)
       class_vars[name] ||= Var.new name
-    end
-
-    def class_var_owner
-      self
     end
   end
 
