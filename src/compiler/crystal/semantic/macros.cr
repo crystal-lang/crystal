@@ -729,6 +729,8 @@ module Crystal
         end
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
+      when "chars"
+        interpret_argless_method(method, args) { create_array_literal_from_values(@value.chars) { |value| CharLiteral.new(value) } }
       when "chomp"
         interpret_argless_method(method, args) { StringLiteral.new(@value.chomp) }
       when "downcase"
@@ -740,11 +742,11 @@ module Crystal
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.length) }
       when "lines"
-        interpret_argless_method(method, args) { create_array_literal_from_values(@value.lines) }
+        interpret_argless_method(method, args) { create_array_literal_from_values(@value.lines) { |value| StringLiteral.new(value) } }
       when "split"
         case args.length
         when 0
-          create_array_literal_from_values(@value.split)
+          create_array_literal_from_values(@value.split) { |value| StringLiteral.new(value) }
         when 1
           first_arg = args.first
           case first_arg
@@ -756,7 +758,7 @@ module Crystal
             splitter = first_arg.to_s
           end
 
-          create_array_literal_from_values(@value.split(splitter))
+          create_array_literal_from_values(@value.split(splitter)) { |value| StringLiteral.new(value) }
         else
           raise "wrong number of arguments for split (#{args.length} for 0, 1)"
         end
@@ -770,7 +772,7 @@ module Crystal
     end
 
     def create_array_literal_from_values(values)
-      ArrayLiteral.new(Array(ASTNode).new(values.length) { |i| StringLiteral.new(values[i]) })
+      ArrayLiteral.new(Array(ASTNode).new(values.length) { |i| yield values[i] })
     end
 
     def to_macro_id
