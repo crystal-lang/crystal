@@ -219,6 +219,10 @@ module Crystal
     end
   end
 
+  class FunDef
+    property! external
+  end
+
   class FunLiteral
     property :force_void
     @force_void = false
@@ -371,14 +375,6 @@ module Crystal
   class Path
     property target_const
     property syntax_replacement
-  end
-
-  class Arg
-    def self.new_with_type(name, type)
-      arg = new(name)
-      arg.set_type(type)
-      arg
-    end
   end
 
   class Call

@@ -520,9 +520,9 @@ module Crystal
           fun_args = yield_vars.map_with_index do |var, i|
             arg = block.args[i]?
             if arg
-              Arg.new_with_type(arg.name, var.type)
+              Arg.new(arg.name, type: var.type)
             else
-              Arg.new_with_type(mod.new_temp_var_name, var.type)
+              Arg.new(mod.new_temp_var_name, type: var.type)
             end
           end
         else

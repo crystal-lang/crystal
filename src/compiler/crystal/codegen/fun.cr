@@ -116,14 +116,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     args = Array(Arg).new(target_def.args.length + 1)
 
     if !is_fun_literal && self_type.passed_as_self?
-      args.push Arg.new_with_type("self", self_type)
+      args.push Arg.new("self", type: self_type)
     end
 
     args.concat target_def.args
 
     if target_def.uses_block_arg
       block_arg = target_def.block_arg.not_nil!
-      args.push Arg.new_with_type(block_arg.name, block_arg.type)
+      args.push Arg.new(block_arg.name, type: block_arg.type)
     end
 
     # This is the case where we declared a fun that was not used and now we

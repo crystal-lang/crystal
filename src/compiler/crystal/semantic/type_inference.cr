@@ -973,7 +973,7 @@ module Crystal
       # We create a ->(...) { } from the block
       fun_args = fun_type.arg_types.map_with_index do |arg_type, index|
         block_arg = block.args[index]?
-        Arg.new_with_type(block_arg.try(&.name) || @mod.new_temp_var_name, arg_type)
+        Arg.new(block_arg.try(&.name) || @mod.new_temp_var_name, type: arg_type)
       end
 
       fun_def = Def.new("->", fun_args, block.body)
@@ -1578,7 +1578,7 @@ module Crystal
 
         arg_type = check_primitive_like(restriction.not_nil!)
 
-        fun_arg = Arg.new_with_type(arg.name, arg_type)
+        fun_arg = Arg.new(arg.name, type: arg_type)
         fun_arg.location = arg.location
         fun_arg
       end

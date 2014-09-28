@@ -2001,7 +2001,7 @@ module Crystal
     end
 
     def add_var(name, type, real_name, attributes)
-      setter = External.new("#{name}=", [Arg.new_with_type("value", type)], Primitive.new(:external_var_set, type), real_name)
+      setter = External.new("#{name}=", [Arg.new("value", type: type)], Primitive.new(:external_var_set, type), real_name)
       setter.set_type(type)
       setter.attributes = attributes
 
@@ -2144,7 +2144,7 @@ module Crystal
     def vars=(vars)
       vars.each do |var|
         @vars[var.name] = var
-        add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))
+        add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:struct_set))
         add_def Def.new(var.name, body: Primitive.new(:struct_get))
       end
     end
@@ -2170,7 +2170,7 @@ module Crystal
     def vars=(vars)
       vars.each do |var|
         @vars[var.name] = var
-        add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:union_set))
+        add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:union_set))
         add_def Def.new(var.name, body: Primitive.new(:union_get))
       end
     end
@@ -2930,7 +2930,7 @@ module Crystal
       var.bind_to var
       super(program, program.function, {"T" => var} of String => ASTNode)
 
-      args = arg_types.map_with_index { |type, i| Arg.new_with_type("arg#{i}", type) }
+      args = arg_types.map_with_index { |type, i| Arg.new("arg#{i}", type: type) }
       add_def Def.new("call", args, Primitive.new(:fun_call, return_type))
       add_def Def.new("arity", body: NumberLiteral.new(fun_types.length - 1))
       add_def Def.new("pointer", body: Primitive.new(:fun_pointer, @program.pointer_of(@program.void)))

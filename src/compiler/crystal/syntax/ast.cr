@@ -731,7 +731,7 @@ module Crystal
     property :default_value
     property :restriction
 
-    def initialize(@name, @default_value = nil, @restriction = nil)
+    def initialize(@name, @default_value = nil, @restriction = nil, @type = nil)
     end
 
     def accept_children(visitor)

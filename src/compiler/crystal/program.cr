@@ -19,7 +19,6 @@ module Crystal
       super(self, self, "main")
 
       @unions = {} of Array(Int32) => Type
-      @funs = {} of Array(Int32) => Type
 
       @types["Object"] = @object = NonGenericClassType.new self, self, "Object", nil
       @object.abstract = true
