@@ -1,5 +1,6 @@
 require "colorize"
 require "option_parser"
+require "signal"
 
 module Spec
   record Result, kind, description, exception
@@ -22,8 +23,17 @@ module Spec
     str.colorize(COLORS[status])
   end
 
-
   class AssertionFailed < Exception
+  end
+
+  @@aborted = false
+
+  def self.abort!
+    @@aborted = true
+  end
+
+  def self.aborted?
+    @@aborted
   end
 end
 
@@ -36,6 +46,8 @@ def describe(description)
 end
 
 def it(description)
+  return if Spec.aborted?
+
   Spec.formatter.before_example description
 
   begin
@@ -49,6 +61,8 @@ def it(description)
 end
 
 def pending(description, &block)
+  return if Spec.aborted?
+
   Spec.formatter.before_example description
 
   Spec::RootContext.report(:pending, description)
@@ -67,6 +81,8 @@ OptionParser.parse! do |opts|
     Spec.formatter = Spec::VerboseFormatter.new
   end
 end
+
+Signal.trap(Signal::INT) { Spec.abort! }
 
 redefine_main do |main|
   time = Time.now
