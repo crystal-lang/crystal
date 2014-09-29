@@ -1,6 +1,4 @@
-ifdef linux
-  @[Link("m")]
-end
+@[Link("m")] ifdef linux
 lib LibM
   fun acos(x : Float64) : Float64
   fun acosh(x : Float64) : Float64
@@ -9,12 +7,30 @@ lib LibM
   fun atan(x : Float64) : Float64
   fun atan2(y : Float64, x : Float64) : Float64
   fun cbrt(x : Float64) : Float64
+  fun ceil_f32 = "llvm.ceil.f32"(value : Float32) : Float32
+  fun ceil_f64 = "llvm.ceil.f64"(value : Float64) : Float64
+  fun cos_f32 = "llvm.cos.f32"(value : Float32) : Float32
+  fun cos_f64 = "llvm.cos.f64"(value : Float64) : Float64
   fun erf(x : Float64) : Float64
   fun erfc(x : Float64) : Float64
+  fun exp_f32 = "llvm.exp.f32"(value : Float32) : Float32
+  fun exp_f64 = "llvm.exp.f64"(value : Float64) : Float64
   fun hypot(x : Float64, y : Float64) : Float64
   fun ldexp(flt : Float64, int : Int32) : Float64
   fun lgamma(x : Float64) : Float64
+  fun log_f32 = "llvm.log.f32"(value : Float32) : Float32
+  fun log_f64 = "llvm.log.f64"(value : Float64) : Float64
+  fun log2_f32 = "llvm.log2.f32"(value : Float32) : Float32
+  fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
+  fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
+  fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
+  fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
+  fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
+  fun sin_f32 = "llvm.sin.f32"(value : Float32) : Float32
+  fun sin_f64 = "llvm.sin.f64"(value : Float64) : Float64
   fun sinh(x : Float64) : Float64
+  fun sqrt_f32 = "llvm.sqrt.f32"(value : Float32) : Float32
+  fun sqrt_f64 = "llvm.sqrt.f64"(value : Float64) : Float64
   fun tan(x : Float64) : Float64
   fun tanh(x : Float64) : Float64
   fun tgamma(x : Float64) : Float64
@@ -23,7 +39,7 @@ end
 module Math
   extend self
 
-  E  = Intrinsics.exp_f64(1.0)
+  E  = LibM.exp_f64(1.0)
   PI = 3.14159265358979323846
 
   def acos(value)
@@ -55,11 +71,11 @@ module Math
   end
 
   def cos(value : Float32)
-    Intrinsics.cos_f32(value)
+    LibM.cos_f32(value)
   end
 
   def cos(value : Float64)
-    Intrinsics.cos_f64(value)
+    LibM.cos_f64(value)
   end
 
   def cos(value)
@@ -75,11 +91,11 @@ module Math
   end
 
   def exp(value : Float32)
-    Intrinsics.exp_f32(value)
+    LibM.exp_f32(value)
   end
 
   def exp(value : Float64)
-    Intrinsics.exp_f64(value)
+    LibM.exp_f64(value)
   end
 
   def exp(value)
@@ -99,11 +115,11 @@ module Math
   end
 
   def log(value : Float32)
-    Intrinsics.log_f32(value)
+    LibM.log_f32(value)
   end
 
   def log(value : Float64)
-    Intrinsics.log_f64(value)
+    LibM.log_f64(value)
   end
 
   def log(value)
@@ -115,11 +131,11 @@ module Math
   end
 
   def log2(value : Float32)
-    Intrinsics.log2_f32(value)
+    LibM.log2_f32(value)
   end
 
   def log2(value : Float64)
-    Intrinsics.log2_f64(value)
+    LibM.log2_f64(value)
   end
 
   def log2(value)
@@ -127,11 +143,11 @@ module Math
   end
 
   def log10(value : Float32)
-    Intrinsics.log10_f32(value)
+    LibM.log10_f32(value)
   end
 
   def log10(value : Float64)
-    Intrinsics.log10_f64(value)
+    LibM.log10_f64(value)
   end
 
   def log10(value)
@@ -147,11 +163,11 @@ module Math
   end
 
   def sin(value : Float32)
-    Intrinsics.sin_f32(value)
+    LibM.sin_f32(value)
   end
 
   def sin(value : Float64)
-    Intrinsics.sin_f64(value)
+    LibM.sin_f64(value)
   end
 
   def sin(value)
@@ -171,11 +187,11 @@ module Math
   end
 
   def sqrt(value : Float32)
-    Intrinsics.sqrt_f32(value)
+    LibM.sqrt_f32(value)
   end
 
   def sqrt(value : Float64)
-    Intrinsics.sqrt_f64(value)
+    LibM.sqrt_f64(value)
   end
 
   def sqrt(value : Int)

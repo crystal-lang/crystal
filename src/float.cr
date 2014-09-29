@@ -27,11 +27,11 @@ struct Float32
   end
 
   def ceil
-    Intrinsics.ceil_f32(self).to_i
+    LibM.ceil_f32(self).to_i
   end
 
   def **(other : Float32)
-    Intrinsics.pow_f32(self, other)
+    LibM.pow_f32(self, other)
   end
 
   def **(other)
@@ -62,11 +62,11 @@ struct Float64
   end
 
   def ceil
-    Intrinsics.ceil_f64(self).to_i
+    LibM.ceil_f64(self).to_i
   end
 
   def **(other : Float64)
-    Intrinsics.pow_f64(self, other)
+    LibM.pow_f64(self, other)
   end
 
   def **(other)
