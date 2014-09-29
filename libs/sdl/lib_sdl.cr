@@ -1,8 +1,6 @@
 @[Link("SDL")]
 @[Link("SDLMain")]
-ifdef darwin
-  @[Link(framework: "Cocoa")]
-end
+@[Link(framework: "Cocoa")] ifdef darwin
 lib LibSDL
   INIT_TIMER       = 0x00000001_u32
   INIT_AUDIO       = 0x00000010_u32
