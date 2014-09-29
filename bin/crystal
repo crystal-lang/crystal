@@ -1,74 +1,10 @@
 #!/usr/bin/env bash
 SCRIPT_ROOT="$(dirname $(readlink $0 || echo $0))/.."
-DEPS_DIR="$SCRIPT_ROOT/deps"
-
 CRYSTAL_DIR="$SCRIPT_ROOT/.build"
 if [ -x $CRYSTAL_DIR/crystal ]
 then
   echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
+  CRYSTAL_BIN="$CRYSTAL_DIR/crystal" crystal "$@"
 else
-  CRYSTAL_DIR=$DEPS_DIR
+  crystal "$@"
 fi
-
-OS_NAME=`uname -s`
-HW_NAME=`uname -m`
-
-case $OS_NAME in
-  Darwin)
-    CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.tar.gz"
-    ;;
-
-  Linux)
-    case $HW_NAME in
-      x86_64)
-        CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux64-latest.tar.gz"
-        ;;
-
-      x86|i386|i686)
-        CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux32-latest.tar.gz"
-        ;;
-
-      *)
-        echo "Unsupported Linux architecture ($HW_NAME)"
-        exit 1
-    esac
-    ;;
-
-  *)
-    echo "Unsuported system ($OS_NAME)"
-    exit 1
-esac
-
-function downloadCompiler {
-  echo "Downloading Crystal compiler"
-  curl "$CRYSTAL_URL" | tar -xz --strip-components=2 crystal/bin/crystal-exe
-  mv crystal-exe "$DEPS_DIR/crystal"
-  chmod +x "$DEPS_DIR/crystal"
-}
-
-function setup {
-  rm -rf "$DEPS_DIR"
-  mkdir -p "$DEPS_DIR"
-
-  downloadCompiler
-}
-
-case "$1" in
-  "--setup")
-    setup
-    exit 0
-    ;;
-  "--update")
-    downloadCompiler
-    exit 0
-    ;;
-esac
-
-# Make sure deps dir exists
-if [ ! -d  "$DEPS_DIR" ]; then
-  echo "Compiler environment is not set. Please run again with '--setup'"
-  exit 1
-fi
-
-export CRYSTAL_PATH="$SCRIPT_ROOT/src:$SCRIPT_ROOT/libs:libs"
-"$CRYSTAL_DIR/crystal" "$@"
