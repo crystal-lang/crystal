@@ -1,0 +1,30 @@
+lib C
+  fun mkstemp(result : UInt8*) : Int32
+end
+
+class Tempfile < FileDescriptorIO
+  def initialize(name)
+    @path = "#{ENV["TMPDIR"]? || "/tmp/"}#{name}.XXXXXX"
+    super(C.mkstemp(@path))
+  end
+
+  getter path
+
+  def self.open(filename)
+    tempfile = Tempfile.new(filename)
+    begin
+      yield tempfile
+    ensure
+      tempfile.close
+    end
+    tempfile
+  end
+
+  def delete
+    File.delete(@path)
+  end
+
+  def unlink
+    delete
+  end
+end
