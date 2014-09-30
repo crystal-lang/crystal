@@ -133,6 +133,49 @@ def build(code)
   result.program.build result.node, single_module: true
 end
 
+class Crystal::SpecRunOutput
+  def initialize(@output)
+  end
+
+  def to_string
+    @output
+  end
+
+  delegate to_i, @output
+  delegate to_f, @output
+  delegate to_f32, @output
+  delegate to_f64, @output
+
+  def to_b
+    @output == "true"
+  end
+end
+
 def run(code)
-  Program.new.run(code)
+  # Code that requires the prelude doesn't run in LLVM's MCJIT
+  # because of missing linked functions (which are available
+  # in the current executable!), so instead we compile
+  # the program and run it, printing the last
+  # expression and using that to compare the result.
+  if code.includes?(%(require "prelude"))
+    ast = Parser.parse(code)
+    assign = Assign.new(Var.new("__tempvar"), ast)
+    call = Call.new(nil, "print!", [Var.new("__tempvar")] of ASTNode)
+    code = Expressions.new([assign, call]).to_s
+
+    tempfile = Tempfile.new("crystal-spec-output")
+    output_filename = tempfile.path
+
+    compiler = Compiler.new
+    compiler.output_filename = output_filename
+    compiler.compile Compiler::Source.new("spec", code)
+
+    output = Process.run(output_filename, output: true).output.not_nil!
+    tempfile.close
+    tempfile.delete
+
+    SpecRunOutput.new(output)
+  else
+    Program.new.run(code)
+  end
 end
