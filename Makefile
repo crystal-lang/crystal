@@ -8,7 +8,7 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 
 all: crystal
 spec: all_spec
-	$(O)/all_spec
+	CRYSTAL_BIN="$(O)/all_spec" crystal
 
 crystal: $(O)/crystal
 all_spec: $(O)/all_spec
