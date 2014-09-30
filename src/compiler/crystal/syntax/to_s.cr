@@ -53,7 +53,7 @@ module Crystal
 
     def visit(node : StringInterpolation)
       @str << %(")
-      visit_interpolation node, &.replace('"', "\\\"")
+      visit_interpolation node, &.gsub('"', "\\\"")
       @str << %(")
       false
     end
@@ -61,7 +61,7 @@ module Crystal
     def visit_interpolation(node)
       node.expressions.each do |exp|
         if exp.is_a?(StringLiteral)
-          @str << yield exp.value.replace('"', "\\\"")
+          @str << yield exp.value.gsub('"', "\\\"")
         else
           @str << "\#{"
           exp.accept(self)
@@ -352,7 +352,7 @@ module Crystal
       when StringLiteral
         @str << exp.value.inspect[1 .. -2]
       when StringInterpolation
-        visit_interpolation exp, &.replace('`', "\\`")
+        visit_interpolation exp, &.gsub('`', "\\`")
       end
       @str << '`'
       false
@@ -791,7 +791,7 @@ module Crystal
       when StringLiteral
         @str << exp.value.inspect[1 .. -2]
       when StringInterpolation
-        visit_interpolation exp, &.replace('/', "\\/")
+        visit_interpolation exp, &.gsub('/', "\\/")
       end
       @str << "/"
       @str << "i" if (node.modifiers & Regex::IGNORE_CASE) != 0

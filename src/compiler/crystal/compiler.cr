@@ -495,7 +495,7 @@ module Crystal
 
       def initialize(@compiler, type_name, @llvm_mod)
         type_name = "main" if type_name == ""
-        @name = type_name.replace do |char|
+        @name = type_name.gsub do |char|
           if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
             nil
           else

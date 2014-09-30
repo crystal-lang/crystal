@@ -174,7 +174,7 @@ module Crystal
           end
         end
 
-        str << name.replace('@', '.')
+        str << name.gsub('@', '.')
 
         next_def = self.next
         while next_def
@@ -212,7 +212,7 @@ module Crystal
       # Windows only allows alphanumeric, dot, dollar and underscore
       # for mangled names.
       ifdef windows
-        name = name.replace do |char|
+        name = name.gsub do |char|
           case char
           when '<', '>', '(', ')', '*', ':', ',', '#', ' '
             "."

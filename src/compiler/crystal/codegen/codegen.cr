@@ -717,7 +717,7 @@ module Crystal
     end
 
     def class_var_global_name(node)
-      "#{node.owner}#{node.var.name.replace('@', ':')}"
+      "#{node.owner}#{node.var.name.gsub('@', ':')}"
     end
 
     def visit(node : DeclareVar)
@@ -1921,7 +1921,7 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
-      name = name.replace '@', '.'
+      name = name.gsub '@', '.'
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
         global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name)

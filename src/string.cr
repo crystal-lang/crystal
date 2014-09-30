@@ -323,7 +323,7 @@ class String
     end
   end
 
-  def replace(&block : Char -> _)
+  def gsub(&block : Char -> _)
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         replacement = yield my_char
@@ -336,23 +336,23 @@ class String
     end
   end
 
-  def replace(char : Char, replacement : String)
+  def gsub(char : Char, replacement : String)
     if includes?(char)
-      replace { |my_char| char == my_char ? replacement : nil }
+      gsub { |my_char| char == my_char ? replacement : nil }
     else
       self
     end
   end
 
-  def replace(char : Char, replacement : Char)
+  def gsub(char : Char, replacement : Char)
     if includes?(char)
-      replace(char, replacement.to_s)
+      gsub(char, replacement.to_s)
     else
       self
     end
   end
 
-  def replace(pattern : Regex)
+  def gsub(pattern : Regex)
     byte_offset = 0
 
     String.build(bytesize) do |buffer|
@@ -371,8 +371,8 @@ class String
     end
   end
 
-  def replace(pattern : Regex, replacement : String)
-    replace(pattern) { replacement }
+  def gsub(pattern : Regex, replacement : String)
+    gsub(pattern) { replacement }
   end
 
   def delete(char : Char)

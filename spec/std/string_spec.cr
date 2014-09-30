@@ -353,14 +353,20 @@ describe "String" do
     reversed.should eq("はちいんこ")
   end
 
-  it "replaces char with string" do
-    replaced = "foobar".replace('o', "ex")
+  it "gsubs char with char" do
+    replaced = "foobar".gsub('o', 'e')
+    replaced.bytesize.should eq(6)
+    replaced.should eq("feebar")
+  end
+
+  it "gsubs char with string" do
+    replaced = "foobar".gsub('o', "ex")
     replaced.bytesize.should eq(8)
     replaced.should eq("fexexbar")
   end
 
-  it "replaces char with string depending on the char" do
-    replaced = "foobar".replace do |char|
+  it "gsubs char with string depending on the char" do
+    replaced = "foobar".gsub do |char|
       case char
       when 'f'
         "some"
@@ -376,26 +382,26 @@ describe "String" do
     replaced.should eq("somethingthingbexr")
   end
 
-  it "replaces with regex and block" do
-    actual = "foo booor booooz".replace(/o+/) do |str|
+  it "gsubs with regex and block" do
+    actual = "foo booor booooz".gsub(/o+/) do |str|
       "#{str}#{str.length}"
     end
     actual.should eq("foo2 booo3r boooo4z")
   end
 
-  it "replaces with regex and block with group" do
-    actual = "foo booor booooz".replace(/(o+).*?(o+)/) do |str, match|
+  it "gsubs with regex and block with group" do
+    actual = "foo booor booooz".gsub(/(o+).*?(o+)/) do |str, match|
       "#{match[1].length}#{match[2].length}"
     end
     actual.should eq("f23r b31z")
   end
 
-  it "replaces with regex and string" do
-    "foo boor booooz".replace(/o+/, "a").should eq("fa bar baz")
+  it "gsubs with regex and string" do
+    "foo boor booooz".gsub(/o+/, "a").should eq("fa bar baz")
   end
 
-  it "replaces with regex and string (utf-8)" do
-    "fここ bここr bここここz".replace(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
+  it "gsubs with regex and string (utf-8)" do
+    "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
   end
 
   it "dumps" do
