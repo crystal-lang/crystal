@@ -532,6 +532,7 @@ describe "Parser" do
   it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", [FunDef.new("foo", [Arg.new("a", restriction: "Int".path.pointer_of.pointer_of)])] of ASTNode)
   it_parses "lib C; fun foo : Int*; end", LibDef.new("C", [FunDef.new("foo", return_type: "Int".path.pointer_of)] of ASTNode)
   it_parses "lib C; fun foo : Int**; end", LibDef.new("C", [FunDef.new("foo", return_type: "Int".path.pointer_of.pointer_of)] of ASTNode)
+  it_parses "lib C; fun foo(a : ::B, ::C -> ::D); end", LibDef.new("C", [FunDef.new("foo", [Arg.new("a", restriction: Fun.new([Path.global("B"), Path.global("C")] of ASTNode, Path.global("D")))])] of ASTNode)
   it_parses "lib C; type A = B; end", LibDef.new("C", [TypeDef.new("A", "B".path)] of ASTNode)
   it_parses "lib C; type A = B*; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
   it_parses "lib C; type A = B**; end", LibDef.new("C", [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)

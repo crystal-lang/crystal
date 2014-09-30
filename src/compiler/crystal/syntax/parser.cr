@@ -3203,6 +3203,11 @@ module Crystal
           if @token.value == :typeof
             return true
           end
+        when :"::"
+          next_token_skip_space
+          if @token.type == :CONST
+            return true
+          end
         end
 
         false
