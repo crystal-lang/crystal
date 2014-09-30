@@ -81,10 +81,8 @@ module Crystal
   end
 
   class MacroExpander
-    record CompiledFile, name, handle
-
     def initialize(@mod)
-      @cache = {} of String => CompiledFile
+      @cache = {} of String => String
     end
 
     def expand(scope : Type, a_macro, call)
@@ -103,7 +101,7 @@ module Crystal
       compiled_file = @cache[filename] ||= compile(filename)
 
       command = String.build do |str|
-        str << compiled_file.name
+        str << compiled_file
         args.each do |arg|
           str << " "
           str << arg.inspect
@@ -118,6 +116,7 @@ module Crystal
       source = File.read(filename)
 
       tempfile = Tempfile.new "crystal-run"
+      tempfile.close
 
       compiler = Compiler.new
       compiler.output_filename = tempfile.path
@@ -128,7 +127,7 @@ module Crystal
 
       compiler.compile Compiler::Source.new(filename, source)
 
-      CompiledFile.new(tempfile.path, tempfile.fd)
+      tempfile.path
     end
 
     class MacroVisitor < Visitor

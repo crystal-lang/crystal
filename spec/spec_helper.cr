@@ -165,13 +165,13 @@ def run(code)
 
     tempfile = Tempfile.new("crystal-spec-output")
     output_filename = tempfile.path
+    tempfile.close
 
     compiler = Compiler.new
     compiler.output_filename = output_filename
     compiler.compile Compiler::Source.new("spec", code)
 
-    output = Process.run(output_filename, output: true).output.not_nil!
-    tempfile.close
+    output = `#{output_filename}`
     tempfile.delete
 
     SpecRunOutput.new(output)
