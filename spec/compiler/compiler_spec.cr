@@ -1,18 +1,17 @@
 #!/usr/bin/env bin/crystal --run
 require "../spec_helper"
+require "tempfile"
 
 describe "Compiler" do
-  pending "compiles a file" do
-    output_filename = "compiler_spec_output"
-
-    tmp_fd = C.mkstemp output_filename
-    C.close tmp_fd
+  it "compiles a file" do
+    tempfile = Tempfile.new "compiler_spec_output"
+    tempfile.close
 
     compiler = Compiler.new
-    compiler.process_options(["#{__DIR__}/data/compiler_sample", "-o", output_filename])
+    compiler.process_options(["#{__DIR__}/data/compiler_sample", "-o", tempfile.path])
 
-    File.exists?(output_filename).should be_true
+    File.exists?(tempfile.path).should be_true
 
-    `./#{output_filename}`.should eq("Hello!")
+    `#{tempfile.path}`.should eq("Hello!")
   end
 end

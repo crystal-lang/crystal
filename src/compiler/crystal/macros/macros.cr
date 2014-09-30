@@ -1,3 +1,5 @@
+require "tempfile"
+
 module Crystal
   class Program
     def push_def_macro(def)
@@ -115,13 +117,10 @@ module Crystal
     def compile(filename)
       source = File.read(filename)
 
-      output_filename = "#{ENV["TMPDIR"]? || "/tmp"}/.crystal-run.XXXXXX"
-      tmp_fd = C.mkstemp output_filename
-      raise "Error creating temp file #{output_filename}" if tmp_fd == -1
-      C.close tmp_fd
+      tempfile = Tempfile.new "crystal-run"
 
       compiler = Compiler.new
-      compiler.output_filename = output_filename
+      compiler.output_filename = tempfile.path
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
@@ -129,7 +128,7 @@ module Crystal
 
       compiler.compile Compiler::Source.new(filename, source)
 
-      CompiledFile.new(output_filename, tmp_fd)
+      CompiledFile.new(tempfile.path, tempfile.fd)
     end
 
     class MacroVisitor < Visitor

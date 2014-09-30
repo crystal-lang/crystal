@@ -3,6 +3,7 @@ require "file_utils"
 require "socket"
 require "net/http/common/common"
 require "colorize"
+require "tempfile"
 
 module Crystal
   class Compiler
@@ -170,10 +171,9 @@ module Crystal
       output_filename = @output_filename
       unless output_filename
         if @run
-          output_filename = "#{ENV["TMPDIR"]? || "/tmp"}/.crystal-run.XXXXXX"
-          tmp_fd = C.mkstemp output_filename
-          raise "Error creating temp file #{output_filename}" if tmp_fd == -1
-          C.close tmp_fd
+          tempfile = Tempfile.new "crystal-run"
+          output_filename = tempfile.path
+          tempfile.close
         else
           output_filename = File.basename(sources.first.filename, File.extname(sources.first.filename))
         end

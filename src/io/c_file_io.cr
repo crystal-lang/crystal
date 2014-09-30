@@ -23,7 +23,6 @@ lib C
   fun fileno(stream : File) : Int32
 
   fun rename(oldname : UInt8*, newname : UInt8*) : Int32
-  fun mkstemp(result : UInt8*) : Int32
 
   ifdef x86_64
     fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
