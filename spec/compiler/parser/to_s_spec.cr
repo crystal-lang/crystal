@@ -17,4 +17,16 @@ describe "ASTNode#to_s" do
   it "puts parenthesis in ~" do
     Parser.parse("(~1).foo").to_s.should eq("(~1).foo")
   end
+
+  it "puts parenthesis in if && has assign on right hand side" do
+    Parser.parse("1 && (a = 2)").to_s.should eq("1 && (a = 2)")
+  end
+
+  it "puts parenthesis in if && has assign on left hand side" do
+    Parser.parse("(a = 2) && 1").to_s.should eq("(a = 2) && 1")
+  end
+
+  it "puts parenthesis in call argument if it's a cast" do
+    Parser.parse("foo(a as Int32)").to_s.should eq("foo((a as Int32))")
+  end
 end

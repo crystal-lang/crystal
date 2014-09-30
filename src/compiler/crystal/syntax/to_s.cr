@@ -294,7 +294,8 @@ module Crystal
             printed_arg = false
             node.args.each_with_index do |arg, i|
               @str << ", " if printed_arg
-              arg.accept self
+              arg_needs_parens = arg.is_a?(Cast)
+              in_parenthesis(arg_needs_parens) { arg.accept self }
               printed_arg = true
             end
             if named_args = node.named_args
@@ -881,11 +882,15 @@ module Crystal
     end
 
     def to_s_binary(node, op)
-      node.left.accept self
+      left_needs_parens = node.left.is_a?(Assign)
+      in_parenthesis(left_needs_parens) { node.left.accept self }
+
       @str << " "
       @str << op
       @str << " "
-      node.right.accept self
+
+      right_needs_parens = node.right.is_a?(Assign)
+      in_parenthesis(right_needs_parens) { node.right.accept self }
       false
     end
 
@@ -1139,16 +1144,19 @@ module Crystal
 
     def visit(node : Rescue)
       @str << keyword("rescue")
+      if name = node.name
+        @str << " "
+        @str << name
+      end
       if (types = node.types) && types.length > 0
+        if node.name
+          @str << " :"
+        end
         @str << " "
         types.each_with_index do |type, i|
-          @str << ", " if i > 0
+          @str << " | " if i > 0
           type.accept self
         end
-      end
-      if name = node.name
-        @str << " => "
-        @str << name
       end
       @str << newline
       accept_with_indent node.body
