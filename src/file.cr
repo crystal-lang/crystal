@@ -44,8 +44,11 @@ class File < FileDescriptorIO
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
 
+    @path = filename
     super(fd)
   end
+
+  getter path
 
   def self.stat(path)
     if C.stat(path, out stat) != 0

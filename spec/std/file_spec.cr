@@ -18,6 +18,12 @@ def home
 end
 
 describe "File" do
+  it "gets path" do
+    path = "#{__DIR__}/data/test_file.txt"
+    file = File.new path
+    file.path.should eq(path)
+  end
+
   it "reads entire file" do
     str = File.read "#{__DIR__}/data/test_file.txt"
     str.should eq("Hello World\n" * 20)
