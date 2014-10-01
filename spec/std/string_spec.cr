@@ -200,6 +200,7 @@ describe "String" do
       assert { "foo".index('g').should be_nil }
       assert { "bar".index('r').should eq(2) }
       assert { "日本語".index('本').should eq(1) }
+      assert { "bar".index('あ').should be_nil }
 
       describe "with offset" do
         assert { "foobarbaz".index('a', 5).should eq(7) }

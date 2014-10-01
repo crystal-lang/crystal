@@ -103,6 +103,10 @@ class String
   end
 
   def [](index : Int)
+    if single_byte_optimizable?
+      return byte_at(index).chr
+    end
+
     index += length if index < 0
 
     each_char_with_index do |char, i|
@@ -125,6 +129,10 @@ class String
   end
 
   def [](start : Int, count : Int)
+    if single_byte_optimizable?
+      return byte_slice(start, count)
+    end
+
     return "" if count <= 0
 
     start_pos = nil
@@ -194,7 +202,7 @@ class String
   end
 
   def downcase
-    String.build do |io|
+    String.build(bytesize) do |io|
       each_char do |char|
         io << char.downcase
       end
@@ -202,7 +210,7 @@ class String
   end
 
   def upcase
-    String.build do |io|
+    String.build(bytesize) do |io|
       each_char do |char|
         io << char.upcase
       end
@@ -212,7 +220,7 @@ class String
   def capitalize
     return self if bytesize == 0
 
-    String.build do |io|
+    String.build(bytesize) do |io|
       each_char_with_index do |char, i|
         if i == 0
           io << char.upcase
@@ -414,7 +422,12 @@ class String
     String.new(size) do |buffer|
       buffer.copy_from(cstr, bytesize)
       (buffer + bytesize).copy_from(other.cstr, other.bytesize)
-      {size, 0}
+
+      if single_byte_optimizable? && other.single_byte_optimizable?
+        {size, @length + other.@length}
+      else
+        {size, 0}
+      end
     end
   end
 
@@ -688,20 +701,29 @@ class String
   end
 
   def each_char
-    CharReader.new(self).each do |char|
-      yield char
+    if single_byte_optimizable?
+      each_byte do |byte|
+        yield byte.chr
+      end
+    else
+      CharReader.new(self).each do |char|
+        yield char
+      end
     end
     self
   end
 
   def each_char_with_index
-    CharReader.new(self).each_with_index do |char, i|
+    i = 0
+    each_char do |char|
       yield char, i
+      i += 1
     end
+    self
   end
 
   def chars
-    chars = Array(Char).new(bytesize)
+    chars = Array(Char).new(@length > 0 ? @length : bytesize)
     each_char do |char|
       chars << char
     end
@@ -798,7 +820,7 @@ class String
   def ends_with?(char : Char)
     return false unless bytesize > 0
 
-    if char.ord <= 127
+    if char.ord <= 127 || single_byte_optimizable?
       return cstr[bytesize - 1] == char.ord
     end
 
@@ -871,6 +893,10 @@ class String
 
   def ascii_only?
     @bytesize == 0 || length == @bytesize
+  end
+
+  protected def single_byte_optimizable?
+    @bytesize == @length
   end
 
   def to_s
