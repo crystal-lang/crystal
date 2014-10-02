@@ -170,12 +170,11 @@ module Crystal
     def compile(sources : Array(Source), run_args = [] of String)
       output_filename = @output_filename
       unless output_filename
+        output_filename = File.basename(sources.first.filename, File.extname(sources.first.filename))
         if @run
-          tempfile = Tempfile.new "crystal-run"
+          tempfile = Tempfile.new "crystal-run-#{output_filename}"
           output_filename = tempfile.path
           tempfile.close
-        else
-          output_filename = File.basename(sources.first.filename, File.extname(sources.first.filename))
         end
       end
 
