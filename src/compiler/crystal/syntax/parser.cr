@@ -2160,7 +2160,7 @@ module Crystal
           elsif @token.type == :","
             next_token_skip_space_or_newline
           else
-            skip_space
+            skip_space_or_newline
             if @token.type != :")"
               unexpected_token @token.to_s, "expected ',' or ')'"
             end

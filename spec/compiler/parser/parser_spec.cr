@@ -816,6 +816,8 @@ describe "Parser" do
 
   it_parses "def `(cmd); 1; end", Def.new("`", ["cmd".arg], 1.int32)
 
+  it_parses "def foo(bar = 1\n); 2; end", Def.new("foo", [Arg.new("bar", default_value: 1.int32)], 2.int32)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
   end
