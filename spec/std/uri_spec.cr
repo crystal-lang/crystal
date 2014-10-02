@@ -21,6 +21,8 @@ describe "URI" do
   assert_uri("http://www.google.com?q=1", "http", "www.google.com", nil, nil, "q=1")
   assert_uri("https://www.google.com", "https", "www.google.com", nil, nil, nil)
   assert_uri("http://www.foo-bar.com", "http", "www.foo-bar.com", nil, nil, nil)
+  assert_uri("/foo", nil, nil, nil, "/foo", nil)
+  assert_uri("/foo?q=1", nil, nil, nil, "/foo", "q=1")
 
   assert { URI.parse("http://www.google.com/foo").full_path.should eq("/foo") }
   assert { URI.parse("http://www.google.com").full_path.should eq("/") }
