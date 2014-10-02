@@ -317,6 +317,7 @@ describe "Parser" do
   it_parses "foo 1, a: 1, b: 2", Call.new(nil, "foo", [1.int32] of ASTNode, named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "foo 1, a: 1, b: 2\n1", [Call.new(nil, "foo", [1.int32] of ASTNode, named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)]), 1.int32]
   it_parses "foo(a: 1\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
+  it_parses "foo(\na: 1,\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
 
   it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])

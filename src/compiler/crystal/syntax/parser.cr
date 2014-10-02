@@ -2797,6 +2797,9 @@ module Crystal
         skip_space_or_newline if allow_newline
         if @token.type == :","
           next_token_skip_space_or_newline
+          if @token.type == :")"
+            break
+          end
         else
           break
         end
