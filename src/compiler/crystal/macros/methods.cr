@@ -382,7 +382,10 @@ module Crystal
 
       ivars = Array(ASTNode).new(all_ivars.length)
       all_ivars.each do |name, ivar|
-        ivars.push MetaVar.new(name[1 .. -1], ivar.type)
+        # An instance var might not have a type, so we skip it
+        if ivar_type = ivar.type?
+          ivars.push MetaVar.new(name[1 .. -1], ivar_type)
+        end
       end
 
       ArrayLiteral.new(ivars)

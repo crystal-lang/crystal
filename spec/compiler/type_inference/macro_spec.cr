@@ -180,4 +180,26 @@ describe "Type inference: macro" do
       Bar.new.foo
       )) { types["Bar"] }
   end
+
+  it "doesn't die on untyped instance var" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          @foo = 1
+        end
+
+        def foo
+          @foo
+        end
+
+        macro def ivars_length : Int32
+          {{@instance_vars.length}}
+        end
+      end
+
+      ->(x : Foo) { x.foo; x.ivars_length }
+      )) { fun_of(types["Foo"], no_return) }
+  end
 end
