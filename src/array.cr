@@ -29,211 +29,8 @@ class Array(T)
     ary
   end
 
-  def count
-    @length
-  end
-
-  def size
-    @length
-  end
-
-  def empty?
-    @length == 0
-  end
-
-  def at(index : Int)
-    at(index) { raise IndexOutOfBounds.new }
-  end
-
-  def at(index : Int)
-    index += length if index < 0
-    if index >= length || index < 0
-      yield
-    else
-      @buffer[index]
-    end
-  end
-
-  def [](index : Int)
-    at(index)
-  end
-
-  def []?(index : Int)
-    at(index) { nil }
-  end
-
-  def []=(index : Int, value : T)
-    index = check_index_out_of_bounds index
-    @buffer[index] = value
-  end
-
-  def [](range : Range)
-    from = range.begin
-    from += length if from < 0
-    to = range.end
-    to += length if to < 0
-    to -= 1 if range.excludes_end?
-    length = to - from + 1
-    length <= 0 ? Array(T).new : self[from, length]
-  end
-
-  def [](start : Int, count : Int)
-    count = Math.min(count, length)
-    Array(T).new(count) { |i| @buffer[start + i] }
-  end
-
-  def update(index : Int)
-    index = check_index_out_of_bounds index
-    buffer[index] = yield buffer[index]
-  end
-
-  def push(value : T)
-    check_needs_resize
-    @buffer[@length] = value
-    @length += 1
-    self
-  end
-
-  def pop
-    pop { raise IndexOutOfBounds.new }
-  end
-
-  def pop?
-    pop { nil }
-  end
-
-  def pop
-    if @length == 0
-      yield
-    else
-      @length -= 1
-      @buffer[@length]
-    end
-  end
-
-  def pop(n)
-    if n < 0
-      raise ArgumentError.new("can't pop negative count")
-    end
-
-    n = Math.min(n, @length)
-    ary = Array(T).new(n) { |i| @buffer[@length - n + i] }
-
-    @length -= n
-
-    ary
-  end
-
-  def shift
-    shift { raise IndexOutOfBounds.new }
-  end
-
-  def shift?
-    shift { nil }
-  end
-
-  def shift
-    if @length == 0
-      yield
-    else
-      value = @buffer[0]
-      @length -=1
-      @buffer.move_from(@buffer + 1, @length)
-      value
-    end
-  end
-
-  def shift(n)
-    if n < 0
-      raise ArgumentError.new("can't shift negative count")
-    end
-
-    n = Math.min(n, @length)
-    ary = Array(T).new(n) { |i| @buffer[i] }
-
-    @buffer.move_from(@buffer + n, @length - n)
-    @length -= n
-
-    ary
-  end
-
-  def unshift(obj : T)
-    insert 0, obj
-  end
-
-  def <<(value : T)
-    push(value)
-  end
-
-  def first
-    raise IndexOutOfBounds.new if @length == 0
-    @buffer[0]
-  end
-
-  def first?
-    @length == 0 ? nil : @buffer[0]
-  end
-
-  def last
-    raise IndexOutOfBounds.new if @length == 0
-    @buffer[@length - 1]
-  end
-
-  def last?
-    return nil if @length == 0
-    @buffer[@length - 1]
-  end
-
-  def insert(index : Int, obj : T)
-    check_needs_resize
-
-    if index < 0
-      index += length + 1
-    end
-
-    unless 0 <= index <= length
-      raise IndexOutOfBounds.new
-    end
-
-    (@buffer + index + 1).move_from(@buffer + index, length - index)
-    @buffer[index] = obj
-    @length += 1
-    self
-  end
-
-  def delete_at(index : Int)
-    index = check_index_out_of_bounds index
-
-    elem = @buffer[index]
-    (@buffer + index).move_from(@buffer + index + 1, length - index - 1)
-    @length -= 1
-    elem
-  end
-
-  def delete(obj)
-    delete_if { |e| e == obj }
-  end
-
-  def delete_if
-    i1 = 0
-    i2 = 0
-    while i1 < @length
-      e = @buffer[i1]
-      unless yield e
-        if i1 != i2
-          @buffer[i2] = e
-        end
-        i2 += 1
-      end
-
-      i1 += 1
-    end
-    if i2 != i1
-      @length -= (i1 - i2)
-      true
-    else
-      false
-    end
+  def ==(other : Array)
+    equals?(other) { |x, y| x == y }
   end
 
   def &(other : Array(U))
@@ -269,6 +66,15 @@ class Array(T)
     ary
   end
 
+  def +(other : Array(U))
+    new_length = length + other.length
+    ary = Array(T | U).new(new_length)
+    ary.length = new_length
+    ary.buffer.copy_from(buffer, length)
+    (ary.buffer + length).copy_from(other.buffer, other.length)
+    ary
+  end
+
   def -(other : Array(U))
     ary = Array(T).new(length - other.length)
     hash = other.each_with_object(Hash(T, Bool).new) { |o, h| h[o] = true }
@@ -278,53 +84,57 @@ class Array(T)
     ary
   end
 
-  def compact
-    compact_map { |x| x }
+  def <<(value : T)
+    push(value)
   end
 
-  def compact!
-    delete nil
+  def [](index : Int)
+    at(index)
   end
 
-  def compact(array)
-    each do |elem|
-      array.push elem if elem
+  def []?(index : Int)
+    at(index) { nil }
+  end
+
+  def []=(index : Int, value : T)
+    index = check_index_out_of_bounds index
+    @buffer[index] = value
+  end
+
+  def [](range : Range)
+    from = range.begin
+    from += length if from < 0
+    to = range.end
+    to += length if to < 0
+    to -= 1 if range.excludes_end?
+    length = to - from + 1
+    length <= 0 ? Array(T).new : self[from, length]
+  end
+
+  def [](start : Int, count : Int)
+    count = Math.min(count, length)
+    Array(T).new(count) { |i| @buffer[start + i] }
+  end
+
+  def at(index : Int)
+    at(index) { raise IndexOutOfBounds.new }
+  end
+
+  def at(index : Int)
+    index += length if index < 0
+    if index >= length || index < 0
+      yield
+    else
+      @buffer[index]
     end
   end
 
-  # def flatten(target : Array(U))
-  #   flatten_append target, self, false
-  #   target
-  # end
-
-  def map(&block : T -> U)
-    ary = Array(U).new(length)
-    ary.length = length
-    each_with_index do |e, i|
-      ary.buffer[i] = yield e
-    end
-    ary
+  def buffer
+    @buffer
   end
 
-  def map_with_index(&block : T, Int32 -> U)
-    ary = Array(U).new(length)
-    ary.length = length
-    each_with_index do |e, i|
-      ary.buffer[i] = yield e, i
-    end
-    ary
-  end
-
-  def map!
-    @buffer.map!(length) { |e| yield e }
-    self
-  end
-
-  def dup
-    ary = Array(T).new(length)
-    ary.length = length
-    ary.buffer.copy_from(buffer, length)
-    ary
+  def clear
+    @length = 0
   end
 
   def clone
@@ -336,96 +146,18 @@ class Array(T)
     ary
   end
 
-  def replace(other : Array)
-    @length = other.length
-    resize_to_capacity(@length) if @length > @capacity
-    @buffer.copy_from(other.buffer, other.length)
-    self
+  def compact
+    compact_map { |x| x }
   end
 
-  def reverse
-    ary = Array(T).new(length)
-    i = 0
-    reverse_each do |obj|
-      ary.buffer[i] = obj
-      i += 1
-    end
-    ary.length = length
-    ary
-  end
-
-  def reverse!
-    i = 0
-    j = length - 1
-    while i != j
-      @buffer.swap(i, j)
-      i += 1
-      j -= 1
-    end
-    self
-  end
-
-  def uniq!(&block : T -> U)
-    uniq_elements = Set(U).new
-    delete_if do |elem|
-      key = yield elem
-      if uniq_elements.includes?(key)
-        true
-      else
-        uniq_elements.add(key)
-        false
-      end
-    end
-    self
-  end
-
-  def uniq!
-    uniq! { |x| x }
-  end
-
-  def clear
-    @length = 0
-  end
-
-  def each
-    length.times do |i|
-      yield @buffer[i]
-    end
-    self
-  end
-
-  def reverse_each
-    (length - 1).downto(0) do |i|
-      yield @buffer[i]
-    end
-    self
-  end
-
-  def each_index
-    length.times do |i|
-      yield i
+  def compact(array)
+    each do |elem|
+      array.push elem if elem
     end
   end
 
-  def buffer
-    @buffer
-  end
-
-  def to_unsafe
-    @buffer
-  end
-
-  def to_a
-    self
-  end
-
-  def +(other : Array(U))
-    new_length = length + other.length
-    ary = Array(T | U).new(new_length)
-    ary.length = new_length
-    ary.buffer.copy_from(buffer, length)
-    (ary.buffer + length).copy_from(other.buffer, other.length)
-    ary
+  def compact!
+    delete nil
   end
 
   def concat(other : Array)
@@ -462,30 +194,219 @@ class Array(T)
     self
   end
 
+  def count
+    @length
+  end
+
+  def delete(obj)
+    delete_if { |e| e == obj }
+  end
+
+  def delete_at(index : Int)
+    index = check_index_out_of_bounds index
+
+    elem = @buffer[index]
+    (@buffer + index).move_from(@buffer + index + 1, length - index - 1)
+    @length -= 1
+    elem
+  end
+
+  def delete_if
+    i1 = 0
+    i2 = 0
+    while i1 < @length
+      e = @buffer[i1]
+      unless yield e
+        if i1 != i2
+          @buffer[i2] = e
+        end
+        i2 += 1
+      end
+
+      i1 += 1
+    end
+    if i2 != i1
+      @length -= (i1 - i2)
+      true
+    else
+      false
+    end
+  end
+
+  def dup
+    ary = Array(T).new(length)
+    ary.length = length
+    ary.buffer.copy_from(buffer, length)
+    ary
+  end
+
+  def each
+    length.times do |i|
+      yield @buffer[i]
+    end
+    self
+  end
+
+  def each_index
+    length.times do |i|
+      yield i
+    end
+  end
+
+  def empty?
+    @length == 0
+  end
+
+  def equals?(other : Array)
+    return false if @length != other.length
+    each_with_index do |item, i|
+      return false unless yield(item, other[i])
+    end
+    true
+  end
+
+  def first
+    first { raise IndexOutOfBounds.new }
+  end
+
+  def first
+    @length == 0 ? yield : @buffer[0]
+  end
+
+  def first?
+    first { nil }
+  end
+
+  def hash
+    inject(31 * @length) do |memo, elem|
+      31 * memo + elem.hash
+    end
+  end
+
+  def insert(index : Int, obj : T)
+    check_needs_resize
+
+    if index < 0
+      index += length + 1
+    end
+
+    unless 0 <= index <= length
+      raise IndexOutOfBounds.new
+    end
+
+    (@buffer + index + 1).move_from(@buffer + index, length - index)
+    @buffer[index] = obj
+    @length += 1
+    self
+  end
+
+  def inspect(io : IO)
+    to_s io
+  end
+
+  def last
+    last { raise IndexOutOfBounds.new }
+  end
+
+  def last
+    @length == 0 ? yield : @buffer[@length - 1]
+  end
+
+  def last?
+    last { nil }
+  end
+
+  def length=(length)
+    @length = length
+  end
+
+  def map
+    Array.new(length) { |i| yield buffer[i] }
+  end
+
+  def map!
+    @buffer.map!(length) { |e| yield e }
+    self
+  end
+
+  def map_with_index
+    Array.new(length) { |i| yield buffer[i], i }
+  end
+
+  def pop
+    pop { raise IndexOutOfBounds.new }
+  end
+
+  def pop
+    if @length == 0
+      yield
+    else
+      @length -= 1
+      @buffer[@length]
+    end
+  end
+
+  def pop(n)
+    if n < 0
+      raise ArgumentError.new("can't pop negative count")
+    end
+
+    n = Math.min(n, @length)
+    ary = Array.new(n) { |i| @buffer[@length - n + i] }
+
+    @length -= n
+
+    ary
+  end
+
+  def pop?
+    pop { nil }
+  end
+
   def product(ary)
     self.each { |a| ary.each { |b| yield a, b } }
   end
 
-  def zip(other : Array)
-    each_with_index do |elem, i|
-      yield elem, other[i]
+  def push(value : T)
+    check_needs_resize
+    @buffer[@length] = value
+    @length += 1
+    self
+  end
+
+  def replace(other : Array)
+    @length = other.length
+    resize_to_capacity(@length) if @length > @capacity
+    @buffer.copy_from(other.buffer, other.length)
+    self
+  end
+
+  def reverse
+    ary = Array(T).new(length)
+    ary.length = length
+    i = 0
+    reverse_each do |obj|
+      ary.buffer[i] = obj
+      i += 1
     end
+    ary
   end
 
-  def zip(other : Array(U))
-    pairs = [] of {T, U}
-    zip(other) { |x, y| pairs << {x, y} }
-    pairs
+  def reverse!
+    i = 0
+    j = length - 1
+    while i != j
+      @buffer.swap i, j
+      i += 1
+      j -= 1
+    end
+    self
   end
 
-  def swap(index0, index1)
-    index0 += length if index0 < 0
-    index1 += length if index1 < 0
-
-    raise IndexOutOfBounds.new if index0 >= length || index0 < 0 || index1 >= length || index1 < 0
-
-    @buffer[index0], @buffer[index1] = @buffer[index1], @buffer[index0]
-
+  def reverse_each
+    (length - 1).downto(0) do |i|
+      yield @buffer[i]
+    end
     self
   end
 
@@ -500,67 +421,6 @@ class Array(T)
       end
     end
     nil
-  end
-
-  def ==(other : Array)
-    equals?(other) { |x, y| x == y }
-  end
-
-  def equals?(other : Array)
-    return false if @length != other.length
-    each_with_index do |item, i|
-      return false unless yield(item, other[i])
-    end
-    true
-  end
-
-  def hash
-    hash = 31 * @length
-    each do |elem|
-      hash = 31 * hash + elem.hash
-    end
-    hash
-  end
-
-  def inspect(io : IO)
-    to_s io
-  end
-
-  def to_s(io : IO)
-    executed = exec_recursive(:to_s) do
-      io << "["
-      join ", ", io, &.inspect(io)
-      io << "]"
-    end
-    io << "[...]" unless executed
-  end
-
-  def sort!
-    Array(T).quicksort!(@buffer, @length)
-    self
-  end
-
-  def sort!(&block: T, T -> Int32)
-    Array(T).quicksort!(@buffer, @length, block)
-    self
-  end
-
-  def sort_by!(&block: T -> U)
-    sort! { |x, y| block.call(x) <=> block.call(y) }
-  end
-
-  def sort_by(&block: T -> U)
-    dup.sort_by! &block
-  end
-
-  def sort
-    dup.sort!
-  end
-
-  def sort(&block: T, T -> Int32)
-    x = dup
-    Array(T).quicksort!(x.buffer, x.length, block)
-    x
   end
 
   def sample
@@ -598,17 +458,145 @@ class Array(T)
     end
   end
 
-  def shuffle!
-    @buffer.shuffle!(length)
-    self
+  def shift
+    shift { raise IndexOutOfBounds.new }
+  end
+
+  def shift
+    if @length == 0
+      yield
+    else
+      value = @buffer[0]
+      @length -=1
+      @buffer.move_from(@buffer + 1, @length)
+      value
+    end
+  end
+
+  def shift(n)
+    if n < 0
+      raise ArgumentError.new("can't shift negative count")
+    end
+
+    n = Math.min(n, @length)
+    ary = Array.new(n) { |i| @buffer[i] }
+
+    @buffer.move_from(@buffer + n, @length - n)
+    @length -= n
+
+    ary
+  end
+
+  def shift?
+    shift { nil }
+  end
+
+  def size
+    @length
   end
 
   def shuffle
     dup.shuffle!
   end
 
-  def length=(length)
-    @length = length
+  def shuffle!
+    @buffer.shuffle!(length)
+    self
+  end
+
+  def sort
+    dup.sort!
+  end
+
+  def sort(&block: T, T -> Int32)
+    dup.sort! &block
+  end
+
+  def sort!
+    Array.quicksort!(@buffer, @length)
+    self
+  end
+
+  def sort!(&block: T, T -> Int32)
+    Array.quicksort!(@buffer, @length, block)
+    self
+  end
+
+  def sort_by(&block: T -> U)
+    dup.sort_by! &block
+  end
+
+  def sort_by!(&block: T -> U)
+    sort! { |x, y| block.call(x) <=> block.call(y) }
+  end
+
+  def swap(index0, index1)
+    index0 += length if index0 < 0
+    index1 += length if index1 < 0
+
+    unless (0 <= index0 < length) && (0 <= index1 < length)
+      raise IndexOutOfBounds.new
+    end
+
+    @buffer[index0], @buffer[index1] = @buffer[index1], @buffer[index0]
+
+    self
+  end
+
+  def to_a
+    self
+  end
+
+  def to_s(io : IO)
+    executed = exec_recursive(:to_s) do
+      io << "["
+      join ", ", io, &.inspect(io)
+      io << "]"
+    end
+    io << "[...]" unless executed
+  end
+
+  def to_unsafe
+    @buffer
+  end
+
+  def uniq!
+    uniq! { |x| x }
+  end
+
+  def uniq!(&block : T -> U)
+    uniq_elements = Set(U).new
+    delete_if do |elem|
+      key = yield elem
+      if uniq_elements.includes? key
+        true
+      else
+        uniq_elements << key
+        false
+      end
+    end
+    self
+  end
+
+  def unshift(obj : T)
+    insert 0, obj
+  end
+
+  def update(index : Int)
+    index = check_index_out_of_bounds index
+    buffer[index] = yield buffer[index]
+  end
+
+  def zip(other : Array)
+    each_with_index do |elem, i|
+      yield elem, other[i]
+    end
+  end
+
+  def zip(other : Array(U))
+    pairs = Array({T, U}).new(length)
+    zip(other) { |x, y| pairs << {x, y} }
+    pairs
   end
 
   private def check_needs_resize
@@ -619,18 +607,6 @@ class Array(T)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
   end
-
-  # def flatten_append(target, source : Array(U), modified)
-  #   source.each do |obj|
-  #     modified |= flatten_append target, obj, true
-  #   end
-  #   modified
-  # end
-
-  # def flatten_append(target, source, modified)
-  #   target.push source
-  #   false
-  # end
 
   protected def self.quicksort!(a, n, comp)
     return if (n < 2)

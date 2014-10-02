@@ -2,6 +2,49 @@
 require "spec"
 
 describe "Array" do
+  describe "==" do
+    it "compares empty" do
+      ([] of Int32).should eq([] of Int32)
+      [1].should_not eq([] of Int32)
+      ([] of Int32).should_not eq([1])
+    end
+
+    it "compares elements" do
+      [1, 2, 3].should eq([1, 2, 3])
+      [1, 2, 3].should_not eq([3, 2, 1])
+    end
+
+    it "compares other" do
+      a = [1, 2, 3]
+      b = [1, 2, 3]
+      c = [1, 2, 3, 4]
+      d = [1, 2, 4]
+      (a == b).should be_true
+      (b == c).should be_false
+      (a == d).should be_false
+    end
+  end
+
+  it "does &" do
+    ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
+  end
+
+  it "does |" do
+    ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
+  end
+
+  it "does +" do
+    a = [1, 2, 3]
+    b = [4, 5]
+    c = a + b
+    c.length.should eq(5)
+    0.upto(4) { |i| c[i].should eq(i + 1) }
+  end
+
+  it "does -" do
+    ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
+  end
+
   describe "[]" do
     it "gets on positive index" do
       [1, 2, 3][1].should eq(2)
@@ -63,40 +106,38 @@ describe "Array" do
     end
   end
 
-  describe "empty" do
-    it "is empty" do
-      ([] of Int32).empty?.should be_true
-    end
-
-    it "has length 0" do
-      ([] of Int32).length.should eq(0)
-    end
+  it "does clear" do
+    a = [1, 2, 3]
+    a.clear
+    a.should eq([] of Int32)
   end
 
-  describe "==" do
-    it "compare empty" do
-      ([] of Int32).should eq([] of Int32)
-      [1].should_not eq([] of Int32)
-      ([] of Int32).should_not eq([1])
-    end
-
-    it "compare elements" do
-      [1, 2, 3].should eq([1, 2, 3])
-      [1, 2, 3].should_not eq([3, 2, 1])
-    end
+  it "does clone" do
+    x = {1 => 2}
+    a = [x]
+    b = a.clone
+    b.should eq(a)
+    a.object_id.should_not eq(b.object_id)
+    a[0].object_id.should_not eq(b[0].object_id)
   end
 
-  describe "inspect" do
-    assert { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
+  it "does compact" do
+    a = [1, nil, 2, nil, 3]
+    b = a.compact.should eq([1, 2, 3])
+    a.should eq([1, nil, 2, nil, 3])
   end
 
-  describe "+" do
-    assert do
-      a = [1, 2, 3]
-      b = [4, 5]
-      c = a + b
-      c.length.should eq(5)
-      0.upto(4) { |i| c[i].should eq(i + 1) }
+  describe "compact!" do
+    it "returns true if removed" do
+      a = [1, nil, 2, nil, 3]
+      b = a.compact!.should be_true
+      a.should eq([1, 2, 3])
+    end
+
+    it "returns false if not removed" do
+      a = [1]
+      b = a.compact!.should be_false
+      a.should eq([1])
     end
   end
 
@@ -120,31 +161,17 @@ describe "Array" do
     end
   end
 
-  describe "index" do
-    it "performs without a block" do
-      a = [1, 2, 3]
-      a.index(3).should eq(2)
-      a.index(4).should be_nil
+  describe "delete" do
+    it "deletes many" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.delete(2).should be_true
+      a.should eq([1, 3, 1, 3])
     end
 
-    it "performs with a block" do
-      a = [1, 2, 3]
-      a.index { |i| i > 1 }.should eq(1)
-      a.index { |i| i > 3 }.should be_nil
-    end
-  end
-
-  describe "rindex" do
-    it "performs without a block" do
-      a = [1, 2, 3, 4, 5, 3, 6]
-      a.rindex(3).should eq(5)
-      a.rindex(7).should be_nil
-    end
-
-    it "performs with a block" do
-      a = [1, 2, 3, 4, 5, 3, 6]
-      a.rindex { |i| i > 1 }.should eq(6)
-      a.rindex { |i| i > 6 }.should be_nil
+    it "delete not found" do
+      a = [1, 2]
+      a.delete(4).should be_false
+      a.should eq([1, 2])
     end
   end
 
@@ -169,20 +196,6 @@ describe "Array" do
     end
   end
 
-  describe "delete" do
-    it "deletes many" do
-      a = [1, 2, 3, 1, 2, 3]
-      a.delete(2).should be_true
-      a.should eq([1, 3, 1, 3])
-    end
-
-    it "delete not found" do
-      a = [1, 2]
-      a.delete(4).should be_false
-      a.should eq([1, 2])
-    end
-  end
-
   describe "delete_if" do
     it "deletes many" do
       a = [1, 2, 3, 1, 2, 3]
@@ -191,78 +204,103 @@ describe "Array" do
     end
   end
 
-  describe "&" do
-    assert { ([1, 2, 3] & [3, 2, 4]).should eq([2, 3]) }
+  it "does dup" do
+    x = {1 => 2}
+    a = [x]
+    b = a.dup
+    b.should eq([x])
+    a.object_id.should_not eq(b.object_id)
+    a[0].object_id.should eq(b[0].object_id)
+    b << {3 => 4}
+    a.should eq([x])
   end
 
-  describe "|" do
-    assert { ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4]) }
+  it "does each_index" do
+    a = [1, 1, 1]
+    b = 0
+    a.each_index { |i| b += i }
+    b.should eq(3)
   end
 
-  describe "-" do
-    assert { ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5]) }
+  describe "empty" do
+    it "is empty" do
+      ([] of Int32).empty?.should be_true
+      [1].empty?.should be_false
+    end
+
+    it "is not empty" do
+      [1].empty?.should be_false
+    end
   end
 
-  describe "clear" do
-    assert do
+  it "does equals? with custom block" do
+    a = [1, 3, 2]
+    b = [3, 9, 4]
+    c = [5, 7, 3]
+    d = [1, 3, 2, 4]
+    f = ->(x : Int32, y : Int32) { (x % 2) == (y % 2) }
+    a.equals?(b, &f).should be_true
+    a.equals?(c, &f).should be_false
+    a.equals?(d, &f).should be_false
+  end
+
+  describe "first" do
+    it "gets first when non empty" do
       a = [1, 2, 3]
-      a.clear
-      a.should eq([] of Int32)
+      a.first.should eq(1)
+    end
+
+    it "raises when empty" do
+      expect_raises IndexOutOfBounds do
+        ([] of Int32).first
+      end
     end
   end
 
-  describe "compact" do
-    assert do
-      a = [1, nil, 2, nil, 3]
-      b = a.compact.should eq([1, 2, 3])
-      a.should eq([1, nil, 2, nil, 3])
-    end
-  end
-
-  describe "compact!" do
-    it "returns true if removed" do
-      a = [1, nil, 2, nil, 3]
-      b = a.compact!.should be_true
-      a.should eq([1, 2, 3])
-    end
-
-    it "returns false if not removed" do
-      a = [1]
-      b = a.compact!.should be_false
-      a.should eq([1])
-    end
-  end
-
-  # describe "flatten" do
-  #   assert do
-  #     a = [[1, 2], 3, [4, [5, 6]]]
-  #     a.flatten([] of Int32).should eq([1, 2, 3, 4, 5, 6])
-  #     a.should eq([[1, 2], 3, [4, [5, 6]]])
-  #   end
-  # end
-
-  describe "map" do
-    assert do
+  describe "first?" do
+    it "gets first? when non empty" do
       a = [1, 2, 3]
-      a.map { |x| x * 2 }.should eq([2, 4, 6])
-      a.should eq([1, 2, 3])
+      a.first?.should eq(1)
+    end
+
+    it "gives nil when empty" do
+      ([] of Int32).first?.should be_nil
     end
   end
 
-  describe "map!" do
-    assert do
+  describe "flat_map" do
+    it "does example 1" do
+      [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
+    end
+
+    it "does example 2" do
+      [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
+    end
+  end
+
+  it "does hash" do
+    a = [1, 2, [3]]
+    b = [1, 2, [3]]
+    a.hash.should eq(b.hash)
+  end
+
+  describe "index" do
+    it "performs without a block" do
       a = [1, 2, 3]
-      a.map! { |x| x * 2 }
-      a.should eq([2, 4, 6])
+      a.index(3).should eq(2)
+      a.index(4).should be_nil
     end
-  end
 
-  describe "unshift" do
-    assert do
-      a = [2, 3]
-      expected = [1, 2, 3]
-      a.unshift(1).should eq(expected)
-      a.should eq(expected)
+    it "performs with a block" do
+      a = [1, 2, 3]
+      a.index { |i| i > 1 }.should eq(1)
+      a.index { |i| i > 3 }.should be_nil
+    end
+
+    it "raises if out of bounds" do
+      expect_raises IndexOutOfBounds do
+        [1, 2, 3][4]
+      end
     end
   end
 
@@ -297,52 +335,43 @@ describe "Array" do
     end
   end
 
-  describe "reverse" do
-    assert do
+  describe "inspect" do
+    assert { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
+  end
+
+  describe "last" do
+    it "gets last when non empty" do
       a = [1, 2, 3]
-      a.reverse.should eq([3, 2, 1])
-      a.should eq([1, 2, 3])
+      a.last.should eq(3)
+    end
+
+    it "raises when empty" do
+      expect_raises IndexOutOfBounds do
+        ([] of Int32).last
+      end
     end
   end
 
-  describe "reverse!" do
-    assert do
-      a = [1, 2, 3, 4, 5]
-      a.reverse!
-      a.should eq([5, 4, 3, 2, 1])
+  describe "length" do
+    it "has length 0" do
+      ([] of Int32).length.should eq(0)
+    end
+
+    it "has length 2" do
+      [1, 2].length.should eq(2)
     end
   end
 
-  describe "uniq!" do
-    assert do
-      a = [1, 2, 2, 3, 1, 4, 5, 3]
-      a.uniq!
-      a.should eq([1, 2, 3, 4, 5])
-    end
-
-    assert do
-      a = [-1, 1, 0, 2, -2]
-      a.uniq! { |x| x.abs }
-      a.should eq([-1, 0, 2])
-    end
-
-    assert do
-      a = [1, 2, 3]
-      a.uniq! { true }
-      a.should eq([1])
-    end
+  it "does map" do
+    a = [1, 2, 3]
+    a.map { |x| x * 2 }.should eq([2, 4, 6])
+    a.should eq([1, 2, 3])
   end
 
-  it "raises if out of bounds" do
-    expect_raises IndexOutOfBounds do
-      [1, 2, 3][4]
-    end
-  end
-
-  it "has hash" do
-    a = [1, 2, [3]]
-    b = [1, 2, [3]]
-    a.hash.should eq(b.hash)
+  it "does map!" do
+    a = [1, 2, 3]
+    a.map! { |x| x * 2 }
+    a.should eq([2, 4, 6])
   end
 
   describe "pop" do
@@ -380,148 +409,46 @@ describe "Array" do
     end
   end
 
-  describe "shift" do
-    it "shifts when non empty" do
-      a = [1, 2, 3]
-      a.shift.should eq(1)
-      a.should eq([2, 3])
+  it "does product" do
+    r = [] of Int32
+    [1,2,3].product([5,6]) { |a, b| r << a; r << b }
+    r.should eq([1,5,1,6,2,5,2,6,3,5,3,6])
+  end
+
+  it "does replace" do
+    a = [1, 2, 3]
+    b = [1]
+    b.replace a
+    b.should eq(a)
+  end
+
+  it "does reverse" do
+    a = [1, 2, 3]
+    a.reverse.should eq([3, 2, 1])
+    a.should eq([1, 2, 3])
+  end
+
+  it "does reverse!" do
+    a = [1, 2, 3, 4, 5]
+    a.reverse!
+    a.should eq([5, 4, 3, 2, 1])
+  end
+
+  describe "rindex" do
+    it "performs without a block" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex(3).should eq(5)
+      a.rindex(7).should be_nil
     end
 
-    it "raises when empty" do
-      expect_raises IndexOutOfBounds do
-        ([] of Int32).shift
-      end
-    end
-
-    it "shifts many elements" do
-      a = [1, 2, 3, 4, 5]
-      b = a.shift(3)
-      b.should eq([1, 2, 3])
-      a.should eq([4, 5])
-    end
-
-    it "shifts more than what is available" do
-      a = [1, 2, 3, 4, 5]
-      b = a.shift(10)
-      b.should eq([1, 2, 3, 4, 5])
-      a.should eq([] of Int32)
-    end
-
-    it "shifts negative count raises" do
-      a = [1, 2]
-      expect_raises ArgumentError do
-        a.shift(-1)
-      end
+    it "performs with a block" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex { |i| i > 1 }.should eq(6)
+      a.rindex { |i| i > 6 }.should be_nil
     end
   end
 
-  describe "first" do
-    it "gets first when non empty" do
-      a = [1, 2, 3]
-      a.first.should eq(1)
-    end
-
-    it "raises when empty" do
-      expect_raises IndexOutOfBounds do
-        ([] of Int32).first
-      end
-    end
-  end
-
-  describe "first?" do
-    it "gets first? when non empty" do
-      a = [1, 2, 3]
-      a.first?.should eq(1)
-    end
-
-    it "gives nil when empty" do
-      ([] of Int32).first?.should be_nil
-    end
-  end
-
-  describe "last" do
-    it "gets last when non empty" do
-      a = [1, 2, 3]
-      a.last.should eq(3)
-    end
-
-    it "raises when empty" do
-      expect_raises IndexOutOfBounds do
-        ([] of Int32).last
-      end
-    end
-  end
-
-  describe "sort" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
-
-    it "sort without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      b = a.sort
-      b.should eq([1, 2, 3, 4, 5, 6])
-      a.should_not eq(b)
-    end
-
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.length <=> y.length }
-      a.should eq(["a", "foo", "hello"])
-    end
-
-    it "sort with a block" do
-      a = ["foo", "a", "hello"]
-      b = a.sort { |x, y| x.length <=> y.length }
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
-
-    it "sorts by!" do
-      a = ["foo", "a", "hello"]
-      a.sort_by! &.length
-      a.should eq(["a", "foo", "hello"])
-    end
-
-    it "sorts by" do
-      a = ["foo", "a", "hello"]
-      b = a.sort_by &.length
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
-  end
-
-  describe "dup" do
-    it "duplicate array" do
-      x = {1 => 2}
-      a = [x]
-      b = a.dup
-      b.should eq([x])
-      a.object_id.should_not eq(b.object_id)
-      b << {3 => 4}
-      a.should eq([x])
-    end
-  end
-
-  describe "shuffle" do
-    it "shuffle!" do
-      a = [1, 2, 3]
-      a.shuffle!
-      b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should be_true }
-    end
-
-    it "shuffle" do
-      a = [1, 2, 3]
-      b = a.shuffle
-      a.same?(b).should be_false
-      a.should eq([1, 2, 3])
-
-      3.times { b.includes?(a.shift).should be_true }
-    end
-
+  describe "sample" do
     it "sample" do
       [1].sample.should eq(1)
 
@@ -572,41 +499,97 @@ describe "Array" do
     end
   end
 
-  describe "flat_map" do
-    it "does example 1" do
-      [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
+  describe "shift" do
+    it "shifts when non empty" do
+      a = [1, 2, 3]
+      a.shift.should eq(1)
+      a.should eq([2, 3])
     end
 
-    it "does example 2" do
-      [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
-    end
-  end
-
-  describe "product" do
-    it "does example 1" do
-      r = [] of Int32
-      [1,2,3].product([5,6]) { |a, b| r << a; r << b }
-      r.should eq([1,5,1,6,2,5,2,6,3,5,3,6])
-    end
-  end
-
-  describe "zip" do
-    describe "when a block is provided" do
-      it "yields pairs of self's elements and passed array" do
-        a, b, r = [1, 2, 3], [4, 5, 6], ""
-        a.zip(b) { |x, y| r += "#{x}:#{y}," }
-        r.should eq("1:4,2:5,3:6,")
+    it "raises when empty" do
+      expect_raises IndexOutOfBounds do
+        ([] of Int32).shift
       end
     end
 
-    describe "when no block is provided" do
-      describe "and the arrays have different typed elements" do
-        it "returns an array of paired elements (tuples)" do
-          a, b = [1, 2, 3], ["a", "b", "c"]
-          r = a.zip(b)
-          r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
-        end
+    it "shifts many elements" do
+      a = [1, 2, 3, 4, 5]
+      b = a.shift(3)
+      b.should eq([1, 2, 3])
+      a.should eq([4, 5])
+    end
+
+    it "shifts more than what is available" do
+      a = [1, 2, 3, 4, 5]
+      b = a.shift(10)
+      b.should eq([1, 2, 3, 4, 5])
+      a.should eq([] of Int32)
+    end
+
+    it "shifts negative count raises" do
+      a = [1, 2]
+      expect_raises ArgumentError do
+        a.shift(-1)
       end
+    end
+  end
+
+  describe "shuffle" do
+    it "shuffle!" do
+      a = [1, 2, 3]
+      a.shuffle!
+      b = [1, 2, 3]
+      3.times { a.includes?(b.shift).should be_true }
+    end
+
+    it "shuffle" do
+      a = [1, 2, 3]
+      b = a.shuffle
+      a.same?(b).should be_false
+      a.should eq([1, 2, 3])
+
+      3.times { b.includes?(a.shift).should be_true }
+    end
+  end
+
+  describe "sort" do
+    it "sort! without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      a.sort!
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "sort without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      b = a.sort
+      b.should eq([1, 2, 3, 4, 5, 6])
+      a.should_not eq(b)
+    end
+
+    it "sort! with a block" do
+      a = ["foo", "a", "hello"]
+      a.sort! { |x, y| x.length <=> y.length }
+      a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sort with a block" do
+      a = ["foo", "a", "hello"]
+      b = a.sort { |x, y| x.length <=> y.length }
+      b.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+
+    it "sorts by!" do
+      a = ["foo", "a", "hello"]
+      a.sort_by! &.length
+      a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sorts by" do
+      a = ["foo", "a", "hello"]
+      b = a.sort_by &.length
+      b.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
     end
   end
 
@@ -638,52 +621,70 @@ describe "Array" do
     end
   end
 
-  describe "==" do
-    it "compares" do
-      a = [1, 2, 3]
-      b = [1, 2, 3]
-      c = [1, 2, 3, 4]
-      d = [1, 2, 4]
-      (a == b).should be_true
-      (b == c).should be_false
-      (a == d).should be_false
-    end
-  end
-
-  describe "equals?" do
-    it "compares with custom block" do
-      a = [1, 3, 2]
-      b = [3, 9, 4]
-      c = [5, 7, 3]
-      d = [1, 3, 2, 4]
-      f = ->(x : Int32, y : Int32) { (x % 2) == (y % 2) }
-      a.equals?(b, &f).should be_true
-      a.equals?(c, &f).should be_false
-      a.equals?(d, &f).should be_false
-    end
-  end
-
-  it "does each_index" do
-    a = [1, 1, 1]
-    b = 0
-    a.each_index { |i| b += i }
-    b.should eq(3)
-  end
-
   describe "to_s" do
-    assert { [1, 2, 3].to_s.should eq("[1, 2, 3]") }
+    it "does to_s" do
+      assert { [1, 2, 3].to_s.should eq("[1, 2, 3]") }
+    end
 
     alias RecursiveArray = Array(RecursiveArray)
-    assert do
+
+    it "does with recursive" do
       ary = [] of RecursiveArray
       ary << ary
       ary.to_s.should eq("[[...]]")
     end
   end
 
-  it "updates value" do
+  describe "uniq!" do
+    it "uniqs without block" do
+      a = [1, 2, 2, 3, 1, 4, 5, 3]
+      a.uniq!
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "uniqs with block" do
+      a = [-1, 1, 0, 2, -2]
+      a.uniq! { |x| x.abs }
+      a.should eq([-1, 0, 2])
+    end
+
+    it "uniqs with true" do
+      a = [1, 2, 3]
+      a.uniq! { true }
+      a.should eq([1])
+    end
+  end
+
+  it "does unshift" do
+    a = [2, 3]
+    expected = [1, 2, 3]
+    a.unshift(1).should eq(expected)
+    a.should eq(expected)
+  end
+
+  it "does update" do
     a = [1, 2, 3]
     a.update(1) { |x| x * 2 }
     a.should eq([1, 4, 3])
+  end
+
+  describe "zip" do
+    describe "when a block is provided" do
+      it "yields pairs of self's elements and passed array" do
+        a, b, r = [1, 2, 3], [4, 5, 6], ""
+        a.zip(b) { |x, y| r += "#{x}:#{y}," }
+        r.should eq("1:4,2:5,3:6,")
+      end
+    end
+
+    describe "when no block is provided" do
+      describe "and the arrays have different typed elements" do
+        it "returns an array of paired elements (tuples)" do
+          a, b = [1, 2, 3], ["a", "b", "c"]
+          r = a.zip(b)
+          r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
+        end
+      end
+    end
   end
 end
