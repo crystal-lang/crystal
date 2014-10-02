@@ -203,13 +203,16 @@ class Hash(K, V)
 
   def merge(other : Hash(K2, V2))
     hash = Hash(K | K2, V | V2).new
-    each do |k, v|
-      hash[k] = v
-    end
-    other.each do |k, v|
-      hash[k] = v
-    end
+    hash.merge! self
+    hash.merge! other
     hash
+  end
+
+  def merge!(other : Hash)
+    other.each do |k, v|
+      self[k] = v
+    end
+    self
   end
 
   def self.zip(ary1 : Array(K), ary2 : Array(V))
