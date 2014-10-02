@@ -68,4 +68,12 @@ describe "Lexer: location" do
     token.column_number.should eq(34)
     token.filename.should eq("foo")
   end
+
+  it "assigns correct loc location to node" do
+    node = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)])
+    location = node.location.not_nil!
+    location.line_number.should eq(2)
+    location.column_number.should eq(3)
+    location.filename.should eq("foo.txt")
+  end
 end
