@@ -19,6 +19,12 @@ describe "CGI" do
     it "unescapes #{from}" do
       CGI.unescape(from).should eq(to)
     end
+
+    it "unescapes #{from} to IO" do
+      String.build do |str|
+        CGI.unescape(from, str)
+      end.should eq(to)
+    end
   end
 
   [
@@ -35,6 +41,12 @@ describe "CGI" do
     from, to = tuple
     it "escapes #{to}" do
       CGI.escape(to).should eq(from)
+    end
+
+    it "escapes #{to} to IO" do
+      String.build do |str|
+        CGI.escape(to, str)
+      end.should eq(from)
     end
   end
 

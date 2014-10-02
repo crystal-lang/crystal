@@ -2,42 +2,50 @@ module CGI
   # URL-decode a string.
   #
   #     CGI.unescape("%27Stop%21%27+said+Fred") => "'Stop!' said Fred"
-  def self.unescape(string)
-    String.build do |io|
-      i = 0
-      bytesize = string.bytesize
-      while i < bytesize
-        byte = string.unsafe_byte_at(i)
-        char = byte.chr
-        i = unescape_one string, bytesize, i, byte, char, io
-      end
+  def self.unescape(string : String)
+    String.build { |io| unescape(string, io) }
+  end
+
+  # URL-decode a string and write the result to an IO.
+  def self.unescape(string : String, io : IO)
+    i = 0
+    bytesize = string.bytesize
+    while i < bytesize
+      byte = string.unsafe_byte_at(i)
+      char = byte.chr
+      i = unescape_one string, bytesize, i, byte, char, io
     end
+    io
   end
 
   # URL-encode a string.
   #
   #     CGI.escape("'Stop!' said Fred") => "%27Stop%21%27+said+Fred"
-  def self.escape(string)
-    String.build do |io|
-      string.each_char do |char|
-        if char == ' '
-          io.write_byte '+'.ord.to_u8
-        elsif char.alphanumeric? || char == '_' || char == '.' || char == '-'
-          io.write_byte char.ord.to_u8
-        else
-          char.each_byte do |byte|
-            io.write_byte '%'.ord.to_u8
-            byte.to_s(16, io)
-          end
+  def self.escape(string : String)
+    String.build { |io| escape(string, io) }
+  end
+
+  # URL-encode a string and write the result to an IO.
+  def self.escape(string : String, io : IO)
+    string.each_char do |char|
+      if char == ' '
+        io.write_byte '+'.ord.to_u8
+      elsif char.alphanumeric? || char == '_' || char == '.' || char == '-'
+        io.write_byte char.ord.to_u8
+      else
+        char.each_byte do |byte|
+          io.write_byte '%'.ord.to_u8
+          byte.to_s(16, io)
         end
       end
     end
+    io
   end
 
   # Parses an HTTP query string into a Hash(String, Array(String))
   #
   #     CGI.parse("foo=bar&foo=baz&qux=zoo") #=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
-  def self.parse(query)
+  def self.parse(query : String)
     parsed = {} of String => Array(String)
     parse(query) do |key, value|
       ary = parsed[key] ||= [] of String
@@ -51,7 +59,7 @@ module CGI
   #     CGI.parse(query) do |key, value|
   #       # ...
   #     end
-  def self.parse(query)
+  def self.parse(query : String)
     key = nil
     buffer = StringIO.new
 
