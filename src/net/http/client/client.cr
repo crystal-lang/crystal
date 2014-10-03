@@ -1,55 +1,126 @@
 require "openssl"
-require "json"
 require "socket"
 require "uri"
+require "cgi"
 require "../common/common"
 
 class HTTP::Client
-  def self.exec(host, port, request)
-    TCPSocket.open(host, port) do |socket|
-      request.to_io(socket)
-      HTTP::Response.from_io(socket)
+  def initialize(@host, port = nil, @ssl = false)
+    @port = port || (ssl ? 443 : 80)
+  end
+
+  def self.new(host, port = nil, ssl = false)
+    client = new(host, port, ssl)
+    begin
+      yield client
+    ensure
+      client.close
     end
   end
 
-  def self.exec_ssl(host, port, request)
-    TCPSocket.open(host, port) do |socket|
-      OpenSSL::SSL::Socket.open_client(socket) do |ssl_socket|
-        request.to_io(ssl_socket)
-        HTTP::Response.from_io(ssl_socket)
+  def before_request(&@before_request : HTTP::Request ->)
+  end
+
+  {% for method in %w(get post put head delete patch) %}
+    def {{method.id}}(path, headers = nil, body = nil)
+      exec :{{method.id}}, path, headers, body
+    end
+
+    def self.{{method.id}}(url, headers = nil, body = nil)
+      exec :{{method.id}}, url, headers, body
+    end
+  {% end %}
+
+  def post_form(path, form : String, headers = nil)
+    headers ||= {} of String => String
+    headers["Content-Type"] = "application/x-www-form-urlencoded"
+    post path, headers, form
+  end
+
+  def post_form(path, form : Hash, headers = nil)
+    body = CGI.build_form do |form_builder|
+      form.each do |key, value|
+        form_builder.add key, value
       end
     end
+
+    post_form path, body, headers
   end
 
-  def self.get(host, port, path, headers = nil)
-    exec(host, port, HTTP::Request.new("GET", path, headers))
+  def exec(request : HTTP::Request)
+    request.to_io(STDOUT)
+    puts
+    request.to_io(socket)
+    HTTP::Response.from_io(socket)
   end
 
-  def self.get(url)
-    exec_url(url) do |path, headers|
-      HTTP::Request.new("GET", path, headers)
+  def exec(method, path, headers = nil, body = nil)
+    exec new_request method, path, headers, body
+  end
+
+  def close
+    @ssl_socket.try &.close
+    @ssl_socket = nil
+
+    @socket.try &.close
+    @socket = nil
+  end
+
+  private def new_request(method, path, headers, body)
+    headers ||= {} of String => String
+    headers["Host"] ||= host_header
+    request = HTTP::Request.new method, path, headers, body
+    @before_request.try &.call(request)
+    request
+  end
+
+  private def socket
+    socket = @socket ||= TCPSocket.new @host, @port
+    if @ssl
+      @ssl_socket ||= OpenSSL::SSL::Socket.new(socket)
+    else
+      socket
     end
   end
 
-  def self.get_json(url)
-    Json.parse(get(url).body.not_nil!)
-  end
-
-  def self.post(url, body)
-    exec_url(url) do |path, headers|
-      HTTP::Request.new("POST", path, headers, body)
+  private def host_header
+    if (@ssl && @port != 443) || (!@ssl && @port != 80)
+      "#{@host}:#{@port}"
+    else
+      @host
     end
   end
 
-  private def self.exec_url(url)
+  def self.post_form(url, form, headers = nil)
+    exec(url) do |client, path|
+      client.post_form(path, form, headers)
+    end
+  end
+
+  def self.exec(method, url, headers = nil, body = nil)
+    exec(url) do |client, path|
+      client.exec method, path, headers, body
+    end
+  end
+
+  private def self.exec(url)
     uri = URI.parse(url)
-    host_header = uri.port ? "#{uri.host}:#{uri.port}" : uri.host
-    request = yield uri.full_path, {"Host" => host_header}
+    host = uri.host.not_nil!
+    port = uri.port
+    path = uri.full_path
+    ssl = false
 
     case uri.scheme
-    when "http" then exec(uri.host, uri.port || 80, request)
-    when "https" then exec_ssl(uri.host, uri.port || 443, request)
-    else raise "Unsuported scheme: #{uri.scheme}"
+    when "http"
+      # Nothing
+    when "https"
+      ssl = true
+    else
+      raise "Unsuported scheme: #{uri.scheme}"
+    end
+
+    HTTP::Client.new(host, port, ssl) do |client|
+      yield client, path
     end
   end
 end

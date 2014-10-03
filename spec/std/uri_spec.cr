@@ -9,7 +9,7 @@ def assert_uri(string, scheme, host, port, path, query_string)
     uri.host.should eq(host)
     uri.port.should eq(port)
     uri.path.should eq(path)
-    uri.query_string.should eq(query_string)
+    uri.query.should eq(query_string)
   end
 end
 
@@ -29,5 +29,13 @@ describe "URI" do
   assert { URI.parse("http://www.google.com/foo?q=1").full_path.should eq("/foo?q=1") }
   assert { URI.parse("http://www.google.com/?q=1").full_path.should eq("/?q=1") }
   assert { URI.parse("http://www.google.com?q=1").full_path.should eq("/?q=1") }
+
+  describe "to_s" do
+    assert { URI.new("http", "www.google.com").to_s.should eq("http://www.google.com") }
+    assert { URI.new("http", "www.google.com", 80).to_s.should eq("http://www.google.com") }
+    assert { URI.new("http", "www.google.com", 1234).to_s.should eq("http://www.google.com:1234") }
+    assert { URI.new("http", "www.google.com", 80, "/hello").to_s.should eq("http://www.google.com/hello") }
+    assert { URI.new("http", "www.google.com", 80, "/hello", "a=1").to_s.should eq("http://www.google.com/hello?a=1") }
+  end
 end
 

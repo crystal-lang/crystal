@@ -19,6 +19,8 @@ require "./handlers/*"
 class HTTP::Server
   property ssl
 
+  @wants_close = false
+
   def initialize(@port, &@handler : Request -> Response)
   end
 
@@ -31,7 +33,9 @@ class HTTP::Server
 
   def listen
     server = TCPServer.new(@port)
-    loop { handle_client(server.accept) }
+    until @wants_close
+      handle_client(server.accept)
+    end
   end
 
   def listen_fork(workers = 8)
@@ -46,13 +50,17 @@ class HTTP::Server
     gets
   end
 
+  def close
+    @wants_close = true
+  end
+
   private def handle_client(sock)
     io = sock
     io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
     io = BufferedIO.new(io)
 
     begin
-      loop do
+      until @wants_close
         begin
           request = HTTP::Request.from_io(io)
         rescue

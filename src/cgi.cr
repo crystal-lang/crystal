@@ -92,6 +92,30 @@ module CGI
     end
   end
 
+  def self.build_form
+    form_builder = FormBuilder.new
+    yield form_builder
+    form_builder.to_s
+  end
+
+  struct FormBuilder
+    def initialize
+      @string = StringIO.new
+    end
+
+    def add(key, value)
+      @string << '&' unless @string.empty?
+      CGI.escape key, @string
+      @string << '='
+      CGI.escape value, @string if value
+      self
+    end
+
+    def to_s
+      @string.to_s
+    end
+  end
+
   private def self.unescape_one(string, bytesize, i, byte, char, io)
     if char == '+'
       io.write_byte ' '.ord.to_u8
