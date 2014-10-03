@@ -1,7 +1,7 @@
-class Json::Parser
+class Json::Parser < Json::Lexer
   def initialize(string)
-    @lexer = Lexer.new(string)
-    @token = next_token
+    super(string)
+    next_token
   end
 
   def parse
@@ -24,13 +24,6 @@ class Json::Parser
       value_and_next_token true
     when :false
       value_and_next_token false
-    else
-      parse_array_or_object
-    end
-  end
-
-  private def parse_array_or_object
-    case @token.type
     when :"["
       parse_array
     when :"{"
@@ -105,10 +98,6 @@ class Json::Parser
 
   private def check(token_type)
     unexpected_token unless @token.type == token_type
-  end
-
-  private def next_token
-    @token = @lexer.next_token
   end
 
   private def unexpected_token
