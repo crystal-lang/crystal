@@ -423,7 +423,7 @@ class String
       buffer.copy_from(cstr, bytesize)
       (buffer + bytesize).copy_from(other.cstr, other.bytesize)
 
-      if single_byte_optimizable? && other.single_byte_optimizable?
+      if length_known? && other.length_known?
         {size, @length + other.@length}
       else
         {size, 0}
@@ -897,6 +897,10 @@ class String
 
   protected def single_byte_optimizable?
     @bytesize == @length
+  end
+
+  protected def length_known?
+    @bytesize == 0 || @length > 0
   end
 
   def to_s

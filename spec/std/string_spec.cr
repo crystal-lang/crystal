@@ -441,10 +441,19 @@ describe "String" do
     str.should eq("foofoofoofoofoofoofoofoofoofoo")
   end
 
-  it "does +" do
-    str = "foo" + "bar"
-    str.bytesize.should eq(6)
-    str.should eq("foobar")
+  describe "+" do
+    it "does for both ascii" do
+      str = "foo" + "bar"
+      str.bytesize.should eq(6)
+      str.@length.should eq(6)
+      str.should eq("foobar")
+    end
+
+    it "does for both unicode" do
+      str = "青い" + "旅路"
+      str.@length.should eq(4)
+      str.should eq("青い旅路")
+    end
   end
 
   it "does %" do
