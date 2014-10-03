@@ -948,7 +948,7 @@ module Crystal
       named_args.each do |named_arg|
         found_index = a_def.args.index { |arg| arg.name == named_arg.name }
         if found_index
-          min_length, max_length = a_def.min_max_args_lengths
+          min_length = args.length
           if found_index < min_length
             named_arg.raise "argument '#{named_arg.name}' already specified"
           end

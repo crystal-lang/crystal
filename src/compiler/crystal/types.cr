@@ -548,19 +548,22 @@ module Crystal
       end
 
       # Now check named args
-      named_args.try &.each do |named_arg|
-        found_index = a_def.args.index { |arg| arg.name == named_arg.name }
-        if found_index
-          # Check whether the named arg refers to an argument before the first default argument
-          if found_index < def_metadata.min_length
-            return nil
-          end
+      if named_args
+        min_index = signature.arg_types.length
+        named_args.each do |named_arg|
+          found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+          if found_index
+            # Check whether the named arg refers to an argument before the first default argument
+            if found_index < min_index
+              return nil
+            end
 
-          unless match_arg(named_arg.value.type, a_def.args[found_index], context)
+            unless match_arg(named_arg.value.type, a_def.args[found_index], context)
+              return nil
+            end
+          else
             return nil
           end
-        else
-          return nil
         end
       end
 

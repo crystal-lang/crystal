@@ -55,4 +55,14 @@ describe "Type inference: named args" do
       ),
       "no overload matches"
   end
+
+  it "errors if named arg already specified but in same position" do
+    assert_error %(
+      def foo(headers = nil)
+      end
+
+      foo 1, headers: 2
+      ),
+      "argument 'headers' already specified"
+  end
 end
