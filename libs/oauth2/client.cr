@@ -5,12 +5,12 @@ class OAuth2::Client
   def initialize(@host, @client_id, @client_secret,
     @port = 443,
     @scheme = "https",
-    @authorization_uri = "/oauth2/authorize",
-    @token_endpoint = "/oauth2/token",
+    @authorize_uri = "/oauth2/authorize",
+    @token_uri = "/oauth2/token",
     @redirect_uri = nil)
   end
 
-  def authorization_uri(scope = nil)
+  def authorize_uri(scope = nil)
     query = CGI.build_form do |form|
       form.add "client_id", @client_id
       form.add "redirect_uri", @redirect_uri
@@ -18,10 +18,10 @@ class OAuth2::Client
       form.add "scope", scope
     end
 
-    URI.new(@scheme, @host, @port, @authorization_uri, query).to_s
+    URI.new(@scheme, @host, @port, @authorize_uri, query).to_s
   end
 
-  def request_access_token
+  def get_access_token
     body = CGI.build_form do |form|
       form
         .add("client_id", @client_id)
@@ -31,7 +31,7 @@ class OAuth2::Client
         .add("code", @authorization_code)
     end
 
-    response = HTTP::Client.post_form(token_endpoint_uri, body)
+    response = HTTP::Client.post_form(token_uri, body)
     case response.status_code
     when 200, 201
       OAuth2::AccessToken.from_json(response.body.not_nil!)
@@ -40,7 +40,7 @@ class OAuth2::Client
     end
   end
 
-  private def token_endpoint_uri
-    URI.new(@scheme, @host, @port, @token_endpoint).to_s
+  private def token_uri
+    URI.new(@scheme, @host, @port, @token_uri).to_s
   end
 end
