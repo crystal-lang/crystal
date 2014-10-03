@@ -9,3 +9,4 @@ script:
   - make crystal spec
 notifications:
   irc: "irc.freenode.net#crystal-lang"
+  slack: "Yfr2462ncrSZiT+yuq547zNtLceoWneB0yJRgcVH3hqIVffVla0HUoze903RhXVqY973LBP4AlAEiH9fr/VSYjPsG0Q5ZaKfligO9QvYvcixiyrSZZFLUidMUlRlDTSqZ1vYJS0C8YpDr1oXWg1TVzcfSKz2teNNVv0VcX70RZg="
