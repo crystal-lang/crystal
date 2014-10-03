@@ -151,7 +151,10 @@ module Crystal
     def parse_expression
       location = @token.location
       atomic = parse_op_assign
+      parse_expression_suffix atomic, location
+    end
 
+    def parse_expression_suffix(atomic, location)
       while true
         case @token.type
         when :SPACE
@@ -196,7 +199,6 @@ module Crystal
           end
         end
       end
-
       atomic
     end
 
@@ -210,10 +212,16 @@ module Crystal
         when :SPACE
           next_token
         when :IDENT
-          if @token.value == :rescue
+          case @token.value
+          when :rescue
             next_token_skip_space
             rescue_body = parse_expression
             atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
+            atomic.location = location
+          when :ensure
+            next_token_skip_space
+            ensure_body = parse_expression
+            atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
             atomic.location = location
           end
           break

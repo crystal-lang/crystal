@@ -712,6 +712,8 @@ describe "Parser" do
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
   it_parses "x = 1 rescue 2", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
+  it_parses "1 ensure 2", ExceptionHandler.new(1.int32, ensure: 2.int32)
+
   it_parses "1 <= 2 <= 3", Call.new(Call.new(1.int32, "<=", [2.int32] of ASTNode), "<=", [3.int32] of ASTNode)
   it_parses "1 == 2 == 3 == 4", Call.new(Call.new(Call.new(1.int32, "==", [2.int32] of ASTNode), "==", [3.int32] of ASTNode), "==", [4.int32] of ASTNode)
 
