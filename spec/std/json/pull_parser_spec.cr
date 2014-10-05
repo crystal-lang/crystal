@@ -154,4 +154,25 @@ describe "Json::PullParser" do
   assert_pull_parse_error %({"foo": {})
   assert_pull_parse_error %({"name": "John", "age", 1})
   assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
+
+  describe "skip" do
+    [
+      {"null", "null"},
+      {"bool", "false"},
+      {"int", "3"},
+      {"float", "3.5"},
+      {"string", %("hello")},
+      {"array", %([10, 20, [30], [40]])},
+      {"object", %({"foo": [1, 2], "bar": {"baz": [3]}})},
+    ].each do |tuple|
+      it "skips #{tuple[0]}" do
+        pull = Json::PullParser.new("[1, #{tuple[1]}, 2]")
+        pull.read_array do
+          pull.read_int.should eq(1)
+          pull.skip
+          pull.read_int.should eq(2)
+        end
+      end
+    end
+  end
 end

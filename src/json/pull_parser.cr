@@ -177,6 +177,19 @@ class Json::PullParser
     end
   end
 
+  def skip
+    case @kind
+    when :null, :bool, :int, :float, :string
+      read_next
+    when :begin_array
+      read_array { skip }
+    when :begin_object
+      read_object { skip }
+    else
+      unexpected_token
+    end
+  end
+
   private def begin_array
     @kind = :begin_array
     @object_stack << :array
