@@ -48,8 +48,6 @@ class HTTP::Client
   end
 
   def exec(request : HTTP::Request)
-    request.to_io(STDOUT)
-    puts
     request.to_io(socket)
     HTTP::Response.from_io(socket)
   end
