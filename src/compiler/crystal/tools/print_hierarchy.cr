@@ -3,7 +3,7 @@ require "set"
 require "colorize"
 
 module Crystal
-  def print_hierarchy(program)
+  def self.print_hierarchy(program)
     HierarchyPrinter.new(program).execute
   end
 

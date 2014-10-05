@@ -119,13 +119,12 @@ module Crystal
       tempfile.close
 
       compiler = Compiler.new
-      compiler.output_filename = tempfile.path
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
       compiler.release = true
 
-      compiler.compile Compiler::Source.new(filename, source)
+      compiler.compile Compiler::Source.new(filename, source), tempfile.path
 
       tempfile.path
     end

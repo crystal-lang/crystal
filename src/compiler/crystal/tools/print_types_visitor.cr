@@ -2,7 +2,7 @@ require "../syntax/ast"
 require "set"
 
 module Crystal
-  def print_types(node)
+  def self.print_types(node)
     visitor = PrintTypesVisitor.new
     # Jump over the require "prelude" that's inserted by the compiler
     if node.is_a?(Expressions)

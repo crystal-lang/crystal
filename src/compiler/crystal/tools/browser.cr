@@ -2,6 +2,30 @@ require "../syntax/ast"
 require "../syntax/to_s"
 
 class Crystal::Browser
+  def self.open(node)
+    browser = Browser.new(node)
+    server, port = create_server
+    puts "Browser open at http://0.0.0.0:#{port}"
+    ifdef darwin
+      system "open http://localhost:#{port}"
+    end
+    while true
+      server.accept do |sock|
+        if request = HTTP::Request.from_io(sock)
+          html = browser.handle(request.path)
+          response = HTTP::Response.new(200, html, {"Content-Type" => "text/html"})
+          response.to_io sock
+        end
+      end
+    end
+  end
+
+  private def self.create_server(port = 4000)
+    {TCPServer.new(port), port}
+  rescue
+    create_server(port + 1)
+  end
+
   def initialize(@node)
     @nodes = {} of typeof(object_id) => ASTNode
   end

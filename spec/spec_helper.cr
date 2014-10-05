@@ -168,8 +168,7 @@ def run(code)
     tempfile.close
 
     compiler = Compiler.new
-    compiler.output_filename = output_filename
-    compiler.compile Compiler::Source.new("spec", code)
+    compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
     tempfile.delete
