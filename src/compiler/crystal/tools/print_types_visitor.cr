@@ -3,15 +3,7 @@ require "set"
 
 module Crystal
   def self.print_types(node)
-    visitor = PrintTypesVisitor.new
-    # Jump over the require "prelude" that's inserted by the compiler
-    if node.is_a?(Expressions)
-      node.expressions[1 .. -1].each do |exp|
-        exp.accept visitor
-      end
-    else
-      node.accept visitor
-    end
+    node.accept PrintTypesVisitor.new
   end
 
   class PrintTypesVisitor < Visitor
