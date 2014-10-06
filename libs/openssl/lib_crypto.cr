@@ -74,4 +74,8 @@ lib LibCrypto
 
   fun hmac = HMAC(evp : EVP_MD, key : UInt8*, key_len : Int32,
                   d : UInt8*, n : C::SizeT, md : UInt8*, md_len : UInt32*) : UInt8*
+
+  fun rand_bytes = RAND_bytes(buf : UInt8*, num : Int32) : Int32
+  fun err_get_error = ERR_get_error : UInt64
+  fun err_error_string = ERR_error_string(e : UInt64, buf : UInt8*) : UInt8*
 end
