@@ -10,11 +10,11 @@ module Base64
   class Error < Exception; end
 
   def encode64(data)
-    data = to_slice(data)
-    String.new(encode_size(data.length, true)) do |buf|
+    slice = data.to_slice
+    String.new(encode_size(slice.length, true)) do |buf|
       inc = 0
       appender = buf.appender
-      to_base64(data, CHARS_STD, true) do |byte|
+      to_base64(slice, CHARS_STD, true) do |byte|
         appender << byte
         inc += 1
         if inc >= LINE_SIZE
@@ -31,30 +31,30 @@ module Base64
   end
 
   def strict_encode64(data)
-    data = to_slice(data)
-    String.new(encode_size(data.length)) do |buf|
+    slice = data.to_slice
+    String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(data, CHARS_STD, true) { |byte| appender << byte }
+      to_base64(slice, CHARS_STD, true) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
   end
 
   def urlsafe_encode64(data)
-    data = to_slice(data)
-    String.new(encode_size(data.length)) do |buf|
+    slice = data.to_slice
+    String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(data, CHARS_SAFE, false) { |byte| appender << byte }
+      to_base64(slice, CHARS_SAFE, false) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
   end
 
   def decode64(data)
-    data = to_slice(data)
-    String.new(decode_size(data.length)) do |buf|
+    slice = data.to_slice
+    String.new(decode_size(slice.length)) do |buf|
       appender = buf.appender
-      from_base64(data) { |byte| appender << byte }
+      from_base64(slice) { |byte| appender << byte }
       {appender.count, 0}
     end
   end
@@ -65,18 +65,6 @@ module Base64
 
   def urlsafe_decode64(str)
     decode64(str)
-  end
-
-  private def to_slice(data : Slice(UInt8))
-    data
-  end
-
-  private def to_slice(data : StaticArray(UInt8, N))
-    data.to_slice
-  end
-
-  private def to_slice(data : String)
-    Slice(UInt8).new(data.cstr, data.bytesize)
   end
 
   private def encode_size(str_size, new_lines = false)

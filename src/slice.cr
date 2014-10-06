@@ -107,6 +107,10 @@ struct Slice(T)
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end
 
+  def to_slice
+    self
+  end
+
   def to_s(io)
     io << "["
     join ", ", io, &.inspect(io)

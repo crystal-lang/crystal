@@ -903,6 +903,10 @@ class String
     @bytesize == 0 || @length > 0
   end
 
+  def to_slice
+    Slice.new(cstr, bytesize)
+  end
+
   def to_s
     self
   end
