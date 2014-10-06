@@ -12,7 +12,7 @@ abstract class OAuth2::AccessToken
       when "token_type"    then token_type    = pull.read_string
       when "access_token"  then access_token  = pull.read_string
       when "expires_in"    then expires_in    = pull.read_int
-      when "refresh_token" then refresh_token = pull.read_string
+      when "refresh_token" then refresh_token = pull.read_string_or_null
       when "mac_algorithm" then mac_algorithm = pull.read_string
       when "mac_key"       then mac_key       = pull.read_string
       else
@@ -20,12 +20,15 @@ abstract class OAuth2::AccessToken
       end
     end
 
+    access_token = access_token.not_nil!
+    expires_in = expires_in.not_nil!
+
     if token_type
       case token_type.downcase
       when "bearer"
-        Bearer.new(access_token.not_nil!, expires_in.not_nil!, refresh_token.not_nil!)
+        Bearer.new(access_token, expires_in, refresh_token)
       when "mac"
-        Mac.new(access_token.not_nil!, expires_in.not_nil!, refresh_token.not_nil!, mac_algorithm.not_nil!, mac_key.not_nil!)
+        Mac.new(access_token, expires_in, refresh_token, mac_algorithm.not_nil!, mac_key.not_nil!)
       else
         raise "Uknown token_type in access token json: #{token_type}"
       end

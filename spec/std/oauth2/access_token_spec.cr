@@ -63,6 +63,20 @@ class OAuth2::AccessToken
       access_token.mac_key.should eq(mac_key)
     end
 
+    it "builds with null refresh token" do
+      json = %({
+        "token_type": "Mac",
+        "access_token":"WRN01OBN1gme8HxeRL5yJ8w05PjCvt-2vXOIle43w9s",
+        "expires_in":899,
+        "refresh_token":null,
+        "mac_algorithm":"hmac-sha-256",
+        "mac_key":"N-ATggO2ywqylWgIi3QZn40jWJmL2f9h6ZOGd3jqcxU"
+        })
+      access_token = AccessToken.from_json(json)
+      access_token = access_token as Mac
+      access_token.refresh_token.should be_nil
+    end
+
     it "dumps to json" do
       token = Mac.new("access token", 3600, "refresh token", "mac algorithm", "mac key")
       token2 = AccessToken.from_json(token.to_json)
