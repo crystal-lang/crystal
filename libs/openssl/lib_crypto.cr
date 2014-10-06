@@ -55,4 +55,10 @@ lib LibCrypto
   fun md5 = MD5(data : UInt8*, lengh : C::SizeT, md : UInt8*) : UInt8*
 
   fun sha1 = SHA1(data : UInt8*, length : C::SizeT, md : UInt8*) : UInt8*
+
+  type EVP_MD = Void
+
+  fun evp_sha1 = EVP_sha1 : EVP_MD*
+  fun hmac = HMAC(evp : EVP_MD*, key : UInt8*, key_len : Int32,
+                  d : UInt8*, n : C::SizeT, md : UInt8*, md_len : UInt32*) : UInt8*
 end
