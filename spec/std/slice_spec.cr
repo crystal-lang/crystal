@@ -96,4 +96,9 @@ describe "Slice" do
 
     expect_raises IndexOutOfBounds { slice.copy_to(pointer, 5) }
   end
+
+  it "does hexstring" do
+    slice = Slice(UInt8).new(4) { |i| i.to_u8 + 1 }
+    slice.hexstring.should eq("01020304")
+  end
 end

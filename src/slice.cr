@@ -88,6 +88,25 @@ struct Slice(T)
     to_s(io)
   end
 
+  def hexstring
+    self as Slice(UInt8)
+
+    str_length = length * 2
+    hash_str = String.new(str_length) do |buffer|
+      i = 0
+      each do |v|
+        buffer[i * 2] = to_hex(v >> 4)
+        buffer[i * 2 + 1] = to_hex(v & 0x0f)
+        i += 1
+      end
+      {str_length, str_length}
+    end
+  end
+
+  private def to_hex(c)
+    ((c < 10 ? 48_u8 : 87_u8) + c)
+  end
+
   def to_s(io)
     io << "["
     join ", ", io, &.inspect(io)
