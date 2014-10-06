@@ -2,7 +2,7 @@ require "./*"
 
 module HTTP
   def self.parse_headers_and_body(io)
-    headers = Hash(String, String).new(nil, Hash::CaseInsensitiveComparator)
+    headers = HTTP::Headers.new
 
     while line = io.gets
       if line == "\r\n" || line == "\n"

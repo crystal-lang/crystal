@@ -5,7 +5,10 @@ require "net/http"
 module HTTP
   describe Request do
     it "serialize GET" do
-      request = Request.new :get, "/", {"Host" => "host.domain.com"}
+      headers = HTTP::Headers.new
+      headers["Host"] = "host.domain.com"
+      request = Request.new :get, "/", headers
+
       io = StringIO.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")
@@ -15,7 +18,7 @@ module HTTP
       request = Request.new :post, "/", body: "thisisthebody"
       io = StringIO.new
       request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      io.to_s.should eq("POST / HTTP/1.1\r\nContent-length: 13\r\n\r\nthisisthebody")
     end
 
     it "parses GET" do
@@ -55,7 +58,9 @@ module HTTP
       end
 
       it "is true in HTTP/1.0 if `Connection: keep-alive` header is present" do
-        request = Request.new "GET", "/", headers: {"Connection" => "keep-alive"}, version: "HTTP/1.0"
+        headers = HTTP::Headers.new
+        headers["Connection"] = "keep-alive"
+        request = Request.new "GET", "/", headers: headers, version: "HTTP/1.0"
         request.keep_alive?.should be_true
       end
 
@@ -65,7 +70,9 @@ module HTTP
       end
 
       it "is false in HTTP/1.1 if `Connection: close` header is present" do
-        request = Request.new "GET", "/", headers: {"Connection" => "close"}, version: "HTTP/1.1"
+        headers = HTTP::Headers.new
+        headers["Connection"] = "close"
+        request = Request.new "GET", "/", headers: headers, version: "HTTP/1.1"
         request.keep_alive?.should be_false
       end
     end

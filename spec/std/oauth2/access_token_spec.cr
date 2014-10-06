@@ -84,8 +84,11 @@ class OAuth2::AccessToken
     end
 
     it "authenticates request" do
+      headers = HTTP::Headers.new
+      headers["Host"] = "localhost:4000"
+
       token = Mac.new("3n2\b-YaAzH67YH9UJ-9CnJ_PS-vSy1MRLM-q7TZknPw", 3600, nil, "hmac-sha-256", "i-pt1Lir-yAfUdXbt-AXM1gMupK7vDiOK1SZGWkASDc")
-      request = HTTP::Request.new "GET", "/some/resource.json", {"Host": "localhost:4000"}
+      request = HTTP::Request.new "GET", "/some/resource.json", headers
       token.authenticate request, false
       auth = request.headers["Authorization"]
       (auth =~ /MAC id=".+?", nonce=".+?", ts=".+?", mac=".+?"/).should be_truthy

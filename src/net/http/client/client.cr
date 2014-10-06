@@ -34,7 +34,7 @@ class HTTP::Client
   {% end %}
 
   def post_form(path, form : String, headers = nil)
-    headers ||= {} of String => String
+    headers ||= HTTP::Headers.new
     headers["Content-Type"] = "application/x-www-form-urlencoded"
     post path, headers, form
   end
@@ -67,7 +67,7 @@ class HTTP::Client
   end
 
   private def new_request(method, path, headers, body)
-    headers ||= {} of String => String
+    headers ||= HTTP::Headers.new
     headers["Host"] ||= host_header
     request = HTTP::Request.new method, path, headers, body
     @before_request.try &.call(request)

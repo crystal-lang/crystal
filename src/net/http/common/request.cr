@@ -7,7 +7,7 @@ class HTTP::Request
   getter body
   getter version
 
-  def initialize(method, @path, @headers = {} of String => String, @body = nil, @version = "HTTP/1.1")
+  def initialize(method, @path, @headers = HTTP::Headers.new : HTTP::Headers, @body = nil, @version = "HTTP/1.1")
     @method = case method
               when :get then "GET"
               when :post then "POST"

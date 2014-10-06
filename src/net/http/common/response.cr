@@ -8,25 +8,30 @@ class HTTP::Response
   getter body
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = {} of String => String, status_message = nil, @version = "HTTP/1.1")
+  def initialize(@status_code, @body = nil, @headers = HTTP::Headers.new : HTTP::Headers, status_message = nil, @version = "HTTP/1.1")
     @status_message = status_message || class.default_status_message_for(@status_code)
 
     if (body = @body)
-      new_headers = @headers ||= {} of String => String
-      new_headers["Content-Length"] = body.bytesize.to_s
+      @headers["Content-Length"] = body.bytesize.to_s
     end
   end
 
   def self.not_found
-    HTTP::Response.new(404, "Not Found", {"Content-Type" => "text/plain"})
+    headers = HTTP::Headers.new
+    headers["Content-Type"] = "text/plain"
+    HTTP::Response.new(404, "Not Found", headers)
   end
 
   def self.ok(content_type, body)
-    HTTP::Response.new(200, body, {"Content-Type" => content_type})
+    headers = HTTP::Headers.new
+    headers["Content-Type"] = content_type
+    HTTP::Response.new(200, body, headers)
   end
 
   def self.error(content_type, body)
-    HTTP::Response.new(500, body, {"Content-Type" => content_type})
+    headers = HTTP::Headers.new
+    headers["Content-Type"] = content_type
+    HTTP::Response.new(500, body, headers)
   end
 
   def to_io(io)
