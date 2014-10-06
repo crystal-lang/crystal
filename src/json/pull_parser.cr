@@ -16,12 +16,29 @@ class Json::PullParser
 
     @token = @lexer.next_token
     case @token.type
+    when :null
+      @kind = :null
+    when :false
+      @kind = :bool
+      @bool_value = false
+    when :true
+      @kind = :bool
+      @bool_value = true
+    when :INT
+      @kind = :int
+      @int_value = @token.int_value
+    when :FLOAT
+      @kind = :float
+      @float_value = @token.float_value
+    when :STRING
+      @kind = :string
+      @string_value = @token.string_value
     when :"["
       begin_array
     when :"{"
       begin_object
     else
-      raise Json::ParseException.new("expecting '[' or '{'", @token.line_number, @token.column_number)
+      unexpected_token
     end
   end
 
@@ -91,6 +108,39 @@ class Json::PullParser
   def read_string
     expect_kind :string
     @string_value.tap { read_next }
+  end
+
+  def read_bool_or_null
+    read_null_or { read_bool }
+  end
+
+  def read_int_or_null
+    read_null_or { read_int }
+  end
+
+  def read_float_or_null
+    read_null_or { read_float }
+  end
+
+  def read_string_or_null
+    read_null_or { read_string }
+  end
+
+  def read_array_or_null
+    read_null_or { read_array { yield } }
+  end
+
+  def read_object_or_null
+    read_null_or { read_object { |key| yield key } }
+  end
+
+  private def read_null_or
+    if @kind == :null
+      read_next
+      nil
+    else
+      yield
+    end
   end
 
   def read_next
@@ -225,7 +275,11 @@ class Json::PullParser
     when :",", :"]", :"}"
       # Ok
     else
-      unexpected_token
+      if @object_stack.empty?
+        @kind = :EOF
+      else
+        unexpected_token
+      end
     end
   end
 

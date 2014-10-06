@@ -112,6 +112,12 @@ def assert_pull_parse_error(string)
 end
 
 describe "Json::PullParser" do
+  assert_pull_parse "null"
+  assert_pull_parse "false"
+  assert_pull_parse "true"
+  assert_pull_parse "1"
+  assert_pull_parse "1.5"
+  assert_pull_parse %("hello")
   assert_pull_parse "[]"
   assert_pull_parse "[[]]"
   assert_pull_parse "[1]"
@@ -128,12 +134,6 @@ describe "Json::PullParser" do
   assert_pull_parse %({"foo": 1, "bar": 2})
   assert_pull_parse %({"foo": "foo1", "bar": "bar1"})
 
-  assert_pull_parse_error "null"
-  assert_pull_parse_error "false"
-  assert_pull_parse_error "true"
-  assert_pull_parse_error %("hello")
-  assert_pull_parse_error "1"
-  assert_pull_parse_error "1.5"
   assert_pull_parse_error "[null 2]"
   assert_pull_parse_error "[false 2]"
   assert_pull_parse_error "[true 2]"
@@ -173,6 +173,45 @@ describe "Json::PullParser" do
           pull.read_int.should eq(2)
         end
       end
+    end
+  end
+
+  it "reads bool or null" do
+    Json::PullParser.new("null").read_bool_or_null.should be_nil
+    Json::PullParser.new("false").read_bool_or_null.should be_false
+  end
+
+  it "reads int or null" do
+    Json::PullParser.new("null").read_int_or_null.should be_nil
+    Json::PullParser.new("1").read_int_or_null.should eq(1)
+  end
+
+  it "reads float or null" do
+    Json::PullParser.new("null").read_float_or_null.should be_nil
+    Json::PullParser.new("1.5").read_float_or_null.should eq(1.5)
+  end
+
+  it "reads string or null" do
+    Json::PullParser.new("null").read_string_or_null.should be_nil
+    Json::PullParser.new(%("hello")).read_string_or_null.should eq("hello")
+  end
+
+  it "reads array or null" do
+    Json::PullParser.new("null").read_array_or_null { fail "expected block not to be called" }
+
+    pull = Json::PullParser.new(%([1]))
+    pull.read_array_or_null do
+      pull.read_int.should eq(1)
+    end
+  end
+
+  it "reads object or null" do
+    Json::PullParser.new("null").read_object_or_null { fail "expected block not to be called" }
+
+    pull = Json::PullParser.new(%({"foo": 1}))
+    pull.read_object_or_null do |key|
+      key.should eq("foo")
+      pull.read_int.should eq(1)
     end
   end
 end
