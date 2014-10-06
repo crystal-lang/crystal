@@ -56,9 +56,22 @@ lib LibCrypto
 
   fun sha1 = SHA1(data : UInt8*, length : C::SizeT, md : UInt8*) : UInt8*
 
-  type EVP_MD = Void
+  type EVP_MD = Void*
 
-  fun evp_sha1 = EVP_sha1 : EVP_MD*
-  fun hmac = HMAC(evp : EVP_MD*, key : UInt8*, key_len : Int32,
+  fun evp_dss       = EVP_dss : EVP_MD
+  fun evp_dss1      = EVP_dss1 : EVP_MD
+  fun evp_md2       = EVP_md2 : EVP_MD
+  fun evp_md4       = EVP_md4 : EVP_MD
+  fun evp_md5       = EVP_md5 : EVP_MD
+  fun evp_mdc2      = EVP_mdc2 : EVP_MD
+  fun evp_ripemd160 = EVP_ripemd160 : EVP_MD
+  fun evp_sha       = EVP_sha : EVP_MD
+  fun evp_sha1      = EVP_sha1 : EVP_MD
+  fun evp_sha224    = EVP_sha224 : EVP_MD
+  fun evp_sha256    = EVP_sha256 : EVP_MD
+  fun evp_sha384    = EVP_sha384 : EVP_MD
+  fun evp_sha512    = EVP_sha512 : EVP_MD
+
+  fun hmac = HMAC(evp : EVP_MD, key : UInt8*, key_len : Int32,
                   d : UInt8*, n : C::SizeT, md : UInt8*, md_len : UInt32*) : UInt8*
 end
