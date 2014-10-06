@@ -32,7 +32,7 @@ class OAuth2::AccessToken
     it "authenticates request" do
       token = Bearer.new("access token", 3600, "refresh token")
       request = HTTP::Request.new "GET", "/"
-      token.authenticate request
+      token.authenticate request, false
       request.headers["Authorization"].should eq("Bearer access token")
     end
   end
@@ -81,6 +81,19 @@ class OAuth2::AccessToken
       token = Mac.new("access token", 3600, "refresh token", "mac algorithm", "mac key")
       token2 = AccessToken.from_json(token.to_json)
       token2.should eq(token)
+    end
+
+    it "authenticates request" do
+      token = Mac.new("3n2\b-YaAzH67YH9UJ-9CnJ_PS-vSy1MRLM-q7TZknPw", 3600, nil, "hmac-sha-256", "i-pt1Lir-yAfUdXbt-AXM1gMupK7vDiOK1SZGWkASDc")
+      request = HTTP::Request.new "GET", "/some/resource.json", {"Host": "localhost:4000"}
+      token.authenticate request, false
+      auth = request.headers["Authorization"]
+      (auth =~ /MAC id=".+?", nonce=".+?", ts=".+?", mac=".+?"/).should be_truthy
+    end
+
+    it "computes signature" do
+      mac = Mac.signature 1, "0:1234", "GET", "/resource.json", "localhost", "4000", "", "hmac-sha-256", "i-pt1Lir-yAfUdXbt-AXM1gMupK7vDiOK1SZGWkASDc"
+      mac.should eq("21vVRFACz5NrO+zlVfFuxTjTx5Wb0qBMfKelMTtujpE=")
     end
   end
 end

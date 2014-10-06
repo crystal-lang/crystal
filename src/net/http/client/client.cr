@@ -5,6 +5,8 @@ require "cgi"
 require "../common/common"
 
 class HTTP::Client
+  getter? ssl
+
   def initialize(@host, port = nil, @ssl = false)
     @port = port || (ssl ? 443 : 80)
   end
