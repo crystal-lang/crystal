@@ -1,3 +1,14 @@
+## Next
+
+* Added [Signal](https://github.com/manastech/crystal/blob/master/src/signal.cr) module.
+* Added [Tempfile](https://github.com/manastech/crystal/blob/master/src/tempfile.cr) class.
+* Enhanced [HTTP::Client](https://github.com/manastech/crystal/blob/master/src/net/http/client/client.cr).
+* Added [OAuth2::Client](https://github.com/manastech/crystal/blob/master/libs/oauth2/client.cr).
+* Added [OpenSSL::HMAC](https://github.com/manastech/crystal/blob/master/libs/openssl/hmac.cr).
+* Added [SecureRandom](https://github.com/manastech/crystal/blob/master/src/secure_random.cr).
+* New syntax for array/hash-like classes. For example: `Set {1, 2, 3}` and `HTTP::Headers {"content-type": "text/plain"}`. These just create the type and use `<<` or `[]=`.
+* Some bug fixes.
+
 ## 0.5.0 (2014-09-24)
 
 * String overhaul, and optimizations
