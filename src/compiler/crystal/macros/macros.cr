@@ -241,20 +241,10 @@ module Crystal
 
         exp = @last
         case exp
-        when ArrayLiteral, TupleLiteral
-          element_var = node.vars[0]
-          index_var = node.vars[1]?
-
-          exp.elements.each_with_index do |element, index|
-            @vars[element_var.name] = element
-            if index_var
-              @vars[index_var.name] = NumberLiteral.new(index)
-            end
-            node.body.accept self
-          end
-
-          @vars.delete element_var.name
-          @vars.delete index_var.name if index_var
+        when ArrayLiteral
+          visit_macro_for_single_iterable node, exp
+        when TupleLiteral
+          visit_macro_for_single_iterable node, exp
         when HashLiteral
           key_var = node.vars[0]
           value_var = node.vars[1]?
@@ -318,6 +308,22 @@ module Crystal
         end
 
         false
+      end
+
+      def visit_macro_for_single_iterable(node, exp)
+        element_var = node.vars[0]
+        index_var = node.vars[1]?
+
+        exp.elements.each_with_index do |element, index|
+          @vars[element_var.name] = element
+          if index_var
+            @vars[index_var.name] = NumberLiteral.new(index)
+          end
+          node.body.accept self
+        end
+
+        @vars.delete element_var.name
+        @vars.delete index_var.name if index_var
       end
 
       def visit(node : Assign)

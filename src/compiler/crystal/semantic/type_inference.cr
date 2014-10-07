@@ -2847,15 +2847,90 @@ module Crystal
     end
 
     def visit(node : ArrayLiteral)
-      expand(node)
+      if name = node.name
+        name.accept self
+        type = name.type.instance_type
+
+        case type
+        when GenericClassType
+          type_name = type.name.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          type_of = TypeOf.new(node.elements)
+          type_of.location = node.location
+
+          generic = Generic.new(path, [type_of] of ASTNode)
+          generic.location = node.location
+
+          node.name = generic
+        when GenericClassInstanceType
+          # Nothing
+        else
+          type_name = type.to_s.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          node.name = path
+        end
+
+        expand_named(node)
+      else
+        expand(node)
+      end
     end
 
     def visit(node : HashLiteral)
-      expand(node)
+      if name = node.name
+        name.accept self
+        type = name.type.instance_type
+
+        case type
+        when GenericClassType
+          type_name = type.name.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          type_of_keys = TypeOf.new(node.keys)
+          type_of_keys.location = node.location
+
+          type_of_values = TypeOf.new(node.values)
+          type_of_values.location = node.location
+
+          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode)
+          generic.location = node.location
+
+          node.name = generic
+        when GenericClassInstanceType
+          # Nothing
+        else
+          type_name = type.to_s.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          node.name = path
+        end
+
+        expand_named(node)
+      else
+        expand(node)
+      end
     end
 
     def expand(node)
-      expanded = @mod.literal_expander.expand node
+      expand(node) { @mod.literal_expander.expand node }
+    end
+
+    def expand_named(node)
+      expand(node) { @mod.literal_expander.expand_named node  }
+    end
+
+    def expand(node)
+      expanded = yield
       expanded.accept self
       node.expanded = expanded
       node.bind_to expanded

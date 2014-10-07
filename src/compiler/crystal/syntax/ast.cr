@@ -237,20 +237,22 @@ module Crystal
   class ArrayLiteral < ASTNode
     property :elements
     property :of
+    property :name
 
-    def initialize(@elements = [] of ASTNode, @of = nil)
+    def initialize(@elements = [] of ASTNode, @of = nil, @name = nil)
     end
 
     def accept_children(visitor)
+      @name.try &.accept visitor
       elements.each &.accept visitor
       @of.try &.accept visitor
     end
 
     def clone_without_location
-      ArrayLiteral.new(@elements.clone, @of.clone)
+      ArrayLiteral.new(@elements.clone, @of.clone, @name.clone)
     end
 
-    def_equals_and_hash @elements, @of
+    def_equals_and_hash @elements, @of, @name
   end
 
   class HashLiteral < ASTNode
@@ -258,11 +260,13 @@ module Crystal
     property :values
     property :of_key
     property :of_value
+    property :name
 
-    def initialize(@keys = [] of ASTNode, @values = [] of ASTNode, @of_key = nil, @of_value = nil)
+    def initialize(@keys = [] of ASTNode, @values = [] of ASTNode, @of_key = nil, @of_value = nil, @name = nil)
     end
 
     def accept_children(visitor)
+      @name.try &.accept visitor
       @keys.each &.accept visitor
       @values.each &.accept visitor
       @of_key.try &.accept visitor
@@ -270,10 +274,10 @@ module Crystal
     end
 
     def clone_without_location
-      HashLiteral.new(@keys.clone, @values.clone, @of_key.clone, @of_value.clone)
+      HashLiteral.new(@keys.clone, @values.clone, @of_key.clone, @of_value.clone, @name.clone)
     end
 
-    def_equals_and_hash @keys, @values, @of_key, @of_value
+    def_equals_and_hash @keys, @values, @of_key, @of_value, @name
   end
 
   class RangeLiteral < ASTNode

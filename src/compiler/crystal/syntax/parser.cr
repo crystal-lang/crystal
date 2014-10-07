@@ -861,7 +861,7 @@ module Crystal
           set_visibility parse_var_or_call
         end
       when :CONST
-        parse_ident
+        parse_ident_or_literal
       when :INSTANCE_VAR
         name = @token.value.to_s
         @instance_vars.try &.add name
@@ -879,6 +879,34 @@ module Crystal
       else
         unexpected_token_in_atomic
       end
+    end
+
+    def parse_ident_or_literal
+      ident = parse_ident
+      skip_space
+
+      if @last_call_has_parenthesis && @token.type == :"{"
+        tuple_or_hash = parse_hash_or_tuple_literal allow_of: false
+
+        skip_space
+
+        if @token.keyword?(:"of")
+          unexpected_token
+        end
+
+        case tuple_or_hash
+        when TupleLiteral
+          ary = ArrayLiteral.new(tuple_or_hash.elements, name: ident)
+          ary.location = tuple_or_hash.location
+          return ary
+        when HashLiteral
+          tuple_or_hash.name = ident
+          return tuple_or_hash
+        else
+          raise "Bug: tuple_or_hash should be tuple or hash, not #{tuple_or_hash}"
+        end
+      end
+      ident
     end
 
     def unless_in_def
@@ -1525,7 +1553,7 @@ module Crystal
       ArrayLiteral.new exps, of
     end
 
-    def parse_hash_or_tuple_literal
+    def parse_hash_or_tuple_literal(allow_of = true)
       location = @token.location
       line = @line_number
       column = @token.column_number
@@ -1559,11 +1587,11 @@ module Crystal
           end
         end
         next_token_skip_space_or_newline
-        parse_hash_literal first_key, location
+        parse_hash_literal first_key, location, allow_of
       end
     end
 
-    def parse_hash_literal(first_key, location)
+    def parse_hash_literal(first_key, location, allow_of)
       line = @line_number
       column = @token.column_number
 
@@ -1602,7 +1630,7 @@ module Crystal
         next_token_skip_space
       end
 
-      new_hash_literal keys, values, line, column
+      new_hash_literal keys, values, line, column, allow_of: allow_of
     end
 
     def parse_tuple(first_exp, location)
@@ -1623,19 +1651,22 @@ module Crystal
       TupleLiteral.new exps
     end
 
-    def new_hash_literal(keys, values, line, column)
+    def new_hash_literal(keys, values, line, column, allow_of = true)
       of_key = nil
       of_value = nil
-      if @token.keyword?(:of)
-        next_token_skip_space_or_newline
-        of_key = parse_single_type
-        check :"=>"
-        next_token_skip_space_or_newline
-        of_value = parse_single_type
-      end
 
-      if keys.length == 0 && !of_key
-        raise "for empty hashes use '{} of KeyType => ValueType'", line, column
+      if allow_of
+        if @token.keyword?(:of)
+          next_token_skip_space_or_newline
+          of_key = parse_single_type
+          check :"=>"
+          next_token_skip_space_or_newline
+          of_value = parse_single_type
+        end
+
+        if keys.length == 0 && !of_key
+          raise "for empty hashes use '{} of KeyType => ValueType'", line, column
+        end
       end
 
       Crystal::HashLiteral.new keys, values, of_key, of_value

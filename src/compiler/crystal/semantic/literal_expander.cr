@@ -84,6 +84,60 @@ module Crystal
       exps
     end
 
+    def expand_named(node : ArrayLiteral)
+      temp_var = new_temp_var
+
+      constructor = Call.new(node.name, "new")
+      constructor.location = node.location
+
+      if node.elements.empty?
+        return constructor
+      end
+
+      assign = Assign.new(temp_var.clone, constructor)
+      assign.location = node.location
+
+      exps = [assign] of ASTNode
+
+      node.elements.each do |elem|
+        push = Call.new(temp_var.clone, "<<", [elem] of ASTNode)
+        push.location = node.location
+        exps << push
+      end
+
+      exps << temp_var.clone
+
+      exps = Expressions.new(exps)
+      exps.location = node.location
+      exps
+    end
+
+    def expand_named(node : HashLiteral)
+      constructor = Call.new(node.name, "new")
+      constructor.location = node.location
+
+      if node.keys.empty?
+        return constructor
+      end
+
+      temp_var = new_temp_var
+
+      assign = Assign.new(temp_var.clone, constructor)
+      assign.location = node.location
+
+      exps = [assign] of ASTNode
+      node.keys.each_with_index do |key, i|
+        call = Call.new(temp_var.clone, "[]=", [key, node.values[i]])
+        call.location = node.location
+        exps << call
+      end
+      exps << temp_var.clone
+
+      exp = Expressions.new exps
+      exp.location = node.location
+      exp
+    end
+
     # Convert a HashLiteral into creating a Hash and assigning keys and values:
     #
     # From:

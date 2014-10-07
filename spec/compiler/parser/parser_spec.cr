@@ -820,6 +820,15 @@ describe "Parser" do
 
   it_parses "def foo(bar = 1\n); 2; end", Def.new("foo", [Arg.new("bar", default_value: 1.int32)], 2.int32)
 
+  it_parses "Set {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: "Set".path)
+  it_parses "Set(Int32) {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: Generic.new("Set".path, ["Int32".path] of ASTNode))
+
+  it_parses "Headers {foo: 1}", HashLiteral.new(["foo".symbol] of ASTNode, [1.int32] of ASTNode, name: "Headers".path)
+  it_parses "Headers(Int32) {foo: 1}", HashLiteral.new(["foo".symbol] of ASTNode, [1.int32] of ASTNode, name: Generic.new("Headers".path, ["Int32".path] of ASTNode))
+
+  it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
+  it_parses "foo(Bar { 1 })", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
   end
@@ -890,6 +899,9 @@ describe "Parser" do
   assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
   assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12
   assert_syntax_error "class Foo(T, T); end", "duplicated type var name: T", 1, 14
+
+  assert_syntax_error "Set {1, 2, 3} of Int32"
+  assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end

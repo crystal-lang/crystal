@@ -71,12 +71,25 @@ module Crystal
     end
 
     def visit(node : ArrayLiteral)
-      @str << "["
+      name = node.name
+      if name
+        name.accept self
+        @str << " {"
+      else
+        @str << "["
+      end
+
       node.elements.each_with_index do |exp, i|
         @str << ", " if i > 0
         exp.accept self
       end
-      @str << "]"
+
+      if name
+        @str << "}"
+      else
+        @str << "]"
+      end
+
       if of = node.of
         @str << " "
         @str << keyword("of")
@@ -87,6 +100,11 @@ module Crystal
     end
 
     def visit(node : HashLiteral)
+      if name = node.name
+        name.accept self
+        @str << " "
+      end
+
       @str << "{"
       node.keys.each_with_index do |key, i|
         @str << ", " if i > 0
