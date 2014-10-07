@@ -71,6 +71,15 @@ struct HTTP::Headers
     dup
   end
 
+  def to_s(io : IO)
+    io << "HTTP::Headers"
+    @hash.to_s(io)
+  end
+
+  def inspect(io : IO)
+    to_s(io)
+  end
+
   macro method_missing(name, args, block)
     @hash.{{name.id}}({{args.argify}}) {{block}}
   end
