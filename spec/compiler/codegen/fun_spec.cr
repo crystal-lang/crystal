@@ -485,4 +485,22 @@ describe "Code gen: fun" do
       foo.call(a).to_i
       )).to_i.should eq(1)
   end
+
+  it "codegens issue with missing byval in fun literal inside struct" do
+    run(%(
+      require "prelude"
+
+      struct Params
+        def foo
+          params = [] of {String}
+          params << {"foo"}
+          params << {"bar"}
+          params.sort! { |x, y| x[0] <=> y[0] }
+          params[0][0]
+        end
+      end
+
+      Params.new.foo
+      )).to_string.should eq("bar")
+  end
 end

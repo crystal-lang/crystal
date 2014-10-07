@@ -180,8 +180,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
       # Set 'byval' attribute
       # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
-      if arg.type.passed_by_value? && (is_closure || !(i == 0 && self_type.struct?))
-        param.add_attribute LibLLVM::Attribute::ByVal
+      if arg.type.passed_by_value?
+        if (is_fun_literal && !is_closure) || (is_closure || !(i == 0 && self_type.struct?))
+          param.add_attribute LibLLVM::Attribute::ByVal
+        end
       end
     end
 
