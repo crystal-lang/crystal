@@ -12,6 +12,7 @@ module Crystal
     getter symbols
     getter global_vars
     getter target_machine
+    getter splat_expansions
     property vars
     property literal_expander
 
@@ -107,6 +108,7 @@ module Crystal
       @literal_expander = LiteralExpander.new self
       @macro_expander = MacroExpander.new self
       @def_macros = [] of Def
+      @splat_expansions = {} of Def => Type
 
       define_primitives
     end

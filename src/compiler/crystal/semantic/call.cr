@@ -232,18 +232,20 @@ module Crystal
             typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner)
             mod.push_def_macro typed_def
           else
-            bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
-              visitor.yield_vars = yield_vars
-              visitor.free_vars = match.context.free_vars
-              visitor.untyped_def = match.def
-              visitor.call = self
-              visitor.scope = lookup_self_type
-              visitor.type_lookup = match.context.type_lookup
-              typed_def.body.accept visitor
+            check_recursive_splat_call match.def, typed_def_args do
+              bubbling_exception do
+                visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
+                visitor.yield_vars = yield_vars
+                visitor.free_vars = match.context.free_vars
+                visitor.untyped_def = match.def
+                visitor.call = self
+                visitor.scope = lookup_self_type
+                visitor.type_lookup = match.context.type_lookup
+                typed_def.body.accept visitor
 
-              if visitor.is_initialize
-                visitor.bind_initialize_instance_vars(owner)
+                if visitor.is_initialize
+                  visitor.bind_initialize_instance_vars(owner)
+                end
               end
             end
           end
@@ -252,6 +254,22 @@ module Crystal
       end
 
       typed_defs
+    end
+
+    def check_recursive_splat_call(a_def, args)
+      if a_def.splat_index
+        current_splat_type = args.values.last.type
+        if previous_splat_type = mod.splat_expansions[a_def]?
+          if current_splat_type.is_a?(TupleInstanceType) && current_splat_type.tuple_types[0] == previous_splat_type
+            raise "recursive splat expansion: #{previous_splat_type}, #{current_splat_type}, ..."
+          end
+        end
+        mod.splat_expansions[a_def] = current_splat_type
+        yield
+        mod.splat_expansions.delete a_def
+      else
+        yield
+      end
     end
 
     def check_tuple_indexer(owner, def_name, args, arg_types)

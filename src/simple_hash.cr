@@ -76,6 +76,10 @@ struct SimpleHash(K, V)
     @values.map { |tuple| tuple[0] }
   end
 
+  def values
+    @values.map { |tuple| tuple[1] }
+  end
+
   def length
     @values.length
   end

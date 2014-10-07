@@ -43,4 +43,18 @@ describe "Type inference: tuples" do
       x.types
       ") { tuple_of [int32.metaclass, float64.metaclass, char.metaclass] }
   end
+
+  it "errors on recursive splat expansion (#218)" do
+    assert_error %(
+      def foo(*a)
+        foo(a)
+      end
+
+      def foo(a : Tuple(String))
+      end
+
+      foo("a", "b")
+      ),
+      "recursive splat expansion"
+  end
 end
