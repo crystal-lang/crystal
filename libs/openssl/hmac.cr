@@ -5,10 +5,8 @@ class OpenSSL::HMAC
     evp = case algorithm
           when :dss       then LibCrypto.evp_dss
           when :dss1      then LibCrypto.evp_dss1
-          when :md2       then LibCrypto.evp_md2
           when :md4       then LibCrypto.evp_md4
           when :md5       then LibCrypto.evp_md5
-          when :mdc2      then LibCrypto.evp_mdc2
           when :ripemd160 then LibCrypto.evp_ripemd160
           when :sha       then LibCrypto.evp_sha
           when :sha1      then LibCrypto.evp_sha1
