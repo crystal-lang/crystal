@@ -5,7 +5,6 @@ class HTTP::Response
   getter status_code
   getter status_message
   getter headers
-  getter body
   property upgrade_handler
 
   def initialize(@status_code, @body = nil, @headers = HTTP::Headers.new : HTTP::Headers, status_message = nil, @version = "HTTP/1.1")
@@ -14,6 +13,14 @@ class HTTP::Response
     if (body = @body)
       @headers["Content-Length"] = body.bytesize.to_s
     end
+  end
+
+  def body
+    @body || ""
+  end
+
+  def body?
+    @body
   end
 
   def self.not_found

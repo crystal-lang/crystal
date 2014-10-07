@@ -34,9 +34,9 @@ class OAuth2::Client
     response = HTTP::Client.post_form(token_uri, body)
     case response.status_code
     when 200, 201
-      OAuth2::AccessToken.from_json(response.body.not_nil!)
+      OAuth2::AccessToken.from_json(response.body)
     else
-      raise OAuth2::Error.from_json(response.body.not_nil!)
+      raise OAuth2::Error.from_json(response.body)
     end
   end
 

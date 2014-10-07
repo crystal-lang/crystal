@@ -29,7 +29,8 @@ module HTTP
       response.status_code.should eq(404)
       response.status_message.should eq("Not Found")
       response.headers.length.should eq(0)
-      response.body.should be_nil
+      response.body.should eq("")
+      response.body?.should be_nil
     end
 
     it "parses response with chunked body" do
