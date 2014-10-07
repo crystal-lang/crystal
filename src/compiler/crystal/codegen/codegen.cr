@@ -288,7 +288,7 @@ module Crystal
         @last = int16(node.value.to_i16)
       when :u16
         @last = int16(node.value.to_u16)
-      when :i32,
+      when :i32
         @last = int32(node.value.to_i32)
       when :u32
         @last = int32(node.value.to_u32)
@@ -336,11 +336,6 @@ module Crystal
               else
                 raise "Bug: pointerof(#{node})"
               end
-      false
-    end
-
-    def visit(node : SimpleOr)
-      @last = or codegen_cond(node.left), codegen_cond(node.right)
       false
     end
 

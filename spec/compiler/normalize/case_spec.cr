@@ -19,7 +19,7 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with many expressions in when" do
-    assert_normalize "x = 1; case x; when 1, 2; 'b'; end", "x = 1\nif 1 === x or 2 === x\n  'b'\nend"
+    assert_normalize "x = 1; case x; when 1, 2; 'b'; end", "x = 1\nif if __temp_1 = 1 === x\n  __temp_1\nelse\n  2 === x\nend\n  'b'\nend"
   end
 
   it "normalizes case with implicit call" do
@@ -35,6 +35,6 @@ describe "Normalize: case" do
   end
 
   it "normalizes case without value with many expressions in when" do
-    assert_normalize "case when 2, 9; 3; when 4; 5; end", "if 2 or 9\n  3\nelse\n  if 4\n    5\n  end\nend"
+    assert_normalize "case when 2, 9; 3; when 4; 5; end", "if if __temp_1 = 2\n  __temp_1\nelse\n  9\nend\n  3\nelse\n  if 4\n    5\n  end\nend"
   end
 end

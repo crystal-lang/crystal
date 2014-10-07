@@ -766,13 +766,6 @@ module Crystal
       node.type = mod.fun_of(types)
     end
 
-    def end_visit(node : SimpleOr)
-      node.bind_to node.left
-      node.bind_to node.right
-
-      false
-    end
-
     def visit(node : Call)
       prepare_call(node)
 

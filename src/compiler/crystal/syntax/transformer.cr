@@ -133,12 +133,6 @@ module Crystal
       node
     end
 
-    def transform(node : SimpleOr)
-      node.left = node.left.transform(self)
-      node.right = node.right.transform(self)
-      node
-    end
-
     def transform(node : Def)
       transform_many node.args
       node.body = node.body.transform(self)

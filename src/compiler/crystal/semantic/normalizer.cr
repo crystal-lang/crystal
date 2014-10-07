@@ -407,7 +407,7 @@ module Crystal
           comp.location = cond.location
 
           if final_comp
-            final_comp = SimpleOr.new(final_comp, comp)
+            final_comp = Or.new(final_comp, comp)
           else
             final_comp = comp
           end

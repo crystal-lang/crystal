@@ -719,16 +719,6 @@ module Crystal
     end
   end
 
-  # Expressions simple or (no short-circuit).
-  #
-  #     expression '||' expression
-  #
-  class SimpleOr < BinaryOp
-    def clone_without_location
-      SimpleOr.new(@left.clone, @right.clone)
-    end
-  end
-
   # A def argument.
   class Arg < ASTNode
     property :name

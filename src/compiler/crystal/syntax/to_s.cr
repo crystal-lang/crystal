@@ -895,10 +895,6 @@ module Crystal
       false
     end
 
-    def visit(node : SimpleOr)
-      to_s_binary node, keyword("or")
-    end
-
     def to_s_binary(node, op)
       left_needs_parens = node.left.is_a?(Assign)
       in_parenthesis(left_needs_parens) { node.left.accept self }
