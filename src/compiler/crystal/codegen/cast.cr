@@ -53,7 +53,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilType, value)
-    store type_id(value, value_type), union_type_id(target_pointer)
+    store_nil_in_union target_pointer, target_type
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
@@ -314,7 +314,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def upcast_distinct(value, to_type : MixedUnionType, from_type : NilType)
     union_ptr = alloca(llvm_type(to_type))
-    store type_id(from_type), union_type_id(union_ptr)
+    store_nil_in_union union_ptr, to_type
     union_ptr
   end
 
@@ -347,5 +347,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     bool_as_i64 = builder.zext(value, llvm_type(@mod.int64))
     casted_value_ptr = cast_to_pointer(union_value(union_pointer), @mod.int64)
     store bool_as_i64, casted_value_ptr
+  end
+
+  def store_nil_in_union(union_pointer, target_type)
+    union_value_type = llvm_union_value_type(target_type)
+    value = union_value_type.null
+
+    store type_id(value, @mod.nil), union_type_id(union_pointer)
+    casted_value_ptr = bit_cast union_value(union_pointer), union_value_type.pointer
+    store value, casted_value_ptr
   end
 end

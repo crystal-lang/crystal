@@ -17,6 +17,7 @@ module Crystal
       @c_cache = TypeCache.new
       @embedded_cache = TypeCache.new
       @embedded_c_cache = TypeCache.new
+      @union_value_cache = TypeCache.new
 
       machine = program.target_machine
       @layout = machine.data_layout.not_nil!
@@ -162,6 +163,8 @@ module Crystal
         max_size = 1 if max_size == 0
 
         llvm_value_type = LLVM::SizeT.array(max_size)
+        @union_value_cache[type] = llvm_value_type
+
         [LLVM::Int32, llvm_value_type]
       end
     end
@@ -381,6 +384,10 @@ module Crystal
 
     def size_of(type)
       @layout.size_in_bytes type
+    end
+
+    def union_value_type(type : MixedUnionType)
+      @union_value_cache[type]
     end
   end
 end

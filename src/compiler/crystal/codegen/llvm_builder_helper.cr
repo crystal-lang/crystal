@@ -227,5 +227,9 @@ module Crystal
     def llvm_struct_size(type)
       llvm_struct_type(type).size
     end
+
+    def llvm_union_value_type(type)
+      llvm_typer.union_value_type(type)
+    end
   end
 end
