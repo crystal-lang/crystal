@@ -7,10 +7,4 @@ describe OAuth::RequestToken do
     token.secret.should eq("p58A6bzyGaT8PR54gM0S4ZesOVC2ManiTmwHcho8")
     token.token.should eq("qyprd6Pe2PbnSxUcyHcWz0VnTF8bg1rxsBbUwOpkQ6bSQEyK")
   end
-
-  it "raises error if oauth_problem present" do
-    expect_raises OAuth::Error, "consumer_key_unknown" do
-      OAuth::RequestToken.from_response("oauth_problem=consumer_key_unknown")
-    end
-  end
 end
