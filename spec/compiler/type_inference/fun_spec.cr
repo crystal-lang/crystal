@@ -444,4 +444,26 @@ describe "Type inference: fun" do
       foo { "hello" }.call
       )) { string }
   end
+
+  it "doesn't need to deduce type of block if return is void" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @bar = 1
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      def foo(&block : Foo ->)
+        block
+      end
+
+      f = foo { |f| f.bar }
+      Foo.new
+      f
+      )) { fun_of(types["Foo"], void) }
+  end
 end

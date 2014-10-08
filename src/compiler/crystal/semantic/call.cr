@@ -595,7 +595,11 @@ module Crystal
             end
           end
         else
-          raise "cant' deduce type of block"
+          if block_arg.fun.output
+            raise "can't deduce type of block"
+          else
+            block.body.type = mod.void
+          end
         end
       else
         block.accept parent_visitor
