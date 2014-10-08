@@ -27,7 +27,7 @@ describe "Char" do
     '\r'.dump.should eq("'\\r'")
     '\t'.dump.should eq("'\\t'")
     '\v'.dump.should eq("'\\v'")
-    'á'.dump.should eq("'\\u{e1}'")
+    'á'.dump.should eq("'\\u{E1}'")
     '\u{81}'.dump.should eq("'\\u{81}'")
   end
 

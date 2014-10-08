@@ -32,10 +32,10 @@ describe "CGI" do
     {"hello+world", "hello world"},
     {"hello%25", "hello%"},
     {"hello%252", "hello%2"},
-    {"hello%2b", "hello+"},
-    {"hello%2bworld", "hello+world"},
-    {"hello%252%2bworld", "hello%2+world"},
-    {"%e3%81%aa%e3%81%aa", "なな"},
+    {"hello%2B", "hello+"},
+    {"hello%2Bworld", "hello+world"},
+    {"hello%252%2Bworld", "hello%2+world"},
+    {"%E3%81%AA%E3%81%AA", "なな"},
     {"%27Stop%21%27+said+Fred", "'Stop!' said Fred"},
   ].each do |tuple|
     from, to = tuple
@@ -66,6 +66,6 @@ describe "CGI" do
   end
 
   it "escapes newline char" do
-    CGI.escape("\n").should eq("%0a")
+    CGI.escape("\n").should eq("%0A")
   end
 end

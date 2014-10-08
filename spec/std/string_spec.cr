@@ -416,7 +416,7 @@ describe "String" do
     "\t".dump.should eq("\"\\t\"")
     "\v".dump.should eq("\"\\v\"")
     "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u{e1}\"")
+    "á".dump.should eq("\"\\u{E1}\"")
     "\u{81}".dump.should eq("\"\\u{81}\"")
   end
 

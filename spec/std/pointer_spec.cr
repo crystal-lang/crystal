@@ -106,7 +106,7 @@ describe "Pointer" do
 
   it "does to_s" do
     Pointer(Int32).null.to_s.should eq("Pointer(Int32).null")
-    Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@4d2")
+    Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@4D2")
   end
 
   it "shuffles!" do

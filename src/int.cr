@@ -147,7 +147,7 @@ struct Int
     while num > 0
       digit = num % radix
       if digit >= 10
-        str.write_byte ('a'.ord + digit - 10).to_u8
+        str.write_byte ('A'.ord + digit - 10).to_u8
       else
         str.write_byte ('0'.ord + digit).to_u8
       end
