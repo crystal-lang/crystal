@@ -18,7 +18,7 @@ class OAuth::Consumer
   private def authenticate(client, oauth_callback)
     client.before_request do |request|
       authenticate client, request, oauth_callback
-      nil
+      nil # TODO: remove after 0.5.0
     end
   end
 
