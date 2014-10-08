@@ -28,8 +28,9 @@ class OAuth::Consumer
     URI.new(@scheme, @host, @port, @authorize_uri, query).to_s
   end
 
-  def get_access_token(request_token, oauth_verifier)
-    extra_params = {"oauth_verifier": oauth_verifier}
+  def get_access_token(request_token, oauth_verifier, extra_params = nil)
+    extra_params ||= {} of String => String
+    extra_params["oauth_verifier"] = oauth_verifier
     with_new_http_client(request_token.token, request_token.secret, extra_params) do |client|
       response = client.post @access_token_uri
       handle_response(response) do
