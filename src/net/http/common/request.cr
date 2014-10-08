@@ -22,6 +22,10 @@ class HTTP::Request
     end
   end
 
+  def uri
+    URI.parse(@path)
+  end
+
   def keep_alive?
     case @headers.try(&.["Connection"]?).try &.downcase
     when "keep-alive"

@@ -5,6 +5,8 @@ require "cgi"
 require "../common/common"
 
 class HTTP::Client
+  getter host
+  getter port
   getter? ssl
 
   def initialize(@host, port = nil, @ssl = false)
