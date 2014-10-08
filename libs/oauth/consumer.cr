@@ -9,7 +9,7 @@ class OAuth::Consumer
   end
 
   def get_request_token(oauth_callback = "oob")
-    with_new_http_client(nil, {"oauth_callback": oauth_callback}) do |client|
+    with_new_http_client(nil, nil, {"oauth_callback": oauth_callback}) do |client|
       response = client.post @request_token_uri
       handle_response(response) do
         RequestToken.from_response(response.body)
