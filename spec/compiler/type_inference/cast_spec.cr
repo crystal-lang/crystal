@@ -193,4 +193,14 @@ describe "Type inference: cast" do
       1 as Int32 | Char
       )) { union_of(int32, char) }
   end
+
+  it "errors on cast inside a call that can't be instantiated" do
+    assert_error %(
+      def foo(x)
+      end
+
+      foo(1 as Bool)
+      ),
+      "can't cast Int32 to Bool"
+  end
 end

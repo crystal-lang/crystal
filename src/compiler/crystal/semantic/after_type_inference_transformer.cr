@@ -119,6 +119,8 @@ module Crystal
         return node
       end
 
+      node = super
+
       # Check if we have an untyped expression in this call, or an expression
       # whose type was never allocated. Replace it with raise.
       obj = node.obj
@@ -140,8 +142,6 @@ module Crystal
           return untyped_expression(node, "#{arg.type} in `#{arg}` was never instantiated")
         end
       end
-
-      super
 
       # If the block doesn't have a type, it's a no-return.
       if (block = node.block) && !block.type?
