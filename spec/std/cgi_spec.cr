@@ -6,6 +6,7 @@ describe "CGI" do
   [
     {"hello", "hello"},
     {"hello+world", "hello world"},
+    {"hello%20world", "hello world"},
     {"hello%", "hello%"},
     {"hello%2", "hello%2"},
     {"hello%2B", "hello+"},
@@ -29,14 +30,14 @@ describe "CGI" do
 
   [
     {"hello", "hello"},
-    {"hello+world", "hello world"},
+    {"hello%20world", "hello world"},
     {"hello%25", "hello%"},
     {"hello%252", "hello%2"},
     {"hello%2B", "hello+"},
     {"hello%2Bworld", "hello+world"},
     {"hello%252%2Bworld", "hello%2+world"},
     {"%E3%81%AA%E3%81%AA", "なな"},
-    {"%27Stop%21%27+said+Fred", "'Stop!' said Fred"},
+    {"%27Stop%21%27%20said%20Fred", "'Stop!' said Fred"},
   ].each do |tuple|
     from, to = tuple
     it "escapes #{to}" do

@@ -28,9 +28,7 @@ module CGI
   # URL-encode a string and write the result to an IO.
   def self.escape(string : String, io : IO)
     string.each_char do |char|
-      if char == ' '
-        io.write_byte '+'.ord.to_u8
-      elsif char.alphanumeric? || char == '_' || char == '.' || char == '-'
+      if char.alphanumeric? || char == '_' || char == '.' || char == '-'
         io.write_byte char.ord.to_u8
       else
         char.each_byte do |byte|
