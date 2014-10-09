@@ -134,7 +134,7 @@ class Json::PullParser
     read_null_or { read_object { |key| yield key } }
   end
 
-  private def read_null_or
+  def read_null_or
     if @kind == :null
       read_next
       nil
@@ -144,6 +144,11 @@ class Json::PullParser
   end
 
   def read_next
+    read_next_internal
+    @kind
+  end
+
+  private def read_next_internal
     current_kind = @kind
 
     while true
