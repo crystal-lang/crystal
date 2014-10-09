@@ -691,7 +691,14 @@ module Crystal
           implicit_call = try_to_unsafe(self_arg) do |ex|
             if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")
               arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
-              self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+
+              if expected_type.is_a?(FunInstanceType) &&
+                 actual_type.is_a?(FunInstanceType) &&
+                 expected_type.arg_types == actual_type.arg_types
+                self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a function returning #{expected_type.return_type}, not #{actual_type.return_type}"
+              else
+                self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+              end
             else
               self_arg.raise ex.message, ex
             end

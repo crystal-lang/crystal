@@ -466,4 +466,15 @@ describe "Type inference: fun" do
       f
       )) { fun_of(types["Foo"], void) }
   end
+
+  it "gives correct error message when fun return type is incorrect (#219)" do
+    assert_error %(
+      lib Foo
+        fun bar(f : Int32 -> Int32)
+      end
+
+      Foo.bar ->(x) { 1.1 }
+      ),
+      "argument 'f' of 'Foo#bar' must be a function returning Int32, not Float64"
+  end
 end

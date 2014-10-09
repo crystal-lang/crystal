@@ -738,7 +738,13 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new(@name, @default_value.clone, @restriction.clone)
+      arg = Arg.new @name, @default_value.clone, @restriction.clone
+
+      # An arg's type can sometimes be used as a restriction,
+      # and must be preserved when cloned
+      arg.set_type @type
+
+      arg
     end
 
     def_equals_and_hash name, default_value, restriction
