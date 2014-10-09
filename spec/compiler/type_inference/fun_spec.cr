@@ -477,4 +477,18 @@ describe "Type inference: fun" do
       ),
       "argument 'f' of 'Foo#bar' must be a function returning Int32, not Float64"
   end
+
+  it "doesn't capture closured var if using typeof" do
+    assert_type(%(
+      lib Foo
+        fun foo(x : ->) : Int32
+      end
+
+      a = 1
+      Foo.foo ->{
+        typeof(a)
+        2
+      }
+      )) { int32 }
+  end
 end

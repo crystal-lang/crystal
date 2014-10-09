@@ -2644,6 +2644,8 @@ module Crystal
     end
 
     def check_closured(var)
+      return if @typeof_nest > 0
+
       if var.name == "self"
         check_self_closured
         return
