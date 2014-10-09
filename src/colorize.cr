@@ -55,6 +55,7 @@ struct ColorizedObject(T)
 
   MODE_DEFAULT        =   "0"
   MODE_BOLD           =   "1"
+  MODE_BRIGHT         =   "1"
   MODE_DIM            =   "2"
   MODE_UNDERLINE      =   "4"
   MODE_BLINK          =   "5"
@@ -200,40 +201,14 @@ struct ColorizedObject(T)
       end
 
       unless mode_is_default
-        if (@mode & MODE_BOLD_FLAG) != 0
-          io << ";" if printed
-          io << MODE_BOLD
-          printed = true
-        end
-
-        if (@mode & MODE_DIM_FLAG) != 0
-          io << ";" if printed
-          io << MODE_DIM
-          printed = true
-        end
-
-        if (@mode & MODE_UNDERLINE_FLAG) != 0
-          io << ";" if printed
-          io << MODE_UNDERLINE
-          printed = true
-        end
-
-        if (@mode & MODE_BLINK_FLAG) != 0
-          io << ";" if printed
-          io << MODE_BLINK
-          printed = true
-        end
-
-        if (@mode & MODE_REVERSE_FLAG) != 0
-          io << ";" if printed
-          io << MODE_REVERSE
-          printed = true
-        end
-
-        if (@mode & MODE_HIDDEN_FLAG) != 0
-          io << ";" if printed
-          io << MODE_HIDDEN
-        end
+        # Can't reuse MODES constant because it has bold/bright duplicated
+        {% for name in %w(bold dim underline blink reverse hidden) %}
+          if (@mode & MODE_{{name.upcase.id}}_FLAG) != 0
+            io << ";" if printed
+            io << MODE_{{name.upcase.id}}
+            printed = true
+          end
+        {% end %}
       end
 
       io << "m"
