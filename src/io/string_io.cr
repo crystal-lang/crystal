@@ -32,7 +32,6 @@ class StringIO
 
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
-    @length_unknown = true
 
     self
   end

@@ -1,4 +1,6 @@
 class Json::Lexer
+  getter token
+
   def initialize(string)
     @reader = CharReader.new(string)
     @token = Token.new

@@ -1,6 +1,6 @@
-class Json::Parser < Json::Lexer
+class Json::Parser
   def initialize(string)
-    super(string)
+    @lexer = Lexer.new(string)
     next_token
   end
 
@@ -11,13 +11,13 @@ class Json::Parser < Json::Lexer
   end
 
   private def parse_value
-    case @token.type
+    case token.type
     when :INT
-      value_and_next_token @token.int_value
+      value_and_next_token token.int_value
     when :FLOAT
-      value_and_next_token @token.float_value
+      value_and_next_token token.float_value
     when :STRING
-      value_and_next_token @token.string_value
+      value_and_next_token token.string_value
     when :null
       value_and_next_token nil
     when :true
@@ -38,14 +38,14 @@ class Json::Parser < Json::Lexer
 
     ary = [] of Type
 
-    if @token.type != :"]"
+    if token.type != :"]"
       while true
         ary << parse_value
 
-        case @token.type
+        case token.type
         when :","
           next_token
-          unexpected_token if @token.type == :"]"
+          unexpected_token if token.type == :"]"
         when :"]"
           break
         end
@@ -62,10 +62,10 @@ class Json::Parser < Json::Lexer
 
     object = {} of String => Type
 
-    if @token.type != :"}"
+    if token.type != :"}"
       while true
         check :STRING
-        key = @token.string_value
+        key = token.string_value
 
         next_token
 
@@ -76,10 +76,10 @@ class Json::Parser < Json::Lexer
 
         object[key] = value
 
-        case @token.type
+        case token.type
         when :","
           next_token
-          unexpected_token if @token.type == :"}"
+          unexpected_token if token.type == :"}"
         when :"}"
           break
         end
@@ -91,16 +91,24 @@ class Json::Parser < Json::Lexer
     object
   end
 
+  private def token
+    @lexer.token
+  end
+
+  private def next_token
+    @lexer.next_token
+  end
+
   private def value_and_next_token(value)
     next_token
     value
   end
 
   private def check(token_type)
-    unexpected_token unless @token.type == token_type
+    unexpected_token unless token.type == token_type
   end
 
   private def unexpected_token
-    raise ParseException.new("unexpected token '#{@token}'", @token.line_number, @token.column_number)
+    raise ParseException.new("unexpected token '#{token}'", token.line_number, token.column_number)
   end
 end

@@ -173,12 +173,16 @@ struct Char
   end
 
   def to_s(io : IO)
-    chars :: UInt8[4]
-    i = 0
-    each_byte do |byte|
-      chars[i] = byte
-      i += 1
+    if ord <= 0x7f
+      io.write_byte ord.to_u8
+    else
+      chars :: UInt8[4]
+      i = 0
+      each_byte do |byte|
+        chars[i] = byte
+        i += 1
+      end
+      io.write chars.to_slice, i
     end
-    io.write chars.to_slice, i
   end
 end
