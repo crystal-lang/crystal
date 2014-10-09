@@ -22,12 +22,12 @@ lib LibXML
   XML_READER_TYPE_END_ENTITY             = 16
   XML_READER_TYPE_XML_DECLARATION        = 17
 
-  fun xmlParserInputBufferCreateStatic(mem : Char*, size : Int32, encoding : Int32) : InputBuffer
-  fun xmlNewTextReader(input : InputBuffer, uri : Char*) : XmlTextReader
+  fun xmlParserInputBufferCreateStatic(mem : UInt8*, size : Int32, encoding : Int32) : InputBuffer
+  fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XmlTextReader
 
   fun xmlTextReaderRead(reader : XmlTextReader) : Int32
   fun xmlTextReaderNodeType(reader : XmlTextReader) : Int32
-  fun xmlTextReaderConstName(reader : XmlTextReader) : Char*
+  fun xmlTextReaderConstName(reader : XmlTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XmlTextReader) : Int32
-  fun xmlTextReaderConstValue(reader : XmlTextReader) : Char*
+  fun xmlTextReaderConstValue(reader : XmlTextReader) : UInt8*
 end

@@ -3,7 +3,7 @@ require "libxml2"
 module Xml
   class Reader
     def initialize(str : String)
-      input = LibXML.xmlParserInputBufferCreateStatic(str, str.length, 22)
+      input = LibXML.xmlParserInputBufferCreateStatic(str, str.bytesize, 1)
       @reader = LibXML.xmlNewTextReader(input, "")
     end
 
