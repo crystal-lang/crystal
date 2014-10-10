@@ -197,10 +197,19 @@ describe "Hash" do
   end
 
   it "initializes with block" do
-    h1 = Hash(String, Array(Int32)).new ->(h : Hash(String, Array(Int32)), k : String) { h[k] = [] of Int32 }
+    h1 = Hash(String, Array(Int32)).new { |h, k| h[k] = [] of Int32 }
     h1["foo"].should eq([] of Int32)
     h1["bar"].push 2
     h1["bar"].should eq([2])
+  end
+
+  it "initializes with default value" do
+    h = Hash(Int32, Int32).new(10)
+    h[0].should eq(10)
+    h.has_key?(0).should be_false
+    h[1] += 2
+    h[1].should eq(12)
+    h.has_key?(1).should be_true
   end
 
   it "merges" do
@@ -257,7 +266,7 @@ describe "Hash" do
   end
 
   it "works with custom comparator" do
-    h = Hash(String, Int32).new(nil, Hash::CaseInsensitiveComparator)
+    h = Hash(String, Int32).new(nil, nil, Hash::CaseInsensitiveComparator)
     h["FOO"] = 1
     h["foo"].should eq(1)
     h["Foo"].should eq(1)
