@@ -1,12 +1,14 @@
 class Json::Lexer
   getter token
+  property skip
 
   def initialize(string)
     @reader = CharReader.new(string)
     @token = Token.new
     @line_number = 1
     @column_number = 1
-    @string_io = StringIO.new
+    @buffer = StringIO.new
+    @skip = false
   end
 
   def next_token
@@ -83,8 +85,7 @@ class Json::Lexer
   end
 
   private def consume_string
-    @string_io.clear
-    buffer = @string_io
+    clear_buffer
     while true
       case char = next_char
       when '\0'
@@ -92,17 +93,17 @@ class Json::Lexer
       when '\\'
         case char = next_char
         when '\\', '"', '/'
-          buffer << char
+          append_to_buffer char
         when 'b'
-          buffer << '\b'
+          append_to_buffer '\b'
         when 'f'
-          buffer << '\f'
+          append_to_buffer '\f'
         when 'n'
-          buffer << '\n'
+          append_to_buffer '\n'
         when 'r'
-          buffer << '\r'
+          append_to_buffer '\r'
         when 't'
-          buffer << '\t'
+          append_to_buffer '\t'
         when 'u'
           hexnum1 = read_hex_number
           if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
@@ -110,9 +111,9 @@ class Json::Lexer
               raise "Unterminated UTF-16 sequence"
             end
             hexnum2 = read_hex_number
-            buffer << (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+            append_to_buffer (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
           else
-            buffer << hexnum1.chr
+            append_to_buffer hexnum1.chr
           end
         else
           raise "uknown escape char: #{char}"
@@ -121,11 +122,11 @@ class Json::Lexer
         next_char
         break
       else
-        buffer << char
+        append_to_buffer char
       end
     end
     @token.type = :STRING
-    @token.string_value = buffer.to_s
+    @token.string_value = buffer_contents
   end
 
   private def read_hex_number
@@ -245,6 +246,22 @@ class Json::Lexer
 
   private def current_char
     @reader.current_char
+  end
+
+  private def clear_buffer
+    @buffer.clear
+  end
+
+  private def append_to_buffer(value)
+    @buffer << value unless @skip
+  end
+
+  private def buffer_contents
+    if @skip
+      ""
+    else
+      @buffer.to_s
+    end
   end
 
   private def unexpected_char(char = current_char)

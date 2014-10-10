@@ -13,6 +13,7 @@ class Json::PullParser
     @float_value = 0.0
     @string_value = ""
     @object_stack = [] of Symbol
+    @skip_count = 0
 
     @token = @lexer.next_token
     case @token.type
@@ -143,6 +144,29 @@ class Json::PullParser
     end
   end
 
+  def on_key(key)
+    read_object do |some_key|
+      some_key == key ? yield : skip
+    end
+  end
+
+  def on_key!(key)
+    found = false
+
+    read_object do |some_key|
+      if some_key == key
+        found = true
+        yield
+      else
+        skip
+      end
+    end
+
+    unless found
+      raise "json key not found: #{key}"
+    end
+  end
+
   def read_next
     read_next_internal
     @kind
@@ -205,7 +229,15 @@ class Json::PullParser
         next_token_after_array_or_object
         return
       when :","
-        case next_token.type
+        if @skip_count == 1
+          @lexer.skip = false
+          next_token
+          @lexer.skip = true
+        else
+          next_token
+        end
+
+        case @token.type
         when :",", :"]", :"}", :EOF
           unexpected_token
         end
@@ -233,16 +265,37 @@ class Json::PullParser
   end
 
   def skip
+    @lexer.skip = true
+    skip_internal
+    @lexer.skip = false
+  end
+
+  private def skip_internal
+    @skip_count += 1
     case @kind
     when :null, :bool, :int, :float, :string
       read_next
     when :begin_array
-      read_array { skip }
+      @skip_count += 1
+      read_begin_array
+      while kind != :end_array
+        skip_internal
+      end
+      @skip_count -= 1
+      read_end_array
     when :begin_object
-      read_object { skip }
+      @skip_count += 1
+      read_begin_object
+      while kind != :end_object
+        read_object_key
+        skip_internal
+      end
+      @skip_count -= 1
+      read_end_object
     else
       unexpected_token
     end
+    @skip_count -= 1
   end
 
   private def begin_array

@@ -214,4 +214,69 @@ describe "Json::PullParser" do
       pull.read_int.should eq(1)
     end
   end
+
+  describe "on key" do
+    it "finds key" do
+      pull = Json::PullParser.new(%({"foo": 1, "bar": 2}))
+
+      bar = nil
+      pull.on_key("bar") do
+        bar = pull.read_int
+      end
+
+      bar.should eq(2)
+    end
+
+    it "finds key" do
+      pull = Json::PullParser.new(%({"foo": 1, "bar": 2}))
+
+      bar = nil
+      pull.on_key("bar") do
+        bar = pull.read_int
+      end
+
+      bar.should eq(2)
+    end
+
+    it "doesn't find key" do
+      pull = Json::PullParser.new(%({"foo": 1, "baz": 2}))
+
+      bar = nil
+      pull.on_key("bar") do
+        bar = pull.read_int
+      end
+
+      bar.should be_nil
+    end
+
+    it "finds key with bang" do
+      pull = Json::PullParser.new(%({"foo": 1, "bar": 2}))
+
+      bar = nil
+      pull.on_key!("bar") do
+        bar = pull.read_int
+      end
+
+      bar.should eq(2)
+    end
+
+    it "doesn't find key with bang" do
+      pull = Json::PullParser.new(%({"foo": 1, "baz": 2}))
+
+      expect_raises Exception, "json key not found: bar" do
+        pull.on_key!("bar") do
+        end
+      end
+    end
+
+    ["1", "[1]", %({"x": [1]})].each do |value|
+      it "yields all keys when skipping #{value}" do
+        pull = Json::PullParser.new(%({"foo": #{value}, "bar": 2}))
+        pull.read_object do |key|
+          key.should_not eq("")
+          pull.skip
+        end
+      end
+    end
+  end
 end
