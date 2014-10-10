@@ -182,7 +182,7 @@ class Json::Lexer
   end
 
   private def consume_float(negative, integer)
-    divisor = 1
+    divisor = 1_u64
     char = next_char
     while '0' <= char <= '9'
       integer *= 10

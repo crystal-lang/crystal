@@ -71,6 +71,7 @@ describe "Json::Lexer" do
   it_lexes_json_float "1e2", 1e2
   it_lexes_json_float "1e+12", 1e12
   it_lexes_json_float "1.2e-3", 1.2e-3
+  it_lexes_json_float "9.91343313498688", 9.91343313498688
   it_lexes_json_int "-1", -1
   it_lexes_json_float "-1.23", -1.23
   it_lexes_json_float "-1.23e4", -1.23e4
