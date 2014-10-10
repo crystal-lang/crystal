@@ -43,9 +43,16 @@ module Xml
   end
 
   class Document < Node
+    def self.parse(io : IO)
+      parse(Reader.new(io))
+    end
+
     def self.parse(str : String)
+      parse(Reader.new(str))
+    end
+
+    def self.parse(reader : Reader)
       doc = Document.new
-      reader = Reader.new(str)
       current = doc
 
       while reader.read

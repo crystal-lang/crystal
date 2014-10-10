@@ -23,6 +23,7 @@ lib LibXML
   XML_READER_TYPE_XML_DECLARATION        = 17
 
   fun xmlParserInputBufferCreateStatic(mem : UInt8*, size : Int32, encoding : Int32) : InputBuffer
+  fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int32) -> Int32, ioclose : Void* -> Int32, ioctx : Void*, enc : Int32) : InputBuffer
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XmlTextReader
 
   fun xmlTextReaderRead(reader : XmlTextReader) : Int32
