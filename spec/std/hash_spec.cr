@@ -313,6 +313,7 @@ describe "Hash" do
     h = {1 => 2, 3 => 4}
     h.clear
     h.empty?.should be_true
+    h.entries.length.should eq(0)
   end
 
   class Breaker

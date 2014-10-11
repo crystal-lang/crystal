@@ -269,6 +269,8 @@ class Hash(K, V)
       @buckets[i] = nil
     end
     @length = 0
+    @first = nil
+    @last = nil
     self
   end
 
