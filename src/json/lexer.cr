@@ -1,3 +1,5 @@
+require "string_pool"
+
 class Json::Lexer
   getter token
   property skip
@@ -8,6 +10,7 @@ class Json::Lexer
     @line_number = 1
     @column_number = 1
     @buffer = StringIO.new
+    @string_pool = StringPool.new
     @skip = false
   end
 
@@ -44,6 +47,16 @@ class Json::Lexer
       consume_number
     end
 
+    @token
+  end
+
+  # Requests the next token where the parser expects a json
+  # object key. In this case the lexer tries to reuse the String
+  # instances by using a StringPool.
+  def next_token_expect_object_key
+    @expects_object_key = true
+    next_token
+    @expects_object_key = false
     @token
   end
 
@@ -85,25 +98,38 @@ class Json::Lexer
   end
 
   private def consume_string
-    clear_buffer
+    start_pos = current_pos
+
+    # A simple string is one that doesn't have an escape character.
+    # In that case we can build a string by doing a subslice of the original string.
+    simple_string = true
+
     while true
       case char = next_char
       when '\0'
         raise "unterminated string"
       when '\\'
+        # If we find an escape character, accumulate everything so
+        # far in the buffer and continue appending to it from now on.
+        if simple_string && !@skip
+          clear_buffer
+          write_to_buffer slice_range(start_pos + 1, current_pos)
+          simple_string = false
+        end
+
         case char = next_char
         when '\\', '"', '/'
-          append_to_buffer char
+          append_to_buffer char unless simple_string
         when 'b'
-          append_to_buffer '\b'
+          append_to_buffer '\b' unless simple_string
         when 'f'
-          append_to_buffer '\f'
+          append_to_buffer '\f' unless simple_string
         when 'n'
-          append_to_buffer '\n'
+          append_to_buffer '\n' unless simple_string
         when 'r'
-          append_to_buffer '\r'
+          append_to_buffer '\r' unless simple_string
         when 't'
-          append_to_buffer '\t'
+          append_to_buffer '\t' unless simple_string
         when 'u'
           hexnum1 = read_hex_number
           if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
@@ -111,9 +137,9 @@ class Json::Lexer
               raise "Unterminated UTF-16 sequence"
             end
             hexnum2 = read_hex_number
-            append_to_buffer (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+            append_to_buffer (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr unless simple_string
           else
-            append_to_buffer hexnum1.chr
+            append_to_buffer hexnum1.chr unless simple_string
           end
         else
           raise "uknown escape char: #{char}"
@@ -122,11 +148,28 @@ class Json::Lexer
         next_char
         break
       else
-        append_to_buffer char
+        append_to_buffer char unless simple_string
       end
     end
     @token.type = :STRING
-    @token.string_value = buffer_contents
+
+    return if @skip
+
+    if simple_string
+      if @expects_object_key
+        start_pos += 1
+        end_pos = current_pos - 1
+        @token.string_value = @string_pool.get(@reader.string.cstr + start_pos, end_pos - start_pos)
+      else
+        @token.string_value = string_range(start_pos + 1, current_pos - 1)
+      end
+    else
+      if @expects_object_key
+        @token.string_value = @string_pool.get(@buffer)
+      else
+        @token.string_value = buffer_contents
+      end
+    end
   end
 
   private def read_hex_number
@@ -230,6 +273,18 @@ class Json::Lexer
     @token.float_value = negative ? -float : float
   end
 
+  private def current_pos
+    @reader.pos
+  end
+
+  def string_range(start_pos, end_pos)
+    @reader.string.byte_slice(start_pos, end_pos - start_pos)
+  end
+
+  def slice_range(start_pos, end_pos)
+    @reader.string.to_slice.to_slice[start_pos, end_pos - start_pos]
+  end
+
   private def next_char
     @column_number += 1
     next_char_no_column_increment
@@ -256,12 +311,12 @@ class Json::Lexer
     @buffer << value unless @skip
   end
 
+  private def write_to_buffer(slice)
+    @buffer.write slice
+  end
+
   private def buffer_contents
-    if @skip
-      ""
-    else
-      @buffer.to_s
-    end
+    @buffer.to_s
   end
 
   private def unexpected_char(char = current_char)

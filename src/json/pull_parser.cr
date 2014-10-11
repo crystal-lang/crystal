@@ -15,8 +15,8 @@ class Json::PullParser
     @object_stack = [] of Symbol
     @skip_count = 0
 
-    @token = @lexer.next_token
-    case @token.type
+    next_token
+    case token.type
     when :null
       @kind = :null
     when :false
@@ -27,13 +27,13 @@ class Json::PullParser
       @bool_value = true
     when :INT
       @kind = :int
-      @int_value = @token.int_value
+      @int_value = token.int_value
     when :FLOAT
       @kind = :float
-      @float_value = @token.float_value
+      @float_value = token.float_value
     when :STRING
       @kind = :string
-      @string_value = @token.string_value
+      @string_value = token.string_value
     when :"["
       begin_array
     when :"{"
@@ -176,7 +176,7 @@ class Json::PullParser
     current_kind = @kind
 
     while true
-      case @token.type
+      case token.type
       when :null
         @kind = :null
         next_token_after_value
@@ -193,24 +193,24 @@ class Json::PullParser
         return
       when :INT
         @kind = :int
-        @int_value = @token.int_value
+        @int_value = token.int_value
         next_token_after_value
         return
       when :FLOAT
         @kind = :float
-        @float_value = @token.float_value
+        @float_value = token.float_value
         next_token_after_value
         return
       when :STRING
         if current_kind == :begin_object
           @kind = :object_key
-          @string_value = @token.string_value
+          @string_value = token.string_value
           if next_token.type != :":"
             unexpected_token
           end
         else
           @kind = :string
-          @string_value = @token.string_value
+          @string_value = token.string_value
           next_token_after_value
         end
         return
@@ -229,22 +229,26 @@ class Json::PullParser
         next_token_after_array_or_object
         return
       when :","
-        if @skip_count == 1
-          @lexer.skip = false
-          next_token
-          @lexer.skip = true
+        obj = current_object()
+
+        @lexer.skip = false if @skip_count == 1
+
+        if obj == :object
+          next_token_expect_object_key
         else
           next_token
         end
 
-        case @token.type
+        @lexer.skip = true if @skip_count == 1
+
+        case token.type
         when :",", :"]", :"}", :EOF
           unexpected_token
         end
 
-        if current_object == :object && @token.type == :STRING
+        if obj == :object && token.type == :STRING
           @kind = :object_key
-          @string_value = @token.string_value
+          @string_value = token.string_value
           if next_token.type != :":"
             unexpected_token
           end
@@ -312,7 +316,7 @@ class Json::PullParser
     @kind = :begin_object
     @object_stack << :object
 
-    case next_token.type
+    case next_token_expect_object_key.type
     when :STRING, :"}"
       # OK
     else
@@ -324,9 +328,9 @@ class Json::PullParser
     @object_stack.last?
   end
 
-  private def next_token
-    @token = @lexer.next_token
-  end
+  delegate token, @lexer
+  delegate next_token, @lexer
+  delegate next_token_expect_object_key, @lexer
 
   private def next_token_after_value
     case next_token.type
@@ -358,10 +362,10 @@ class Json::PullParser
   end
 
   private def expect_kind(kind)
-    raise ParseException.new("expected #{kind} but was #{@kind}", @token.line_number, @token.column_number) unless @kind == kind
+    raise ParseException.new("expected #{kind} but was #{@kind}", token.line_number, token.column_number) unless @kind == kind
   end
 
   private def unexpected_token
-    raise ParseException.new("unexpected token: #{@token}", @token.line_number, @token.column_number)
+    raise ParseException.new("unexpected token: #{token}", token.line_number, token.column_number)
   end
 end

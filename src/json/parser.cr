@@ -58,7 +58,7 @@ class Json::Parser
   end
 
   private def parse_object
-    next_token
+    next_token_expect_object_key
 
     object = {} of String => Type
 
@@ -78,7 +78,7 @@ class Json::Parser
 
         case token.type
         when :","
-          next_token
+          next_token_expect_object_key
           unexpected_token if token.type == :"}"
         when :"}"
           break
@@ -91,13 +91,9 @@ class Json::Parser
     object
   end
 
-  private def token
-    @lexer.token
-  end
-
-  private def next_token
-    @lexer.next_token
-  end
+  delegate token, @lexer
+  delegate next_token, @lexer
+  delegate next_token_expect_object_key, @lexer
 
   private def value_and_next_token(value)
     next_token

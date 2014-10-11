@@ -37,6 +37,7 @@ describe "Json::Parser" do
   it_parses_json "{}", {} of String => Json::Type
   it_parses_json %({"foo": 1}), {"foo" => 1}
   it_parses_json %({"foo": 1, "bar": 1.5}), {"foo" => 1, "bar" => 1.5}
+  it_parses_json %({"fo\\no": 1}), {"fo\no" => 1}
 
   it_parses_json "[[1]]", [[1]]
   it_parses_json %([{"foo": 1}]), [{"foo" => 1}]
