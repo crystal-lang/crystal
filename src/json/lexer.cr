@@ -42,7 +42,8 @@ class Json::Lexer
     when 't'
       consume_true
     when '"'
-      consume_string
+      @token.type = :STRING
+      @skip ? consume_string_skip : consume_string
     else
       consume_number
     end
@@ -97,78 +98,102 @@ class Json::Lexer
     end
   end
 
+  # Consume a string by remembering the start position of it and then
+  # doing a substring of the original string.
+  # If we find an escape sequence (\) we can't do that anymore so we
+  # go through a slow path where we accumulate everything in a buffer
+  # to build the resulting string.
   private def consume_string
     start_pos = current_pos
-
-    # A simple string is one that doesn't have an escape character.
-    # In that case we can build a string by doing a subslice of the original string.
-    simple_string = true
 
     while true
       case char = next_char
       when '\0'
         raise "unterminated string"
       when '\\'
-        # If we find an escape character, accumulate everything so
-        # far in the buffer and continue appending to it from now on.
-        if simple_string && !@skip
-          clear_buffer
-          write_to_buffer slice_range(start_pos + 1, current_pos)
-          simple_string = false
-        end
+        return consume_string_slow_path start_pos
+      when '"'
+        next_char
+        break
+      end
+    end
 
-        case char = next_char
-        when '\\', '"', '/'
-          append_to_buffer char unless simple_string
-        when 'b'
-          append_to_buffer '\b' unless simple_string
-        when 'f'
-          append_to_buffer '\f' unless simple_string
-        when 'n'
-          append_to_buffer '\n' unless simple_string
-        when 'r'
-          append_to_buffer '\r' unless simple_string
-        when 't'
-          append_to_buffer '\t' unless simple_string
-        when 'u'
-          hexnum1 = read_hex_number
-          if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
-            if next_char != '\\' || next_char != 'u'
-              raise "Unterminated UTF-16 sequence"
-            end
-            hexnum2 = read_hex_number
-            append_to_buffer (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr unless simple_string
-          else
-            append_to_buffer hexnum1.chr unless simple_string
-          end
-        else
-          raise "uknown escape char: #{char}"
-        end
+    if @expects_object_key
+      start_pos += 1
+      end_pos = current_pos - 1
+      @token.string_value = @string_pool.get(@reader.string.cstr + start_pos, end_pos - start_pos)
+    else
+      @token.string_value = string_range(start_pos + 1, current_pos - 1)
+    end
+  end
+
+  # Since we are skipping we don't care about a
+  # string's contents, so we just move forward.
+  private def consume_string_skip
+    while true
+      case next_char
+      when '\0'
+        raise "unterminated string"
+      when '\\'
+        consume_string_escape_sequence
+      when '"'
+        next_char
+        break
+      end
+    end
+  end
+
+  private def consume_string_slow_path(start_pos)
+    clear_buffer
+    write_to_buffer slice_range(start_pos + 1, current_pos)
+    append_to_buffer consume_string_escape_sequence
+    while true
+      case char = next_char
+      when '\0'
+        raise "unterminated string"
+      when '\\'
+        append_to_buffer consume_string_escape_sequence
       when '"'
         next_char
         break
       else
-        append_to_buffer char unless simple_string
+        append_to_buffer char
       end
     end
-    @token.type = :STRING
+    if @expects_object_key
+      @token.string_value = @string_pool.get(@buffer)
+    else
+      @token.string_value = buffer_contents
+    end
+  end
 
-    return if @skip
-
-    if simple_string
-      if @expects_object_key
-        start_pos += 1
-        end_pos = current_pos - 1
-        @token.string_value = @string_pool.get(@reader.string.cstr + start_pos, end_pos - start_pos)
+  private def consume_string_escape_sequence
+    case char = next_char
+    when '\\', '"', '/'
+      char
+    when 'b'
+      '\b'
+    when 'f'
+      '\f'
+    when 'n'
+      '\n'
+    when 'r'
+      '\r'
+    when 't'
+      '\t'
+    when 'u'
+      hexnum1 = read_hex_number
+      if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
+        if next_char != '\\' || next_char != 'u'
+          raise "Unterminated UTF-16 sequence"
+        end
+        hexnum2 = read_hex_number
+        (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
       else
-        @token.string_value = string_range(start_pos + 1, current_pos - 1)
+        hexnum1.chr
       end
     else
-      if @expects_object_key
-        @token.string_value = @string_pool.get(@buffer)
-      else
-        @token.string_value = buffer_contents
-      end
+      raise "uknown escape char: #{char}"
     end
   end
 
