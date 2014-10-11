@@ -1,21 +1,18 @@
-# From source repository
+# From sources
 
-First, you need to fulfil some dependencies:
+If you want to contribute then you might want to install Crystal from sources. But Crystal is written in Crystal itself! So you first need to use one of the previous described methods to have a running compiler.
 
-* Clang or GCC
-* The latest version of the Boehm-Demers-Weiser conservative garbage collector
-* libunwind
-* libpcre
+You will also need LLVM 3.5 present in the path. If you are using Mac and the Homebrew formula, this will be automatically configured for you if you install Crystal adding `--with-llvm` flag.
 
-Then:
+Then clone the repository:
 
-1. Clone the repository: git clone git@github.com:manastech/crystal.git
-1. Execute `bin/crystal --setup`
+```
+git clone git@github.com:manastech/crystal.git
+```
 
-Then you will have available the `bin/crystal` executable.
+and you're ready to start hacking.
 
-To make it simpler to use, you can create a symbolic link to the executable:
+To build your own version of the compiler, run `make`. The new compiler will be placed at `.build/crystal`.
 
-`ln -s [full path to bin/crystal] /usr/local/bin/crystal`
+Inside the repository you will also find a wrapper script at `bin/crystal`. This script will execute the global installed compiler or the one that you just compiled (if present).
 
-Then you can invoke crystal by just typing `crystal`.
