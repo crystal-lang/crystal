@@ -281,8 +281,12 @@ module Crystal
       case method
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(keys.empty?) }
+      when "keys"
+        interpret_argless_method(method, args) { ArrayLiteral.new(keys) }
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(keys.length) }
+      when "values"
+        interpret_argless_method(method, args) { ArrayLiteral.new(values) }
       when "[]"
         case args.length
         when 1

@@ -383,6 +383,14 @@ describe "MacroExpander" do
     it "executes index not found" do
       assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
     end
+
+    it "executes keys" do
+      assert_macro "", %({{{a: 1, b: 2}.keys}}), [] of ASTNode, "[:a, :b]"
+    end
+
+    it "executes values" do
+      assert_macro "", %({{{a: 1, b: 2}.values}}), [] of ASTNode, "[1, 2]"
+    end
   end
 
   describe "tuple methods" do
