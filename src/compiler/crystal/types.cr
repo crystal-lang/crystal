@@ -395,33 +395,6 @@ module Crystal
     end
   end
 
-  class NoReturnType < Type
-    getter :program
-
-    def initialize(@program)
-    end
-
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      Matches.new(nil, nil, self, false)
-    end
-
-    def no_return?
-      true
-    end
-
-    def primitive_like?
-      true
-    end
-
-    def parents
-      nil
-    end
-
-    def to_s(io)
-      io << "NoReturn"
-    end
-  end
-
   abstract class ContainedType < Type
     getter :program
     getter :container
@@ -1459,9 +1432,58 @@ module Crystal
     end
   end
 
-  class VoidType < PrimitiveType
+  abstract class EmptyType < Type
+    getter :program
+
+    def initialize(@program)
+    end
+
+    def lookup_defs(name)
+      [] of Def
+    end
+
+    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
+      Matches.new(nil, nil, self, false)
+    end
+
+    def parents
+      nil
+    end
+
+    def allocated
+      true
+    end
+
+    def abstract
+      false
+    end
+  end
+
+  class NoReturnType < EmptyType
+    def no_return?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def to_s(io)
+      io << "NoReturn"
+    end
+  end
+
+  class VoidType < EmptyType
     def void?
       true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def to_s(io)
+      io << "Void"
     end
   end
 

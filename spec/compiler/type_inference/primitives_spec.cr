@@ -57,4 +57,14 @@ describe "Type inference: primitives" do
   it "types instance_sizeof" do
     assert_type("instance_sizeof(Reference)") { int32 }
   end
+
+  it "errors when comparing void (#225)" do
+    assert_error %(
+      lib Foo
+        fun foo
+      end
+
+      Foo.foo == 1
+      ), "undefined method '==' for Void"
+  end
 end

@@ -32,7 +32,7 @@ module Crystal
       @number.abstract = true
 
       @types["NoReturn"] = @no_return = NoReturnType.new self
-      @types["Void"] = @void = VoidType.new self, self, "Void", @value, 1
+      @types["Void"] = @void = VoidType.new self
       @types["Nil"] = @nil = NilType.new self, self, "Nil", @value, 1
       @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, 1
       @types["Char"] = @char = CharType.new self, self, "Char", @value, 4
