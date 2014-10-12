@@ -1026,7 +1026,7 @@ describe "Code gen: block" do
       ").to_i.should eq(1)
   end
 
-  it "allows initialize with yield" do
+  it "allows initialize with yield (#224)" do
     run(%(
       class Foo
         def initialize

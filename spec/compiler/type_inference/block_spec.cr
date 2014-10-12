@@ -430,7 +430,7 @@ describe "Block inference" do
       )) { array_of(float64) }
   end
 
-  it "allows initialize with yield" do
+  it "allows initialize with yield (#224)" do
     assert_type(%(
       class Foo
         def initialize
