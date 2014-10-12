@@ -31,17 +31,37 @@ lib C
     WHT = 14_u8
   end
 
-  struct Glob
-    pathc : C::SizeT
-    pathv : UInt8**
-    offs : C::SizeT
-    flags :  Int32
+  ifdef linux
+    struct Glob
+      pathc : C::SizeT
+      pathv : UInt8**
+      offs : C::SizeT
+      flags : Int32
+      dummy : UInt8[40]
+    end
+  elsif darwin
+    struct Glob
+      pathc : C::SizeT
+      matchc : Int32
+      offs : C::SizeT
+      flags : Int32
+      pathv : UInt8**
+      dummy : UInt8[48]
+    end
   end
 
-  enum GlobFlags
-    APPEND = 1 << 5
-    BRACE  = 1 << 10
-    TILDE  = 1 << 12
+  ifdef linux
+    enum GlobFlags
+      APPEND = 1 << 5
+      BRACE  = 1 << 10
+      TILDE  = 1 << 12
+    end
+  elsif darwin
+    enum GlobFlags
+      APPEND = 0x0001
+      BRACE  = 0x0080
+      TILDE  = 0x0800
+    end
   end
 
   enum GlobErrors
@@ -63,7 +83,7 @@ lib C
     fun readdir = readdir64(dir : Dir*) : DirEntry*
   end
 
-  fun glob(pattern : UInt8*, flags : Int32, errfunc : (UInt8*, Int32) -> Int32, result : Glob*)
+  fun glob(pattern : UInt8*, flags : Int32, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
   fun globfree(result : Glob*)
 end
 
