@@ -10,8 +10,8 @@ module Json
 
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
 
-  def self.parse(string : String)
-    Parser.new(string).parse
+  def self.parse(string_or_io)
+    Parser.new(string_or_io).parse
   end
 end
 

@@ -1,11 +1,18 @@
 require "string_pool"
 
-class Json::Lexer
+abstract class Json::Lexer
   getter token
   property skip
 
-  def initialize(string)
-    @reader = CharReader.new(string)
+  def self.new(string : String)
+    StringBased.new(string)
+  end
+
+  def self.new(io : IO)
+    IOBased.new(io)
+  end
+
+  def initialize
     @token = Token.new
     @line_number = 1
     @column_number = 1
@@ -13,6 +20,10 @@ class Json::Lexer
     @string_pool = StringPool.new
     @skip = false
   end
+
+  private abstract def consume_string
+  private abstract def next_char_no_column_increment
+  private abstract def current_char
 
   def next_token
     skip_whitespace
@@ -98,35 +109,6 @@ class Json::Lexer
     end
   end
 
-  # Consume a string by remembering the start position of it and then
-  # doing a substring of the original string.
-  # If we find an escape sequence (\) we can't do that anymore so we
-  # go through a slow path where we accumulate everything in a buffer
-  # to build the resulting string.
-  private def consume_string
-    start_pos = current_pos
-
-    while true
-      case char = next_char
-      when '\0'
-        raise "unterminated string"
-      when '\\'
-        return consume_string_slow_path start_pos
-      when '"'
-        next_char
-        break
-      end
-    end
-
-    if @expects_object_key
-      start_pos += 1
-      end_pos = current_pos - 1
-      @token.string_value = @string_pool.get(@reader.string.cstr + start_pos, end_pos - start_pos)
-    else
-      @token.string_value = string_range(start_pos + 1, current_pos - 1)
-    end
-  end
-
   # Since we are skipping we don't care about a
   # string's contents, so we just move forward.
   private def consume_string_skip
@@ -143,27 +125,30 @@ class Json::Lexer
     end
   end
 
-  private def consume_string_slow_path(start_pos)
-    clear_buffer
-    write_to_buffer slice_range(start_pos + 1, current_pos)
-    append_to_buffer consume_string_escape_sequence
+  private def consume_string_with_buffer
+    consume_string_with_buffer {}
+  end
+
+  private def consume_string_with_buffer
+    @buffer.clear
+    yield
     while true
       case char = next_char
       when '\0'
         raise "unterminated string"
       when '\\'
-        append_to_buffer consume_string_escape_sequence
+        @buffer << consume_string_escape_sequence
       when '"'
         next_char
         break
       else
-        append_to_buffer char
+        @buffer << char
       end
     end
     if @expects_object_key
       @token.string_value = @string_pool.get(@buffer)
     else
-      @token.string_value = buffer_contents
+      @token.string_value = @buffer.to_s
     end
   end
 
@@ -298,50 +283,14 @@ class Json::Lexer
     @token.float_value = negative ? -float : float
   end
 
-  private def current_pos
-    @reader.pos
-  end
-
-  def string_range(start_pos, end_pos)
-    @reader.string.byte_slice(start_pos, end_pos - start_pos)
-  end
-
-  def slice_range(start_pos, end_pos)
-    @reader.string.to_slice.to_slice[start_pos, end_pos - start_pos]
-  end
-
   private def next_char
     @column_number += 1
     next_char_no_column_increment
   end
 
-  private def next_char_no_column_increment
-    @reader.next_char
-  end
-
   private def next_char(token_type)
     @token.type = token_type
     next_char
-  end
-
-  private def current_char
-    @reader.current_char
-  end
-
-  private def clear_buffer
-    @buffer.clear
-  end
-
-  private def append_to_buffer(value)
-    @buffer << value unless @skip
-  end
-
-  private def write_to_buffer(slice)
-    @buffer.write slice
-  end
-
-  private def buffer_contents
-    @buffer.to_s
   end
 
   private def unexpected_char(char = current_char)
@@ -352,3 +301,5 @@ class Json::Lexer
     ::raise ParseException.new(msg, @line_number, @column_number)
   end
 end
+
+require "./lexer/*"

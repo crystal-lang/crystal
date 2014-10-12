@@ -328,9 +328,9 @@ class Json::PullParser
     @object_stack.last?
   end
 
-  delegate token, @lexer
-  delegate next_token, @lexer
-  delegate next_token_expect_object_key, @lexer
+  private delegate token, @lexer
+  private delegate next_token, @lexer
+  private delegate next_token_expect_object_key, @lexer
 
   private def next_token_after_value
     case next_token.type

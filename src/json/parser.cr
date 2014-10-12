@@ -1,6 +1,8 @@
+require "lexer"
+
 class Json::Parser
-  def initialize(string)
-    @lexer = Lexer.new(string)
+  def initialize(string_or_io)
+    @lexer = Json::Lexer.new(string_or_io)
     next_token
   end
 
@@ -91,9 +93,9 @@ class Json::Parser
     object
   end
 
-  delegate token, @lexer
-  delegate next_token, @lexer
-  delegate next_token_expect_object_key, @lexer
+  private delegate token, @lexer
+  private delegate next_token, @lexer
+  private delegate next_token_expect_object_key, @lexer
 
   private def value_and_next_token(value)
     next_token
