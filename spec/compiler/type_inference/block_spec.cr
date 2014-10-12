@@ -429,4 +429,23 @@ describe "Block inference" do
       foo.map &.to_f
       )) { array_of(float64) }
   end
+
+  it "allows initialize with yield" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = yield 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new do |a|
+        a + 1
+      end
+      foo.x
+      )) { int32 }
+  end
 end

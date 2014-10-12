@@ -190,6 +190,14 @@ module Crystal
       call_gc = Call.new(Path.global("GC"), "add_finalizer", [var] of ASTNode)
       init = Call.new(var, "initialize", new_vars)
 
+      # If the initialize yields, call it with a block
+      # that yields those arguments.
+      if block_args_count = self.yields
+        block_args = Array.new(block_args_count) { |i| Var.new("_arg#{i}") }
+        vars = Array(ASTNode).new(block_args_count) { |i| Var.new("_arg#{i}") }
+        init.block = Block.new(block_args, Yield.new(vars))
+      end
+
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << call_gc unless instance_type.struct?

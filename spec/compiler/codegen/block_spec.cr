@@ -1025,4 +1025,23 @@ describe "Code gen: block" do
       end
       ").to_i.should eq(1)
   end
+
+  it "allows initialize with yield" do
+    run(%(
+      class Foo
+        def initialize
+          @x = yield 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new do |a|
+        a + 1
+      end
+      foo.x
+      )).to_i.should eq(2)
+  end
 end
