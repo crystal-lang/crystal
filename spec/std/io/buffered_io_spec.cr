@@ -30,4 +30,24 @@ describe "BufferedIO" do
     io.read(10).should eq(" world")
     io.read(5).should eq("")
   end
+
+  it "reads char" do
+    io = BufferedIO.new(StringIO.new("hi 世界"))
+    io.read_char.should eq('h')
+    io.read_char.should eq('i')
+    io.read_char.should eq(' ')
+    io.read_char.should eq('世')
+    io.read_char.should eq('界')
+    io.read_char.should be_nil
+  end
+
+  it "reads byte" do
+    io = BufferedIO.new(StringIO.new("hello"))
+    io.read_byte.should eq('h'.ord)
+    io.read_byte.should eq('e'.ord)
+    io.read_byte.should eq('l'.ord)
+    io.read_byte.should eq('l'.ord)
+    io.read_byte.should eq('o'.ord)
+    io.read_char.should be_nil
+  end
 end
