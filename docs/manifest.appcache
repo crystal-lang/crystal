@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1410827595689
+# Revision 1413075105718
 
 CACHE:
 index.html
@@ -17,7 +17,9 @@ builtin_types/value.html
 installation/README.html
 installation/from_a_targz.html
 installation/from_source_repository.html
+installation/on_debian_and_ubuntu.html
 installation/on_mac_osx_using_homebrew.html
+installation/on_redhat_and_centos.html
 overview/README.html
 syntax_and_semantics/inheritance.html
 syntax_and_semantics/README.html
