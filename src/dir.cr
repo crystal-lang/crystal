@@ -31,6 +31,25 @@ lib C
     WHT = 14_u8
   end
 
+  struct Glob
+    pathc : C::SizeT
+    pathv : UInt8**
+    offs : C::SizeT
+    flags :  Int32
+  end
+
+  enum GlobFlags
+    APPEND = 1 << 5
+    BRACE  = 1 << 10
+    TILDE  = 1 << 12
+  end
+
+  enum GlobErrors
+    NOSPACE = 1
+    ABORTED = 2
+    NOMATCH = 3
+  end
+
   fun getcwd(buffer : UInt8*, size : Int32) : UInt8*
   fun opendir(name : UInt8*) : Dir*
   fun closedir(dir : Dir*) : Int32
@@ -43,6 +62,9 @@ lib C
   elsif linux
     fun readdir = readdir64(dir : Dir*) : DirEntry*
   end
+
+  fun glob(pattern : UInt8*, flags : Int32, errfunc : (UInt8*, Int32) -> Int32, result : Glob*)
+  fun globfree(result : Glob*)
 end
 
 class Dir
@@ -64,6 +86,60 @@ class Dir
     ensure
       C.closedir(dir)
     end
+  end
+
+  def self.entries(dirname)
+    entries = [] of String
+    list(dirname) do |name, type|
+      entries << name
+    end
+    entries
+  end
+
+  def self.[](*patterns)
+    glob(patterns)
+  end
+
+  def self.[](patterns : Enumerable(String))
+    glob(patterns)
+  end
+
+  def self.glob(*patterns)
+    glob(patterns)
+  end
+
+  def self.glob(patterns : Enumerable(String))
+    paths = [] of String
+    glob(patterns) do |path|
+      paths << path
+    end
+    paths
+  end
+
+  def self.glob(patterns : Enumerable(String))
+    paths = C::Glob.new
+    flags = C::GlobFlags::BRACE|C::GlobFlags::TILDE
+    errfunc = -> (_path : UInt8*, _errno : Int32) { 0 }
+
+    patterns.each do |pattern|
+      result = C.glob(pattern, flags, errfunc, pointerof(paths))
+
+      if result == C::GlobErrors::NOSPACE
+        raise GlobError.new "Ran out of memory"
+      elsif result == C::GlobErrors::ABORTED
+        raise GlobError.new "Read error"
+      end
+
+      flags |= C::GlobFlags::APPEND
+    end
+
+    Slice(UInt8*).new(paths.pathv, paths.pathc.to_i32).each do |path|
+      yield String.new(path)
+    end
+
+    nil
+  ensure
+    C.globfree(pointerof(paths))
   end
 
   def self.exists?(path)
@@ -105,4 +181,7 @@ class Dir
     end
     0
   end
+end
+
+class GlobError < Exception
 end
