@@ -1,5 +1,5 @@
-def Object.from_json(json : String)
-  parser = Json::PullParser.new(json)
+def Object.from_json(string_or_io)
+  parser = Json::PullParser.new(string_or_io)
   new parser
 end
 

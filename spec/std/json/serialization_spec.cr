@@ -38,6 +38,11 @@ describe "Json serialization" do
     it "does Hash(String, Int32)#from_json and skips null" do
       Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null})).should eq({"foo" => 1, "bar" => 2})
     end
+
+    it "does for Array(Int32) from IO" do
+      io = StringIO.new "[1, 2, 3]"
+      Array(Int32).from_json(io).should eq([1, 2, 3])
+    end
   end
 
   describe "to_json" do
