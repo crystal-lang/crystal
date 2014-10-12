@@ -417,6 +417,12 @@ module Crystal
         false
       end
 
+      def visit(node : Splat)
+        node.exp.accept self
+        @last = @last.interpret("argify", [] of ASTNode, nil, self)
+        false
+      end
+
       class ReplaceBlockVarsTransformer < Transformer
         def initialize(@vars)
         end

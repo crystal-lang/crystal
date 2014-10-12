@@ -2079,7 +2079,17 @@ module Crystal
 
     def parse_expression_inside_macro
       @in_macro_expression = true
-      exp = parse_op_assign
+
+      if @token.type == :"*"
+        next_token_skip_space
+        exp = parse_op_assign
+        splat = Splat.new(exp)
+        splat.location = exp.location
+        exp = splat
+      else
+        exp = parse_op_assign
+      end
+
       @in_macro_expression = false
       exp
     end

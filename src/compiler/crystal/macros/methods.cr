@@ -234,11 +234,14 @@ module Crystal
 
           block_arg = block.args.first?
 
-          ArrayLiteral.new(elements.map do |elem|
+          mapped_elements = Array(ASTNode).new(elements.length)
+          elements.each do |elem|
             block_value = interpreter.accept elem.to_macro_var
             interpreter.define_var(block_arg.name, block_value) if block_arg
-            interpreter.accept block.body
-          end)
+            mapped_elements << interpreter.accept block.body
+          end
+
+          ArrayLiteral.new(mapped_elements)
         end
       when "select"
         interpret_argless_method(method, args) do

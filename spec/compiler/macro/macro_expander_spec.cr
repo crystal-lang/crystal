@@ -365,6 +365,10 @@ describe "MacroExpander" do
     it "executes argify with symbols and strings" do
       assert_macro "", %({{[:foo, "hello", 3].argify}}), [] of ASTNode, %(:foo, "hello", 3)
     end
+
+    it "executes argify with splat" do
+      assert_macro "", %({{*[1, 2, 3]}}), [] of ASTNode, "1, 2, 3"
+    end
   end
 
   describe "hash methods" do
