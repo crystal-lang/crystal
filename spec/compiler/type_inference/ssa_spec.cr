@@ -124,7 +124,7 @@ describe "Type inference: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var that is re-assigned in a while and used in condiiton" do
+  it "types a var that is re-assigned in a while and used in condition" do
     assert_type(%(
       a = 1
       while b = a
@@ -134,7 +134,7 @@ describe "Type inference: ssa" do
       )) { union_of(int32, char) }
   end
 
-  it "types a var that is re-assigned in a while in next and used in condiiton" do
+  it "types a var that is re-assigned in a while in next and used in condition" do
     assert_type(%(
       a = 1
       while b = a
