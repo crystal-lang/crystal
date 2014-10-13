@@ -364,6 +364,25 @@ module Crystal
     end
   end
 
+  class Block
+    def interpret(method, args, block, interpreter)
+      case method
+      when "body"
+        interpret_argless_method(method, args) { @body || Nop.new }
+      when "args"
+        interpret_argless_method(method, args) do
+          vars = Array(ASTNode).new(@args.length)
+          @args.each do |arg|
+            vars << MacroId.new(arg.name)
+          end
+          ArrayLiteral.new(vars)
+        end
+      else
+        super
+      end
+    end
+  end
+
   class MacroType
     def interpret(method, args, block, interpreter)
       case method

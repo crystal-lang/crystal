@@ -425,6 +425,16 @@ describe "MacroExpander" do
     end
   end
 
+  describe "block methods" do
+    it "executes body" do
+      assert_macro "x", %({{x.body}}), [Block.new(body: NumberLiteral.new(1))] of ASTNode, "1"
+    end
+
+    it "executes args" do
+      assert_macro "x", %({{x.args}}), [Block.new([Var.new("x"), Var.new("y")])] of ASTNode, "[x, y]"
+    end
+  end
+
   it "executes assign" do
     assert_macro "", %({{a = 1}}{{a}}), [] of ASTNode, "1"
   end

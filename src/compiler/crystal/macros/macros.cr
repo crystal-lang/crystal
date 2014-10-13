@@ -165,6 +165,13 @@ module Crystal
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
+        # The block arg
+        call_block = call.block
+        macro_block_arg = a_macro.block_arg
+        if macro_block_arg
+          vars[macro_block_arg.name] = call_block || Nop.new
+        end
+
         new(expander, mod, scope, a_macro.location, vars, call.block)
       end
 

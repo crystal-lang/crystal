@@ -562,4 +562,20 @@ describe "Code gen: macro" do
       Foo.new.foo
       )).to_string.should eq("Foo")
   end
+
+  it "receives &block" do
+    run(%(
+      macro foo(&block)
+        bar {{block}}
+      end
+
+      def bar
+        yield 1
+      end
+
+      foo do |x|
+        x + 1
+      end
+      )).to_i.should eq(2)
+  end
 end
