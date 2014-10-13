@@ -1935,11 +1935,11 @@ module Crystal
     end
 
     def ident_start?(char)
-      char.alpha? || char == '_'
+      char.alpha? || char == '_' || char.ord > 0x9F
     end
 
     def ident_part?(char)
-      ident_start?(char) || char.digit? || char.ord > 0x9F
+      ident_start?(char) || char.digit?
     end
 
     def ident_part_or_end?(char)
