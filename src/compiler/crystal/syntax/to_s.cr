@@ -40,15 +40,22 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @str << node.value.inspect
+      node.value.inspect(@str)
     end
 
     def visit(node : SymbolLiteral)
-      @str << ":" << node.value
+      @str << ':'
+
+      value = node.value
+      if Symbol.needs_quotes?(value)
+        value.inspect(@str)
+      else
+        value.to_s(@str)
+      end
     end
 
     def visit(node : StringLiteral)
-      @str << node.value.inspect
+      node.value.inspect(@str)
     end
 
     def visit(node : StringInterpolation)

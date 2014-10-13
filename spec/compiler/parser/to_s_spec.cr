@@ -29,4 +29,12 @@ describe "ASTNode#to_s" do
   it "puts parenthesis in call argument if it's a cast" do
     Parser.parse("foo(a as Int32)").to_s.should eq("foo((a as Int32))")
   end
+
+  it "correctly convert a symbol that doesn't need qoutes" do
+    Parser.parse(%(:foo)).to_s.should eq(%(:foo))
+  end
+
+  it "correctly convert a symbol that needs qoutes" do
+    Parser.parse(%(:"{")).to_s.should eq(%(:"{"))
+  end
 end
