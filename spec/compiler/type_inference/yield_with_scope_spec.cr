@@ -51,4 +51,23 @@ describe "Type inference: yield with scope" do
     mod, input = result.program, result.node as Expressions
     (input.last as Call).block.not_nil!.body.type.should eq(mod.float64)
   end
+
+  it "passes #229" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      def a
+        with Foo.new yield
+      end
+
+      module Bar
+        x = a { foo }
+      end
+      x
+      )) { int32 }
+  end
 end

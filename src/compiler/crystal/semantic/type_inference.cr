@@ -645,7 +645,7 @@ module Crystal
       block_visitor.fun_literal_context = @fun_literal_context
 
       block_scope = node.scope || @scope
-      block_scope = current_type.metaclass unless current_type.is_a?(Program)
+      block_scope ||= current_type.metaclass unless current_type.is_a?(Program)
 
       block_visitor.scope = block_scope
 
