@@ -57,7 +57,7 @@ class CSV
       end
 
       def <<(value : String)
-        if value =~ /(,|\n|")/
+        if needs_quotes?(value)
           @builder.quote_cell value
         else
           @builder.cell { |io| io << value }
@@ -84,6 +84,16 @@ class CSV
 
       def skip_cell
         self << nil
+      end
+
+      private def needs_quotes?(value)
+        value.each_byte do |byte|
+          case byte.chr
+          when ',', '\n', '"'
+            return true
+          end
+        end
+        false
       end
     end
   end
