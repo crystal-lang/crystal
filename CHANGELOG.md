@@ -3,10 +3,15 @@
 * Added [Signal](https://github.com/manastech/crystal/blob/master/src/signal.cr) module.
 * Added [Tempfile](https://github.com/manastech/crystal/blob/master/src/tempfile.cr) class.
 * Enhanced [HTTP::Client](https://github.com/manastech/crystal/blob/master/src/net/http/client/client.cr).
+* Added [OAuth::Consumer](https://github.com/manastech/crystal/blob/master/libs/oauth/consumer.cr).
 * Added [OAuth2::Client](https://github.com/manastech/crystal/blob/master/libs/oauth2/client.cr).
 * Added [OpenSSL::HMAC](https://github.com/manastech/crystal/blob/master/libs/openssl/hmac.cr).
 * Added [SecureRandom](https://github.com/manastech/crystal/blob/master/src/secure_random.cr).
 * New syntax for array/hash-like classes. For example: `Set {1, 2, 3}` and `HTTP::Headers {"content-type": "text/plain"}`. These just create the type and use `<<` or `[]=`.
+* Optimized Json parsing performance.
+* Added a [CSV builder](https://github.com/manastech/crystal/blob/master/src/csv.cr#L13).
+* XML reader can [parse from an IO](https://github.com/manastech/crystal/blob/master/src/xml/reader.cr#L10).
+* Added `Dir::glob` and `Dir::Entries` (thanks @jhass)
 * Some bug fixes.
 
 ## 0.5.0 (2014-09-24)
