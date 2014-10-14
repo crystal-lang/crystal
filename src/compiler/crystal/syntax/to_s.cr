@@ -670,13 +670,12 @@ module Crystal
         @str << " = "
         default_value.accept self
       end
-      if restriction = node.restriction
-        @str << " : "
-        restriction.accept self
-      end
       if type = node.type?
         @str << " : "
         type.to_s(@str)
+      elsif restriction = node.restriction
+        @str << " : "
+        restriction.accept self
       end
       false
     end
