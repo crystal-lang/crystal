@@ -202,4 +202,26 @@ describe "Type inference: macro" do
       ->(x : Foo) { x.foo; x.ivars_length }
       )) { fun_of(types["Foo"], no_return) }
   end
+
+  it "errors if non-existent named arg" do
+    assert_error %(
+      macro foo(x = 1)
+        {{x}} + 1
+      end
+
+      foo y: 2
+      ),
+      "no argument named 'y'"
+  end
+
+  it "errors if named arg already specified" do
+    assert_error %(
+      macro foo(x = 1)
+        {{x}} + 1
+      end
+
+      foo 2, x: 2
+      ),
+      "argument 'x' already specified"
+  end
 end

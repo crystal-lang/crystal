@@ -165,6 +165,11 @@ module Crystal
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
+        # The named arguments
+        call.named_args.try &.each do |named_arg|
+          vars[named_arg.name] = named_arg.value
+        end
+
         # The block arg
         call_block = call.block
         macro_block_arg = a_macro.block_arg

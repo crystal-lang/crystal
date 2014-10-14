@@ -578,4 +578,14 @@ describe "Code gen: macro" do
       end
       )).to_i.should eq(2)
   end
+
+  it "executes with named arguments" do
+    run(%(
+      macro foo(x = 1)
+        {{x}} + 1
+      end
+
+      foo x: 2
+      )).to_i.should eq(3)
+  end
 end

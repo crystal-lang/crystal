@@ -289,7 +289,7 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_macro"
     end
 
-    def lookup_macro(name, args_length)
+    def lookup_macro(name, args_length, named_args)
       raise "Bug: #{self} doesn't implement lookup_macro"
     end
 
@@ -303,7 +303,7 @@ module Crystal
 
     def lookup_method_missing
       # method_missing is actually stored in the metaclass
-      method_missing = metaclass.lookup_macro("method_missing", 3)
+      method_missing = metaclass.lookup_macro("method_missing", 3, nil)
       return method_missing if method_missing
 
       parents.try &.each do |parent|
@@ -697,14 +697,14 @@ module Crystal
       nil
     end
 
-    def lookup_macro(name, args_length)
+    def lookup_macro(name, args_length, named_args)
       if (macros = self.macros) && (array = macros[name]?)
-        match = array.find &.matches_args_length?(args_length)
+        match = array.find &.matches?(args_length, named_args)
         return match if match
       end
 
       parents.try &.each do |parent|
-        parent_macro = parent.lookup_macro(name, args_length)
+        parent_macro = parent.lookup_macro(name, args_length, named_args)
         return parent_macro if parent_macro
       end
 
@@ -2890,7 +2890,7 @@ module Crystal
       true
     end
 
-    def lookup_macro(name, args_length)
+    def lookup_macro(name, args_length, named_args)
       nil
     end
 

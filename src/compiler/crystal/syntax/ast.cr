@@ -894,7 +894,7 @@ module Crystal
       name.length
     end
 
-    def matches_args_length?(args_length)
+    def matches?(args_length, named_args)
       my_args_length = args.length
       min_args_length = args.index(&.default_value) || my_args_length
       max_args_length = my_args_length
@@ -902,7 +902,23 @@ module Crystal
         min_args_length -= 1
         max_args_length = Int32::MAX
       end
-      min_args_length <= args_length <= max_args_length
+
+      unless min_args_length <= args_length <= max_args_length
+        return false
+      end
+
+      named_args.try &.each do |named_arg|
+        index = args.index { |arg| arg.name == named_arg.name }
+        if index
+          if index < args_length
+            return false
+          end
+        else
+          return false
+        end
+      end
+
+      true
     end
 
     def clone_without_location
