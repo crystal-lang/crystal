@@ -6,7 +6,7 @@ class Class
   macro def to_s(io) : Nil
     class_name = {{@class_name}}
     if class_name.ends_with?(":Class")
-      class_name = class_name[0 .. -7]
+      class_name = class_name[0, class_name.length - 6]
     end
     io << class_name
     nil
