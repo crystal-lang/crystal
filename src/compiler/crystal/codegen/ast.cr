@@ -170,6 +170,10 @@ module Crystal
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
             owner.llvm_name(str)
+            if original_owner != self_type
+              str << "@"
+              original_owner.llvm_name(str)
+            end
             str << "#"
           end
         end

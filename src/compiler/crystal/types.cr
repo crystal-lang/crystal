@@ -1891,7 +1891,11 @@ module Crystal
     end
 
     def tuple_indexer(index)
-      @tuple_indexers[index] ||= Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
+      @tuple_indexers[index] ||= begin
+        indexer = Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
+        indexer.owner = self
+        indexer
+      end
     end
 
     def var

@@ -494,4 +494,31 @@ describe "Code gen: def" do
       method(foo)
       ").to_i.should eq(1)
   end
+
+  it "fixes #230: include original owner in mangled def" do
+    run(%(
+      class Base
+        def some(other : self)
+          false
+        end
+
+        def some(other)
+          false
+        end
+      end
+
+      class Foo(T) < Base
+        def some(other : Foo)
+          true
+        end
+      end
+
+      a = Foo(Int32).new
+      b = Foo(Int32).new || Foo(Int32 | Nil).new || true
+      a.some(b)
+
+      c = Foo(Int32).new
+      c.some(c)
+      )).to_b.should be_true
+  end
 end

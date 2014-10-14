@@ -3,6 +3,7 @@ require "../syntax/ast"
 module Crystal
   class Def
     property! :owner
+    property! :original_owner
     property :vars
     property :raises
 
@@ -98,6 +99,7 @@ module Crystal
       expansion.uses_block_arg = uses_block_arg
       expansion.yields = yields
       expansion.location = location
+      expansion.owner = owner?
 
       if retain_body
         new_body = [] of ASTNode

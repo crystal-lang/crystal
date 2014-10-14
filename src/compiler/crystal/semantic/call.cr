@@ -1158,6 +1158,7 @@ module Crystal
 
       typed_def = untyped_def.clone
       typed_def.owner = owner
+      typed_def.original_owner = untyped_def.owner
 
       if body = typed_def.body
         typed_def.bind_to body
