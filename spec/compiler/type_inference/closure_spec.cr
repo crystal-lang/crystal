@@ -416,4 +416,25 @@ describe "Type inference: closure" do
       Foo(Int32).new.foo { |x| x.to_f }
       ") { fun_of(int32, float64) }
   end
+
+  it "passes #227" do
+    result = assert_type(%(
+      ->{ a = 1; ->{ a } }
+      )) { fun_of(fun_of(int32)) }
+    fn = result.node as FunLiteral
+    fn.def.closure.should be_false
+  end
+
+  it "marks outer fun inside a block as closured" do
+    result = assert_type(%(
+      def foo
+        yield
+      end
+
+      a = 1
+      ->{ ->{ foo { a } } }
+      )) { fun_of(fun_of(int32)) }
+    fn = (result.node as Expressions).last as FunLiteral
+    fn.def.closure.should be_true
+  end
 end

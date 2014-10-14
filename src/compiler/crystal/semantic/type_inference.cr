@@ -29,6 +29,7 @@ module Crystal
     property call
     property type_lookup
     property fun_literal_context
+    property parent
     property types
     property block_nest
 
@@ -643,6 +644,7 @@ module Crystal
       block_visitor.untyped_def = @untyped_def
       block_visitor.call = @call
       block_visitor.fun_literal_context = @fun_literal_context
+      block_visitor.parent = self
 
       block_scope = node.scope || @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)
@@ -713,13 +715,9 @@ module Crystal
       block_visitor.type_lookup = type_lookup
       block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
       block_visitor.block_nest = @block_nest
+      block_visitor.parent = self
 
       node.def.body.accept block_visitor
-
-      if node.def.closure
-        context = current_non_block_context
-        context.closure = true if context.is_a?(Def)
-      end
 
       false
     end
@@ -2665,7 +2663,19 @@ module Crystal
         closured = !context.same?(var_context)
         if closured
           var.closured = true
-          context.closure = true if context.is_a?(Def)
+
+          # Go up and mark fun literal defs as closured until we get
+          # to the context where the variable is defined
+          visitor = self
+          while visitor
+            visitor_context = visitor.closure_context
+            if visitor_context == var_context
+              break
+            end
+
+            visitor_context.closure = true if visitor_context.is_a?(Def)
+            visitor = visitor.parent
+          end
         end
       end
     end
@@ -2685,6 +2695,12 @@ module Crystal
 
     def current_non_block_context
       @typed_def || @mod
+    end
+
+    def closure_context
+      context = current_context
+      context = context.context if context.is_a?(Block)
+      context
     end
 
     def lookup_var_or_instance_var(var : Var)
