@@ -581,7 +581,7 @@ module Crystal
         @last = node
       end
 
-      {% for name in %w(Bool Number Char String Symbol Nil Array Range Tuple Hash) %}
+      {% for name in %w(Bool Number Char String Symbol Nil Array Range Tuple Hash Regex) %}
         def visit(node : {{name.id}}Literal)
           @last = node
           false

@@ -132,6 +132,21 @@ module Crystal
             raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
           end
         end
+      when "=~"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when RegexLiteral
+            arg_value = arg.value
+            if arg_value.is_a?(StringLiteral)
+              regex = Regex.new(arg_value.value, arg.modifiers)
+            else
+              raise "regex interpolations not yet allowed in macros"
+            end
+            BoolLiteral.new(!!(@value =~ regex))
+          else
+            BoolLiteral.new(false)
+          end
+        end
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
       when "chars"
@@ -142,6 +157,18 @@ module Crystal
         interpret_argless_method(method, args) { StringLiteral.new(@value.downcase) }
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(@value.empty?) }
+      when "ends_with?"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            piece = arg.value
+          when StringLiteral
+            piece = arg.value
+          else
+            raise "StringLiteral#ends_with? expects char or string, not #{arg.class_desc}"
+          end
+          BoolLiteral.new(@value.ends_with?(piece))
+        end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
       when "length"
@@ -166,6 +193,18 @@ module Crystal
           create_array_literal_from_values(@value.split(splitter)) { |value| StringLiteral.new(value) }
         else
           raise "wrong number of arguments for split (#{args.length} for 0, 1)"
+        end
+      when "starts_with?"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            piece = arg.value
+          when StringLiteral
+            piece = arg.value
+          else
+            raise "StringLiteral#starts_with? expects char or string, not #{arg.class_desc}"
+          end
+          BoolLiteral.new(@value.starts_with?(piece))
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
@@ -380,6 +419,30 @@ module Crystal
       else
         super
       end
+    end
+  end
+
+  class MacroId
+    def interpret(method, args, block, interpreter)
+      if method == "stringify"
+        return super
+      end
+
+      value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
+      value = MacroId.new(value.value) if value.is_a?(StringLiteral)
+      value
+    end
+  end
+
+  class SymbolLiteral
+    def interpret(method, args, block, interpreter)
+      if method == "stringify"
+        return super
+      end
+
+      value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
+      value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
+      value
     end
   end
 

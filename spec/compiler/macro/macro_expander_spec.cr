@@ -286,6 +286,66 @@ describe "MacroExpander" do
     it "executes string chomp" do
       assert_macro "", %({{"hello\n".chomp}}), [] of ASTNode, %("hello")
     end
+
+    it "executes string starts_with? char (true)" do
+      assert_macro "", %({{"hello".starts_with?('h')}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string starts_with? char (false)" do
+      assert_macro "", %({{"hello".starts_with?('e')}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string starts_with? string (true)" do
+      assert_macro "", %({{"hello".starts_with?("hel")}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string starts_with? string (false)" do
+      assert_macro "", %({{"hello".starts_with?("hi")}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string ends_with? char (true)" do
+      assert_macro "", %({{"hello".ends_with?('o')}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string ends_with? char (false)" do
+      assert_macro "", %({{"hello".ends_with?('e')}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string ends_with? string (true)" do
+      assert_macro "", %({{"hello".ends_with?("llo")}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string ends_with? string (false)" do
+      assert_macro "", %({{"hello".ends_with?("tro")}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string =~ (false)" do
+      assert_macro "", %({{"hello" =~ /hei/}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string =~ (true)" do
+      assert_macro "", %({{"hello" =~ /ell/}}), [] of ASTNode, %(true)
+    end
+  end
+
+  describe "macro id methods" do
+    it "forwards methods to string" do
+      assert_macro "x", %({{x.ends_with?("llo")}}), [MacroId.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.ends_with?("tro")}}), [MacroId.new("hello")] of ASTNode, %(false)
+      assert_macro "x", %({{x.starts_with?("hel")}}), [MacroId.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.chomp}}), [MacroId.new("hello\n")] of ASTNode, %(hello)
+      assert_macro "x", %({{x.upcase}}), [MacroId.new("hello")] of ASTNode, %(HELLO)
+    end
+  end
+
+  describe "symbol methods" do
+    it "forwards methods to string" do
+      assert_macro "x", %({{x.ends_with?("llo")}}), [SymbolLiteral.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.ends_with?("tro")}}), [SymbolLiteral.new("hello")] of ASTNode, %(false)
+      assert_macro "x", %({{x.starts_with?("hel")}}), [SymbolLiteral.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.chomp}}), [SymbolLiteral.new("hello\n")] of ASTNode, %(:hello)
+      assert_macro "x", %({{x.upcase}}), [SymbolLiteral.new("hello")] of ASTNode, %(:HELLO)
+    end
   end
 
   describe "array methods" do
