@@ -437,4 +437,21 @@ describe "Type inference: closure" do
     fn = (result.node as Expressions).last as FunLiteral
     fn.def.closure.should be_true
   end
+
+  it "marks outer fun as closured when using self" do
+    result = assert_type(%(
+      class Foo
+        def foo
+          ->{ ->{ self } }
+        end
+      end
+
+      Foo.new.foo
+      )) { fun_of(fun_of(types["Foo"])) }
+    call = (result.node as Expressions).last as Call
+    a_def = call.target_def
+    a_def.self_closured.should be_true
+    fn = (a_def.body as FunLiteral)
+    fn.def.closure.should be_true
+  end
 end

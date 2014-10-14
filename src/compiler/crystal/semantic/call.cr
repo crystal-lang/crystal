@@ -241,7 +241,6 @@ module Crystal
                 visitor.call = self
                 visitor.scope = lookup_self_type
                 visitor.type_lookup = match.context.type_lookup
-                visitor.parent = parent_visitor
                 typed_def.body.accept visitor
 
                 if visitor.is_initialize

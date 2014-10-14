@@ -2669,9 +2669,7 @@ module Crystal
           visitor = self
           while visitor
             visitor_context = visitor.closure_context
-            if visitor_context == var_context
-              break
-            end
+            break if visitor_context == var_context
 
             visitor_context.closure = true if visitor_context.is_a?(Def)
             visitor = visitor.parent
@@ -2684,8 +2682,14 @@ module Crystal
       if (context = @fun_literal_context) && context.is_a?(Def)
         context.self_closured = true
 
-        non_block_context = current_non_block_context
-        non_block_context.closure = true if non_block_context.is_a?(Def)
+        # Go up and mark fun literal defs as closured until the top
+        # (which should be when we leave the top Def)
+        visitor = self
+        while visitor
+          visitor_context = visitor.closure_context
+          visitor_context.closure = true if visitor_context.is_a?(Def)
+          visitor = visitor.parent
+        end
       end
     end
 
