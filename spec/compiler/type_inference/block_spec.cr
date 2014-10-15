@@ -448,4 +448,16 @@ describe "Block inference" do
       foo.x
       )) { int32 }
   end
+
+  it "passes #233: block with initialize with default args" do
+    assert_type(%(
+      class Foo
+        def initialize(x = nil)
+          yield
+        end
+      end
+
+      Foo.new {}
+      )) { types["Foo"] }
+  end
 end

@@ -210,6 +210,7 @@ module Crystal
 
       new_def = Def.new("new", def_args, exps)
       new_def.splat_index = splat_index
+      new_def.yields = yields
 
       # Forward block argument if any
       if uses_block_arg
