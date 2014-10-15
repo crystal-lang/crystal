@@ -35,7 +35,7 @@ class String
     buffer = (str as String).cstr
     bytesize, length = yield buffer
     str_header = str as {Int32, Int32, Int32}*
-    str_header.value = {TYPE_ID, bytesize, length}
+    str_header.value = {TYPE_ID, bytesize.to_i, length.to_i}
     buffer[bytesize] = 0_u8
     str as String
   end

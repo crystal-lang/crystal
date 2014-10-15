@@ -137,17 +137,16 @@ end
 
 struct PointerAppender(T)
   def initialize(@pointer : Pointer(T))
-    @count = 0
+    @start = @pointer
   end
 
   def <<(value : T)
     @pointer.value = value
     @pointer += 1
-    @count += 1
   end
 
   def count
-    @count
+    @pointer - @start
   end
 
   def pointer
