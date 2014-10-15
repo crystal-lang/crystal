@@ -414,4 +414,30 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:EOF)
   end
+
+  it "lexes string with backslash" do
+    lexer = Lexer.new(%("hello \\\n    world"))
+
+    token = lexer.next_token
+    token.type.should eq(:DELIMITER_START)
+    token.delimiter_state.end.should eq('"')
+    token.delimiter_state.nest.should eq('"')
+    token.delimiter_state.open_count.should eq(0)
+
+    delimiter_state = token.delimiter_state
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:STRING)
+    token.value.should eq("hello ")
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:STRING)
+    token.value.should eq("world")
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:DELIMITER_END)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
 end

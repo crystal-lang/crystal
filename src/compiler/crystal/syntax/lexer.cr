@@ -1352,13 +1352,7 @@ module Crystal
 
       case current_char
       when '\0'
-        if string_end == '`'
-          raise "unterminated command", @line_number, @column_number
-        elsif string_end == '/'
-          raise "unterminated regular expression", @line_number, @column_number
-        else
-          raise "unterminated string literal", @line_number, @column_number
-        end
+        raise_unterminated_quoted string_end
       when string_end
         next_char
         if string_open_count == 0
@@ -1403,6 +1397,20 @@ module Crystal
             next_char
             @token.type = :STRING
             @token.value = char_value.chr.to_s
+          when '\n'
+            # Skip until the next non-whitespace char
+            while true
+              char = next_char
+              case char
+              when '\0'
+                raise_unterminated_quoted string_end
+              when .whitespace?
+                # Continue
+              else
+                break
+              end
+            end
+            next_string_token delimiter_state
           else
             @token.type = :STRING
             @token.value = current_char.to_s
@@ -1442,6 +1450,15 @@ module Crystal
       end
 
       @token
+    end
+
+    def raise_unterminated_quoted(string_end)
+      msg = case string_end
+            when '`' then "unterminated command"
+            when '/' then "unterminated regular expression"
+            else          "unterminated string literal"
+            end
+      raise msg, @line_number, @column_number
     end
 
     def next_macro_token(macro_state, skip_whitespace)

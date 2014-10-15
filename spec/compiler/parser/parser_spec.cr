@@ -142,6 +142,7 @@ describe "Parser" do
 
   it_parses %("foo"), "foo".string
   it_parses %(""), "".string
+  it_parses %("hello \\\n     world"), "hello world".string
 
   it_parses ":foo", "foo".symbol
 
