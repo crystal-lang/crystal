@@ -12,7 +12,16 @@
 * Added a [CSV builder](https://github.com/manastech/crystal/blob/master/src/csv.cr#L13).
 * XML reader can [parse from an IO](https://github.com/manastech/crystal/blob/master/src/xml/reader.cr#L10).
 * Added `Dir::glob` and `Dir::Entries` (thanks @jhass)
-* Some bug fixes.
+* Allow `ensure` as an expression suffix.
+* Fixed [#219](https://github.com/manastech/crystal/issues/219): Proc type is not inferred when passing to library fun and the return type doesn't match.
+* Fixed [#224](https://github.com/manastech/crystal/issues/224): Class#new doesn't pass a block.
+* Fixed [#225](https://github.com/manastech/crystal/issues/225): ICE when comparing void to something.
+* Fixed [#227](https://github.com/manastech/crystal/issues/227): Nested captured block looses scope and crashes compiler.
+* Fixed [#228](https://github.com/manastech/crystal/issues/228): Macro expansion doesn't retain symbol escaping as needed.
+* Fixed [#229](https://github.com/manastech/crystal/issues/229): Can't change block context if defined within module context.
+* Fixed [#230](https://github.com/manastech/crystal/issues/230): Type interference breaks equality operator.
+* Fixed [#233](https://github.com/manastech/crystal/issues/233): Incorrect `no block given` message with new.
+* Other bug fixes.
 
 ## 0.5.0 (2014-09-24)
 
