@@ -269,6 +269,13 @@ describe "Json::PullParser" do
       end
     end
 
+    it "reads float when it is an int" do
+      pull = Json::PullParser.new(%(1))
+      f = pull.read_float
+      f.is_a?(Float64).should be_true
+      f.should eq(1.0)
+    end
+
     ["1", "[1]", %({"x": [1]})].each do |value|
       it "yields all keys when skipping #{value}" do
         pull = Json::PullParser.new(%({"foo": #{value}, "bar": 2}))
