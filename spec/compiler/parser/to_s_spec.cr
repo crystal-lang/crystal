@@ -30,6 +30,10 @@ describe "ASTNode#to_s" do
     Parser.parse("foo(a as Int32)").to_s.should eq("foo((a as Int32))")
   end
 
+  it "doesn't put parenthesis in call on instance var" do
+    Parser.parse("@foo.bar").to_s.should eq("@foo.bar")
+  end
+
   it "correctly convert a symbol that doesn't need qoutes" do
     Parser.parse(%(:foo)).to_s.should eq(%(:foo))
   end

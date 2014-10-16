@@ -250,7 +250,8 @@ module Crystal
           else
             true
           end
-        when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, StringInterpolation, Path, Generic
+        when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
+             StringInterpolation, Path, Generic, InstanceVar, Global
           false
         when ArrayLiteral
           !!node_obj.of
