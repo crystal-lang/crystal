@@ -1,4 +1,4 @@
-## Next
+## 0.5.1 (2014-10-16)
 
 * Added [json_mapping](https://github.com/manastech/crystal/blob/master/spec/std/json/mapping_spec.cr) macro.
 * Added [Signal](https://github.com/manastech/crystal/blob/master/src/signal.cr) module.
