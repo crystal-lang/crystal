@@ -135,7 +135,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
     if is_external
       llvm_args_types = args.map { |arg| llvm_c_type(arg.type) }
-      llvm_return_type = llvm_c_type(target_def.type)
+      llvm_return_type = llvm_c_return_type(target_def.type)
     else
       llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
       llvm_return_type = llvm_type(target_def.type)

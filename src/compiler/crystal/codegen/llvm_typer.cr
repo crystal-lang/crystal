@@ -335,6 +335,14 @@ module Crystal
       llvm_arg_type(type)
     end
 
+    def llvm_c_return_type(type : CStructType)
+      llvm_type(type)
+    end
+
+    def llvm_c_return_type(type)
+      llvm_c_type(type)
+    end
+
     def closure_type(type : FunInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
       arg_types.insert(0, LLVM::VoidPointer)

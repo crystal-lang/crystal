@@ -220,6 +220,10 @@ module Crystal
       llvm_typer.llvm_c_type(type)
     end
 
+    def llvm_c_return_type(type)
+      llvm_typer.llvm_c_return_type(type)
+    end
+
     def llvm_size(type)
       llvm_type(type).size
     end

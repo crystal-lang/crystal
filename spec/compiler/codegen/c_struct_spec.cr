@@ -293,4 +293,20 @@ describe "Code gen: struct" do
       point.x + point.y
       )).to_i.should eq(3)
   end
+
+  it "returns big struct" do
+    build(%(
+      lib C
+        struct Big
+          x : Int64
+          y : Int64
+          z : Int32
+        end
+
+        fun foo(y : Int32) : Big
+      end
+
+      s = C.foo(1)
+      ))
+  end
 end
