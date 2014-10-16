@@ -1,5 +1,6 @@
 ## Next
 
+* Added [json_mapping](https://github.com/manastech/crystal/blob/master/spec/std/json/mapping_spec.cr) macro.
 * Added [Signal](https://github.com/manastech/crystal/blob/master/src/signal.cr) module.
 * Added [Tempfile](https://github.com/manastech/crystal/blob/master/src/tempfile.cr) class.
 * Enhanced [HTTP::Client](https://github.com/manastech/crystal/blob/master/src/net/http/client/client.cr).
