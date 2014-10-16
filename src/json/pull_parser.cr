@@ -108,7 +108,7 @@ class Json::PullParser
     when :float
       @float_value.tap { read_next }
     else
-      raise_error "expecting int or float but was #{@kind}"
+      parse_exception "expecting int or float but was #{@kind}"
     end
   end
 
@@ -368,14 +368,14 @@ class Json::PullParser
   end
 
   private def expect_kind(kind)
-    raise_error "expected #{kind} but was #{@kind}" unless @kind == kind
+    parse_exception "expected #{kind} but was #{@kind}" unless @kind == kind
   end
 
   private def unexpected_token
-    raise_error "unexpected token: #{token}"
+    parse_exception "unexpected token: #{token}"
   end
 
-  private def raise_error(msg)
+  private def parse_exception(msg)
     raise ParseException.new(msg, token.line_number, token.column_number)
   end
 end
