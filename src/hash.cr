@@ -180,8 +180,8 @@ class Hash(K, V)
     values
   end
 
-  def entries
-    ary = [] of {K, V}
+  def to_a
+    ary = Array({K, V}).new(@length)
     each do |key, value|
       ary << {key, value}
     end

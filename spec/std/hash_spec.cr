@@ -304,16 +304,16 @@ describe "Hash" do
     h.length.should eq(1)
   end
 
-  it "gets hash entries as tuples" do
+  it "does to_a" do
     h = {1 => "hello", 2 => "bye"}
-    h.entries.should eq([{1, "hello"}, {2, "bye"}])
+    h.to_a.should eq([{1, "hello"}, {2, "bye"}])
   end
 
   it "clears" do
     h = {1 => 2, 3 => 4}
     h.clear
     h.empty?.should be_true
-    h.entries.length.should eq(0)
+    h.to_a.length.should eq(0)
   end
 
   class Breaker
