@@ -13,10 +13,6 @@ module Crystal
     def initialize(program)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
-      @arg_cache = TypeCache.new
-      @c_cache = TypeCache.new
-      @embedded_cache = TypeCache.new
-      @embedded_c_cache = TypeCache.new
       @union_value_cache = TypeCache.new
 
       machine = program.target_machine
@@ -271,15 +267,11 @@ module Crystal
       raise "Bug: called llvm_struct_type for #{type}"
     end
 
-    def llvm_arg_type(type)
-      @arg_cache[type] ||= create_llvm_arg_type(type)
-    end
-
-    def create_llvm_arg_type(type : AliasType)
+    def llvm_arg_type(type : AliasType)
       llvm_arg_type(type.remove_alias)
     end
 
-    def create_llvm_arg_type(type : Type)
+    def llvm_arg_type(type : Type)
       if type.passed_by_value?
         llvm_type(type).pointer
       else
@@ -287,23 +279,19 @@ module Crystal
       end
     end
 
-    def llvm_embedded_type(type)
-      @embedded_cache[type] ||= create_llvm_embedded_type type
-    end
-
-    def create_llvm_embedded_type(type : CStructType)
+    def llvm_embedded_type(type : CStructType)
       llvm_struct_type type
     end
 
-    def create_llvm_embedded_type(type : CUnionType)
+    def llvm_embedded_type(type : CUnionType)
       llvm_struct_type type
     end
 
-    def create_llvm_embedded_type(type : FunInstanceType)
+    def llvm_embedded_type(type : FunInstanceType)
       llvm_type type
     end
 
-    def create_llvm_embedded_type(type : InstanceVarContainer)
+    def llvm_embedded_type(type : InstanceVarContainer)
       if type.struct?
         llvm_struct_type type
       else
@@ -311,47 +299,39 @@ module Crystal
       end
     end
 
-    def create_llvm_embedded_type(type : StaticArrayInstanceType)
+    def llvm_embedded_type(type : StaticArrayInstanceType)
       llvm_type type
     end
 
-    def create_llvm_embedded_type(type : NoReturnType)
+    def llvm_embedded_type(type : NoReturnType)
       LLVM::Int8
     end
 
-    def create_llvm_embedded_type(type : VoidType)
+    def llvm_embedded_type(type : VoidType)
       LLVM::Int8
     end
 
-    def create_llvm_embedded_type(type)
+    def llvm_embedded_type(type)
       llvm_type type
+    end
+
+    def llvm_embedded_c_type(type : FunInstanceType)
+      fun_type(type)
     end
 
     def llvm_embedded_c_type(type)
-      @embedded_c_cache[type] ||= create_llvm_embedded_c_type type
-    end
-
-    def create_llvm_embedded_c_type(type : FunInstanceType)
-      fun_type(type)
-    end
-
-    def create_llvm_embedded_c_type(type)
       llvm_embedded_type type
     end
 
-    def llvm_c_type(type : Type)
-      @c_cache[type] ||= create_llvm_c_type(type)
-    end
-
-    def create_llvm_c_type(type : FunInstanceType)
+    def llvm_c_type(type : FunInstanceType)
       fun_type(type)
     end
 
-    def create_llvm_c_type(type : NilableFunType)
+    def llvm_c_type(type : NilableFunType)
       fun_type(type.fun_type)
     end
 
-    def create_llvm_c_type(type)
+    def llvm_c_type(type)
       llvm_arg_type(type)
     end
 
@@ -362,7 +342,10 @@ module Crystal
     end
 
     def fun_type(type : FunInstanceType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
+      arg_types = Array(LLVM::Type).new(type.arg_types.length)
+      type.arg_types.each do |arg_type|
+        arg_types << llvm_arg_type(arg_type)
+      end
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
