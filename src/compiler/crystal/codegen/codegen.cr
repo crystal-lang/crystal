@@ -345,6 +345,13 @@ module Crystal
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
       is_closure = node.def.closure
 
+      # If we don't care about a fun literal's return type then we mark the associated
+      # def as returning void. This can't be done in the type inference phase because
+      # of bindings and type propagation.
+      if node.force_void
+        node.def.set_type @mod.void
+      end
+
       the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module: @main_mod, is_fun_literal: true, is_closure: is_closure
       the_fun = check_main_fun fun_literal_name, the_fun
 

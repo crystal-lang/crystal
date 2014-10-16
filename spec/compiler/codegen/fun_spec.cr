@@ -503,4 +503,50 @@ describe "Code gen: fun" do
       Params.new.foo
       )).to_string.should eq("bar")
   end
+
+  it "codegens fun that references struct (bug)" do
+    run(%(
+      class Context
+        def initialize
+          @x = Reference.new
+        end
+
+        def run
+          @x.object_id
+        end
+
+        def it(&block)
+          block.call
+        end
+      end
+
+      struct Foo
+        def initialize
+          @x = 0
+          @y = 0
+          @z = 42
+          @w = 0
+        end
+      end
+
+      context = Context.new
+      context.it do
+        Foo.new
+      end
+      context.run
+      )).to_i.should_not eq(42)
+  end
+
+  it "codegens captured block that returns tuple" do
+    build(%(
+      def foo(&block)
+        block
+      end
+
+      block = foo do
+        {0, 0, 42, 0}
+      end
+      block.call
+      ))
+  end
 end
