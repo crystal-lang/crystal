@@ -11,6 +11,18 @@ struct LLVM::Function
     LibLLVM.set_linkage(self, linkage)
   end
 
+  def linkage
+    LibLLVM.get_linkage(self)
+  end
+
+  def call_convention
+    LibLLVM.get_function_call_convention(self)
+  end
+
+  def call_convention=(cc)
+    LibLLVM.set_function_call_convention(self, cc)
+  end
+
   def add_attribute(attribute)
     LibLLVM.add_function_attr self, attribute
   end

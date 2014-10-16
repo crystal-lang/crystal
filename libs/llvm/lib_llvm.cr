@@ -152,6 +152,16 @@ lib LibLLVM
     ReturnStatusAction   # verifier will just return 1
   end
 
+  enum CallConvention
+    C           = 0
+    Fast        = 8
+    Cold        = 9
+    WebKitJS    = 12
+    AnyReg      = 13
+    X86Std  = 64
+    X86Fastcall = 65
+  end
+
   struct JITCompilerOptions
     opt_level : UInt32
     code_model : CodeModel
@@ -352,4 +362,7 @@ lib LibLLVM
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
   fun print_type_to_string = LLVMPrintTypeToString(ty : TypeRef) : UInt8*
   fun print_value_to_string = LLVMPrintValueToString(v : ValueRef) : UInt8*
+  fun get_linkage = LLVMGetLinkage(v : ValueRef) : Linkage
+  fun get_function_call_convention = LLVMGetFunctionCallConv(fn : ValueRef) : CallConvention
+  fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : CallConvention)
 end
