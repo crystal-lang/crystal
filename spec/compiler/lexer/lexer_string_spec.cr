@@ -416,7 +416,7 @@ describe "Lexer string" do
   end
 
   it "lexes string with backslash" do
-    lexer = Lexer.new(%("hello \\\n    world"))
+    lexer = Lexer.new(%("hello \\\n    world"1))
 
     token = lexer.next_token
     token.type.should eq(:DELIMITER_START)
@@ -436,6 +436,10 @@ describe "Lexer string" do
 
     token = lexer.next_string_token(delimiter_state)
     token.type.should eq(:DELIMITER_END)
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(2)
 
     token = lexer.next_token
     token.type.should eq(:EOF)

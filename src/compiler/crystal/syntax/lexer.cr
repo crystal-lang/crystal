@@ -1398,12 +1398,16 @@ module Crystal
             @token.type = :STRING
             @token.value = char_value.chr.to_s
           when '\n'
+            @line_number += 1
+
             # Skip until the next non-whitespace char
             while true
               char = next_char
               case char
               when '\0'
                 raise_unterminated_quoted string_end
+              when '\n'
+                @line_number += 1
               when .whitespace?
                 # Continue
               else
