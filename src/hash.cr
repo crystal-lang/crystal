@@ -298,6 +298,14 @@ class Hash(K, V)
     end
     hash
   end
+  
+  def to_a
+    array = [] of Array(K | V)
+    each do |key, value|
+      array << [key, value] }
+    end
+    array
+  end
 
   def inspect(io : IO)
     to_s(io)
