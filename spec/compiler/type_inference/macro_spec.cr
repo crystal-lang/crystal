@@ -224,4 +224,24 @@ describe "Type inference: macro" do
       ),
       "argument 'x' already specified"
   end
+
+  it "finds macro in included module" do
+    assert_type(%(
+      module Moo
+        macro bar
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          bar
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
 end

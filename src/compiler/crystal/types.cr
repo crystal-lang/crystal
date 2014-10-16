@@ -703,8 +703,8 @@ module Crystal
         return match if match
       end
 
-      parents.try &.each do |parent|
-        parent_macro = parent.lookup_macro(name, args_length, named_args)
+      instance_type.parents.try &.each do |parent|
+        parent_macro = parent.metaclass.lookup_macro(name, args_length, named_args)
         return parent_macro if parent_macro
       end
 
