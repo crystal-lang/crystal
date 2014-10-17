@@ -588,4 +588,27 @@ describe "Code gen: macro" do
       foo x: 2
       )).to_i.should eq(3)
   end
+
+  it "gets correct class name when there are classes in the middle" do
+    run(%(
+      class Foo
+        macro def class_desc : String
+          {{@class_name}}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Bar
+      end
+
+      class Qux < Bar
+      end
+
+      a = Pointer(Foo).malloc(1_u64)
+      a.value = Qux.new
+      a.value.class_desc
+      )).to_string.should eq("Qux")
+  end
 end

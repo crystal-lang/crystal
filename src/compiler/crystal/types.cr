@@ -2563,6 +2563,8 @@ module Crystal
   end
 
   module VirtualTypeLookup
+    record Change, :type, :def
+
     def lookup_matches(signature, owner = self, type_lookup = self)
       is_new = virtual_metaclass? && signature.name == "new"
 
@@ -2583,6 +2585,7 @@ module Crystal
 
       type_to_matches = nil
       matches = base_type_matches.matches
+      changes = nil
 
       # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
@@ -2615,11 +2618,15 @@ module Crystal
               if base_type_match.def.return_type
                 # We need to check if the definition for the method is different than the one in the base type
                 full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
-                if full_subtype_matches.any? { |match| match.def.same?(base_type_match.def) }
+                if full_subtype_matches.any? &.def.same?(base_type_match.def)
                   cloned_def = base_type_match.def.clone
                   cloned_def.macro_owner = base_type_match.def.macro_owner
-                  subtype.add_def cloned_def
                   cloned_def.owner = subtype_lookup
+
+                  # We want to add this cloned def at the end, because if we search subtype matches
+                  # in the next iteration we will find it, and we don't want that.
+                  changes ||= [] of Change
+                  changes << Change.new(subtype, cloned_def)
 
                   new_subtype_matches ||= [] of Match
                   new_subtype_matches.push Match.new(cloned_def, base_type_match.arg_types, MatchContext.new(subtype_lookup, base_type_match.context.type_lookup, base_type_match.context.free_vars))
@@ -2686,6 +2693,10 @@ module Crystal
             end
           end
         end
+      end
+
+      changes.try &.each do |change|
+        change.type.add_def change.def
       end
 
       Matches.new(matches, (matches && matches.length > 0), self)
