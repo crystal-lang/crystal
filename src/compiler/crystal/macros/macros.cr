@@ -366,6 +366,18 @@ module Crystal
         false
       end
 
+      def visit(node : If)
+        node.cond.accept self
+        (@last.truthy? ? node.then : node.else).accept self
+        false
+      end
+
+      def visit(node : Unless)
+        node.cond.accept self
+        (@last.truthy? ? node.else : node.then).accept self
+        false
+      end
+
       def visit(node : Call)
         obj = node.obj
         if obj

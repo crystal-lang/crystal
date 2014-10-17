@@ -541,4 +541,12 @@ describe "MacroExpander" do
       assert_macro "", %({{env("FOO")}}), [] of ASTNode, %(nil)
     end
   end
+
+  it "does regular if" do
+    assert_macro "", %({{1 == 2 ? 3 : 4}}), [] of ASTNode, "4"
+  end
+
+  it "does regular unless" do
+    assert_macro "", %({{unless 1 == 2; 3; else; 4; end}}), [] of ASTNode, "3"
+  end
 end
