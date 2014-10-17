@@ -479,6 +479,8 @@ module Crystal
           execute_env(node)
         when "puts", "p"
           execute_puts(node)
+        when "pp"
+          execute_pp(node)
         when "system", "`"
           execute_system(node)
         when "raise"
@@ -507,7 +509,18 @@ module Crystal
           puts @last
         end
 
-        @last = NilLiteral.new
+        @last = Nop.new
+      end
+
+      def execute_pp(node)
+        node.args.each do |arg|
+          arg.accept self
+          print arg
+          print " = "
+          puts @last
+        end
+
+        @last = Nop.new
       end
 
       def execute_system(node)
