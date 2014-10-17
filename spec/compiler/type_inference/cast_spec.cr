@@ -203,4 +203,20 @@ describe "Type inference: cast" do
       ),
       "can't cast Int32 to Bool"
   end
+
+  it "casts to target type even if can't infer casted value type" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        property! x
+      end
+
+      a = [1, 2, 3]
+      b = a.map { Foo.new.x as Int32 }
+
+      Foo.new.x = 1
+      b
+      )) { array_of(int32) }
+  end
 end

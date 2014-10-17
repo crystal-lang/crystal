@@ -195,10 +195,15 @@ module Crystal
     end
 
     def update(from = nil)
-      obj_type = obj.type?
-      return unless obj_type
-
       to_type = to.type.instance_type
+
+      obj_type = obj.type?
+
+      # If we don't know what type we are casting from, leave it as the to_type
+      unless obj_type
+        self.type = to_type.virtual_type
+        return
+      end
 
       if obj_type.pointer? || to_type.pointer?
         self.type = to_type
@@ -214,6 +219,11 @@ module Crystal
           filtered_type = to_type.virtual_type
           @upcast = true
         end
+
+        # If we don't have a matching type, leave it as the to_type:
+        # later (in after type inference) we will check again.
+        filtered_type ||= to_type.virtual_type
+
         self.type = filtered_type
       end
     end
