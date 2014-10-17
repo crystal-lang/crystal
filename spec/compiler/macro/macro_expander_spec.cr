@@ -429,6 +429,11 @@ describe "MacroExpander" do
     it "executes argify with splat" do
       assert_macro "", %({{*[1, 2, 3]}}), [] of ASTNode, "1, 2, 3"
     end
+
+    it "executes is_a?" do
+      assert_macro "", %({{[1, 2, 3].is_a?(ArrayLiteral)}}), [] of ASTNode, "true"
+      assert_macro "", %({{[1, 2, 3].is_a?(NumberLiteral)}}), [] of ASTNode, "false"
+    end
   end
 
   describe "hash methods" do
@@ -454,6 +459,11 @@ describe "MacroExpander" do
 
     it "executes values" do
       assert_macro "", %({{{a: 1, b: 2}.values}}), [] of ASTNode, "[1, 2]"
+    end
+
+    it "executes is_a?" do
+      assert_macro "", %({{{a: 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
+      assert_macro "", %({{{a: 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
     end
   end
 

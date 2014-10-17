@@ -435,6 +435,14 @@ module Crystal
         false
       end
 
+      def visit(node : IsA)
+        node.obj.accept self
+        const_name = node.const.to_s
+        obj_class_desc = @last.class_desc
+        @last = BoolLiteral.new(@last.class_desc == const_name)
+        false
+      end
+
       class ReplaceBlockVarsTransformer < Transformer
         def initialize(@vars)
         end
