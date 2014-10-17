@@ -37,8 +37,8 @@ lib C
   fun waitpid(pid : Int32, stat_loc : Int32*, options : Int32) : Int32
   fun open(path : UInt8*, oflag : Int32, ...) : Int32
   fun dup2(fd : Int32, fd2 : Int32) : Int32
-  fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SizeT
-  fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT)
+  fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SSizeT
+  fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SSizeT
   fun pipe(filedes : Int32[2]*) : Int32
 
   # In fact lseek's offset is off_t, but it matches the definition of size_t

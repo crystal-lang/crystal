@@ -9,11 +9,19 @@ class FileDescriptorIO
   end
 
   def read(slice : Slice(UInt8), count)
-    C.read(@fd, slice.pointer(count), C::SizeT.cast(count))
+    bytes_read = C.read(@fd, slice.pointer(count), C::SizeT.cast(count))
+    if bytes_read == -1
+      raise Errno.new "Error reading file"
+    end
+    bytes_read
   end
 
   def write(slice : Slice(UInt8), count)
-    C.write(@fd, slice.pointer(count), C::SizeT.cast(count))
+    bytes_written = C.write(@fd, slice.pointer(count), C::SizeT.cast(count))
+    if bytes_written == -1
+      raise Errno.new "Error writing file"
+    end
+    bytes_written
   end
 
   def seek(amount, whence)
