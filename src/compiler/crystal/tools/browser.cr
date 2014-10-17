@@ -14,10 +14,7 @@ class Crystal::Browser
         if request = HTTP::Request.from_io(sock)
           html = browser.handle(request.path)
 
-          headers = HTTP::Headers.new
-          headers["Content-Type"] = "text/html"
-
-          response = HTTP::Response.new(200, html, headers)
+          response = HTTP::Response.new(200, html, HTTP::Headers{"Content-Type": "text/html"})
           response.to_io sock
         end
       end

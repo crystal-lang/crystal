@@ -24,21 +24,15 @@ class HTTP::Response
   end
 
   def self.not_found
-    headers = HTTP::Headers.new
-    headers["Content-Type"] = "text/plain"
-    HTTP::Response.new(404, "Not Found", headers)
+    HTTP::Response.new(404, "Not Found", HTTP::Headers{"Content-Type": "text/plain"})
   end
 
   def self.ok(content_type, body)
-    headers = HTTP::Headers.new
-    headers["Content-Type"] = content_type
-    HTTP::Response.new(200, body, headers)
+    HTTP::Response.new(200, body, HTTP::Headers{"Content-Type": content_type})
   end
 
   def self.error(content_type, body)
-    headers = HTTP::Headers.new
-    headers["Content-Type"] = content_type
-    HTTP::Response.new(500, body, headers)
+    HTTP::Response.new(500, body, HTTP::Headers{"Content-Type": content_type})
   end
 
   def to_io(io)

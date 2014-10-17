@@ -730,10 +730,9 @@ module Crystal
       call = Call.new(obj, node.name)
       prepare_call(call)
 
-      call.args = Array(ASTNode).new(node.args.length)
-      node.args.each_with_index do |arg, i|
-        arg.accept(self)
-        call.args << Var.new("arg#{i}", arg.type.instance_type)
+      call.args = node.args.map_with_index do |arg, i|
+        arg.accept self
+        Var.new("arg#{i}", arg.type.instance_type) as ASTNode
       end
 
       begin

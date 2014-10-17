@@ -1,10 +1,8 @@
 macro record(name, *fields)
   struct {{name.id}}
-    {% for field in fields %}
-      getter {{field}}
-    {% end %}
+    getter {{*fields}}
 
-    def initialize({{ (fields.map { |field| "@#{field.id}" }.join ", ").id }})
+    def initialize({{ *fields.map { |field| "@#{field.id}".id } }})
     end
 
     {{yield}}
@@ -12,7 +10,7 @@ macro record(name, *fields)
 end
 
 macro pp(exp)
-  puts "#{ {{exp.stringify}} } = #{ ({{exp}}).inspect }"
+  ::puts "#{ {{exp.stringify}} } = #{ ({{exp}}).inspect }"
 end
 
 macro assert_responds_to(var, method)

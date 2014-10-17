@@ -503,7 +503,7 @@ module Crystal
             next_token_skip_space
             to = parse_single_type
             atomic = Cast.new(atomic, to)
-            atomic.location
+            atomic.location = location
           else
             break
           end

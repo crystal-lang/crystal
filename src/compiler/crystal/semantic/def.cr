@@ -162,10 +162,7 @@ module Crystal
 
     def expand_new_from_initialize(instance_type)
       if instance_type.is_a?(GenericClassType)
-        generic_type_args = Array(ASTNode).new(instance_type.type_vars.length)
-        instance_type.type_vars.each do |type_var|
-          generic_type_args << Path.new(type_var)
-        end
+        generic_type_args = instance_type.type_vars.map { |type_var| Path.new(type_var) as ASTNode }
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
         alloc = Call.new(new_generic, "allocate")
       else
@@ -179,10 +176,7 @@ module Crystal
       #    x.initialize ..., &block
       #    x
       var = Var.new("_")
-      new_vars = Array(ASTNode).new(args.length)
-      args.each do |arg|
-        new_vars.push Var.new(arg.name)
-      end
+      new_vars = args.map { |arg| Var.new(arg.name) as ASTNode }
 
       if splat_index = self.splat_index
         new_vars[splat_index] = Splat.new(new_vars[splat_index])
@@ -196,7 +190,7 @@ module Crystal
       # that yields those arguments.
       if block_args_count = self.yields
         block_args = Array.new(block_args_count) { |i| Var.new("_arg#{i}") }
-        vars = Array(ASTNode).new(block_args_count) { |i| Var.new("_arg#{i}") }
+        vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}") as ASTNode }
         init.block = Block.new(block_args, Yield.new(vars))
       end
 

@@ -57,7 +57,7 @@ module Crystal
     macro method_missing(name, args, block)
       return llvm_nil if @end
 
-      @builder.{{name.id}}({{args.argify}}) {{block}}
+      @builder.{{name.id}}({{*args}}) {{block}}
     end
   end
 end

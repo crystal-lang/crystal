@@ -8,8 +8,7 @@ describe HTTP::Headers do
   end
 
   it "is case insensitive" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     headers["foo"].should eq("bar")
   end
 
@@ -22,8 +21,7 @@ describe HTTP::Headers do
   end
 
   it "fetches" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     headers.fetch("foo").should eq("bar")
   end
 
@@ -44,28 +42,24 @@ describe HTTP::Headers do
   end
 
   it "has key" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     headers.has_key?("foo").should be_true
     headers.has_key?("bar").should be_false
   end
 
   it "deletes" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     headers.delete("foo").should eq("bar")
     headers.empty?.should be_true
   end
 
   it "equals another hash" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     headers.should eq({"foo": "bar"})
   end
 
   it "dups" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     other = headers.dup
     other.is_a?(HTTP::Headers).should be_true
     other["foo"].should eq("bar")
@@ -75,8 +69,7 @@ describe HTTP::Headers do
   end
 
   it "clones" do
-    headers = HTTP::Headers.new
-    headers["Foo"] = "bar"
+    headers = HTTP::Headers{"Foo": "bar"}
     other = headers.clone
     other.is_a?(HTTP::Headers).should be_true
     other["foo"].should eq("bar")

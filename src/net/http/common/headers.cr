@@ -80,9 +80,7 @@ struct HTTP::Headers
     to_s(io)
   end
 
-  macro method_missing(name, args, block)
-    @hash.{{name.id}}({{args.argify}}) {{block}}
-  end
+  forward_missing_to @hash
 
   private def key_name(key)
     key.capitalize

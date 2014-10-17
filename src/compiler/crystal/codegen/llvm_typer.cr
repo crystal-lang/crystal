@@ -109,11 +109,7 @@ module Crystal
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
-        element_types = Array(LLVM::Type).new(type.tuple_types.length)
-        type.tuple_types.each do |tuple_type|
-          element_types << llvm_embedded_type(tuple_type)
-        end
-        element_types
+        type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type) }
       end
     end
 

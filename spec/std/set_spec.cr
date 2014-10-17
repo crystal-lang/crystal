@@ -24,7 +24,7 @@ describe "Set" do
 
   describe "delete" do
     it "deletes an object" do
-      set = Set.new [1, 2, 3]
+      set = Set{1, 2, 3}
       set.delete 2
       set.length.should eq(2)
       set.includes?(1).should be_true
@@ -34,9 +34,9 @@ describe "Set" do
 
   describe "==" do
     it "compares two sets" do
-      set1 = Set.new([1, 2, 3])
-      set2 = Set.new([1, 2, 3])
-      set3 = Set.new([1, 2, 3, 4])
+      set1 = Set{1, 2, 3}
+      set2 = Set{1, 2, 3}
+      set3 = Set{1, 2, 3, 4}
 
       set1.should eq(set1)
       set1.should eq(set2)
@@ -45,24 +45,24 @@ describe "Set" do
   end
 
   it "does &" do
-    set1 = Set.new([1, 2, 3])
-    set2 = Set.new([4, 2, 5, 3])
+    set1 = Set{1, 2, 3}
+    set2 = Set{4, 2, 5, 3}
     set3 = set1 & set2
-    set3.should eq(Set.new([2, 3]))
+    set3.should eq(Set{2, 3})
   end
 
   it "does |" do
-    set1 = Set.new([1, 2, 3])
-    set2 = Set.new([4, 2, 5, 3])
+    set1 = Set{1, 2, 3}
+    set2 = Set{4, 2, 5, 3}
     set3 = set1 | set2
-    set3.should eq(Set.new([1, 2, 3, 4, 5]))
+    set3.should eq(Set{1, 2, 3, 4, 5})
   end
 
   it "does to_a" do
-    Set.new([1, 2, 3]).to_a.should eq([1, 2, 3])
+    Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end
 
   it "does to_s" do
-    Set.new([1, 2, 3]).to_s.should eq("Set{1, 2, 3}")
+    Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
   end
 end

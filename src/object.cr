@@ -93,7 +93,6 @@ class Object
     {% end %}
   end
 
-
   macro setter(*names)
     {% for name in names %}
       def {{name.id}}=(@{{name.id}})
@@ -102,18 +101,18 @@ class Object
   end
 
   macro property(*names)
-    getter {{names.argify}}
-    setter {{names.argify}}
+    getter {{*names}}
+    setter {{*names}}
   end
 
   macro property!(*names)
-    getter! {{names.argify}}
-    setter {{names.argify}}
+    getter! {{*names}}
+    setter {{*names}}
   end
 
   macro property?(*names)
-    getter? {{names.argify}}
-    setter {{names.argify}}
+    getter? {{*names}}
+    setter {{*names}}
   end
 
   macro delegate(method, to)
@@ -142,7 +141,13 @@ class Object
   end
 
   macro def_equals_and_hash(*fields)
-    def_equals {{fields.argify}}
-    def_hash {{fields.argify}}
+    def_equals {{*fields}}
+    def_hash {{*fields}}
+  end
+
+  macro forward_missing_to(delegate)
+    macro method_missing(name, args, block)
+      @hash.\{{name.id}}(\{{*args}}) \{{block}}
+    end
   end
 end

@@ -410,10 +410,7 @@ module Crystal
         interpret_argless_method(method, args) { @body || Nop.new }
       when "args"
         interpret_argless_method(method, args) do
-          vars = Array(ASTNode).new(@args.length)
-          @args.each do |arg|
-            vars << MacroId.new(arg.name)
-          end
+          vars = @args.map { |arg| MacroId.new(arg.name) as ASTNode }
           ArrayLiteral.new(vars)
         end
       else
