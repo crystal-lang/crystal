@@ -186,6 +186,28 @@ module Crystal
             exp = parse_op_assign
             atomic = Until.new(exp, atomic, true)
             atomic.location = location
+          when :rescue
+            next_token_skip_space
+            rescue_body = parse_expression
+            if atomic.is_a?(Assign)
+              eh = ExceptionHandler.new(atomic.value, [Rescue.new(rescue_body)] of Rescue)
+              eh.location = location
+              atomic.value = eh
+            else
+              atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
+              atomic.location = location
+            end
+          when :ensure
+            next_token_skip_space
+            ensure_body = parse_expression
+            if atomic.is_a?(Assign)
+              eh = ExceptionHandler.new(atomic.value, ensure: ensure_body)
+              eh.location = location
+              atomic.value = eh
+            else
+              atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
+              atomic.location = location
+            end
           else
             break
           end
@@ -211,20 +233,6 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
-        when :IDENT
-          case @token.value
-          when :rescue
-            next_token_skip_space
-            rescue_body = parse_expression
-            atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
-            atomic.location = location
-          when :ensure
-            next_token_skip_space
-            ensure_body = parse_expression
-            atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
-            atomic.location = location
-          end
-          break
         when :"="
           if atomic.is_a?(Call) && atomic.name == "[]"
             next_token_skip_space_or_newline
@@ -2793,7 +2801,7 @@ module Crystal
       end
 
       case @token.value
-      when :if, :unless, :while
+      when :if, :unless, :while, :rescue, :ensure
         return nil
       when :yield
         return nil if @stop_on_yield > 0

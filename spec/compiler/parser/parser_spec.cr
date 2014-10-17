@@ -713,8 +713,13 @@ describe "Parser" do
 
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
   it_parses "x = 1 rescue 2", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+  it_parses "x = 1 ensure 2", Assign.new("x".var, ExceptionHandler.new(1.int32, ensure: 2.int32))
+  it_parses "a = 1; a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new("a".var, [Rescue.new("a".var)])]
+  it_parses "a = 1; yield a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), [Rescue.new("a".var)])]
 
   it_parses "1 ensure 2", ExceptionHandler.new(1.int32, ensure: 2.int32)
+  it_parses "a = 1; a ensure a", [Assign.new("a".var, 1.int32), ExceptionHandler.new("a".var, ensure: "a".var)]
+  it_parses "a = 1; yield a ensure a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), ensure: "a".var)]
 
   it_parses "1 <= 2 <= 3", Call.new(Call.new(1.int32, "<=", [2.int32] of ASTNode), "<=", [3.int32] of ASTNode)
   it_parses "1 == 2 == 3 == 4", Call.new(Call.new(Call.new(1.int32, "==", [2.int32] of ASTNode), "==", [3.int32] of ASTNode), "==", [4.int32] of ASTNode)
