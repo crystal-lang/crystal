@@ -75,16 +75,17 @@ module Crystal::Command
 
   private def self.eval(args)
     if args.empty?
-      error "missing eval arguments"
-    end
-
-    double_dash_index = args.index("--")
-    if double_dash_index
-      program_source = args[0 ... double_dash_index].join " "
-      program_args = args[double_dash_index + 1 .. -1]
-    else
-      program_source = args.join " "
+      program_source = STDIN.gets_to_end
       program_args = [] of String
+    else
+      double_dash_index = args.index("--")
+      if double_dash_index
+        program_source = args[0 ... double_dash_index].join " "
+        program_args = args[double_dash_index + 1 .. -1]
+      else
+        program_source = args.join " "
+        program_args = [] of String
+      end
     end
 
     compiler = Compiler.new
