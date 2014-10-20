@@ -244,4 +244,19 @@ describe "Type inference: macro" do
       Foo.new.foo
       )) { int32 }
   end
+
+  it "errors when trying to define def inside def with macro expansion" do
+    assert_error %(
+      macro foo
+        def bar; end
+      end
+
+      def baz
+        foo
+      end
+
+      baz
+      ),
+      "can't define def inside def"
+  end
 end

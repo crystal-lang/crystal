@@ -1015,9 +1015,9 @@ module Crystal
       macros = in_macro_target &.lookup_macros(def_name)
       if macros
         all_arguments_lengths = Set(Int32).new
-        macros.each do |macro|
+        macros.each do |a_macro|
           named_args.try &.each do |named_arg|
-            index = macro.args.index { |arg| arg.name == named_arg.name }
+            index = a_macro.args.index { |arg| arg.name == named_arg.name }
             if index
               if index < args.length
                 raise "argument '#{named_arg.name}' already specified"
@@ -1027,8 +1027,8 @@ module Crystal
             end
           end
 
-          min_length = macro.args.index(&.default_value) || macro.args.length
-          min_length.upto(macro.args.length) do |args_length|
+          min_length = a_macro.args.index(&.default_value) || a_macro.args.length
+          min_length.upto(a_macro.args.length) do |args_length|
             all_arguments_lengths << args_length
           end
         end

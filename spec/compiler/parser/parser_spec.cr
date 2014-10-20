@@ -838,7 +838,7 @@ describe "Parser" do
   it_parses "foo(Bar { 1 })", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
-    it_parses "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
+    assert_syntax_error "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
   end
 
   it "keeps instance variables declared in def" do

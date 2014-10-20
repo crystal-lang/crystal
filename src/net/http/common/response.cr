@@ -8,7 +8,7 @@ class HTTP::Response
   property upgrade_handler
 
   def initialize(@status_code, @body = nil, @headers = HTTP::Headers.new : HTTP::Headers, status_message = nil, @version = "HTTP/1.1")
-    @status_message = status_message || class.default_status_message_for(@status_code)
+    @status_message = status_message || self.class.default_status_message_for(@status_code)
 
     if (body = @body)
       @headers["Content-Length"] = body.bytesize.to_s

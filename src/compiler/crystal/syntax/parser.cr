@@ -7,6 +7,7 @@ module Crystal
     record Unclosed, name, location
 
     property visibility
+    property def_nest
 
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
@@ -795,7 +796,7 @@ module Crystal
         when :with
           parse_yield_with_scope
         when :abstract
-          unless_in_def do
+          check_not_inside_def("can't use abstract inside def") do
             next_token_skip_space_or_newline
             case @token.type
             when :IDENT
@@ -812,9 +813,13 @@ module Crystal
             end
           end
         when :def
-          unless_in_def { parse_def }
+          check_not_inside_def("can't define def inside def") do
+            parse_def
+          end
         when :macro
-          unless_in_def { parse_macro }
+          check_not_inside_def("can't define macro inside def") do
+            parse_macro
+          end
         when :require
           parse_require
         when :case
@@ -826,15 +831,25 @@ module Crystal
         when :unless
           parse_unless
         when :include
-          unless_in_def { parse_include }
+          check_not_inside_def("can't include inside def") do
+            parse_include
+          end
         when :extend
-          unless_in_def { parse_extend }
+          check_not_inside_def("can't extend inside def") do
+            parse_extend
+          end
         when :class
-          unless_in_def { parse_class_def }
+          check_not_inside_def("can't define class inside def") do
+            parse_class_def
+          end
         when :struct
-          unless_in_def { parse_class_def is_struct: true }
+          check_not_inside_def("can't define struct inside def") do
+            parse_class_def is_struct: true
+          end
         when :module
-          unless_in_def { parse_module_def }
+          check_not_inside_def("can't define module inside def") do
+            parse_module_def
+          end
         when :while
           parse_while
         when :until
@@ -846,11 +861,17 @@ module Crystal
         when :break
           parse_break
         when :lib
-          unless_in_def { parse_lib }
+          check_not_inside_def("can't define lib inside def") do
+            parse_lib
+          end
         when :fun
-          unless_in_def { parse_fun_def require_body: true }
+          check_not_inside_def("can't define fun inside def") do
+            parse_fun_def require_body: true
+          end
         when :alias
-          unless_in_def { parse_alias }
+          check_not_inside_def("can't define alias inside def") do
+            parse_alias
+          end
         when :pointerof
           parse_pointerof
         when :sizeof
@@ -917,12 +938,16 @@ module Crystal
       ident
     end
 
-    def unless_in_def
+    def check_not_inside_def(message)
       if @def_nest == 0
         yield
       else
-        parse_var_or_call
+        raise message, @token.line_number, @token.column_number
       end
+    end
+
+    def inside_def?
+      @def_nest > 0
     end
 
     def parse_attribute
