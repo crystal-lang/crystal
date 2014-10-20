@@ -186,6 +186,7 @@ describe "Lexer" do
   it_lexes_u64 ["9223372036854775808", "-9223372036854775809"]
 
   it_lexes_char "'a'", 'a'
+  it_lexes_char "'\\b'", 8.chr
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
   it_lexes_char "'\\v'", '\v'

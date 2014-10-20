@@ -45,6 +45,7 @@ describe "Char" do
   end
 
   it "escapes" do
+    # TODO '\b'.ord.should eq(8)
     '\t'.ord.should eq(9)
     '\n'.ord.should eq(10)
     '\v'.ord.should eq(11)

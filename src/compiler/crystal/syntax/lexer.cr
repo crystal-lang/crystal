@@ -402,6 +402,8 @@ module Crystal
         case char1 = next_char
         when '\\'
           case char2 = next_char
+          when 'b'
+            @token.value = 8.chr # TODO use \b
           when 'e'
             @token.value = '\e'
           when 'f'
@@ -1375,6 +1377,8 @@ module Crystal
           @token.value = "\\#{char}"
         else
           case char = next_char
+          when 'b'
+            string_token_escape_value "\u{8}"
           when 'n'
             string_token_escape_value "\n"
           when 'r'
