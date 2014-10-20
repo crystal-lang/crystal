@@ -284,4 +284,16 @@ describe "Type inference: def" do
       foo a
       ), "no overload matches"
   end
+
+  it "says can only defined def on types and self" do
+    assert_error %(
+      class Foo
+      end
+
+      foo = Foo.new
+      def foo.bar
+      end
+      ),
+      "def receiver can only be a Type or self"
+  end
 end

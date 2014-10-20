@@ -2158,6 +2158,7 @@ module Crystal
       @yields = nil
       name_line_number = @token.line_number
       name_column_number = @token.column_number
+      receiver_location = @token.location
 
       if @token.type == :CONST
         receiver = parse_ident
@@ -2182,6 +2183,7 @@ module Crystal
         unless receiver
           if name
             receiver = Var.new name
+            receiver.location = receiver_location
           else
             raise "shouldn't reach this line"
           end

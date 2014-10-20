@@ -520,9 +520,13 @@ module Crystal
       check_valid_attributes node, ValidDefAttributes, "def"
 
       if receiver = node.receiver
-        # TODO: hack
-        if receiver.is_a?(Var) && receiver.name == "self"
-          target_type = current_type.metaclass
+        case receiver
+        when Var
+          if receiver.name == "self"
+            target_type = current_type.metaclass
+          else
+            receiver.raise "def receiver can only be a Type or self"
+          end
         else
           target_type = lookup_path_type(receiver).metaclass
         end
