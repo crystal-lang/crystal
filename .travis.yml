@@ -7,7 +7,8 @@ install:
   - brew install crystal --with-llvm
 env: CRYSTAL_CONFIG_VERSION=ci
 script:
-  - make crystal spec
+  - make crystal
+  - bin/crystal spec/all_spec.cr
 notifications:
   irc: "irc.freenode.net#crystal-lang"
   slack:
