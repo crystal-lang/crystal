@@ -2,11 +2,11 @@ module Crystal::Command
   USAGE = %(Usage: crystal [command] [switches] [program file] [--] [arguments]\n\
             \n\
             Command:\n    \
-            build                    compile and link program file\n    \
+            build                    compile program file\n    \
             browser                  open an http server to browse program file\n    \
             eval                     eval code\n    \
             hierarchy                show type hierarchy\n    \
-            run (default)            compile, like and run program file\n    \
+            run (default)            compile and run program file\n    \
             types                    show type of main variables\n    \
             --help                   show this help\n    \
             --version                show version)
