@@ -7,7 +7,7 @@ describe "Compiler" do
     tempfile = Tempfile.new "compiler_spec_output"
     tempfile.close
 
-    Crystal::Command.run ["#{__DIR__}/data/compiler_sample", "-o", tempfile.path]
+    Crystal::Command.run ["build", "#{__DIR__}/data/compiler_sample", "-o", tempfile.path]
 
     File.exists?(tempfile.path).should be_true
 
