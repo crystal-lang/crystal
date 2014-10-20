@@ -19,7 +19,7 @@ describe "Regex" do
 
   it "raises if outside match range with []" do
     "foo" =~ /foo/
-    expect_raises IndexOutOfBounds { $1 }
+    expect_raises(IndexOutOfBounds) { $1 }
   end
 
   it "capture named group" do
@@ -35,7 +35,7 @@ describe "Regex" do
 
   it "raises exception when named group doesn't exist" do
     ("foo" =~ /foo/).should eq(0)
-    expect_raises ArgumentError  { $~["group"] }
+    expect_raises(ArgumentError) { $~["group"] }
   end
 
   it "matches multiline" do
@@ -54,6 +54,6 @@ describe "Regex" do
   end
 
   it "raises exception with invalid regex" do
-    expect_raises ArgumentError { Regex.new("+") }
+    expect_raises(ArgumentError) { Regex.new("+") }
   end
 end

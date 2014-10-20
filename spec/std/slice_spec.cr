@@ -18,8 +18,8 @@ describe "Slice" do
     slice[-2].should eq(2)
     slice[-3].should eq(1)
 
-    expect_raises IndexOutOfBounds { slice[-4] }
-    expect_raises IndexOutOfBounds { slice[3] }
+    expect_raises(IndexOutOfBounds) { slice[-4] }
+    expect_raises(IndexOutOfBounds) { slice[3] }
   end
 
   it "does []=" do
@@ -27,8 +27,8 @@ describe "Slice" do
     slice[0] = 1
     slice[0].should eq(1)
 
-    expect_raises IndexOutOfBounds { slice[-4] = 1 }
-    expect_raises IndexOutOfBounds { slice[3] = 1 }
+    expect_raises(IndexOutOfBounds) { slice[-4] = 1 }
+    expect_raises(IndexOutOfBounds) { slice[3] = 1 }
   end
 
   it "does +" do
@@ -42,8 +42,8 @@ describe "Slice" do
     slice3 = slice + 3
     slice3.length.should eq(0)
 
-    expect_raises IndexOutOfBounds { slice + 4 }
-    expect_raises IndexOutOfBounds { slice + (-1) }
+    expect_raises(IndexOutOfBounds) { slice + 4 }
+    expect_raises(IndexOutOfBounds) { slice + (-1) }
   end
 
   it "does [] with start and count" do
@@ -53,10 +53,10 @@ describe "Slice" do
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
-    expect_raises IndexOutOfBounds { slice[-1, 1] }
-    expect_raises IndexOutOfBounds { slice[3, 2] }
-    expect_raises IndexOutOfBounds { slice[0, 5] }
-    expect_raises IndexOutOfBounds { slice[3, -1] }
+    expect_raises(IndexOutOfBounds) { slice[-1, 1] }
+    expect_raises(IndexOutOfBounds) { slice[3, 2] }
+    expect_raises(IndexOutOfBounds) { slice[0, 5] }
+    expect_raises(IndexOutOfBounds) { slice[3, -1] }
   end
 
   it "does empty?" do
@@ -65,7 +65,7 @@ describe "Slice" do
   end
 
   it "raises if length is negative on new" do
-    expect_raises ArgumentError { Slice.new(-1, 0) }
+    expect_raises(ArgumentError) { Slice.new(-1, 0) }
   end
 
   it "does to_s" do
@@ -75,8 +75,8 @@ describe "Slice" do
 
   it "gets pointer" do
     slice = Slice.new(4, 0)
-    expect_raises IndexOutOfBounds { slice.pointer(5) }
-    expect_raises IndexOutOfBounds { slice.pointer(-1) }
+    expect_raises(IndexOutOfBounds) { slice.pointer(5) }
+    expect_raises(IndexOutOfBounds) { slice.pointer(-1) }
   end
 
   it "does copy_from" do
@@ -85,7 +85,7 @@ describe "Slice" do
     slice.copy_from(pointer, 4)
     4.times { |i| slice[i].should eq(i + 1) }
 
-    expect_raises IndexOutOfBounds { slice.copy_from(pointer, 5) }
+    expect_raises(IndexOutOfBounds) { slice.copy_from(pointer, 5) }
   end
 
   it "does copy_to" do
@@ -94,7 +94,7 @@ describe "Slice" do
     slice.copy_to(pointer, 4)
     4.times { |i| pointer[i].should eq(i + 1) }
 
-    expect_raises IndexOutOfBounds { slice.copy_to(pointer, 5) }
+    expect_raises(IndexOutOfBounds) { slice.copy_to(pointer, 5) }
   end
 
   it "does hexstring" do

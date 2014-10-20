@@ -833,7 +833,8 @@ describe "Parser" do
   it_parses "Headers {foo: 1}", HashLiteral.new(["foo".symbol] of ASTNode, [1.int32] of ASTNode, name: "Headers".path)
   it_parses "Headers(Int32) {foo: 1}", HashLiteral.new(["foo".symbol] of ASTNode, [1.int32] of ASTNode, name: Generic.new("Headers".path, ["Int32".path] of ASTNode))
 
-  it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
+  it_parses "foo(Bar) { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
+  it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
   it_parses "foo(Bar { 1 })", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|

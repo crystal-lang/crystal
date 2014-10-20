@@ -129,6 +129,6 @@ describe "Pointer" do
   end
 
   it "raises if mallocs negative size" do
-    expect_raises ArgumentError { Pointer.malloc(-1, 0) }
+    expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end
 end

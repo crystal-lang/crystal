@@ -28,9 +28,9 @@ describe "Tuple" do
   it "does [] raises index out of bounds" do
     a = {1, 2.5}
     i = 2
-    expect_raises IndexOutOfBounds { a[i] }
+    expect_raises(IndexOutOfBounds) { a[i] }
     i = -1
-    expect_raises IndexOutOfBounds { a[i] }
+    expect_raises(IndexOutOfBounds) { a[i] }
   end
 
   it "does ==" do

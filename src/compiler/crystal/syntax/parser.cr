@@ -893,7 +893,7 @@ module Crystal
       ident = parse_ident
       skip_space
 
-      if @last_call_has_parenthesis && @token.type == :"{"
+      if @token.type == :"{"
         tuple_or_hash = parse_hash_or_tuple_literal allow_of: false
 
         skip_space

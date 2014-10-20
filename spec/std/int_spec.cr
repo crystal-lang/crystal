@@ -155,7 +155,7 @@ describe "Int" do
   end
 
   it "raises when divides by zero" do
-    expect_raises DivisionByZero { 1 / 0 }
+    expect_raises(DivisionByZero) { 1 / 0 }
     (4 / 2).should eq(2)
   end
 end
