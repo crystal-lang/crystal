@@ -200,19 +200,21 @@ abstract class Json::Lexer
       next_char
     end
 
-    if current_char == '0'
+    case current_char
+    when '0'
       next_char
-      if current_char == '.'
+      case current_char
+      when '.'
         consume_float(negative, integer)
-      elsif current_char == 'e'
+      when 'e', 'E'
         consume_exponent(negative, integer.to_f64)
-      elsif '0' <= current_char <= '9' || current_char == 'e' || current_char == 'E'
+      when '0' .. '9'
         unexpected_char
       else
         @token.type = :INT
         @token.int_value = 0_i64
       end
-    elsif '1' <= current_char <= '9'
+    when '1' .. '9'
       integer = (current_char.ord - '0'.ord).to_i64
       char = next_char
       while '0' <= char <= '9'
@@ -224,7 +226,7 @@ abstract class Json::Lexer
       case char
       when '.'
         consume_float(negative, integer)
-      when 'e'
+      when 'e', 'E'
         consume_exponent(negative, integer.to_f64)
       else
         @token.type = :INT
