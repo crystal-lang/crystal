@@ -251,6 +251,10 @@ module Crystal
         node.ensure = node_ensure.transform(self)
       end
 
+      if node_else = node.else
+        node.else = node_else.transform(self)
+      end
+
       node
     end
 

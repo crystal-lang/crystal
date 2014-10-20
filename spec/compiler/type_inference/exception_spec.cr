@@ -192,4 +192,14 @@ describe "Type inference: exception" do
       1
       )) { int32 }
   end
+
+  it "transform nodes in else block" do
+    assert_type(%(
+      begin
+      rescue
+      else
+        1 || nil
+      end
+    )) { |mod| union_of(mod.int32, mod.nil) }
+  end
 end
