@@ -157,7 +157,8 @@ abstract class Json::Lexer
     when '\\', '"', '/'
       char
     when 'b'
-      '\b'
+      8.chr # TODO use \b
+      # '\b'
     when 'f'
       '\f'
     when 'n'
