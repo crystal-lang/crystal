@@ -618,4 +618,31 @@ describe "Code gen: exception" do
       x
       )).to_i.should eq(1)
   end
+
+  it "codegens issue #118 (1)" do
+    build(%(
+      require "prelude"
+
+      begin
+        raise "hey"
+        n = 3
+      ensure
+        p n
+      end
+      ))
+  end
+
+  it "codegens issue #118 (2)" do
+    build(%(
+      require "prelude"
+
+      n = nil
+      begin
+        raise "hey"
+        n = 3
+      ensure
+        p n
+      end
+      ))
+  end
 end

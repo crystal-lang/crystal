@@ -1377,6 +1377,10 @@ module Crystal
         @last = call func, call_args
       end
 
+      if @builder.end
+        return @last
+      end
+
       set_call_by_val_attributes node, target_def, self_type, is_closure, fun_type
       emit_debug_metadata node, @last if @debug
 

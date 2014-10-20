@@ -202,4 +202,41 @@ describe "Type inference: exception" do
       end
     )) { |mod| union_of(mod.int32, mod.nil) }
   end
+
+  it "types var as nilable inside ensure (1)" do
+    result = assert_type(%(
+      require "prelude"
+
+      n = nil
+      begin
+        raise "hey"
+        n = 3
+      ensure
+        p n
+      end
+      n
+      )) { no_return }
+    mod = result.program
+    eh = (result.node as Expressions).expressions[-1]
+    call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
+    call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
+  end
+
+  it "types var as nilable inside ensure (2)" do
+    result = assert_type(%(
+      require "prelude"
+
+      begin
+        raise "hey"
+        n = 3
+      ensure
+        p n
+      end
+      n
+      )) { no_return }
+    mod = result.program
+    eh = (result.node as Expressions).expressions[-1]
+    call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
+    call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
+  end
 end

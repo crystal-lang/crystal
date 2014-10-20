@@ -2376,6 +2376,9 @@ module Crystal
       # If there were no rescue/else blocks or all of them were unreachable
       unless all_rescue_vars
         if node_ensure = node.ensure
+          after_handler_vars = @vars
+          @vars = exception_handler_vars
+
           # Variables in the ensure block might be nil because we don't know
           # if an exception was thrown before any assignment.
           @vars.each do |name, var|
@@ -2385,6 +2388,8 @@ module Crystal
           end
 
           node_ensure.accept self
+
+          @vars = after_handler_vars
         end
 
         # However, those previous variables can't be nil afterwards:
