@@ -95,4 +95,50 @@ describe "Json serialization" do
       {foo: 1, bar: 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
   end
+
+  describe "to_pretty_json" do
+    it "does for Nil" do
+      nil.to_pretty_json.should eq("null")
+    end
+
+    it "does for Bool" do
+      true.to_pretty_json.should eq("true")
+    end
+
+    it "does for Int32" do
+      1.to_pretty_json.should eq("1")
+    end
+
+    it "does for Float64" do
+      1.5.to_pretty_json.should eq("1.5")
+    end
+
+    it "does for String" do
+      "hello".to_pretty_json.should eq("\"hello\"")
+    end
+
+    it "does for Array" do
+      [1, 2, 3].to_pretty_json.should eq("[\n  1,\n  2,\n  3\n]")
+    end
+
+    it "does for nested Array" do
+      [[1, 2, 3]].to_pretty_json.should eq("[\n  [\n    1,\n    2,\n    3\n  ]\n]")
+    end
+
+    it "does for empty Array" do
+      ([] of Nil).to_pretty_json.should eq("[]")
+    end
+
+    it "does for Hash" do
+      {"foo" => 1, "bar" => 2}.to_pretty_json.should eq(%({\n  "foo": 1,\n  "bar": 2\n}))
+    end
+
+    it "does for nested Hash" do
+      {"foo" => {"bar" => 1} }.to_pretty_json.should eq(%({\n  "foo": {\n    "bar": 1\n  }\n}))
+    end
+
+    it "does for empty Hash" do
+      ({} of Nil => Nil).to_pretty_json.should eq(%({}))
+    end
+  end
 end

@@ -4,10 +4,20 @@ class Object
       to_json str
     end
   end
+
+  def to_pretty_json
+    String.build do |str|
+      to_pretty_json str
+    end
+  end
+
+  def to_pretty_json(io : IO)
+    to_json Json::PrettyWriter.new(io)
+  end
 end
 
 struct Json::ObjectBuilder(T)
-  def initialize(@io : T)
+  def initialize(@io : T, @indent = 0)
     @count = 0
   end
 
@@ -16,22 +26,31 @@ struct Json::ObjectBuilder(T)
   end
 
   def field(name)
-    @io << "," if @count > 0
+    if @count > 0
+      @io << ","
+      @io << '\n' if @indent > 0
+    end
+    @indent.times { @io << "  " }
     @io << "\""
     name.to_s(@io)
     @io << "\":"
+    @io << " " if @indent > 0
     yield
     @count += 1
   end
 end
 
 struct Json::ArrayBuilder(T)
-  def initialize(@io : T)
+  def initialize(@io : T, @indent = 0)
     @count = 0
   end
 
   def <<(value)
-    @io << "," if @count > 0
+    if @count > 0
+      @io << ","
+      @io << '\n' if @indent > 0
+    end
+    @indent.times { @io << "  " }
     value.to_json(@io)
     @count += 1
   end
@@ -53,6 +72,37 @@ end
 
 module IO
   include Json::Builder
+end
+
+class Json::PrettyWriter
+  include IO
+
+  def initialize(@io)
+    @indent = 0
+  end
+
+  delegate read, @io
+  delegate write, @io
+
+  def json_object
+    self << "{\n"
+    @indent += 1
+    yield Json::ObjectBuilder.new(self, @indent)
+    @indent -= 1
+    self << '\n'
+    @indent.times { @io << "  " }
+    self << "}"
+  end
+
+  def json_array
+    self << "[\n"
+    @indent += 1
+    yield Json::ArrayBuilder.new(self, @indent)
+    @indent -= 1
+    self << '\n'
+    @indent.times { @io << "  " }
+    self << ']'
+  end
 end
 
 struct Nil
@@ -115,6 +165,11 @@ end
 
 class Array
   def to_json(io)
+    if empty?
+      io << "[]"
+      return
+    end
+
     io.json_array do |array|
       each do |element|
         array << element
@@ -125,6 +180,11 @@ end
 
 class Hash
   def to_json(io)
+    if empty?
+      io << "{}"
+      return
+    end
+
     io.json_object do |object|
       each do |key, value|
         object.field key, value
