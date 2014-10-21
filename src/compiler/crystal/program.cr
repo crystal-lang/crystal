@@ -15,6 +15,7 @@ module Crystal
     getter splat_expansions
     property vars
     property literal_expander
+    getter consts_stack
 
     def initialize
       super(self, self, "main")
@@ -109,6 +110,7 @@ module Crystal
       @macro_expander = MacroExpander.new self
       @def_macros = [] of Def
       @splat_expansions = {} of Def => Type
+      @consts_stack = [] of Const
 
       define_primitives
     end
@@ -145,6 +147,18 @@ module Crystal
 
     def add_flag(flag)
       flags.add(flag)
+    end
+
+    def push_const(const)
+      if last_const = @consts_stack.last?
+        last_const.add_dependency const
+      end
+
+      @consts_stack.push const
+    end
+
+    def pop_const
+      @consts_stack.pop
     end
 
     def program

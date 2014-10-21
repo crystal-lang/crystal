@@ -162,4 +162,14 @@ describe "Type inference: const" do
       B::CONSTANT
       )) { bool }
   end
+
+  it "detects recursive constant definition" do
+    assert_error %(
+      A = B
+      B = A
+
+      A
+      ),
+      "recursive constant definition: A -> B -> A"
+  end
 end

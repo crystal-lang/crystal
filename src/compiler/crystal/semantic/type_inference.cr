@@ -1772,12 +1772,22 @@ module Crystal
       case type
       when Const
         unless type.value.type?
+          if type.visited?
+            node.raise "recursive constant definition: #{@mod.consts_stack.join " -> "} -> #{type}"
+          end
+
+          type.visited = true
+
           meta_vars = MetaVars.new
           const_def = Def.new("const", [] of Arg)
           type_visitor = TypeVisitor.new(@mod, meta_vars, const_def)
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
+
+          @mod.push_const type
           type.value.accept type_visitor
+          @mod.pop_const
+
           type.vars = const_def.vars
         end
         node.target_const = type

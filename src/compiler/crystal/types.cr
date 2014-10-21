@@ -2551,10 +2551,18 @@ module Crystal
     getter scope
     property! vars
     property used
+    property dependencies
+    property? visited
 
     def initialize(program, container, name, @value, @scope_types = [] of Type, @scope = nil)
       super(program, container, name)
       @used = false
+      @visited = false
+    end
+
+    def add_dependency(const)
+      dependencies = @dependencies ||= [] of Const
+      dependencies.push const
     end
 
     def type_desc

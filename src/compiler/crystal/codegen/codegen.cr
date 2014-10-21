@@ -640,7 +640,7 @@ module Crystal
       # Initialize constants if they are used
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        declare_const(const)
+        declare_const const
         @last = llvm_nil
         return false
       end
@@ -874,10 +874,10 @@ module Crystal
       if const = node.target_const
         global_name = const.llvm_name
 
-        # TODO: the `||` part is to take care of constants that, for their
-        # initialization, depend on a constant that comes later in the code.
-        # We should maybe give an error in the type inference phase in this case.
-        global = @main_mod.globals[global_name]? || declare_const(const).not_nil!
+        global = @main_mod.globals[global_name]?
+        unless global
+          node.raise "Bug: global not found for #{const}"
+        end
 
         if @llvm_mod != @main_mod
           global = @llvm_mod.globals[global_name]?
@@ -902,7 +902,17 @@ module Crystal
     end
 
     def declare_const(const, global_name = const.llvm_name)
-      return nil unless const.used
+      return unless const.used
+
+      # First declare constants this constant depends on
+      const.dependencies.try &.each do |dep|
+        declare_const dep
+      end
+
+      # The constant might be already codegened
+      if global = @main_mod.globals[global_name]?
+        return global
+      end
 
       global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
 

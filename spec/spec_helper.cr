@@ -130,7 +130,7 @@ end
 def build(code)
   node = parse code
   result = infer_type node
-  result.program.build result.node, single_module: true
+  result.program.build result.node, single_module: false
 end
 
 class Crystal::SpecRunOutput
