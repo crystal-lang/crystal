@@ -4,6 +4,7 @@ module Crystal::Command
             Command:\n    \
             build                    compile program file\n    \
             browser                  open an http server to browse program file\n    \
+            deps                     install project dependencies\n    \
             eval                     eval code\n    \
             hierarchy                show type hierarchy\n    \
             run (default)            compile and run program file\n    \
@@ -25,6 +26,9 @@ module Crystal::Command
         when "browser" == command
           options.shift
           browser options
+        when "deps".starts_with?(command)
+          options.shift
+          deps options
         when "eval".starts_with?(command)
           options.shift
           eval options
@@ -111,6 +115,17 @@ module Crystal::Command
 
     result = compiler.compile sources, output_filename
     execute output_filename, arguments
+  end
+
+  private def self.deps(options)
+    compiler = Compiler.new
+    sources = gather_sources(["Projectfile"])
+    sources.insert 0, Compiler::Source.new("require", %(require "project"))
+
+    output_filename = tempfile "deps"
+
+    result = compiler.compile sources, output_filename
+    execute output_filename, options
   end
 
   private def self.types(options)
