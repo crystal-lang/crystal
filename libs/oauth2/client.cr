@@ -1,6 +1,5 @@
 class OAuth2::Client
   property scope
-  property authorization_code
 
   def initialize(@host, @client_id, @client_secret,
     @port = 443,
@@ -21,14 +20,26 @@ class OAuth2::Client
     URI.new(@scheme, @host, @port, @authorize_uri, query).to_s
   end
 
-  def get_access_token
+  def get_access_token_using_authorization_code(authorization_code)
+    get_access_token do |form|
+      form.add("redirect_uri", @redirect_uri)
+      form.add("grant_type", "authorization_code")
+      form.add("code", authorization_code)
+    end
+  end
+
+  def get_access_token_using_refresh_token(refresh_token)
+    get_access_token do |form|
+      form.add("grant_type", "refresh_token")
+      form.add("refresh_token", refresh_token)
+    end
+  end
+
+  private def get_access_token
     body = CGI.build_form do |form|
-      form
-        .add("client_id", @client_id)
-        .add("client_secret", @client_secret)
-        .add("redirect_uri", @redirect_uri)
-        .add("grant_type", "authorization_code")
-        .add("code", @authorization_code)
+      form.add("client_id", @client_id)
+      form.add("client_secret", @client_secret)
+      yield form
     end
 
     response = HTTP::Client.post_form(token_uri, body)
