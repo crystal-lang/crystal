@@ -8,6 +8,7 @@ module Crystal::Command
             eval                     eval code\n    \
             hierarchy                show type hierarchy\n    \
             run (default)            compile and run program file\n    \
+            spec                     compile and run specs (in spec directory)\n    \
             types                    show type of main variables\n    \
             --help                   show this help\n    \
             --version                show version)
@@ -16,7 +17,7 @@ module Crystal::Command
     command = options.first?
 
     if command
-      if File.exists?(command)
+      if File.exists?(command) && !Dir.exists?(command)
         run_command options
       else
         case
@@ -38,6 +39,9 @@ module Crystal::Command
         when "run".starts_with?(command)
           options.shift
           run_command options
+        when "spec".starts_with?(command)
+          options.shift
+          run_specs options
         when "types".starts_with?(command)
           options.shift
           types options
@@ -115,6 +119,16 @@ module Crystal::Command
 
     result = compiler.compile sources, output_filename
     execute output_filename, arguments
+  end
+
+  private def self.run_specs(options)
+    compiler = Compiler.new
+    sources = [Compiler::Source.new("spec", %(require "spec/**"))]
+
+    output_filename = tempfile "spec"
+
+    result = compiler.compile sources, output_filename
+    execute output_filename, options
   end
 
   private def self.deps(options)
