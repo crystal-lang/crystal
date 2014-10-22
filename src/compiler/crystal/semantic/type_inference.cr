@@ -19,7 +19,8 @@ module Crystal
     ValidExternalVarAttributes = ThreadLocalAttributes
     ValidClassVarAttributes = ThreadLocalAttributes
     ValidStructDefAttributes = %w(Packed)
-    ValidDefAttributes = %w(AlwaysInline NoInline ReturnsTwice)
+    ValidDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
+    ValidFunDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
 
     getter mod
     property! scope
@@ -533,6 +534,9 @@ module Crystal
       else
         target_type = current_type
       end
+
+      node.raises = true if node.has_attribute?("Raises")
+
       target_type.add_def node
       node.set_type @mod.nil
       false
@@ -1614,6 +1618,8 @@ module Crystal
       elsif node.name == Crystal::MAIN_NAME
         external.raises = true
       end
+
+      external.raises = true if node.has_attribute?("Raises")
 
       begin
         old_external = current_type.add_def external

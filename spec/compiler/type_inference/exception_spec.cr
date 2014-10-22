@@ -239,4 +239,29 @@ describe "Type inference: exception" do
     call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
     call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
   end
+
+  it "marks fun as raises" do
+    result = assert_type(%(
+      @[Raises]
+      fun foo : Int32; 1; end
+      foo
+      )) { int32 }
+    mod = result.program
+    a_def = mod.lookup_first_def("foo", false)
+    a_def.not_nil!.raises.should be_true
+  end
+
+  it "marks def as raises" do
+    result = assert_type(%(
+      @[Raises]
+      def foo
+        1
+      end
+
+      foo
+      )) { int32 }
+    mod = result.program
+    a_def = mod.lookup_first_def("foo", false)
+    a_def.not_nil!.raises.should be_true
+  end
 end
