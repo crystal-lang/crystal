@@ -37,6 +37,13 @@ abstract class OAuth2::AccessToken
     end
   end
 
+  property access_token
+  property expires_in
+  property refresh_token
+
+  def initialize(@access_token, @expires_in, @refresh_token)
+  end
+
   abstract def authenticate(request : HTTP::Request, ssl)
 
   def authenticate(client : HTTP::Client)

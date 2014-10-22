@@ -1,13 +1,6 @@
 require "access_token"
 
 class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
-  getter access_token
-  getter expires_in
-  getter refresh_token
-
-  def initialize(@access_token, @expires_in, @refresh_token)
-  end
-
   def token_type
     "Bearer"
   end

@@ -4,14 +4,12 @@ require "openssl/hmac"
 require "base64"
 
 class OAuth2::AccessToken::Mac < OAuth2::AccessToken
-  getter access_token
-  getter expires_in
-  getter refresh_token
-  getter mac_algorithm
-  getter mac_key
-  getter issued_at
+  property mac_algorithm
+  property mac_key
+  property issued_at
 
-  def initialize(@access_token, @expires_in, @refresh_token, @mac_algorithm, @mac_key, @issued_at = Time.now.to_i)
+  def initialize(access_token, expires_in, refresh_token, @mac_algorithm, @mac_key, @issued_at = Time.now.to_i)
+    super(access_token, expires_in, refresh_token)
   end
 
   def token_type
