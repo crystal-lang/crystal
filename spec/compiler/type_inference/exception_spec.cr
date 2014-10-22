@@ -264,4 +264,10 @@ describe "Type inference: exception" do
     a_def = mod.lookup_first_def("foo", false)
     a_def.not_nil!.raises.should be_true
   end
+
+  it "marks fun literal as raises" do
+    result = assert_type("->{ 1 }.call") { int32 }
+    call = result.node as Call
+    call.target_def.raises.should be_true
+  end
 end

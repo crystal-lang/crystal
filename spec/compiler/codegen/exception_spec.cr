@@ -645,4 +645,22 @@ describe "Code gen: exception" do
       end
       ))
   end
+
+  it "captures exception thrown from proc" do
+    run(%(
+      require "prelude"
+
+      def foo
+        ->{ raise "OH NO" }.call
+      end
+
+      a = 1
+      begin
+        foo
+      rescue
+        a = 2
+      end
+      a
+      )).to_i.should eq(2)
+  end
 end

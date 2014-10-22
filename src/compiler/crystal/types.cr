@@ -2979,7 +2979,11 @@ module Crystal
       super(program, program.function, {"T" => var} of String => ASTNode)
 
       args = arg_types.map_with_index { |type, i| Arg.new("arg#{i}", type: type) }
-      add_def Def.new("call", args, Primitive.new(:fun_call, return_type))
+
+      fun_call = Def.new("call", args, Primitive.new(:fun_call, return_type))
+      fun_call.raises = true
+
+      add_def fun_call
       add_def Def.new("arity", body: NumberLiteral.new(fun_types.length - 1))
       add_def Def.new("pointer", body: Primitive.new(:fun_pointer, @program.pointer_of(@program.void)))
       add_def Def.new("closure?", body: Primitive.new(:fun_closure?, @program.bool))
