@@ -611,4 +611,25 @@ describe "Code gen: macro" do
       a.value.class_desc
       )).to_string.should eq("Qux")
   end
+
+  it "transforms hooks (bug)" do
+    build(%(
+      module GC
+        def self.add_finalizer(object : T)
+          object.responds_to?(:finalize)
+        end
+      end
+
+      abstract class Foo
+        ALL = Pointer(Foo).malloc(1_u64)
+
+        macro inherited
+          ALL.value = new
+        end
+      end
+
+      class Bar < Foo
+      end
+      ))
+  end
 end
