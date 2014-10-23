@@ -177,7 +177,15 @@ module Crystal
     def transform(node : RangeLiteral)
       super
 
-      Call.new(Path.global("Range"), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
+      path = Path.global("Range")
+      path.location = node.location
+
+      bool = BoolLiteral.new(node.exclusive)
+      bool.location = node.location
+
+      call = Call.new(path, "new", [node.from, node.to, bool])
+      call.location = node.location
+      call
     end
 
     # Transform a multi assign into many assigns.

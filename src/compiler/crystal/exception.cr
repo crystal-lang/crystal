@@ -86,7 +86,13 @@ module Crystal
     def self.for_node(node, message, inner = nil)
       location = node.location
       if location
-        new message, location.line_number, (node.name_column_number || location.column_number), location.filename, (node.name_length || 0), inner
+        column_number = node.name_column_number
+        name_length = node.name_length
+        if column_number == 0
+          name_length = 0
+          column_number = location.column_number
+        end
+        new message, location.line_number, column_number, location.filename, name_length, inner
       else
         new message, nil, 0, nil, 0, inner
       end

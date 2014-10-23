@@ -461,4 +461,62 @@ describe "Code gen: class" do
       end
       ))
   end
+
+  it "does to_s for virtual metaclass type (1)" do
+    run(%(
+      require "prelude"
+
+      class Foo; end
+      class A < Foo; end
+      class B < Foo; end
+
+      a = Foo || A || B
+      a.to_s
+      )).to_string.should eq("Foo")
+  end
+
+  it "does to_s for virtual metaclass type (2)" do
+    run(%(
+      require "prelude"
+
+      class Foo; end
+      class A < Foo; end
+      class B < Foo; end
+
+      a = A || Foo || B
+      a.to_s
+      )).to_string.should eq("A")
+  end
+
+  it "does to_s for virtual metaclass type (3)" do
+    run(%(
+      require "prelude"
+
+      class Foo; end
+      class A < Foo; end
+      class B < Foo; end
+
+      a = B || A || Foo
+      a.to_s
+      )).to_string.should eq("B")
+  end
+
+  it "does to_s for virtual metaclass type (4)" do
+    run(%(
+      require "prelude"
+
+      class Foo; end
+      class A < Foo; end
+      class B < Foo; end
+
+      class Obj(T)
+        def self.t
+          T
+        end
+      end
+
+      t = Obj(Foo+).t
+      t.to_s
+      )).to_string.should eq("Foo")
+  end
 end
