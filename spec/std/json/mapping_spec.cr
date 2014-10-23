@@ -17,6 +17,13 @@ class StrictJsonPerson
   }, true)
 end
 
+class JsonPersonEmittingNull
+  json_mapping({
+    name: {type: String},
+    age: {type: Int32, nilable: true, emit_null: true},
+  })
+end
+
 describe "Json mapping" do
   it "parses person" do
     person = JsonPerson.from_json(%({"name": "John", "age": 30}))
@@ -55,5 +62,15 @@ describe "Json mapping" do
     expect_raises Exception, "unknown json attribute: foo" do
       StrictJsonPerson.from_json(%({"name": "John", "age": 30, "foo": "bar"}))
     end
+  end
+
+  it "doesn't emit null by default when doing to_json" do
+    person = JsonPerson.from_json(%({"name": "John"}))
+    (person.to_json =~ /age/).should be_falsey
+  end
+
+  it "emits null on request when doing to_json" do
+    person = JsonPersonEmittingNull.from_json(%({"name": "John"}))
+    (person.to_json =~ /age/).should be_truthy
   end
 end

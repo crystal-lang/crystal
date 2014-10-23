@@ -42,9 +42,17 @@ class Object
     def to_json(io : IO)
       io.json_object do |json|
         {% for key, value in properties %}
-          json.field({{value[:key] || key.id.stringify}}) do
-            @{{key.id}}.to_json(io)
-          end
+          {% unless value[:emit_null] %}
+            unless @{{key.id}}.nil?
+          {% end %}
+
+            json.field({{value[:key] || key.id.stringify}}) do
+              @{{key.id}}.to_json(io)
+            end
+
+          {% unless value[:emit_null] %}
+            end
+          {% end %}
         {% end %}
       end
     end
