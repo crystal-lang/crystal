@@ -7,18 +7,11 @@ class HTTP::Request
   getter body
   getter version
 
-  def initialize(method, @path, @headers = HTTP::Headers.new : HTTP::Headers, @body = nil, @version = "HTTP/1.1")
-    @method = case method
-              when :get then "GET"
-              when :post then "POST"
-              when :put then "PUT"
-              when :head then "HEAD"
-              when :delete then "HEAD"
-              when :patch then "PATCH"
-              else method.to_s.upcase
-              end
+  def initialize(@method : String, @path, @headers = HTTP::Headers.new : HTTP::Headers, @body = nil, @version = "HTTP/1.1")
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
+    elsif @method == "POST" || @method == "PUT"
+      @headers["Content-Length"] = "0"
     end
   end
 

@@ -7,7 +7,7 @@ module HTTP
     it "serialize GET" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.domain.com"
-      request = Request.new :get, "/", headers
+      request = Request.new "GET", "/", headers
 
       io = StringIO.new
       request.to_io(io)
@@ -15,7 +15,7 @@ module HTTP
     end
 
     it "serialize POST (with body)" do
-      request = Request.new :post, "/", body: "thisisthebody"
+      request = Request.new "POST", "/", body: "thisisthebody"
       io = StringIO.new
       request.to_io(io)
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-length: 13\r\n\r\nthisisthebody")

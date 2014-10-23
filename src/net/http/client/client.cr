@@ -27,11 +27,11 @@ class HTTP::Client
 
   {% for method in %w(get post put head delete patch) %}
     def {{method.id}}(path, headers = nil, body = nil)
-      exec :{{method.id}}, path, headers, body
+      exec {{method.upcase}}, path, headers, body
     end
 
     def self.{{method.id}}(url, headers = nil, body = nil)
-      exec :{{method.id}}, url, headers, body
+      exec :{{method.upcase}}, url, headers, body
     end
   {% end %}
 
@@ -56,7 +56,7 @@ class HTTP::Client
     HTTP::Response.from_io(socket)
   end
 
-  def exec(method, path, headers = nil, body = nil)
+  def exec(method : String, path, headers = nil, body = nil)
     exec new_request method, path, headers, body
   end
 
