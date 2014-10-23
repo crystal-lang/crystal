@@ -35,6 +35,10 @@ class HTTP::Response
     HTTP::Response.new(500, body, HTTP::Headers{"Content-Type": content_type})
   end
 
+  def self.unauthorized
+    HTTP::Response.new(401, "Unauthorized", HTTP::Headers{"Content-Type": "text/plain"})
+  end
+
   def to_io(io)
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
     HTTP.serialize_headers_and_body(io, @headers, @body)
