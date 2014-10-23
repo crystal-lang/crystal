@@ -755,4 +755,18 @@ describe "Type inference: class" do
       ),
       "wrong number of arguments for 'Bar#initialize' (0 for 1)"
   end
+
+  it "instantiates types inferring generic type when there a type argument has the same name as an existing type" do
+    assert_type(%(
+      class B
+      end
+
+      class Foo(B)
+        def initialize(x : B)
+        end
+      end
+
+      Foo.new(0)
+      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
+  end
 end

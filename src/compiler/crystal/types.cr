@@ -551,10 +551,10 @@ module Crystal
 
     def self.match_arg(arg_type, arg : Arg, context : MatchContext)
       restriction = arg.type? || arg.restriction
-      arg_type.not_nil!.restrict restriction, context
+      match_arg arg_type, restriction, context
     end
 
-    def self.match_arg(arg_type, restriction : ASTNode, context : MatchContext)
+    def self.match_arg(arg_type, restriction, context : MatchContext)
       arg_type.not_nil!.restrict restriction, context
     end
 

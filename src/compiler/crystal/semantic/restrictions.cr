@@ -149,6 +149,18 @@ module Crystal
     def restrict(other : Path, context)
       single_name = other.names.length == 1
       if single_name
+        owner = context.owner
+
+        # Special case: if we have an *uninstantiated* generic type like Foo(X)
+        # and a restriction X, it matches, and we add X to the free vars.
+        if owner.is_a?(GenericType)
+          first_name = other.names.first
+          if owner.type_vars.includes?(first_name)
+            context.set_free_var(first_name, self)
+            return self
+          end
+        end
+
         ident_type = context.get_free_var(other.names.first)
       end
 
