@@ -4,7 +4,7 @@ class Object
 
     def initialize(_pull : Json::PullParser)
       {% for key, value in properties %}
-        {{key.id}} = nil
+        _{{key.id}} = nil
       {% end %}
 
       _pull.read_object do |_key|
@@ -12,9 +12,9 @@ class Object
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             {% if value[:nilable] == true %}
-              {{key.id}} = _pull.read_null_or { {{value[:type]}}.new(_pull) }
+              _{{key.id}} = _pull.read_null_or { {{value[:type]}}.new(_pull) }
             {% else %}
-              {{key.id}} = {{value[:type]}}.new(_pull)
+              _{{key.id}} = {{value[:type]}}.new(_pull)
             {% end %}
         {% end %}
         else
@@ -28,14 +28,14 @@ class Object
 
       {% for key, value in properties %}
         {% unless value[:nilable] %}
-          unless {{key.id}}
+          unless _{{key.id}}
             raise "missing json attribute: {{(value[:key] || key).id}}"
           end
         {% end %}
       {% end %}
 
       {% for key, value in properties %}
-        @{{key.id}} = {{key.id}}
+        @{{key.id}} = _{{key.id}}
       {% end %}
     end
 
