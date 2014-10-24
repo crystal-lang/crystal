@@ -56,4 +56,11 @@ describe "Type inference: var" do
     assert_error "1 == 2 ? (a = 1) : a",
       "read before definition of 'a'"
   end
+
+  it "lets type on else side of if with a Bool | Nil union" do
+    assert_type(%(
+      a = (1 == 1) || nil
+      a ? nil : a
+      )) { nilable bool }
+  end
 end

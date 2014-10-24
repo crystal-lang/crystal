@@ -214,7 +214,7 @@ module Crystal
         node.bind_to(var)
 
         if needs_type_filters?
-          @type_filters = not_nil_filter(node)
+          @type_filters = truthy_filter(node)
         end
       elsif node.name == "self"
         current_type = current_type()
@@ -416,7 +416,7 @@ module Crystal
       end
 
       if needs_type_filters?
-        @type_filters = and_type_filters(not_nil_filter(target), value_type_filters)
+        @type_filters = and_type_filters(truthy_filter(target), value_type_filters)
       end
     end
 
@@ -2815,8 +2815,8 @@ module Crystal
       new_filter
     end
 
-    def not_nil_filter(node)
-      new_type_filter(node, NotNilFilter.instance)
+    def truthy_filter(node)
+      new_type_filter(node, TruthyFilter.instance)
     end
 
     def needs_type_filters?

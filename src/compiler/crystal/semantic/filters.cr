@@ -99,7 +99,7 @@ module Crystal
     end
   end
 
-  class NotNilFilter < TypeFilter
+  class TruthyFilter < TypeFilter
     def self.instance
       @@instance
     end
@@ -111,7 +111,7 @@ module Crystal
       when NilType
         return nil
       when UnionType
-        return Type.merge(other.union_types.select { |type| !type.nil_type? })
+        return Type.merge(other.union_types.reject &.nil_type?)
       else
         other
       end
@@ -125,7 +125,7 @@ module Crystal
       io << "not-nil"
     end
 
-    @@instance = NotNilFilter.new
+    @@instance = TruthyFilter.new
   end
 
   class NotFilter < TypeFilter
@@ -158,9 +158,15 @@ module Crystal
       end
 
       resulting_types = other_types - types
+
+      # Special case: not truthy (falsey) can also be bool
+      if @filter.is_a?(TruthyFilter) && (bool_type = types.find(&.bool_type?))
+        resulting_types << bool_type
+      end
+
       case resulting_types.length
       when 0
-        if @filter.is_a?(NotNilFilter)
+        if @filter.is_a?(TruthyFilter)
           other
         else
           nil
