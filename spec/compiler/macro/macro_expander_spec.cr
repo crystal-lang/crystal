@@ -194,6 +194,14 @@ describe "MacroExpander" do
     it "executes != on numbers (false)" do
       assert_macro "", "{%if 1 != 1%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
     end
+
+    it "executes == on symbols (true) (#240)" do
+      assert_macro "", "{{:foo == :foo}}", [] of ASTNode, "true"
+    end
+
+    it "executes == on symbols (false) (#240)" do
+      assert_macro "", "{{:foo == :bar}}", [] of ASTNode, "false"
+    end
   end
 
   describe "number methods" do
