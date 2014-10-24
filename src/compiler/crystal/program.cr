@@ -15,7 +15,6 @@ module Crystal
     getter splat_expansions
     property vars
     property literal_expander
-    getter consts_stack
 
     def initialize
       super(self, self, "main")
@@ -92,8 +91,11 @@ module Crystal
       @types["Function"] = @function = FunType.new self, self, "Function", @value, ["T"]
       @function.variadic = true
 
-      @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
-      @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
+      @types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
+      @types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
+
+      argc_unsafe.initialized = true
+      argv_unsafe.initialized = true
 
       @types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
@@ -147,18 +149,6 @@ module Crystal
 
     def add_flag(flag)
       flags.add(flag)
-    end
-
-    def push_const(const)
-      if last_const = @consts_stack.last?
-        last_const.add_dependency const
-      end
-
-      @consts_stack.push const
-    end
-
-    def pop_const
-      @consts_stack.pop
     end
 
     def program

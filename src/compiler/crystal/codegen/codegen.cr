@@ -904,16 +904,6 @@ module Crystal
     def declare_const(const, global_name = const.llvm_name)
       return unless const.used
 
-      # First declare constants this constant depends on
-      const.dependencies.try &.each do |dep|
-        declare_const dep
-      end
-
-      # The constant might be already codegened
-      if global = @main_mod.globals[global_name]?
-        return global
-      end
-
       global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
 
       in_const_block(const.container) do

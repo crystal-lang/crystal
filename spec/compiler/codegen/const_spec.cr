@@ -227,21 +227,6 @@ describe "Codegen: const" do
       )).to_i.should eq(4)
   end
 
-  it "works with const referred from a method" do
-    run(%(
-      module Foo
-        BAR = bar
-        BAZ = 1
-
-        def self.bar
-          BAZ
-        end
-      end
-
-      Foo::BAR
-      )).to_i.should eq(1)
-  end
-
   it "codegens constant that refers to another constant that is a struct" do
     run(%(
       struct Foo
@@ -258,40 +243,5 @@ describe "Codegen: const" do
 
       Foo::Y.value
       )).to_i.should eq(1)
-  end
-
-  it "codegens constant that refers to another one later in the file through a method call" do
-    build(%(
-      def foo
-        1
-      end
-
-      class Some
-        CONST_1 = Some.method
-        CONST_2 = foo
-
-        def self.method
-          CONST_2
-        end
-      end
-
-      Some::CONST_1
-      ))
-  end
-
-  it "codegens constant that refers to another one later, twice" do
-    build(%(
-      def foo
-        1
-      end
-
-      class Some
-        CONST_1 = CONST_2
-        CONST_2 = CONST_3
-        CONST_3 = foo
-      end
-
-      Some::CONST_1
-      ))
   end
 end

@@ -1777,11 +1777,7 @@ module Crystal
       type = resolve_ident(node)
       case type
       when Const
-        unless type.value.type?
-          if type.visited?
-            node.raise "recursive constant definition: #{@mod.consts_stack.join " -> "} -> #{type}"
-          end
-
+        if !type.value.type? && !type.visited?
           type.visited = true
 
           meta_vars = MetaVars.new
@@ -1790,10 +1786,7 @@ module Crystal
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
 
-          @mod.push_const type
           type.value.accept type_visitor
-          @mod.pop_const
-
           type.vars = const_def.vars
         end
         node.target_const = type

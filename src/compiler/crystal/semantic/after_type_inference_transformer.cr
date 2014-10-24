@@ -104,12 +104,19 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        unless const.used
+        if const.used
+          @const_being_initialized = target
+        else
           return node
         end
       end
 
-      node = super
+      node.value = node.value.transform self
+
+      if target.is_a?(Path)
+        const.not_nil!.initialized = true
+        @const_being_initialized = nil
+      end
 
       if node.target == node.value
         node.raise "expression has no effect"
@@ -121,6 +128,30 @@ module Crystal
           rebind_node node, node.value
           return node.value
         end
+      end
+
+      node
+    end
+
+    def transform(node : Path)
+      if target_const = node.target_const
+        if target_const.used && !target_const.initialized?
+          if const_node = @const_being_initialized
+            const_being_initialized = const_node.target_const.not_nil!
+            const_node.raise "constant #{const_being_initialized} requires initialization of #{target_const}, \
+                                        which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
+          end
+        end
+      end
+
+      super
+    end
+
+    def transform(node : EnumDef)
+      super
+
+      node.c_enum_type.types.each_value do |const|
+        (const as Const).initialized = true
       end
 
       node

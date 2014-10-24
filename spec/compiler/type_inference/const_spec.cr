@@ -170,6 +170,31 @@ describe "Type inference: const" do
 
       A
       ),
-      "recursive constant definition: A -> B -> A"
+      "constant A requires initialization of B, which is initialized later. Initialize B before A"
+  end
+
+  it "errors if constant depends on another one defined later through method" do
+    assert_error %(
+      A = foo
+      B = 1
+
+      def foo
+        B
+      end
+
+      A
+      ), "constant A requires initialization of B, which is initialized later. Initialize B before A"
+  end
+
+  it "doesn't error if using c enum" do
+    assert_type(%(
+      lib C
+        enum Foo
+          A = 1
+        end
+      end
+
+      C::Foo::A
+      )) { int32 }
   end
 end
