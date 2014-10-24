@@ -39,7 +39,7 @@ module Crystal::Command
         when "run".starts_with?(command)
           options.shift
           run_command options
-        when "spec".starts_with?(command)
+        when "spec/".starts_with?(command)
           options.shift
           run_specs options
         when "types".starts_with?(command)
