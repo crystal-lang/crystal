@@ -24,6 +24,12 @@ class JsonPersonEmittingNull
   })
 end
 
+class JsonWithBool
+  json_mapping({
+    value: {type: Bool},
+  })
+end
+
 describe "Json mapping" do
   it "parses person" do
     person = JsonPerson.from_json(%({"name": "John", "age": 30}))
@@ -72,5 +78,10 @@ describe "Json mapping" do
   it "emits null on request when doing to_json" do
     person = JsonPersonEmittingNull.from_json(%({"name": "John"}))
     (person.to_json =~ /age/).should be_truthy
+  end
+
+  it "doesn't raises on false value when not-nil" do
+    json = JsonWithBool.from_json(%({"value": false}))
+    json.value.should be_false
   end
 end
