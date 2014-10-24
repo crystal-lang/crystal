@@ -197,4 +197,29 @@ describe "Type inference: const" do
       C::Foo::A
       )) { int32 }
   end
+
+  it "errors if constant depends on a global initialized later" do
+    assert_error %(
+      A = foo
+      $b = 1
+
+      def foo
+        $b
+      end
+
+      A
+      ), "constant A requires initialization of $b, which is initialized later. Initialize $b before A"
+  end
+
+  it "doesn't error if constant depends on a global var that is never initialized" do
+    assert_type(%(
+      A = foo
+
+      def foo
+        $b
+      end
+
+      A
+      )) { |mod| mod.nil }
+  end
 end

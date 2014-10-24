@@ -118,6 +118,10 @@ module Crystal
         @const_being_initialized = nil
       end
 
+      if target.is_a?(Global)
+        @program.initialized_global_vars.add target.name
+      end
+
       if node.target == node.value
         node.raise "expression has no effect"
       end
@@ -145,6 +149,21 @@ module Crystal
       end
 
       super
+    end
+
+    def transform(node : Global)
+      if const_node = @const_being_initialized
+        const_being_initialized = const_node.target_const.not_nil!
+
+        if !@program.initialized_global_vars.includes?(node.name) &&
+           !const_being_initialized.value.type?.try &.includes_type?(@program.nil)
+          const_being_initialized = const_node.target_const.not_nil!
+          const_node.raise "constant #{const_being_initialized} requires initialization of #{node}, \
+                                      which is initialized later. Initialize #{node} before #{const_being_initialized}"
+        end
+      end
+
+      node
     end
 
     def transform(node : EnumDef)

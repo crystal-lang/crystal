@@ -15,6 +15,7 @@ module Crystal
     getter splat_expansions
     property vars
     property literal_expander
+    property initialized_global_vars
 
     def initialize
       super(self, self, "main")
@@ -112,7 +113,7 @@ module Crystal
       @macro_expander = MacroExpander.new self
       @def_macros = [] of Def
       @splat_expansions = {} of Def => Type
-      @consts_stack = [] of Const
+      @initialized_global_vars = Set(String).new
 
       define_primitives
     end

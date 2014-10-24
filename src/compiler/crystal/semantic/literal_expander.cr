@@ -226,6 +226,7 @@ module Crystal
 
         global_name = "$Regex:#{index}"
         temp_name = @program.new_temp_var_name
+        @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
         regex = Call.new(Path.global("Regex"), "new", [StringLiteral.new(string), NumberLiteral.new(node.modifiers)] of ASTNode)
         second_assign = Assign.new(Global.new(global_name), regex)
