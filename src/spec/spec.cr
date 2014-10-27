@@ -50,6 +50,15 @@ module Spec
       true
     end
   end
+
+  @@fail_fast = false
+
+  def self.fail_fast=(@@fail_fast)
+  end
+
+  def self.fail_fast?
+    @@fail_fast
+  end
 end
 
 require "./*"
@@ -71,8 +80,10 @@ def it(description)
     Spec::RootContext.report(:success, description)
   rescue ex : Spec::AssertionFailed
     Spec::RootContext.report(:fail, description, ex)
+    Spec.abort! if Spec.fail_fast?
   rescue ex
     Spec::RootContext.report(:error, description, ex)
+    Spec.abort! if Spec.fail_fast?
   end
 end
 
@@ -96,6 +107,9 @@ end
 OptionParser.parse! do |opts|
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
+  end
+  opts.on("--fail-fast", "abort the run on first failure") do
+    Spec.fail_fast = true
   end
   opts.on("-v", "--verbose", "verbose output") do
     Spec.formatter = Spec::VerboseFormatter.new
