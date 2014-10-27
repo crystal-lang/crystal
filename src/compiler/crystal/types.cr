@@ -989,7 +989,7 @@ module Crystal
     def add_subclass(subclass)
       subclasses << subclass
       notify_subclass_added
-      @superclass.try &.notify_subclass_added
+      superclass.try &.notify_subclass_added
     end
   end
 
@@ -1070,7 +1070,7 @@ module Crystal
     end
 
     def force_add_subclass
-      @superclass.try &.add_subclass(self)
+      superclass.try &.add_subclass(self)
     end
 
     def all_subclasses
@@ -1087,7 +1087,7 @@ module Crystal
     end
 
     def is_subclass_of?(type)
-      super || ((superclass = @superclass) && superclass.is_subclass_of?(type))
+      super || superclass.try &.is_subclass_of?(type)
     end
 
     def add_def(a_def)
@@ -1106,7 +1106,7 @@ module Crystal
 
       if a_def_instance_vars = a_def.instance_vars
         a_def_instance_vars.each do |ivar|
-          if superclass = @superclass
+          if superclass = superclass()
             unless superclass.owns_instance_var?(ivar)
               unless owned_instance_vars.includes?(ivar)
                 owned_instance_vars.add(ivar)
@@ -1183,9 +1183,7 @@ module Crystal
 
     def allocated=(allocated)
       @allocated = allocated
-      if superclass = @superclass
-        superclass.allocated = allocated
-      end
+      superclass.try { |s| s.allocated = allocated }
     end
 
     def struct?
@@ -1207,7 +1205,7 @@ module Crystal
     end
 
     def owns_instance_var?(name)
-      owned_instance_vars.includes?(name) || ((superclass = @superclass) && superclass.owns_instance_var?(name))
+      owned_instance_vars.includes?(name) || superclass.try &.owns_instance_var?(name)
     end
 
     def remove_instance_var(name)
@@ -1220,7 +1218,7 @@ module Crystal
     end
 
     def lookup_instance_var?(name, create)
-      if (superclass = @superclass) && (var = superclass.lookup_instance_var?(name, false))
+      if var = superclass.try &.lookup_instance_var?(name, false)
         return var
       end
 
@@ -1711,9 +1709,7 @@ module Crystal
 
     def allocated=(allocated)
       @allocated = allocated
-      if superclass = superclass()
-        superclass.allocated = allocated
-      end
+      superclass.try { |s| s.allocated = allocated }
     end
 
     def filter_by_responds_to(name)

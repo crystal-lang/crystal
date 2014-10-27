@@ -519,4 +519,28 @@ describe "Code gen: class" do
       t.to_s
       )).to_string.should eq("Foo")
   end
+
+  it "builds generic class bug" do
+    build(%(
+      abstract class Base
+        def initialize
+          @value = 1
+        end
+      end
+
+      class Foo(T) < Base
+        def foo
+          @target
+        end
+      end
+
+      class Bar < Base
+        def foo
+        end
+      end
+
+      ex = Foo(Int32).new || Bar.new
+      ex.foo
+      ))
+  end
 end
