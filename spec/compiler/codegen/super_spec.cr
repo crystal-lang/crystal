@@ -237,4 +237,22 @@ describe "Codegen: super" do
       f.call(3)
       )).to_i.should eq(6)
   end
+
+  it "build super on generic class (bug)" do
+    build(%(
+      class Base
+        def foo(x)
+          1.5
+        end
+      end
+
+      class Foo(T) < Base
+        def foo
+          super(1)
+        end
+      end
+
+      Foo(Int32).new.foo
+      ))
+  end
 end

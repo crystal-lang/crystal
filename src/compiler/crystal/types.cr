@@ -1709,6 +1709,13 @@ module Crystal
     delegate type_desc, @generic_class
     delegate check_method_missing, @generic_class
 
+    def allocated=(allocated)
+      @allocated = allocated
+      if superclass = superclass()
+        superclass.allocated = allocated
+      end
+    end
+
     def filter_by_responds_to(name)
       @generic_class.filter_by_responds_to(name) ? self : nil
     end
