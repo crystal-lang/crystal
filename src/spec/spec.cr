@@ -105,11 +105,16 @@ def fail(msg)
 end
 
 OptionParser.parse! do |opts|
+  opts.banner = "crystal spec runner"
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
   end
   opts.on("--fail-fast", "abort the run on first failure") do
     Spec.fail_fast = true
+  end
+  opts.on("--help", "show this help") do |pattern|
+    puts opts
+    exit
   end
   opts.on("-v", "--verbose", "verbose output") do
     Spec.formatter = Spec::VerboseFormatter.new
