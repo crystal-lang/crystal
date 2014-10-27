@@ -1926,6 +1926,43 @@ module Crystal
       MagicConstant.new(@name)
     end
 
+    def expand_node(location)
+      case name
+      when :__LINE__
+        MagicConstant.expand_line_node(location)
+      when :__FILE__
+        MagicConstant.expand_file_node(location)
+      when :__DIR__
+        MagicConstant.expand_dir_node(location)
+      else
+        raise "Bug: unknown magic constant: #{name}"
+      end
+    end
+
+    def self.expand_line_node(location)
+      NumberLiteral.new(expand_line(location))
+    end
+
+    def self.expand_line(location)
+      location.try(&.line_number) || 0
+    end
+
+    def self.expand_file_node(location)
+      StringLiteral.new(expand_file(location))
+    end
+
+    def self.expand_file(location)
+      location.try(&.filename.to_s) || "?"
+    end
+
+    def self.expand_dir_node(location)
+      StringLiteral.new(expand_dir(location))
+    end
+
+    def self.expand_dir(location)
+      location.try(&.dirname) || "?"
+    end
+
     def_equals_and_hash name
   end
 

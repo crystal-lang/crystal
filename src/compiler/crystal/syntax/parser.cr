@@ -782,13 +782,11 @@ module Crystal
           node_and_next_token Call.new(Call.new(Path.new("MatchData", global: true), "last"), "[]", [NumberLiteral.new(value as Int32)] of ASTNode)
         end
       when :__LINE__
-        node_and_next_token NumberLiteral.new(@token.line_number)
+        node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__FILE__
-        node_and_next_token StringLiteral.new(@filename.to_s)
+        node_and_next_token MagicConstant.expand_file_node(@token.location)
       when :__DIR__
-        filename = @filename
-        dir = filename.is_a?(String) ? File.dirname(filename) : "-"
-        node_and_next_token StringLiteral.new(dir)
+        node_and_next_token MagicConstant.expand_dir_node(@token.location)
       when :IDENT
         case @token.value
         when :begin

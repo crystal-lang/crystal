@@ -1204,13 +1204,11 @@ module Crystal
         location = node.location
         case default_value.name
         when :__LINE__
-          call_args << int32(location.try(&.line_number) || 0)
+          call_args << int32(MagicConstant.expand_line(location))
         when :__FILE__
-          call_args << build_string_constant(location.try(&.filename.to_s) || "?")
+          call_args << build_string_constant(MagicConstant.expand_file(location))
         when :__DIR__
-          filename = location.try &.filename
-          dir = filename.is_a?(String) ? File.dirname(filename) : "?"
-          call_args << build_string_constant(dir)
+          call_args << build_string_constant(MagicConstant.expand_dir(location))
         else
           default_value.raise "Bug: unknown magic constant: #{default_value.name}"
         end

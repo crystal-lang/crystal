@@ -75,4 +75,34 @@ describe "Code gen: magic constants" do
       foo 1, z: 20
       )).to_i.should eq(26)
   end
+
+  it "does __LINE__ in macro" do
+    run(%(
+      macro foo(line = __LINE__)
+        {{line}}
+      end
+
+      foo
+      )).to_i.should eq(6)
+  end
+
+  it "does __FILE__ in macro" do
+    run(%(
+      macro foo(file = __FILE__)
+        {{file}}
+      end
+
+      foo
+      ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar/baz.cr")
+  end
+
+  it "does __DIR__ in macro" do
+    run(%(
+      macro foo(dir = __DIR__)
+        {{dir}}
+      end
+
+      foo
+      ), filename: "/foo/bar/baz.cr").to_string.should eq("/foo/bar")
+  end
 end

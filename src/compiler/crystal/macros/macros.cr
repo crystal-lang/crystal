@@ -144,6 +144,7 @@ module Crystal
         0.upto(splat_index - 1) do |index|
           macro_arg = a_macro.args[index]
           call_arg = call.args[index]? || macro_arg.default_value.not_nil!
+          call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
@@ -163,6 +164,7 @@ module Crystal
         base.upto(macro_args_length - 1) do |index|
           macro_arg = a_macro.args[index]
           call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
+          call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
