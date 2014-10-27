@@ -812,9 +812,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                filename = @filename
-                @token.type = :STRING
-                @token.value = filename.is_a?(String) ? File.dirname(filename) : "-"
+                @token.type = :__DIR__
                 return @token
               end
             end
@@ -824,8 +822,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :STRING
-                @token.value = @filename
+                @token.type = :__FILE__
                 return @token
               end
             end
@@ -835,9 +832,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :NUMBER
-                @token.number_kind = :i32
-                @token.value = @line_number
+                @token.type = :__LINE__
                 return @token
               end
             end

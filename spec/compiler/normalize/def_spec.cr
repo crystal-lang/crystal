@@ -126,4 +126,34 @@ describe "Normalize: def" do
     other_def = a_def.expand_default_arguments(1, ["y", "z"])
     other_def.should be(a_def)
   end
+
+  it "expands with magic constant" do
+    a_def = parse("def foo(x, y = __LINE__); x; end") as Def
+    other_def = a_def.expand_default_arguments(1)
+    other_def.should be(a_def)
+  end
+
+  it "expands with magic constant specifying one when all are magic" do
+    a_def = parse("def foo(x, file = __FILE__, line = __LINE__); x; end") as Def
+    other_def = a_def.expand_default_arguments(2)
+    other_def.should be(a_def)
+  end
+
+  it "expands with magic constant specifying one when not all are magic" do
+    a_def = parse("def foo(x, z = 1, line = __LINE__); x; end") as Def
+    other_def = a_def.expand_default_arguments(2)
+    other_def.should be(a_def)
+  end
+
+  it "expands with magic constant with named arg" do
+    a_def = parse("def foo(x, file = __FILE__, line = __LINE__); x; end") as Def
+    other_def = a_def.expand_default_arguments(1, ["line"])
+    other_def.to_s.should eq("def foo:line(x, line, file = __FILE__)\n  foo(x, file, line)\nend")
+  end
+
+  it "expands with magic constant with named arg with yield" do
+    a_def = parse("def foo(x, file = __FILE__, line = __LINE__); yield x, file, line; end") as Def
+    other_def = a_def.expand_default_arguments(1, ["line"])
+    other_def.to_s.should eq("def foo:line(x, line, file = __FILE__)\n  yield x, file, line\nend")
+  end
 end

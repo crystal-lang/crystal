@@ -109,7 +109,9 @@ end
 
 def it_parses(string, expected_node)
   it "parses #{string}" do
-    node = Parser.parse(string)
+    parser = Parser.new(string)
+    parser.filename = "/foo/bar/baz.cr"
+    node = parser.parse
     node.should eq(Expressions.from expected_node)
   end
 end
@@ -836,6 +838,14 @@ describe "Parser" do
   it_parses "foo(Bar) { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
   it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
   it_parses "foo(Bar { 1 })", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
+
+  it_parses "\n\n__LINE__", 3.int32
+  it_parses "__FILE__", "/foo/bar/baz.cr".string
+  it_parses "__DIR__", "/foo/bar".string
+
+  it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
+  it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__FILE__))])
+  it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__DIR__))])
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)

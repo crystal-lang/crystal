@@ -47,6 +47,21 @@ module Crystal
         end
       end
 
+      # If there are no named args and all unspecified default arguments are magic
+      # constants we can return outself (magic constants will be filled later)
+      if !named_args && !splat_index
+        all_magic = true
+        args_length.upto(args.length - 1) do |index|
+          unless args[index].default_value.is_a?(MagicConstant)
+            all_magic = false
+            break
+          end
+        end
+        if all_magic
+          return self
+        end
+      end
+
       retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction } || splat_index
 
       splat_index = splat_index() || -1
@@ -117,7 +132,15 @@ module Crystal
 
           # But first check if we already have it in the named arguments
           unless named_args.try &.index(arg.name)
-            new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
+            default_value = arg.default_value.not_nil!
+
+            # If the default value is a magic constant we add it to the expanded
+            # def and don't declare it (since it's already an argument)
+            if default_value.is_a?(MagicConstant)
+              expansion.args.push arg.clone
+            else
+              new_body << Assign.new(Var.new(arg.name), default_value)
+            end
           end
         end
 
@@ -150,7 +173,16 @@ module Crystal
           if named_args.try &.index(arg.name)
             new_args.push Var.new(arg.name)
           else
-            new_args.push arg.default_value.not_nil!
+            default_value = arg.default_value.not_nil!
+
+            # If the default value is a magic constant we add it to the expanded
+            # def, and use that on the forwarded call
+            if default_value.is_a?(MagicConstant)
+              new_args.push Var.new(arg.name)
+              expansion.args.push arg.clone
+            else
+              new_args.push default_value
+            end
           end
         end
 

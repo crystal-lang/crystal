@@ -480,6 +480,10 @@ module Crystal
       node
     end
 
+    def transform(node : MagicConstant)
+      node
+    end
+
     def transform(node : Primitive)
       node
     end

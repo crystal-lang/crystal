@@ -1916,6 +1916,19 @@ module Crystal
     end
   end
 
+  class MagicConstant < ASTNode
+    property :name
+
+    def initialize(@name)
+    end
+
+    def clone_without_location
+      MagicConstant.new(@name)
+    end
+
+    def_equals_and_hash name
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name

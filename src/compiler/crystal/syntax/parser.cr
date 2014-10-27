@@ -781,6 +781,14 @@ module Crystal
         else
           node_and_next_token Call.new(Call.new(Path.new("MatchData", global: true), "last"), "[]", [NumberLiteral.new(value as Int32)] of ASTNode)
         end
+      when :__LINE__
+        node_and_next_token NumberLiteral.new(@token.line_number)
+      when :__FILE__
+        node_and_next_token StringLiteral.new(@filename.to_s)
+      when :__DIR__
+        filename = @filename
+        dir = filename.is_a?(String) ? File.dirname(filename) : "-"
+        node_and_next_token StringLiteral.new(dir)
       when :IDENT
         case @token.value
         when :begin
@@ -2383,7 +2391,16 @@ module Crystal
         end
 
         next_token_skip_space_or_newline
-        default_value = parse_op_assign
+
+        case @token.type
+        when :__LINE__, :__FILE__, :__DIR__
+          default_value = MagicConstant.new(@token.type)
+          default_value.location = @token.location
+          next_token
+        else
+          default_value = parse_op_assign
+        end
+
         skip_space
       else
         if found_default_value && !splat

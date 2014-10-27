@@ -151,7 +151,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code)
+def run(code, filename = nil)
   # Code that requires the prelude doesn't run in LLVM's MCJIT
   # because of missing linked functions (which are available
   # in the current executable!), so instead we compile
@@ -175,6 +175,6 @@ def run(code)
 
     SpecRunOutput.new(output)
   else
-    Program.new.run(code)
+    Program.new.run(code, filename: filename)
   end
 end

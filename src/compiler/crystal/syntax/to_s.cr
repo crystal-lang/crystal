@@ -1230,6 +1230,10 @@ module Crystal
       false
     end
 
+    def visit(node : MagicConstant)
+      @str << node.name
+    end
+
     def newline
       "\n"
     end

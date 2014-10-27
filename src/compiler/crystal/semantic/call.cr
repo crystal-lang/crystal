@@ -1191,6 +1191,26 @@ module Crystal
         arg.type = type
       end
 
+      # Fill magic constants (__LINE__, __FILE__, __DIR__)
+      named_args_length = named_args.try(&.length) || 0
+      (self.args.length + named_args_length).upto(typed_def.args.length - 1) do |index|
+        arg = typed_def.args[index]
+        default_value = arg.default_value as MagicConstant
+        case default_value.name
+        when :__LINE__
+          type = mod.int32
+        when :__FILE__, :__DIR__
+          type = mod.string
+        else
+          default_value.raise "Bug: unknown magic constant: #{default_value.name}"
+        end
+        var = MetaVar.new(arg.name, type)
+        var.location = arg.location
+        var.bind_to(var)
+        args[arg.name] = var
+        arg.type = type
+      end
+
       named_args.try &.each do |named_arg|
         type = named_arg.value.type
         var = MetaVar.new(named_arg.name, type)

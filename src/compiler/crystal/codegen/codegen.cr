@@ -14,8 +14,10 @@ module Crystal
   REALLOC_NAME = "__crystal_realloc"
 
   class Program
-    def run(code)
-      node = Parser.parse(code)
+    def run(code, filename = nil)
+      parser = Parser.new(code)
+      parser.filename = filename
+      node = parser.parse
       node = normalize node
       node = infer_type node
       load_libs
@@ -1195,6 +1197,25 @@ module Crystal
         call_args << call_arg
       end
 
+      # Then magic constants (__LINE__, __FILE__, __DIR__)
+      node.args.length.upto(target_def.args.length - 1) do |index|
+        arg = target_def.args[index]
+        default_value = arg.default_value as MagicConstant
+        location = node.location
+        case default_value.name
+        when :__LINE__
+          call_args << int32(location.try(&.line_number) || 0)
+        when :__FILE__
+          call_args << build_string_constant(location.try(&.filename.to_s) || "?")
+        when :__DIR__
+          filename = location.try &.filename
+          dir = filename.is_a?(String) ? File.dirname(filename) : "?"
+          call_args << build_string_constant(dir)
+        else
+          default_value.raise "Bug: unknown magic constant: #{default_value.name}"
+        end
+      end
+
       @needs_value = old_needs_value
 
       {call_args, has_out}
@@ -1313,6 +1334,7 @@ module Crystal
       # Reuse this call for each dispatch branch
       call = Call.new(node_obj ? Var.new("%self") : nil, node.name, Array(ASTNode).new(node.args.length) { |i| Var.new("%arg#{i}") }, node.block)
       call.scope = node.scope
+      call.location = node.location
 
       with_cloned_context do
         context.vars = new_vars
@@ -1321,8 +1343,9 @@ module Crystal
           # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
           target_defs.each do |a_def|
             result = match_type_id(owner, a_def.owner, obj_type_id)
-            a_def.args.each_with_index do |arg, i|
-              result = and(result, match_type_id(node.args[i].type, arg.type, arg_type_ids[i]))
+            node.args.each_with_index do |node_arg, i|
+              a_def_arg = a_def.args[i]
+              result = and(result, match_type_id(node_arg.type, a_def_arg.type, arg_type_ids[i]))
             end
 
             current_def_label, next_def_label = new_blocks "current_def", "next_def"

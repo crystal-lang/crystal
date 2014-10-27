@@ -278,24 +278,20 @@ describe "Lexer" do
   it "lexes __LINE__" do
     lexer = Lexer.new "__LINE__"
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.value.should eq(1)
+    token.type.should eq(:__LINE__)
   end
 
   it "lexes __FILE__" do
     lexer = Lexer.new "__FILE__"
     lexer.filename = "foo"
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq("foo")
+    token.type.should eq(:__FILE__)
   end
 
   it "lexes __DIR__" do
     lexer = Lexer.new "__DIR__"
-    lexer.filename = "/Users/foo/bar.cr"
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq("/Users/foo")
+    token.type.should eq(:__DIR__)
   end
 
   it "lexes dot and ident" do
