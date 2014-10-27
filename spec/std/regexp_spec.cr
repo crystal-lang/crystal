@@ -56,4 +56,8 @@ describe "Regex" do
   it "raises exception with invalid regex" do
     expect_raises(ArgumentError) { Regex.new("+") }
   end
+
+  it "escapes" do
+    Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello").should eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
+  end
 end

@@ -39,4 +39,20 @@ class Regex
     io << source
     io << "/"
   end
+
+  def self.escape(str)
+    String.build do |result|
+      str.each_byte do |byte|
+        case byte.chr
+        when ' ', '.', '\\', '+', '*', '?', '[',
+             '^', ']', '$', '(', ')', '{', '}',
+             '=', '!', '<', '>', '|', ':', '-'
+          result << '\\'
+          result.write_byte byte
+        else
+          result.write_byte byte
+        end
+      end
+    end
+  end
 end
