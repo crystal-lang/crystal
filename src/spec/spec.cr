@@ -35,6 +35,21 @@ module Spec
   def self.aborted?
     @@aborted
   end
+
+  @@pattern = nil
+
+  def self.pattern=(pattern)
+    @@pattern = Regex.new(Regex.escape(pattern))
+  end
+
+  def self.matches?(description)
+    pattern = @@pattern
+    if pattern
+      Spec::RootContext.matches?(description, pattern)
+    else
+      true
+    end
+  end
 end
 
 require "./*"
@@ -47,6 +62,7 @@ end
 
 def it(description)
   return if Spec.aborted?
+  return unless Spec.matches?(description)
 
   Spec.formatter.before_example description
 
@@ -62,6 +78,7 @@ end
 
 def pending(description, &block)
   return if Spec.aborted?
+  return unless Spec.matches?(description)
 
   Spec.formatter.before_example description
 
@@ -77,6 +94,9 @@ def fail(msg)
 end
 
 OptionParser.parse! do |opts|
+  opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
+    Spec.pattern = pattern
+  end
   opts.on("-v", "--verbose", "verbose output") do
     Spec.formatter = Spec::VerboseFormatter.new
   end

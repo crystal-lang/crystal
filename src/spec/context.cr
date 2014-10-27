@@ -101,6 +101,14 @@ module Spec
       Spec.formatter.pop
       @@contexts_stack.pop
     end
+
+    def self.matches?(description, pattern)
+      @@contexts_stack.any?(&.matches?(pattern)) || description =~ pattern
+    end
+
+    def matches?(pattern)
+      false
+    end
   end
 
   class NestedContext < Context
@@ -112,6 +120,10 @@ module Spec
 
     def report(kind, description, ex = nil)
       @parent.report(kind, "#{@description} #{description}", ex)
+    end
+
+    def matches?(pattern)
+      @description =~ pattern
     end
   end
 end
