@@ -343,6 +343,23 @@ module Crystal
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
         end
+      when "[]="
+        case args.length
+        when 2
+          key, value = args
+
+          index = keys.index(key)
+          if index
+            values[index] = value
+          else
+            keys.push key
+            values.push value
+          end
+
+          value
+        else
+          raise "wrong number of arguments for []= (#{args.length} for 2)"
+        end
       else
         super
       end

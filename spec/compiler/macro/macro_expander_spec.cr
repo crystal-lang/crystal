@@ -453,11 +453,11 @@ describe "MacroExpander" do
       assert_macro "", %({{{a: 1}.empty?}}), [] of ASTNode, "false"
     end
 
-    it "executes index" do
+    it "executes []" do
       assert_macro "", %({{{a: 1}[:a]}}), [] of ASTNode, "1"
     end
 
-    it "executes index not found" do
+    it "executes [] not found" do
       assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
     end
 
@@ -472,6 +472,10 @@ describe "MacroExpander" do
     it "executes is_a?" do
       assert_macro "", %({{{a: 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
       assert_macro "", %({{{a: 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
+    end
+
+    it "executes []=" do
+      assert_macro "", %({% a = {} of Nil => Nil; a[1] = 2 %}{{a[1]}}), [] of ASTNode, "2"
     end
   end
 
