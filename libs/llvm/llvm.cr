@@ -86,10 +86,9 @@ module LLVM
 
   VoidPointer = Int8.pointer
 
-  # TODO: replace with constants after 0.5.0
   ifdef x86_64
-    SizeT = Type.new LibLLVM.int64_type # Int64
+    SizeT = Int64
   else
-    SizeT = Type.new LibLLVM.int32_type # Int32
+    SizeT = Int32
   end
 end

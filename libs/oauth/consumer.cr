@@ -56,7 +56,6 @@ class OAuth::Consumer
   private def authenticate(client, oauth_token, token_shared_secret, extra_params)
     client.before_request do |request|
       authenticate client, request, oauth_token, token_shared_secret, extra_params
-      nil # TODO: remove after 0.5.0
     end
   end
 

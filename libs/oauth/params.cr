@@ -1,5 +1,4 @@
-# TODO: make struct after 0.5.0
-class OAuth::Params
+struct OAuth::Params
   def initialize
     @params = [] of {String, String}
   end
