@@ -1805,11 +1805,14 @@ module Crystal
     def_equals_and_hash name, args, named_args
   end
 
-  # A macro expression, surrounded by {{ ... }}
+  # A macro expression,
+  # surrounded by {{ ... }} (output = true)
+  # or by {% ... %} (output = false)
   class MacroExpression < ASTNode
     property exp
+    property output
 
-    def initialize(@exp)
+    def initialize(@exp, @output = true)
     end
 
     def accept_children(visitor)
@@ -1817,10 +1820,10 @@ module Crystal
     end
 
     def clone_without_location
-      MacroExpression.new(@exp.clone)
+      MacroExpression.new(@exp.clone, @output)
     end
 
-    def_equals_and_hash exp
+    def_equals_and_hash exp, output
   end
 
   # Free text that is part of a macro

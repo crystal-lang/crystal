@@ -212,7 +212,7 @@ module Crystal
           else
             break
           end
-        when :")", :",", :";", :NEWLINE, :EOF
+        when :")", :",", :";", :"%}", :"}}", :NEWLINE, :EOF
           break
         else
           if is_end_token
@@ -2019,7 +2019,7 @@ module Crystal
     end
 
     def parse_macro_control(start_line, start_column, macro_state = Token::MacroState.default)
-      next_token_skip_space
+      next_token_skip_space_or_newline
 
       case @token.type
       when :IDENT
@@ -2061,20 +2061,38 @@ module Crystal
           return parse_macro_if(start_line, start_column, macro_state)
         when :unless
           macro_if = parse_macro_if(start_line, start_column, macro_state)
-          macro_if.then, macro_if.else = macro_if.else, macro_if.then
+          case macro_if
+          when MacroIf
+            macro_if.then, macro_if.else = macro_if.else, macro_if.then
+          when MacroExpression
+            if (exp = macro_if.exp).is_a?(If)
+              exp.then, exp.else = exp.else, exp.then
+            end
+          end
           return macro_if
         when :else, :elsif, :end
           return nil
         end
       end
 
-      unexpected_token
+      @in_macro_expression = true
+      exps = parse_expressions
+      @in_macro_expression = false
+
+      MacroExpression.new(exps, output: false)
     end
 
     def parse_macro_if(start_line, start_column, macro_state, check_end = true)
       next_token_skip_space
 
-      cond = parse_expression_inside_macro
+      @in_macro_expression = true
+      cond = parse_op_assign
+      @in_macro_expression = false
+
+      if @token.type != :"%}" && check_end
+        an_if = parse_if_after_condition cond, true
+        return MacroExpression.new(an_if, output: false)
+      end
 
       check :"%}"
 
@@ -2121,12 +2139,12 @@ module Crystal
 
       if @token.type == :"*"
         next_token_skip_space
-        exp = parse_op_assign
+        exp = parse_expression
         splat = Splat.new(exp)
         splat.location = exp.location
         exp = splat
       else
-        exp = parse_op_assign
+        exp = parse_expression
       end
 
       @in_macro_expression = false
@@ -2500,6 +2518,10 @@ module Crystal
       next_token_skip_space_or_newline
 
       cond = parse_op_assign
+      parse_if_after_condition cond, check_end
+    end
+
+    def parse_if_after_condition(cond, check_end)
       skip_statement_end
 
       a_then = parse_expressions
@@ -3752,7 +3774,7 @@ module Crystal
 
     def is_end_token
       case @token.type
-      when :"}", :"]", :EOF
+      when :"}", :"]", :"%}", :EOF
         return true
       end
 

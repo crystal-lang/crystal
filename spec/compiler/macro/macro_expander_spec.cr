@@ -514,7 +514,11 @@ describe "MacroExpander" do
   end
 
   it "executes assign" do
-    assert_macro "", %({{a = 1}}{{a}}), [] of ASTNode, "1"
+    assert_macro "", %({{a = 1}}{{a}}), [] of ASTNode, "11"
+  end
+
+  it "executes assign without output" do
+    assert_macro "", %({% a = 1 %}{{a}}), [] of ASTNode, "1"
   end
 
   describe "type methods" do
@@ -570,5 +574,9 @@ describe "MacroExpander" do
 
   it "does regular unless" do
     assert_macro "", %({{unless 1 == 2; 3; else; 4; end}}), [] of ASTNode, "3"
+  end
+
+  it "does not expand when macro expression is {% ... %}" do
+    assert_macro "", %({% 1 %}), [] of ASTNode, ""
   end
 end

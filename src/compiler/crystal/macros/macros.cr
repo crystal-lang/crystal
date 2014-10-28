@@ -205,7 +205,7 @@ module Crystal
       def visit(node : MacroExpression)
         node.exp.accept self
 
-        unless node.exp.is_a?(Assign)
+        if node.output
           @last.to_s(@str)
         end
 

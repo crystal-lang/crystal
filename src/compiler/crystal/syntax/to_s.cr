@@ -607,9 +607,10 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
-      @str << "{{"
+      @str << (node.output ? "{{" : "{% ")
+      @str << " "
       node.exp.accept self
-      @str << "}}"
+      @str << (node.output ? "}}" : " %}")
       false
     end
 

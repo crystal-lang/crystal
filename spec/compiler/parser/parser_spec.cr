@@ -573,6 +573,12 @@ describe "Parser" do
   it_parses "puts %i(one two)", Call.new(nil, "puts", [(["one".symbol, "two".symbol] of ASTNode).array] of ASTNode)
   it_parses "puts {{1}}", Call.new(nil, "puts", [MacroExpression.new(1.int32)] of ASTNode)
   it_parses "puts {{*1}}", Call.new(nil, "puts", [MacroExpression.new(1.int32.splat)] of ASTNode)
+  it_parses "{{a = 1 if 2}}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)))
+  it_parses "{% a = 1 %}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
+  it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
+  it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
+  it_parses "{% unless 1; 2; end %}", MacroExpression.new(If.new(1.int32, Nop.new, 2.int32), output: false)
+  it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
   it_parses "[] of Int", ([] of ASTNode).array_of("Int".path)
   it_parses "[1, 2] of Int", ([1.int32, 2.int32] of ASTNode).array_of("Int".path)
