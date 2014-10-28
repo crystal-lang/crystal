@@ -231,6 +231,10 @@ module Crystal
     def visit(node : DeclareVar)
       case var = node.var
       when Var
+        if @vars[var.name]?
+          var.raise "variable '#{var.name}' already declared"
+        end
+
         node.declared_type.accept self
         node.type = check_declare_var_type node
 

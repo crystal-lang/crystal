@@ -2677,10 +2677,6 @@ module Crystal
           end
         else
           if @token.type == :"::"
-            if is_var
-              raise "variable '#{name}' is already declared"
-            end
-
             next_token_skip_space_or_newline
             declared_type = parse_single_type
             declare_var = DeclareVar.new(Var.new(name), declared_type)

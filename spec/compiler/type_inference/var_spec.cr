@@ -63,4 +63,12 @@ describe "Type inference: var" do
       a ? nil : a
       )) { nilable bool }
   end
+
+  it "errors if declaring var that is already declared" do
+    assert_error %(
+      a = 1
+      a :: Float64
+      ),
+      "variable 'a' already declared"
+  end
 end
