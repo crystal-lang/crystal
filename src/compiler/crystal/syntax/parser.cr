@@ -1158,7 +1158,13 @@ module Crystal
           call.location = location
         elsif @token.type == :"["
           call = parse_atomic_method_suffix obj, location
-          call.location = location
+
+          if @token.type == :"=" && call.is_a?(Call)
+            next_token_skip_space
+            exp = parse_op_assign
+            call.name = "#{call.name}="
+            call.args << exp
+          end
         else
           call = parse_var_or_call force_call: true
           call.location = location
@@ -1188,7 +1194,15 @@ module Crystal
             end
           else
             call = parse_atomic_method_suffix call, location
-            call = check_special_call(call)
+
+            if @token.type == :"=" && call.is_a?(Call) && call.name == "[]"
+              next_token_skip_space
+              exp = parse_op_assign
+              call.name = "#{call.name}="
+              call.args << exp
+            else
+              call = check_special_call(call)
+            end
           end
         end
 
