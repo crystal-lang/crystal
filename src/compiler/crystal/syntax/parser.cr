@@ -1169,8 +1169,27 @@ module Crystal
             raise "Bug: #{call} should be a call"
           end
 
-          call = parse_atomic_method_suffix call, location
-          call = check_special_call(call)
+          call = call as Call
+
+          if @token.type == :"="
+            next_token_skip_space
+            if @token.type == :"("
+              next_token_skip_space
+              exp = parse_op_assign
+              check :")"
+              next_token_skip_space
+              call.name = "#{call.name}="
+              call.args = [exp] of ASTNode
+              call = parse_atomic_method_suffix call, location
+            else
+              exp = parse_op_assign
+              call.name = "#{call.name}="
+              call.args = [exp] of ASTNode
+            end
+          else
+            call = parse_atomic_method_suffix call, location
+            call = check_special_call(call)
+          end
         end
 
         block = Block.new([Var.new(block_arg_name)], call)
