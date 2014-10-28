@@ -419,6 +419,23 @@ module Crystal
     end
   end
 
+  class DeclareVar
+    def interpret(method, args, block, interpreter)
+      case method
+      when "var"
+        interpret_argless_method(method, args) do
+          var = @var
+          var = MacroId.new(var.name) if var.is_a?(Var)
+          var
+        end
+      when "type"
+        interpret_argless_method(method, args) { @declared_type }
+      else
+        super
+      end
+    end
+  end
+
   class MacroId
     def interpret(method, args, block, interpreter)
       case method

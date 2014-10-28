@@ -517,7 +517,7 @@ describe "MacroExpander" do
     assert_macro "", %({{a = 1}}{{a}}), [] of ASTNode, "1"
   end
 
-  describe "type method" do
+  describe "type methods" do
     it "executes name" do
       assert_macro("x", "{{x.name}}", %("String")) do |program|
         [MacroType.new(program.string)] of ASTNode
@@ -534,6 +534,20 @@ describe "MacroExpander" do
       assert_macro("x", "{{x.superclass}}", %(Reference)) do |program|
         [MacroType.new(program.string)] of ASTNode
       end
+    end
+  end
+
+  describe "declare var methods" do
+    it "executes var" do
+      assert_macro "x", %({{x.var}}), [DeclareVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "some_name"
+    end
+
+    it "executes var when instance var" do
+      assert_macro "x", %({{x.var}}), [DeclareVar.new(InstanceVar.new("@some_name"), Path.new("SomeType"))] of ASTNode, "@some_name"
+    end
+
+    it "executes type" do
+      assert_macro "x", %({{x.type}}), [DeclareVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
     end
   end
 
