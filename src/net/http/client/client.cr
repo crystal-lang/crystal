@@ -2,6 +2,7 @@ require "openssl"
 require "socket"
 require "uri"
 require "cgi"
+require "base64"
 require "../common/common"
 
 class HTTP::Client
@@ -19,6 +20,13 @@ class HTTP::Client
       yield client
     ensure
       client.close
+    end
+  end
+
+  def basic_auth(username, password)
+    header = "Basic #{Base64.encode64("#{username}:#{password}")}"
+    before_request do |request|
+      request.headers["Authorization"] = header
     end
   end
 
