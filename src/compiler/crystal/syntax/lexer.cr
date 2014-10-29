@@ -1138,8 +1138,11 @@ module Crystal
       if num_length == 20
         i = 0
         "18446744073709551615".each_byte do |byte|
-          if string_value.byte_at(i) > byte
+          string_byte = string_value.byte_at(i)
+          if string_byte > byte
             raise_value_doesnt_fit_in_uint64 string_value, start
+          elsif string_byte < byte
+            break
           end
           i += 1
         end
