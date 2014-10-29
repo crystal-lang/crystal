@@ -47,12 +47,17 @@ module Crystal
       when '\0'
         @token.type = :EOF
       when ' ', '\t'
-        @token.type = :SPACE
-        next_char
-        while current_char == ' ' || current_char == '\t'
-          next_char
-        end
+        consume_whitespace
         reset_wants_regex = false
+      when '\\'
+        if next_char == '\n'
+          @line_number += 1
+          @column_number = 1
+          consume_whitespace
+          reset_wants_regex = false
+        else
+          unknown_token
+        end
       when '\n'
         @token.type = :NEWLINE
         next_char
@@ -864,6 +869,27 @@ module Crystal
       @wants_regex = true if reset_wants_regex
 
       @token
+    end
+
+    def consume_whitespace
+      @token.type = :SPACE
+      next_char
+      while true
+        case current_char
+        when ' ', '\t'
+          next_char
+        when '\\'
+          if next_char == '\n'
+            next_char
+            @line_number += 1
+            @column_number = 1
+          else
+            unknown_token
+          end
+        else
+          break
+        end
+      end
     end
 
     def consume_newlines

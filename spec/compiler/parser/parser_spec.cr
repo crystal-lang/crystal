@@ -859,6 +859,9 @@ describe "Parser" do
 
   it_parses "macro foo(x = __LINE__);end", Macro.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
 
+  it_parses "1 \\\n + 2", Call.new(1.int32, "+", [2.int32] of ASTNode)
+  it_parses "1\\\n + 2", Call.new(1.int32, "+", [2.int32] of ASTNode)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
   end
