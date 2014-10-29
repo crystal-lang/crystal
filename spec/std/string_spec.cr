@@ -607,4 +607,32 @@ describe "String" do
     end
     str.ascii_only?.should be_false
   end
+
+  describe "scan" do
+    it "does without block" do
+      a = "cruel world"
+      a.scan(/\w+/).map(&.[0]).should eq(["cruel", "world"])
+      a.scan(/.../).map(&.[0]).should eq(["cru", "el ", "wor"])
+      a.scan(/(...)/).map(&.[1]).should eq(["cru", "el ", "wor"])
+      a.scan(/(..)(..)/).map { |m| {m[1], m[2]} }.should eq([{"cr", "ue"}, {"l ", "wo"}])
+    end
+
+    it "does with block" do
+      a = "foo goo"
+      i = 0
+      a.scan(/\w(o+)/) do |match|
+        case i
+        when 0
+          match[0].should eq("foo")
+          match[1].should eq("oo")
+        when 1
+          match[0].should eq("goo")
+          match[1].should eq("oo")
+        else
+          fail "expected two matches"
+        end
+        i += 1
+      end
+    end
+  end
 end

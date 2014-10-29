@@ -700,6 +700,26 @@ class String
     end
   end
 
+  def scan(pattern)
+    byte_offset = 0
+
+    while match = pattern.match(self, byte_offset)
+      index = match.begin(0)
+      yield match
+      byte_offset = index + match[0].bytesize
+    end
+
+    self
+  end
+
+  def scan(pattern)
+    matches = [] of MatchData
+    scan(pattern) do |match|
+      matches << match
+    end
+    matches
+  end
+
   def each_char
     if single_byte_optimizable?
       each_byte do |byte|
