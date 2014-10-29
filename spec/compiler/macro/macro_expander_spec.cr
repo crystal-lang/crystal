@@ -442,6 +442,10 @@ describe "MacroExpander" do
       assert_macro "", %({{[1, 2, 3].is_a?(ArrayLiteral)}}), [] of ASTNode, "true"
       assert_macro "", %({{[1, 2, 3].is_a?(NumberLiteral)}}), [] of ASTNode, "false"
     end
+
+    it "creates an array literal with a var" do
+      assert_macro "x", %({% a = [x] %}{{a[0]}}), [NumberLiteral.new(1)] of ASTNode, "1"
+    end
   end
 
   describe "hash methods" do
@@ -477,6 +481,10 @@ describe "MacroExpander" do
     it "executes []=" do
       assert_macro "", %({% a = {} of Nil => Nil; a[1] = 2 %}{{a[1]}}), [] of ASTNode, "2"
     end
+
+    it "creates a hash literal with a var" do
+      assert_macro "x", %({% a = {a: x} %}{{a[:a]}}), [NumberLiteral.new(1)] of ASTNode, "1"
+    end
   end
 
   describe "tuple methods" do
@@ -490,6 +498,10 @@ describe "MacroExpander" do
 
     it "executes index 1" do
       assert_macro "", %({{{1, 2, 3}[1]}}), [] of ASTNode, "2"
+    end
+
+    it "creates a tuple literal with a var" do
+      assert_macro "x", %({% a = {x} %}{{a[0]}}), [NumberLiteral.new(1)] of ASTNode, "1"
     end
   end
 

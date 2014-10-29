@@ -619,12 +619,38 @@ module Crystal
         @last = node
       end
 
-      {% for name in %w(Bool Number Char String Symbol Nil Array Range Tuple Hash Regex) %}
+      {% for name in %w(Bool Number Char String Symbol Nil Range Regex) %}
         def visit(node : {{name.id}}Literal)
           @last = node
           false
         end
       {% end %}
+
+      def visit(node : TupleLiteral)
+        node.elements.map! do |element|
+          accept element
+        end
+        @last = node
+        false
+      end
+
+      def visit(node : ArrayLiteral)
+        node.elements.map! do |element|
+          accept element
+        end
+        @last = node
+        false
+      end
+
+      def visit(node : HashLiteral)
+        node.entries.map! do |entry|
+          mapped_key = accept entry.key
+          mapped_value = accept entry.value
+          HashLiteral::Entry.new(mapped_key, mapped_value)
+        end
+        @last = node
+        false
+      end
 
       def visit(node : Nop)
         @last = node
