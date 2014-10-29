@@ -447,6 +447,39 @@ module Crystal
     end
   end
 
+  class Def
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        MacroId.new(name)
+      when "body"
+        body
+      when "args"
+        def_args = Array(ASTNode).new(self.args.length) { |i| self.args[i] }
+        ArrayLiteral.new(def_args)
+      when "receiver"
+        receiver || Nop.new
+      else
+        super
+      end
+    end
+  end
+
+  class Arg
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        MacroId.new(name)
+      when "default_value"
+        default_value || Nop.new
+      when "restriction"
+        restriction || Nop.new
+      else
+        super
+      end
+    end
+  end
+
   class MacroId
     def interpret(method, args, block, interpreter)
       case method

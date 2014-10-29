@@ -571,6 +571,38 @@ describe "MacroExpander" do
     end
   end
 
+  describe "def methods" do
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [Def.new("some_def")] of ASTNode, "some_def"
+    end
+
+    it "executes body" do
+      assert_macro "x", %({{x.body}}), [Def.new("some_def", body: NumberLiteral.new(1))] of ASTNode, "1"
+    end
+
+    it "executes args" do
+      assert_macro "x", %({{x.args}}), [Def.new("some_def", args: [Arg.new("z")])] of ASTNode, "[z]"
+    end
+
+    it "executes receiver" do
+      assert_macro "x", %({{x.receiver}}), [Def.new("some_def", receiver: Var.new("self"))] of ASTNode, "self"
+    end
+  end
+
+  describe "arg methods" do
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [Arg.new("some_arg")] of ASTNode, "some_arg"
+    end
+
+    it "executes default_value" do
+      assert_macro "x", %({{x.default_value}}), [Arg.new("some_arg", default_value: NumberLiteral.new(1))] of ASTNode, "1"
+    end
+
+    it "executes restriction" do
+      assert_macro "x", %({{x.restriction}}), [Arg.new("some_arg", restriction: Path.new("T"))] of ASTNode, "T"
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"
