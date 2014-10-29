@@ -862,6 +862,11 @@ describe "Parser" do
   it_parses "1 \\\n + 2", Call.new(1.int32, "+", [2.int32] of ASTNode)
   it_parses "1\\\n + 2", Call.new(1.int32, "+", [2.int32] of ASTNode)
 
+  it_parses %("hello " \\\n "world"), StringLiteral.new("hello world")
+  it_parses %("hello "\\\n"world"), StringLiteral.new("hello world")
+  it_parses %("hello \#{1}" \\\n "\#{2} world"), StringInterpolation.new(["hello ".string, 1.int32, 2.int32, " world".string] of ASTNode)
+  assert_syntax_error %("foo" "bar")
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
   end

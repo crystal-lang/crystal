@@ -53,6 +53,7 @@ module Crystal
         if next_char == '\n'
           @line_number += 1
           @column_number = 1
+          @token.passed_backslash_newline = true
           consume_whitespace
           reset_wants_regex = false
         else
@@ -883,6 +884,7 @@ module Crystal
             next_char
             @line_number += 1
             @column_number = 1
+            @token.passed_backslash_newline = true
           else
             unknown_token
           end
@@ -1935,6 +1937,7 @@ module Crystal
       @token.column_number = @column_number
       @token.filename = @filename
       @token.location = nil
+      @token.passed_backslash_newline = false
     end
 
     def next_token_skip_space

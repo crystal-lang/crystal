@@ -10,6 +10,7 @@ module Crystal
     property filename
     property delimiter_state
     property macro_state
+    property passed_backslash_newline
 
     record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields) do
       def self.default
@@ -36,6 +37,7 @@ module Crystal
       @column_number = 0
       @delimiter_state = DelimiterState.default
       @macro_state = MacroState.default
+      @passed_backslash_newline = false
     end
 
     def location

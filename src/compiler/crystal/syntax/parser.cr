@@ -1452,7 +1452,6 @@ module Crystal
       end
 
       delimiter_state = @token.delimiter_state
-      modifiers = 0
 
       check :DELIMITER_START
 
@@ -1462,6 +1461,48 @@ module Crystal
       pieces = [] of ASTNode | String
       has_interpolation = false
 
+      delimiter_state, has_interpolation, modifiers = consume_delimiter pieces, delimiter_state, has_interpolation
+
+      if delimiter_state.kind == :string
+        while true
+          passed_backslash_newline = @token.passed_backslash_newline
+          skip_space
+
+          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+            next_string_token(delimiter_state)
+            delimiter_state = @token.delimiter_state
+            delimiter_state, has_interpolation, modifiers = consume_delimiter pieces, delimiter_state, has_interpolation
+          else
+            break
+          end
+        end
+      end
+
+      if has_interpolation
+        pieces = pieces.map do |piece|
+          piece.is_a?(String) ? StringLiteral.new(piece) : piece
+        end
+        if pieces.length == 1
+          result = Call.new(pieces.first, "to_s")
+        else
+          result = StringInterpolation.new(pieces)
+        end
+      else
+        result = StringLiteral.new pieces.join
+      end
+
+      case delimiter_state.kind
+      when :command
+        result = Call.new(nil, "`", [result] of ASTNode)
+      when :regex
+        result = RegexLiteral.new(result, modifiers)
+      end
+
+      result
+    end
+
+    def consume_delimiter(pieces, delimiter_state, has_interpolation)
+      modifiers = 0
       while true
         case @token.type
         when :STRING
@@ -1504,27 +1545,7 @@ module Crystal
         end
       end
 
-      if has_interpolation
-        pieces = pieces.map do |piece|
-          piece.is_a?(String) ? StringLiteral.new(piece) : piece
-        end
-        if pieces.length == 1
-          result = Call.new(pieces.first, "to_s")
-        else
-          result = StringInterpolation.new(pieces)
-        end
-      else
-        result = StringLiteral.new pieces.join
-      end
-
-      case delimiter_state.kind
-      when :command
-        result = Call.new(nil, "`", [result] of ASTNode)
-      when :regex
-        result = RegexLiteral.new(result, modifiers)
-      end
-
-      result
+      {delimiter_state, has_interpolation, modifiers}
     end
 
     def consume_regex_modifiers
