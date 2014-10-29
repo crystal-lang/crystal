@@ -118,11 +118,11 @@ describe "MacroExpander" do
     end
 
     it "expands macro with for over hash literal" do
-      assert_macro "x", "{%for k, v in x%}{{k}}{{v}}{%end%}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "acbd"
+      assert_macro "x", "{%for k, v in x%}{{k}}{{v}}{%end%}", [HashLiteral.new([HashLiteral::Entry.new(Var.new("a"), Var.new("c")), HashLiteral::Entry.new(Var.new("b"), Var.new("d"))])] of ASTNode, "acbd"
     end
 
     it "expands macro with for over hash literal with index" do
-      assert_macro "x", "{%for k, v, i in x%}{{k}}{{v}}{{i}}{%end%}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "ac0bd1"
+      assert_macro "x", "{%for k, v, i in x%}{{k}}{{v}}{{i}}{%end%}", [HashLiteral.new([HashLiteral::Entry.new(Var.new("a"), Var.new("c")), HashLiteral::Entry.new(Var.new("b"), Var.new("d"))])] of ASTNode, "ac0bd1"
     end
 
     it "expands macro with for over tuple literal" do

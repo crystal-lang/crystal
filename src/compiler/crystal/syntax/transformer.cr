@@ -92,15 +92,12 @@ module Crystal
     end
 
     def transform(node : HashLiteral)
-      transform_many node.keys
-      transform_many node.values
-
-      if of_key = node.of_key
-        node.of_key = of_key.transform(self)
+      node.entries.map! do |entry|
+        HashLiteral::Entry.new(entry.key.transform(self), entry.value.transform(self))
       end
 
-      if of_value = node.of_value
-        node.of_value = of_value.transform(self)
+      if of = node.of
+        node.of = HashLiteral::Entry.new(of.key.transform(self), of.value.transform(self))
       end
 
       node

@@ -113,22 +113,20 @@ module Crystal
       end
 
       @str << "{"
-      node.keys.each_with_index do |key, i|
+      node.entries.each_with_index do |entry, i|
         @str << ", " if i > 0
-        key.accept self
+        entry.key.accept self
         @str << " => "
-        node.values[i].accept self
+        entry.value.accept self
       end
       @str << "}"
-      if of_key = node.of_key
+      if of = node.of
         @str << " "
         @str << keyword("of")
         @str << " "
-        of_key.accept self
+        of.key.accept self
         @str << " => "
-        if (of_value = node.of_value)
-          of_value.accept self
-        end
+        of.value.accept self
       end
       false
     end
@@ -256,7 +254,7 @@ module Crystal
         when ArrayLiteral
           !!node_obj.of
         when HashLiteral
-          !!node_obj.of_key
+          !!node_obj.of
         else
           true
         end

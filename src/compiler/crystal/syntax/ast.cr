@@ -256,28 +256,32 @@ module Crystal
   end
 
   class HashLiteral < ASTNode
-    property :keys
-    property :values
-    property :of_key
-    property :of_value
+    property :entries
+    property :of
     property :name
 
-    def initialize(@keys = [] of ASTNode, @values = [] of ASTNode, @of_key = nil, @of_value = nil, @name = nil)
+    def initialize(@entries = [] of Entry, @of = nil, @name = nil)
     end
 
     def accept_children(visitor)
       @name.try &.accept visitor
-      @keys.each &.accept visitor
-      @values.each &.accept visitor
-      @of_key.try &.accept visitor
-      @of_value.try &.accept visitor
+      @entries.each do |entry|
+        entry.key.accept visitor
+        entry.value.accept visitor
+      end
+      if of = @of
+        of.key.accept visitor
+        of.value.accept visitor
+      end
     end
 
     def clone_without_location
-      HashLiteral.new(@keys.clone, @values.clone, @of_key.clone, @of_value.clone, @name.clone)
+      HashLiteral.new(@entries.clone, @of.clone, @name.clone)
     end
 
-    def_equals_and_hash @keys, @values, @of_key, @of_value, @name
+    def_equals_and_hash @entries, @of, @name
+
+    record Entry, key, value
   end
 
   class RangeLiteral < ASTNode

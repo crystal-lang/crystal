@@ -265,19 +265,16 @@ module Crystal
           value_var = node.vars[1]?
           index_var = node.vars[2]?
 
-          i = 0
-          exp.keys.zip(exp.values) do |key, value|
-            @vars[key_var.name] = key
+          exp.entries.each_with_index do |entry, i|
+            @vars[key_var.name] = entry.key
             if value_var
-              @vars[value_var.name] = value
+              @vars[value_var.name] = entry.value
             end
             if index_var
               @vars[index_var.name] = NumberLiteral.new(i)
             end
 
             node.body.accept self
-
-            i += 1
           end
 
           @vars.delete key_var.name

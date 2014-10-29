@@ -322,24 +322,19 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "empty?"
-        interpret_argless_method(method, args) { BoolLiteral.new(keys.empty?) }
+        interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
       when "keys"
-        interpret_argless_method(method, args) { ArrayLiteral.new(keys) }
+        interpret_argless_method(method, args) { ArrayLiteral.new(entries.map &.key) }
       when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(keys.length) }
+        interpret_argless_method(method, args) { NumberLiteral.new(entries.length) }
       when "values"
-        interpret_argless_method(method, args) { ArrayLiteral.new(values) }
+        interpret_argless_method(method, args) { ArrayLiteral.new(entries.map &.value) }
       when "[]"
         case args.length
         when 1
-          arg = args.first
-
-          index = keys.index(arg)
-          if index
-            values[index]
-          else
-            NilLiteral.new
-          end
+          key = args.first
+          entry = entries.find &.key.==(key)
+          entry.try(&.value) || NilLiteral.new
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
         end
@@ -348,12 +343,11 @@ module Crystal
         when 2
           key, value = args
 
-          index = keys.index(key)
+          index = entries.index &.key.==(key)
           if index
-            values[index] = value
+            entries[index] = HashLiteral::Entry.new(key, value)
           else
-            keys.push key
-            values.push value
+            entries << HashLiteral::Entry.new(key, value)
           end
 
           value

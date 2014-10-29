@@ -116,7 +116,7 @@ module Crystal
       constructor = Call.new(node.name, "new")
       constructor.location = node.location
 
-      if node.keys.empty?
+      if node.entries.empty?
         return constructor
       end
 
@@ -126,8 +126,8 @@ module Crystal
       assign.location = node.location
 
       exps = [assign] of ASTNode
-      node.keys.each_with_index do |key, i|
-        call = Call.new(temp_var.clone, "[]=", [key, node.values[i]])
+      node.entries.each do |entry|
+        call = Call.new(temp_var.clone, "[]=", [entry.key, entry.value])
         call.location = node.location
         exps << call
       end
@@ -159,13 +159,13 @@ module Crystal
     #     hash[c] = d
     #     hash
     def expand(node : HashLiteral)
-      if (node_of_key = node.of_key)
-        type_vars = [node_of_key, node.of_value.not_nil!] of ASTNode
+      if of = node.of
+        type_vars = [of.key, of.value] of ASTNode
       else
-        typeof_key = TypeOf.new(node.keys)
+        typeof_key = TypeOf.new(node.entries.map &.key)
         typeof_key.location = node.location
 
-        typeof_value = TypeOf.new(node.values)
+        typeof_value = TypeOf.new(node.entries.map &.value)
         typeof_value.location = node.location
 
         type_vars = [typeof_key, typeof_value] of ASTNode
@@ -177,15 +177,15 @@ module Crystal
       constructor = Call.new(generic, "new")
       constructor.location = node.location
 
-      if node.keys.length == 0
+      if node.entries.empty?
         constructor
       else
         temp_var = new_temp_var
         assign = Assign.new(temp_var.clone, constructor)
 
         exps = [assign] of ASTNode
-        node.keys.each_with_index do |key, i|
-          exps << Call.new(temp_var.clone, "[]=", [key, node.values[i]])
+        node.entries.each do |entry|
+          exps << Call.new(temp_var.clone, "[]=", [entry.key, entry.value])
         end
         exps << temp_var.clone
         exp = Expressions.new exps

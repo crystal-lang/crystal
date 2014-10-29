@@ -2930,10 +2930,10 @@ module Crystal
           path = Path.global(type_name)
           path.location = node.location
 
-          type_of_keys = TypeOf.new(node.keys)
+          type_of_keys = TypeOf.new(node.entries.map &.key)
           type_of_keys.location = node.location
 
-          type_of_values = TypeOf.new(node.values)
+          type_of_values = TypeOf.new(node.entries.map &.value)
           type_of_values.location = node.location
 
           generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode)

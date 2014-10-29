@@ -1634,7 +1634,7 @@ module Crystal
 
       if @token.type == :"}"
         next_token_skip_space
-        new_hash_literal([] of ASTNode, [] of ASTNode, line, column)
+        new_hash_literal([] of HashLiteral::Entry, line, column)
       else
         # "{foo:" or "{Foo:" means a hash literal with symbol key
         if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
@@ -1667,12 +1667,10 @@ module Crystal
       line = @line_number
       column = @token.column_number
 
-      keys = [] of ASTNode
-      values = [] of ASTNode
+      entries = [] of HashLiteral::Entry
 
       open(:hash_literal, location) do
-        keys << first_key
-        values << parse_op_assign
+        entries << HashLiteral::Entry.new(first_key, parse_op_assign)
         skip_space_or_newline
         if @token.type == :","
           next_token_skip_space_or_newline
@@ -1680,11 +1678,10 @@ module Crystal
 
         while @token.type != :"}"
           if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
-            keys << SymbolLiteral.new(@token.value.to_s)
+            key = SymbolLiteral.new(@token.value.to_s)
             next_token
           else
             key = parse_op_assign
-            keys << key
             skip_space_or_newline
             if @token.type == :":" && key.is_a?(StringLiteral)
               # Nothing: it's a string key
@@ -1693,7 +1690,7 @@ module Crystal
             end
           end
           next_token_skip_space_or_newline
-          values << parse_op_assign
+          entries << HashLiteral::Entry.new(key, parse_op_assign)
           skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
@@ -1702,7 +1699,7 @@ module Crystal
         next_token_skip_space
       end
 
-      new_hash_literal keys, values, line, column, allow_of: allow_of
+      new_hash_literal entries, line, column, allow_of: allow_of
     end
 
     def parse_tuple(first_exp, location)
@@ -1723,9 +1720,8 @@ module Crystal
       TupleLiteral.new exps
     end
 
-    def new_hash_literal(keys, values, line, column, allow_of = true)
-      of_key = nil
-      of_value = nil
+    def new_hash_literal(entries, line, column, allow_of = true)
+      of = nil
 
       if allow_of
         if @token.keyword?(:of)
@@ -1734,14 +1730,15 @@ module Crystal
           check :"=>"
           next_token_skip_space_or_newline
           of_value = parse_single_type
+          of = HashLiteral::Entry.new(of_key, of_value)
         end
 
-        if keys.length == 0 && !of_key
+        if entries.empty? && !of
           raise "for empty hashes use '{} of KeyType => ValueType'", line, column
         end
       end
 
-      Crystal::HashLiteral.new keys, values, of_key, of_value
+      Crystal::HashLiteral.new entries, of
     end
 
     def parse_require

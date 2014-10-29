@@ -463,7 +463,7 @@ describe "Parser" do
     it_parses "#{keyword} 1", klass.new(1.int32)
     it_parses "#{keyword} 1, 2", klass.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
     it_parses "#{keyword} {1, 2}", klass.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
-    it_parses "#{keyword} {1 => 2}", klass.new(HashLiteral.new([1.int32] of ASTNode, [2.int32] of ASTNode))
+    it_parses "#{keyword} {1 => 2}", klass.new(HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32)]))
     it_parses "#{keyword} 1 if true", If.new(true.bool, klass.new(1.int32))
     it_parses "#{keyword} if true", If.new(true.bool, klass.new)
   end
@@ -661,14 +661,14 @@ describe "Parser" do
   it_parses "foo out @x; @x", [Call.new(nil, "foo", [Out.new("@x".instance_var)] of ASTNode), "@x".instance_var]
   it_parses "foo(out @x); @x", [Call.new(nil, "foo", [Out.new("@x".instance_var)] of ASTNode), "@x".instance_var]
 
-  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int32, 3.int32] of ASTNode, [2.int32, 4.int32] of ASTNode)
-  it_parses "{a: 1, b: 2}", HashLiteral.new(["a".symbol, "b".symbol] of ASTNode, [1.int32, 2.int32] of ASTNode)
-  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(["a".symbol, 3.int32, "b".symbol] of ASTNode, [1.int32, 4.int32, 2.int32] of ASTNode)
-  it_parses "{A: 1, 3 => 4, B: 2}", HashLiteral.new(["A".symbol, 3.int32, "B".symbol] of ASTNode, [1.int32, 4.int32, 2.int32] of ASTNode)
-  it_parses %({"foo": 1}), HashLiteral.new(["foo".string] of ASTNode, [1.int32] of ASTNode)
-  it_parses %({"foo": 1, "bar": 2}), HashLiteral.new(["foo".string, "bar".string] of ASTNode, [1.int32, 2.int32] of ASTNode)
+  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
+  it_parses "{a: 1, b: 2}", HashLiteral.new([HashLiteral::Entry.new("a".symbol, 1.int32), HashLiteral::Entry.new("b".symbol, 2.int32)])
+  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new([HashLiteral::Entry.new("a".symbol, 1.int32), HashLiteral::Entry.new(3.int32, 4.int32), HashLiteral::Entry.new("b".symbol, 2.int32)])
+  it_parses "{A: 1, 3 => 4, B: 2}", HashLiteral.new([HashLiteral::Entry.new("A".symbol, 1.int32), HashLiteral::Entry.new(3.int32, 4.int32), HashLiteral::Entry.new("B".symbol, 2.int32)])
+  it_parses %({"foo": 1}), HashLiteral.new([HashLiteral::Entry.new("foo".string, 1.int32)])
+  it_parses %({"foo": 1, "bar": 2}), HashLiteral.new([HashLiteral::Entry.new("foo".string, 1.int32), HashLiteral::Entry.new("bar".string, 2.int32)])
 
-  it_parses "{} of Int => Double", HashLiteral.new([] of ASTNode, [] of ASTNode, "Int".path, "Double".path)
+  it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
 
   it_parses "require \"foo\"", Require.new("foo")
   it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
@@ -753,7 +753,7 @@ describe "Parser" do
   it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")] of ASTNode)
   it_parses "[] of ->\n", ArrayLiteral.new(of: Fun.new)
 
-  it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", [HashLiteral.new(of_key: "Int32".path, of_value: "Int32".path)] of ASTNode)
+  it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", [HashLiteral.new(of: HashLiteral::Entry.new("Int32".path, "Int32".path))] of ASTNode)
 
   it_parses "alias Foo = Bar", Alias.new("Foo", "Bar".path)
 
@@ -842,8 +842,8 @@ describe "Parser" do
   it_parses "Set {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: "Set".path)
   it_parses "Set(Int32) {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: Generic.new("Set".path, ["Int32".path] of ASTNode))
 
-  it_parses "Headers {foo: 1}", HashLiteral.new(["foo".symbol] of ASTNode, [1.int32] of ASTNode, name: "Headers".path)
-  it_parses "Headers(Int32) {foo: 1}", HashLiteral.new(["foo".symbol] of ASTNode, [1.int32] of ASTNode, name: Generic.new("Headers".path, ["Int32".path] of ASTNode))
+  it_parses "Headers {foo: 1}", HashLiteral.new([HashLiteral::Entry.new("foo".symbol, 1.int32)], name: "Headers".path)
+  it_parses "Headers(Int32) {foo: 1}", HashLiteral.new([HashLiteral::Entry.new("foo".symbol, 1.int32)], name: Generic.new("Headers".path, ["Int32".path] of ASTNode))
 
   it_parses "foo(Bar) { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
   it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)

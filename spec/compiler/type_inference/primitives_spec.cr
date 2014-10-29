@@ -67,4 +67,19 @@ describe "Type inference: primitives" do
       Foo.foo == 1
       ), "undefined method '==' for Void"
   end
+
+  it "correctly types first hash from type vars (bug)" do
+    assert_type(%(
+      class Hash(K, V)
+      end
+
+      def foo(x : K, y : V)
+        {} of K => V
+      end
+
+      x = foo 1, 'a'
+      y = foo 'a', 1
+      x
+      )) { (types["Hash"] as GenericClassType).instantiate([int32, char] of TypeVar) }
+  end
 end
