@@ -6,6 +6,10 @@ macro record(name, *fields)
     end
 
     {{yield}}
+
+    def clone
+      {{name.id}}.new({{ *fields.map { |field| "@#{field.id}.clone".id } }})
+    end
   end
 end
 
