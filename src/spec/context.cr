@@ -86,7 +86,7 @@ module Spec
                      else                                            :success
                      end
 
-      puts "Finished in #{elapsed_time} seconds"
+      puts "Finished in #{elapsed_time}"
       puts Spec.color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", final_status)
     end
 
