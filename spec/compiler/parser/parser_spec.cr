@@ -940,6 +940,7 @@ describe "Parser" do
 
   assert_syntax_error "Set {1, 2, 3} of Int32"
   assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
+  assert_syntax_error "case foo; end"
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end
