@@ -275,3 +275,30 @@ struct Float
     TimeSpan.from self, TimeSpan::TicksPerMillisecond
   end
 end
+
+struct MonthSpan
+  getter value
+
+  def initialize(value)
+    @value = value.to_i64
+  end
+end
+
+struct Int
+  def month
+    months
+  end
+
+  def months
+    MonthSpan.new(self)
+  end
+
+  def year
+    years
+  end
+
+  def years
+    MonthSpan.new(self * 12)
+  end
+end
+

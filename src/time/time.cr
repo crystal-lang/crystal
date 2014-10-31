@@ -23,6 +23,8 @@ struct Time
   # *Heavily* inspired by Mono's DateTime class:
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/DateTime.cs
 
+  include Comparable(self)
+
   TicksMask = 4611686018427387903 # TODO replace with 0x3fffffffffffffff after 0.5.1
   KindMask = 1383505805528216371_u64 * 10 + 2 # TODO replace with 0xc000000000000000 after 0.5.1
   MAX_VALUE_TICKS = 3155378975999999999_i64
@@ -34,18 +36,18 @@ struct Time
   DP100 = 36524
   DP4   = 1461
 
-  MaxValue = new 3155378975999999999
-  MinValue = new 0
-
-  KindShift = 62_i64
-
-  UnixEpoch = 621355968000000000_i64
-
   module Kind
     Unspecified = 0_i64
     Utc         = 1_i64
     Local       = 2_i64
   end
+
+  KindShift = 62_i64
+
+  MaxValue = new 3155378975999999999
+  MinValue = new 0
+
+  UnixEpoch = 621355968000000000_i64
 
   # 1 tick is a tenth of a millisecond
   # The 2 higher bits are reserved for the kind of time.
@@ -53,19 +55,19 @@ struct Time
   protected property encoded
 
   def initialize
-    @encoded = Time.local_ticks
-    @encoded |= Kind::Local << KindShift
+    initialize Time.local_ticks
   end
 
-  def initialize(ticks)
+  def initialize(ticks, kind = Kind::Local)
     if ticks < 0 || ticks > MAX_VALUE_TICKS
       raise ArgumentError.new "invalid ticks value"
     end
 
     @encoded = ticks.to_i64
+    @encoded |= kind << KindShift
   end
 
-  def initialize(year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0)
+  def initialize(year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0, kind = Kind::Local)
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -77,6 +79,7 @@ struct Time
     end
 
     @encoded = TimeSpan.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
+    @encoded |= kind << KindShift
   end
 
   def +(other : TimeSpan)
@@ -85,6 +88,37 @@ struct Time
 
   def -(other : TimeSpan)
     add_ticks -other.ticks
+  end
+
+  def +(other : MonthSpan)
+    add_months other.value
+  end
+
+  def -(other : MonthSpan)
+    add_months -other.value
+  end
+
+  private def add_months(months)
+    day = self.day
+    month = self.month + (months % 12)
+    year = self.year + (months / 12)
+
+    if month < 1
+      month = 12 + month
+      year -= 1
+    elsif month > 12
+      month = month - 12
+      year += 1
+    end
+
+    maxday = Time.days_in_month(year, month)
+    if day > maxday
+      day = maxday
+    end
+
+    temp = Time.new(year, month, day)
+    temp.encoded |= encoded & KindMask
+    temp + time_of_day
   end
 
   def add_ticks(value)
@@ -108,6 +142,10 @@ struct Time
 
   def self.now
     new
+  end
+
+  def self.utc_now
+    new utc_ticks, Kind::Utc
   end
 
   def ticks
@@ -146,6 +184,38 @@ struct Time
 
   def millisecond
     ((encoded & TicksMask) % TimeSpan::TicksPerSecond / TimeSpan::TicksPerMillisecond).to_i32
+  end
+
+  def time_of_day
+    TimeSpan.new((encoded & TicksMask) % TimeSpan::TicksPerDay)
+  end
+
+  def day_of_week
+    (((encoded & TicksMask) / TimeSpan::TicksPerDay) + 1) % 7
+  end
+
+  def day_of_year
+    from_ticks :day_year
+  end
+
+  def kind
+    encoded.to_u64 >> KindShift
+  end
+
+  def utc?
+    kind == Kind::Utc
+  end
+
+  def local?
+    kind == Kind::Local
+  end
+
+  def <=>(other : self)
+    ticks <=> other.ticks
+  end
+
+  def hash
+    @encoded
   end
 
   def self.days_in_month(year, month)
@@ -196,6 +266,18 @@ struct Time
     s = second
     io << '0' if s < 10
     io << s
+
+    if utc?
+      io << " UTC"
+    end
+  end
+
+  def to_s(format : String)
+    TimeFormat.new(format).format(self)
+  end
+
+  def to_s(format : String, io : IO)
+    TimeFormat.new(format).format(self, io)
   end
 
   protected def self.absolute_days(year, month, day)
@@ -270,6 +352,18 @@ struct Time
     ticks = tp.tv_sec.to_i64 * ticks_per_second + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
     ticks -= tzp.tz_minuteswest.to_i64 * ticks_per_minute
+    ticks
+  end
+
+  def self.utc_ticks
+    # FIXME spec uses Time.now before main so the consts don't get initialized
+    ticks_per_second = 10_000_000_i64
+    ticks_per_minute = 600_000_000_i64
+
+    # TODO use clock_gettime in linux, but find a fast function to get the local timezone
+    C.gettimeofday(out tp, out tzp)
+    ticks = tp.tv_sec.to_i64 * ticks_per_second + tp.tv_usec.to_i64 * 10_i64
+    ticks += UnixEpoch
     ticks
   end
 end

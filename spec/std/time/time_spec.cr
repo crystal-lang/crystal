@@ -128,6 +128,30 @@ describe Time do
     end
   end
 
+  it "add months" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t2 = t + 1.month
+    t2.to_s.should eq("2014-11-30 21:18:13")
+
+    t = Time.new 2014, 10, 31, 21, 18, 13
+    t2 = t + 1.month
+    t2.to_s.should eq("2014-11-30 21:18:13")
+
+    t = Time.new 2014, 10, 31, 21, 18, 13
+    t2 = t - 1.month
+    t2.to_s.should eq("2014-09-30 21:18:13")
+  end
+
+  it "add years" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t2 = t + 1.year
+    t2.to_s.should eq("2015-10-30 21:18:13")
+
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t2 = t - 2.years
+    t2.to_s.should eq("2012-10-30 21:18:13")
+  end
+
   it "add hours" do
     t1 = Time.new TimeSpecTicks[1]
     t1 = t1 + 10.hours
@@ -172,6 +196,30 @@ describe Time do
     t1.second.should eq(13)
   end
 
+  it "gets time of day" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t.time_of_day.should eq(TimeSpan.new(21, 18, 13))
+  end
+
+  it "gets day of week" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t.day_of_week.should eq(4)
+  end
+
+  it "gets day of week" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t.day_of_year.should eq(303)
+  end
+
+  it "compares" do
+    t1 = Time.new 2014, 10, 30, 21, 18, 13
+    t2 = Time.new 2014, 10, 30, 21, 18, 14
+
+    (t1 <=> t2).should eq(-1)
+    (t1 == t2).should be_false
+    (t1 < t2).should be_true
+  end
+
   it "to_s" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.to_s.should eq("2014-10-30 21:18:13")
@@ -190,5 +238,85 @@ describe Time do
 
     t = Time.new 2014, 10, 30, 21, 18, 1
     t.to_s.should eq("2014-10-30 21:18:01")
+  end
+
+  it "formats" do
+    t = Time.new 2014, 1, 2, 3, 4, 5, 6
+    t2 = Time.new 2014, 1, 2, 15, 4, 5, 6
+
+    t.to_s("%Y").should eq("2014")
+    t.to_s("%C").should eq("20")
+    t.to_s("%y").should eq("14")
+    t.to_s("%m").should eq("01")
+    t.to_s("%_m").should eq(" 1")
+    t.to_s("%-m").should eq("1")
+    t.to_s("%B").should eq("February")
+    t.to_s("%^B").should eq("FEBRUARY")
+    t.to_s("%b").should eq("Feb")
+    t.to_s("%^b").should eq("FEB")
+    t.to_s("%h").should eq("Feb")
+    t.to_s("%^h").should eq("FEB")
+    t.to_s("%d").should eq("02")
+    t.to_s("%-d").should eq("2")
+    t.to_s("%e").should eq(" 2")
+    t.to_s("%j").should eq("002")
+    t.to_s("%H").should eq("03")
+
+    t.to_s("%k").should eq(" 3")
+    t2.to_s("%k").should eq("15")
+
+    t.to_s("%I").should eq("03")
+    t2.to_s("%I").should eq("03")
+
+    t.to_s("%l").should eq(" 3")
+    t2.to_s("%l").should eq(" 3")
+
+    # Note: we purposely match %p to am/pm and %P to AM/PM (makes more sense)
+    t.to_s("%p").should eq("am")
+    t2.to_s("%p").should eq("pm")
+
+    t.to_s("%P").should eq("AM")
+    t2.to_s("%P").should eq("PM")
+
+    t.to_s("%M").to_s.should eq("04")
+    t.to_s("%S").to_s.should eq("05")
+    t.to_s("%L").to_s.should eq("006")
+
+    # TODO %N
+    # TODO %z
+    # TODO %Z
+
+    t.to_s("%A").to_s.should eq("Thursday")
+    t.to_s("%^A").to_s.should eq("THURSDAY")
+    t.to_s("%a").to_s.should eq("Thu")
+    t.to_s("%u").to_s.should eq("4")
+    t.to_s("%w").to_s.should eq("4")
+
+    t3 = Time.new 2014, 1, 5 # A Sunday
+    t3.to_s("%u").to_s.should eq("7")
+    t3.to_s("%w").to_s.should eq("0")
+
+    # TODO %G
+    # TODO %g
+    # TODO %V
+    # TODO %U
+    # TODO %W
+    # TODO %s
+    # TODO %n
+    # TODO %t
+    # TODO %%
+
+    t.to_s("%%").should eq("%")
+    t.to_s("%c").should eq(t.to_s("%a %b %e %T %Y"))
+    t.to_s("%D").should eq(t.to_s("%m/%d/%y"))
+    t.to_s("%F").should eq(t.to_s("%Y-%m-%d"))
+    # TODO %v
+    t.to_s("%x").should eq(t.to_s("%D"))
+    t.to_s("%X").should eq(t.to_s("%T"))
+    t.to_s("%r").should eq(t.to_s("%I:%M:%S %P"))
+    t.to_s("%R").should eq(t.to_s("%H:%M"))
+    t.to_s("%T").should eq(t.to_s("%H:%M:%S"))
+
+    t.to_s("%Y-%m-hello").should eq("2014-01-hello")
   end
 end
