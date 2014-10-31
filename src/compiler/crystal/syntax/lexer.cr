@@ -191,7 +191,7 @@ module Crystal
         when '>'
           next_char :"->"
         when '0'
-          scan_zero_number start, multiplier: -1, negative: true
+          scan_zero_number start, negative: true
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number start, negative: true
         else
@@ -1153,36 +1153,12 @@ module Crystal
       raise "#{string_value} doesn't fit in an UInt64", @token, (current_pos - start)
     end
 
-    def scan_hex_number(multiplier = 1)
-      @token.type = :NUMBER
-      num = 0
-      next_char
-
-      while true
-        char = next_char
-        if char == '_'
-        else
-          hex_value = char_to_hex(char) { nil }
-          if hex_value
-            num = 16 * num + hex_value
-          else
-            break
-          end
-        end
-      end
-
-      num *= multiplier
-      @token.value = num.to_s
-
-      consume_optional_int_suffix
-    end
-
-    def scan_zero_number(start, multiplier = 1, negative = false)
+    def scan_zero_number(start, negative = false)
       case peek_next_char
       when 'x'
-        scan_hex_number(multiplier)
+        scan_hex_number(start, negative)
       when 'b'
-        scan_bin_number(multiplier)
+        scan_bin_number(start, negative)
       when '.'
         scan_number(start)
       when 'i'
@@ -1221,35 +1197,14 @@ module Crystal
           scan_number(start)
         end
       else
-        scan_octal_number(multiplier)
+        scan_octal_number(start, negative)
       end
     end
 
-    def scan_octal_number(multiplier = 1)
-      @token.type = :NUMBER
-      num = 0
-
-      while true
-        char = next_char
-        if '0' <= char <= '7'
-          num = num * 8 + (char - '0')
-        elsif char == '_'
-        else
-          break
-        end
-      end
-
-      num *= multiplier
-      @token.value = num.to_s
-
-      consume_optional_int_suffix
-    end
-
-    def scan_bin_number(multiplier = 1)
-      @token.type = :NUMBER
-      num = 0
+    def scan_bin_number(start, negative)
       next_char
 
+      num = 0_u64
       while true
         case next_char
         when '0'
@@ -1263,21 +1218,69 @@ module Crystal
         end
       end
 
-      num *= multiplier
-      @token.value = num.to_s
-
-      consume_optional_int_suffix
+      finish_scan_prefixed_number num, negative, start
     end
 
-    def consume_optional_int_suffix
+    def scan_octal_number(start, negative)
+      num = 0_u64
+
+      while true
+        char = next_char
+        if '0' <= char <= '7'
+          num = num * 8 + (char - '0')
+        elsif char == '_'
+        else
+          break
+        end
+      end
+
+      finish_scan_prefixed_number num, negative, start
+    end
+
+    def scan_hex_number(start, negative = false)
+      next_char
+
+      num = 0_u64
+      while true
+        char = next_char
+        if char == '_'
+        else
+          hex_value = char_to_hex(char) { nil }
+          if hex_value
+            num = num * 16 + hex_value
+          else
+            break
+          end
+        end
+      end
+
+      finish_scan_prefixed_number num, negative, start
+    end
+
+    def finish_scan_prefixed_number(num, negative, start)
+      if negative
+        string_value = (-1 * num.to_i64).to_s
+      else
+        string_value = num.to_s
+      end
+
+      name_length = string_value.length
+      name_length -= 1 if negative
+
       case current_char
       when 'i'
         consume_int_suffix
+        check_integer_literal_fits_in_size string_value, name_length, negative, start
       when 'u'
         consume_uint_suffix
+        check_integer_literal_fits_in_size string_value, name_length, negative, start
       else
         @token.number_kind = :i32
+        deduce_integer_kind string_value, name_length, negative, start
       end
+
+      @token.type = :NUMBER
+      @token.value = string_value
     end
 
     def consume_int_suffix

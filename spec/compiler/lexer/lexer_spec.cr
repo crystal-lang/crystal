@@ -185,6 +185,8 @@ describe "Lexer" do
   it_lexes_i64 ["2147483648", "-2147483649", "-9223372036854775808"]
   it_lexes_u64 ["9223372036854775808", "-9223372036854775809"]
   it_lexes_u64 ["18446744073709551615", "18446744073709551615", "14146167139683460000"]
+  it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
+  it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
 
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\b'", 8.chr
@@ -234,6 +236,10 @@ describe "Lexer" do
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
 
   assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
+
+  assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"
+  assert_syntax_error "0200_i8", "128 doesn't fit in an Int8"
+  assert_syntax_error "0b10000000_i8", "128 doesn't fit in an Int8"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
@@ -360,6 +366,15 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:CHAR)
     (token.value as Char).ord.should eq(0x10FFFF)
+  end
+
+  it "lexes float then zero (bug)" do
+    lexer = Lexer.new "2.5 0"
+    lexer.next_token.number_kind.should eq(:f64)
+    lexer.next_token.type.should eq(:SPACE)
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.number_kind.should eq(:i32)
   end
 
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
