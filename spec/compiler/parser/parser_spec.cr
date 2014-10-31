@@ -404,6 +404,7 @@ describe "Parser" do
   it_parses "class Foo < Bar; end", ClassDef.new("Foo".path, superclass: "Bar".path)
   it_parses "class Foo(T); end", ClassDef.new("Foo".path, type_vars: ["T"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
+  it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
 
   it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 

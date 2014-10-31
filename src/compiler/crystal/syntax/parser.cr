@@ -811,6 +811,8 @@ module Crystal
                 parse_def is_abstract: true
               when :class
                 parse_class_def is_abstract: true
+              when :struct
+                parse_class_def is_abstract: true, is_struct: true
               else
                 unexpected_token
               end
