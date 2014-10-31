@@ -1,4 +1,4 @@
-require "./*"
+require "./**"
 
 lib C
   struct TimeSpec
