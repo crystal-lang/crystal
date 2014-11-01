@@ -116,8 +116,7 @@ struct Time
       day = maxday
     end
 
-    temp = Time.new(year, month, day)
-    temp.encoded |= encoded & KindMask
+    temp = mask Time.new(year, month, day)
     temp + time_of_day
   end
 
@@ -127,9 +126,7 @@ struct Time
       raise ArgumentError.new "invalid time"
     end
 
-    ret = Time.new res
-    ret.encoded |= encoded & KindMask
-    ret
+    mask Time.new(res)
   end
 
   def -(other : Int)
@@ -153,21 +150,19 @@ struct Time
   end
 
   def date
-    ret = Time.new year, month, day
-    ret.encoded |= encoded & KindMask
-    ret
+    mask Time.new(year, month, day)
   end
 
   def year
-    from_ticks :year
+    year_month_day_day_year[0]
   end
 
   def month
-    from_ticks :month
+    year_month_day_day_year[1]
   end
 
   def day
-    from_ticks :day
+    year_month_day_day_year[2]
   end
 
   def hour
@@ -195,7 +190,7 @@ struct Time
   end
 
   def day_of_year
-    from_ticks :day_year
+    year_month_day_day_year[3]
   end
 
   def kind
@@ -259,6 +254,56 @@ struct Time
     TimeFormat.new(pattern).parse(time)
   end
 
+  macro def_at(name)
+    def at_{{name.id}}
+      year, month, day, day_year = year_month_day_day_year
+      mask({{yield}})
+    end
+  end
+
+  def_at(beginning_of_year)    { Time.new(year, 1, 1) }
+  def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
+  def_at(beginning_of_month)   { Time.new(year, month, 1) }
+  def_at(beginning_of_day)     { Time.new(year, month, day) }
+  def_at(beginning_of_hour)    { Time.new(year, month, day, hour) }
+  def_at(beginning_of_minute)  { Time.new(year, month, day, hour, minute) }
+
+  def at_beginning_of_week
+    dow = day_of_week
+    if dow == 0
+      (self - 6.days).at_beginning_of_day
+    else
+      (self - (dow - 1).days).at_beginning_of_day
+    end
+  end
+
+  def_at(end_of_year) { Time.new(year, 12, 31, 23, 59, 59, 999) }
+
+  def at_end_of_quarter
+    year, month = year_month_day_day_year
+    if month <= 6
+      mask Time.new(year, 6, 30, 23, 59, 59, 999)
+    else
+      mask Time.new(year, 12, 31, 23, 59, 59, 999)
+    end
+  end
+
+  def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, 999) }
+
+  def at_end_of_week
+    dow = day_of_week
+    if dow == 0
+      at_end_of_day
+    else
+      (self + (7 - day_of_week).days).at_end_of_day
+    end
+  end
+
+  def_at(end_of_day)    { Time.new(year, month, day, 23, 59, 59, 999) }
+  def_at(end_of_hour)   { Time.new(year, month, day, hour, 59, 59, 999) }
+  def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, 999) }
+  def_at(midday)        { Time.new(year, month, day, 12, 0, 0, 0) }
+
   protected def self.absolute_days(year, month, day)
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
 
@@ -272,7 +317,7 @@ struct Time
     (day-1) + temp + (365* (year-1)) + ((year-1)/4) - ((year-1)/100) + ((year-1)/400)
   end
 
-  private def from_ticks(what)
+  private def year_month_day_day_year
     m = 1
 
     days = DAYS_MONTH
@@ -296,14 +341,10 @@ struct Time
       numyears = 3
     end
 
-    if what == :year
-      return num400*400 + num100*100 + num4*4 + numyears + 1
-    end
+    year = num400*400 + num100*100 + num4*4 + numyears + 1
 
     totaldays -= numyears * 365
-    if what == :day_year
-      return totaldays + 1
-    end
+    day_year = totaldays + 1
 
     if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leapyear
       days = DAYS_MONTH_LEAP
@@ -314,11 +355,15 @@ struct Time
       m += 1
     end
 
-    if what == :month
-      return m
-    end
+    month = m
+    day = totaldays + 1
 
-    totaldays + 1
+    {year, month, day, day_year}
+  end
+
+  private def mask(time)
+    time.encoded |= encoded & KindMask
+    time
   end
 
   def self.local_ticks

@@ -393,4 +393,54 @@ describe Time do
     Time.parse("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
     Time.parse("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
   end
+
+  it "at" do
+    t1 = Time.new 2014, 11, 25, 10, 11, 12, 13
+    t2 = Time.new 2014, 6, 25, 10, 11, 12, 13
+
+    t1.at_beginning_of_year.to_s.should eq("2014-01-01 00:00:00")
+
+    1.upto(3) do |i|
+      Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-01-01 00:00:00")
+    end
+    4.upto(6) do |i|
+      Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-04-01 00:00:00")
+    end
+    7.upto(9) do |i|
+      Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-07-01 00:00:00")
+    end
+    10.upto(12) do |i|
+      Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-10-01 00:00:00")
+    end
+
+    t1.at_beginning_of_quarter.to_s.should eq("2014-10-01 00:00:00")
+    t1.at_beginning_of_month.to_s.should eq("2014-11-01 00:00:00")
+
+    3.upto(9) do |i|
+      Time.new(2014, 11, i).at_beginning_of_week.to_s.should eq("2014-11-03 00:00:00")
+    end
+
+    t1.at_beginning_of_day.to_s.should eq("2014-11-25 00:00:00")
+    t1.at_beginning_of_hour.to_s.should eq("2014-11-25 10:00:00")
+    t1.at_beginning_of_minute.to_s.should eq("2014-11-25 10:11:00")
+
+    t1.at_end_of_year.to_s.should eq("2014-12-31 23:59:59")
+
+    t1.at_end_of_quarter.to_s.should eq("2014-12-31 23:59:59")
+    t2.at_end_of_quarter.to_s.should eq("2014-06-30 23:59:59")
+
+    t1.at_end_of_month.to_s.should eq("2014-11-30 23:59:59")
+    t1.at_end_of_week.to_s.should eq("2014-11-30 23:59:59")
+
+    Time.new(2014, 11, 2).at_end_of_week.to_s.should eq("2014-11-02 23:59:59")
+    3.upto(9) do |i|
+      Time.new(2014, 11, i).at_end_of_week.to_s.should eq("2014-11-09 23:59:59")
+    end
+
+    t1.at_end_of_day.to_s.should eq("2014-11-25 23:59:59")
+    t1.at_end_of_hour.to_s.should eq("2014-11-25 10:59:59")
+    t1.at_end_of_minute.to_s.should eq("2014-11-25 10:11:59")
+
+    t1.at_midday.to_s.should eq("2014-11-25 12:00:00")
+  end
 end
