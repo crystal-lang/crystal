@@ -30,6 +30,12 @@ class JsonWithBool
   })
 end
 
+class JsonWithTime
+  json_mapping({
+    value: {type: Time, converter: TimeFormat.new("%F %T")},
+  })
+end
+
 describe "Json mapping" do
   it "parses person" do
     person = JsonPerson.from_json(%({"name": "John", "age": 30}))
@@ -83,5 +89,12 @@ describe "Json mapping" do
   it "doesn't raises on false value when not-nil" do
     json = JsonWithBool.from_json(%({"value": false}))
     json.value.should be_false
+  end
+
+  it "parses json with TimeFormat converter" do
+    json = JsonWithTime.from_json(%({"value": "2014-10-31 23:37:16"}))
+    json.value.is_a?(Time).should be_true
+    json.value.to_s.should eq("2014-10-31 23:37:16")
+    json.to_json.should eq(%({"value":"2014-10-31 23:37:16"}))
   end
 end

@@ -11,11 +11,16 @@ class Object
         case _key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
-            {% if value[:nilable] == true %}
-              _{{key.id}} = _pull.read_null_or { {{value[:type]}}.new(_pull) }
+            _{{key.id}} =
+            {% if value[:nilable] == true %} _pull.read_null_or { {% end %}
+
+            {% if value[:converter] %}
+              {{value[:converter]}}.from_json(_pull)
             {% else %}
-              _{{key.id}} = {{value[:type]}}.new(_pull)
+              {{value[:type]}}.new(_pull)
             {% end %}
+
+            {% if value[:nilable] == true %} } {% end %}
         {% end %}
         else
           {% if strict %}
@@ -48,7 +53,11 @@ class Object
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
-              @{{key.id}}.to_json(io)
+              {% if value[:converter] %}
+                {{ value[:converter] }}.to_json(@{{key.id}}, io)
+              {% else %}
+                @{{key.id}}.to_json(io)
+              {% end %}
             end
 
           {% unless value[:emit_null] %}

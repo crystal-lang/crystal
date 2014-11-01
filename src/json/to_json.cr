@@ -192,3 +192,9 @@ class Hash
     end
   end
 end
+
+struct TimeFormat
+  def to_json(value : Time, io : IO)
+    format(value).to_json(io)
+  end
+end

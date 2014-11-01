@@ -58,7 +58,7 @@ struct Time
     initialize Time.local_ticks
   end
 
-  def initialize(ticks, kind = Kind::Local)
+  def initialize(ticks : Int, kind = Kind::Local)
     if ticks < 0 || ticks > MAX_VALUE_TICKS
       raise ArgumentError.new "invalid ticks value"
     end

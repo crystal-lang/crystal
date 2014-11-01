@@ -64,3 +64,10 @@ def Hash.new(pull : Json::PullParser)
   end
   hash
 end
+
+struct TimeFormat
+  def from_json(pull : Json::PullParser)
+    string = pull.read_string
+    parse(string)
+  end
+end
