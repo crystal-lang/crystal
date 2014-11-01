@@ -874,19 +874,23 @@ module Crystal
 
     def visit(node : Path)
       if const = node.target_const
-        global_name = const.llvm_name
+        if initializer = const.initializer
+          @last = initializer
+        else
+          global_name = const.llvm_name
 
-        global = @main_mod.globals[global_name]?
-        unless global
-          node.raise "Bug: global not found for #{const}"
+          global = @main_mod.globals[global_name]?
+          unless global
+            node.raise "Bug: global not found for #{const}"
+          end
+
+          if @llvm_mod != @main_mod
+            global = @llvm_mod.globals[global_name]?
+            global ||= @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
+          end
+
+          @last = to_lhs global, const.value.type
         end
-
-        if @llvm_mod != @main_mod
-          global = @llvm_mod.globals[global_name]?
-          global ||= @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
-        end
-
-        @last = to_lhs global, const.value.type
       elsif replacement = node.syntax_replacement
         accept replacement
       else
@@ -922,6 +926,7 @@ module Crystal
         if @last.constant?
           global.initializer = @last
           global.global_constant = true
+          const.initializer = @last if const.value.type.is_a?(PrimitiveType)
         else
           if const.value.type.passed_by_value?
             global.initializer = llvm_type(const.value.type).undef

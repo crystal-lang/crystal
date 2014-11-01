@@ -43,4 +43,8 @@ module Crystal
       typedef.llvm_name(io)
     end
   end
+
+  class Const
+    property initializer
+  end
 end
