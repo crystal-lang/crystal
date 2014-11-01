@@ -367,27 +367,25 @@ struct Time
   end
 
   def self.local_ticks
-    # FIXME spec uses Time.now before main so the consts don't get initialized
-    ticks_per_second = 10_000_000_i64
-    ticks_per_minute = 600_000_000_i64
+    ticks_per_minute = 600_000_000_i64 # TODO: replace with TimeSpan::TicksPerMinute after 0.5.1
 
-    # TODO use clock_gettime in linux, but find a fast function to get the local timezone
-    C.gettimeofday(out tp, out tzp)
-    ticks = tp.tv_sec.to_i64 * ticks_per_second + tp.tv_usec.to_i64 * 10_i64
-    ticks += UnixEpoch
-    ticks -= tzp.tz_minuteswest.to_i64 * ticks_per_minute
-    ticks
+    compute_ticks do |ticks, tp, tzp|
+      ticks - (tzp.tz_minuteswest.to_i64 * ticks_per_minute)
+    end
   end
 
   def self.utc_ticks
-    # FIXME spec uses Time.now before main so the consts don't get initialized
-    ticks_per_second = 10_000_000_i64
-    ticks_per_minute = 600_000_000_i64
+    compute_ticks do |ticks, tp, tzp|
+      ticks
+    end
+  end
 
-    # TODO use clock_gettime in linux, but find a fast function to get the local timezone
+  private def self.compute_ticks
+    ticks_per_second = 10_000_000_i64   # TODO: replace with TimeSpan::TicksPerSecond after 0.5.1
+
     C.gettimeofday(out tp, out tzp)
     ticks = tp.tv_sec.to_i64 * ticks_per_second + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
-    ticks
+    yield ticks, tp, tzp
   end
 end
