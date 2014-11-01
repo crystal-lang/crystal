@@ -4,17 +4,11 @@ struct TimeFormat
     DAY_NAMES = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
 
     def visit(pattern)
-      i = 0
-      bytesize = pattern.bytesize
-      str = pattern.cstr
-
-      while i < bytesize
-        byte = str[i]
-        case byte.chr
+      reader = CharReader.new(pattern)
+      while reader.has_next?
+        case char = reader.current_char
         when '%'
-          i += 1
-          byte = str[i]
-          case byte.chr
+          case char = reader.next_char
           when 'a'
             short_day_name
           when 'A'
@@ -74,20 +68,16 @@ struct TimeFormat
           when 'Y'
             year
           when '_'
-            i += 1
-            byte = str[i]
-            case byte.chr
+            case char = reader.next_char
             when 'm'
               month_blank_padded
             else
               char '%'
               char '_'
-              byte byte
+              char char
             end
           when '-'
-            i += 1
-            byte = str[i]
-            case byte.chr
+            case char = reader.next_char
             when 'd'
               day_of_month
             when 'm'
@@ -95,12 +85,10 @@ struct TimeFormat
             else
               char '%'
               char '-'
-              byte byte
+              char char
             end
           when '^'
-            i += 1
-            byte = str[i]
-            case byte.chr
+            case char = reader.next_char
             when 'a'
               short_day_name_upcase
             when 'A'
@@ -112,24 +100,20 @@ struct TimeFormat
             else
               char '%'
               char '^'
-              byte byte
+              char char
             end
           when '%'
             char '%'
           else
             char '%'
-            byte byte
+            char char
           end
         else
-          byte byte
+          char char
         end
 
-        i += 1
+        reader.next_char
       end
-    end
-
-    def char(char)
-      byte char.ord.to_u8
     end
 
     def date_and_time

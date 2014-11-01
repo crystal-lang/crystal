@@ -391,5 +391,6 @@ describe Time do
     Time.parse("11:12:13", "%T").to_s.should eq("0001-01-01 11:12:13")
 
     Time.parse("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
+    Time.parse("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
   end
 end

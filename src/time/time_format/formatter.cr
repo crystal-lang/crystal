@@ -128,8 +128,8 @@ struct TimeFormat
       io << time.day_of_week
     end
 
-    def byte(byte)
-      io.write_byte byte
+    def char(char)
+      io << char
     end
 
     def get_month_name

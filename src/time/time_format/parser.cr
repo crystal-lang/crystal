@@ -182,10 +182,6 @@ struct TimeFormat
       end
     end
 
-    def byte(byte)
-      char byte.chr
-    end
-
     def consume_number
       n = 0
       char = current_char
