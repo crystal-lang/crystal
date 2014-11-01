@@ -244,7 +244,7 @@ describe "Array" do
     a.equals?(d, &f).should be_false
   end
   
-    describe "fill" do
+  describe "fill" do
     it "replaces all values" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'x']
