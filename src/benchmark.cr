@@ -61,7 +61,7 @@ module Benchmark
                      t1.stime  - t0.stime,
                      t1.cutime - t0.cutime,
                      t1.cstime - t0.cstime,
-                     r1.to_f - r0.to_f,
+                     (r1.ticks - r0.ticks).to_f / TimeSpan::TicksPerSecond,
                      label)
   end
 
