@@ -264,6 +264,43 @@ class Array(T)
     end
     true
   end
+  
+  def fill(value : T)
+    each_index { |i| @buffer[i] = value }
+
+    self
+  end
+
+  def fill(value : T, from : Int, size = length - 1 : Int)
+    return self if size < 0
+
+    from += length if from < 0
+    size += length if size < 0
+
+    raise IndexOutOfBounds.new if from >= length || size + from > length
+
+    size += from - 1
+
+    from.upto(size) { |i| @buffer[i] = value }
+
+    self
+  end
+
+  def fill(value : T, range : Range(Int, Int))
+    from = range.begin
+    to = range.end
+
+    from += length if from < 0
+    to += length if to < 0
+
+    to -= 1 if range.excludes_end?
+
+    each_index do |i|
+      @buffer[i] = value if i >= from && i <= to
+    end
+
+    self
+  end
 
   def first
     first { raise IndexOutOfBounds.new }
