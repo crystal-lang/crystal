@@ -1,11 +1,16 @@
 struct TimeFormat
+  class Error < ::Exception
+  end
+
   getter pattern
 
   def initialize(@pattern : String)
   end
 
   def parse(string)
-    # TimeParser.new(pattern, string).parse
+    parser = Parser.new(string)
+    parser.visit(pattern)
+    parser.time
   end
 
   def format(time : Time)
@@ -17,5 +22,6 @@ struct TimeFormat
   def format(time : Time, io : IO)
     formatter = Formatter.new(time, io)
     formatter.visit(pattern)
+    io
   end
 end

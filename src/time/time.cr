@@ -240,36 +240,11 @@ struct Time
   end
 
   def inspect(io : IO)
-    io << year
-    io << '-'
-
-    m = month
-    io << '0' if m < 10
-    io << m
-    io << '-'
-
-    d = day
-    io << '0' if d < 10
-    io << d
-    io << ' '
-
-    h = hour
-    io << '0' if h < 10
-    io << h
-    io << ':'
-
-    m = minute
-    io << '0' if m < 10
-    io << m
-    io << ':'
-
-    s = second
-    io << '0' if s < 10
-    io << s
-
+    TimeFormat.new("%F %T").format(self, io)
     if utc?
       io << " UTC"
     end
+    io
   end
 
   def to_s(format : String)
@@ -278,6 +253,10 @@ struct Time
 
   def to_s(format : String, io : IO)
     TimeFormat.new(format).format(self, io)
+  end
+
+  def self.parse(time, pattern)
+    TimeFormat.new(pattern).parse(time)
   end
 
   protected def self.absolute_days(year, month, day)

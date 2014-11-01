@@ -50,7 +50,7 @@ struct TimeFormat
           when 'm'
             month_zero_padded
           when 'M'
-            minute_zero_padded
+            minute
           when 'p'
             am_pm
           when 'P'
@@ -60,7 +60,7 @@ struct TimeFormat
           when 'R'
             twenty_four_hour_time
           when 'S'
-            second_zero_padded
+            second
           when 'T'
             twenty_four_hour_time_with_seconds
           when 'u'
@@ -89,7 +89,7 @@ struct TimeFormat
             byte = str[i]
             case byte.chr
             when 'd'
-              day
+              day_of_month
             when 'm'
               month
             else
@@ -101,6 +101,8 @@ struct TimeFormat
             i += 1
             byte = str[i]
             case byte.chr
+            when 'a'
+              short_day_name_upcase
             when 'A'
               day_name_upcase
             when 'b', 'h'
@@ -161,9 +163,9 @@ struct TimeFormat
     def twelve_hour_time
       hour_12_zero_padded
       char ':'
-      minute_zero_padded
+      minute
       char ':'
-      second_zero_padded
+      second
       char ' '
       am_pm_upcase
     end
@@ -171,15 +173,15 @@ struct TimeFormat
     def twenty_four_hour_time
       hour_24_zero_padded
       char ':'
-      minute_zero_padded
+      minute
     end
 
     def twenty_four_hour_time_with_seconds
       hour_24_zero_padded
       char ':'
-      minute_zero_padded
+      minute
       char ':'
-      second_zero_padded
+      second
     end
   end
 end

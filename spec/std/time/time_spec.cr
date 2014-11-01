@@ -245,6 +245,8 @@ describe Time do
     t2 = Time.new 2014, 1, 2, 15, 4, 5, 6
 
     t.to_s("%Y").should eq("2014")
+    Time.new(1, 1, 2, 3, 4, 5, 6).to_s("%Y").should eq("0001")
+
     t.to_s("%C").should eq("20")
     t.to_s("%y").should eq("14")
     t.to_s("%m").should eq("01")
@@ -289,6 +291,7 @@ describe Time do
     t.to_s("%A").to_s.should eq("Thursday")
     t.to_s("%^A").to_s.should eq("THURSDAY")
     t.to_s("%a").to_s.should eq("Thu")
+    t.to_s("%^a").to_s.should eq("THU")
     t.to_s("%u").to_s.should eq("4")
     t.to_s("%w").to_s.should eq("4")
 
@@ -318,5 +321,75 @@ describe Time do
     t.to_s("%T").should eq(t.to_s("%H:%M:%S"))
 
     t.to_s("%Y-%m-hello").should eq("2014-01-hello")
+  end
+
+  it "parses with format" do
+    t = Time.parse("", "")
+    t.year.should eq(1)
+    t.month.should eq(1)
+    t.day.should eq(1)
+    t.hour.should eq(0)
+    t.minute.should eq(0)
+    t.second.should eq(0)
+    t.millisecond.should eq(0)
+
+    Time.parse("2014", "%Y").year.should eq(2014)
+    Time.parse("19", "%C").year.should eq(1900)
+    Time.parse("14", "%y").year.should eq(2014)
+    Time.parse("09", "%m").month.should eq(9)
+    Time.parse(" 9", "%_m").month.should eq(9)
+    Time.parse("9", "%-m").month.should eq(9)
+    Time.parse("February", "%B").month.should eq(2)
+    Time.parse("March", "%B").month.should eq(3)
+    Time.parse("MaRcH", "%B").month.should eq(3)
+    Time.parse("MaR", "%B").month.should eq(3)
+    Time.parse("MARCH", "%^B").month.should eq(3)
+    Time.parse("Mar", "%b").month.should eq(3)
+    Time.parse("Mar", "%^b").month.should eq(3)
+    Time.parse("MAR", "%^b").month.should eq(3)
+    Time.parse("MAR", "%h").month.should eq(3)
+    Time.parse("MAR", "%^h").month.should eq(3)
+    Time.parse("2", "%d").day.should eq(2)
+    Time.parse("02", "%d").day.should eq(2)
+    Time.parse("02", "%-d").day.should eq(2)
+    Time.parse(" 2", "%e").day.should eq(2)
+    Time.parse("0123", "%j").year.should eq(123)
+    Time.parse("9", "%H").hour.should eq(9)
+    Time.parse(" 9", "%k").hour.should eq(9)
+    Time.parse("09", "%I").hour.should eq(9)
+    Time.parse(" 9", "%l").hour.should eq(9)
+    Time.parse("9pm", "%l%p").hour.should eq(21)
+    Time.parse("9PM", "%l%P").hour.should eq(21)
+    Time.parse("09", "%M").minute.should eq(9)
+    Time.parse("09", "%S").second.should eq(9)
+    Time.parse("123", "%L").millisecond.should eq(123)
+
+    # TODO %N
+    # TODO %z
+    # TODO %Z
+
+    # TODO %G
+    # TODO %g
+    # TODO %V
+    # TODO %U
+    # TODO %W
+    # TODO %s
+    # TODO %n
+    # TODO %t
+    # TODO %%
+
+    Time.parse("Fri Oct 31 23:00:24 2014", "%c").to_s.should eq("2014-10-31 23:00:24")
+    Time.parse("10/31/14", "%D").to_s.should eq("2014-10-31 00:00:00")
+    Time.parse("10/31/69", "%D").to_s.should eq("1969-10-31 00:00:00")
+    Time.parse("2014-10-31", "%F").to_s.should eq("2014-10-31 00:00:00")
+    Time.parse("2014-10-31", "%F").to_s.should eq("2014-10-31 00:00:00")
+    # TODO %v
+    Time.parse("10/31/14", "%x").to_s.should eq("2014-10-31 00:00:00")
+    Time.parse("10:11:12", "%X").to_s.should eq("0001-01-01 10:11:12")
+    Time.parse("11:14:01 PM", "%r").to_s.should eq("0001-01-01 23:14:01")
+    Time.parse("11:14", "%R").to_s.should eq("0001-01-01 11:14:00")
+    Time.parse("11:12:13", "%T").to_s.should eq("0001-01-01 11:12:13")
+
+    Time.parse("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
   end
 end
