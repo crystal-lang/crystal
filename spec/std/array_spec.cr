@@ -243,6 +243,44 @@ describe "Array" do
     a.equals?(c, &f).should be_false
     a.equals?(d, &f).should be_false
   end
+  
+    describe "fill" do
+    it "replaces all values" do
+      a = ['a', 'b', 'c']
+      expected = ['x', 'x', 'x']
+      a.fill('x').should eq(expected)
+    end
+
+    it "replaces only values between index and size" do
+      a = ['a', 'b', 'c']
+      expected = ['x', 'x', 'c']
+      a.fill('x', 0, 2).should eq(expected)
+    end
+
+    it "replaces only values between index and size (2)" do
+      a = ['a', 'b', 'c']
+      expected = ['a', 'x', 'x']
+      a.fill('x', 1, 2).should eq(expected)
+    end
+
+    it "replaces all values from index onwards" do
+      a = ['a', 'b', 'c']
+      expected = ['a', 'x', 'x']
+      a.fill('x', -2).should eq(expected)
+    end
+
+    it "replaces only values between negative index and size" do
+      a = ['a', 'b', 'c']
+      expected = ['a', 'b', 'x']
+      a.fill('x', -1, 1).should eq(expected)
+    end
+
+    it "replaces only values in range" do
+      a = ['a', 'b', 'c']
+      expected = ['x', 'x', 'c']
+      a.fill('x', -3..1).should eq(expected)
+    end
+  end
 
   describe "first" do
     it "gets first when non empty" do
