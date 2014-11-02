@@ -674,6 +674,17 @@ describe "Array" do
       expected = {:foo => :bar, 1 => 2}
       a.to_h.should eq(expected)
     end
+    
+    it "works with different types" do
+      a = [['a', :b], ["c", [:d]], [1, 2], [{x: :y}, {3 => 4}]]
+      expected = {'a' => :b, "c" => [:d], 1 => 2, {:x => :y} => {3 => 4}}
+      a.to_h.should eq(expected)
+    end
+    
+    it "works with an array of tuple pairs" do
+      h = {a: 0, b: 1, c: 2}
+      h.to_a.to_h.should eq(h)
+    end
   end
 
   describe "to_s" do
