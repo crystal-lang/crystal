@@ -667,6 +667,14 @@ describe "Array" do
       end
     end
   end
+  
+  describe "to_h" do
+    it "returns the result of interpreting self as an array of [k, v] arrays" do
+      a = [[:foo, :bar], [1, 2]]
+      expected = {:foo => :bar, 1 => 2}
+      a.to_h.should eq(expected)
+    end
+  end
 
   describe "to_s" do
     it "does to_s" do
