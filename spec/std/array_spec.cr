@@ -707,6 +707,12 @@ describe "Array" do
       expected = [['a', 'd', 'g'], [:b, :e, :h], ["c", "f", "i"], [1, 2, 3]]
       a.transpose.should eq(expected)
     end
+    
+    it "returns an empty array when self is empty" do
+      a = [[1, 2], [3, 4]]
+      a.clear
+      a.transpose.should eq(a)
+    end
   end
 
   describe "uniq" do
