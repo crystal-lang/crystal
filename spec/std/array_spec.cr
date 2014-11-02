@@ -689,6 +689,25 @@ describe "Array" do
       ary.to_s.should eq("[[...]]")
     end
   end
+  
+  describe "transpose" do
+    it "transposes rows and columns correctly" do
+      a = [[1, 2], [3, 4]]
+      expected = [[1, 3], [2, 4]]
+      a.transpose.should eq(expected)
+
+      a = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
+      expected = [[1, 6, 11], [2, 7, 12], [3, 8, 13], [4, 9, 14], [5, 10, 15]]
+      a.transpose.should eq(expected)
+      a.transpose.transpose.should eq(a)
+    end
+
+    it "works with different types" do
+      a = [['a', :b, "c", 1], ['d', :e, "f", 2], ['g', :h, "i", 3]]
+      expected = [['a', 'd', 'g'], [:b, :e, :h], ["c", "f", "i"], [1, 2, 3]]
+      a.transpose.should eq(expected)
+    end
+  end
 
   describe "uniq" do
     it "uniqs without block" do
