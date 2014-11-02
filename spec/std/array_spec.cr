@@ -280,6 +280,15 @@ describe "Array" do
       expected = ['x', 'x', 'c']
       a.fill('x', -3..1).should eq(expected)
     end
+    
+    it "works with a block" do
+      a = [3, 6, 9]
+      a.clone.fill { 0 }.should eq([0, 0, 0])
+      a.clone.fill { |i| i }.should eq([0, 1, 2])
+      a.clone.fill(1) { |i| i ** i}.should eq([3, 1, 4])
+      a.clone.fill(1, 1) { |i| i ** i }.should eq([3, 1, 9])
+      a.clone.fill(1..1) { |i| i ** i }.should eq([3, 1, 9])
+    end
   end
 
   describe "first" do
