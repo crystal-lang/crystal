@@ -39,6 +39,16 @@ describe "Float" do
     end
   end
 
+  describe "hash" do
+    it "does for Float32" do
+      1.2_f32.hash.should_not eq(0)
+    end
+
+    it "does for Float64" do
+      1.2.hash.should_not eq(0)
+    end
+  end
+
   it "casts" do
     Float32.cast(1_f64).is_a?(Float32).should be_true
     Float32.cast(1_f64).should eq(1)
