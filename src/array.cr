@@ -34,7 +34,7 @@ class Array(T)
   end
 
   def &(other : Array(U))
-    hash = other.each_with_object(Hash(T, Bool).new) { |o, h| h[o] = true }
+    hash = other.to_lookup_hash
     ary = Array(T).new(Math.min(length, other.length))
     i = 0
     each do |obj|
@@ -77,7 +77,7 @@ class Array(T)
 
   def -(other : Array(U))
     ary = Array(T).new(length - other.length)
-    hash = other.each_with_object(Hash(T, Bool).new) { |o, h| h[o] = true }
+    hash = other.to_lookup_hash
     each do |obj|
       ary << obj unless hash.has_key?(obj)
     end
@@ -264,7 +264,7 @@ class Array(T)
     end
     true
   end
-  
+
   def fill
     each_index { |i| @buffer[i] = yield i }
 
@@ -628,16 +628,23 @@ class Array(T)
   end
 
   def uniq!(&block : T -> U)
-    uniq_elements = Set(U).new
-    delete_if do |elem|
-      key = yield elem
-      if uniq_elements.includes? key
-        true
-      else
-        uniq_elements << key
-        false
-      end
+    if length <= 1
+      return self
     end
+
+    hash = to_lookup_hash { |elem| yield elem }
+    if length == hash.length
+      return self
+    end
+
+    @length = hash.length
+
+    ptr = @buffer
+    hash.each do |k, v|
+      ptr.value = v
+      ptr += 1
+    end
+
     self
   end
 
@@ -721,5 +728,18 @@ class Array(T)
       raise IndexOutOfBounds.new
     end
     index
+  end
+
+  protected def to_lookup_hash
+    to_lookup_hash { |elem| elem }
+  end
+
+  protected def to_lookup_hash(&block : T -> U)
+    each_with_object(Hash(U, T).new) do |o, h|
+      key = yield o
+      unless h.has_key?(key)
+        h[key] = o
+      end
+    end
   end
 end
