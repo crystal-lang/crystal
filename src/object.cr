@@ -123,11 +123,15 @@ class Object
 
   macro def_hash(*fields)
     def hash
-      hash = 0
-      {% for field in fields %}
-        hash = 31 * hash + {{field}}.hash
+      {% if fields.length == 1 %}
+        {{fields[0]}}.hash
+      {% else %}
+        hash = 0
+        {% for field in fields %}
+          hash = 31 * hash + {{field}}.hash
+        {% end %}
+        hash
       {% end %}
-      hash
     end
   end
 
