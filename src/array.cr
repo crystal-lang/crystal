@@ -637,6 +637,8 @@ end
   
   def transpose
     result = Array(T).new
+    
+    return result if length == 0
 
     first.length.times do |i|
       result << map { |pair| pair[i] }
