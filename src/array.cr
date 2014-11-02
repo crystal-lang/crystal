@@ -276,7 +276,7 @@ class Array(T)
 
     raise IndexOutOfBounds.new if from >= length
 
-    from.upto(length - 1) { |i| p i; @buffer[i] = yield i }
+    from.upto(length - 1) { |i| @buffer[i] = yield i }
 
     self
   end
