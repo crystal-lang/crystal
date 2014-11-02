@@ -611,16 +611,14 @@ class Array(T)
   end
   
   def to_h
-    result = {first.first => last.last}
+    result = {first.first => last[last.length - 1]}
 
     each_with_index do |pair, index|
-      result[pair.first] = pair.last
+      result[pair.first] = pair[last.length - 1]
     end
 
     result
   end
-
-end
 
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
