@@ -65,4 +65,10 @@ describe "Set" do
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
   end
+
+  it "compares hashes of sets" do
+    h1 = { Set{1, 2, 3} => 1 }
+    h2 = { Set{1, 2, 3} => 1 }
+    h1.should eq(h2)
+  end
 end

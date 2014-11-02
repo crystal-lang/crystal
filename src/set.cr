@@ -76,6 +76,10 @@ class Set(T)
     to_s(io)
   end
 
+  def hash
+    @hash.hash
+  end
+
   def to_s(io)
     io << "Set{"
     join ", ", io
