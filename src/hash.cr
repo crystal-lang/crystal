@@ -283,6 +283,15 @@ class Hash(K, V)
     true
   end
 
+  def hash
+    hash = length
+    each do |key, value|
+      hash = 31 * hash + key.hash
+      hash = 31 * hash + value.hash
+    end
+    hash
+  end
+
   def dup
     hash = Hash(K, V).new
     each do |key, value|

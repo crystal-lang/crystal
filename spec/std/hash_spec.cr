@@ -67,6 +67,12 @@ describe "Hash" do
       b = {3 => 4}
       a.should_not eq(b)
     end
+
+    it "compares hash of nested hash" do
+      a = { {1 => 2} => 3}
+      b = { {1 => 2} => 3}
+      a.should eq(b)
+    end
   end
 
   describe "[]" do
@@ -314,6 +320,14 @@ describe "Hash" do
     h.clear
     h.empty?.should be_true
     h.to_a.length.should eq(0)
+  end
+
+  it "computes hash" do
+    h = { {1 => 2} => {3 => 4} }
+    h.hash.should_not eq(h.object_id)
+
+    h2 = { {1 => 2} => {3 => 4} }
+    h.hash.should eq(h2.hash)
   end
 
   class Breaker
