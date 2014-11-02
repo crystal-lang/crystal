@@ -265,13 +265,23 @@ class Array(T)
     true
   end
   
-  def fill(value : T)
-    each_index { |i| @buffer[i] = value }
+  def fill
+    each_index { |i| @buffer[i] = yield i }
 
     self
   end
 
-  def fill(value : T, from : Int, size = length - 1 : Int)
+  def fill(from : Int)
+    from += length if from < 0
+
+    raise IndexOutOfBounds.new if from >= length
+
+    from.upto(length - 1) { |i| @buffer[i] = yield i }
+
+    self
+  end
+
+  def fill(from : Int, size : Int)
     return self if size < 0
 
     from += length if from < 0
@@ -281,12 +291,12 @@ class Array(T)
 
     size += from - 1
 
-    from.upto(size) { |i| @buffer[i] = value }
+    from.upto(size) { |i| @buffer[i] = yield i }
 
     self
   end
 
-  def fill(value : T, range : Range(Int, Int))
+  def fill(range : Range(Int, Int))
     from = range.begin
     to = range.end
 
@@ -296,10 +306,26 @@ class Array(T)
     to -= 1 if range.excludes_end?
 
     each_index do |i|
-      @buffer[i] = value if i >= from && i <= to
+      @buffer[i] = yield i if i >= from && i <= to
     end
 
     self
+  end
+
+  def fill(value : T)
+    fill { value }
+  end
+
+  def fill(value : T, from : Int)
+    fill(from) { value }
+  end
+
+  def fill(value : T, from : Int, size : Int)
+    fill(from, size) { value }
+  end
+
+  def fill(value : T, range : Range(Int, Int))
+    fill(range) { value }
   end
 
   def first
