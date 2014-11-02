@@ -243,7 +243,7 @@ describe "Array" do
     a.equals?(c, &f).should be_false
     a.equals?(d, &f).should be_false
   end
-  
+
   describe "fill" do
     it "replaces all values" do
       a = ['a', 'b', 'c']
@@ -280,7 +280,7 @@ describe "Array" do
       expected = ['x', 'x', 'c']
       a.fill('x', -3..1).should eq(expected)
     end
-    
+
     it "works with a block" do
       a = [3, 6, 9]
       a.clone.fill { 0 }.should eq([0, 0, 0])
@@ -682,6 +682,29 @@ describe "Array" do
     end
   end
 
+  describe "uniq" do
+    it "uniqs without block" do
+      a = [1, 2, 2, 3, 1, 4, 5, 3]
+      b = a.uniq
+      b.should eq([1, 2, 3, 4, 5])
+      a.same?(b).should be_false
+    end
+
+    it "uniqs with block" do
+      a = [-1, 1, 0, 2, -2]
+      b = a.uniq &.abs
+      b.should eq([-1, 0, 2])
+      a.same?(b).should be_false
+    end
+
+    it "uniqs with true" do
+      a = [1, 2, 3]
+      b = a.uniq { true }
+      b.should eq([1])
+      a.same?(b).should be_false
+    end
+  end
+
   describe "uniq!" do
     it "uniqs without block" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]
@@ -691,7 +714,7 @@ describe "Array" do
 
     it "uniqs with block" do
       a = [-1, 1, 0, 2, -2]
-      a.uniq! { |x| x.abs }
+      a.uniq! &.abs
       a.should eq([-1, 0, 2])
     end
 

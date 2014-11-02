@@ -623,6 +623,19 @@ class Array(T)
     @buffer
   end
 
+  def uniq
+    uniq { |x| x }
+  end
+
+  def uniq(&block : T -> U)
+    if length <= 1
+      dup
+    else
+      hash = to_lookup_hash { |elem| yield elem }
+      hash.values
+    end
+  end
+
   def uniq!
     uniq! { |x| x }
   end
