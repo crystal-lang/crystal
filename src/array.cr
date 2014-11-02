@@ -634,6 +634,16 @@ end
   def to_unsafe
     @buffer
   end
+  
+  def transpose
+    result = Array(T).new
+
+    first.length.times do |i|
+      result << map { |pair| pair[i] }
+    end
+
+    result
+  end
 
   def uniq
     uniq { |x| x }
