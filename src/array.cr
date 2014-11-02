@@ -609,6 +609,18 @@ class Array(T)
   def to_a
     self
   end
+  
+  def to_h
+    result = {first.first => last.last}
+
+    each_with_index do |pair, index|
+      result[pair.first] = pair.last
+    end
+
+    result
+  end
+
+end
 
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
