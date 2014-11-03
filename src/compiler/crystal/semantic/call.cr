@@ -229,7 +229,7 @@ module Crystal
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
           def_instance_owner.add_def_instance(def_instance_key, typed_def) if use_cache
           if return_type = typed_def.return_type
-            typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner)
+            typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner.instance_type)
             mod.push_def_macro typed_def
           else
             check_recursive_splat_call match.def, typed_def_args do

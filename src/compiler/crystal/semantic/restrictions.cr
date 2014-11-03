@@ -125,7 +125,7 @@ module Crystal
     end
 
     def restrict(other : Self, context)
-      restrict(context.owner, context)
+      restrict(context.owner.instance_type, context)
     end
 
     def restrict(other : UnionType, context)

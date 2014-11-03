@@ -64,4 +64,27 @@ describe "Restrictions" do
       t(mod, "A+").restrict(t(mod, "M"), MatchContext.new(mod, mod)).should eq(mod.union_of(t(mod, "B+"), t(mod, "C+")))
     end
   end
+
+  it "self always matches instance type in restriction" do
+    assert_type(%(
+      class Foo
+        def self.foo(x : self)
+          x
+        end
+      end
+
+      Foo.foo Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "self always matches instance type in return type" do
+    assert_type(%(
+      class Foo
+        macro def self.foo : self
+          Foo.new
+        end
+      end
+      Foo.foo
+      )) { types["Foo"] }
+  end
 end
