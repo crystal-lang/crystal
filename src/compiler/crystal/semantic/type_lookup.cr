@@ -15,6 +15,8 @@ module Crystal
     def initialize(@root, @self_type)
     end
 
+    delegate program, @root
+
     def visit(node : ASTNode)
       true
     end
@@ -33,7 +35,7 @@ module Crystal
         ident.accept self
         type
       end
-      @type = @root.program.type_merge(types)
+      @type = program.type_merge(types)
       false
     end
 
@@ -87,10 +89,10 @@ module Crystal
         output.accept self
         types << type
       else
-        types << @root.program.void
+        types << program.void
       end
 
-      @type = @root.program.fun_of(types)
+      @type = program.fun_of(types)
       false
     end
 
@@ -100,14 +102,10 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      meta_vars = MetaVars.new
-      meta_vars["self"] = MetaVar.new("self", @root.instance_type)
-
-      visitor = TypeVisitor.new(@root.program, meta_vars)
-      node.expressions.each do |exp|
-        exp.accept visitor
-      end
-      @type = @root.program.type_merge(node.expressions.map &.type)
+      meta_vars = MetaVars { "self": MetaVar.new("self", @self_type) }
+      visitor = TypeVisitor.new(program, meta_vars)
+      node.expressions.each &.accept visitor
+      @type = program.type_merge node.expressions
       false
     end
 
