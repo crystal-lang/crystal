@@ -3355,7 +3355,8 @@ module Crystal
         when :NUMBER
           return allow_int && @token.number_kind == :i32
         when :IDENT
-          if @token.value == :typeof
+          case @token.value
+          when :typeof, :self
             return true
           end
         when :"::"

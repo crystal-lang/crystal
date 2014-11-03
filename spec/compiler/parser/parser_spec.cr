@@ -257,6 +257,7 @@ describe "Parser" do
   it_parses "def foo a, &block\nend", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block"), yields: 0)
   it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new(["Int".path] of ASTNode, "Double".path)), yields: 1)
   it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path)), yields: 2)
+  it_parses "def foo(a, &block : Int, self -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new(["Int".path, Self.new] of ASTNode, "Double".path)), yields: 2)
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new(nil, "Double".path)), yields: 0)
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new(["Int".path] of ASTNode)), yields: 1)
   it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new([Self.new] of ASTNode, Self.new)), yields: 1)
