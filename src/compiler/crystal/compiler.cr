@@ -260,7 +260,7 @@ module Crystal
       if @stats
         time = Time.now
         value = yield
-        puts "#{label}: #{Time.now - time} seconds"
+        puts "#{label}: #{Time.now - time}"
         value
       else
         yield

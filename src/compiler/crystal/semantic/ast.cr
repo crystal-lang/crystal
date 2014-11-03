@@ -471,7 +471,7 @@ module Crystal
   end
 
   class EnumDef
-    property! c_enum_type
+    property enum_type
   end
 
   class Yield

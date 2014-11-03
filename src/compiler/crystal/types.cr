@@ -1303,6 +1303,8 @@ module Crystal
     def virtual_type
       if leaf? && !self.abstract
         self
+      elsif struct?
+        self
       else
         virtual_type!
       end
@@ -2220,11 +2222,22 @@ module Crystal
     end
   end
 
-  class CEnumType < NamedType
-    getter base_type
+  class EnumType < NamedType
+    include DefContainer
+    include DefInstanceContainer
 
-    def initialize(program, container, name, @base_type)
+    getter base_type
+    getter? flags
+
+    def initialize(program, container, name, @base_type, @c_enum, @flags)
       super(program, container, name)
+
+      add_def Def.new("value", [] of Arg, Primitive.new(:enum_value, @base_type))
+      metaclass.add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new(:enum_new, self))
+    end
+
+    def parents
+      @parents ||= [program.enum] of Type
     end
 
     def add_constant(constant)
@@ -2232,25 +2245,15 @@ module Crystal
     end
 
     def c_enum?
-      true
+      @c_enum
     end
 
     def primitive_like?
-      true
-    end
-
-    def parents
-      nil
+      c_enum?
     end
 
     def type_desc
       "enum"
-    end
-
-    def to_s(io)
-      container.to_s(io)
-      io << "::"
-      name.to_s(io)
     end
   end
 
@@ -2267,6 +2270,8 @@ module Crystal
       @instance_type = instance_type
       super_class ||= if instance_type.is_a?(ClassType) && instance_type.superclass
                         instance_type.superclass.not_nil!.metaclass as ClassType
+                      elsif instance_type.is_a?(EnumType)
+                        @program.enum.metaclass as MetaclassType
                       else
                         @program.class_type
                       end
@@ -2552,7 +2557,7 @@ module Crystal
     property value
     getter scope_types
     getter scope
-    property! vars
+    property vars
     property used
     property? visited
     property? initialized

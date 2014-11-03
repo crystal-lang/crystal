@@ -324,7 +324,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     union_ptr
   end
 
-  def upcast_distinct(value, to_type : CEnumType, from_type : Type)
+  def upcast_distinct(value, to_type : EnumType, from_type : Type)
     value
   end
 

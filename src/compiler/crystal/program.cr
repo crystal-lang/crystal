@@ -89,6 +89,10 @@ module Crystal
       @struct.abstract = true
       @struct.struct = true
 
+      @types["Enum"] = @enum = NonGenericClassType.new self, self, "Enum", @value
+      @enum.abstract = true
+      @enum.struct = true
+
       @types["Function"] = @function = FunType.new self, self, "Function", @value, ["T"]
       @function.variadic = true
 
@@ -297,6 +301,7 @@ module Crystal
     getter :exception
     getter :tuple
     getter :function
+    getter :enum
 
     def class_type
       @class

@@ -22,10 +22,6 @@ module Crystal
       Attribute.any?(attributes, name)
     end
 
-    def accepts_attributes?
-      false
-    end
-
     def name_column_number
       @location.try(&.column_number) || 0
     end
@@ -673,10 +669,6 @@ module Crystal
     def initialize(@name)
     end
 
-    def accepts_attributes?
-      true
-    end
-
     def name_length
       name.length
     end
@@ -833,10 +825,6 @@ module Crystal
       @uses_block_arg = false
       @raises = false
       @name_column_number = 0
-    end
-
-    def accepts_attributes?
-      true
     end
 
     def accept_children(visitor)
@@ -1153,10 +1141,6 @@ module Crystal
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0)
       @body = Expressions.from body
-    end
-
-    def accepts_attributes?
-      true
     end
 
     def accept_children(visitor)
@@ -1561,10 +1545,6 @@ module Crystal
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
     end
 
-    def accepts_attributes?
-      true
-    end
-
     def accept_children(visitor)
       @args.each &.accept visitor
       @return_type.try &.accept visitor
@@ -1614,10 +1594,6 @@ module Crystal
   class StructDef < StructOrUnionDef
     property :attributes
 
-    def accepts_attributes?
-      true
-    end
-
     def clone_without_location
       StructDef.new(@name, @fields.clone)
     end
@@ -1631,22 +1607,23 @@ module Crystal
 
   class EnumDef < ASTNode
     property :name
-    property :constants
+    property :members
     property :base_type
+    property :attributes
 
-    def initialize(@name, @constants = [] of Arg, @base_type = nil)
+    def initialize(@name, @members = [] of ASTNode, @base_type = nil)
     end
 
     def accept_children(visitor)
-      @constants.each &.accept visitor
+      @members.each &.accept visitor
       @base_type.try &.accept visitor
     end
 
     def clone_without_location
-      EnumDef.new(@name, @constants.clone, @base_type.clone)
+      EnumDef.new(@name, @members.clone, @base_type.clone)
     end
 
-    def_equals_and_hash @name, @constants, @base_type
+    def_equals_and_hash @name, @members, @base_type
   end
 
   class ExternalVar < ASTNode
@@ -1656,10 +1633,6 @@ module Crystal
     property :attributes
 
     def initialize(@name, @type_spec, @real_name = nil)
-    end
-
-    def accepts_attributes?
-      true
     end
 
     def accept_children(visitor)

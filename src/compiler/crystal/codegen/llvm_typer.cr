@@ -65,7 +65,7 @@ module Crystal
       LLVM::Int32
     end
 
-    def create_llvm_type(type : CEnumType)
+    def create_llvm_type(type : EnumType)
       llvm_type(type.base_type)
     end
 

@@ -858,6 +858,10 @@ module Crystal
           check_not_inside_def("can't define module inside def") do
             parse_module_def
           end
+        when :enum
+          check_not_inside_def("can't define enum inside def") do
+            parse_enum_def
+          end
         when :while
           parse_while
         when :until
@@ -3513,7 +3517,7 @@ module Crystal
         when :union
           parse_struct_or_union UnionDef
         when :enum
-          parse_enum
+          parse_enum_def
         when :ifdef
           parse_ifdef check_end: true, inside_lib: true
         else
@@ -3780,14 +3784,15 @@ module Crystal
       fields
     end
 
-    def parse_enum
+    def parse_enum_def
       next_token_skip_space_or_newline
 
       check :CONST
       name = @token.value.to_s
 
       next_token_skip_space
-      if @token.type == :"<"
+      case @token.type
+      when :"<", :":"
         next_token_skip_space_or_newline
         base_type = parse_single_type
         skip_statement_end
@@ -3795,33 +3800,45 @@ module Crystal
         next_token_skip_statement_end
       end
 
-      constants = [] of Arg
-      while !@token.keyword?(:end)
-        check :CONST
+      members = [] of ASTNode
+      until @token.keyword?(:end)
+        case @token.type
+        when :CONST
+          constant_name = @token.value.to_s
+          next_token_skip_space
+          if @token.type == :"="
+            next_token_skip_space_or_newline
 
-        constant_name = @token.value.to_s
-        next_token_skip_space
-        if @token.type == :"="
-          next_token_skip_space_or_newline
+            constant_value = parse_logical_or
+            next_token_skip_statement_end
+          else
+            constant_value = nil
+            skip_statement_end
+          end
 
-          constant_value = parse_logical_or
-          next_token_skip_statement_end
-        else
-          constant_value = nil
+          case @token.type
+          when :",", :";"
+            next_token_skip_statement_end
+          end
+
+          members << Arg.new(constant_name, constant_value)
+        when :IDENT
+          if @token.value == :def
+            members << parse_def
+          else
+            unexpected_token
+          end
+        when :";", :NEWLINE
           skip_statement_end
+        else
+          unexpected_token
         end
-
-        if @token.type == :","
-          next_token_skip_statement_end
-        end
-
-        constants << Arg.new(constant_name, constant_value)
       end
 
       check_ident :end
       next_token_skip_space
 
-      EnumDef.new name, constants, base_type
+      EnumDef.new name, members, base_type
     end
 
     def node_and_next_token(node)

@@ -1015,9 +1015,9 @@ module Crystal
       end
       @str << newline
       with_indent do
-        node.constants.each do |constant|
+        node.members.each do |member|
           append_indent
-          constant.accept self
+          member.accept self
           @str << newline
         end
       end

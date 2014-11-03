@@ -465,6 +465,7 @@ module Crystal
     end
 
     def transform(node : EnumDef)
+      transform_many node.members
       node
     end
 

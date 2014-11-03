@@ -69,6 +69,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_pointer_diff node, target_def, call_args
             when :tuple_indexer_known_index
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
+            when :enum_value, :enum_new
+              call_args[0]
             else
               raise "Bug: unhandled primitive in codegen: #{node.name}"
             end

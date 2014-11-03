@@ -1,7 +1,7 @@
 #!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
-describe "Type inference: enum" do
+describe "Type inference: c enum" do
   it "types enum value" do
     assert_type("lib Foo; enum Bar; X, Y, Z = 10, W; end; end; Foo::Bar::X") { int32 }
   end

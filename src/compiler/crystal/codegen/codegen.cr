@@ -478,7 +478,7 @@ module Crystal
     end
 
     def visit(node : EnumDef)
-      node.c_enum_type.types.each_value do |type|
+      node.enum_type.try &.types.each_value do |type|
         declare_const(type as Const)
       end
       @last = llvm_nil

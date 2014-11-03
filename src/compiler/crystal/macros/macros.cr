@@ -603,13 +603,28 @@ module Crystal
         when "@instance_vars"
           return @last = MacroType.instance_vars(@scope)
         when "@length"
-          if (scope = @scope).is_a?(TupleInstanceType)
+          scope = @scope.try &.instance_type
+          if scope.is_a?(TupleInstanceType)
             return @last = NumberLiteral.new(scope.tuple_types.length)
           end
         when "@superclass"
           return @last = MacroType.superclass(@scope)
         when "@type"
           return @last = MacroType.new(@scope)
+        when "@enum_members"
+          scope = @scope.try &.instance_type
+          if scope.is_a?(EnumType)
+            names = Array(ASTNode).new(scope.types.length)
+            scope.types.each_key do |name|
+              names << MacroId.new(name)
+            end
+            return @last = ArrayLiteral.new names
+          end
+        when "@enum_flags"
+          scope = @scope.try &.instance_type
+          if scope.is_a?(EnumType)
+            return @last = BoolLiteral.new(scope.flags?)
+          end
         end
 
         node.raise "unknown macro instance var: '#{node.name}'"

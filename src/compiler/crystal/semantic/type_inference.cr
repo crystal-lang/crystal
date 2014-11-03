@@ -21,6 +21,7 @@ module Crystal
     ValidStructDefAttributes = %w(Packed)
     ValidDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
     ValidFunDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
+    ValidEnumDefAttributes = %w(Flags)
 
     getter mod
     property! scope
@@ -1681,36 +1682,78 @@ module Crystal
     end
 
     def visit(node : EnumDef)
-      type = current_type.types[node.name]?
-      if type
-        node.raise "#{node.name} is already defined"
-      else
-        if base_type = node.base_type
-          base_type.accept self
-          enum_base_type = base_type.type.instance_type
-          unless enum_base_type.is_a?(IntegerType)
-            base_type.raise "enum base type must be an integer type"
-          end
-        else
-          enum_base_type = @mod.int32
+      check_valid_attributes node, ValidEnumDefAttributes, "enum"
+
+      enum_type = current_type.types[node.name]?
+      if enum_type
+        unless enum_type.is_a?(EnumType)
+          node.raise "#{node.name} is not a enum, it's a #{enum_type.type_desc}"
         end
+      end
 
-        enum_type = CEnumType.new(@mod, current_type, node.name, enum_base_type)
+      if base_type = node.base_type
+        base_type.accept self
+        enum_base_type = base_type.type.instance_type
+        unless enum_base_type.is_a?(IntegerType)
+          base_type.raise "enum base type must be an integer type"
+        end
+      else
+        enum_base_type = @mod.int32
+      end
 
-        pushing_type(enum_type) do
-          counter = 0
-          node.constants.each do |constant|
-            if default_value = constant.default_value
+      is_lib = current_type.is_a?(LibType)
+      is_flags = node.has_attribute?("Flags")
+      all_value = 0_u64
+      existed = !!enum_type
+      enum_type ||= EnumType.new(@mod, current_type, node.name, enum_base_type, is_lib, is_flags)
+
+      pushing_type(enum_type) do
+        counter = is_flags ? 1 : 0
+        node.members.each do |member|
+          case member
+          when Arg
+            if existed
+              member.raise "can't reopen enum and add more constants to it"
+            end
+
+            if default_value = member.default_value
               counter = interpret_enum_value(default_value)
             end
-            constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
-            enum_type.add_constant constant
-            counter += 1
+            all_value |= counter
+            const_value = NumberLiteral.new(counter, enum_base_type.kind)
+            member.default_value = const_value
+            if enum_type.types.has_key?(member.name)
+              member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
+            end
+            enum_type.add_constant member
+            const_value.type = enum_type unless is_lib
+            counter = is_flags ? counter * 2 : counter + 1
+          when Def
+            member.accept self
+          end
+        end
+      end
+
+      unless existed
+        if is_flags
+          unless enum_type.types["None"]?
+            none = NumberLiteral.new(0, enum_base_type.kind)
+            none.type = enum_type unless is_lib
+            enum_type.add_constant Arg.new("None", default_value: none)
+          end
+
+          unless enum_type.types["All"]?
+            all = NumberLiteral.new(all_value, enum_base_type.kind)
+            all.type = enum_type unless is_lib
+            enum_type.add_constant Arg.new("All", default_value: all)
           end
         end
 
-        node.c_enum_type = current_type.types[node.name] = enum_type
+        node.enum_type = current_type.types[node.name] = enum_type
       end
+
+      node.type = mod.nil
+
       false
     end
 
@@ -2153,6 +2196,10 @@ module Crystal
         node.type = mod.int64
       when :class_name
         node.type = mod.string
+      when :enum_value
+        # Nothing to do
+      when :enum_new
+        # Nothing to do
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

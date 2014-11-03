@@ -169,7 +169,7 @@ module Crystal
     def transform(node : EnumDef)
       super
 
-      node.c_enum_type.types.each_value do |const|
+      node.enum_type.try &.types.each_value do |const|
         (const as Const).initialized = true
       end
 

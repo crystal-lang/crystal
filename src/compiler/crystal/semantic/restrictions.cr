@@ -251,8 +251,12 @@ module Crystal
   end
 
   class IntegerType
-    def restrict(other : CEnumType, context)
-      self == other.base_type ? self : nil
+    def restrict(other : EnumType, context)
+      if other.c_enum?
+        self == other.base_type ? self : nil
+      else
+        super
+      end
     end
   end
 
