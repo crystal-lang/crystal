@@ -1,3 +1,34 @@
+## Next
+
+* New command line interface to the compiler (`crystal build ...`, `crystal run ...`, `crystal spec`, etc.). The default is to compiler and run a program.
+* `crystal eval` without arguments reads from standard input.
+* `__FILE__`, `__DIR__` and `__LINE__`, when used as def default arguments, resolve to the caller location (similar to [D](http://dlang.org/traits.html#specialkeywords) and [Swift](https://developer.apple.com/swift/blog/?id=15))
+* Allow `as` to determine a type even if the casted value doesn't have a type yet.
+* Added `is_a?` in macros. The check is against an [AST node](https://github.com/manastech/crystal/blob/master/src/compiler/crystal/syntax/ast.cr) name. For example `node.is_a?(HashLiteral)`.
+* Added `emit_null` property to `json_mapping`.
+* Added `converter` property to `json_mapping`.
+* Added `pp` in macros.
+* Added `to_pretty_json`.
+* Added really basic `CSV.parse`.
+* Added `Regex.escape`.
+* Added `String#scan`.
+* Added `-e` switch to spec, to run specs that match a pattern.
+* Added `--fail-fast` swtich to spec.
+* Added `HTTPClient#basic_auth`.
+* Added `DeclareVar`, `Def` and `Arg` macro methods.
+* Added `Time` and `TimeSpan` structs. `TimeWithZone` will come later.
+* Added `Array#fill` (thanks @Exilor).
+* Added `Array#uniq`.
+* Optimized `File.read_lines`.
+* Allow any expression inside `{% ... %}` so that you can intepret code without outputting the result.
+* Allow `\` at the end of a line.
+* Allow using `if` and `unless` inside macro expressions.
+* Allow marking a `fun/def` as `@[Raises]` (useful when a function can potentially raise from a callback).
+* Allow procs are now considered `@[Raises]`.
+* `OAuth2::Client` supports getting an access token via authorization code or refresh token.
+* Consecutive string literals are automatically concatenated by the parser as long as there is a `\` with a newline between them.
+* Many bug fixes.
+
 ## 0.5.1 (2014-10-16)
 
 * Added [json_mapping](https://github.com/manastech/crystal/blob/master/spec/std/json/mapping_spec.cr) macro.
