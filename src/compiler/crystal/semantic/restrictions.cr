@@ -128,6 +128,12 @@ module Crystal
       restrict(context.owner.instance_type, context)
     end
 
+    def restrict(other : TypeOf, context)
+      lookup = TypeLookup.new self, context.owner.instance_type
+      other.accept lookup
+      restrict lookup.type.not_nil!, context
+    end
+
     def restrict(other : UnionType, context)
       restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, context.owner) }
       restricted ? self : nil

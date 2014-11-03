@@ -87,4 +87,16 @@ describe "Restrictions" do
       Foo.foo
       )) { types["Foo"] }
   end
+
+  it "allows typeof as restriction" do
+    assert_type(%(
+      struct Int32
+        def self.foo(x : typeof(self))
+          x
+        end
+      end
+
+      Int32.foo 1
+      )) { int32 }
+  end
 end

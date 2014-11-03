@@ -24,6 +24,17 @@ module Crystal
       combined_union_of compact_types(nodes, &.type?)
     end
 
+    def type_merge(nodes : Array(ASTNode))
+      # Merging two types is the most common case, so we optimize it
+      if nodes.length == 2
+        first, second = nodes
+        did_merge, merged_type = type_merge_two(first.type?, second.type?)
+        return merged_type if did_merge
+      end
+
+      combined_union_of compact_types(nodes, &.type?)
+    end
+
     def type_merge_two(first, second)
       if first == second
         # Same, so return any of them
