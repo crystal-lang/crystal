@@ -1,4 +1,4 @@
-## Next
+## 0.5.2 (2014-11-04)
 
 * New command line interface to the compiler (`crystal build ...`, `crystal run ...`, `crystal spec`, etc.). The default is to compiler and run a program.
 * `crystal eval` without arguments reads from standard input.
