@@ -60,6 +60,10 @@ struct LLVM::Type
     LibLLVM.get_type_kind(self)
   end
 
+  def void?
+    kind == LibLLVM::TypeKind::Void
+  end
+
   def null
     Value.new LibLLVM.const_null(self)
   end

@@ -125,7 +125,7 @@ module Crystal
     setter target_machine
 
     def target_machine
-      @target_machine ||= TargetMachine.create("i686-unknown-linux", "", false)
+      @target_machine ||= TargetMachine.create(LLVM.default_target_triple, "", false)
     end
 
     def has_flag?(name)

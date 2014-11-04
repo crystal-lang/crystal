@@ -1391,7 +1391,15 @@ module Crystal
       end
 
       func = target_def_fun(target_def, self_type)
-      codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+
+      if target_def.sret?
+        sret_value = alloca llvm_type(target_def.type)
+        call_args.insert 0, sret_value
+        codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, @mod.void)
+        @last = sret_value
+      else
+        codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+      end
     end
 
     def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
@@ -1438,6 +1446,7 @@ module Crystal
       call_args = node.args
       arg_types = node.args.map &.type
       arg_offset += 1 if self_type.try(&.passed_as_self?)
+      arg_offset += 1 if target_def.sret?
 
       arg_types.each_with_index do |arg_type, i|
         next unless arg_type.passed_by_value?

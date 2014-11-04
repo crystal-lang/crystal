@@ -136,6 +136,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     if is_external
       llvm_args_types = args.map { |arg| llvm_c_type(arg.type) }
       llvm_return_type = llvm_c_return_type(target_def.type)
+
+      if needs_sret?(llvm_return_type)
+        llvm_args_types.insert 0, llvm_return_type.pointer
+        llvm_return_type = LLVM::Void
+        target_def.sret = true
+      end
     else
       llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
       llvm_return_type = llvm_type(target_def.type)
@@ -147,6 +153,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     else
       offset = 0
     end
+
+    offset += 1 if target_def.sret?
 
     context.fun = @llvm_mod.functions.add(
       mangled_name,
@@ -188,6 +196,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
 
     args
+  end
+
+  def needs_sret?(llvm_type)
+    # TODO: this logic is specific to AMD64, find out the logic for other ABIs
+    @llvm_typer.size_of(llvm_type) > (2 * @llvm_typer.pointer_size)
   end
 
   def setup_closure_vars(closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)

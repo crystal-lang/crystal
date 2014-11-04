@@ -370,7 +370,15 @@ module Crystal
     end
 
     def size_of(type)
-      @layout.size_in_bytes type
+      if type.void?
+        0
+      else
+        @layout.size_in_bytes type
+      end
+    end
+
+    def pointer_size
+      @pointer_size ||= size_of(LLVM::VoidPointer)
     end
 
     def union_value_type(type : MixedUnionType)
