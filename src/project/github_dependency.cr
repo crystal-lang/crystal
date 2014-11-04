@@ -11,7 +11,7 @@ class GitHubDependency < Dependency
 
   def install
     unless Dir.exists?(@target_dir)
-      `git clone git@github.com:#{@author}/#{@repository}.git #{@target_dir}`
+      `git clone https://github.com/#{@author}/#{@repository}.git #{@target_dir}`
     end
     `ln -sf ../#{@target_dir}/src libs/#{@repository}`
 
