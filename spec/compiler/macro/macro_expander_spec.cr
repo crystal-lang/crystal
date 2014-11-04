@@ -236,6 +236,10 @@ describe "MacroExpander" do
     it "executes <= (false)" do
       assert_macro "", "{%if 3 <= 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
     end
+
+    it "executes <=>" do
+      assert_macro "", "{{1 <=> -1}}", [] of ASTNode, "1"
+    end
   end
 
   describe "string methods" do
@@ -402,6 +406,14 @@ describe "MacroExpander" do
       assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
     end
 
+    it "executes find (finds)" do
+      assert_macro "", %({{[1, 2, 3].find { |e| e == 2 }}}), [] of ASTNode, "2"
+    end
+
+    it "executes find (doesn't find)" do
+      assert_macro "", %({{[1, 2, 3].find { |e| e == 4 }}}), [] of ASTNode, "nil"
+    end
+
     it "executes any? (true)" do
       assert_macro "", %({{[1, 2, 3].any? { |e| e == 1 }}}), [] of ASTNode, "true"
     end
@@ -484,6 +496,10 @@ describe "MacroExpander" do
 
     it "creates a hash literal with a var" do
       assert_macro "x", %({% a = {a: x} %}{{a[:a]}}), [NumberLiteral.new(1)] of ASTNode, "1"
+    end
+
+    it "executes to_a" do
+      assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{:a, 1}, {:b, 3}]"
     end
   end
 

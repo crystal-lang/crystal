@@ -91,6 +91,12 @@ module Crystal
         compare_to(args.first) { |me, other| me < other }
       when "<="
         compare_to(args.first) { |me, other| me <= other }
+      when "<=>"
+        other = args.first
+        unless other.is_a?(NumberLiteral)
+          raise "can't compare number to #{other}"
+        end
+        NumberLiteral.new(to_number <=> other.to_number)
       else
         super
       end
@@ -257,6 +263,19 @@ module Crystal
         end
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
+      when "find"
+        interpret_argless_method(method, args) do
+          raise "select expects a block" unless block
+
+          block_arg = block.args.first?
+
+          found = elements.find do |elem|
+            block_value = interpreter.accept elem.to_macro_var
+            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.accept(block.body).truthy?
+          end
+          found ? found : NilLiteral.new
+        end
       when "first"
         interpret_argless_method(method, args) { elements.first? || NilLiteral.new }
       when "join"
@@ -289,8 +308,8 @@ module Crystal
           block_arg = block.args.first?
 
           ArrayLiteral.new(elements.select do |elem|
-            block_value = interpreter.accept elem.to_macro_var
-            interpreter.define_var(block_arg.name, block_value) if block_arg
+            block_arg_value = interpreter.accept elem.to_macro_var
+            interpreter.define_var(block_arg.name, block_arg_value) if block_arg
             interpreter.accept(block.body).truthy?
           end)
         end
@@ -327,6 +346,10 @@ module Crystal
         interpret_argless_method(method, args) { ArrayLiteral.new(entries.map &.key) }
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(entries.length) }
+      when "to_a"
+        interpret_argless_method(method, args) do
+          ArrayLiteral.new(Array(ASTNode).new(entries.length) { |i| TupleLiteral.new([entries[i].key, entries[i].value] of ASTNode) })
+        end
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.new(entries.map &.value) }
       when "[]"
