@@ -138,12 +138,7 @@ class Array(T)
   end
 
   def clone
-    ary = Array(T).new(length)
-    ary.length = length
-    each_with_index do |e, i|
-      ary.buffer[i] = e.clone
-    end
-    ary
+    Array.new(length) { |i| @buffer[i].clone as T }
   end
 
   def compact
@@ -445,14 +440,7 @@ class Array(T)
   end
 
   def reverse
-    ary = Array(T).new(length)
-    ary.length = length
-    i = 0
-    reverse_each do |obj|
-      ary.buffer[i] = obj
-      i += 1
-    end
-    ary
+    Array.new(length) { |i| @buffer[length - i - 1] }
   end
 
   def reverse!

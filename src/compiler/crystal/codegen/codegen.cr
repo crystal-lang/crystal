@@ -1335,7 +1335,7 @@ module Crystal
       end
 
       # Reuse this call for each dispatch branch
-      call = Call.new(node_obj ? Var.new("%self") : nil, node.name, Array(ASTNode).new(node.args.length) { |i| Var.new("%arg#{i}") }, node.block)
+      call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block)
       call.scope = node.scope
       call.location = node.location
 

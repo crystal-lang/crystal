@@ -140,16 +140,16 @@ module Base64
     end
   end
 
-  DECODE_TABLE = Array.new(256) do |i|
+  DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.chr
-    when 'A'..'Z'   then i - 0x41
-    when 'a'..'z'   then i - 0x47
-    when '0'..'9'   then i + 0x04
-    when '+', '-'   then 0x3E
-    when '/', '_'   then 0x3F
-    when '\n', '\r' then -2
-    when '='        then -3
-    else                 -1
+    when 'A'..'Z'   then (i - 0x41).to_i8
+    when 'a'..'z'   then (i - 0x47).to_i8
+    when '0'..'9'   then (i + 0x04).to_i8
+    when '+', '-'   then 0x3E_i8
+    when '/', '_'   then 0x3F_i8
+    when '\n', '\r' then -2_i8
+    when '='        then -3_i8
+    else                 -1_i8
     end
   end
 end

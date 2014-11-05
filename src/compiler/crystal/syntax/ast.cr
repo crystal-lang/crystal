@@ -238,6 +238,10 @@ module Crystal
     def initialize(@elements = [] of ASTNode, @of = nil, @name = nil)
     end
 
+    def self.map(values)
+      new(values.map { |value| (yield value) as ASTNode })
+    end
+
     def accept_children(visitor)
       @name.try &.accept visitor
       elements.each &.accept visitor

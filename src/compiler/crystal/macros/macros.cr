@@ -614,10 +614,7 @@ module Crystal
         when "@enum_members"
           scope = @scope.try &.instance_type
           if scope.is_a?(EnumType)
-            names = Array(ASTNode).new(scope.types.length)
-            scope.types.each_key do |name|
-              names << MacroId.new(name)
-            end
+            names = scope.types.map { |name, type| MacroId.new(name) as ASTNode }
             return @last = ArrayLiteral.new names
           end
         when "@enum_flags"

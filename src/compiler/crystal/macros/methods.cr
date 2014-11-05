@@ -156,7 +156,7 @@ module Crystal
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
       when "chars"
-        interpret_argless_method(method, args) { create_array_literal_from_values(@value.chars) { |value| CharLiteral.new(value) } }
+        interpret_argless_method(method, args) { ArrayLiteral.map(@value.chars) { |value| CharLiteral.new(value) } }
       when "chomp"
         interpret_argless_method(method, args) { StringLiteral.new(@value.chomp) }
       when "downcase"
@@ -180,11 +180,11 @@ module Crystal
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.length) }
       when "lines"
-        interpret_argless_method(method, args) { create_array_literal_from_values(@value.lines) { |value| StringLiteral.new(value) } }
+        interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
       when "split"
         case args.length
         when 0
-          create_array_literal_from_values(@value.split) { |value| StringLiteral.new(value) }
+          ArrayLiteral.map(@value.split) { |value| StringLiteral.new(value) }
         when 1
           first_arg = args.first
           case first_arg
@@ -196,7 +196,7 @@ module Crystal
             splitter = first_arg.to_s
           end
 
-          create_array_literal_from_values(@value.split(splitter)) { |value| StringLiteral.new(value) }
+          ArrayLiteral.map(@value.split(splitter)) { |value| StringLiteral.new(value) }
         else
           raise "wrong number of arguments for split (#{args.length} for 0, 1)"
         end
@@ -219,10 +219,6 @@ module Crystal
       else
         super
       end
-    end
-
-    def create_array_literal_from_values(values)
-      ArrayLiteral.new(Array(ASTNode).new(values.length) { |i| yield values[i] })
     end
 
     def to_macro_id
@@ -292,14 +288,11 @@ module Crystal
 
           block_arg = block.args.first?
 
-          mapped_elements = Array(ASTNode).new(elements.length)
-          elements.each do |elem|
+          ArrayLiteral.map(elements) do |elem|
             block_value = interpreter.accept elem.to_macro_var
             interpreter.define_var(block_arg.name, block_value) if block_arg
-            mapped_elements << interpreter.accept block.body
+            interpreter.accept block.body
           end
-
-          ArrayLiteral.new(mapped_elements)
         end
       when "select"
         interpret_argless_method(method, args) do
@@ -343,15 +336,15 @@ module Crystal
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
       when "keys"
-        interpret_argless_method(method, args) { ArrayLiteral.new(entries.map &.key) }
+        interpret_argless_method(method, args) { ArrayLiteral.map entries, &.key }
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(entries.length) }
       when "to_a"
         interpret_argless_method(method, args) do
-          ArrayLiteral.new(Array(ASTNode).new(entries.length) { |i| TupleLiteral.new([entries[i].key, entries[i].value] of ASTNode) })
+          ArrayLiteral.map(entries) { |entry| TupleLiteral.new([entry.key, entry.value] of ASTNode) }
         end
       when "values"
-        interpret_argless_method(method, args) { ArrayLiteral.new(entries.map &.value) }
+        interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
       when "[]"
         case args.length
         when 1
@@ -444,8 +437,7 @@ module Crystal
         interpret_argless_method(method, args) { @body || Nop.new }
       when "args"
         interpret_argless_method(method, args) do
-          vars = @args.map { |arg| MacroId.new(arg.name) as ASTNode }
-          ArrayLiteral.new(vars)
+          ArrayLiteral.map(@args) { |arg| MacroId.new(arg.name) }
         end
       else
         super
@@ -478,8 +470,7 @@ module Crystal
       when "body"
         body
       when "args"
-        def_args = Array(ASTNode).new(self.args.length) { |i| self.args[i] }
-        ArrayLiteral.new(def_args)
+        ArrayLiteral.map(self.args) { |arg| arg }
       when "receiver"
         receiver || Nop.new
       else
