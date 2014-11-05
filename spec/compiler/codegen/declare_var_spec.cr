@@ -3,7 +3,8 @@ require "../../spec_helper"
 
 describe "Code gen: declare var" do
   it "codegens declare var and read it" do
-    run("a :: Int32; a") # TODO: initialize to zero?
+    # Using :: is unsafe and returns uninitialized memory
+    run("a :: Int32; a")
   end
 
   it "codegens declare var and changes it" do

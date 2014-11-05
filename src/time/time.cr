@@ -25,8 +25,8 @@ struct Time
 
   include Comparable(self)
 
-  TicksMask = 4611686018427387903 # TODO replace with 0x3fffffffffffffff after 0.5.1
-  KindMask = 1383505805528216371_u64 * 10 + 2 # TODO replace with 0xc000000000000000 after 0.5.1
+  TicksMask       = 0x3fffffffffffffff
+  KindMask        = 0xc000000000000000
   MAX_VALUE_TICKS = 3155378975999999999_i64
 
   DAYS_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -254,6 +254,11 @@ struct Time
     TimeFormat.new(pattern).parse(time)
   end
 
+  # Returns the number of seconds since the Epoch
+  def to_i
+    (ticks - UnixEpoch) / TimeSpan::TicksPerSecond
+  end
+
   macro def_at(name)
     def at_{{name.id}}
       year, month, day, day_year = year_month_day_day_year
@@ -367,10 +372,8 @@ struct Time
   end
 
   def self.local_ticks
-    ticks_per_minute = 600_000_000_i64 # TODO: replace with TimeSpan::TicksPerMinute after 0.5.1
-
     compute_ticks do |ticks, tp, tzp|
-      ticks - (tzp.tz_minuteswest.to_i64 * ticks_per_minute)
+      ticks - (tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute)
     end
   end
 
@@ -381,10 +384,8 @@ struct Time
   end
 
   private def self.compute_ticks
-    ticks_per_second = 10_000_000_i64   # TODO: replace with TimeSpan::TicksPerSecond after 0.5.1
-
     C.gettimeofday(out tp, out tzp)
-    ticks = tp.tv_sec.to_i64 * ticks_per_second + tp.tv_usec.to_i64 * 10_i64
+    ticks = tp.tv_sec.to_i64 * TimeSpan::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
     yield ticks, tp, tzp
   end

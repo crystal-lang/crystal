@@ -795,7 +795,7 @@ class String
       case current_char
       when '"'  then io << "\\\""
       when '\\' then io << "\\\\"
-      when (8.chr) then io << "\\b" # TODO use \b in when
+      when '\b' then io << "\\b"
       when '\e' then io << "\\e"
       when '\f' then io << "\\f"
       when '\n' then io << "\\n"

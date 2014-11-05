@@ -220,6 +220,11 @@ describe Time do
     (t1 < t2).should be_true
   end
 
+  it "gets unix epoch seconds" do
+    t1 = Time.new 2014, 10, 30, 21, 18, 13
+    t1.to_i.should eq(1414703893)
+  end
+
   it "to_s" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.to_s.should eq("2014-10-30 21:18:13")

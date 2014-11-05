@@ -2296,7 +2296,7 @@ module Crystal
         else
           raise "shouldn't reach this line" unless name
         end
-        name ||= "" # TODO: this is to satisfy the compiler, fix
+        name = name.not_nil!
       end
 
       found_default_value = false

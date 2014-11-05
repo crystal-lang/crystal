@@ -409,7 +409,7 @@ module Crystal
         when '\\'
           case char2 = next_char
           when 'b'
-            @token.value = 8.chr # TODO use \b
+            @token.value = '\b'
           when 'e'
             @token.value = '\e'
           when 'f'

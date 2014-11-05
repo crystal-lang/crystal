@@ -138,7 +138,7 @@ class String
         io << "\\\\"
       when '"'
         io << "\\\""
-      when 8.chr # TODO use '\b'
+      when '\b'
         io << "\\b"
       when '\f'
         io << "\\f"

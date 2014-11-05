@@ -31,8 +31,8 @@ lib LibGMP
   fun ui_sub = __gmpz_ui_sub(rop : MPZ*, op1 : UInt64, op2 : MPZ*)
 
   fun mul = __gmpz_mul(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun mul_si = __gmpz_mul_si(rop : MPZ*, op1 : MPZ*, op2 : Int64) # TODO: op2 : long int
-  fun mul_ui = __gmpz_mul_ui(rop : MPZ*, op1 : MPZ*, op2 : UInt64) # TODO: op2 : unsigned long int
+  fun mul_si = __gmpz_mul_si(rop : MPZ*, op1 : MPZ*, op2 : Int64)
+  fun mul_ui = __gmpz_mul_ui(rop : MPZ*, op1 : MPZ*, op2 : UInt64)
 
   fun fdiv_q = __gmpz_fdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : UInt64)
