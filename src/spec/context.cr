@@ -59,6 +59,12 @@ module Spec
           if ex = fail.exception
             puts
             puts "  #{i + 1}) #{fail.description}"
+            if ex.is_a?(AssertionFailed)
+              source_line = Spec.read_line(ex.file, ex.line)
+              if source_line
+                puts Spec.color("     Failure/Error: #{source_line.strip}", :error)
+              end
+            end
             puts
 
             ex.to_s.split("\n").each do |line|
@@ -70,6 +76,11 @@ module Spec
                 print "       "
                 puts Spec.color(trace, :error)
               end
+            end
+
+            if ex.is_a?(AssertionFailed)
+              puts
+              puts "     # #{Spec.relative_file(ex.file)}:#{ex.line}".colorize.cyan
             end
           end
         end

@@ -175,7 +175,7 @@ describe "Type inference: exception" do
         end
       end
 
-      class AssertionFailed < ::Exception
+      class SomeException < ::Exception
       end
 
       abstract class FooException < ::Exception

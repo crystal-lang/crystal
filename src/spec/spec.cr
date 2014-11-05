@@ -24,6 +24,12 @@ module Spec
   end
 
   class AssertionFailed < Exception
+    getter file
+    getter line
+
+    def initialize(message, @file, @line)
+      super(message)
+    end
   end
 
   @@aborted = false
@@ -100,8 +106,8 @@ def assert
   it("assert") { yield }
 end
 
-def fail(msg)
-  raise Spec::AssertionFailed.new(msg)
+def fail(msg, file = __FILE__, line = __LINE__)
+  raise Spec::AssertionFailed.new(msg, file, line)
 end
 
 OptionParser.parse! do |opts|
