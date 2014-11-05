@@ -48,10 +48,19 @@ module Spec
     @@pattern = Regex.new(Regex.escape(pattern))
   end
 
-  def self.matches?(description)
-    pattern = @@pattern
-    if pattern
-      Spec::RootContext.matches?(description, pattern)
+  @@line = nil
+
+  def self.line=(@@line)
+  end
+
+  def self.matches?(description, file, line)
+    spec_pattern = @@pattern
+    spec_line = @@line
+
+    if line == spec_line
+      return true
+    elsif spec_pattern || spec_line
+      Spec::RootContext.matches?(description, spec_pattern, spec_line)
     else
       true
     end
@@ -77,7 +86,7 @@ end
 
 def it(description, file = __FILE__, line = __LINE__)
   return if Spec.aborted?
-  return unless Spec.matches?(description)
+  return unless Spec.matches?(description, file, line)
 
   Spec.formatter.before_example description
 
@@ -95,7 +104,7 @@ end
 
 def pending(description, file = __FILE__, line = __LINE__, &block)
   return if Spec.aborted?
-  return unless Spec.matches?(description)
+  return unless Spec.matches?(description, file, line)
 
   Spec.formatter.before_example description
 
@@ -114,6 +123,9 @@ OptionParser.parse! do |opts|
   opts.banner = "crystal spec runner"
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
+  end
+  opts.on("-l ", "--line LINE", "run examples whose line matches LINE") do |line|
+    Spec.line = line.to_i
   end
   opts.on("--fail-fast", "abort the run on first failure") do
     Spec.fail_fast = true

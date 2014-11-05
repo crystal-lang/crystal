@@ -122,8 +122,24 @@ module Crystal::Command
   end
 
   private def self.run_specs(options)
+    target_filename_and_line_number = options.shift?
+    if target_filename_and_line_number
+      splitted = target_filename_and_line_number.split ':', 2
+      target_filename = splitted[0]
+      cwd = Dir.working_directory
+      if target_filename.starts_with?(cwd)
+        target_filename = "./#{target_filename[cwd.length .. -1]}"
+      end
+      if splitted.length == 2
+        target_line = splitted[1]
+        options << "-l" << target_line
+      end
+    else
+      target_filename = "spec/**"
+    end
+
     compiler = Compiler.new
-    sources = [Compiler::Source.new("spec", %(require "spec/**"))]
+    sources = [Compiler::Source.new("spec", %(require "#{target_filename}"))]
 
     output_filename = tempfile "spec"
 

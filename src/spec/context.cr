@@ -125,11 +125,11 @@ module Spec
       @@contexts_stack.pop
     end
 
-    def self.matches?(description, pattern)
-      @@contexts_stack.any?(&.matches?(pattern)) || description =~ pattern
+    def self.matches?(description, pattern, line)
+      @@contexts_stack.any?(&.matches?(pattern, line)) || description =~ pattern
     end
 
-    def matches?(pattern)
+    def matches?(pattern, line)
       false
     end
   end
@@ -147,8 +147,8 @@ module Spec
       @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.exception)
     end
 
-    def matches?(pattern)
-      @description =~ pattern
+    def matches?(pattern, line)
+      @description =~ pattern || @line == line
     end
   end
 end
