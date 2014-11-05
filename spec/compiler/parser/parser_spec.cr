@@ -107,8 +107,8 @@ class Crystal::ASTNode
   end
 end
 
-def it_parses(string, expected_node)
-  it "parses #{string}" do
+def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
+  it "parses #{string}", file, line do
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse

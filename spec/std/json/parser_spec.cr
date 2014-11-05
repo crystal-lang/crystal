@@ -1,14 +1,14 @@
 require "spec"
 require "json"
 
-def it_parses_json(string, expected_value)
-  it "parses #{string}" do
+def it_parses_json(string, expected_value, file = __FILE__, line = __LINE__)
+  it "parses #{string}", file, line do
     Json.parse(string).should eq(expected_value)
   end
 end
 
-def it_raises_on_parse_json(string)
-  it "raises on parse #{string}" do
+def it_raises_on_parse_json(string, file = __FILE__, line = __LINE__)
+  it "raises on parse #{string}", file, line do
     expect_raises Json::ParseException do
       Json.parse(string)
     end
