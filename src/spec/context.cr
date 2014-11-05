@@ -20,13 +20,14 @@ module Spec
       @results[:fail].empty? && @results[:error].empty?
     end
 
-    def self.report(kind, full_description, ex = nil)
-      @@contexts_stack.last.report(kind, full_description, ex)
+    def self.report(kind, full_description, file, line, ex = nil)
+      result = Result.new(kind, full_description, file, line, ex)
+      @@contexts_stack.last.report(result)
     end
 
-    def report(kind, full_description, ex = nil)
-      Spec.formatter.report(kind, full_description, ex)
-      @results[kind] << Result.new(kind, full_description, ex)
+    def report(result)
+      Spec.formatter.report(result)
+      @results[result.kind] << result
     end
 
     def self.print_results(elapsed_time)
@@ -52,10 +53,11 @@ module Spec
       failures = @results[:fail]
       errors = @results[:error]
 
-      unless failures.empty? && errors.empty?
+      failures_and_errors = failures + errors
+      unless failures_and_errors.empty?
         puts
         puts "Failures:"
-        (failures + errors).each_with_index do |fail, i|
+        failures_and_errors.each_with_index do |fail, i|
           if ex = fail.exception
             puts
             puts "  #{i + 1}) #{fail.description}"
@@ -99,13 +101,23 @@ module Spec
 
       puts "Finished in #{elapsed_time}"
       puts Spec.color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", final_status)
+
+      unless failures_and_errors.empty?
+        puts
+        puts "Failed examples:"
+        puts
+        failures_and_errors.each do |fail|
+          print "crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}".colorize.red
+          puts " # #{fail.description}".colorize.cyan
+        end
+      end
     end
 
     @@instance = RootContext.new
     @@contexts_stack = [@@instance] of Context
 
-    def self.describe(description)
-      describe = Spec::NestedContext.new(description, @@contexts_stack.last)
+    def self.describe(description, file, line)
+      describe = Spec::NestedContext.new(description, file, line, @@contexts_stack.last)
       @@contexts_stack.push describe
       Spec.formatter.push describe
       yield describe
@@ -125,12 +137,14 @@ module Spec
   class NestedContext < Context
     getter parent
     getter description
+    getter file
+    getter line
 
-    def initialize(@description, @parent)
+    def initialize(@description, @file, @line, @parent)
     end
 
-    def report(kind, description, ex = nil)
-      @parent.report(kind, "#{@description} #{description}", ex)
+    def report(result)
+      @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.exception)
     end
 
     def matches?(pattern)

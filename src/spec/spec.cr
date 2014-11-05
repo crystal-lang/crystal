@@ -3,7 +3,7 @@ require "option_parser"
 require "signal"
 
 module Spec
-  record Result, kind, description, exception
+  record Result, kind, description, file, line, exception
 
   COLORS = {
     success: :green,
@@ -69,13 +69,13 @@ end
 
 require "./*"
 
-def describe(description)
-  Spec::RootContext.describe(description) do |context|
+def describe(description, file = __FILE__, line = __LINE__)
+  Spec::RootContext.describe(description, file, line) do |context|
     yield
   end
 end
 
-def it(description)
+def it(description, file = __FILE__, line = __LINE__)
   return if Spec.aborted?
   return unless Spec.matches?(description)
 
@@ -83,23 +83,23 @@ def it(description)
 
   begin
     yield
-    Spec::RootContext.report(:success, description)
+    Spec::RootContext.report(:success, description, file, line)
   rescue ex : Spec::AssertionFailed
-    Spec::RootContext.report(:fail, description, ex)
+    Spec::RootContext.report(:fail, description, file, line, ex)
     Spec.abort! if Spec.fail_fast?
   rescue ex
-    Spec::RootContext.report(:error, description, ex)
+    Spec::RootContext.report(:error, description, file, line, ex)
     Spec.abort! if Spec.fail_fast?
   end
 end
 
-def pending(description, &block)
+def pending(description, file = __FILE__, line = __LINE__, &block)
   return if Spec.aborted?
   return unless Spec.matches?(description)
 
   Spec.formatter.before_example description
 
-  Spec::RootContext.report(:pending, description)
+  Spec::RootContext.report(:pending, description, file, line)
 end
 
 def assert

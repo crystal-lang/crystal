@@ -9,7 +9,7 @@ module Spec
     def before_example(description)
     end
 
-    def report(kind, full_description, ex)
+    def report(result)
     end
 
     def finish
@@ -17,8 +17,8 @@ module Spec
   end
 
   class DotFormatter < Formatter
-    def report(kind, full_description, ex)
-      print! Spec.color(LETTERS[kind], kind)
+    def report(result)
+      print! Spec.color(LETTERS[result.kind], result.kind)
     end
 
     def finish
@@ -52,10 +52,10 @@ module Spec
       @last_description = description
     end
 
-    def report(kind, description, ex)
+    def report(result)
       print '\r'
       print_ident
-      puts Spec.color(@last_description, kind)
+      puts Spec.color(@last_description, result.kind)
     end
   end
 
