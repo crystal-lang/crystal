@@ -67,6 +67,8 @@ class Object
 
   macro getter(*names)
     {% for name in names %}
+      {% name = name.var if name.is_a?(DeclareVar) %}
+
       def {{name.id}}
         @{{name.id}}
       end
@@ -75,6 +77,8 @@ class Object
 
   macro getter!(*names)
     {% for name in names %}
+      {% name = name.var if name.is_a?(DeclareVar) %}
+
       def {{name.id}}?
         @{{name.id}}
       end
@@ -87,6 +91,8 @@ class Object
 
   macro getter?(*names)
     {% for name in names %}
+      {% name = name.var if name.is_a?(DeclareVar) %}
+
       def {{name.id}}?
         @{{name.id}}
       end
@@ -95,8 +101,13 @@ class Object
 
   macro setter(*names)
     {% for name in names %}
-      def {{name.id}}=(@{{name.id}})
-      end
+      {% if name.is_a?(DeclareVar) %}
+        def {{name.var.id}}=(@{{name.var.id}} : {{name.type}})
+        end
+      {% else %}
+        def {{name.id}}=(@{{name.id}})
+        end
+      {% end %}
     {% end %}
   end
 
