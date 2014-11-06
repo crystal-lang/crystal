@@ -5,7 +5,7 @@
 * Added `crystal spec file:line`
 * Properties (property, setter, getter) can now be restricted to a type with the syntax `property name :: Type`.
 * Removed the distinction between `lib` enums and regular enums.
-* Fixed: it was incorrectly possible to define `class`, `def`, etc. inside a cal block.
+* Fixed: it was incorrectly possible to define `class`, `def`, etc. inside a call block.
 
 ## 0.5.2 (2014-11-04)
 
