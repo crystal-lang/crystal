@@ -4,7 +4,7 @@ CRYSTAL_DIR="$SCRIPT_ROOT/.build"
 if [ -x $CRYSTAL_DIR/crystal ]
 then
   echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
-  CRYSTAL_BIN="$CRYSTAL_DIR/crystal" crystal "$@"
+  $CRYSTAL_DIR/crystal "$@"
 else
   crystal "$@"
 fi
