@@ -738,6 +738,24 @@ describe "Array" do
     a.should eq([1, 4, 3])
   end
 
+  it "does <=>" do
+    a = [1, 2, 3]
+    b = [4, 5, 6]
+    c = [1, 2]
+    ((a <=> b) < 0).should be_true
+    ((a <=> c) > 0).should be_true
+    ((b <=> c) > 0).should be_true
+    ((b <=> a) > 0).should be_true
+    ((c <=> a) < 0).should be_true
+    ((c <=> b) < 0).should be_true
+    (a <=> a).should eq(0)
+
+    (([8] <=> [1, 2, 3]) > 0).should be_true
+    (([8] <=> [8, 1, 2]) < 0).should be_true
+
+    [[1, 2, 3], [4, 5], [8], [1, 2, 3, 4]].sort.should eq([[1, 2, 3], [1, 2, 3, 4], [4, 5], [8]])
+  end
+
   describe "zip" do
     describe "when a block is provided" do
       it "yields pairs of self's elements and passed array" do

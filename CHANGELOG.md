@@ -7,6 +7,7 @@
 * Removed the distinction between `lib` enums and regular enums.
 * Fixed: it was incorrectly possible to define `class`, `def`, etc. inside a call block.
 * The syntax for specifying the base type of an enum, `enum Name < BaseType` has been deprecated. Use `enum Name : BaseType`.
+* Added `Array#<=>` and make it comparable to other arrays.
 
 ## 0.5.2 (2014-11-04)
 

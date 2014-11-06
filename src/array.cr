@@ -1,5 +1,6 @@
 class Array(T)
   include Enumerable
+  include Comparable(Array)
 
   getter length
 
@@ -31,6 +32,19 @@ class Array(T)
 
   def ==(other : Array)
     equals?(other) { |x, y| x == y }
+  end
+
+  def ==(other)
+    false
+  end
+
+  def <=>(other : Array)
+    min_length = Math.min(length, other.length)
+    0.upto(min_length - 1) do |i|
+      n = buffer[i] <=> other.buffer[i]
+      return n if n != 0
+    end
+    length <=> other.length
   end
 
   def &(other : Array(U))
