@@ -3792,12 +3792,14 @@ module Crystal
 
       next_token_skip_space
       case @token.type
-      when :"<", :":"
+      when :":"
         next_token_skip_space_or_newline
         base_type = parse_single_type
         skip_statement_end
+      when :";", :NEWLINE
+        skip_statement_end
       else
-        next_token_skip_statement_end
+        unexpected_token
       end
 
       members = [] of ASTNode

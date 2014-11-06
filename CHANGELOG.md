@@ -1,4 +1,4 @@
-## Next
+## 0.5.3
 
 * Spec: when a `should` or `should_not` fail, the filename and line number, including the source's line, is included in the error message.
 * Spec: added `-l` switch to be able to run a spec defined in a line.
@@ -6,6 +6,7 @@
 * Properties (property, setter, getter) can now be restricted to a type with the syntax `property name :: Type`.
 * Removed the distinction between `lib` enums and regular enums.
 * Fixed: it was incorrectly possible to define `class`, `def`, etc. inside a call block.
+* The syntax for specifying the base type of an enum, `enum Name < BaseType` has been deprecated. Use `enum Name : BaseType`.
 
 ## 0.5.2 (2014-11-04)
 

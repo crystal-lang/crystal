@@ -72,31 +72,15 @@ def assert_after_type_inference(before, after)
   result.node.to_s.strip.should eq(after.strip)
 end
 
-def assert_syntax_error(str)
-  it "says syntax error on #{str.inspect}" do
-    expect_raises Crystal::SyntaxException do
-      parse str
-    end
-  end
-end
-
-def assert_syntax_error(str, message)
-  it "says syntax error on #{str.inspect}" do
-    expect_raises Crystal::SyntaxException, message do
-      parse str
-    end
-  end
-end
-
-def assert_syntax_error(str, message, line, column)
-  it "says syntax error on #{str.inspect}" do
+def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__)
+  it "says syntax error on #{str.inspect}", metafile, metaline do
     begin
-      Parser.parse(str)
+      parse str
       fail "expected SyntaxException to be raised"
     rescue ex : SyntaxException
-      ex.message.not_nil!.includes?(message).should be_true
-      ex.line_number.should eq(line)
-      ex.column_number.should eq(column)
+      ex.message.not_nil!.includes?(message).should be_true if message
+      ex.line_number.should eq(line) if line
+      ex.column_number.should eq(column) if column
     end
   end
 end

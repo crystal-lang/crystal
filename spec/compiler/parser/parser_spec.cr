@@ -555,7 +555,6 @@ describe "Parser" do
   it_parses "lib C; union Foo; end end", LibDef.new("C", [UnionDef.new("Foo")] of ASTNode)
   it_parses "lib C; enum Foo; A\nB, C\nD = 1; end end", LibDef.new("C", [EnumDef.new("Foo", [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
   it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new("C", [EnumDef.new("Foo", [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
-  it_parses "lib C; enum Foo < UInt16; end end", LibDef.new("C", [EnumDef.new("Foo", base_type: "UInt16".path)] of ASTNode)
   it_parses "lib C; Foo = 1; end", LibDef.new("C", [Assign.new("Foo".path, 1.int32)] of ASTNode)
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", [FunDef.new("getch", real_name: "GetChar")] of ASTNode)
   it_parses %(lib C\nfun getch = "get.char"\nend), LibDef.new("C", [FunDef.new("getch", real_name: "get.char")] of ASTNode)
@@ -871,7 +870,6 @@ describe "Parser" do
 
   it_parses "enum Foo; A\nB, C\nD = 1; end", EnumDef.new("Foo", [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
   it_parses "enum Foo; A = 1, B; end", EnumDef.new("Foo", [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
-  it_parses "enum Foo < UInt16; end", EnumDef.new("Foo", base_type: "UInt16".path)
   it_parses "enum Foo : UInt16; end", EnumDef.new("Foo", base_type: "UInt16".path)
   it_parses "enum Foo; def foo; 1; end; end", EnumDef.new("Foo", [Def.new("foo", body: 1.int32)] of ASTNode)
   it_parses "enum Foo; A = 1\ndef foo; 1; end; end", EnumDef.new("Foo", [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32)] of ASTNode)
@@ -879,7 +877,7 @@ describe "Parser" do
   it_parses "enum Foo; A = 1\ndef self.foo; 1; end\nend", EnumDef.new("Foo", [Arg.new("A", 1.int32), Def.new("foo", receiver: "self".var, body: 1.int32)] of ASTNode)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
-    assert_syntax_error "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
+    assert_syntax_error "def foo\n#{keyword}\nend"
   end
 
   it "keeps instance variables declared in def" do
@@ -952,6 +950,7 @@ describe "Parser" do
   assert_syntax_error "Set {1, 2, 3} of Int32"
   assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
   assert_syntax_error "case foo; end"
+  assert_syntax_error "enum Foo < UInt16; end"
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end

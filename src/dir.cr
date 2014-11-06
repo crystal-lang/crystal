@@ -76,7 +76,7 @@ lib C
 end
 
 class Dir
-  enum Type < UInt8
+  enum Type : UInt8
     UNKNOWN = 0
     FIFO = 1
     CHR = 2

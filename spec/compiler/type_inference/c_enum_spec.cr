@@ -37,11 +37,11 @@ describe "Type inference: c enum" do
   end
 
   it "types enum value with base type" do
-    assert_type("lib Foo; enum Bar < Int16; X; end; end; Foo::Bar::X") { types["Foo"].types["Bar"] }
+    assert_type("lib Foo; enum Bar : Int16; X; end; end; Foo::Bar::X") { types["Foo"].types["Bar"] }
   end
 
   it "errors if enum base type is not an integer" do
-    assert_error "lib Foo; enum Bar < Float32; X; end; end; Foo::Bar::X",
+    assert_error "lib Foo; enum Bar : Float32; X; end; end; Foo::Bar::X",
       "enum base type must be an integer type"
   end
 end

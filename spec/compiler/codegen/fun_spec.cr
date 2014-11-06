@@ -248,7 +248,7 @@ describe "Code gen: fun" do
   it "allows fun type of enum type with base type" do
     run("
       lib Foo
-        enum MyEnum < UInt16
+        enum MyEnum : UInt16
           X = 1
         end
       end
