@@ -16,11 +16,11 @@ struct LLVM::Function
   end
 
   def add_attribute(attribute)
-    LibLLVM.add_function_attr self, attribute.value
+    LibLLVM.add_function_attr self, attribute
   end
 
   def attributes
-    Attribute.new LibLLVM.get_function_attr(self)
+    LibLLVM.get_function_attr(self)
   end
 
   def function_type

@@ -1454,7 +1454,7 @@ module Crystal
         # If the argument is out the type might be a struct but we don't pass anything byval
         next if call_args[i]?.try &.is_a?(Out)
 
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal.value)
+        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
       end
     end
 
@@ -1464,7 +1464,7 @@ module Crystal
       arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
       arg_types.try &.each_with_index do |arg_type, i|
         next unless arg_type.passed_by_value?
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal.value)
+        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
       end
     end
 

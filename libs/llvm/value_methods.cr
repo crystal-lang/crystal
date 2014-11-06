@@ -13,11 +13,11 @@ module LLVM::ValueMethods
   end
 
   def add_attribute(attribute)
-    LibLLVM.add_attribute self, attribute.value
+    LibLLVM.add_attribute self, attribute
   end
 
   def attributes
-    Attribute.new LibLLVM.get_attribute(self)
+    LibLLVM.get_attribute(self)
   end
 
   def constant?
@@ -37,11 +37,11 @@ module LLVM::ValueMethods
   end
 
   def linkage=(linkage)
-    LibLLVM.set_linkage(self, linkage.value)
+    LibLLVM.set_linkage(self, linkage)
   end
 
   def linkage
-    LLVM::Linkage.new LibLLVM.get_linkage(self)
+    LibLLVM.get_linkage(self)
   end
 
   def global_constant=(global_constant)
