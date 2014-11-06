@@ -8,6 +8,9 @@ class JsonPerson
   })
 
   def_equals name, age
+
+  def initialize(@name : String)
+  end
 end
 
 class StrictJsonPerson
@@ -96,5 +99,11 @@ describe "Json mapping" do
     json.value.is_a?(Time).should be_true
     json.value.to_s.should eq("2014-10-31 23:37:16")
     json.to_json.should eq(%({"value":"2014-10-31 23:37:16"}))
+  end
+
+  it "allows setting a nilable property to nil" do
+    person = JsonPerson.new("John")
+    person.age = 1
+    person.age = nil
   end
 end

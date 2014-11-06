@@ -1,6 +1,8 @@
 class Object
   macro json_mapping(properties, strict = false)
-    property {{*properties.keys}}
+    {% for key, value in properties %}
+      property {{key.id}} :: {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+    {% end %}
 
     def initialize(_pull : Json::PullParser)
       {% for key, value in properties %}
