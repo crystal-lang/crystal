@@ -62,8 +62,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def create_match_fun_body(type : VirtualType, type_id)
     min_max = @llvm_id.min_max_type_id(type.base_type).not_nil!
     ret(
-      and (builder.icmp LibLLVM::IntPredicate::SGE, type_id, int(min_max[0])),
-                   (builder.icmp LibLLVM::IntPredicate::SLE, type_id, int(min_max[1]))
+      and (builder.icmp LLVM::IntPredicate::SGE, type_id, int(min_max[0])),
+                   (builder.icmp LLVM::IntPredicate::SLE, type_id, int(min_max[1]))
                 )
   end
 

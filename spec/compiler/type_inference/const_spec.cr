@@ -195,7 +195,7 @@ describe "Type inference: const" do
       end
 
       C::Foo::A
-      )) { int32 }
+      )) { types["C"].types["Foo"] }
   end
 
   it "errors if constant depends on a global initialized later" do

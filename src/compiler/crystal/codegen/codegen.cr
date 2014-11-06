@@ -706,7 +706,7 @@ module Crystal
         if @llvm_mod == @main_mod
           ptr.initializer = llvm_type.null
         else
-          ptr.linkage = LibLLVM::Linkage::External
+          ptr.linkage = LLVM::Linkage::External
 
           # Define it in main if it's not already defined
           main_ptr = @main_mod.globals[name]?
@@ -856,7 +856,7 @@ module Crystal
       var = @llvm_mod.globals[name]?
       unless var
         var = llvm_mod.globals.add(llvm_c_type(type), name)
-        var.linkage = LibLLVM::Linkage::External
+        var.linkage = LLVM::Linkage::External
         var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       end
       var
@@ -1454,7 +1454,7 @@ module Crystal
         # If the argument is out the type might be a struct but we don't pass anything byval
         next if call_args[i]?.try &.is_a?(Out)
 
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
+        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal.value)
       end
     end
 
@@ -1464,7 +1464,7 @@ module Crystal
       arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
       arg_types.try &.each_with_index do |arg_type, i|
         next unless arg_type.passed_by_value?
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
+        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal.value)
       end
     end
 
@@ -1966,7 +1966,7 @@ module Crystal
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
         global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name)
-        global.linkage = LibLLVM::Linkage::Private
+        global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = LLVM.struct [
                                type_id(@mod.string),

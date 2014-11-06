@@ -57,11 +57,11 @@ struct LLVM::Type
   end
 
   def kind
-    LibLLVM.get_type_kind(self)
+    Kind.new LibLLVM.get_type_kind(self)
   end
 
   def void?
-    kind == LibLLVM::TypeKind::Void
+    kind == Kind::Void
   end
 
   def null

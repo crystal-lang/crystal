@@ -250,16 +250,6 @@ module Crystal
     end
   end
 
-  class IntegerType
-    def restrict(other : EnumType, context)
-      if other.c_enum?
-        self == other.base_type ? self : nil
-      else
-        super
-      end
-    end
-  end
-
   class UnionType
     def is_restriction_of?(type, owner)
       self == type || union_types.any? &.is_restriction_of?(type, owner)

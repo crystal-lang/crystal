@@ -7,16 +7,8 @@ struct LLVM::Function
     BasicBlockCollection.new self
   end
 
-  def linkage=(linkage)
-    LibLLVM.set_linkage(self, linkage)
-  end
-
-  def linkage
-    LibLLVM.get_linkage(self)
-  end
-
   def call_convention
-    LibLLVM.get_function_call_convention(self)
+    LLVM::CallConvention.new LibLLVM.get_function_call_convention(self)
   end
 
   def call_convention=(cc)
@@ -24,7 +16,11 @@ struct LLVM::Function
   end
 
   def add_attribute(attribute)
-    LibLLVM.add_function_attr self, attribute
+    LibLLVM.add_function_attr self, attribute.value
+  end
+
+  def attributes
+    Attribute.new LibLLVM.get_function_attr(self)
   end
 
   def function_type

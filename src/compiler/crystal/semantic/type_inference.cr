@@ -1695,11 +1695,10 @@ module Crystal
         enum_base_type = @mod.int32
       end
 
-      is_lib = current_type.is_a?(LibType)
       is_flags = node.has_attribute?("Flags")
       all_value = 0_u64
       existed = !!enum_type
-      enum_type ||= EnumType.new(@mod, current_type, node.name, enum_base_type, is_lib, is_flags)
+      enum_type ||= EnumType.new(@mod, current_type, node.name, enum_base_type, is_flags)
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0
@@ -1720,7 +1719,7 @@ module Crystal
               member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
             end
             enum_type.add_constant member
-            const_value.type = enum_type unless is_lib
+            const_value.type = enum_type
             counter = is_flags ? counter * 2 : counter + 1
           when Def
             member.accept self
@@ -1732,13 +1731,13 @@ module Crystal
         if is_flags
           unless enum_type.types["None"]?
             none = NumberLiteral.new(0, enum_base_type.kind)
-            none.type = enum_type unless is_lib
+            none.type = enum_type
             enum_type.add_constant Arg.new("None", default_value: none)
           end
 
           unless enum_type.types["All"]?
             all = NumberLiteral.new(all_value, enum_base_type.kind)
-            all.type = enum_type unless is_lib
+            all.type = enum_type
             enum_type.add_constant Arg.new("All", default_value: all)
           end
         end
@@ -2690,9 +2689,7 @@ module Crystal
         node.raise msg
       end
 
-      if type.c_enum?
-        type = @mod.int32
-      elsif type.is_a?(TypeDefType) && type.typedef.fun?
+      if type.is_a?(TypeDefType) && type.typedef.fun?
         type = type.typedef
       end
 

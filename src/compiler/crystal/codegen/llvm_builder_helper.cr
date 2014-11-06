@@ -41,11 +41,11 @@ module Crystal
     end
 
     def equal?(value1, value2)
-      builder.icmp LibLLVM::IntPredicate::EQ, value1, value2
+      builder.icmp LLVM::IntPredicate::EQ, value1, value2
     end
 
     def not_equal?(value1, value2)
-      builder.icmp LibLLVM::IntPredicate::NE, value1, value2
+      builder.icmp LLVM::IntPredicate::NE, value1, value2
     end
 
     def null_pointer?(value)

@@ -19,18 +19,6 @@ lib C
     end
   end
 
-  enum DirType
-    UNKNOWN = 0_u8
-    FIFO = 1_u8
-    CHR = 2_u8
-    DIR = 4_u8
-    BLK = 6_u8
-    REG = 8_u8
-    LNK = 10_u8
-    SOCK = 12_u8
-    WHT = 14_u8
-  end
-
   ifdef linux
     struct Glob
       pathc : C::SizeT
@@ -83,11 +71,23 @@ lib C
     fun readdir = readdir64(dir : Dir*) : DirEntry*
   end
 
-  fun glob(pattern : UInt8*, flags : Int32, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
+  fun glob(pattern : UInt8*, flags : GlobFlags, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
   fun globfree(result : Glob*)
 end
 
 class Dir
+  enum Type < UInt8
+    UNKNOWN = 0
+    FIFO = 1
+    CHR = 2
+    DIR = 4
+    BLK = 6
+    REG = 8
+    LNK = 10
+    SOCK = 12
+    WHT = 14
+  end
+
   def self.working_directory
     dir = C.getcwd(nil, 0)
     String.new(dir).tap { C.free(dir as Void*) }
@@ -101,7 +101,7 @@ class Dir
 
     begin
       while ent = C.readdir(dir)
-        yield String.new(ent.value.name.buffer), ent.value.type
+        yield String.new(ent.value.name.buffer), Type.new(ent.value.type)
       end
     ensure
       C.closedir(dir)

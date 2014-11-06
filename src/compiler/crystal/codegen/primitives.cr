@@ -84,28 +84,28 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_binary_op(op, t1 : BoolType, t2 : BoolType, p1, p2)
     case op
-    when "==" then builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-    when "!=" then builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+    when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
     else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
     case op
-    when "==" then return builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LibLLVM::IntPredicate::NE, p1, p2
-    when "<" then return builder.icmp LibLLVM::IntPredicate::ULT, p1, p2
-    when "<=" then return builder.icmp LibLLVM::IntPredicate::ULE, p1, p2
-    when ">" then return builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
-    when ">=" then return builder.icmp LibLLVM::IntPredicate::UGE, p1, p2
+    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+    when "<" then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
+    when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
+    when ">" then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
+    when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
     else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
     case op
-    when "==" then return builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
     else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
@@ -130,12 +130,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
             when "|" then or(p1, p2)
             when "&" then and(p1, p2)
             when "^" then builder.xor(p1, p2)
-            when "==" then return builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
-            when "!=" then return builder.icmp LibLLVM::IntPredicate::NE, p1, p2
-            when "<" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLT : LibLLVM::IntPredicate::ULT), p1, p2
-            when "<=" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLE : LibLLVM::IntPredicate::ULE), p1, p2
-            when ">" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
-            when ">=" then return builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGE : LibLLVM::IntPredicate::UGE), p1, p2
+            when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+            when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+            when "<" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLT : LLVM::IntPredicate::ULT), p1, p2
+            when "<=" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLE : LLVM::IntPredicate::ULE), p1, p2
+            when ">" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGT : LLVM::IntPredicate::UGT), p1, p2
+            when ">=" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGE : LLVM::IntPredicate::UGE), p1, p2
             else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
 
@@ -168,12 +168,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
             when "-" then builder.fsub p1, p2
             when "*" then builder.fmul p1, p2
             when "/" then builder.fdiv p1, p2
-            when "==" then return builder.fcmp LibLLVM::RealPredicate::OEQ, p1, p2
-            when "!=" then return builder.fcmp LibLLVM::RealPredicate::ONE, p1, p2
-            when "<" then return builder.fcmp LibLLVM::RealPredicate::OLT, p1, p2
-            when "<=" then return builder.fcmp LibLLVM::RealPredicate::OLE, p1, p2
-            when ">" then return builder.fcmp LibLLVM::RealPredicate::OGT, p1, p2
-            when ">=" then return builder.fcmp LibLLVM::RealPredicate::OGE, p1, p2
+            when "==" then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
+            when "!=" then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "<" then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
+            when "<=" then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
+            when ">" then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
+            when ">=" then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
             else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank

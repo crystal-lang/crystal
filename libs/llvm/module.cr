@@ -30,7 +30,7 @@ struct LLVM::Module
   end
 
   def verify
-    if LibLLVM.verify_module(self, LibLLVM::VerifierFailureAction::ReturnStatusAction, out message) == 1
+    if LibLLVM.verify_module(self, LLVM::VerifierFailureAction::ReturnStatusAction.value, out message) == 1
       raise "Module validation failed: #{String.new(message)}"
     end
   end

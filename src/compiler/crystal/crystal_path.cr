@@ -60,7 +60,7 @@ module Crystal
       dirs = [] of String
 
       Dir.list(dir) do |filename, type|
-        if type == C::DirType::DIR
+        if type == Dir::Type::DIR
           if filename != "." && filename != ".." && recursive
             dirs << filename
           end

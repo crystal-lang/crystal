@@ -71,4 +71,32 @@ describe "Code gen: lib" do
       C.x.call
       ))
   end
+
+  it "can use enum as fun argument" do
+    build(%(
+      enum Foo
+        A
+      end
+
+      lib C
+        fun foo(x : Foo)
+      end
+
+      C.foo(Foo::A)
+      ))
+  end
+
+  it "can use enum as fun return" do
+    build(%(
+      enum Foo
+        A
+      end
+
+      lib C
+        fun foo : Foo
+      end
+
+      C.foo
+      ))
+  end
 end

@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Type inference: c enum" do
   it "types enum value" do
-    assert_type("lib Foo; enum Bar; X, Y, Z = 10, W; end; end; Foo::Bar::X") { int32 }
+    assert_type("lib Foo; enum Bar; X, Y, Z = 10, W; end; end; Foo::Bar::X") { types["Foo"].types["Bar"] }
   end
 
   it "allows using an enum as a type in a fun" do
@@ -16,7 +16,7 @@ describe "Type inference: c enum" do
       end
 
       C.my_mega_function(C::Foo::A)
-    ") { int32 }
+    ") { types["C"].types["Foo"] }
   end
 
   it "allows using an enum as a type in a struct" do
@@ -33,11 +33,11 @@ describe "Type inference: c enum" do
       f = C::Bar.new
       f.x = C::Foo::A
       f.x
-    ") { int32 }
+    ") { types["C"].types["Foo"] }
   end
 
   it "types enum value with base type" do
-    assert_type("lib Foo; enum Bar < Int16; X; end; end; Foo::Bar::X") { int16 }
+    assert_type("lib Foo; enum Bar < Int16; X; end; end; Foo::Bar::X") { types["Foo"].types["Bar"] }
   end
 
   it "errors if enum base type is not an integer" do

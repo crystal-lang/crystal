@@ -34,7 +34,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     )
     func.params.to_a.zip(new_fun.params.to_a) do |p1, p2|
       val = p1.attributes
-      p2.add_attribute val if val != 0
+      p2.add_attribute val if val.value != 0
     end
     new_fun
   end
@@ -162,24 +162,24 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       llvm_return_type,
       target_def.varargs,
     )
-    context.fun.add_attribute LibLLVM::Attribute::NoReturn if target_def.no_returns?
+    context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
 
     no_inline = false
     target_def.attributes.try &.each do |attribute|
       case attribute.name
       when "NoInline"
-        context.fun.add_attribute LibLLVM::Attribute::NoInline
-        context.fun.linkage = LibLLVM::Linkage::External
+        context.fun.add_attribute LLVM::Attribute::NoInline
+        context.fun.linkage = LLVM::Linkage::External
         no_inline = true
       when "AlwaysInline"
-        context.fun.add_attribute LibLLVM::Attribute::AlwaysInline
+        context.fun.add_attribute LLVM::Attribute::AlwaysInline
       when "ReturnsTwice"
-        context.fun.add_attribute LibLLVM::Attribute::ReturnsTwice
+        context.fun.add_attribute LLVM::Attribute::ReturnsTwice
       end
     end
 
     if @single_module && !target_def.is_a?(External) && !no_inline
-      context.fun.linkage = LibLLVM::Linkage::Internal
+      context.fun.linkage = LLVM::Linkage::Internal
     end
 
     args.each_with_index do |arg, i|
@@ -190,7 +190,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
       if arg.type.passed_by_value?
         if (is_fun_literal && !is_closure) || (is_closure || !(i == 0 && self_type.struct?))
-          param.add_attribute LibLLVM::Attribute::ByVal
+          param.add_attribute LLVM::Attribute::ByVal
         end
       end
     end

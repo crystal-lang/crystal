@@ -1,3 +1,5 @@
+require "enums"
+
 @[Link("stdc++")]
 @[Link(ldflags: "`(llvm-config-3.5 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config --libs --system-libs --ldflags 2>/dev/null)`")]
 lib LibLLVM
@@ -16,164 +18,25 @@ lib LibLLVM
   type PassManagerRef = Void*
   type PassRegistryRef = Void*
 
-  enum Attribute
-    ZExt            =  1 << 0
-    SExt            =  1 << 1
-    NoReturn        =  1 << 2
-    InReg           =  1 << 3
-    StructRet       =  1 << 4
-    NoUnwind        =  1 << 5
-    NoAlias         =  1 << 6
-    ByVal           =  1 << 7
-    Nest            =  1 << 8
-    ReadNone        =  1 << 9
-    ReadOnly        =  1 << 10
-    NoInline        =  1 << 11
-    AlwaysInline    =  1 << 12
-    OptimizeForSize =  1 << 13
-    StackProtect    =  1 << 14
-    StackProtectReq =  1 << 15
-    Alignment       = 31 << 16
-    NoCapture       =  1 << 21
-    NoRedZone       =  1 << 22
-    NoImplicitFloat =  1 << 23
-    Naked           =  1 << 24
-    InlineHint      =  1 << 25
-    StackAlignment  =  7 << 26
-    ReturnsTwice    =  1 << 29
-    UWTable         =  1 << 30
-    NonLazyBind     =  1 << 31
-    # AddressSafety = 1_u64 << 32,
-    # StackProtectStrong = 1_u64 << 33
-  end
-
-  enum Linkage
-    External
-    AvailableExternally
-    LinkOnceAny
-    LinkOnceODR
-    LinkOnceODRAutoHide
-    WeakAny
-    WeakODR
-    Appending
-    Internal
-    Private
-    DLLImport
-    DLLExport
-    ExternalWeak
-    Ghost
-    Common
-    LinkerPrivate
-    LinkerPrivateWeak
-  end
-
-  enum IntPredicate
-    EQ = 32
-    NE
-    UGT
-    UGE
-    ULT
-    ULE
-    SGT
-    SGE
-    SLT
-    SLE
-  end
-
-  enum RealPredicate
-    PredicateFalse
-    OEQ
-    OGT
-    OGE
-    OLT
-    OLE
-    ONE
-    ORD
-    UNO
-    UEQ
-    UGT
-    UGE
-    ULT
-    ULE
-    UNE
-    PredicateTrue
-  end
-
-  enum TypeKind
-    Void
-    Half
-    Float
-    Double
-    X86_FP80
-    FP128
-    PPC_FP128
-    Label
-    Integer
-    Function
-    Struct
-    Array
-    Pointer
-    Vector
-    Metadata
-    X86_MMX
-  end
-
-  enum CodeGenOptLevel
-    None
-    Less
-    Default
-    Aggressive
-  end
-
-  enum CodeGenFileType
-    AssemblyFile
-    ObjectFile
-  end
-
-  enum RelocMode
-    Default
-    Static
-    PIC
-    DynamicNoPIC
-  end
-
-  enum CodeModel
-    Default
-    JITDefault
-    Small
-    Kernel
-    Medium
-    Large
-  end
-
-  enum VerifierFailureAction
-    AbortProcessAction   # verifier will print to stderr and abort()
-    PrintMessageAction   # verifier will print to stderr and return 1
-    ReturnStatusAction   # verifier will just return 1
-  end
-
-  enum CallConvention
-    C           = 0
-    Fast        = 8
-    Cold        = 9
-    WebKitJS    = 12
-    AnyReg      = 13
-    X86Std  = 64
-    X86Fastcall = 65
-  end
-
   struct JITCompilerOptions
     opt_level : UInt32
-    code_model : CodeModel
+    code_model : Int32 # TODO LLVM::CodeModel after 0.5.2
     no_frame_pointer_elim : Int32
     enable_fast_isel : Int32
   end
 
+  # TODO: use enums after 0.5.2 (right now enums outside libs are not valid as C types, but after 0.5.2 they will)
+
+  # fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : LLVM::Attribute)
   fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : Int32)
-  fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : Attribute)
+  # fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : LLVM::Attribute)
+  fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : Int32)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
+  # fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
   fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : Int32)
+  # fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
+  fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : Int32
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
@@ -191,7 +54,8 @@ lib LibLLVM
   fun build_exact_sdiv = LLVMBuildExactSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : UInt8*) : ValueRef
   fun build_fadd = LLVMBuildFAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
-  fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : RealPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
+  # fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : LLVM::RealPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
+  fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : Int32, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_fp2si = LLVMBuildFPToSI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
@@ -202,7 +66,8 @@ lib LibLLVM
   fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
   fun build_inbounds_gep = LLVMBuildInBoundsGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
   fun build_global_string_ptr = LLVMBuildGlobalStringPtr(builder : BuilderRef, str : UInt8*, name : UInt8*) : ValueRef
-  fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
+  # fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : LLVM::IntPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
+  fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : Int32, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
   fun build_invoke = LLVMBuildInvoke(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
   fun build_landing_pad = LLVMBuildLandingPad(builder : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt32, name : UInt8*) : ValueRef
@@ -247,19 +112,22 @@ lib LibLLVM
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
-  fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : CodeGenOptLevel, reloc : RelocMode, code_model : CodeModel) : TargetMachineRef
+  # fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
+  fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : Int32, reloc : Int32, code_model : Int32) : TargetMachineRef
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
   fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
   fun double_type = LLVMDoubleType : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
-  fun target_machine_emit_to_file = LLVMTargetMachineEmitToFile(t : TargetMachineRef, m : ModuleRef, filename : UInt8*, codegen : CodeGenFileType, error_msg : UInt8**) : Int32
+  # fun target_machine_emit_to_file = LLVMTargetMachineEmitToFile(t : TargetMachineRef, m : ModuleRef, filename : UInt8*, codegen : LLVM::CodeGenFileType, error_msg : UInt8**) : Int32
+  fun target_machine_emit_to_file = LLVMTargetMachineEmitToFile(t : TargetMachineRef, m : ModuleRef, filename : UInt8*, codegen : Int32, error_msg : UInt8**) : Int32
   fun float_type = LLVMFloatType : TypeRef
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
-  fun get_attribute = LLVMGetAttribute(arg : ValueRef) : Attribute
+  # fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
+  fun get_attribute = LLVMGetAttribute(arg : ValueRef) : Int32
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
@@ -276,7 +144,8 @@ lib LibLLVM
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
-  fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : TypeKind
+  # fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
+  fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : Int32
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
   fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
@@ -319,8 +188,10 @@ lib LibLLVM
   fun is_global_constant = LLVMIsGlobalConstant(global : ValueRef) : Int32
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun get_initializer = LLVMGetInitializer(global_var : ValueRef) : ValueRef
-  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
-  fun get_linkage = LLVMGetLinkage(global : ValueRef) : Linkage
+  # fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : LLVM::Linkage)
+  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Int32)
+  # fun get_linkage = LLVMGetLinkage(global : ValueRef) : LLVM::Linkage
+  fun get_linkage = LLVMGetLinkage(global : ValueRef) : Int32
   fun set_metadata = LLVMSetMetadata(value : ValueRef, kind_id : UInt32, node : ValueRef)
   fun set_target = LLVMSetTarget(mod : ModuleRef, triple : UInt8*)
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
@@ -334,7 +205,8 @@ lib LibLLVM
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
   fun void_type = LLVMVoidType : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : UInt8*) : Int32
-  fun verify_module = LLVMVerifyModule(module : ModuleRef, action : VerifierFailureAction, outmessage : UInt8**) : Int32
+  # fun verify_module = LLVMVerifyModule(module : ModuleRef, action : LLVM::VerifierFailureAction, outmessage : UInt8**) : Int32
+  fun verify_module = LLVMVerifyModule(module : ModuleRef, action : Int32, outmessage : UInt8**) : Int32
   fun link_in_jit = LLVMLinkInJIT
   fun link_in_mc_jit = LLVMLinkInMCJIT
   fun start_multithreaded = LLVMStartMultithreaded : Int32
@@ -362,7 +234,8 @@ lib LibLLVM
   fun print_module_to_string = LLVMPrintModuleToString(mod : ModuleRef) : UInt8*
   fun print_type_to_string = LLVMPrintTypeToString(ty : TypeRef) : UInt8*
   fun print_value_to_string = LLVMPrintValueToString(v : ValueRef) : UInt8*
-  fun get_linkage = LLVMGetLinkage(v : ValueRef) : Linkage
-  fun get_function_call_convention = LLVMGetFunctionCallConv(fn : ValueRef) : CallConvention
-  fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : CallConvention)
+  # fun get_function_call_convention = LLVMGetFunctionCallConv(fn : ValueRef) : LLVM::CallConvention
+  fun get_function_call_convention = LLVMGetFunctionCallConv(fn : ValueRef) : Int32
+  # fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : LLVM::CallConvention)
+  fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : Int32)
 end

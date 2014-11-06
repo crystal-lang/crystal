@@ -86,10 +86,6 @@ module Crystal
       false
     end
 
-    def c_enum?
-      false
-    end
-
     def primitive_like?
       false
     end
@@ -2229,7 +2225,7 @@ module Crystal
     getter base_type
     getter? flags
 
-    def initialize(program, container, name, @base_type, @c_enum, @flags)
+    def initialize(program, container, name, @base_type, @flags)
       super(program, container, name)
 
       add_def Def.new("value", [] of Arg, Primitive.new(:enum_value, @base_type))
@@ -2244,12 +2240,8 @@ module Crystal
       @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
     end
 
-    def c_enum?
-      @c_enum
-    end
-
     def primitive_like?
-      c_enum?
+      true
     end
 
     def type_desc

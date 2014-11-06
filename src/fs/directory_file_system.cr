@@ -11,9 +11,9 @@ module FS
 
     def entry?(path)
       if Dir.exists?(scoped_file_name(path))
-        return create_entry(path, C::DirType::DIR)
+        return create_entry(path, Dir::Type::DIR)
       elsif File.exists?(scoped_file_name(path))
-        return create_entry(path, C::DirType::REG)
+        return create_entry(path, Dir::Type::REG)
       else
         nil
       end
@@ -33,10 +33,11 @@ module FS
     end
 
     private def create_entry(entry, type)
-      if type == C::DirType::DIR
+      case type
+      when Dir::Type::DIR
         DirectoryEntry.new(self, entry)
       # else
-      elsif type == C::DirType::REG
+      when Dir::Type::REG
         FileEntry.new(self, entry)
       else
         raise "not implemented"

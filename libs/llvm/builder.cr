@@ -94,7 +94,7 @@ struct LLVM::Builder
 
   {% for name in %w(icmp fcmp) %}
     def {{name.id}}(op, lhs, rhs, name = "")
-      Value.new LibLLVM.build_{{name.id}}(self, op, lhs, rhs, name)
+      Value.new LibLLVM.build_{{name.id}}(self, op.value, lhs, rhs, name)
     end
   {% end %}
 

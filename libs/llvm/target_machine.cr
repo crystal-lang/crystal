@@ -15,15 +15,15 @@ struct LLVM::TargetMachine
   end
 
   def emit_obj_to_file(llvm_mod, filename)
-    emit_to_file llvm_mod, filename, LibLLVM::CodeGenFileType::ObjectFile
+    emit_to_file llvm_mod, filename, LLVM::CodeGenFileType::ObjectFile
   end
 
   def emit_asm_to_file(llvm_mod, filename)
-    emit_to_file llvm_mod, filename, LibLLVM::CodeGenFileType::AssemblyFile
+    emit_to_file llvm_mod, filename, LLVM::CodeGenFileType::AssemblyFile
   end
 
   private def emit_to_file(llvm_mod, filename, type)
-    status = LibLLVM.target_machine_emit_to_file(self, llvm_mod, filename, type, out error_msg)
+    status = LibLLVM.target_machine_emit_to_file(self, llvm_mod, filename, type.value, out error_msg)
     unless status == 0
       raise String.new(error_msg)
     end
