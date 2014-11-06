@@ -1,4 +1,5 @@
 lib CrystalMain
+  @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 

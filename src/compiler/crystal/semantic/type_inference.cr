@@ -1616,12 +1616,6 @@ module Crystal
         end
 
         external.set_type(return_type)
-
-        if node.name == Crystal::RAISE_NAME
-          external.raises = true
-        end
-      elsif node.name == Crystal::MAIN_NAME
-        external.raises = true
       end
 
       external.raises = true if node.has_attribute?("Raises")

@@ -45,26 +45,15 @@ describe "Type inference: exception" do
     ") { int32 }
   end
 
-  it "marks #{Crystal::RAISE_NAME} as raises" do
-    result = assert_type("fun #{Crystal::RAISE_NAME} : Int32; 1; end; 1") { int32 }
-    mod = result.program
-    a_def = mod.lookup_first_def(Crystal::RAISE_NAME, false)
-    a_def.not_nil!.raises.should be_true
-  end
-
-  it "marks #{Crystal::MAIN_NAME} as raises" do
-    result = assert_type("lib CrystalMain; fun #{Crystal::MAIN_NAME}; end; 1") { int32 }
-    mod = result.program
-    a_def = mod.types["CrystalMain"].lookup_first_def(Crystal::MAIN_NAME, false)
-    a_def.not_nil!.raises.should be_true
-  end
-
   it "marks method calling method that raises as raises" do
     result = assert_type("
-      fun #{Crystal::RAISE_NAME} : Int32; 1; end
+      @[Raises]
+      fun some_fun : Int32; 1; end
+
       def foo
-        #{Crystal::RAISE_NAME}
+        some_fun
       end
+
       foo
     ") { int32 }
     mod = result.program

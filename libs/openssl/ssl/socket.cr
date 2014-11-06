@@ -22,7 +22,12 @@ class OpenSSL::SSL::Socket
   end
 
   def close
-    while LibSSL.ssl_shutdown(@ssl) == 0; end
+    begin
+      while LibSSL.ssl_shutdown(@ssl) == 0; end
+    # TODO: only rescue IOError
+    rescue
+    end
+
     LibSSL.ssl_free(@ssl)
   end
 
