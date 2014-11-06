@@ -4,6 +4,7 @@
 * Spec: added `-l` switch to be able to run a spec defined in a line.
 * Added `crystal spec file:line`
 * Properties (property, setter, getter) can now be restricted to a type with the syntax `property name :: Type`.
+* Enums can be used outside `lib`. They inherit `Enum`, can have methods and can be marked with @[Flags].
 * Removed the distinction between `lib` enums and regular enums.
 * Fixed: it was incorrectly possible to define `class`, `def`, etc. inside a call block.
 * The syntax for specifying the base type of an enum, `enum Name < BaseType` has been deprecated. Use `enum Name : BaseType`.
