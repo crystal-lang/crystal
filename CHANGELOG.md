@@ -1,4 +1,4 @@
-## 0.5.3
+## 0.5.3 (2014-11-06)
 
 * Spec: when a `should` or `should_not` fail, the filename and line number, including the source's line, is included in the error message.
 * Spec: added `-l` switch to be able to run a spec defined in a line.
