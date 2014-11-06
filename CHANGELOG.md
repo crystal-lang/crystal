@@ -1,3 +1,10 @@
+## Next
+
+* Spec: when a `should` or `should_not` fail, the filename and line number, including the source's line, is included in the error message.
+* Spec: added `-l` switch to be able to run a spec defined in a line.
+* Added `crystal spec file:line`
+* Properties (property, setter, getter) can now be restricted to a type with the syntax `property name :: Type`.
+
 ## 0.5.2 (2014-11-04)
 
 * New command line interface to the compiler (`crystal build ...`, `crystal run ...`, `crystal spec`, etc.). The default is to compiler and run a program.
