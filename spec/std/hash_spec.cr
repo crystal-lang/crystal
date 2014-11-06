@@ -1,6 +1,17 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
 
+alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
+
+class HashBreaker
+  getter x
+  def initialize(@x)
+  end
+end
+
+class NeverInstantiated
+end
+
 describe "Hash" do
   describe "empty" do
     it "length should be zero" do
@@ -187,7 +198,6 @@ describe "Hash" do
   describe "to_s" do
     assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
 
-    alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
     assert do
       h = {} of RecursiveHash => RecursiveHash
       h[h] = h
@@ -330,18 +340,9 @@ describe "Hash" do
     h.hash.should eq(h2.hash)
   end
 
-  class Breaker
-    getter x
-    def initialize(@x)
-    end
-  end
-
-  class NeverInstantiated
-  end
-
   it "fetches from empty hash with default value" do
-    x = {} of Int32 => Breaker
-    breaker = x.fetch(10) { Breaker.new(1) }
+    x = {} of Int32 => HashBreaker
+    breaker = x.fetch(10) { HashBreaker.new(1) }
     breaker.x.should eq(1)
   end
 

@@ -1,15 +1,17 @@
 #!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
-describe "Restrictions" do
-  def t(mod, type)
+class Crystal::Program
+  def t(type)
     if type.ends_with?('+')
-      mod.types[type[0 .. -2]].virtual_type
+      types[type[0 .. -2]].virtual_type
     else
-      mod.types[type]
+      types[type]
     end
   end
+end
 
+describe "Restrictions" do
   describe "restrict" do
     it "restricts type with same type" do
       mod = Program.new
@@ -47,7 +49,7 @@ describe "Restrictions" do
         class A; include M; end
       ")
 
-      t(mod, "A+").restrict(t(mod, "M"), MatchContext.new(mod, mod)).should eq(t(mod, "A+"))
+      mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod)).should eq(mod.t("A+"))
     end
 
     it "restricts virtual type with included module 2" do
@@ -61,7 +63,7 @@ describe "Restrictions" do
         class E < A; end
       ")
 
-      t(mod, "A+").restrict(t(mod, "M"), MatchContext.new(mod, mod)).should eq(mod.union_of(t(mod, "B+"), t(mod, "C+")))
+      mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("B+"), mod.t("C+")))
     end
   end
 

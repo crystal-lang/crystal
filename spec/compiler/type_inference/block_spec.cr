@@ -460,4 +460,142 @@ describe "Block inference" do
       Foo.new {}
       )) { types["Foo"] }
   end
+
+  it "errors if declares def inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        def bar
+        end
+      end
+      ),
+      "can't declare def inside block"
+  end
+
+  it "errors if declares macro inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        macro bar
+        end
+      end
+      ),
+      "can't declare macro inside block"
+  end
+
+  it "errors if declares fun inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        fun bar : Int32
+        end
+      end
+      ),
+      "can't declare fun inside block"
+  end
+
+  it "errors if declares class inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        class Foo
+        end
+      end
+      ),
+      "can't declare class inside block"
+  end
+
+  it "errors if declares module inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        module Foo
+        end
+      end
+      ),
+      "can't declare module inside block"
+  end
+
+  it "errors if declares lib inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        lib Foo
+        end
+      end
+      ),
+      "can't declare lib inside block"
+  end
+
+  it "errors if declares alias inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        alias A = Int32
+      end
+      ),
+      "can't declare alias inside block"
+  end
+
+  it "errors if declares include inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        include Int32
+      end
+      ),
+      "can't include inside block"
+  end
+
+  it "errors if declares extend inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        extend Int32
+      end
+      ),
+      "can't extend inside block"
+  end
+
+  it "errors if declares enum inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        enum Foo
+          A
+        end
+      end
+      ),
+      "can't declare enum inside block"
+  end
 end

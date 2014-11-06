@@ -1,12 +1,12 @@
 require "spec"
 require "net/http/websocket"
 
-describe WebSocket do
-  def packet(bytes)
-    slice = Slice(UInt8).new(bytes.length) { |i| bytes[i].to_u8 }
-    slice.pointer(bytes.length)
-  end
+def packet(bytes)
+  slice = Slice(UInt8).new(bytes.length) { |i| bytes[i].to_u8 }
+  slice.pointer(bytes.length)
+end
 
+describe WebSocket do
   describe "receive" do
     it "can read a small text packet" do
       data = packet([0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f])

@@ -1,13 +1,13 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
 
-describe "Exception" do
-  module ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName
-    def self.foo
-      raise "Foo"
-    end
+module ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName
+  def self.foo
+    raise "Foo"
   end
+end
 
+describe "Exception" do
   pending "allocates enough space for backtrace frames" do
     begin
       ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName.foo

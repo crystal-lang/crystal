@@ -1,6 +1,8 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
 
+alias RecursiveArray = Array(RecursiveArray)
+
 describe "Array" do
   describe "==" do
     it "compares empty" do
@@ -672,8 +674,6 @@ describe "Array" do
     it "does to_s" do
       assert { [1, 2, 3].to_s.should eq("[1, 2, 3]") }
     end
-
-    alias RecursiveArray = Array(RecursiveArray)
 
     it "does with recursive" do
       ary = [] of RecursiveArray

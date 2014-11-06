@@ -100,6 +100,10 @@ module Crystal
       @block_context = @block
     end
 
+    def inside_block?
+      @block_context
+    end
+
     def visit_any(node)
       @unreachable = false
       true
@@ -523,6 +527,10 @@ module Crystal
     end
 
     def visit(node : Def)
+      if inside_block?
+        node.raise "can't declare def inside block"
+      end
+
       check_valid_attributes node, ValidDefAttributes, "def"
 
       if receiver = node.receiver
@@ -548,6 +556,10 @@ module Crystal
     end
 
     def visit(node : Macro)
+      if inside_block?
+        node.raise "can't declare macro inside block"
+      end
+
       begin
         current_type.metaclass.add_macro node
       rescue ex
@@ -1274,6 +1286,10 @@ module Crystal
     end
 
     def visit(node : ClassDef)
+      if inside_block?
+        node.raise "can't declare class inside block"
+      end
+
       superclass = if node_superclass = node.superclass
                      lookup_path_type node_superclass
                    elsif node.struct
@@ -1381,6 +1397,10 @@ module Crystal
     end
 
     def visit(node : ModuleDef)
+      if inside_block?
+        node.raise "can't declare module inside block"
+      end
+
       if node.name.names.length == 1 && !node.name.global
         scope = current_type
         name = node.name.names.first
@@ -1413,6 +1433,10 @@ module Crystal
     end
 
     def visit(node : Alias)
+      if inside_block?
+        node.raise "can't declare alias inside block"
+      end
+
       alias_type = AliasType.new(@mod, current_type, node.name)
       current_type.types[node.name] = alias_type
       node.value.accept self
@@ -1424,6 +1448,10 @@ module Crystal
     end
 
     def visit(node : Include)
+      if inside_block?
+        node.raise "can't include inside block"
+      end
+
       include_in current_type, node, :included
 
       node.type = @mod.nil
@@ -1432,6 +1460,10 @@ module Crystal
     end
 
     def visit(node : Extend)
+      if inside_block?
+        node.raise "can't extend inside block"
+      end
+
       include_in current_type.metaclass, node, :extended
 
       node.type = @mod.nil
@@ -1440,6 +1472,10 @@ module Crystal
     end
 
     def visit(node : LibDef)
+      if inside_block?
+        node.raise "can't declare lib inside block"
+      end
+
       link_attributes = process_link_attributes
 
       type = current_type.types[node.name]?
@@ -1563,6 +1599,10 @@ module Crystal
     end
 
     def visit(node : FunDef)
+      if inside_block?
+        node.raise "can't declare fun inside block"
+      end
+
       if node.body && !current_type.is_a?(Program)
         node.raise "can only declare fun at lib or global scope"
       end
@@ -1676,6 +1716,10 @@ module Crystal
     end
 
     def visit(node : EnumDef)
+      if inside_block?
+        node.raise "can't declare enum inside block"
+      end
+
       check_valid_attributes node, ValidEnumDefAttributes, "enum"
 
       enum_type = current_type.types[node.name]?
