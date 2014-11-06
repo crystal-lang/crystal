@@ -76,12 +76,20 @@ struct Enum
   end
 
   macro def self.names : Array(String)
-    {{ @enum_members.map &.stringify }}
+    {% if @enum_flags %}
+      {{ @enum_members.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
+    {% else %}
+      {{ @enum_members.map &.stringify }}
+    {% end %}
   end
 
-  # macro def self.values : Array(self)
-  #   {{ @enum_members }}
-  # end
+  macro def self.values : Array(self)
+    {% if @enum_flags %}
+      {{ @enum_members.select { |e| e.stringify != "None" && e.stringify != "All" } }}
+    {% else %}
+      {{ @enum_members }}
+    {% end %}
+  end
 
   # macro def self.to_h : Hash(String, self)
   #   {
