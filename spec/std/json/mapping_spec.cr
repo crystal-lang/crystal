@@ -39,6 +39,10 @@ class JsonWithTime
   })
 end
 
+class JsonWithSimpleMapping
+  json_mapping({name: String, age: Int32})
+end
+
 describe "Json mapping" do
   it "parses person" do
     person = JsonPerson.from_json(%({"name": "John", "age": 30}))
@@ -105,5 +109,12 @@ describe "Json mapping" do
     person = JsonPerson.new("John")
     person.age = 1
     person.age = nil
+  end
+
+  it "parses simple mapping" do
+    person = JsonWithSimpleMapping.from_json(%({"name": "John", "age": 30}))
+    (person.is_a?(JsonWithSimpleMapping)).should be_true
+    person.name.should eq("John")
+    person.age.should eq(30)
   end
 end

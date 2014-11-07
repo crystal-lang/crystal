@@ -1,3 +1,7 @@
+## Next
+
+* `json_mapping` macro supports a simpler syntax: `json_mapping({key1: Type1, key2: Type2})`.
+
 ## 0.5.3 (2014-11-06)
 
 * Spec: when a `should` or `should_not` fail, the filename and line number, including the source's line, is included in the error message.

@@ -1,6 +1,10 @@
 class Object
   macro json_mapping(properties, strict = false)
     {% for key, value in properties %}
+      {% properties[key] = {type: value} unless value.is_a?(HashLiteral) %}
+    {% end %}
+
+    {% for key, value in properties %}
       property {{key.id}} :: {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
     {% end %}
 
