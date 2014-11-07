@@ -24,7 +24,7 @@ class HTTP::Client
   end
 
   def basic_auth(username, password)
-    header = "Basic #{Base64.encode64("#{username}:#{password}")}"
+    header = "Basic #{Base64.strict_encode64("#{username}:#{password}")}"
     before_request do |request|
       request.headers["Authorization"] = header
     end
