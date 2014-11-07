@@ -27,7 +27,7 @@ lib C
   EWOULDBLOCK = 140
   EAGAIN      = 11
 
-  fun fcntl(fd : Int32, cmd : Int32, ...) : Int32
+  fun fcntl(fd : Int32, cmd : FCNTL, ...) : Int32
   fun getchar : Char
   fun putchar(c : Char) : Char
   fun puts(str : UInt8*) : Int32

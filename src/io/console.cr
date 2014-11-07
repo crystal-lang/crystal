@@ -19,6 +19,7 @@ lib Termios
 # The commented flags are not used yet and for many
 # of them crossplatform availability is uncertain
 
+  @[Flags]
   enum IFlag
 #    IGNBRK  = 0000001
     BRKINT  = 0000002
@@ -37,6 +38,7 @@ lib Termios
 #    IUTF8   = 0040000
   end
 
+  @[Flags]
   enum OFlag
     OPOST  = 0000001
 #    OLCUC  = 0000002
@@ -136,6 +138,7 @@ lib Termios
 ##endif
 #  end
 
+  @[Flags]
   enum LFlag
     ISIG    = 0000001
     ICANON  = 0000002
@@ -164,7 +167,7 @@ lib Termios
 
   fun cfmakeraw(termios_p : Termios::Struct*) : Int32
   fun tcgetattr(fd : Int32, termios_p : Termios::Struct*) : Int32
-  fun tcsetattr(fd : Int32, optional_actions : Int32, termios_p : Termios::Struct*) : Int32
+  fun tcsetattr(fd : Int32, optional_actions : OptionalActions, termios_p : Termios::Struct*) : Int32
 end
 
 struct CFileIO

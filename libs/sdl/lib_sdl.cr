@@ -115,7 +115,7 @@ lib LibSDL
 
   struct KeySym
     scan_code : UInt8
-    sym : UInt32
+    sym : Key
     #TODO
   end
 

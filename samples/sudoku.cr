@@ -62,7 +62,7 @@ def sd_solve(mr, mc, s)
   ret = [] of Array(Int32)
   sr, sc, hints = Array.new(729, 0), Array.new(324, 9), 0
   (0...81).each do |i|
-    a = (s[i].chr >= '1' && s[i].chr <= '9') ? s[i].to_i32 - 49 : -1
+    a = ('1' <= s[i] <= '9') ? s[i].ord - 49 : -1
     if a >= 0
       sd_update(mr, mc, sr, sc, i * 9 + a, 1)
       hints += 1
@@ -105,7 +105,7 @@ def sd_solve(mr, mc, s)
     end
     break if i < 0
     o = [] of Int32
-    (0...81).each { |j| o.push((s[j] - 49).to_i32) }
+    (0...81).each { |j| o.push((s[j].ord - 49).to_i32) }
     (0...i).each do |j|
       r = mr[cc[j]][cr[j]]
       o[r / 9] = r % 9 + 1
