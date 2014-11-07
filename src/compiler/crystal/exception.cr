@@ -67,7 +67,7 @@ module Crystal
     def fetch_source(source)
       case filename = @filename
       when String
-        source = File.read(filename) if File.exists?(filename)
+        source = File.read(filename) if File.file?(filename)
       when VirtualFile
         source = filename.source
       end
@@ -123,7 +123,7 @@ module Crystal
 
       case filename
       when String
-        if File.exists?(filename)
+        if File.file?(filename)
           lines = File.read_lines(filename)
           io << "in " << filename << ":" << @line << ": "
           append_error_message io, msg
@@ -221,7 +221,7 @@ module Crystal
             lines = filename.source.lines.to_a
             filename = "macro #{filename.macro.name} (in #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number})"
           when String
-            if File.exists?(filename)
+            if File.file?(filename)
               lines = File.read_lines filename
             else
               lines = source ? source.lines.to_a : nil

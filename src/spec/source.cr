@@ -4,7 +4,7 @@ module Spec
   end
 
   def self.read_line(file, line)
-    return nil unless File.exists?(file)
+    return nil unless File.file?(file)
 
     lines = lines_cache[file] ||= File.read_lines(file)
     lines[line - 1]?

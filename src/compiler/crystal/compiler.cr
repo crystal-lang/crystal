@@ -97,7 +97,7 @@ module Crystal
       bc_flags_changed = true
       current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}|#{@link_flags}"
       bc_flags_filename = "#{output_dir}/bc_flags"
-      if File.exists?(bc_flags_filename)
+      if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
         bc_flags_changed = previous_bc_flags != current_bc_flags
       end

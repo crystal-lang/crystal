@@ -17,7 +17,7 @@ module Crystal::Command
     command = options.first?
 
     if command
-      if File.exists?(command) && !Dir.exists?(command)
+      if File.file?(command)
         run_command options
       else
         case
@@ -126,7 +126,7 @@ module Crystal::Command
     if target_filename_and_line_number
       splitted = target_filename_and_line_number.split ':', 2
       target_filename = splitted[0]
-      if File.exists?(target_filename)
+      if File.file?(target_filename)
         options.shift
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
@@ -284,7 +284,7 @@ module Crystal::Command
 
   private def self.gather_sources(filenames)
     filenames.map do |filename|
-      unless File.exists?(filename)
+      unless File.file?(filename)
         puts "File #{filename} does not exist"
         exit 1
       end

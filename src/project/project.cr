@@ -15,7 +15,7 @@ class Project
     Dir.mkdir_p "libs"
 
     # Load lockfile
-    if File.exists?(".deps.lock")
+    if File.file?(".deps.lock")
       lock = Json.parse(File.read(".deps.lock")) as Hash
       @dependencies.each do |dep|
         if locked_version = lock[dep.name]?
