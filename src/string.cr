@@ -165,11 +165,13 @@ class String
 
     start += bytesize if start < 0
     count = bytesize - start if start + count > bytesize
+    single_byte_optimizable = single_byte_optimizable?
 
     if 0 <= start < bytesize
       String.new(count) do |buffer|
         buffer.copy_from(cstr + start, count)
-        {count, 0}
+        slice_length = single_byte_optimizable ? count : 0
+        {count, slice_length}
       end
     else
       ""
@@ -541,6 +543,7 @@ class String
 
   def split
     ary = Array(String).new
+    single_byte_optimizable = single_byte_optimizable?
     index = 0
     i = 0
     looking_for_space = false
@@ -550,7 +553,9 @@ class String
           c = cstr[i]
           i += 1
           if c.chr.whitespace?
-            ary.push String.new(cstr + index, i - 1 - index)
+            piece_bytesize = i - 1 - index
+            piece_length = single_byte_optimizable ? piece_bytesize : 0
+            ary.push String.new(cstr + index, piece_bytesize, piece_length)
             looking_for_space = false
             break
           end
@@ -568,7 +573,9 @@ class String
       end
     end
     if looking_for_space
-      ary.push String.new(cstr + index, bytesize - index)
+      piece_bytesize = bytesize - index
+      piece_length = single_byte_optimizable ? piece_bytesize : 0
+      ary.push String.new(cstr + index, piece_bytesize, piece_length)
     end
     ary
   end
@@ -585,18 +592,23 @@ class String
     ary = Array(String).new
 
     byte_offset = 0
+    single_byte_optimizable = single_byte_optimizable?
 
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
       if char == separator
-        ary.push byte_slice(byte_offset, reader.pos - byte_offset)
+        piece_bytesize = reader.pos - byte_offset
+        piece_length = single_byte_optimizable ? piece_bytesize : 0
+        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
         byte_offset = reader.pos + reader.current_char_width
         break if limit && ary.length + 1 == limit
       end
     end
 
     if byte_offset != bytesize
-      ary.push byte_slice(byte_offset)
+      piece_bytesize = bytesize - byte_offset
+      piece_length = single_byte_optimizable ? piece_bytesize : 0
+      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
     end
 
     ary
@@ -619,18 +631,24 @@ class String
       return split
     end
 
+    single_byte_optimizable = single_byte_optimizable?
+
     i = 0
     stop = bytesize - separator.bytesize + 1
     while i < stop
       if (buffer + i).memcmp(separator.cstr, separator_bytesize) == 0
-        ary.push byte_slice(byte_offset, i - byte_offset)
+        piece_bytesize = i - byte_offset
+        piece_length = single_byte_optimizable ? piece_bytesize : 0
+        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
       end
       i += 1
     end
     if byte_offset != bytesize
-      ary.push byte_slice(byte_offset)
+      piece_bytesize = bytesize - byte_offset
+      piece_length = single_byte_optimizable ? piece_bytesize : 0
+      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
     end
     ary
   end
@@ -841,7 +859,7 @@ class String
   def ends_with?(char : Char)
     return false unless bytesize > 0
 
-    if char.ord <= 127 || single_byte_optimizable?
+    if char.ord < 0x80 || single_byte_optimizable?
       return cstr[bytesize - 1] == char.ord
     end
 
