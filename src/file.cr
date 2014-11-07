@@ -68,6 +68,17 @@ class File < FileDescriptorIO
     C.access(filename, C::F_OK) == 0
   end
 
+  def self.file?(path)
+    if C.stat(path, out stat) != 0
+      return false
+    end
+    File::Stat.new(stat).file?
+  end
+
+  def self.directory?(path)
+    Dir.exists?(path)
+  end
+
   def self.dirname(filename)
     index = filename.rindex SEPARATOR
     if index

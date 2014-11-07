@@ -46,12 +46,34 @@ describe "File" do
     idx.should eq(20)
   end
 
-  it "tests exists? and gives true" do
-    File.exists?("#{__DIR__}/data/test_file.txt").should be_true
+  describe "exists?" do
+    it "gives true" do
+      File.exists?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+
+    it "gives false" do
+      File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
   end
 
-  it "tests exists? and gives false" do
-    File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
+  describe "file?" do
+    it "gives true" do
+      File.file?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+
+    it "gives false" do
+      File.file?("#{__DIR__}/data").should be_false
+    end
+  end
+
+  describe "directory?" do
+    it "gives true" do
+      File.directory?("#{__DIR__}/data").should be_true
+    end
+
+    it "gives false" do
+      File.directory?("#{__DIR__}/data/test_file.txt").should be_false
+    end
   end
 
   it "gets dirname" do
