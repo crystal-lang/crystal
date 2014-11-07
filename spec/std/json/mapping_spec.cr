@@ -46,14 +46,14 @@ end
 describe "Json mapping" do
   it "parses person" do
     person = JsonPerson.from_json(%({"name": "John", "age": 30}))
-    person.is_a?(JsonPerson).should be_true
+    person.should be_a(JsonPerson)
     person.name.should eq("John")
     person.age.should eq(30)
   end
 
   it "parses person without age" do
     person = JsonPerson.from_json(%({"name": "John"}))
-    person.is_a?(JsonPerson).should be_true
+    person.should be_a(JsonPerson)
     person.name.should eq("John")
     person.name.length.should eq(4) # This verifies that name is not nilable
     person.age.should be_nil
@@ -72,7 +72,7 @@ describe "Json mapping" do
 
   it "parses person with unknown attributes" do
     person = JsonPerson.from_json(%({"name": "John", "age": 30, "foo": "bar"}))
-    person.is_a?(JsonPerson).should be_true
+    person.should be_a(JsonPerson)
     person.name.should eq("John")
     person.age.should eq(30)
   end
@@ -100,7 +100,7 @@ describe "Json mapping" do
 
   it "parses json with TimeFormat converter" do
     json = JsonWithTime.from_json(%({"value": "2014-10-31 23:37:16"}))
-    json.value.is_a?(Time).should be_true
+    json.value.should be_a(Time)
     json.value.to_s.should eq("2014-10-31 23:37:16")
     json.to_json.should eq(%({"value":"2014-10-31 23:37:16"}))
   end
@@ -113,7 +113,7 @@ describe "Json mapping" do
 
   it "parses simple mapping" do
     person = JsonWithSimpleMapping.from_json(%({"name": "John", "age": 30}))
-    (person.is_a?(JsonWithSimpleMapping)).should be_true
+    person.should be_a(JsonWithSimpleMapping)
     person.name.should eq("John")
     person.age.should eq(30)
   end

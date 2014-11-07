@@ -50,10 +50,10 @@ describe "Float" do
   end
 
   it "casts" do
-    Float32.cast(1_f64).is_a?(Float32).should be_true
+    Float32.cast(1_f64).should be_a(Float32)
     Float32.cast(1_f64).should eq(1)
 
-    Float64.cast(1_f32).is_a?(Float64).should be_true
+    Float64.cast(1_f32).should be_a(Float64)
     Float64.cast(1_f32).should eq(1)
   end
 end

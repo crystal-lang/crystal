@@ -51,7 +51,7 @@ describe "Type inference: struct" do
       Foo.new || nil
       ") do | mod|
         type = union_of(types["Foo"], mod.nil)
-        type.is_a?(NilableType).should be_false
+        type.should_not be_a(NilableType)
         type
       end
   end

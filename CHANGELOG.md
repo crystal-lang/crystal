@@ -1,6 +1,7 @@
 ## Next
 
 * `json_mapping` macro supports a simpler syntax: `json_mapping({key1: Type1, key2: Type2})`.
+* Spec: added `be_a(type)` matcher.
 
 ## 0.5.3 (2014-11-06)
 

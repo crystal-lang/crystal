@@ -80,6 +80,21 @@ module Spec
       "expected #{@target} not to be within #{@delta} of #{@expected}"
     end
   end
+
+  class BeAExpectation(T)
+    def match(value)
+      @target = value
+      value.is_a?(T)
+    end
+
+    def failure_message
+      "expected #{@target} to be a #{T}"
+    end
+
+    def negative_failure_message
+      "expected #{@target} not to be a #{T}"
+    end
+  end
 end
 
 def eq(value)
@@ -112,6 +127,10 @@ end
 
 def be_close(expected, delta)
   Spec::CloseExpectation.new(expected, delta)
+end
+
+macro be_a(type)
+  Spec::BeAExpectation({{type}}).new
 end
 
 macro expect_raises

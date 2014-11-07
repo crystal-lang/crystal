@@ -129,28 +129,28 @@ describe "Int" do
   end
 
   it "casts" do
-    Int8.cast(1).is_a?(Int8).should be_true
+    Int8.cast(1).should be_a(Int8)
     Int8.cast(1).should eq(1)
 
-    Int16.cast(1).is_a?(Int16).should be_true
+    Int16.cast(1).should be_a(Int16)
     Int16.cast(1).should eq(1)
 
-    Int32.cast(1).is_a?(Int32).should be_true
+    Int32.cast(1).should be_a(Int32)
     Int32.cast(1).should eq(1)
 
-    Int64.cast(1).is_a?(Int64).should be_true
+    Int64.cast(1).should be_a(Int64)
     Int64.cast(1).should eq(1)
 
-    UInt8.cast(1).is_a?(UInt8).should be_true
+    UInt8.cast(1).should be_a(UInt8)
     UInt8.cast(1).should eq(1)
 
-    UInt16.cast(1).is_a?(UInt16).should be_true
+    UInt16.cast(1).should be_a(UInt16)
     UInt16.cast(1).should eq(1)
 
-    UInt32.cast(1).is_a?(UInt32).should be_true
+    UInt32.cast(1).should be_a(UInt32)
     UInt32.cast(1).should eq(1)
 
-    UInt64.cast(1).is_a?(UInt64).should be_true
+    UInt64.cast(1).should be_a(UInt64)
     UInt64.cast(1).should eq(1)
   end
 

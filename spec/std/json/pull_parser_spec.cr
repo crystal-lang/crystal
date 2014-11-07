@@ -272,7 +272,7 @@ describe "Json::PullParser" do
     it "reads float when it is an int" do
       pull = Json::PullParser.new(%(1))
       f = pull.read_float
-      f.is_a?(Float64).should be_true
+      f.should be_a(Float64)
       f.should eq(1.0)
     end
 

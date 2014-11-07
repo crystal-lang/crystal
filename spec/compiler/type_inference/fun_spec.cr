@@ -267,7 +267,7 @@ describe "Type inference: fun" do
 
   it "types nil or fun type" do
     result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
-    result.node.type.is_a?(NilableFunType).should be_true
+    result.node.type.should be_a(NilableFunType)
   end
 
   it "undefs fun" do

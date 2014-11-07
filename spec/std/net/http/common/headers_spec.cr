@@ -61,7 +61,7 @@ describe HTTP::Headers do
   it "dups" do
     headers = HTTP::Headers{"Foo": "bar"}
     other = headers.dup
-    other.is_a?(HTTP::Headers).should be_true
+    other.should be_a(HTTP::Headers)
     other["foo"].should eq("bar")
 
     other["Baz"] = "Qux"
@@ -71,7 +71,7 @@ describe HTTP::Headers do
   it "clones" do
     headers = HTTP::Headers{"Foo": "bar"}
     other = headers.clone
-    other.is_a?(HTTP::Headers).should be_true
+    other.should be_a(HTTP::Headers)
     other["foo"].should eq("bar")
 
     other["Baz"] = "Qux"

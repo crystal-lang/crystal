@@ -5,7 +5,7 @@ describe "String" do
   describe "[]" do
     it "gets with positive index" do
       c = "hello!"[1]
-      (c.is_a?(Char)).should be_true
+      c.should be_a(Char)
       c.should eq('e')
     end
 
