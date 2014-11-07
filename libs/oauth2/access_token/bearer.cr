@@ -14,9 +14,10 @@ class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
       object.field "token_type", "Bearer"
       object.field "access_token", access_token
       object.field "expires_in", expires_in
-      object.field "refresh_token", refresh_token
+      object.field "refresh_token", refresh_token if refresh_token
+      object.field "scope", scope if scope
     end
   end
 
-  def_equals_and_hash access_token, expires_in, refresh_token
+  def_equals_and_hash access_token, expires_in, refresh_token, scope
 end

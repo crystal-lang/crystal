@@ -8,11 +8,13 @@ class OAuth2::AccessToken
       token_type = "Bearer"
       expires_in = 3600
       refresh_token = "some refresh token"
+      scope = "some scope"
       json = %({
         "access_token" : "#{token_value}",
         "token_type" : "#{token_type}",
         "expires_in" : #{expires_in},
-        "refresh_token" : "#{refresh_token}"
+        "refresh_token" : "#{refresh_token}",
+        "scope" : "#{scope}"
         })
 
       access_token = AccessToken.from_json(json)
@@ -21,6 +23,7 @@ class OAuth2::AccessToken
       access_token.access_token.should eq(token_value)
       access_token.expires_in.should eq(expires_in)
       access_token.refresh_token.should eq(refresh_token)
+      access_token.scope.should eq(scope)
     end
 
     it "dumps to json" do
@@ -44,13 +47,15 @@ class OAuth2::AccessToken
       mac_key = "secret key"
       refresh_token = "some refresh token"
       token_value = "some token value"
+      scope = "some scope"
       json = %({
           "token_type": "mac",
           "mac_algorithm": "#{mac_algorithm}",
           "expires_in": #{expires_in},
           "mac_key": "#{mac_key}",
           "refresh_token":"#{refresh_token}",
-          "access_token":"#{token_value}"
+          "access_token":"#{token_value}",
+          "scope":"#{scope}"
         })
 
       access_token = AccessToken.from_json(json)
@@ -59,6 +64,7 @@ class OAuth2::AccessToken
       access_token.access_token.should eq(token_value)
       access_token.expires_in.should eq(expires_in)
       access_token.refresh_token.should eq(refresh_token)
+      access_token.scope.should eq(scope)
       access_token.mac_algorithm.should eq(mac_algorithm)
       access_token.mac_key.should eq(mac_key)
     end
@@ -78,7 +84,7 @@ class OAuth2::AccessToken
     end
 
     it "dumps to json" do
-      token = Mac.new("access token", 3600, "refresh token", "mac algorithm", "mac key")
+      token = Mac.new("access token", 3600, "mac algorithm", "mac key", "refresh token", "scope")
       token2 = AccessToken.from_json(token.to_json)
       token2.should eq(token)
     end
@@ -87,7 +93,7 @@ class OAuth2::AccessToken
       headers = HTTP::Headers.new
       headers["Host"] = "localhost:4000"
 
-      token = Mac.new("3n2\b-YaAzH67YH9UJ-9CnJ_PS-vSy1MRLM-q7TZknPw", 3600, nil, "hmac-sha-256", "i-pt1Lir-yAfUdXbt-AXM1gMupK7vDiOK1SZGWkASDc")
+      token = Mac.new("3n2\b-YaAzH67YH9UJ-9CnJ_PS-vSy1MRLM-q7TZknPw", 3600, "hmac-sha-256", "i-pt1Lir-yAfUdXbt-AXM1gMupK7vDiOK1SZGWkASDc")
       request = HTTP::Request.new "GET", "/some/resource.json", headers
       token.authenticate request, false
       auth = request.headers["Authorization"]

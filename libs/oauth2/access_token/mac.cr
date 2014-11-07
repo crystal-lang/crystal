@@ -8,8 +8,8 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_key
   property issued_at
 
-  def initialize(access_token, expires_in, refresh_token, @mac_algorithm, @mac_key, @issued_at = Time.now.to_i)
-    super(access_token, expires_in, refresh_token)
+  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.to_i)
+    super(access_token, expires_in, refresh_token, scope)
   end
 
   def token_type
@@ -46,13 +46,14 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
       object.field "token_type", "Mac"
       object.field "access_token", access_token
       object.field "expires_in", expires_in
-      object.field "refresh_token", refresh_token
+      object.field "refresh_token", refresh_token if refresh_token
+      object.field "scope", scope if scope
       object.field "mac_algorithm", mac_algorithm
       object.field "mac_key", mac_key
     end
   end
 
-  def_equals_and_hash access_token, expires_in, refresh_token, mac_algorithm, mac_key
+  def_equals_and_hash access_token, expires_in, mac_algorithm, mac_key, refresh_token, scope
 
   private def host_and_port(request, ssl)
     host_header = request.headers["Host"]

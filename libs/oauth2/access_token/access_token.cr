@@ -4,6 +4,7 @@ abstract class OAuth2::AccessToken
     access_token = nil
     expires_in = nil
     refresh_token = nil
+    scope = nil
     mac_algorithm = nil
     mac_key = nil
 
@@ -13,6 +14,7 @@ abstract class OAuth2::AccessToken
       when "access_token"  then access_token  = pull.read_string
       when "expires_in"    then expires_in    = pull.read_int
       when "refresh_token" then refresh_token = pull.read_string_or_null
+      when "scope"         then scope         = pull.read_string_or_null
       when "mac_algorithm" then mac_algorithm = pull.read_string
       when "mac_key"       then mac_key       = pull.read_string
       else
@@ -26,9 +28,9 @@ abstract class OAuth2::AccessToken
     if token_type
       case token_type.downcase
       when "bearer"
-        Bearer.new(access_token, expires_in, refresh_token)
+        Bearer.new(access_token, expires_in, refresh_token, scope)
       when "mac"
-        Mac.new(access_token, expires_in, refresh_token, mac_algorithm.not_nil!, mac_key.not_nil!)
+        Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope)
       else
         raise "Uknown token_type in access token json: #{token_type}"
       end
@@ -40,8 +42,9 @@ abstract class OAuth2::AccessToken
   property access_token
   property expires_in
   property refresh_token
+  property scope
 
-  def initialize(@access_token, @expires_in, @refresh_token)
+  def initialize(@access_token, @expires_in, @refresh_token = nil, @scope = nil)
   end
 
   abstract def authenticate(request : HTTP::Request, ssl)
