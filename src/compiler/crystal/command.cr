@@ -72,8 +72,8 @@ module Crystal::Command
   end
 
   private def self.build(options)
-    compiler, sources, output_filename, arguments = create_compiler "run", options
-    compiler.compile sources, output_filename
+    config = create_compiler "run", options
+    config.compile
   end
 
   private def self.browser(options)
@@ -111,14 +111,18 @@ module Crystal::Command
   end
 
   private def self.run_command(options)
-    compiler, sources, output_filename, arguments = create_compiler "run", options
+    config = create_compiler "run", options
+    if config.specified_output
+      config.compile
+      return
+    end
 
-    tempfile = Tempfile.new "crystal-run-#{output_filename}"
+    tempfile = Tempfile.new "crystal-run-#{config.output_filename}"
     output_filename = tempfile.path
     tempfile.close
 
-    result = compiler.compile sources, output_filename
-    execute output_filename, arguments
+    result = config.compile output_filename
+    execute output_filename, config.arguments
   end
 
   private def self.run_specs(options)
@@ -169,9 +173,9 @@ module Crystal::Command
   end
 
   private def self.compile_no_build(command, options)
-    compiler, sources, output_filename, arguments = create_compiler command, options, no_build: true
-    compiler.no_build = true
-    compiler.compile sources, output_filename
+    config = create_compiler command, options, no_build: true
+    config.compiler.no_build = true
+    config.compile
   end
 
   private def self.execute(output_filename, run_args)
@@ -190,12 +194,19 @@ module Crystal::Command
     output_filename
   end
 
+  record CompilerConfig, compiler, sources, output_filename, arguments, specified_output do
+    def compile(output_filename = self.output_filename)
+      compiler.compile sources, output_filename
+    end
+  end
+
   private def self.create_compiler(command, options, no_build = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
     opt_arguments = nil
     opt_output_filename = nil
+    specified_output = false
 
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -229,6 +240,7 @@ module Crystal::Command
         end
         opts.on("-o ", "Output filename") do |an_output_filename|
           opt_output_filename = an_output_filename
+          specified_output = true
         end
       end
 
@@ -277,7 +289,7 @@ module Crystal::Command
     sources = gather_sources(filenames)
     output_filename ||= output_filename_from_sources(sources)
 
-    {compiler, sources, output_filename, arguments}
+    CompilerConfig.new compiler, sources, output_filename, arguments, specified_output
   rescue ex : OptionParser::Exception
     error ex.message
   end
