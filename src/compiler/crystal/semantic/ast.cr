@@ -309,8 +309,7 @@ module Crystal
     def update(from = nil)
       return unless elements.all? &.type?
 
-      types = [] of TypeVar
-      elements.each { |exp| types << exp.type }
+      types = elements.map { |exp| exp.type as TypeVar }
       self.type = mod.tuple_of types
     end
   end

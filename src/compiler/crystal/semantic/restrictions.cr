@@ -144,10 +144,8 @@ module Crystal
     end
 
     def restrict(other : Union, context)
-      types = [] of Type
-      other.types.each do |ident|
-        restricted = restrict ident, context
-        types << restricted if restricted
+      types = other.types.compact_map do |ident|
+        restrict(ident, context) as Type?
       end
       types.length > 0 ? program.type_merge_union_of(types) : nil
     end
@@ -286,10 +284,8 @@ module Crystal
     end
 
     def restrict_type_or_fun_or_generic(other, context)
-      types = [] of Type
-      union_types.each do |type|
-        restricted = type.restrict(other, context)
-        types << restricted if restricted
+      types = union_types.compact_map do |type|
+        type.restrict(other, context) as Type?
       end
       program.type_merge_union_of(types)
     end
@@ -397,10 +393,8 @@ module Crystal
       if self == other
         self
       elsif other.is_a?(UnionType)
-        types = [] of Type
-        other.union_types.each do |t|
-          restricted = self.restrict(t, context)
-          types << restricted if restricted
+        types = other.union_types.compact_map do |t|
+          restrict(t, context) as Type?
         end
         program.type_merge types
       elsif other.is_a?(VirtualType)
@@ -414,10 +408,8 @@ module Crystal
         if base_type.implements?(other)
           self
         else
-          types = [] of Type
-          base_type.subclasses.each do |subclass|
-            restricted = subclass.virtual_type.restrict(other, context)
-            types << restricted if restricted
+          types = base_type.subclasses.compact_map do |subclass|
+            subclass.virtual_type.restrict(other, context) as Type?
           end
           program.type_merge_union_of types
         end
@@ -427,10 +419,8 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      types = [] of Type
-      base_type.subclasses.each do |subclass|
-        restricted = subclass.virtual_type.restrict(other, context)
-        types << restricted if restricted
+      types = base_type.subclasses.compact_map do |subclass|
+        subclass.virtual_type.restrict(other, context) as Type?
       end
       program.type_merge_union_of types
     end

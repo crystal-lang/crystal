@@ -109,7 +109,7 @@ describe "Enumerable" do
   end
 
   describe "compact map" do
-    assert { [1, nil, 2, nil, 3].compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
+    assert { Set { 1, nil, 2, nil, 3 }.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
   describe "first" do

@@ -1861,10 +1861,7 @@ module Crystal
         return instance
       end
 
-      types = [] of Type
-      type_vars.each do |type_var|
-        types << type_var as Type
-      end
+      types = type_vars.map { |type_var| type_var as Type }
       instance = TupleInstanceType.new(program, types)
       generic_types[type_vars] = instance
       initialize_instance instance
@@ -2400,13 +2397,8 @@ module Crystal
     end
 
     def apply_filter
-      filtered_types = [] of Type
-
-      @union_types.each do |union_type|
-        filtered_type = yield union_type
-        if filtered_type
-          filtered_types.push filtered_type
-        end
+      filtered_types = @union_types.compact_map do |union_type|
+        yield union_type
       end
 
       case filtered_types.length
@@ -2941,11 +2933,7 @@ module Crystal
         return instance
       end
 
-      types = [] of Type
-      type_vars.each do |type_var|
-        types << type_var as Type
-      end
-
+      types = type_vars.map { |type_var| type_var as Type }
       instance = FunInstanceType.new(program, types)
       generic_types[type_vars] = instance
       initialize_instance instance

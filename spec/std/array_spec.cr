@@ -775,4 +775,10 @@ describe "Array" do
       end
     end
   end
+
+  it "does compact_map" do
+    a = [1, 2, 3, 4, 5]
+    b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
+    b.length.should eq(2)
+  end
 end

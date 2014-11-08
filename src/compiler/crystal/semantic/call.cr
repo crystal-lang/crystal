@@ -518,11 +518,10 @@ module Crystal
       ident_lookup = MatchTypeLookup.new(match.context)
 
       if inputs = block_arg.fun.inputs
-        yield_vars = [] of Var
-        inputs.each_with_index do |input, i|
+        yield_vars = inputs.map_with_index do |input, i|
           type = lookup_node_type(ident_lookup, input)
           type = type.virtual_type
-          yield_vars << Var.new("var#{i}", type)
+          Var.new("var#{i}", type)
         end
         block.args.each_with_index do |arg, i|
           var = yield_vars[i]?

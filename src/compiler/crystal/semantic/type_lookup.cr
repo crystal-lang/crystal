@@ -66,12 +66,10 @@ module Crystal
         end
       end
 
-      type_vars = [] of TypeVar
-      node.type_vars.each do |type_var|
+      type_vars = node.type_vars.map do |type_var|
         type_var.accept self
-        type_vars.push @type.not_nil!
+        @type.not_nil! as TypeVar
       end
-
       @type = instance_type.instantiate(type_vars)
       false
     end
