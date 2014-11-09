@@ -39,10 +39,9 @@ class Object
 
       {% for key, value in properties %}
         {% unless value[:nilable] %}
-          if _{{key.id}}.nil?
+          if _{{key.id}}.is_a?(Nil)
             raise "missing json attribute: {{(value[:key] || key).id}}"
           end
-          _{{key.id}} = _{{key.id}}.not_nil!
         {% end %}
       {% end %}
 
