@@ -250,16 +250,18 @@ class Array(T)
   end
 
   def each
-    length.times do |i|
+    each_index do |i|
       yield @buffer[i]
     end
-    self
   end
 
   def each_index
-    length.times do |i|
+    i = 0
+    while i < length
       yield i
+      i += 1
     end
+    self
   end
 
   def empty?

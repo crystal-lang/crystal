@@ -756,6 +756,26 @@ describe "Array" do
     [[1, 2, 3], [4, 5], [8], [1, 2, 3, 4]].sort.should eq([[1, 2, 3], [1, 2, 3, 4], [4, 5], [8]])
   end
 
+  it "does each while modifying array" do
+    a = [1, 2, 3]
+    count = 0
+    a.each do
+      count += 1
+      a.clear
+    end
+    count.should eq(1)
+  end
+
+  it "does each index while modifying array" do
+    a = [1, 2, 3]
+    count = 0
+    a.each_index do
+      count += 1
+      a.clear
+    end
+    count.should eq(1)
+  end
+
   describe "zip" do
     describe "when a block is provided" do
       it "yields pairs of self's elements and passed array" do
