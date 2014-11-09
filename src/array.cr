@@ -169,19 +169,6 @@ class Array(T)
     delete nil
   end
 
-  def compact_map(&block : T -> Nil | U)
-    ary = Array(U).new(@length)
-    count = 0
-    each do |elem|
-      if mapped_elem = yield elem
-        ary.buffer[count] = mapped_elem
-        count += 1
-      end
-    end
-    ary.length = count
-    ary
-  end
-
   def concat(other : Array)
     other_length = other.length
     new_length = length + other_length
