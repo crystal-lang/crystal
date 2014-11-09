@@ -17,11 +17,13 @@ module Enumerable(T)
     any? { |e| e }
   end
 
-  def compact_map(&block : T -> Nil | U)
-    ary = [] of U
+  def compact_map
+    ary = [] of typeof((yield first).not_nil!)
     each do |e|
       v = yield e
-      ary << v if v
+      unless v.is_a?(Nil)
+        ary << v
+      end
     end
     ary
   end

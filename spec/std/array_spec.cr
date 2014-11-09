@@ -800,5 +800,19 @@ describe "Array" do
     a = [1, 2, 3, 4, 5]
     b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
     b.length.should eq(2)
+    b.should eq([2, 4])
+  end
+
+  it "does compact_map with false" do
+    a = [1, 2, 3]
+    b = a.compact_map do |e|
+      case e
+      when 1 then 1
+      when 2 then nil
+      else        false
+      end
+    end
+    b.length.should eq(2)
+    b.should eq([1, false])
   end
 end
