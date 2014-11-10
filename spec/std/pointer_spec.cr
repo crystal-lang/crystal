@@ -91,8 +91,8 @@ describe "Pointer" do
       p3 = Pointer.malloc(4) { |i| i + 1 }
 
       p1.memcmp(p2, 4).should eq(0)
-      (p1.memcmp(p3, 4) < 0).should be_true
-      (p3.memcmp(p1, 4) > 0).should be_true
+      p1.memcmp(p3, 4).should be < 0
+      p3.memcmp(p1, 4).should be > 0
     end
   end
 

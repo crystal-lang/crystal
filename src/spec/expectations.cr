@@ -95,6 +95,52 @@ module Spec
       "expected #{@target} not to be a #{T}"
     end
   end
+
+  class Be(T)
+    def self.<(other)
+      Be.new(other, :"<")
+    end
+
+    def self.<=(other)
+      Be.new(other, :"<=")
+    end
+
+    def self.>(other)
+      Be.new(other, :">")
+    end
+
+    def self.>=(other)
+      Be.new(other, :">=")
+    end
+
+    def initialize(@expected : T, @op)
+    end
+
+    def match(value)
+      @target = value
+
+      case @op
+      when :"<"
+        value < @expected
+      when :"<="
+        value <= @expected
+      when :">"
+        value > @expected
+      when :">="
+        value >= @expected
+      else
+        false
+      end
+    end
+
+    def failure_message
+      "expected #{@target} to be #{@op} #{@expected}"
+    end
+
+    def negative_failure_message
+      "expected #{@target} not to be #{@op} #{@expected}"
+    end
+  end
 end
 
 def eq(value)
@@ -127,6 +173,10 @@ end
 
 def be_close(expected, delta)
   Spec::CloseExpectation.new(expected, delta)
+end
+
+def be
+  Spec::Be
 end
 
 macro be_a(type)

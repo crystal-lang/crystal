@@ -742,16 +742,17 @@ describe "Array" do
     a = [1, 2, 3]
     b = [4, 5, 6]
     c = [1, 2]
-    ((a <=> b) < 0).should be_true
-    ((a <=> c) > 0).should be_true
-    ((b <=> c) > 0).should be_true
-    ((b <=> a) > 0).should be_true
-    ((c <=> a) < 0).should be_true
-    ((c <=> b) < 0).should be_true
+
+    (a <=> b).should be < 1
+    (a <=> c).should be > 0
+    (b <=> c).should be > 0
+    (b <=> a).should be > 0
+    (c <=> a).should be < 0
+    (c <=> b).should be < 0
     (a <=> a).should eq(0)
 
-    (([8] <=> [1, 2, 3]) > 0).should be_true
-    (([8] <=> [8, 1, 2]) < 0).should be_true
+    ([8] <=> [1, 2, 3]).should be > 0
+    ([8] <=> [8, 1, 2]).should be < 0
 
     [[1, 2, 3], [4, 5], [8], [1, 2, 3, 4]].sort.should eq([[1, 2, 3], [1, 2, 3, 4], [4, 5], [8]])
   end

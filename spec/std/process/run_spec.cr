@@ -15,7 +15,7 @@ describe "Process.run" do
   end
 
   it "includes PID in process status " do
-    (Process.run("true").pid > 0).should be_true
+    Process.run("true").pid.should be > 0
   end
 
   it "receives arguments in array" do

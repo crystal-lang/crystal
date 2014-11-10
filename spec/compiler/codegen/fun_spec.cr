@@ -393,7 +393,7 @@ describe "Code gen: fun" do
     address = run("
       ->{}.pointer.address
       ").to_i
-    (address > 0).should be_true
+    address.should be > 0
   end
 
   it "does new on fun type" do
