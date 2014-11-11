@@ -1290,13 +1290,23 @@ module Crystal
         node.raise "can't declare class inside block"
       end
 
-      superclass = if node_superclass = node.superclass
-                     lookup_path_type node_superclass
-                   elsif node.struct
-                     mod.struct
-                   else
-                     mod.reference
-                   end
+      node_superclass = node.superclass
+
+      if node_superclass
+        superclass = lookup_path_type(node_superclass)
+      else
+        superclass = node.struct ? mod.struct : mod.reference
+      end
+
+      if node_superclass.is_a?(Generic)
+        unless superclass.is_a?(GenericClassType)
+          node_superclass.raise "#{superclass} is not a generic class, it's a #{superclass.type_desc}"
+        end
+
+        if node_superclass.type_vars.length != superclass.type_vars.length
+          node_superclass.raise "wrong number of type vars for #{superclass} (#{node_superclass.type_vars.length} for #{superclass.type_vars.length})"
+        end
+      end
 
       if node.name.names.length == 1 && !node.name.global
         scope = current_type
@@ -1344,7 +1354,13 @@ module Crystal
           end
         end
       else
-        unless superclass.is_a?(NonGenericClassType)
+        case superclass
+        when NonGenericClassType
+          # OK
+        when GenericClassType
+          mapping = Hash.zip(superclass.type_vars, (node_superclass as Generic).type_vars)
+          superclass = InheritedGenericClass.new(@mod, superclass, mapping)
+        else
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
         end
 
@@ -1356,6 +1372,11 @@ module Crystal
         end
         type.abstract = node.abstract
         type.struct = node.struct
+
+        if superclass.is_a?(InheritedGenericClass)
+          superclass.extending_class = type
+        end
+
         scope.types[name] = type
       end
 
@@ -2574,11 +2595,7 @@ module Crystal
 
     def include_in(current_type, node, kind)
       node_name = node.name
-      if node_name.is_a?(Generic)
-        type = lookup_path_type(node_name.name)
-      else
-        type = lookup_path_type(node_name)
-      end
+      type = lookup_path_type(node_name)
 
       unless type.module?
         node_name.raise "#{node_name} is not a module, it's a #{type.type_desc}"
@@ -2672,6 +2689,10 @@ module Crystal
       else
         node.raise "#{node} must be a type here, not #{target_type}"
       end
+    end
+
+    def lookup_path_type(node : Generic, create_modules_if_missing = false)
+      lookup_path_type node.name, create_modules_if_missing
     end
 
     def lookup_path_type(node, create_modules_if_missing = false)

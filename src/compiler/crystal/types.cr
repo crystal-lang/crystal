@@ -342,6 +342,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement index_of_instance_var"
     end
 
+    def index_of_instance_var?(name)
+      raise "Bug: #{self} doesn't implement index_of_instance_var?"
+    end
+
     def lookup_instance_var(name, create = true)
       raise "Bug: #{self} doesn't implement lookup_instance_var"
     end
@@ -366,12 +370,28 @@ module Crystal
       raise "Bug: #{self} doesn't implement remove_instance_var"
     end
 
-    def index_of_instance_var?(name)
-      raise "Bug: #{self} doesn't implement index_of_instance_var"
-    end
-
     def all_instance_vars_count
       raise "Bug: #{self} doesn't implement all_instance_vars_count"
+    end
+
+    def add_subclass(subclass)
+      raise "Bug: #{self} doesn't implement add_subclass"
+    end
+
+    def notify_subclass_added
+      raise "Bug: #{self} doesn't implement notify_subclass_added"
+    end
+
+    def instance_vars_in_initialize
+      raise "Bug: #{self} doesn't implement instance_vars_in_initialize"
+    end
+
+    def instance_vars_in_initialize=(value)
+      raise "Bug: #{self} doesn't implement instance_vars_in_initialize="
+    end
+
+    def depth
+      raise "Bug: #{self} doesn't implement depth"
     end
 
     def type_desc
@@ -1179,7 +1199,7 @@ module Crystal
 
     def allocated=(allocated)
       @allocated = allocated
-      superclass.try { |s| s.allocated = allocated }
+      superclass.try &.allocated = allocated
     end
 
     def struct?
@@ -1248,10 +1268,7 @@ module Crystal
     end
 
     def each_instance_var(&block)
-      if superclass
-        superclass.each_instance_var(&block)
-      end
-
+      superclass.try &.each_instance_var &block
       instance_vars.each(&block)
     end
 
@@ -1596,6 +1613,10 @@ module Crystal
       true
     end
 
+    def allocated=(value)
+      superclass.try &.allocated = value
+    end
+
     def new_generic_instance(program, generic_type, type_vars)
       GenericClassInstanceType.new program, generic_type, type_vars
     end
@@ -1639,6 +1660,12 @@ module Crystal
       end
     end
 
+    def has_instance_var_in_initialize?(name)
+      instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
+        instance_vars_in_initialize.try(&.includes?(name)) ||
+        superclass.try &.has_instance_var_in_initialize?(name)
+    end
+
     def type_desc
       struct? ? "generic struct" : "generic class"
     end
@@ -1680,8 +1707,11 @@ module Crystal
 
     def parents
       @parents ||= generic_class.parents.map do |t|
-        if t.is_a?(IncludedGenericModule)
+        case t
+        when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
+        when InheritedGenericClass
+          InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
         else
           t
         end
@@ -1937,10 +1967,10 @@ module Crystal
   class IncludedGenericModule < Type
     include MatchesLookup
 
-    getter program
+    getter :program
     getter :module
-    getter including_class
-    getter mapping
+    getter :including_class
+    getter :mapping
 
     def initialize(@program, @module, @including_class, @mapping)
     end
@@ -1977,8 +2007,11 @@ module Crystal
 
     def parents
       @parents ||= @module.parents.map do |t|
-        if t.is_a?(IncludedGenericModule)
+        case t
+        when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
+        when InheritedGenericClass
+          InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
         else
           t
         end
@@ -1989,6 +2022,92 @@ module Crystal
       @module.to_s(io)
       io << "("
       @including_class.to_s(io)
+      io << ")"
+      io << @mapping
+    end
+  end
+
+  class InheritedGenericClass < Type
+    include MatchesLookup
+
+    getter :program
+    getter :extended_class
+    property! :extending_class
+    getter :mapping
+
+    def initialize(@program, @extended_class, @mapping, @extending_class = nil)
+    end
+
+    delegate depth, @extended_class
+    delegate superclass, @extended_class
+    delegate add_subclass, @extended_class
+    delegate container, @extended_class
+    delegate name, @extended_class
+    delegate defs, @extended_class
+    delegate macros, @extended_class
+    delegate implements?, @extended_class
+    delegate lookup_defs, @extended_class
+    delegate lookup_defs_with_modules, @extended_class
+    delegate lookup_similar_def_name, @extended_class
+    delegate lookup_macro, @extended_class
+    delegate lookup_macros, @extended_class
+    delegate has_def?, @extended_class
+    delegate lookup_similar_type_name, @extended_class
+    delegate has_instance_var_in_initialize?, @extended_class
+    delegate instance_vars_in_initialize, @extended_class
+    delegate :"allocated=", @extended_class
+    delegate notify_subclass_added, @extended_class
+
+    def lookup_instance_var?(name, create = false)
+      nil
+    end
+
+    def all_instance_vars
+      {} of String => Var
+    end
+
+    def index_of_instance_var?(name)
+      nil
+    end
+
+    def all_instance_vars_count
+      0
+    end
+
+    def owns_instance_var?(name)
+      false
+    end
+
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      if (names.length == 1) && (m = @mapping[names[0]]?)
+        case extending_class
+        when GenericClassType
+          # skip
+        else
+          return TypeLookup.lookup(extending_class, m)
+        end
+      end
+
+      @extended_class.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def parents
+      @parents ||= @extended_class.parents.map do |t|
+        case t
+        when IncludedGenericModule
+          IncludedGenericModule.new(program, t.module, self, t.mapping)
+        when InheritedGenericClass
+          InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
+        else
+          t
+        end
+      end
+    end
+
+    def to_s(io)
+      @extended_class.to_s(io)
+      io << "("
+      @extending_class.to_s(io)
       io << ")"
       io << @mapping
     end
@@ -2075,8 +2194,11 @@ module Crystal
       # so "self" restrictions match and don't point to the typdefed type.
       if typedef_parents
         typedef_parents.each_with_index do |t, i|
-          if t.is_a?(IncludedGenericModule)
+          case t
+          when IncludedGenericModule
             typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
+          when InheritedGenericClass
+            typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
           end
         end
       end

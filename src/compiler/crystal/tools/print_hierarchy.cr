@@ -61,6 +61,7 @@ module Crystal
       print type.type_desc
       print " "
       print type
+
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(FunInstanceType)
         size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
@@ -76,11 +77,11 @@ module Crystal
     def print_type(type : NonGenericClassType | GenericClassInstanceType)
       print_type_name type
 
-      subtypes = type.subclasses.select { |sub| must_print?(sub) }
+      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) && must_print?(sub) }
       print_instance_vars type, !subtypes.empty?
 
       with_indent do
-        print_subtypes subtypes.select { |t| !t.is_a?(GenericClassInstanceType) }
+        print_subtypes subtypes
       end
 
       if type.is_a?(NonGenericClassType)
@@ -91,9 +92,13 @@ module Crystal
     def print_type(type : GenericClassType)
       print_type_name type
 
+      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) && must_print?(sub) }
+      instantiations = type.generic_types.values.select { |sub| must_print?(sub) }
+
       with_indent do
-        print_subtypes type.generic_types.values.select { |sub| must_print?(sub) }
+        print_subtypes subtypes + instantiations
       end
+
       print_types type.types
     end
 
@@ -128,7 +133,7 @@ module Crystal
     end
 
     def must_print?(type : GenericClassType)
-      !type.generic_types.empty? && !@printed.includes?(type)
+      (!type.generic_types.empty? || !type.subclasses.empty?) && !@printed.includes?(type)
     end
 
     def must_print?(type)
