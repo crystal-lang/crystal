@@ -163,4 +163,18 @@ describe "Type inference: generic class" do
       baz.t2
       )) { float64.metaclass }
   end
+
+  it "defines empty initialize on inherited generic class" do
+    assert_type(%(
+      class Maybe(T)
+      end
+
+      class Nothing < Maybe(Int32)
+        def initialize
+        end
+      end
+
+      Nothing.new
+      )) { types["Nothing"] }
+  end
 end

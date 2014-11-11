@@ -2055,6 +2055,7 @@ module Crystal
     delegate lookup_similar_type_name, @extended_class
     delegate has_instance_var_in_initialize?, @extended_class
     delegate instance_vars_in_initialize, @extended_class
+    delegate :"instance_vars_in_initialize=", @extended_class
     delegate :"allocated=", @extended_class
     delegate notify_subclass_added, @extended_class
 
