@@ -575,4 +575,19 @@ describe "Code gen: closure" do
       a
       )).to_i.should eq(3)
   end
+
+  it "closures struct self" do
+    run(%(
+      struct Foo
+        def initialize(@x)
+        end
+
+        def foo
+          ->{ @x }
+        end
+      end
+
+      Foo.new(1).foo.call
+      )).to_i.should eq(1)
+  end
 end

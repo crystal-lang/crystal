@@ -218,7 +218,9 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         setup_closure_vars(parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
       elsif closure_self = context.closure_self
         offset = context.closure_parent_context ? 1 : 0
-        self.context.vars["self"] = LLVMVar.new(load(gep(closure_ptr, 0, closure_vars.length + offset, "self")), closure_self, true)
+        self_value = gep(closure_ptr, 0, closure_vars.length + offset, "self")
+        self_value = load(self_value) unless context.type.passed_by_value?
+        self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
       end
     end
   end

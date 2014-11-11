@@ -1750,7 +1750,11 @@ module Crystal
 
         if self_closured
           offset = parent_closure_type ? 1 : 0
-          store llvm_self, gep(closure_ptr, 0, closure_vars.length + offset, "self")
+          self_value = llvm_self
+          self_value = load self_value if current_context.type.passed_by_value?
+
+          store self_value, gep(closure_ptr, 0, closure_vars.length + offset, "self")
+
           current_context.closure_self = current_context.type
         end
       elsif parent_context && parent_context.closure_type
