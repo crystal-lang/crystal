@@ -181,7 +181,7 @@ module Crystal
       llvm_type(type.remove_alias)
     end
 
-    def create_llvm_type(type : NonGenericModuleType)
+    def create_llvm_type(type : NonGenericModuleType | GenericClassType)
       if including_type = type.including_types
         llvm_type(including_type)
       else

@@ -158,6 +158,16 @@ module Crystal
     end
   end
 
+  class GenericClassType
+    def common_ancestor(other : Type)
+      if other.implements?(self)
+        self
+      else
+        nil
+      end
+    end
+  end
+
   class ClassType
     def common_ancestor(other : ClassType)
       if depth <= 1

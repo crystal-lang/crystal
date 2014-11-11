@@ -225,4 +225,34 @@ describe "Type inference: generic class" do
       foo Bar(Int32).new
       )) { int32.metaclass }
   end
+
+  it "creates pointer of unspecified generic type (1)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      p = Pointer(Foo).malloc(1_u64)
+      p.value = Foo(Int32).new
+      p.value = Foo(Float64).new
+      p.value
+      )) { types["Foo"] }
+  end
+
+  it "creates pointer of unspecified generic type (2)" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@x : T)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      p = Pointer(Foo).malloc(1_u64)
+      p.value = Foo.new(1)
+      p.value = Foo.new('a')
+      p.value.x
+      )) { union_of int32, char }
+  end
 end

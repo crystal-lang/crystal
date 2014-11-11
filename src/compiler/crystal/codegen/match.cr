@@ -3,7 +3,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     llvm_true
   end
 
-  def match_type_id(type : NonGenericModuleType, restriction, type_id)
+  def match_type_id(type : NonGenericModuleType | GenericClassType, restriction, type_id)
     match_type_id(type.including_types.not_nil!, restriction, type_id)
   end
 

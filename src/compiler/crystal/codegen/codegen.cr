@@ -1552,6 +1552,10 @@ module Crystal
       type_id(value, type.including_types.not_nil!)
     end
 
+    def type_id(value, type : GenericClassType)
+      type_id(value, type.including_types.not_nil!)
+    end
+
     def type_id(value, type)
       type_id(type)
     end

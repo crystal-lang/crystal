@@ -118,6 +118,18 @@ module Crystal
       end
     end
 
+    def lookup_matches_in(owner : GenericClassType)
+      including_types = owner.including_types
+      if including_types
+        owner.add_subclass_observer(self)
+        @subclass_notifier = owner
+
+        lookup_matches_in(including_types)
+      else
+        raise "no type inherits #{owner}"
+      end
+    end
+
     def lookup_matches_in(owner : Type, self_type = nil, def_name = self.name)
       lookup_matches_in_type(owner, self_type, def_name)
     end

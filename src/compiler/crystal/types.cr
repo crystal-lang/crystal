@@ -1602,6 +1602,7 @@ module Crystal
 
   class GenericClassType < ClassType
     include GenericType
+    include DefInstanceContainer
 
     def initialize(program, container, name, superclass, @type_vars, add_subclass = true)
       super(program, container, name, superclass, add_subclass)
@@ -1668,6 +1669,10 @@ module Crystal
 
     def type_desc
       struct? ? "generic struct" : "generic class"
+    end
+
+    def including_types
+      program.union_of generic_types.values
     end
 
     def to_s(io)
