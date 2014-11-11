@@ -1672,7 +1672,16 @@ module Crystal
     end
 
     def including_types
-      program.union_of generic_types.values
+      instances = generic_types.values
+      subclasses.each do |subclass|
+        if subclass.is_a?(GenericClassType)
+          subtypes = subclass.including_types
+          instances.concat subtypes if subtypes
+        else
+          instances << subclass
+        end
+      end
+      program.union_of instances
     end
 
     def to_s(io)

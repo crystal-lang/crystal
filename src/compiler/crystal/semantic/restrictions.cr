@@ -302,7 +302,7 @@ module Crystal
     end
 
     def restrict(other : GenericClassType, context)
-      generic_class == other ? self : nil
+      generic_class == other ? self : super
     end
 
     def restrict(other : Generic, context)

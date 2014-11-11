@@ -255,4 +255,18 @@ describe "Type inference: generic class" do
       p.value.x
       )) { union_of int32, char }
   end
+
+  it "creates pointer of unspecified generic type with inherited class" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      p = Pointer(Foo).malloc(1_u64)
+      p.value = Bar(Int32).new
+      p.value
+      )) { types["Foo"] }
+  end
 end
