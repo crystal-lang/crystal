@@ -383,6 +383,32 @@ module Crystal
     end
   end
 
+  class InheritedGenericClass
+    def is_restriction_of?(other : Type, owner)
+      @extended_class.is_restriction_of?(other, owner)
+    end
+
+    def restrict(other : Generic, context)
+      generic_class = context.type_lookup.lookup_type other.name
+      return nil unless generic_class == @extended_class
+
+      generic_class = generic_class as GenericClassType
+      return nil unless generic_class.type_vars.length == @extended_class.type_vars.length
+
+      @extended_class.type_vars.zip(other.type_vars) do |class_type_var, other_type_var|
+        if m = @mapping[class_type_var]?
+          t = TypeLookup.lookup(extending_class, m)
+          restricted = t.restrict other_type_var, context
+          return nil unless restricted
+
+          context.set_free_var(class_type_var, restricted)
+        end
+      end
+
+      self
+    end
+  end
+
   class VirtualType
     def is_restriction_of?(other : Type, owner)
       other = other.base_type if other.is_a?(VirtualType)

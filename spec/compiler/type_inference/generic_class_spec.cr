@@ -177,4 +177,52 @@ describe "Type inference: generic class" do
       Nothing.new
       )) { types["Nothing"] }
   end
+
+  it "restricts non-generic to generic" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      def foo(x : Foo)
+        x
+      end
+
+      foo Bar.new
+      )) { types["Bar"] }
+  end
+
+  it "restricts non-generic to generic with free var" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      def foo(x : Foo(T))
+        T
+      end
+
+      foo Bar.new
+      )) { int32.metaclass }
+  end
+
+  it "restricts generic to generic with free var" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      def foo(x : Foo(T))
+        T
+      end
+
+      foo Bar(Int32).new
+      )) { int32.metaclass }
+  end
 end
