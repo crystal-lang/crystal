@@ -877,6 +877,9 @@ describe "Parser" do
   it_parses "enum Foo; A = 1\ndef foo; 1; end\ndef bar; 2; end\nend", EnumDef.new("Foo", [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32), Def.new("bar", body: 2.int32)] of ASTNode)
   it_parses "enum Foo; A = 1\ndef self.foo; 1; end\nend", EnumDef.new("Foo", [Arg.new("A", 1.int32), Def.new("foo", receiver: "self".var, body: 1.int32)] of ASTNode)
 
+  it_parses "1.[](2)", Call.new(1.int32, "[]", [2.int32] of ASTNode)
+  it_parses "1.[]=(2, 3)", Call.new(1.int32, "[]=", [2.int32, 3.int32] of ASTNode)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
   end
