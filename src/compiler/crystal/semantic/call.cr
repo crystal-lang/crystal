@@ -529,18 +529,37 @@ module Crystal
       block = @block.not_nil!
       ident_lookup = MatchTypeLookup.new(match.context)
 
-      if inputs = block_arg.fun.inputs
-        yield_vars = inputs.map_with_index do |input, i|
-          type = lookup_node_type(ident_lookup, input)
-          type = type.virtual_type
-          Var.new("var#{i}", type)
+      block_arg_fun = block_arg.fun
+      if block_arg_fun.is_a?(Fun)
+        if inputs = block_arg_fun.inputs
+          yield_vars = inputs.map_with_index do |input, i|
+            type = lookup_node_type(ident_lookup, input)
+            type = type.virtual_type
+            Var.new("var#{i}", type)
+          end
+          block.args.each_with_index do |arg, i|
+            var = yield_vars[i]?
+            arg.bind_to(var || mod.nil_var)
+          end
+        else
+          block.args.each &.bind_to(mod.nil_var)
+        end
+        block_arg_fun_output = block_arg_fun.output
+      else
+        block_arg_type = lookup_node_type(ident_lookup, block_arg_fun)
+        unless block_arg_type.is_a?(FunInstanceType)
+          block_arg_fun.raise "expected block type to be a function type, not #{block_arg_type}"
+          return
+        end
+
+        yield_vars = block_arg_type.arg_types.map_with_index do |input, i|
+          Var.new("var#{i}", input)
         end
         block.args.each_with_index do |arg, i|
           var = yield_vars[i]?
           arg.bind_to(var || mod.nil_var)
         end
-      else
-        block.args.each &.bind_to(mod.nil_var)
+        block_arg_fun_output = block_arg_type.return_type
       end
 
       if match.def.uses_block_arg
@@ -587,7 +606,7 @@ module Crystal
           fun_def = Def.new("->", fun_args, block.body)
           fun_literal = FunLiteral.new(fun_def)
 
-          unless block_arg.fun.output
+          unless block_arg_fun_output
             fun_literal.force_void = true
           end
 
@@ -598,7 +617,7 @@ module Crystal
 
         fun_literal_type = fun_literal.type?
         if fun_literal_type
-          if output = block_arg.fun.output
+          if output = block_arg_fun_output
             block_type = (fun_literal_type as FunInstanceType).return_type
             matched = MatchesLookup.match_arg(block_type, output, match.context)
             unless matched
@@ -606,7 +625,7 @@ module Crystal
             end
           end
         else
-          if block_arg.fun.output
+          if block_arg_fun_output
             raise "can't deduce type of block"
           else
             block.body.type = mod.void
@@ -615,7 +634,7 @@ module Crystal
       else
         block.accept parent_visitor
 
-        if output = block_arg.fun.output
+        if output = block_arg_fun_output
           raise "can't infer block type" unless block.body.type?
 
           block_type = block.body.type

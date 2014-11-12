@@ -598,4 +598,33 @@ describe "Block inference" do
       ),
       "can't declare enum inside block"
   end
+
+  it "allows alias as block fun type" do
+    assert_type(%(
+      alias Alias = Int32 -> Int32
+
+      def foo(&block : Alias)
+        block.call(1)
+      end
+
+      foo do |x|
+        x + 1
+      end
+      )) { int32 }
+  end
+
+  it "errors if alias is not a fun type" do
+    assert_error %(
+      alias Alias = Int32
+
+      def foo(&block : Alias)
+        block.call(1)
+      end
+
+      foo do |x|
+        x + 1
+      end
+      ),
+      "expected block type to be a function type, not Int32"
+  end
 end

@@ -2318,8 +2318,9 @@ module Crystal
             found_splat = true
           end
           if block_arg = extras.block_arg
-            if inputs = block_arg.fun.inputs
-              @yields = inputs.length
+            block_arg_fun = block_arg.fun
+            if block_arg_fun.is_a?(Fun)
+              @yields = block_arg_fun.inputs.try(&.length) || 0
             else
               @yields = 0
             end
@@ -2347,8 +2348,9 @@ module Crystal
             found_splat = true
           end
           if block_arg = extras.block_arg
-            if inputs = block_arg.fun.inputs
-              @yields = inputs.length
+            block_arg_fun = block_arg.fun
+            if block_arg_fun.is_a?(Fun)
+              @yields = block_arg_fun.inputs.try(&.length) || 0
             else
               @yields = 0
             end
@@ -2516,9 +2518,6 @@ module Crystal
         location = @token.location
 
         type_spec = parse_single_type
-        unless type_spec.is_a?(Fun)
-          raise "expected block argument type to be a function", location
-        end
       else
         type_spec = Fun.new
       end

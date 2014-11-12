@@ -325,8 +325,11 @@ module Crystal
       # and it doesn't use it, we remove it because it's useless
       # and the semantic code won't have to bother checking it
       block_arg = node.block_arg
-      if !node.uses_block_arg && block_arg && !block_arg.fun.inputs && !block_arg.fun.output
-        node.block_arg = nil
+      if !node.uses_block_arg && block_arg
+        block_arg_fun = block_arg.fun
+        if block_arg_fun.is_a?(Fun) && !block_arg_fun.inputs && !block_arg_fun.output
+          node.block_arg = nil
+        end
       end
 
       node
