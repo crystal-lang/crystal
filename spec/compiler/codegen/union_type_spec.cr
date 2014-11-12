@@ -138,4 +138,39 @@ describe "Code gen: union type" do
       a.nil?
     ")
   end
+
+  it "sorts restrictions when there are unions" do
+    run("
+      class Middle
+      end
+
+      class Top < Middle
+      end
+
+      class Another1
+      end
+
+      class Another2
+      end
+
+      def type_id(type : Another2)
+        1
+      end
+
+      def type_id(y : Top)
+        2
+      end
+
+      def type_id(y : Middle | Another1)
+        3
+      end
+
+      def type_id(y)
+        4
+      end
+
+      t = Top.new || Another1.new
+      type_id t
+      ").to_i.should eq(2)
+  end
 end

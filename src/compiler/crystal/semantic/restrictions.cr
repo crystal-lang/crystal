@@ -82,7 +82,7 @@ module Crystal
 
   class Union
     def is_restriction_of?(other : Path, owner)
-      !other.is_restriction_of?(self, owner)
+      types.any? &.is_restriction_of?(other, owner)
     end
   end
 
