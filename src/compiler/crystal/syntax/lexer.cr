@@ -743,11 +743,8 @@ module Crystal
             return check_ident_or_keyword(:then, start)
           end
         when 'r'
-          case next_char
-          when 'u'
-            if next_char == 'e'
-              return check_ident_or_keyword(:true, start)
-            end
+          if next_char == 'u' && next_char == 'e'
+            return check_ident_or_keyword(:true, start)
           end
         when 'y'
           if next_char == 'p' && next_char == 'e'
