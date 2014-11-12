@@ -25,7 +25,7 @@ module Crystal
     end
 
     def type=(type)
-      return if type.nil? || @type.object_id == type.object_id
+      return if type.nil? || @type.same?(type)
 
       set_type(type)
       notify_observers
@@ -64,7 +64,7 @@ module Crystal
       else
         new_type = Type.merge dependencies
       end
-      return if @type.object_id == new_type.object_id
+      return if @type.same? new_type
       return unless new_type
 
       set_type(map_type(new_type))
@@ -112,25 +112,14 @@ module Crystal
     end
 
     def notify_observers
-      @observers.try &.each do |observer|
-        observer.update self
-      end
-
-      @input_observers.try &.each do |observer|
-        observer.update_input self
-      end
-
-      @observers.try &.each do |observer|
-        observer.propagate
-      end
-
-      @input_observers.try &.each do |observer|
-        observer.propagate
-      end
+      @observers.try &.each &.update self
+      @input_observers.try &.each &.update_input self
+      @observers.try &.each &.propagate
+      @input_observers.try &.each &.propagate
     end
 
     def update(from)
-      return if @type.object_id == from.type.object_id
+      return if @type.same? from.type
 
       if dependencies.length == 1 || !@type
         new_type = from.type?
@@ -138,7 +127,7 @@ module Crystal
         new_type = Type.merge dependencies
       end
 
-      return if @type.object_id == new_type.object_id
+      return if @type.same? new_type
       return unless new_type
 
       set_type(map_type(new_type))
@@ -161,6 +150,31 @@ module Crystal
 
     def visibility
       nil
+    end
+  end
+
+  class Def
+    property! :owner
+    property! :original_owner
+    property :vars
+    property :raises
+
+    property closure
+    @closure = false
+
+    property :self_closured
+    @self_closured = false
+
+    property :previous
+    property :next
+
+    property :visibility
+
+    def macro_owner=(@macro_owner)
+    end
+
+    def macro_owner
+      @macro_owner || @owner
     end
   end
 
@@ -244,18 +258,14 @@ module Crystal
       return unless self.def.type?
 
       types = self.def.args.map &.type
-      if @force_void
-        return_type = self.def.type.program.void
-      else
-        return_type = self.def.type
-      end
+      return_type = @force_void ? self.def.type.program.void : self.def.type
 
       expected_return_type = @expected_return_type
       if expected_return_type && !expected_return_type.void? && expected_return_type != return_type
         raise "expected new to return #{expected_return_type}, not #{return_type}"
       end
 
-      types.push return_type
+      types << return_type
 
       self.type = self.def.type.program.fun_of(types)
     end
@@ -268,16 +278,14 @@ module Crystal
     @in_type_args = false
 
     def update(from = nil)
-      type_vars_types = [] of TypeVar
-
-      type_vars.each do |node|
+      type_vars_types = type_vars.map do |node|
         if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
           node = syntax_replacement
         end
 
         case node
         when NumberLiteral
-          type_vars_types << node
+          type_var = node
         else
           node_type = node.type?
           unless node_type
@@ -288,8 +296,10 @@ module Crystal
               self.raise "can't deduce generic type in recursive method"
             end
           end
-          type_vars_types << node_type.virtual_type
+          type_var = node_type.virtual_type
         end
+
+        type_var as TypeVar
       end
 
       begin

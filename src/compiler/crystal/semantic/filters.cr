@@ -202,4 +202,69 @@ module Crystal
       io << ")"
     end
   end
+
+  struct TypeFilters
+    def initialize
+      @filters = {} of String => TypeFilter
+    end
+
+    def self.new(node, filter)
+      new_filter = new
+      new_filter[node.name] = filter
+      new_filter
+    end
+
+    def self.truthy(node)
+      new node, TruthyFilter.instance
+    end
+
+    def self.and(filters1, filters2)
+      if filters1 && filters2
+        new_filters = TypeFilters.new
+        all_keys = (filters1.keys + filters2.keys).uniq!
+        all_keys.each do |name|
+          filter1 = filters1[name]?
+          filter2 = filters2[name]?
+          if filter1 && filter2
+            new_filters[name] = TypeFilter.and(filter1, filter2)
+          elsif filter1
+            new_filters[name] = filter1
+          elsif filter2
+            new_filters[name] = filter2
+          end
+        end
+        new_filters
+      elsif filters1
+        filters1
+      else
+        filters2
+      end
+    end
+
+    def self.and(filters1, filters2, filters3)
+      and(filters1, and(filters2, filters3))
+    end
+
+    def [](name)
+      @filters[name]
+    end
+
+    def []?(name)
+      @filters[name]?
+    end
+
+    def []=(name, filter)
+      @filters[name] = filter
+    end
+
+    def each
+      @filters.each do |key, value|
+        yield key, value
+      end
+    end
+
+    def keys
+      @filters.keys
+    end
+  end
 end

@@ -44,17 +44,11 @@ module Crystal
       true
     end
 
-    def ==(other : self)
-      true
-    end
-
     def clone_without_location
       Nop.new
     end
 
-    def hash
-      0
-    end
+    def_equals_and_hash
   end
 
   # A container for one or many expressions.
@@ -111,17 +105,11 @@ module Crystal
   #     'nil'
   #
   class NilLiteral < ASTNode
-    def ==(other : self)
-      true
-    end
-
     def clone_without_location
       self
     end
 
-    def hash
-      0
-    end
+    def_equals_and_hash
   end
 
   # A bool literal.
@@ -852,6 +840,10 @@ module Crystal
         max_length = Int32::MAX
       end
       {min_length, max_length}
+    end
+
+    def has_default_arguments?
+      args.length > 0 && args.last.default_value
     end
 
     def clone_without_location

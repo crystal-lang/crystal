@@ -90,20 +90,6 @@ module Crystal
       @meta_vars = meta_vars
     end
 
-    def new_meta_var(name)
-      meta_var = MetaVar.new(name)
-      meta_var.context = current_context
-      meta_var
-    end
-
-    def block=(@block)
-      @block_context = @block
-    end
-
-    def inside_block?
-      @block_context
-    end
-
     def visit_any(node)
       @unreachable = false
       true
@@ -137,70 +123,6 @@ module Crystal
       end
     end
 
-    def visit(node : Nop)
-      node.type = @mod.nil
-    end
-
-    def visit(node : NilLiteral)
-      node.type = @mod.nil
-    end
-
-    def visit(node : BoolLiteral)
-      node.type = mod.bool
-    end
-
-    def visit(node : NumberLiteral)
-      node.type = case node.kind
-                  when :i8 then mod.int8
-                  when :i16 then mod.int16
-                  when :i32 then mod.int32
-                  when :i64 then mod.int64
-                  when :u8 then mod.uint8
-                  when :u16 then mod.uint16
-                  when :u32 then mod.uint32
-                  when :u64 then mod.uint64
-                  when :f32 then mod.float32
-                  when :f64 then mod.float64
-                  else raise "Invalid node kind: #{node.kind}"
-                  end
-    end
-
-    def visit(node : CharLiteral)
-      node.type = mod.char
-    end
-
-    def visit(node : SymbolLiteral)
-      node.type = mod.symbol
-      mod.symbols.add node.value
-    end
-
-    def visit(node : StringLiteral)
-      node.type = mod.string
-    end
-
-    def visit(node : Out)
-      case exp = node.exp
-      when Var
-        # We declare out variables
-        # TODO: check that the out variable didn't exist before
-        @meta_vars[exp.name] = new_meta_var(exp.name)
-        @vars[exp.name] = new_meta_var(exp.name)
-      when InstanceVar
-        var = lookup_instance_var exp
-        exp.bind_to(var)
-
-        if @is_initialize
-          @vars[exp.name] = MetaVar.new(exp.name)
-        end
-      else
-        node.raise "Bug: unexpected out exp: #{exp}"
-      end
-
-      node.bind_to node.exp
-
-      false
-    end
-
     def visit(node : Var)
       var = @vars[node.name]?
       if var
@@ -219,7 +141,7 @@ module Crystal
         node.bind_to(var)
 
         if needs_type_filters?
-          @type_filters = truthy_filter(node)
+          @type_filters = TypeFilters.truthy(node)
         end
       elsif node.name == "self"
         current_type = current_type()
@@ -281,6 +203,29 @@ module Crystal
       false
     end
 
+    def visit(node : Out)
+      case exp = node.exp
+      when Var
+        # We declare out variables
+        # TODO: check that the out variable didn't exist before
+        @meta_vars[exp.name] = new_meta_var(exp.name)
+        @vars[exp.name] = new_meta_var(exp.name)
+      when InstanceVar
+        var = lookup_instance_var exp
+        exp.bind_to(var)
+
+        if @is_initialize
+          @vars[exp.name] = MetaVar.new(exp.name)
+        end
+      else
+        node.raise "Bug: unexpected out exp: #{exp}"
+      end
+
+      node.bind_to node.exp
+
+      false
+    end
+
     def check_declare_var_type(node)
       type = node.declared_type.type.instance_type
 
@@ -334,37 +279,28 @@ module Crystal
     end
 
     def lookup_instance_var(node)
-      scope = @scope
-
-      if scope
-        if scope.is_a?(Crystal::Program)
-          node.raise "can't use instance variables at the top level"
-        elsif scope.is_a?(PrimitiveType) #|| scope.metaclass?
-          node.raise "can't use instance variables inside #{@scope}"
-        end
-
-        if scope.metaclass?
-          node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
-        elsif scope.is_a?(InstanceVarContainer)
-          var = scope.lookup_instance_var node.name
-          unless scope.has_instance_var_in_initialize?(node.name)
-            begin
-              var.bind_to mod.nil_var
-            rescue ex : Crystal::Exception
-              node.raise "#{node} not in initialize so it's nilable", ex
-            end
+      case scope = @scope
+      when Nil
+        node.raise "can't use instance variables at the top level"
+      when Program
+        node.raise "can't use instance variables at the top level"
+      when PrimitiveType
+        node.raise "can't use instance variables inside #{scope}"
+      when .metaclass?
+        node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+      when InstanceVarContainer
+        var = scope.lookup_instance_var node.name
+        unless scope.has_instance_var_in_initialize?(node.name)
+          begin
+            var.bind_to mod.nil_var
+          rescue ex : Crystal::Exception
+            node.raise "#{node} not in initialize so it's nilable", ex
           end
-        else
-          node.raise "Bug: #{scope} is not an InstanceVarContainer"
         end
-
-        raise "Bug: var is nil" unless var
-
         check_self_closured
-
         var
       else
-        node.raise "can't use instance variables at the top level"
+        node.raise "Bug: #{scope} is not an InstanceVarContainer"
       end
     end
 
@@ -425,7 +361,7 @@ module Crystal
       end
 
       if needs_type_filters?
-        @type_filters = and_type_filters(truthy_filter(target), value_type_filters)
+        @type_filters = TypeFilters.and(TypeFilters.truthy(target), value_type_filters)
       end
     end
 
@@ -533,20 +469,17 @@ module Crystal
 
       check_valid_attributes node, ValidDefAttributes, "def"
 
-      if receiver = node.receiver
-        case receiver
-        when Var
-          if receiver.name == "self"
-            target_type = current_type.metaclass
-          else
-            receiver.raise "def receiver can only be a Type or self"
-          end
-        else
-          target_type = lookup_path_type(receiver).metaclass
-        end
-      else
-        target_type = current_type
-      end
+      target_type = case receiver = node.receiver
+                    when Nil
+                      current_type
+                    when Var
+                      unless receiver.name == "self"
+                        receiver.raise "def receiver can only be a Type or self"
+                      end
+                      current_type.metaclass
+                    else
+                      lookup_path_type(receiver).metaclass
+                    end
 
       node.raises = true if node.has_attribute?("Raises")
 
@@ -623,7 +556,7 @@ module Crystal
           if node_scope = node.scope
             block.scope = node_scope.type
           end
-          ignore_type_filters do
+          ignoring_type_filters do
             block.accept call.parent_visitor.not_nil!
           end
         end
@@ -637,8 +570,7 @@ module Crystal
 
     def bind_block_args_to_yield_exps(block, node)
       block.args.each_with_index do |arg, i|
-        exp = node.exps[i]?
-        arg.bind_to(exp ? exp : mod.nil_var)
+        arg.bind_to(node.exps[i]? || mod.nil_var)
       end
     end
 
@@ -652,8 +584,7 @@ module Crystal
 
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
-        meta_var = MetaVar.new(arg.name)
-        meta_var.context = node
+        meta_var = new_meta_var(arg.name, context: node)
         meta_var.bind_to(arg)
 
         # TODO: check if we need a second meta-var
@@ -720,8 +651,7 @@ module Crystal
         fun_var = MetaVar.new(arg.name, arg.type)
         fun_vars[arg.name] = fun_var
 
-        meta_var = MetaVar.new(arg.name)
-        meta_var.context = node.def
+        meta_var = new_meta_var(arg.name, context: node.def)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
       end
@@ -802,7 +732,7 @@ module Crystal
       block_arg = node.block_arg
       named_args = node.named_args
 
-      ignore_type_filters do
+      ignoring_type_filters do
         if obj
           obj.accept(self)
 
@@ -1245,7 +1175,7 @@ module Crystal
       end
 
       if needs_type_filters? && (var = get_expression_var(node.obj))
-        @type_filters = new_type_filter(var, SimpleTypeFilter.new(node.const.type))
+        @type_filters = TypeFilters.new var, SimpleTypeFilter.new(node.const.type)
       end
 
       false
@@ -1254,7 +1184,7 @@ module Crystal
     def end_visit(node : RespondsTo)
       node.type = mod.bool
       if needs_type_filters? && (var = get_expression_var(node.obj))
-        @type_filters = new_type_filter(var, RespondsToTypeFilter.new(node.name.value))
+        @type_filters = TypeFilters.new var, RespondsToTypeFilter.new(node.name.value)
       end
     end
 
@@ -1970,7 +1900,7 @@ module Crystal
       if needs_type_filters?
         case node.binary
         when :and
-          @type_filters = and_type_filters(and_type_filters(cond_type_filters, then_type_filters), else_type_filters)
+          @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
         # TODO: or type filters
         # when :or
         #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
@@ -2154,7 +2084,6 @@ module Crystal
       end
     end
 
-
     def end_visit(node : Break)
       container = @while_stack.last? || (block.try &.break)
       node.raise "Invalid break" unless container
@@ -2179,11 +2108,7 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
-        if exp = node.exp
-          block.bind_to exp
-        else
-          block.bind_to mod.nil_var
-        end
+        block.bind_to(node.exp || mod.nil_var)
 
         bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars
@@ -2761,6 +2686,147 @@ module Crystal
       type
     end
 
+    ## Literals
+
+    def visit(node : Nop)
+      node.type = @mod.nil
+    end
+
+    def visit(node : NilLiteral)
+      node.type = @mod.nil
+    end
+
+    def visit(node : BoolLiteral)
+      node.type = mod.bool
+    end
+
+    def visit(node : NumberLiteral)
+      node.type = case node.kind
+                  when :i8 then mod.int8
+                  when :i16 then mod.int16
+                  when :i32 then mod.int32
+                  when :i64 then mod.int64
+                  when :u8 then mod.uint8
+                  when :u16 then mod.uint16
+                  when :u32 then mod.uint32
+                  when :u64 then mod.uint64
+                  when :f32 then mod.float32
+                  when :f64 then mod.float64
+                  else raise "Invalid node kind: #{node.kind}"
+                  end
+    end
+
+    def visit(node : CharLiteral)
+      node.type = mod.char
+    end
+
+    def visit(node : SymbolLiteral)
+      node.type = mod.symbol
+      mod.symbols.add node.value
+    end
+
+    def visit(node : StringLiteral)
+      node.type = mod.string
+    end
+
+
+    def visit(node : RegexLiteral)
+      expand(node)
+    end
+
+    def visit(node : ArrayLiteral)
+      if name = node.name
+        name.accept self
+        type = name.type.instance_type
+
+        case type
+        when GenericClassType
+          type_name = type.name.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          type_of = TypeOf.new(node.elements)
+          type_of.location = node.location
+
+          generic = Generic.new(path, [type_of] of ASTNode)
+          generic.location = node.location
+
+          node.name = generic
+        when GenericClassInstanceType
+          # Nothing
+        else
+          type_name = type.to_s.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          node.name = path
+        end
+
+        expand_named(node)
+      else
+        expand(node)
+      end
+    end
+
+    def visit(node : HashLiteral)
+      if name = node.name
+        name.accept self
+        type = name.type.instance_type
+
+        case type
+        when GenericClassType
+          type_name = type.name.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          type_of_keys = TypeOf.new(node.entries.map &.key)
+          type_of_keys.location = node.location
+
+          type_of_values = TypeOf.new(node.entries.map &.value)
+          type_of_values.location = node.location
+
+          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode)
+          generic.location = node.location
+
+          node.name = generic
+        when GenericClassInstanceType
+          # Nothing
+        else
+          type_name = type.to_s.split "::"
+
+          path = Path.global(type_name)
+          path.location = node.location
+
+          node.name = path
+        end
+
+        expand_named(node)
+      else
+        expand(node)
+      end
+    end
+
+    def expand(node)
+      expand(node) { @mod.literal_expander.expand node }
+    end
+
+    def expand_named(node)
+      expand(node) { @mod.literal_expander.expand_named node  }
+    end
+
+    def expand(node)
+      expanded = yield
+      expanded.accept self
+      node.expanded = expanded
+      node.bind_to expanded
+      false
+    end
+
+    ## Helpers
+
     def current_type
       @types.last
     end
@@ -2876,56 +2942,6 @@ module Crystal
       end
     end
 
-    def and_type_filters(filters1, filters2)
-      if filters1 && filters2
-        new_filters = new_type_filter
-        all_keys = (filters1.keys + filters2.keys).uniq!
-        all_keys.each do |name|
-          filter1 = filters1[name]?
-          filter2 = filters2[name]?
-          if filter1 && filter2
-            new_filters[name] = TypeFilter.and(filter1, filter2)
-          elsif filter1
-            new_filters[name] = filter1
-          elsif filter2
-            new_filters[name] = filter2
-          end
-        end
-        new_filters
-      elsif filters1
-        filters1
-      else
-        filters2
-      end
-    end
-
-    def or_type_filters(filters1, filters2)
-      # TODO: or type filters
-      nil
-    end
-
-    def negate_filters(filters_hash)
-      negated_filters = new_type_filter
-      filters_hash.each do |name, filter|
-        negated_filters[name] = NotFilter.new(filter)
-      end
-      negated_filters
-    end
-
-    def new_type_filter
-      {} of String => TypeFilter
-    end
-
-    def new_type_filter(node, filter)
-      new_filter = new_type_filter
-      new_filter[node.name] = filter
-      new_filter
-    end
-
-    def truthy_filter(node)
-      new_type_filter(node, TruthyFilter.instance)
-    end
-
     def needs_type_filters?
       @needs_type_filters > 0
     end
@@ -2940,7 +2956,7 @@ module Crystal
       end
     end
 
-    def ignore_type_filters
+    def ignoring_type_filters
       needs_type_filters, @needs_type_filters = @needs_type_filters, 0
       begin
         yield
@@ -2955,6 +2971,26 @@ module Crystal
           similar_name.test(var_name)
         end
       end
+    end
+
+    def new_meta_var(name, context = current_context)
+      meta_var = MetaVar.new(name)
+      meta_var.context = context
+      meta_var
+    end
+
+    def block=(@block)
+      @block_context = @block
+    end
+
+    def inside_block?
+      @block_context
+    end
+
+    def pushing_type(type)
+      @types.push type
+      yield
+      @types.pop
     end
 
     def visit(node : And)
@@ -2979,107 +3015,6 @@ module Crystal
 
     def visit(node : When)
       raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : RegexLiteral)
-      expand(node)
-    end
-
-    def visit(node : ArrayLiteral)
-      if name = node.name
-        name.accept self
-        type = name.type.instance_type
-
-        case type
-        when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name)
-          path.location = node.location
-
-          type_of = TypeOf.new(node.elements)
-          type_of.location = node.location
-
-          generic = Generic.new(path, [type_of] of ASTNode)
-          generic.location = node.location
-
-          node.name = generic
-        when GenericClassInstanceType
-          # Nothing
-        else
-          type_name = type.to_s.split "::"
-
-          path = Path.global(type_name)
-          path.location = node.location
-
-          node.name = path
-        end
-
-        expand_named(node)
-      else
-        expand(node)
-      end
-    end
-
-    def visit(node : HashLiteral)
-      if name = node.name
-        name.accept self
-        type = name.type.instance_type
-
-        case type
-        when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name)
-          path.location = node.location
-
-          type_of_keys = TypeOf.new(node.entries.map &.key)
-          type_of_keys.location = node.location
-
-          type_of_values = TypeOf.new(node.entries.map &.value)
-          type_of_values.location = node.location
-
-          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode)
-          generic.location = node.location
-
-          node.name = generic
-        when GenericClassInstanceType
-          # Nothing
-        else
-          type_name = type.to_s.split "::"
-
-          path = Path.global(type_name)
-          path.location = node.location
-
-          node.name = path
-        end
-
-        expand_named(node)
-      else
-        expand(node)
-      end
-    end
-
-    def expand(node)
-      expand(node) { @mod.literal_expander.expand node }
-    end
-
-    def expand_named(node)
-      expand(node) { @mod.literal_expander.expand_named node  }
-    end
-
-    def expand(node)
-      expanded = yield
-      expanded.accept self
-      node.expanded = expanded
-      node.bind_to expanded
-      false
-    end
-
-    def pushing_type(type)
-      @types.push type
-      yield
-      @types.pop
     end
 
     def visit(node : Unless)

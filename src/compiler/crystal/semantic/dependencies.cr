@@ -90,6 +90,10 @@ module Crystal
       end
     end
 
+    def inspect(io)
+      to_s io
+    end
+
     def to_s(io)
       io << "["
       each_with_index do |node, i|
