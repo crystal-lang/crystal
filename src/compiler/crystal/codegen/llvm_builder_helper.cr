@@ -72,69 +72,23 @@ module Crystal
       builder.inbounds_gep ptr, [index0, index1], name
     end
 
-    def ptr2int(value, type)
-      builder.ptr2int value, type
-    end
-
-    def int2ptr(value, type)
-      builder.int2ptr value, type
-    end
-
-    def and(value1, value2)
-      builder.and value1, value2
-    end
-
-    def or(value1, value2)
-      builder.or value1, value2
-    end
-
-    def not(value)
-      builder.not value
-    end
-
-    def call(func, args)
-      builder.call func, args
-    end
-
-    def bit_cast(value, type)
-      builder.bit_cast value, type
-    end
-
-    def trunc(value, type)
-      builder.trunc value, type
-    end
-
-    def load(value, name = "")
-      builder.load value, name
-    end
-
-    def store(value, ptr)
-      builder.store value, ptr
-    end
-
-    def br(block)
-      builder.br block
-    end
-
-    def insert_block
-      builder.insert_block
-    end
-
-    def position_at_end(block)
-      builder.position_at_end block
-    end
-
-    def unreachable
-      builder.unreachable
-    end
-
-    def cond(cond, then_block, else_block)
-      builder.cond cond, then_block, else_block
-    end
-
-    def phi(type, table)
-      builder.phi type, table
-    end
+    delegate ptr2int, builder
+    delegate int2ptr, builder
+    delegate and, builder
+    delegate or, builder
+    delegate not, builder
+    delegate call, builder
+    delegate bit_cast, builder
+    delegate trunc, builder
+    delegate load, builder
+    delegate store, builder
+    delegate br, builder
+    delegate insert_block, builder
+    delegate position_at_end, builder
+    delegate unreachable, builder
+    delegate cond, builder
+    delegate phi, builder
+    delegate extract_value, builder
 
     def ret
       builder.ret
@@ -188,25 +142,12 @@ module Crystal
       bit_cast value, llvm_type(type).pointer
     end
 
-    def extract_value(value, index)
-      builder.extract_value value, index
-    end
-
-    def llvm_type(type)
-      llvm_typer.llvm_type(type)
-    end
-
-    def llvm_struct_type(type)
-      llvm_typer.llvm_struct_type(type)
-    end
-
-    def llvm_arg_type(type)
-      llvm_typer.llvm_arg_type(type)
-    end
-
-    def llvm_embedded_type(type)
-      llvm_typer.llvm_embedded_type(type)
-    end
+    delegate llvm_type, llvm_typer
+    delegate llvm_struct_type, llvm_typer
+    delegate llvm_arg_type, llvm_typer
+    delegate llvm_embedded_type, llvm_typer
+    delegate llvm_c_type, llvm_typer
+    delegate llvm_c_return_type, llvm_typer
 
     def llvm_fun_type(type)
       llvm_typer.fun_type(type as FunInstanceType)
@@ -214,14 +155,6 @@ module Crystal
 
     def llvm_closure_type(type)
       llvm_typer.closure_type(type as FunInstanceType)
-    end
-
-    def llvm_c_type(type)
-      llvm_typer.llvm_c_type(type)
-    end
-
-    def llvm_c_return_type(type)
-      llvm_typer.llvm_c_return_type(type)
     end
 
     def llvm_size(type)

@@ -15,25 +15,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     equal? type_id(restriction), type_id
   end
 
-  def match_any_type_id(type, type_id)
-    # Special case: if the type is Object+ we want to match against Reference+,
-    # because Object+ can only mean a Reference type (so we exclude Nil, for example).
-    type = @mod.reference.virtual_type if type == @mod.object.virtual_type
+  def match_any_type_id(type : UnionType | VirtualType | VirtualMetaclassType, type_id)
+    match_any_type_id_with_function(type, type_id)
+  end
 
-    case type
-    when UnionType
-      match_any_type_id_with_function(type, type_id)
-    when VirtualMetaclassType
-      match_any_type_id_with_function(type, type_id)
-    when VirtualType
-      if type.base_type.subclasses.empty?
-        equal? type_id(type.base_type), type_id
-      else
-        match_any_type_id_with_function(type, type_id)
-      end
-    else
-      equal? type_id(type), type_id
-    end
+  def match_any_type_id(type, type_id)
+    equal? type_id(type), type_id
   end
 
   def match_any_type_id_with_function(type, type_id)
@@ -62,16 +49,18 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def create_match_fun_body(type : VirtualType, type_id)
     min_max = @llvm_id.min_max_type_id(type.base_type).not_nil!
     ret(
-      and (builder.icmp LLVM::IntPredicate::SGE, type_id, int(min_max[0])),
-                   (builder.icmp LLVM::IntPredicate::SLE, type_id, int(min_max[1]))
-                )
+      and(
+        builder.icmp(LLVM::IntPredicate::SGE, type_id, int(min_max[0])),
+        builder.icmp(LLVM::IntPredicate::SLE, type_id, int(min_max[1]))
+      )
+    )
   end
 
   def create_match_fun_body(type : VirtualMetaclassType, type_id)
     result = equal? type_id(type), type_id
     type.each_concrete_type do |sub_type|
       sub_type_cond = equal? type_id(sub_type), type_id
-      result = result ? or(result, sub_type_cond) : sub_type_cond
+      result = or(result, sub_type_cond)
     end
     ret result
   end

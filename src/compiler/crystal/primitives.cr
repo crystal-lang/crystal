@@ -99,17 +99,5 @@ module Crystal
     def memset(llvm_mod)
       llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [LLVM::VoidPointer, LLVM::Int8, LLVM::Int32, LLVM::Int32, LLVM::Int1], LLVM::Void)
     end
-
-    def trampoline_init(llvm_mod)
-      llvm_mod.functions["llvm.init.trampoline"]? || llvm_mod.functions.add("llvm.init.trampoline", [
-        LLVM::VoidPointer, LLVM::VoidPointer, LLVM::VoidPointer
-      ], LLVM::Void)
-    end
-
-    def trampoline_adjust(llvm_mod)
-      llvm_mod.functions["llvm.adjust.trampoline"]? || llvm_mod.functions.add("llvm.adjust.trampoline", [
-        LLVM::VoidPointer
-      ], LLVM::VoidPointer)
-    end
   end
 end

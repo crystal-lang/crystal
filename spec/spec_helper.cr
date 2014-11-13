@@ -144,7 +144,7 @@ def run(code, filename = nil)
   if code.includes?(%(require "prelude"))
     ast = Parser.parse(code)
     assign = Assign.new(Var.new("__tempvar"), ast)
-    call = Call.new(nil, "print!", [Var.new("__tempvar")] of ASTNode)
+    call = Call.new(nil, "print!", Var.new("__tempvar"))
     code = Expressions.new([assign, call]).to_s
 
     tempfile = Tempfile.new("crystal-spec-output")

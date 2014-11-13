@@ -772,8 +772,7 @@ module Crystal
         block_vars = block.args.map_with_index do |var, index|
           Var.new("_block_arg#{index}")
         end
-        yield_exps = [] of ASTNode
-        block_vars.each { |block_var| yield_exps << block_var.clone }
+        yield_exps = block_vars.map { |var| var.clone as ASTNode }
         block_body = Yield.new(yield_exps)
         block_node = Block.new(block_vars, block_body)
       else

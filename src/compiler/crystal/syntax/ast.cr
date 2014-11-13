@@ -3,6 +3,14 @@ module Crystal
   abstract class ASTNode
     property location
 
+    def at(@location : Location?)
+      self
+    end
+
+    def at(node : ASTNode)
+      at node.location
+    end
+
     def clone
       clone = clone_without_location
       clone.location = location
@@ -415,6 +423,22 @@ module Crystal
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
       @name_length = nil
+    end
+
+    def self.new(obj, name, arg : ASTNode)
+      new obj, name, [arg] of ASTNode
+    end
+
+    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
+      new obj, name, [arg1, arg2] of ASTNode
+    end
+
+    def self.global(name, arg : ASTNode)
+      new nil, name, [arg] of ASTNode, global: true
+    end
+
+    def self.global(name, arg1 : ASTNode, arg2 : ASTNode)
+      new nil, name, [arg1, arg2] of ASTNode, global: true
     end
 
     def name_length
@@ -1236,7 +1260,11 @@ module Crystal
     property :name
     property :type_vars
 
-    def initialize(@name, @type_vars)
+    def initialize(@name, @type_vars : Array)
+    end
+
+    def self.new(name, type_var : ASTNode)
+      new name, [type_var] of ASTNode
     end
 
     def accept_children(visitor)

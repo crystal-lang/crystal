@@ -448,6 +448,12 @@ class Array(T)
     self
   end
 
+  def push(*values)
+    values.each do |value|
+      push value
+    end
+  end
+
   def replace(other : Array)
     @length = other.length
     resize_to_capacity(@length) if @length > @capacity

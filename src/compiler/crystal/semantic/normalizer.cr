@@ -146,15 +146,13 @@ module Crystal
       if capacity <= 64
         call = Call.new(Path.global("StringIO"), "new")
       else
-        call = Call.new(Path.global("StringIO"), "new", [NumberLiteral.new(capacity)] of ASTNode)
+        call = Call.new(Path.global("StringIO"), "new", NumberLiteral.new(capacity))
       end
 
       node.expressions.each do |piece|
-        call = Call.new(call, "<<", [piece])
+        call = Call.new(call, "<<", piece)
       end
-      call = Call.new(call, "to_s")
-      call.location = node.location
-      call
+      Call.new(call, "to_s").at(node)
     end
 
     # Transform a range literal into creating a Range object.
@@ -177,15 +175,9 @@ module Crystal
     def transform(node : RangeLiteral)
       super
 
-      path = Path.global("Range")
-      path.location = node.location
-
-      bool = BoolLiteral.new(node.exclusive)
-      bool.location = node.location
-
-      call = Call.new(path, "new", [node.from, node.to, bool])
-      call.location = node.location
-      call
+      path = Path.global("Range").at(node)
+      bool = BoolLiteral.new(node.exclusive).at(node)
+      Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
     # Transform a multi assign into many assigns.
@@ -205,15 +197,10 @@ module Crystal
 
         temp_var = new_temp_var
 
-        assigns = [] of ASTNode
-
-        assign = Assign.new(temp_var.clone, value)
-        assign.location = value.location
-        assigns << assign
-
+        assigns = Array(ASTNode).new(node.targets.length + 1)
+        assigns << Assign.new(temp_var.clone, value).at(value)
         node.targets.each_with_index do |target, i|
-          call = Call.new(temp_var.clone, "[]", [NumberLiteral.new(i)] of ASTNode)
-          call.location = value.location
+          call = Call.new(temp_var.clone, "[]", NumberLiteral.new(i)).at(value)
           assigns << transform_multi_assign_target(target, call)
         end
         exps = Expressions.new(assigns)
@@ -247,9 +234,7 @@ module Crystal
         assign_from_temps = [] of ASTNode
 
         temp_vars.each_with_index do |temp_var_2, i|
-          assign = Assign.new(temp_var_2.clone, node.values[i])
-          assign.location = node.location
-          assign_to_temps << assign
+          assign_to_temps << Assign.new(temp_var_2.clone, node.values[i]).at(node)
           assign_from_temps << transform_multi_assign_target(node.targets[i], temp_var_2.clone)
         end
 
@@ -265,9 +250,7 @@ module Crystal
         target.args << value
         target
       else
-        assign = Assign.new(target, value)
-        assign.location = target.location
-        assign
+        Assign.new(target, value).at(target)
       end
     end
 
@@ -295,7 +278,7 @@ module Crystal
         else
           temp_var = new_temp_var
           temp_assign = Assign.new(temp_var.clone, middle)
-          left = Call.new(obj.obj, obj.name, [temp_assign] of ASTNode)
+          left = Call.new(obj.obj, obj.name, temp_assign)
           right = Call.new(temp_var.clone, node.name, node.args)
         end
         node = And.new(left, right)
@@ -409,7 +392,7 @@ module Crystal
               implicit_call.obj = temp_var.clone
               comp = implicit_call
             else
-              comp = Call.new(cond, "===", [right_side] of ASTNode)
+              comp = Call.new(cond, "===", right_side)
             end
           else
             comp = cond
@@ -478,9 +461,7 @@ module Crystal
     #       bar
     #     end
     def transform(node : Unless)
-      a_if = If.new(node.cond, node.else, node.then).transform(self)
-      a_if.location = node.location
-      a_if
+      If.new(node.cond, node.else, node.then).transform(self).at(node)
     end
 
     # Convert unless to while:
@@ -498,11 +479,8 @@ module Crystal
     #    end
     def transform(node : Until)
       node = super
-      not = Call.new(node.cond, "!")
-      not.location = node.cond.location
-      while_node = While.new(not, node.body, node.run_once)
-      while_node.location = node.location
-      while_node
+      not_exp = Call.new(node.cond, "!").at(node.cond)
+      While.new(not_exp, node.body, node.run_once).at(node)
     end
 
     # Evaluate the ifdef's flags.

@@ -520,10 +520,8 @@ module Crystal
       # This is the case of a yield when there's a captured block
       if block.fun_literal
         block_arg_name = typed_def.block_arg.not_nil!.name
-        block_var = Var.new(block_arg_name)
-        block_var.location = node.location
-        call = Call.new(block_var, "call", node.exps)
-        call.location = node.location
+        block_var = Var.new(block_arg_name).at(node.location)
+        call = Call.new(block_var, "call", node.exps).at(node.location)
         call.accept self
         node.bind_to call
         node.expanded = call
@@ -916,8 +914,7 @@ module Crystal
       end
 
       fun_def = Def.new("->", fun_args, block.body)
-      fun_literal = FunLiteral.new(fun_def)
-      fun_literal.location = node.location
+      fun_literal = FunLiteral.new(fun_def).at(node.location)
       fun_literal.expected_return_type = fun_type.return_type
       fun_literal.accept self
 
@@ -942,14 +939,13 @@ module Crystal
 
       temp_name = @mod.new_temp_var_name
 
-      new_call = Call.new(node.obj, "new")
-      new_call.location = node.location
+      new_call = Call.new(node.obj, "new").at(node.location)
 
       new_assign = Assign.new(Var.new(temp_name), new_call)
       exps << new_assign
 
       named_args.each do |named_arg|
-        assign_call = Call.new(Var.new(temp_name), "#{named_arg.name}=", [named_arg.value] of ASTNode)
+        assign_call = Call.new(Var.new(temp_name), "#{named_arg.name}=", named_arg.value)
         if loc = named_arg.location
           assign_call.location = loc
           assign_call.name_column_number = loc.column_number
@@ -1070,8 +1066,7 @@ module Crystal
     end
 
     def expand_inline_macro(node)
-      the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node)
-      the_macro.location = node.location
+      the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
       generated_nodes = expand_macro(the_macro, node) do
         @mod.expand_macro (@scope || current_type), node
@@ -1166,8 +1161,7 @@ module Crystal
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
       if const.is_a?(Path) && const.target_const
-        comp = Call.new(const, "===", [node.obj])
-        comp.location = node.location
+        comp = Call.new(const, "===", node.obj).at(node.location)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -1566,9 +1560,7 @@ module Crystal
 
         arg_type = check_primitive_like(restriction.not_nil!)
 
-        fun_arg = Arg.new(arg.name, type: arg_type)
-        fun_arg.location = arg.location
-        fun_arg
+        Arg.new(arg.name, type: arg_type).at(arg.location)
       end
 
       node_return_type = node.return_type
@@ -2743,24 +2735,16 @@ module Crystal
         when GenericClassType
           type_name = type.name.split "::"
 
-          path = Path.global(type_name)
-          path.location = node.location
-
-          type_of = TypeOf.new(node.elements)
-          type_of.location = node.location
-
-          generic = Generic.new(path, [type_of] of ASTNode)
-          generic.location = node.location
+          path = Path.global(type_name).at(node.location)
+          type_of = TypeOf.new(node.elements).at(node.location)
+          generic = Generic.new(path, type_of).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
           type_name = type.to_s.split "::"
-
-          path = Path.global(type_name)
-          path.location = node.location
-
+          path = Path.global(type_name).at(node.location)
           node.name = path
         end
 
@@ -2779,17 +2763,10 @@ module Crystal
         when GenericClassType
           type_name = type.name.split "::"
 
-          path = Path.global(type_name)
-          path.location = node.location
-
-          type_of_keys = TypeOf.new(node.entries.map &.key)
-          type_of_keys.location = node.location
-
-          type_of_values = TypeOf.new(node.entries.map &.value)
-          type_of_values.location = node.location
-
-          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode)
-          generic.location = node.location
+          path = Path.global(type_name).at(node.location)
+          type_of_keys = TypeOf.new(node.entries.map &.key).at(node.location)
+          type_of_values = TypeOf.new(node.entries.map &.value).at(node.location)
+          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
@@ -2797,8 +2774,7 @@ module Crystal
         else
           type_name = type.to_s.split "::"
 
-          path = Path.global(type_name)
-          path.location = node.location
+          path = Path.global(type_name).at(node.location)
 
           node.name = path
         end

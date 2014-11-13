@@ -284,7 +284,7 @@ class Crystal::Call
           arg.raise "splat expects a tuple, not #{arg_type}"
         end
         arg_type.tuple_types.each_index do |index|
-          tuple_indexer = Call.new(arg.exp, "[]", [NumberLiteral.new(index)] of ASTNode)
+          tuple_indexer = Call.new(arg.exp, "[]", NumberLiteral.new(index))
           tuple_indexer.accept parent_visitor
           new_args << tuple_indexer
           arg.remove_input_observer(self)
@@ -638,8 +638,7 @@ class Crystal::Call
     self.args.each_index do |index|
       arg = typed_def.args[index]
       type = arg_types[args_start_index + index]
-      var = MetaVar.new(arg.name, type)
-      var.location = arg.location
+      var = MetaVar.new(arg.name, type).at(arg.location)
       var.bind_to(var)
       args[arg.name] = var
       arg.type = type
@@ -658,8 +657,7 @@ class Crystal::Call
       else
         default_value.raise "Bug: unknown magic constant: #{default_value.name}"
       end
-      var = MetaVar.new(arg.name, type)
-      var.location = arg.location
+      var = MetaVar.new(arg.name, type).at(arg.location)
       var.bind_to(var)
       args[arg.name] = var
       arg.type = type
@@ -667,8 +665,7 @@ class Crystal::Call
 
     named_args.try &.each do |named_arg|
       type = named_arg.value.type
-      var = MetaVar.new(named_arg.name, type)
-      var.location = named_arg.value.location
+      var = MetaVar.new(named_arg.name, type).at(named_arg.value.location)
       var.bind_to(var)
       args[named_arg.name] = var
       arg = typed_def.args.find { |arg| arg.name == named_arg.name }.not_nil!

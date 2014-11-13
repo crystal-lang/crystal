@@ -639,31 +639,26 @@ module Crystal
       {% end %}
 
       def visit(node : TupleLiteral)
-        new_tuple = TupleLiteral.new(node.elements.map do |element|
-          accept element
-        end)
-        new_tuple.location = node.location
-        @last = new_tuple
+        @last =
+          TupleLiteral.new(node.elements.map do |element|
+            accept element
+          end).at(node)
         false
       end
 
       def visit(node : ArrayLiteral)
-        new_ary = ArrayLiteral.new(node.elements.map do |element|
-          accept element
-        end)
-        new_ary.location = node.location
-        @last = new_ary
+        @last =
+          ArrayLiteral.new(node.elements.map do |element|
+            accept element
+          end).at(node)
         false
       end
 
       def visit(node : HashLiteral)
-        new_hash = HashLiteral.new(node.entries.map do |entry|
-          mapped_key = accept entry.key
-          mapped_value = accept entry.value
-          HashLiteral::Entry.new(mapped_key, mapped_value)
-        end)
-        new_hash.location = node.location
-        @last = new_hash
+        @last =
+          HashLiteral.new(node.entries.map do |entry|
+            HashLiteral::Entry.new(accept(entry.key), accept(entry.value))
+          end).at(node)
         false
       end
 

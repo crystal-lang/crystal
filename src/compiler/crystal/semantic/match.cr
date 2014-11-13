@@ -49,8 +49,7 @@ module Crystal
     def empty?
       return true unless @success
 
-      matches = @matches
-      if matches
+      if matches = @matches
         matches.empty?
       else
         true
@@ -58,11 +57,8 @@ module Crystal
     end
 
     def each
-      matches = @matches
-      if @success && matches
-        matches.each do |match|
-          yield match
-        end
+      @success && @matches.try &.each do |match|
+        yield match
       end
     end
 
