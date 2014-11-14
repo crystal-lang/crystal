@@ -128,34 +128,6 @@ module Crystal
       @target_machine ||= TargetMachine.create(LLVM.default_target_triple, "", false)
     end
 
-    def has_flag?(name)
-      flags.includes?(name)
-    end
-
-    def flags
-      @flags ||= host_flags
-    end
-
-    def flags=(flags)
-      @flags = parse_flags(flags)
-    end
-
-    def host_flags
-      @host_flags ||= parse_flags(`uname -m -s`)
-    end
-
-    def parse_flags(flags_name)
-      flags = Set(String).new
-      flags_name.split(' ').each do |uname|
-        flags.add uname.downcase
-      end
-      flags
-    end
-
-    def add_flag(flag)
-      flags.add(flag)
-    end
-
     def program
       self
     end
@@ -241,22 +213,6 @@ module Crystal
 
     def find_in_path(filename, relative_to = nil)
       @crystal_path.find filename, relative_to
-    end
-
-    def link_attributes
-      attrs = [] of LinkAttribute
-      add_link_attributes @types, attrs
-      attrs
-    end
-
-    private def add_link_attributes(types, attrs)
-      types.each_value do |type|
-        if type.is_a?(LibType) && type.used? && (link_attrs = type.link_attributes)
-          attrs.concat link_attrs
-        end
-
-        add_link_attributes type.types, attrs
-      end
     end
 
     def load_libs

@@ -242,11 +242,8 @@ module Crystal
       def visit(node : MacroIf)
         node.cond.accept self
 
-        if @last.truthy?
-          node.then.accept self
-        else
-          node.else.accept self
-        end
+        body = @last.truthy? ? node.then : node.else
+        body.accept self
 
         false
       end

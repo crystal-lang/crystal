@@ -2969,48 +2969,10 @@ module Crystal
       @types.pop
     end
 
-    def visit(node : And)
-      raise "Bug: And node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : Or)
-      raise "Bug: Or node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : Require)
-      raise "Bug: Require node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : RangeLiteral)
-      raise "Bug: RangeLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : Case)
-      raise "Bug: Case node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : When)
-      raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : Unless)
-      raise "Bug: Unless node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : StringInterpolation)
-      raise "Bug: StringInterpolation node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : MultiAssign)
-      raise "Bug: MultiAssign node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : Until)
-      raise "Bug: Until node '#{node}' (#{node.location}) should have been eliminated in normalize"
-    end
-
-    def visit(node : MacroLiteral)
-      raise "Bug: shouldn't visit macro literal in type inference"
+    def visit(node : And | Or | Require | RangeLiteral | Case |
+                     When | Unless | StringInterpolation | MultiAssign |
+                     Until | MacroLiteral)
+      raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

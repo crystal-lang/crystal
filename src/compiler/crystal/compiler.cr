@@ -49,7 +49,7 @@ module Crystal
       if cross_compile_flags = @cross_compile_flags
         program.flags = cross_compile_flags
       end
-      program.add_flag "release" if @release
+      program.flags << "release" if @release
 
       node, original_node = parse program, sources
       node = infer_type program, node
@@ -108,7 +108,7 @@ module Crystal
     end
 
     private def build(program, node, sources, output_filename)
-      lib_flags = lib_flags(program)
+      lib_flags = program.lib_flags
 
       llvm_modules = timing("Codegen (crystal)") do
         program.build node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags
@@ -265,61 +265,6 @@ module Crystal
       else
         yield
       end
-    end
-
-    private def lib_flags(mod)
-      library_path = ["/usr/lib", "/usr/local/lib"]
-
-      String.build do |flags|
-        mod.link_attributes.reverse_each do |attr|
-          if ldflags = attr.ldflags
-            flags << " "
-            flags << ldflags
-          end
-
-          if libname = attr.lib
-            if libflags = pkg_config_flags(libname, attr.static?, library_path)
-              flags << " " << libflags
-            elsif attr.static? && (static_lib = find_static_lib(libname, library_path))
-              flags << " " << static_lib
-            else
-              flags << " -l" << libname
-            end
-          end
-
-          if framework = attr.framework
-            flags << " -framework " << framework
-          end
-        end
-      end
-    end
-
-    private def pkg_config_flags(libname, static, library_path)
-      if ::system("pkg-config #{libname}")
-        if static
-          flags = [] of String
-          `pkg-config #{libname} --libs --static`.split.each do |cfg|
-            if cfg.starts_with?("-L")
-              library_path << cfg[2 .. -1]
-            elsif cfg.starts_with?("-l")
-              flags << (find_static_lib(cfg[2 .. -1], library_path) || cfg)
-            else
-              flags << cfg
-            end
-          end
-          flags.join " "
-        else
-          `pkg-config #{libname} --libs`.chomp
-        end
-      end
-    end
-
-    private def find_static_lib(libname, library_path)
-      library_path.each do |libdir|
-        static_lib = "#{libdir}/lib#{libname}.a"
-        return static_lib if File.exists?(static_lib)
-      end
-      nil
     end
 
     class CompilationUnit
