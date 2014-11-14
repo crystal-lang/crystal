@@ -1,4 +1,4 @@
-require "./*"
+require "./**"
 
 module CSV
   class MalformedCSVError < Exception
@@ -10,8 +10,8 @@ module CSV
     end
   end
 
-  def self.parse(string)
-    Parser.new(string).parse
+  def self.parse(string_or_io)
+    Parser.new(string_or_io).parse
   end
 
   def self.build

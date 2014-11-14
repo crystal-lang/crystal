@@ -60,14 +60,14 @@ class CSV::Builder
       self << value.to_s
     end
 
-    def append(values : Enumerable)
+    def concat(values : Enumerable)
       values.each do |value|
         self << value
       end
     end
 
-    def append(*values)
-      append values
+    def concat(*values)
+      concat values
     end
 
     def skip_cell
