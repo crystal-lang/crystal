@@ -61,7 +61,7 @@ module Crystal
     end
 
     def gep(ptr, index0 : LLVM::Value, name = "")
-      builder.inbounds_gep ptr, [index0], name
+      builder.inbounds_gep ptr, index0, name
     end
 
     def gep(ptr, index0 : Int32, index1 : Int32, name = "")
@@ -69,7 +69,7 @@ module Crystal
     end
 
     def gep(ptr, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
-      builder.inbounds_gep ptr, [index0, index1], name
+      builder.inbounds_gep ptr, index0, index1, name
     end
 
     delegate ptr2int, builder

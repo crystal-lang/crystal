@@ -216,11 +216,7 @@ module Crystal
         return true
       end
 
-      if (parents = self.parents) && parents.length > 0
-        return parents.any? &.is_restriction_of?(other, owner)
-      end
-
-      false
+      parents.try &.any? &.is_restriction_of?(other, owner)
     end
 
     def is_restriction_of?(other : AliasType, owner)
@@ -471,20 +467,12 @@ module Crystal
   class MetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      if restricted
-        self
-      else
-        nil
-      end
+      restricted ? self : nil
     end
 
     def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
-      if restricted
-        self
-      else
-        nil
-      end
+      restricted ? self : nil
     end
   end
 

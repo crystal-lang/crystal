@@ -68,13 +68,23 @@ struct LLVM::Builder
     Value.new LibLLVM.build_array_malloc(self, type, value, name)
   end
 
-  def gep(value, indices : Array(LLVM::ValueRef), name = "")
-    Value.new LibLLVM.build_gep(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.length.to_u32, name)
-  end
+  {% for method_name in %w(gep inbounds_gep) %}
+    def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.length.to_u32, name)
+    end
 
-  def inbounds_gep(value, indices : Array(LLVM::ValueRef), name = "")
-    Value.new LibLLVM.build_inbounds_gep(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.length.to_u32, name)
-  end
+    def {{method_name.id}}(value, index : LLVM::Value, name = "")
+      indices = pointerof(index) as LibLLVM::ValueRef*
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1_u32, name)
+    end
+
+    def {{method_name.id}}(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+      indices :: LLVM::Value[2]
+      indices[0] = index1
+      indices[1] = index2
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), 2_u32, name)
+    end
+  {% end %}
 
   def extract_value(value, index, name = "")
     Value.new LibLLVM.build_extract_value(self, value, index.to_u32, name)
