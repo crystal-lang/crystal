@@ -1,3 +1,5 @@
+require "../types"
+
 module Crystal
   class TypeLookup < Visitor
     getter! type
@@ -110,5 +112,123 @@ module Crystal
     def visit(node : Underscore)
       node.raise "can't use underscore as generic type argument"
     end
+  end
+
+  alias TypeIdSet = Set(Int32)
+
+  class Type
+    def lookup_type(node : Path)
+      (node.global ? program : self).lookup_type(node.names)
+    end
+
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      raise "Bug: #{self} doesn't implement lookup_type"
+    end
+
+    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
+      raise "Bug: #{self} doesn't implement lookup_type_in_parents"
+    end
+  end
+
+  class ContainedType
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(type_id)
+
+      if lookup_in_container
+        already_looked_up.add(type_id)
+      end
+
+      type = self
+      names.each_with_index do |name, i|
+        next_type = type.types[name]?
+        if !next_type && i != 0
+          next_type = type.lookup_type_in_parents(names[i .. -1])
+        end
+        type = next_type
+        break unless type
+      end
+
+      return type if type
+
+      parent_match = lookup_type_in_parents(names, already_looked_up)
+      return parent_match if parent_match
+
+      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
+    end
+
+    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
+      parents.try &.each do |parent|
+        match = parent.lookup_type(names, already_looked_up, lookup_in_container)
+        if match.is_a?(Type)
+          return match
+        end
+      end
+      nil
+    end
+  end
+
+  class GenericClassInstanceType
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      if (names.length == 1) && (type_var = type_vars[names[0]]?)
+        case type_var
+        when Var
+          return type_var.type
+        else
+          return type_var
+        end
+      end
+
+      generic_class.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+  end
+
+  class IncludedGenericModule
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      if (names.length == 1) && (m = @mapping[names[0]]?)
+        case @including_class
+        when GenericClassType, GenericModuleType
+          # skip
+        else
+          return TypeLookup.lookup(@including_class, m)
+        end
+      end
+
+      @module.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+  end
+
+  class InheritedGenericClass
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      if (names.length == 1) && (m = @mapping[names[0]]?)
+        case extending_class
+        when GenericClassType
+          # skip
+        else
+          return TypeLookup.lookup(extending_class, m)
+        end
+      end
+
+      @extended_class.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+  end
+
+  class TypeDefType
+    delegate lookup_type, typedef
+  end
+
+  class MetaclassType
+    delegate lookup_type, instance_type
+  end
+
+  class GenericClassInstanceMetaclassType
+    delegate lookup_type, instance_type
+  end
+
+  class VirtualType
+    delegate lookup_type, base_type
+  end
+
+  class VirtualMetaclassType
+    delegate lookup_type, instance_type
   end
 end

@@ -1,8 +1,6 @@
 require "similar_name"
 
 module Crystal
-  alias TypeIdSet = Set(Int32)
-
   abstract class Type
     include Enumerable(self)
 
@@ -205,18 +203,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
-    def lookup_type(node : Path)
-      (node.global ? program : self).lookup_type(node.names)
-    end
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      raise "Bug: #{self} doesn't implement lookup_type"
-    end
-
-    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
-      raise "Bug: #{self} doesn't implement lookup_type_in_parents"
-    end
-
     def types
       {} of String => Type
     end
@@ -381,41 +367,6 @@ module Crystal
 
     def initialize(@program, @container)
       @types = {} of String => Type
-    end
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
-
-      if lookup_in_container
-        already_looked_up.add(type_id)
-      end
-
-      type = self
-      names.each_with_index do |name, i|
-        next_type = type.types[name]?
-        if !next_type && i != 0
-          next_type = type.lookup_type_in_parents(names[i .. -1])
-        end
-        type = next_type
-        break unless type
-      end
-
-      return type if type
-
-      parent_match = lookup_type_in_parents(names, already_looked_up)
-      return parent_match if parent_match
-
-      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
-    end
-
-    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
-      parents.try &.each do |parent|
-        match = parent.lookup_type(names, already_looked_up, lookup_in_container)
-        if match.is_a?(Type)
-          return match
-        end
-      end
-      nil
     end
   end
 
@@ -1447,19 +1398,6 @@ module Crystal
       super || generic_class.implements?(other_type)
     end
 
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      if (names.length == 1) && (type_var = type_vars[names[0]]?)
-        case type_var
-        when Var
-          return type_var.type
-        else
-          return type_var
-        end
-      end
-
-      generic_class.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
     def to_s(io)
       generic_class.append_full_name(io)
       io << "("
@@ -1673,19 +1611,6 @@ module Crystal
     delegate lookup_macros, @module
     delegate has_def?, @module
 
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      if (names.length == 1) && (m = @mapping[names[0]]?)
-        case @including_class
-        when GenericClassType, GenericModuleType
-          # skip
-        else
-          return TypeLookup.lookup(@including_class, m)
-        end
-      end
-
-      @module.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
     def parents
       @parents ||= @module.parents.map do |t|
         case t
@@ -1756,19 +1681,6 @@ module Crystal
 
     def owns_instance_var?(name)
       false
-    end
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      if (names.length == 1) && (m = @mapping[names[0]]?)
-        case extending_class
-        when GenericClassType
-          # skip
-        else
-          return TypeLookup.lookup(extending_class, m)
-        end
-      end
-
-      @extended_class.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
     def parents
@@ -1865,7 +1777,6 @@ module Crystal
     delegate pointer?, typedef
     delegate defs, typedef
     delegate macros, typedef
-    delegate lookup_type, typedef
 
     def parents
       typedef_parents = typedef.parents
@@ -2075,7 +1986,6 @@ module Crystal
       @program.class_type
     end
 
-    delegate lookup_type, instance_type
     delegate :abstract, instance_type
 
     def class_var_owner
@@ -2123,7 +2033,6 @@ module Crystal
     delegate macros, instance_type.generic_class.metaclass
     delegate type_vars, instance_type
     delegate :abstract, instance_type
-    delegate lookup_type, instance_type
 
     def metaclass?
       true
@@ -2386,7 +2295,6 @@ module Crystal
     delegate index_of_instance_var, base_type
     delegate lookup_macro, base_type
     delegate lookup_macros, base_type
-    delegate lookup_type, base_type
     delegate has_instance_var_in_initialize?, base_type
     delegate all_instance_vars, base_type
     delegate owned_instance_vars, base_type
@@ -2505,7 +2413,6 @@ module Crystal
     delegate base_type, instance_type
     delegate cover, instance_type
     delegate lookup_first_def, instance_type
-    delegate lookup_type, instance_type
 
     def virtual_lookup(type)
       type.metaclass

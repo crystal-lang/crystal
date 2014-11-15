@@ -74,22 +74,22 @@ describe CSV do
       string.should eq("1,,2\n")
     end
 
-    it "appends enumerable to row" do
+    it "concats enumerable to row" do
       string = CSV.build do |csv|
         csv.row do |row|
           row << 1
-          row.append [2, 3, 4]
+          row.concat [2, 3, 4]
           row << 5
         end
       end
       string.should eq("1,2,3,4,5\n")
     end
 
-    it "appends splat to row" do
+    it "concats splat to row" do
       string = CSV.build do |csv|
         csv.row do |row|
           row << 1
-          row.append 2, 3, 4
+          row.concat 2, 3, 4
           row << 5
         end
       end
