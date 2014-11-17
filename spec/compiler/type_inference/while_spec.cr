@@ -29,4 +29,46 @@ describe "Type inference: while" do
     assert_error "next",
       "Invalid next"
   end
+
+  it "uses var type inside while if endless loop" do
+    assert_type(%(
+      a = nil
+      while true
+        a = 1
+        break
+      end
+      a
+      )) { int32 }
+  end
+
+  it "uses var type inside while if endless loop (2)" do
+    assert_type(%(
+      while true
+        a = 1
+        break
+      end
+      a
+      )) { int32 }
+  end
+
+  it "marks variable as nil if breaking before assigning to it in an endless loop" do
+    assert_type(%(
+      a = nil
+      while true
+        break if 1 == 2
+        a = 1
+      end
+      a
+      )) { nilable int32 }
+  end
+
+  it "marks variable as nil if breaking before assigning to it in an endless loop (2)" do
+    assert_type(%(
+      while true
+        break if 1 == 2
+        a = 1
+      end
+      a
+      )) { nilable int32 }
+  end
 end

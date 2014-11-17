@@ -42,6 +42,14 @@ module Crystal
       false
     end
 
+    def true_literal?
+      false
+    end
+
+    def false_literal?
+      false
+    end
+
     macro def class_desc : String
       {{@class_name.split("::").last}}
     end
@@ -128,6 +136,14 @@ module Crystal
     property :value
 
     def initialize(@value)
+    end
+
+    def false_literal?
+      !value
+    end
+
+    def true_literal?
+      value
     end
 
     def clone_without_location

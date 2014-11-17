@@ -1980,17 +1980,28 @@ module Crystal
       @while_stack.push node
       node.body.accept self
 
-      merge_while_vars before_cond_vars, after_cond_vars, @vars, node.break_vars
+      endless_while = node.cond.true_literal?
+      merge_while_vars endless_while, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
       @while_vars = old_while_vars
 
+
+      unless node.has_breaks
+        if endless_while
+          node.type = mod.no_return
+          return
+        end
+      end
+
+      node.type = @mod.nil
+
       false
     end
 
     # Here we assign the types of variables after a while.
-    def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
+    def merge_while_vars(endless, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = MetaVars.new
 
       while_vars.each do |name, while_var|
@@ -2009,19 +2020,38 @@ module Crystal
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
           after_while_var = MetaVar.new(name)
-          after_while_var.bind_to(before_cond_var)
-          after_while_var.bind_to(while_var)
-          after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
+
+          # If the loop is endless
+          if endless
+            after_while_var.bind_to(while_var)
+            after_while_var.nil_if_read = while_var.nil_if_read
+          else
+            after_while_var.bind_to(before_cond_var)
+            after_while_var.bind_to(while_var)
+            after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
+          end
           after_while_vars[name] = after_while_var
 
         # Otherwise, it's a new variable inside the while: used
-        # outside it must be nilable.
+        # outside it must be nilable, unless the loop is endless.
         else
-          nilable_var = MetaVar.new(name)
-          nilable_var.bind_to(while_var)
-          nilable_var.bind_to(@mod.nil_var)
-          nilable_var.nil_if_read = true
-          after_while_vars[name] = nilable_var
+          after_while_var = MetaVar.new(name)
+          after_while_var.bind_to(while_var)
+          nilable = false
+          if endless
+            # In an endless loop if there's a break before a variable is declared,
+            # that variable becomes nilable.
+            unless all_break_vars.try &.all? &.has_key?(name)
+              nilable = true
+            end
+          else
+            nilable = true
+          end
+          if nilable
+            after_while_var.bind_to(@mod.nil_var)
+            after_while_var.nil_if_read = true
+          end
+          after_while_vars[name] = after_while_var
         end
       end
 
@@ -2035,18 +2065,6 @@ module Crystal
           end
         end
       end
-    end
-
-    def end_visit(node : While)
-      unless node.has_breaks
-        node_cond = node.cond
-        if node_cond.is_a?(BoolLiteral) && node_cond.value == true
-          node.type = mod.no_return
-          return
-        end
-      end
-
-      node.type = @mod.nil
     end
 
     # If we have:

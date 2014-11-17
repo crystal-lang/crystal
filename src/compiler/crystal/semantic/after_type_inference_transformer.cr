@@ -12,26 +12,6 @@ module Crystal
     end
   end
 
-  class ASTNode
-    def false_literal?
-      false
-    end
-
-    def true_literal?
-      false
-    end
-  end
-
-  class BoolLiteral
-    def false_literal?
-      !value
-    end
-
-    def true_literal?
-      value
-    end
-  end
-
   class AfterTypeInferenceTransformer < Transformer
     def initialize(@program)
       @transformed = Set(typeof(object_id)).new
