@@ -1044,4 +1044,17 @@ describe "Code gen: block" do
       foo.x
       )).to_i.should eq(2)
   end
+
+  it "uses block inside array literal (bug)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        yield 1
+      end
+
+      ary = [foo { |x| x.abs }]
+      ary[0]
+      )).to_i.should eq(1)
+  end
 end

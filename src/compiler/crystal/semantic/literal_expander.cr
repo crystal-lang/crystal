@@ -37,7 +37,7 @@ module Crystal
 
         type_var = node_of
       else
-        type_var = TypeOf.new(node.elements)
+        type_var = TypeOf.new(node.elements.clone)
       end
 
       length = node.elements.length
