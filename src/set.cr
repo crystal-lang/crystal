@@ -82,7 +82,7 @@ class Set(T)
 
   def to_s(io)
     io << "Set{"
-    join ", ", io
+    join ", ", io, &.inspect(io)
     io << "}"
   end
 end

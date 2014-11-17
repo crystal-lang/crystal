@@ -64,6 +64,7 @@ describe "Set" do
 
   it "does to_s" do
     Set{1, 2, 3}.to_s.should eq("Set{1, 2, 3}")
+    Set{"foo"}.to_s.should eq(%(Set{"foo"}))
   end
 
   it "compares hashes of sets" do
