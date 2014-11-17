@@ -1,4 +1,6 @@
 struct TimeFormat
+  ISO_8601_DATE = new "%F"
+
   class Error < ::Exception
   end
 
