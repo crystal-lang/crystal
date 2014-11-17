@@ -39,6 +39,24 @@ class JsonWithTime
   })
 end
 
+class JsonWithNilableTime
+  json_mapping({
+    value: {type: Time, converter: TimeFormat.new("%F")},
+  })
+
+  def initialize
+  end
+end
+
+class JsonWithNilableTimeEmittingNull
+  json_mapping({
+    value: {type: Time, converter: TimeFormat.new("%F"), emit_null: true},
+  })
+
+  def initialize
+  end
+end
+
 class JsonWithSimpleMapping
   json_mapping({name: String, age: Int32})
 end
@@ -116,5 +134,15 @@ describe "Json mapping" do
     person.should be_a(JsonWithSimpleMapping)
     person.name.should eq("John")
     person.age.should eq(30)
+  end
+
+  it "outputs with converter when nilable" do
+    json = JsonWithNilableTime.new
+    json.to_json.should eq("{}")
+  end
+
+  it "outputs with converter when nilable when emit_null is true" do
+    json = JsonWithNilableTimeEmittingNull.new
+    json.to_json.should eq(%({"value":null}))
   end
 end

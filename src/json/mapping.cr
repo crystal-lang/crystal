@@ -53,15 +53,21 @@ class Object
     def to_json(io : IO)
       io.json_object do |json|
         {% for key, value in properties %}
+          _{{key.id}} = @{{key.id}}
+
           {% unless value[:emit_null] %}
-            unless @{{key.id}}.nil?
+            unless _{{key.id}}.is_a?(Nil)
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
               {% if value[:converter] %}
-                {{ value[:converter] }}.to_json(@{{key.id}}, io)
+                if _{{key.id}}
+                  {{ value[:converter] }}.to_json(_{{key.id}}, io)
+                else
+                  nil.to_json(io)
+                end
               {% else %}
-                @{{key.id}}.to_json(io)
+                _{{key.id}}.to_json(io)
               {% end %}
             end
 
