@@ -91,6 +91,13 @@ describe CSV do
       lexer.expect_eof
     end
 
+    it "lexes newline and eof as a single eof" do
+      lexer = CSV::Lexer.new("hello,world\n")
+      lexer.expect_cell "hello"
+      lexer.expect_cell "world"
+      lexer.expect_eof
+    end
+
     it "raises if single quote in the middle" do
       expect_raises CSV::MalformedCSVError, "unexpected quote at 1:4" do
         lexer = CSV::Lexer.new %(hel"lo)

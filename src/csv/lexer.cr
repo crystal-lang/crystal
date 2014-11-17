@@ -7,6 +7,8 @@ abstract class CSV::Lexer
     IOBased.new(io)
   end
 
+  getter token
+
   def initialize
     @token = Token.new
     @buffer = StringIO.new
@@ -35,8 +37,7 @@ abstract class CSV::Lexer
       @token.value = ""
       check_last_empty_column
     when '\n'
-      @token.kind = :newline
-      next_char
+      @token.kind = next_char == '\0' ? :eof : :newline
     when '"'
       @token.kind = :cell
       @token.value = consume_quoted_cell
