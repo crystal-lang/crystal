@@ -407,15 +407,19 @@ describe Time do
 
     1.upto(3) do |i|
       Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-01-01 00:00:00")
+      Time.new(2014, i, 10).at_end_of_quarter.to_s.should eq("2014-03-31 23:59:59")
     end
     4.upto(6) do |i|
       Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-04-01 00:00:00")
+      Time.new(2014, i, 10).at_end_of_quarter.to_s.should eq("2014-06-30 23:59:59")
     end
     7.upto(9) do |i|
       Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-07-01 00:00:00")
+      Time.new(2014, i, 10).at_end_of_quarter.to_s.should eq("2014-09-30 23:59:59")
     end
     10.upto(12) do |i|
       Time.new(2014, i, 10).at_beginning_of_quarter.to_s.should eq("2014-10-01 00:00:00")
+      Time.new(2014, i, 10).at_end_of_quarter.to_s.should eq("2014-12-31 23:59:59")
     end
 
     t1.at_beginning_of_quarter.to_s.should eq("2014-10-01 00:00:00")
@@ -447,5 +451,11 @@ describe Time do
     t1.at_end_of_minute.to_s.should eq("2014-11-25 10:11:59")
 
     t1.at_midday.to_s.should eq("2014-11-25 12:00:00")
+
+    t1.at_beginning_of_semester.to_s.should eq("2014-07-01 00:00:00")
+    t2.at_beginning_of_semester.to_s.should eq("2014-01-01 00:00:00")
+
+    t1.at_end_of_semester.to_s.should eq("2014-12-31 23:59:59")
+    t2.at_end_of_semester.to_s.should eq("2014-06-30 23:59:59")
   end
 end

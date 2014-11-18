@@ -267,6 +267,7 @@ struct Time
   end
 
   def_at(beginning_of_year)    { Time.new(year, 1, 1) }
+  def_at(beginning_of_semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1) }
   def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
   def_at(beginning_of_month)   { Time.new(year, month, 1) }
   def_at(beginning_of_day)     { Time.new(year, month, day) }
@@ -284,13 +285,28 @@ struct Time
 
   def_at(end_of_year) { Time.new(year, 12, 31, 23, 59, 59, 999) }
 
-  def at_end_of_quarter
+  def at_end_of_semester
     year, month = year_month_day_day_year
     if month <= 6
-      mask Time.new(year, 6, 30, 23, 59, 59, 999)
+      month, day = 6, 30
     else
-      mask Time.new(year, 12, 31, 23, 59, 59, 999)
+      month, day = 12, 31
     end
+    mask Time.new(year, month, day, 23, 59, 59, 999)
+  end
+
+  def at_end_of_quarter
+    year, month = year_month_day_day_year
+    if month <= 3
+      month, day = 3, 31
+    elsif month <= 6
+      month, day = 6, 30
+    elsif month <= 9
+      month, day = 9, 30
+    else
+      month, day = 12, 31
+    end
+    mask Time.new(year, month, day, 23, 59, 59, 999)
   end
 
   def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, 999) }
