@@ -37,7 +37,12 @@ module Crystal
 
       return false unless yields == other.yields
 
-      min = Math.min(max_length, other.max_length)
+      if self.def.splat_index && other.def.splat_index
+        min = Math.min(min_length, other.min_length)
+      else
+        min = Math.min(max_length, other.max_length)
+      end
+
       0.upto(min - 1) do |index|
         self_arg = self.def.args[index]
         other_arg = other.def.args[index]

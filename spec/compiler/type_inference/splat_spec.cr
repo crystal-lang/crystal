@@ -21,4 +21,22 @@ describe "Type inference: splat" do
       ),
       "wrong number of arguments"
   end
+
+  it "redefines method with splat (bug #248)" do
+    assert_type(%(
+      class Foo
+        def bar(*x)
+          1
+        end
+      end
+
+      class Foo
+        def bar(*x)
+          'a'
+        end
+      end
+
+      Foo.new.bar 1
+      )) { char }
+  end
 end
