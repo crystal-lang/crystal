@@ -39,4 +39,12 @@ describe "Type inference: splat" do
       Foo.new.bar 1
       )) { char }
   end
+
+  it "errors if splatting union" do
+    assert_error %(
+      a = {1} || {1, 2}
+      foo *a
+      ),
+      "splatting a union (({Int32} | {Int32, Int32})) is not yet supported"
+  end
 end

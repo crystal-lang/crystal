@@ -265,6 +265,8 @@ module Crystal
         node.named_args = nil
       end
 
+      node.replace_splats
+
       # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
 
       node

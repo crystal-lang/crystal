@@ -48,8 +48,6 @@ class Crystal::Call
 
     return unless obj_and_args_types_set?
 
-    replace_splats
-
     block = @block
 
     unbind_from @target_defs if @target_defs
@@ -62,15 +60,7 @@ class Crystal::Call
       replace_block_arg_with_block(block_arg)
     end
 
-    if obj
-      matches = lookup_matches_in(obj.type)
-    elsif name == "super"
-      matches = lookup_matches_in_super
-    elsif name == "previous_def"
-      matches = lookup_previous_def_matches
-    else
-      matches = lookup_matches_in scope
-    end
+    matches = lookup_matches
 
     # If @target_defs is set here it means there was a recalculation
     # fired as a result of a recalculation. We keep the last one.
@@ -87,49 +77,82 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_in(owner : AliasType)
-    lookup_matches_in(owner.remove_alias)
+  def lookup_matches
+    if args.any? &.is_a?(Splat)
+      lookup_matches_with_splat
+    else
+      lookup_matches_without_splat args.map(&.type)
+    end
   end
 
-  def lookup_matches_in(owner : UnionType)
-    owner.union_types.flat_map { |type| lookup_matches_in(type) }
+  def lookup_matches_with_splat
+    # Check if all splat are of tuples
+    arg_types = Array(Type).new(args.length * 2)
+    args.each do |arg|
+      if arg.is_a?(Splat)
+        if (arg_type = arg.type).is_a?(TupleInstanceType)
+          arg_types.concat arg_type.tuple_types
+        else
+          arg.raise "splatting a union (#{arg_type}) is not yet supported"
+        end
+      end
+    end
+    lookup_matches_without_splat arg_types
   end
 
-  def lookup_matches_in(owner : Program, self_type = nil, def_name = self.name)
-    lookup_matches_in_type(owner, self_type, def_name)
+  def lookup_matches_without_splat(arg_types)
+    if obj = @obj
+      lookup_matches_in(obj.type, arg_types)
+    elsif name == "super"
+      lookup_matches_in_super(arg_types)
+    elsif name == "previous_def"
+      lookup_previous_def_matches(arg_types)
+    else
+      lookup_matches_in scope, arg_types
+    end
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType)
+  def lookup_matches_in(owner : AliasType, arg_types)
+    lookup_matches_in(owner.remove_alias, arg_types)
+  end
+
+  def lookup_matches_in(owner : UnionType, arg_types)
+    owner.union_types.flat_map { |type| lookup_matches_in(type, arg_types) }
+  end
+
+  def lookup_matches_in(owner : Program, arg_types, self_type = nil, def_name = self.name)
+    lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  end
+
+  def lookup_matches_in(owner : NonGenericModuleType, arg_types)
     including_types = owner.including_types
     if including_types
       owner.add_subclass_observer(self)
       @subclass_notifier = owner
 
-      lookup_matches_in(including_types)
+      lookup_matches_in(including_types, arg_types)
     else
       raise "no type includes #{owner}"
     end
   end
 
-  def lookup_matches_in(owner : GenericClassType)
+  def lookup_matches_in(owner : GenericClassType, arg_types)
     including_types = owner.including_types
     if including_types
       owner.add_subclass_observer(self)
       @subclass_notifier = owner
 
-      lookup_matches_in(including_types)
+      lookup_matches_in(including_types, arg_types)
     else
       raise "no type inherits #{owner}"
     end
   end
 
-  def lookup_matches_in(owner : Type, self_type = nil, def_name = self.name)
-    lookup_matches_in_type(owner, self_type, def_name)
+  def lookup_matches_in(owner : Type, arg_types, self_type = nil, def_name = self.name)
+    lookup_matches_in_type(owner, arg_types, self_type, def_name)
   end
 
-  def lookup_matches_in_type(owner, self_type, def_name)
-    arg_types = args.map &.type
-
+  def lookup_matches_in_type(owner, arg_types, self_type, def_name)
     signature = CallSignature.new(def_name, arg_types, block, named_args)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
@@ -182,7 +205,7 @@ class Crystal::Call
     instantiate matches, owner, self_type
   end
 
-  def lookup_matches_in(owner : Nil)
+  def lookup_matches_in(owner : Nil, arg_types)
     raise "Bug: trying to lookup matches in nil in #{self}"
   end
 
@@ -333,7 +356,7 @@ class Crystal::Call
     MethodTraceException.new(owner, owner_trace)
   end
 
-  def lookup_matches_in_super
+  def lookup_matches_in_super(arg_types)
     if scope.is_a?(Program)
       raise "there's no superclass in this scope"
     end
@@ -355,7 +378,7 @@ class Crystal::Call
       parents_length = parents.length
       parents.each_with_index do |parent, i|
         if i == parents_length - 1 || parent.lookup_first_def(enclosing_def.name, block)
-          return lookup_matches_in(parent, scope, enclosing_def.name)
+          return lookup_matches_in(parent, arg_types, scope, enclosing_def.name)
         end
       end
     end
@@ -363,7 +386,7 @@ class Crystal::Call
     nil
   end
 
-  def lookup_previous_def_matches
+  def lookup_previous_def_matches(arg_types)
     enclosing_def = enclosing_def()
 
     previous = enclosing_def.previous
@@ -375,7 +398,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    match = Match.new(previous, args.map(&.type), MatchContext.new(scope, scope))
+    match = Match.new(previous, arg_types, MatchContext.new(scope, scope))
     matches = Matches.new([match] of Match, true)
     typed_defs = instantiate matches, scope
     typed_defs.each do |typed_def|
@@ -635,7 +658,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    self.args.each_index do |index|
+    arg_types.each_index do |index|
       arg = typed_def.args[index]
       type = arg_types[args_start_index + index]
       var = MetaVar.new(arg.name, type).at(arg.location)
@@ -646,7 +669,7 @@ class Crystal::Call
 
     # Fill magic constants (__LINE__, __FILE__, __DIR__)
     named_args_length = named_args.try(&.length) || 0
-    (self.args.length + named_args_length).upto(typed_def.args.length - 1) do |index|
+    (arg_types.length + named_args_length).upto(typed_def.args.length - 1) do |index|
       arg = typed_def.args[index]
       default_value = arg.default_value as MagicConstant
       case default_value.name
