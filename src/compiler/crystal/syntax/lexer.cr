@@ -315,19 +315,89 @@ module Crystal
       when ';' then next_char :";"
       when ':'
         char = next_char
-        if char == ':'
+        case char
+        when ':'
           next_char :"::"
-        elsif ident_start?(char)
-          start = current_pos
-          while ident_part?(next_char)
-            # Nothing to do
+        when '+'
+          next_char_and_symbol "+"
+        when '-'
+          next_char_and_symbol "-"
+        when '*'
+          if next_char == '*'
+            next_char_and_symbol "**"
+          else
+            symbol "*"
           end
-          if current_char == '!' || current_char == '?'
-            next_char
+        when '/'
+          next_char_and_symbol "/"
+        when '='
+          case next_char
+          when '='
+            if next_char == '='
+              next_char_and_symbol "==="
+            else
+              symbol "=="
+            end
+          when '~'
+            next_char_and_symbol "=~"
+          else
+            unknown_token
           end
-          @token.type = :SYMBOL
-          @token.value = string_range(start)
-        elsif char == '"'
+        when '!'
+          case next_char
+          when '='
+            next_char_and_symbol "!="
+          when '~'
+            next_char_and_symbol "!~"
+          else
+            symbol "!"
+          end
+        when '<'
+          case next_char
+          when '='
+            if next_char == '>'
+              next_char_and_symbol "<=>"
+            else
+              symbol "<="
+            end
+          when '<'
+            next_char_and_symbol "<<"
+          else
+            symbol "<"
+          end
+        when '>'
+          case next_char
+          when '='
+            next_char_and_symbol ">="
+          when '>'
+            next_char_and_symbol ">>"
+          else
+            symbol ">"
+          end
+        when '&'
+          next_char_and_symbol "&"
+        when '|'
+          next_char_and_symbol "|"
+        when '^'
+          next_char_and_symbol "^"
+        when '~'
+          next_char_and_symbol "~"
+        when '%'
+          next_char_and_symbol "%"
+        when '['
+          if next_char == ']'
+            case next_char
+            when '='
+              symbol "[]="
+            when '?'
+              symbol "[]?"
+            else
+              symbol "[]"
+            end
+          else
+            unknown_token
+          end
+        when '"'
           line = @line_number
           column = @column_number
           start = current_pos + 1
@@ -350,7 +420,19 @@ module Crystal
 
           next_char
         else
-          @token.type = :":"
+          if ident_start?(char)
+            start = current_pos
+            while ident_part?(next_char)
+              # Nothing to do
+            end
+            if current_char == '!' || current_char == '?'
+              next_char
+            end
+            @token.type = :SYMBOL
+            @token.value = string_range(start)
+          else
+            @token.type = :":"
+          end
         end
       when '~'
         next_char :"~"
@@ -930,6 +1012,16 @@ module Crystal
       @token.type = :IDENT
       @token.value = string_range(start)
       @token
+    end
+
+    def next_char_and_symbol(value)
+      next_char
+      symbol value
+    end
+
+    def symbol(value)
+      @token.type = :SYMBOL
+      @token.value = value
     end
 
     def scan_number(start, negative = false)
