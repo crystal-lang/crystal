@@ -149,6 +149,7 @@ class Array(T)
 
   def clear
     @length = 0
+    self
   end
 
   def clone
