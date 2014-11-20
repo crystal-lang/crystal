@@ -928,10 +928,10 @@ describe "Parser" do
                       "unterminated parenthesized expression", 1, 2
 
   assert_syntax_error "foo(1, 2, 3 end",
-                      "unterminated call", 1, 4
+                      "expecting token ')', not 'end'", 1, 13
 
   assert_syntax_error "foo(foo(&.block)",
-                      "unterminated call", 1, 4
+                      "expecting token ')', not 'EOF'", 1, 17
 
   assert_syntax_error "case when .foo? then 1; end"
   assert_syntax_error "macro foo;{%end};end"
@@ -963,6 +963,8 @@ describe "Parser" do
   assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
   assert_syntax_error "case foo; end"
   assert_syntax_error "enum Foo < UInt16; end"
+  assert_syntax_error "foo(1 2)"
+  assert_syntax_error %(foo("bar" "baz"))
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end

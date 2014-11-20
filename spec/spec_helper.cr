@@ -76,11 +76,11 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
   it "says syntax error on #{str.inspect}", metafile, metaline do
     begin
       parse str
-      fail "expected SyntaxException to be raised"
+      fail "expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
-      ex.message.not_nil!.includes?(message).should be_true if message
-      ex.line_number.should eq(line) if line
-      ex.column_number.should eq(column) if column
+      ex.message.not_nil!.includes?(message).should be_true, metafile, metaline if message
+      ex.line_number.should eq(line), metafile, metaline if line
+      ex.column_number.should eq(column), metafile, metaline if column
     end
   end
 end
