@@ -1,4 +1,4 @@
-require "ast"
+require "./ast"
 
 module Crystal
   class Visitor

@@ -1,4 +1,4 @@
-require "ast"
+require "./ast"
 
 module Crystal
   # This is like an Array(ASTNode) except that it's optimized

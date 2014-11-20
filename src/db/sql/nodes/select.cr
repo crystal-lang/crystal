@@ -1,4 +1,4 @@
-require "node"
+require "./node"
 
 class DB::Sql::Select < DB::Sql::Node
   getter froms

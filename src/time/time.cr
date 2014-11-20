@@ -236,9 +236,7 @@ struct Time
 
   def inspect(io : IO)
     TimeFormat.new("%F %T").format(self, io)
-    if utc?
-      io << " UTC"
-    end
+    io << " UTC" if utc?
     io
   end
 

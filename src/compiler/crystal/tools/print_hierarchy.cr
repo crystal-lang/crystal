@@ -1,6 +1,6 @@
-require "../syntax/ast"
 require "set"
 require "colorize"
+require "../syntax/ast"
 
 module Crystal
   def self.print_hierarchy(program)

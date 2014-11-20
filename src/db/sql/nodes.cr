@@ -1,1 +1,1 @@
-require "nodes/*"
+require "./nodes/*"

@@ -1,4 +1,4 @@
-require "libxml2"
+require "./libxml2"
 
 module Xml
   class Reader

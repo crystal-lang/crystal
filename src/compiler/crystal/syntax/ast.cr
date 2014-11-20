@@ -2050,4 +2050,4 @@ module Crystal
   end
 end
 
-require "to_s"
+require "./to_s"

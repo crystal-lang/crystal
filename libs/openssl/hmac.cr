@@ -1,4 +1,4 @@
-require "lib_crypto"
+require "./lib_crypto"
 
 class OpenSSL::HMAC
   def self.digest(algorithm : Symbol, key, data)

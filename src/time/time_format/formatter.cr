@@ -1,4 +1,4 @@
-require "pattern"
+require "./pattern"
 
 struct TimeFormat
   struct Formatter

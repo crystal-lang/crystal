@@ -1,4 +1,4 @@
-require "node"
+require "./node"
 
 class DB::Sql::Table < DB::Sql::Node
   getter name

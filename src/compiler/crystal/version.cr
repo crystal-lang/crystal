@@ -1,4 +1,4 @@
-require "config"
+require "./config"
 
 def Crystal.version_string
   build_date = {{ `date -u`.stringify.chomp }}

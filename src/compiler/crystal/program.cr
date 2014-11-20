@@ -1,6 +1,6 @@
-require "types"
 require "llvm"
 require "dl"
+require "./types"
 
 module Crystal
   class Program < NonGenericModuleType

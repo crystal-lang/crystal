@@ -1,5 +1,5 @@
-require "ast"
-require "visitor"
+require "./ast"
+require "./visitor"
 
 module Crystal
   class ASTNode

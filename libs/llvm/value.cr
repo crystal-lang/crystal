@@ -1,4 +1,4 @@
-require "value_methods"
+require "./value_methods"
 
 struct LLVM::Value
   include ValueMethods

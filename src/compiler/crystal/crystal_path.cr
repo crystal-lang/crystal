@@ -1,4 +1,4 @@
-require "config"
+require "./config"
 
 module Crystal
   struct CrystalPath
@@ -10,12 +10,16 @@ module Crystal
 
     def find(filename, relative_to = nil)
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
-      result = find_in_path_relative_to_dir(filename, relative_to, true)
+      if filename.starts_with? '.'
+        result = find_in_path_relative_to_dir(filename, relative_to)
+      else
+        result = find_in_crystal_path(filename, relative_to)
+      end
       result = [result] if result.is_a?(String)
       result
     end
 
-    private def find_in_path_relative_to_dir(filename, relative_to, check_crystal_path)
+    private def find_in_path_relative_to_dir(filename, relative_to, check_crystal_path = true)
       if relative_to.is_a?(String)
         # Check if it's a wildcard.
         if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
@@ -90,7 +94,7 @@ module Crystal
 
     private def find_in_crystal_path(filename, relative_to)
       @crystal_path.each do |path|
-        required = find_in_path_relative_to_dir(filename, path, false)
+        required = find_in_path_relative_to_dir(filename, path, check_crystal_path: false)
         return required if required
       end
 

@@ -1,7 +1,7 @@
+require "llvm"
 require "../syntax/parser"
 require "../syntax/visitor"
 require "../semantic/type_inference"
-require "llvm"
 require "../program"
 require "./*"
 

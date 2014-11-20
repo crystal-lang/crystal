@@ -1,5 +1,5 @@
-require "../syntax/ast"
 require "set"
+require "../syntax/ast"
 
 module Crystal
   def self.print_types(node)

@@ -1,4 +1,4 @@
-require "common"
+require "./common"
 
 class HTTP::Response
   getter version

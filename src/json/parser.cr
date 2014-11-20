@@ -1,4 +1,4 @@
-require "lexer"
+require "./lexer"
 
 class Json::Parser
   def initialize(string_or_io)

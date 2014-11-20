@@ -1,4 +1,4 @@
-require "enums"
+require "./enums"
 
 @[Link("stdc++")]
 @[Link(ldflags: "`(llvm-config-3.5 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config --libs --system-libs --ldflags 2>/dev/null)`")]

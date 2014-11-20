@@ -1,4 +1,4 @@
-require "location"
+require "./location"
 
 module Crystal
   class Token

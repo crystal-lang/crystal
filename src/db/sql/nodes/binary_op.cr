@@ -1,4 +1,4 @@
-require "node"
+require "./node"
 
 class DB::Sql::BinaryOp < DB::Sql::Node
   getter left

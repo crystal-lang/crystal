@@ -1,4 +1,4 @@
-require "lib_crypto"
+require "./lib_crypto"
 
 class OpenSSL::MD5
   def self.hash(data : String)

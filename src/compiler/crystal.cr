@@ -1,3 +1,3 @@
-require "crystal/**"
+require "./crystal/**"
 
 Crystal::Command.run

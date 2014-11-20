@@ -1,4 +1,3 @@
-require "lib_pthread"
 require "./*"
 
 class Thread(T, R)

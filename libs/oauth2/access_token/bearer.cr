@@ -1,4 +1,4 @@
-require "access_token"
+require "./access_token"
 
 class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
   def token_type

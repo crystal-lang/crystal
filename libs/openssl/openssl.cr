@@ -1,3 +1,3 @@
-require "bio"
-require "ssl"
-require "md5"
+require "./bio"
+require "./ssl"
+require "./md5"

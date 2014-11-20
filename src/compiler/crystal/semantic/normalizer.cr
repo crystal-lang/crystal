@@ -1,6 +1,6 @@
+require "set"
 require "../program"
 require "../syntax/transformer"
-require "set"
 
 module Crystal
   class Program

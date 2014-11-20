@@ -42,25 +42,46 @@ describe Crystal::CrystalPath do
       ])
   end
 
-  it "finds file relative to another one" do
+  it "doesn't find file relative to another one if not using ./" do
     path = Crystal::CrystalPath.new(__DIR__)
-    matches = path.find "file_two.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
+    expect_raises Exception, /can't find file/ do
+      path.find "file_two.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
+    end
+  end
+
+  it "finds file relative to another one if using ./" do
+    path = Crystal::CrystalPath.new(__DIR__)
+    matches = path.find "./file_two.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
     matches.should eq([
       "#{__DIR__}/test_files/file_two.cr",
       ])
   end
 
-  it "finds file relative to another one with directory" do
+  it "doesn't find file relative to another one with directory if not using ./" do
     path = Crystal::CrystalPath.new(__DIR__)
-    matches = path.find "test_folder/file_three.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
+    expect_raises Exception, /can't find file/ do
+      path.find "test_folder/file_three.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
+    end
+  end
+
+  it "finds file relative to another one with directory if using ./" do
+    path = Crystal::CrystalPath.new(__DIR__)
+    matches = path.find "./test_folder/file_three.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
     matches.should eq([
       "#{__DIR__}/test_files/test_folder/file_three.cr",
       ])
   end
 
-  it "finds files with * relative to another one" do
+  it "doesn't inds files with * relative to another one if not using ./" do
     path = Crystal::CrystalPath.new(__DIR__)
-    matches = path.find "test_folder/*", relative_to: "#{__DIR__}/test_files/file_one.cr"
+    expect_raises Exception, /can't find file/ do
+      path.find "test_folder/*", relative_to: "#{__DIR__}/test_files/file_one.cr"
+    end
+  end
+
+  it "finds files with * relative to another one if using ./" do
+    path = Crystal::CrystalPath.new(__DIR__)
+    matches = path.find "./test_folder/*", relative_to: "#{__DIR__}/test_files/file_one.cr"
     matches.should eq([
       "#{__DIR__}/test_files/test_folder/file_three.cr",
       "#{__DIR__}/test_files/test_folder/test_folder.cr",

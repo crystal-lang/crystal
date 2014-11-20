@@ -1,4 +1,4 @@
-require "token"
+require "./token"
 require "../exception"
 
 module Crystal

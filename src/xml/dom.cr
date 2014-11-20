@@ -1,4 +1,4 @@
-require "reader"
+require "./reader"
 
 module Xml
   class Node

@@ -1,4 +1,4 @@
-require "similar_name"
+require "./similar_name"
 
 module Crystal
   abstract class Type

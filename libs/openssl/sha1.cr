@@ -1,4 +1,4 @@
-require "lib_crypto"
+require "./lib_crypto"
 
 class OpenSSL::SHA1
   def self.hash(data : String)

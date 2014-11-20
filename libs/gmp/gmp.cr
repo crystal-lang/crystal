@@ -1,1 +1,1 @@
-require "lib_gmp"
+require "./lib_gmp"

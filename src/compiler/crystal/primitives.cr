@@ -1,7 +1,7 @@
-require "syntax/ast"
 require "llvm"
-require "types"
-require "program"
+require "./syntax/ast"
+require "./types"
+require "./program"
 
 module Crystal
   class Program

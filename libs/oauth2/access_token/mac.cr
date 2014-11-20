@@ -1,7 +1,7 @@
-require "access_token"
 require "secure_random"
 require "openssl/hmac"
 require "base64"
+require "./access_token"
 
 class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_algorithm

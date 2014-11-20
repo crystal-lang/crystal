@@ -1,6 +1,6 @@
-require "lexer"
-require "ast"
 require "set"
+require "./ast"
+require "./lexer"
 
 module Crystal
   class Parser < Lexer
