@@ -5,6 +5,10 @@ struct Char
     ord - other.ord
   end
 
+  def <=>(other : Char)
+    self - other
+  end
+
   def digit?
     '0' <= self && self <= '9'
   end

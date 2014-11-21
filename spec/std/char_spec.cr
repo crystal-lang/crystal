@@ -107,4 +107,10 @@ describe "Char" do
     assert { "foo".index('o').should eq(1) }
     assert { "foo".index('x').should be_nil }
   end
+
+  it "does <=>" do
+    ('a' <=> 'b').should be < 0
+    ('a' <=> 'a').should eq(0)
+    ('b' <=> 'a').should be > 0
+  end
 end
