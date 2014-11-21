@@ -137,6 +137,14 @@ struct TimeSpan
     TimeSpan.new(ticks.abs)
   end
 
+  def from_now
+    Time.now + self
+  end
+
+  def ago
+    Time.now - self
+  end
+
   def -(other : self)
     # TODO check overflow
     TimeSpan.new(ticks - other.ticks)
@@ -238,7 +246,7 @@ struct Int
   end
 
   def second
-    second
+    seconds
   end
 
   def seconds
@@ -246,7 +254,7 @@ struct Int
   end
 
   def millisecond
-    millisecond
+    milliseconds
   end
 
   def milliseconds
@@ -281,6 +289,14 @@ struct MonthSpan
 
   def initialize(value)
     @value = value.to_i64
+  end
+
+  def from_now
+    Time.now + self
+  end
+
+  def ago
+    Time.now - self
   end
 end
 

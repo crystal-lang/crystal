@@ -5,11 +5,6 @@ TimeSpecTicks = [
   631501920000000000_i64, # 25 Feb 2002 - 00:00:00
   631502475130080000_i64, # 25 Feb 2002 - 15:25:13,8
   631502115130080000_i64, # 25 Feb 2002 - 05:25:13,8
-  631502115000000000_i64, # 25 Feb 2002 - 05:25:00
-  631502115130000000_i64, # 25 Feb 2002 - 05:25:13
-  631502079130000000_i64, # 25 Feb 2002 - 04:25:13
-  629197085770000000_i64, # 06 Nov 1994 - 08:49:37
-  631796544000000000_i64, # 01 Feb 2003 - 00:00:00
 ]
 
 def Time.expect_invalid
@@ -131,6 +126,9 @@ describe Time do
   it "add months" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t2 = t + 1.month
+    t2.to_s.should eq("2014-11-30 21:18:13")
+
+    t2 = t + 1.months
     t2.to_s.should eq("2014-11-30 21:18:13")
 
     t = Time.new 2014, 10, 31, 21, 18, 13
@@ -458,4 +456,21 @@ describe Time do
     t1.at_end_of_semester.to_s.should eq("2014-12-31 23:59:59")
     t2.at_end_of_semester.to_s.should eq("2014-06-30 23:59:59")
   end
+
+  it "does time span units" do
+    1.millisecond.ticks.should eq(TimeSpan::TicksPerMillisecond)
+    1.milliseconds.ticks.should eq(TimeSpan::TicksPerMillisecond)
+    1.second.ticks.should eq(TimeSpan::TicksPerSecond)
+    1.seconds.ticks.should eq(TimeSpan::TicksPerSecond)
+    1.minute.ticks.should eq(TimeSpan::TicksPerMinute)
+    1.minutes.ticks.should eq(TimeSpan::TicksPerMinute)
+    1.hour.ticks.should eq(TimeSpan::TicksPerHour)
+    1.hours.ticks.should eq(TimeSpan::TicksPerHour)
+  end
+
+  typeof(Time.now.year)
+  typeof(1.minute.from_now.year)
+  typeof(1.minute.ago.year)
+  typeof(1.month.from_now.year)
+  typeof(1.month.ago.year)
 end
