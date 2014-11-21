@@ -1,4 +1,3 @@
-#!/usr/bin/env crystal --run
 require "../../spec_helper"
 
 struct Number

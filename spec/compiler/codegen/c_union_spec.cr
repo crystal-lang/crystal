@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 CodeGenUnionString = "lib Foo; union Bar; x : Int32; y : Int64; z : Float32; end; end"

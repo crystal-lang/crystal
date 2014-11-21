@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Type inference: named args" do

@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal -run
 # Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u32/program.php?test=nbody&lang=yarv&id=2
 
 SOLAR_MASS = 4 * Math::PI**2

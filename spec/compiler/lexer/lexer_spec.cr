@@ -1,4 +1,3 @@
-#!/usr/bin/env crystal --run
 require "../../spec_helper"
 
 def it_lexes(string, type)

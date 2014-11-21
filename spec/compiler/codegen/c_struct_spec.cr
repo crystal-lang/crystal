@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 CodeGenStructString = "lib Foo; struct Bar; x : Int32; y : Float32; end; end"

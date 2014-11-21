@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "spec"
 require "complex"
 
@@ -34,7 +33,7 @@ describe "Complex" do
       c = Complex.new(7.2, 0)
       (a == b).should be_true
       (a == c).should be_false
-    end 
+    end
   end
 
   it "to_s" do
@@ -77,7 +76,7 @@ describe "Complex" do
 
     it "number + complex" do
       (-1.7+Complex.new(7, 4.1)).should eq(Complex.new(5.3, 4.1))
-    end 
+    end
   end
 
   describe "-" do
@@ -95,7 +94,7 @@ describe "Complex" do
 
     it "number - complex" do
       (-3.27-Complex.new(7, 5.1)).should eq(Complex.new(-10.27, -5.1))
-    end 
+    end
   end
 
   describe "*" do
@@ -109,7 +108,7 @@ describe "Complex" do
 
     it "number * complex" do
       (-1.7*Complex.new(9.7, 3.22)).should eq(Complex.new(-16.49, -5.474))
-    end 
+    end
   end
 
   describe "/" do
@@ -123,6 +122,6 @@ describe "Complex" do
 
     it "number / complex" do
       (-5.7*(Complex.new(2.27, 8.92))).should eq(Complex.new(-12.939, -50.844))
-    end 
+    end
   end
 end

@@ -1,4 +1,3 @@
-#!/usr/bin/env crystal --run
 require "../../spec_helper"
 
 describe "Type inference: is_a?" do

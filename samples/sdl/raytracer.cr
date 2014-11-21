@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal -run
 # Ported from Nimrod: https://gist.github.com/AdrianV/5774141
 
 require "sdl"

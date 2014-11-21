@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Code gen: global" do

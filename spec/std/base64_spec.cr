@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "spec"
 require "base64"
 require "crypto/md5"

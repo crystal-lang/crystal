@@ -1,4 +1,3 @@
-#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 CodeGenCEnumString = "lib Foo; enum Bar; X, Y, Z = 10, W; end end"
