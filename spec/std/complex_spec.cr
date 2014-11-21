@@ -11,7 +11,7 @@ describe "Complex" do
     a.should_not eq(c)
   end
 
-  describe "==:" do
+  describe "==" do
     it "complex == complex" do
       a = Complex.new(1.5, 2)
       b = Complex.new(1.5, 2)
@@ -54,7 +54,7 @@ describe "Complex" do
   end
 
   it "polar" do
-    Complex.new(7.25, -13.1).polar.should eq([14.972391258579906, -1.0653196179316864])
+    Complex.new(7.25, -13.1).polar.should eq({14.972391258579906, -1.0653196179316864})
   end
 
   it "conj" do
@@ -65,7 +65,7 @@ describe "Complex" do
     Complex.new(1.5, -2.5).inv.should eq(Complex.new(0.17647058823529413, 0.29411764705882354))
   end
 
-  describe "+:" do
+  describe "+" do
     it "complex + complex" do
       (Complex.new(2.2, 7)+Complex.new(10.1, 1.34)).should eq(Complex.new(12.3, 8.34))
     end
@@ -79,7 +79,7 @@ describe "Complex" do
     end 
   end
 
-  describe "-:" do
+  describe "-" do
     it "- complex" do
       (-Complex.new(5.43, 27.12)).should eq(Complex.new(-5.43, -27.12))
     end
@@ -97,7 +97,7 @@ describe "Complex" do
     end 
   end
 
-  describe "*:" do
+  describe "*" do
     it "complex * complex" do
       (Complex.new(12.2, 9.8)*Complex.new(4.78, 2.86)).should eq(Complex.new(30.288, 81.736))
     end
@@ -111,7 +111,7 @@ describe "Complex" do
     end 
   end
 
-  describe "/:" do
+  describe "/" do
     it "complex / complex" do
       ((Complex.new(4.1, 6.0))/(Complex.new(10, 2.2))).should eq(Complex.new(0.5169782525753529, 0.48626478443342236))
     end

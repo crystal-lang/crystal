@@ -39,7 +39,7 @@ struct Complex
   end
 
   def polar
-    [abs, phase]
+    {abs, phase}
   end
 
   def conj
