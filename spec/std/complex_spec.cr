@@ -39,6 +39,7 @@ describe "Complex" do
 
   it "to_s" do
     Complex.new(1.25, 8.2).to_s.should eq("1.25 + 8.2i")
+    Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
   end
 
   it "abs" do
