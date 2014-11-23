@@ -2206,7 +2206,7 @@ module Crystal
         node.type = t1.integer? && t2.float? ? t2 : t1
       when "==", "<", "<=", ">", ">=", "!="
         node.type = @mod.bool
-      when "%", "<<", ">>", "|", "&", "^"
+      when "%", "<<", ">>", "|", "&", "^", "unsafe_mod"
         node.type = scope
       else
         raise "Bug: unknown binary operator #{typed_def.name}"

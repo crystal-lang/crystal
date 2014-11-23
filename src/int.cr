@@ -19,6 +19,15 @@ struct Int
     unsafe_div x
   end
 
+  # TODO: uncomment after 0.5.3
+  # def %(x : Int)
+  #   if x == 0
+  #     raise DivisionByZero.new
+  #   end
+
+  #   unsafe_mod x
+  # end
+
   def abs
     self >= 0 ? self : -self
   end

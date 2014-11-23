@@ -26,7 +26,7 @@ module Crystal
       floats = [float32, float64]
       nums = ints + floats
 
-      %w(+ - * / unsafe_div).each do |op|
+      %w(+ - * /).each do |op|
         nums.each do |another_number|
           number.add_def Def.new(op, [Arg.new("other", type: another_number)], binary)
         end
@@ -39,7 +39,7 @@ module Crystal
         char.add_def Def.new(op, [Arg.new("other", type: char)], binary)
       end
 
-      %w(% << >> | & ^).each do |op|
+      %w(% << >> | & ^ unsafe_div unsafe_mod).each do |op|
         ints.each do |another_int|
           int.add_def Def.new(op, [Arg.new("other", type: another_int)], binary)
         end

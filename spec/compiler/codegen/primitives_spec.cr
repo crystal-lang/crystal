@@ -50,6 +50,10 @@ describe "Code gen: primitives" do
     run(%(8.unsafe_div 3)).to_i.should eq(2)
   end
 
+  it "codegens 8.unsafe_mod 3" do
+    run(%(10.unsafe_mod 3)).to_i.should eq(1)
+  end
+
   it "defined method that calls primitive (bug)" do
     run("
       struct Int64
