@@ -23,11 +23,15 @@ struct Int
     self >= 0 ? self : -self
   end
 
+  def ceil
+    self
+  end
+
   def floor
     self
   end
 
-  def ceil
+  def nearbyint
     self
   end
 
