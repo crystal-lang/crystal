@@ -6,14 +6,6 @@ struct Float
   def +
     self
   end
-
-  def floor
-    to_i32
-  end
-
-  def round
-    (self + 0.5).to_i32
-  end
 end
 
 struct Float32
@@ -28,6 +20,14 @@ struct Float32
 
   def ceil
     LibM.ceil_f32(self).to_i
+  end
+
+  def floor
+    LibM.floor_f32(self).to_i
+  end
+
+  def round
+    LibM.round_f32(self).to_i
   end
 
   def **(other : Float32)
@@ -68,6 +68,14 @@ struct Float64
 
   def ceil
     LibM.ceil_f64(self).to_i
+  end
+
+  def floor
+    LibM.floor_f64(self).to_i
+  end
+
+  def round
+    LibM.round_f64(self).to_i
   end
 
   def **(other : Float64)

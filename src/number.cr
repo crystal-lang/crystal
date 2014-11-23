@@ -28,6 +28,10 @@ struct Number
     self < 0 ? -self : self
   end
 
+  def sign
+    self < 0 ? -1 : (self == 0 ? 0 : 1)
+  end
+
   def divmod(number)
     {self / number, self % number}
   end

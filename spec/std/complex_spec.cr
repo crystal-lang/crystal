@@ -36,6 +36,19 @@ describe "Complex" do
     end
   end
 
+  it "ceil" do
+    Complex.new(3.24, -5.91).ceil.should eq(Complex.new(4, -5))
+  end
+
+  it "floor" do
+    Complex.new(-5.24, 7.99).floor.should eq(Complex.new(-6, 7))
+  end
+
+  it "round" do
+    Complex.new(-11.6, 2.3).round.should eq(Complex.new(-12, 2))
+    Complex.new(-11.1, 8.5).round.should eq(Complex.new(-11, 9))
+  end
+
   it "to_s" do
     Complex.new(1.25, 8.2).to_s.should eq("1.25 + 8.2i")
     Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
@@ -49,6 +62,10 @@ describe "Complex" do
     Complex.new(-1.1, 9).abs2.should eq(82.21)
   end
 
+  it "sign" do
+    Complex.new(-1.4, 7.7).sign.should eq(Complex.new(-0.17888543819998315, 0.9838699100999074))
+  end
+
   it "phase" do
     Complex.new(11.5, -6.25).phase.should eq(-0.4978223326170012)
   end
@@ -57,12 +74,27 @@ describe "Complex" do
     Complex.new(7.25, -13.1).polar.should eq({14.972391258579906, -1.0653196179316864})
   end
 
+  it "cis" do
+    2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+  end
+
   it "conj" do
     Complex.new(10.1, 3.7).conj.should eq(Complex.new(10.1, -3.7))
   end
 
   it "inv" do
     Complex.new(1.5, -2.5).inv.should eq(Complex.new(0.17647058823529413, 0.29411764705882354))
+  end
+
+  it "sqrt" do
+    Complex.new(1.32, 7.25).sqrt.should eq(Complex.new(2.0843687106374236, 1.739135682425128))
+    Complex.new(7.11, -0.9).sqrt.should eq(Complex.new(2.671772413453534, -0.1684275194002508))
+    Complex.new(-2.2, 6.22).sqrt.should eq(Complex.new(1.4828360708935342, 2.0973323087062226))
+    Complex.new(-8.3, -1.11).sqrt.should eq(Complex.new(0.1922159681400434, -2.8873771797962275))
+  end
+
+  it "exp" do
+    Complex.new(1.15, -5.1).exp.should eq(Complex.new(1.1937266270566773, 2.923901365414129))
   end
 
   describe "+" do
@@ -113,6 +145,7 @@ describe "Complex" do
 
   describe "/" do
     it "complex / complex" do
+      ((Complex.new(4, 6.2))/(Complex.new(0.5, 2.7))).should eq(Complex.new(2.485411140583554, -1.0212201591511936))
       ((Complex.new(4.1, 6.0))/(Complex.new(10, 2.2))).should eq(Complex.new(0.5169782525753529, 0.48626478443342236))
     end
 

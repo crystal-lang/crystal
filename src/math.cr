@@ -15,6 +15,8 @@ lib LibM
   fun erfc(x : Float64) : Float64
   fun exp_f32 = "llvm.exp.f32"(value : Float32) : Float32
   fun exp_f64 = "llvm.exp.f64"(value : Float64) : Float64
+  fun floor_f32 = "llvm.floor.f32"(value : Float32) : Float32
+  fun floor_f64 = "llvm.floor.f64"(value : Float64) : Float64
   fun hypot(x : Float64, y : Float64) : Float64
   fun ldexp(flt : Float64, int : Int32) : Float64
   fun lgamma(x : Float64) : Float64
@@ -26,6 +28,8 @@ lib LibM
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
+  fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
+  fun round_f64 = "llvm.round.f64"(value : Float64) : Float64
   fun sin_f32 = "llvm.sin.f32"(value : Float32) : Float32
   fun sin_f64 = "llvm.sin.f64"(value : Float64) : Float64
   fun sinh(x : Float64) : Float64
