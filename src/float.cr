@@ -19,19 +19,19 @@ struct Float32
   end
 
   def ceil
-    LibM.ceil_f32(self).to_i
+    LibM.ceil_f32(self).to_i32
   end
 
   def floor
-    LibM.floor_f32(self).to_i
+    LibM.floor_f32(self).to_i32
   end
 
   def nearbyint
-    LibM.nearbyint_f32(self).to_i
+    LibM.nearbyint_f32(self).to_i32
   end
 
   def round
-    LibM.round_f32(self).to_i
+    LibM.round_f32(self).to_i32
   end
 
   def **(other : Float32)
@@ -71,19 +71,19 @@ struct Float64
   end
 
   def ceil
-    LibM.ceil_f64(self).to_i
+    LibM.ceil_f64(self).to_i64
   end
 
   def floor
-    LibM.floor_f64(self).to_i
+    LibM.floor_f64(self).to_i64
   end
 
   def nearbyint
-    LibM.nearbyint_f64(self).to_i
+    LibM.nearbyint_f64(self).to_i64
   end
 
   def round
-    LibM.round_f64(self).to_i
+    LibM.round_f64(self).to_i64
   end
 
   def **(other : Float64)
