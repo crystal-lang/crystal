@@ -44,11 +44,8 @@ describe "Complex" do
     Complex.new(-5.24, 7.99).floor.should eq(Complex.new(-6, 7))
   end
 
-  it "nearbyint" do
-    Complex.new(-11.6, 2.3).nearbyint.should eq(Complex.new(-12, 2))
-  end
-
   it "round" do
+    Complex.new(-11.6, 2.3).round.should eq(Complex.new(-12, 2))
     Complex.new(-11.1, 8.5).round.should eq(Complex.new(-11, 9))
   end
 

@@ -27,10 +27,6 @@ struct Complex
     Complex.new(@real.floor, @imag.floor)
   end
 
-  def nearbyint
-    Complex.new(@real.nearbyint, @imag.nearbyint)
-  end
-
   def round
     Complex.new(@real.round, @imag.round)
   end

@@ -31,10 +31,6 @@ struct Int
     self
   end
 
-  def nearbyint
-    self
-  end
-
   def round
     self
   end

@@ -26,8 +26,6 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
-  fun nearbyint_f32 = "llvm.nearbyint.f32"(value : Float32) : Float32
-  fun nearbyint_f64 = "llvm.nearbyint.f64"(value : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
