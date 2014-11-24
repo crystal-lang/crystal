@@ -38,6 +38,8 @@ lib LibM
   fun tan(x : Float64) : Float64
   fun tanh(x : Float64) : Float64
   fun tgamma(x : Float64) : Float64
+  fun trunc_f32 = "llvm.trunc.f32"(value : Float32) : Float32
+  fun trunc_f64 = "llvm.trunc.f64"(value : Float64) : Float64
 end
 
 module Math

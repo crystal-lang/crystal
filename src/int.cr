@@ -35,6 +35,10 @@ struct Int
     self
   end
 
+  def trunc
+    self
+  end
+
   def **(other : Int)
     (to_f64 ** other).to_i
   end

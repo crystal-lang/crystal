@@ -23,24 +23,16 @@ struct Complex
     Complex.new(@real.ceil, @imag.ceil)
   end
 
-  def iceil
-    Complex.new(@real.iceil, @imag.iceil)
-  end
-
   def floor
     Complex.new(@real.floor, @imag.floor)
-  end
-
-  def ifloor
-    Complex.new(@real.ifloor, @imag.ifloor)
   end
 
   def round
     Complex.new(@real.round, @imag.round)
   end
 
-  def iround
-    Complex.new(@real.iround, @imag.iround)
+  def trunc
+    Complex.new(@real.trunc, @imag.trunc)
   end
 
   def to_s(io : IO)

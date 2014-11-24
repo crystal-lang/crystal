@@ -22,24 +22,16 @@ struct Float32
     LibM.ceil_f32(self)
   end
 
-  def iceil
-    LibM.ceil_f32(self).to_i
-  end
-
   def floor
     LibM.floor_f32(self)
-  end
-
-  def ifloor
-    LibM.floor_f32(self).to_i
   end
 
   def round
     LibM.round_f32(self)
   end
 
-  def iround
-    LibM.round_f32(self).to_i
+  def trunc
+    LibM.trunc_f32(self)
   end
 
   def **(other : Float32)
@@ -82,24 +74,16 @@ struct Float64
     LibM.ceil_f64(self)
   end
 
-  def iceil
-    LibM.ceil_f64(self).to_i
-  end
-
   def floor
     LibM.floor_f64(self)
-  end
-
-  def ifloor
-    LibM.floor_f64(self).to_i
   end
 
   def round
     LibM.round_f64(self)
   end
 
-  def iround
-    LibM.round_f64(self).to_i
+  def trunc
+    LibM.trunc_f64(self)
   end
 
   def **(other : Float64)
