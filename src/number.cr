@@ -39,4 +39,32 @@ struct Number
   def <=>(other)
     self > other ? 1 : (self < other ? -1 : 0)
   end
+
+  def significant(digits, base = 10)
+    if digits < 0
+      raise ArgumentError.new "digits should be non-negative"
+    end
+
+    x = self.to_f
+
+    if x == 0 
+        return x
+    end
+
+    y = if base == 10
+      10 ** ((Math.log10(self.abs) - digits + 1).floor)
+    elsif base == 2
+      2 ** ((Math.log2(self.abs) - digits + 1).floor)
+    else
+      (base.to_f) ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
+    end
+
+    (x / y).round * y
+  end
+
+  def round(digits, base = 10)
+    x = self.to_f
+    y = base ** digits
+    (x * y).round / y
+  end
 end
