@@ -150,7 +150,7 @@ module Crystal
         else
           max_size /= 4.0
         end
-        max_size = max_size.ceil
+        max_size = max_size.iceil
 
         max_size = 1 if max_size == 0
 

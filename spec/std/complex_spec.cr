@@ -40,13 +40,26 @@ describe "Complex" do
     Complex.new(3.24, -5.91).ceil.should eq(Complex.new(4, -5))
   end
 
+  it "iceil" do
+    Complex.new(3.24, -5.91).iceil.should eq(Complex.new(4, -5))
+  end
+
   it "floor" do
     Complex.new(-5.24, 7.99).floor.should eq(Complex.new(-6, 7))
+  end
+
+  it "ifloor" do
+    Complex.new(-5.24, 7.99).ifloor.should eq(Complex.new(-6, 7))
   end
 
   it "round" do
     Complex.new(-11.6, 2.3).round.should eq(Complex.new(-12, 2))
     Complex.new(-11.1, 8.5).round.should eq(Complex.new(-11, 9))
+  end
+
+  it "iround" do
+    Complex.new(-11.6, 2.3).iround.should eq(Complex.new(-12, 2))
+    Complex.new(-11.1, 8.5).iround.should eq(Complex.new(-11, 9))
   end
 
   it "to_s" do
