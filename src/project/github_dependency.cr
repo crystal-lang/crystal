@@ -15,7 +15,7 @@ class GitHubDependency < Dependency
     end
     `ln -sf ../#{@target_dir}/src libs/#{@repository}`
 
-    if @locked_version &&
+    if @locked_version
       if current_version != @locked_version
         `git -C #{@target_dir} checkout -q #{@locked_version}`
       end
