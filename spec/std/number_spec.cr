@@ -13,6 +13,12 @@ describe "Number" do
       753.155.significant(3, base = 2).should eq(768.0)
       15.159.significant(1, base = 2).should eq(16.0)
     end
+
+    it "8 base " do
+      -1763.116.significant(2, base = 8).should eq(-1792.0)
+      753.155.significant(3, base = 8).should eq(752.0)
+      15.159.significant(1, base = 8).should eq(16.0)
+    end
   end
 
   describe "round" do
@@ -26,6 +32,12 @@ describe "Number" do
       -1763.116.round(2, base = 2).should eq(-1763.0)
       753.155.round(2, base = 2).should eq(753.25)
       15.159.round(2, base = 2).should eq(15.25)
+    end
+
+    it "8 base " do
+      -1763.116.round(2, base = 8).should eq(-1763.109375)
+      753.155.round(1, base = 8).should eq(753.125)
+      15.159.round(0, base = 8).should eq(15.0)
     end
   end
 end
