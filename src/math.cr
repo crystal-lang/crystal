@@ -26,6 +26,7 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
+  fun log1p(x : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
@@ -114,12 +115,17 @@ module Math
     LibM.tgamma(value.to_f64)
   end
 
+
   def hypot(x, y)
     LibM.hypot(x.to_f64, y.to_f64)
   end
 
   def ldexp(flt, int : Int)
     LibM.ldexp(flt.to_f64, int)
+  end
+
+  def lgamma(value)
+    LibM.lgamma(value.to_f64)
   end
 
   def log(value : Float32)
@@ -160,6 +166,10 @@ module Math
 
   def log10(value)
     log10(value.to_f64)
+  end
+
+  def log1p(value)
+    LibM.log1p(value.to_f64)
   end
 
   def min(value1, value2)
