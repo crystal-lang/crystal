@@ -45,8 +45,10 @@ end
 module Math
   extend self
 
-  E  = LibM.exp_f64(1.0)
   PI = 3.14159265358979323846
+  E = LibM.exp_f64(1.0)
+  LOG2 = LibM.log_f64(2.0)
+  LOG10 = LibM.log_f64(10.0)
 
   def acos(value)
     LibM.acos(value.to_f64)

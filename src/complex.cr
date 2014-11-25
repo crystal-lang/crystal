@@ -87,6 +87,14 @@ struct Complex
     Complex.new(Math.log(abs), phase)
   end
 
+  def log2
+    log / Math::LOG2
+  end
+
+  def log10
+    log / Math::LOG10
+  end
+
   def +(other : Complex)
     Complex.new(@real + other.real, @imag + other.imag)
   end
