@@ -19,22 +19,6 @@ struct Complex
     false
   end
 
-  def ceil
-    Complex.new(@real.ceil, @imag.ceil)
-  end
-
-  def floor
-    Complex.new(@real.floor, @imag.floor)
-  end
-
-  def round
-    Complex.new(@real.round, @imag.round)
-  end
-
-  def trunc
-    Complex.new(@real.trunc, @imag.trunc)
-  end
-
   def to_s(io : IO)
     io << @real
     io << (@imag >= 0 ? " + " : " - ")

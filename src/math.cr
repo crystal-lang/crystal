@@ -214,6 +214,4 @@ module Math
     v |= v >> 16
     v += 1
   end
-
-
 end

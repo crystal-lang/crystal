@@ -36,23 +36,6 @@ describe "Complex" do
     end
   end
 
-  it "ceil" do
-    Complex.new(3.24, -5.91).ceil.should eq(Complex.new(4, -5))
-  end
-
-  it "floor" do
-    Complex.new(-5.24, 7.99).floor.should eq(Complex.new(-6, 7))
-  end
-
-  it "round" do
-    Complex.new(-11.6, 2.3).round.should eq(Complex.new(-12, 2))
-    Complex.new(-11.1, 8.5).round.should eq(Complex.new(-11, 9))
-  end
-
-  it "trunc" do
-    Complex.new(-2.6, -3.3).trunc.should eq(Complex.new(-2, -3))
-  end
-
   it "to_s" do
     Complex.new(1.25, 8.2).to_s.should eq("1.25 + 8.2i")
     Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
