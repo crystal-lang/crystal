@@ -83,6 +83,10 @@ struct Complex
     Complex.new(r * Math.cos(@imag), r * Math.sin(@imag))
   end
 
+  def log
+    Complex.new(Math.log(abs), phase)
+  end
+
   def +(other : Complex)
     Complex.new(@real + other.real, @imag + other.imag)
   end

@@ -84,6 +84,10 @@ describe "Complex" do
     Complex.new(1.15, -5.1).exp.should eq(Complex.new(1.1937266270566773, 2.923901365414129))
   end
 
+  it "log" do
+    Complex.new(1.25, -4.7).log.should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
+  end
+
   describe "+" do
     it "complex + complex" do
       (Complex.new(2.2, 7)+Complex.new(10.1, 1.34)).should eq(Complex.new(12.3, 8.34))
