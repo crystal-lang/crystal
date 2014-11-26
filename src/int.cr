@@ -126,15 +126,15 @@ struct Int
     self % other
   end
 
-  def to_s(radix : Int)
+  def to_s(base : Int)
     String.build do |io|
-      to_s(radix, io)
+      to_s(base, io)
     end
   end
 
-  def to_s(radix : Int, io : IO)
-    if radix < 1 || radix > 36
-      raise "Invalid radix #{radix}"
+  def to_s(base : Int, io : IO)
+    if base < 1 || base > 36
+      raise "Invalid base #{base}"
     end
 
     if self == 0
@@ -154,13 +154,13 @@ struct Int
     end
 
     while num > 0
-      digit = num % radix
+      digit = num % base
       if digit >= 10
         str.write_byte ('A'.ord + digit - 10).to_u8
       else
         str.write_byte ('0'.ord + digit).to_u8
       end
-      num /= radix
+      num /= base
     end
 
     # Reverse buffer
