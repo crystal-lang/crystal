@@ -2,6 +2,8 @@ module Spec
   abstract class Context
   end
 
+  record Result, kind, description, file, line, exception
+
   class RootContext < Context
     def initialize
       @results = {

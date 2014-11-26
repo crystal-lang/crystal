@@ -3,8 +3,6 @@ require "option_parser"
 require "signal"
 
 module Spec
-  record Result, kind, description, file, line, exception
-
   COLORS = {
     success: :green,
     fail: :red,

@@ -141,10 +141,10 @@ module Crystal::Command
           options << "-l" << target_line
         end
       else
-        target_filename = "spec/**"
+        target_filename = "./spec/**"
       end
     else
-      target_filename = "spec/**"
+      target_filename = "./spec/**"
     end
 
     compiler = Compiler.new
@@ -158,7 +158,7 @@ module Crystal::Command
 
   private def self.deps(options)
     compiler = Compiler.new
-    sources = gather_sources(["Projectfile"])
+    sources = gather_sources(["./Projectfile"])
     sources.insert 0, Compiler::Source.new("require", %(require "project"))
 
     output_filename = tempfile "deps"

@@ -1828,6 +1828,7 @@ module Crystal
     delegate lookup_macros, aliased_type
     delegate cover, aliased_type
     delegate cover_length, aliased_type
+    delegate passed_by_value?, aliased_type
 
     def remove_alias
       if aliased_type = @aliased_type

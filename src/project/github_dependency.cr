@@ -5,8 +5,10 @@ class GitHubDependency < Dependency
     end
 
     @author = $1
-    @name = @repository = $2
+    @repository = $2
     @target_dir = ".deps/#{@repository}"
+
+    super(@repository)
   end
 
   def install

@@ -25,6 +25,7 @@ lib C
   fun sysconf(name : Int32) : Int64
 
   fun sleep(seconds : UInt32) : UInt32
+  fun usleep(useconds : UInt32) : UInt32
 end
 
 module Process
@@ -82,11 +83,18 @@ def fork()
   Process.fork()
 end
 
-def sleep(seconds)
+def sleep(seconds : Int)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
   end
   C.sleep seconds.to_u32
+end
+
+def sleep(seconds : Float)
+  if seconds < 0
+    raise ArgumentError.new "sleep seconds must be positive"
+  end
+  C.usleep (seconds * 1E6).to_u32
 end
 
 require "./*"

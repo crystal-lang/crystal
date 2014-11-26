@@ -11,6 +11,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     match_any_type_id(restriction, type_id)
   end
 
+  def match_type_id(type : AliasType, restriction, type_id)
+    match_type_id type.aliased_type, restriction, type_id
+  end
+
   def match_type_id(type, restriction, type_id)
     equal? type_id(restriction), type_id
   end
