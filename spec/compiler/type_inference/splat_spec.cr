@@ -46,4 +46,19 @@ describe "Type inference: splat" do
       ),
       "splatting a union (({Int32} | {Int32, Int32})) is not yet supported"
   end
+
+  it "forwards tuple with an extra argument" do
+    assert_type(%(
+      def foo(*args)
+        bar 1, *args
+      end
+
+      def bar(name, *args)
+        args
+      end
+
+      x = foo 2
+      x
+      )) { tuple_of [int32] of TypeVar }
+  end
 end
