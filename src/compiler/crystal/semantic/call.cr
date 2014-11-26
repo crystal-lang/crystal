@@ -95,6 +95,8 @@ class Crystal::Call
         else
           arg.raise "splatting a union (#{arg_type}) is not yet supported"
         end
+      else
+        arg_types << arg.type
       end
     end
     lookup_matches_without_splat arg_types
