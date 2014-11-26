@@ -56,7 +56,7 @@ struct Number
     elsif base == 2
       2 ** ((Math.log2(self.abs) - digits + 1).floor)
     else
-      (base.to_f) ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
+      base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
     end
 
     (x / y).round * y
