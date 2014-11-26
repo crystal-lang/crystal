@@ -48,4 +48,29 @@ describe "Code gen: alias" do
       b
       )).to_i.should eq(1)
   end
+
+  it "casts to recursive alias" do
+    run(%(
+      class Bar(T)
+        def self.new(&block : -> T)
+        end
+
+        def to_i
+          0
+        end
+      end
+
+      alias Foo = Int32 | Bar(Foo)
+
+      def foo(n)
+        if n == 0
+          1
+        else
+          foo(n - 1) as Foo
+        end
+      end
+
+      foo(2).to_i
+      )).to_i.should eq(1)
+  end
 end
