@@ -65,6 +65,10 @@ class Object
     self
   end
 
+  def itself
+    self
+  end
+
   macro getter(*names)
     {% for name in names %}
       {% name = name.var if name.is_a?(DeclareVar) %}

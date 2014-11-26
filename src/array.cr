@@ -157,7 +157,7 @@ class Array(T)
   end
 
   def compact
-    compact_map { |x| x }
+    compact_map &.itself
   end
 
   def compact(array)
@@ -635,7 +635,7 @@ class Array(T)
   end
 
   def uniq
-    uniq { |x| x }
+    uniq &.itself
   end
 
   def uniq(&block : T -> U)
@@ -648,7 +648,7 @@ class Array(T)
   end
 
   def uniq!
-    uniq! { |x| x }
+    uniq! &.itself
   end
 
   def uniq!(&block : T -> U)
