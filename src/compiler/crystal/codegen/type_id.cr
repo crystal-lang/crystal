@@ -54,6 +54,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     type_id(value, type.including_types.not_nil!)
   end
 
+  def type_id(value, type : AliasType)
+    type_id value, type.aliased_type
+  end
+
   def type_id(value, type)
     type_id(type)
   end
