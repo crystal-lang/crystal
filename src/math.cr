@@ -43,8 +43,8 @@ lib LibM
   fun asin_f64 = asin(value : Float64) : Float64
   fun asinh_f32 = asinhf(value : Float32) : Float32
   fun asinh_f64 = asinh(value : Float64) : Float64
-  fun atan2_f32 = atan2f(value1 : Float32, value2: Float32) : Float32
-  fun atan2_f64 = atan2(value1 : Float64, value2: Float64) : Float64
+  fun atan2_f32 = atan2f(value1 : Float32, value2 : Float32) : Float32
+  fun atan2_f64 = atan2(value1 : Float64, value2 : Float64) : Float64
   fun atan_f32 = atanf(value : Float32) : Float32
   fun atan_f64 = atan(value : Float64) : Float64
   fun atanh_f32 = atanhf(value : Float32) : Float32
@@ -59,54 +59,42 @@ lib LibM
   fun erf_f64 = erf(value : Float64) : Float64
   fun exp2_f32 = exp2f(value : Float32) : Float32
   fun exp2_f64 = exp2(value : Float64) : Float64
-  fun exp_f32 = expf(value : Float32) : Float32
-  fun exp_f64 = exp(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-  fun fdim_f32 = fdimf(value1 : Float32, value2: Float32) : Float32
-  fun fdim_f64 = fdim(value1 : Float64, value2: Float64) : Float64
-  fun fma_f32 = fmaf(value1 : Float32, value2: Float32, value3: Float32) : Float32
-  fun fma_f64 = fma(value1 : Float64, value2: Float64, value3: Float64) : Float64
-  fun fmod_f32 = fmodf(value1 : Float32, value2: Float32) : Float32
-  fun fmod_f64 = fmod(value1 : Float64, value2: Float64) : Float64
+  fun fdim_f32 = fdimf(value1 : Float32, value2 : Float32) : Float32
+  fun fdim_f64 = fdim(value1 : Float64, value2 : Float64) : Float64
+  fun fma_f32 = fmaf(value1 : Float32, value2 : Float32, value3 : Float32) : Float32
+  fun fma_f64 = fma(value1 : Float64, value2 : Float64, value3 : Float64) : Float64
+  fun fmod_f32 = fmodf(value1 : Float32, value2 : Float32) : Float32
+  fun fmod_f64 = fmod(value1 : Float64, value2 : Float64) : Float64
   fun gamma_f32 = gammaf(value : Float32) : Float32
   fun gamma_f64 = gamma(value : Float64) : Float64
+  fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
+  fun hypot_f64 = hypot(value1 : Float64, value2 : Float64) : Float64
   fun ilogb_f32 = ilogbf(value : Float32) : Float32
   fun ilogb_f64 = ilogb(value : Float64) : Float64
   fun j0_f32 = j0f(value : Float32) : Float32
   fun j0_f64 = j0(value : Float64) : Float64
   fun j1_f32 = j1f(value : Float32) : Float32
   fun j1_f64 = j1(value : Float64) : Float64
-  fun jn_f32 = jnf(value1 : Int32, value2: Float32) : Float32
-  fun jn_f64 = jn(value1 : Int32, value2: Float64) : Float64
-  fun ldexp_f32 = ldexpf(value1 : Float32, value2: Int32) : Float32
-  fun ldexp_f64 = ldexp(value1 : Float64, value2: Int32) : Float64
-  fun log10_f32 = log10f(value : Float32) : Float32
-  fun log10_f64 = log10(value : Float64) : Float64
+  fun jn_f32 = jnf(value1 : Int32, value2 : Float32) : Float32
+  fun jn_f64 = jn(value1 : Int32, value2 : Float64) : Float64
+  fun ldexp_f32 = ldexpf(value1 : Float32, value2 : Int32) : Float32
+  fun ldexp_f64 = ldexp(value1 : Float64, value2 : Int32) : Float64
   fun log1p_f32 = log1pf(value : Float32) : Float32
   fun log1p_f64 = log1p(value : Float64) : Float64
-  fun log2_f32 = log2f(value : Float32) : Float32
-  fun log2_f64 = log2(value : Float64) : Float64
   fun logb_f32 = logbf(value : Float32) : Float32
   fun logb_f64 = logb(value : Float64) : Float64
-  fun log_f32 = logf(value : Float32) : Float32
-  fun log_f64 = log(value : Float64) : Float64
-  fun nextafter_f32 = nextafterf(value1 : Float32, value2: Float32) : Float32
-  fun nextafter_f64 = nextafter(value1 : Float64, value2: Float64) : Float64
-  fun pow_f32 = powf(value1 : Float32, value2: Float32) : Float32
-  fun pow_f64 = pow(value1 : Float64, value2: Float64) : Float64
-  fun remainder_f32 = remainderf(value1 : Float32, value2: Float32) : Float32
-  fun remainder_f64 = remainder(value1 : Float64, value2: Float64) : Float64
-  fun scalbln_f32 = scalblnf(value1 : Float32, value2: Int64) : Float32
-  fun scalbln_f64 = scalbln(value1 : Float64, value2: Int64) : Float64
-  fun scalbn_f32 = scalbnf(value1 : Float32, value2: Int32) : Float32
-  fun scalbn_f64 = scalbn(value1 : Float64, value2: Int32) : Float64
-  fun sin_f32 = sinf(value : Float32) : Float32
-  fun sin_f64 = sin(value : Float64) : Float64
+  fun nextafter_f32 = nextafterf(value1 : Float32, value2 : Float32) : Float32
+  fun nextafter_f64 = nextafter(value1 : Float64, value2 : Float64) : Float64
+  fun remainder_f32 = remainderf(value1 : Float32, value2 : Float32) : Float32
+  fun remainder_f64 = remainder(value1 : Float64, value2 : Float64) : Float64
+  fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
+  fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
+  fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32
+  fun scalbn_f64 = scalbn(value1 : Float64, value2 : Int32) : Float64
   fun sinh_f32 = sinhf(value : Float32) : Float32
   fun sinh_f64 = sinh(value : Float64) : Float64
-  fun sqrt_f32 = sqrtf(value : Float32) : Float32
-  fun sqrt_f64 = sqrt(value : Float64) : Float64
   fun tan_f32 = tanf(value : Float32) : Float32
   fun tan_f64 = tan(value : Float64) : Float64
   fun tanh_f32 = tanhf(value : Float32) : Float32
@@ -117,8 +105,8 @@ lib LibM
   fun y0_f64 = y0(value : Float64) : Float64
   fun y1_f32 = y1f(value : Float32) : Float32
   fun y1_f64 = y1(value : Float64) : Float64
-  fun yn_f32 = ynf(value1 : Int32, value2: Float32) : Float32
-  fun yn_f64 = yn(value1 : Int32, value2: Float64) : Float64
+  fun yn_f32 = ynf(value1 : Int32, value2 : Float32) : Float32
+  fun yn_f64 = yn(value1 : Int32, value2 : Float64) : Float64
 end
 
 module Math
@@ -129,7 +117,8 @@ module Math
   LOG2 = LibM.log_f64(2.0)
   LOG10 = LibM.log_f64(10.0)
 
-  {% for name in %w(acos acosh) %}
+  {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp exp2 expm1 gamma ilogb j0 j1 log log10 log1p
+    log2 logb min max sin sinh sqrt tan tanh tgamma y0 y1) %}
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
     end
@@ -142,117 +131,75 @@ module Math
       {{name.id}}(value.to_f)
     end
   {% end %}
-  
-  def asin(value)
-    LibM.asin(value.to_f64)
+
+  {% for name in %w(atan2 copysign fdim fmod hypot nextafter remainder) %}
+    def {{name.id}}(value1 : Float32, value2 : Float32)
+      LibM.{{name.id}}_f32(value1, value2)
+    end
+
+    def {{name.id}}(value1 : Float64, value2 : Float64)
+      LibM.{{name.id}}_f64(value1, value2)
+    end
+
+    def {{name.id}}(value1, value2)
+      {{name.id}}(value1.to_f, value1.to_f)
+    end
+  {% end %}
+
+  {% for name in %w(jn yn) %}
+    def {{name.id}}(value1 : Int32, value2 : Float32)
+      LibM.{{name.id}}_f32(value1, value2)
+    end
+
+    def {{name.id}}(value1 : Int32, value2 : Float64)
+      LibM.{{name.id}}_f64(value1, value2)
+    end
+
+    def {{name.id}}(value1, value2)
+      {{name.id}}(value1.to_i32, value1.to_f)
+    end
+  {% end %}
+
+  {% for name in %w(ldexp scalbn) %}
+    def {{name.id}}(value1 : Float32, value2 : Int32)
+      LibM.{{name.id}}_f32(value1, value2)
+    end
+
+    def {{name.id}}(value1 : Float64, value2 : Int32)
+      LibM.{{name.id}}_f64(value1, value2)
+    end
+
+    def {{name.id}}(value1, value2)
+      {{name.id}}(value1.to_f, value2.to_i32)
+    end
+  {% end %}
+
+  def scalbln(value1 : Float32, value2 : Int64)
+    LibM.scalbln_f32(value1, value2)
   end
 
-  def asinh(value)
-    LibM.asinh(value.to_f64)
+  def scalbln(value1 : Float64, value2 : Int64)
+    LibM.scalbln_f64(value1, value2)
   end
 
-  def atan(value)
-    LibM.atan(value.to_f64)
+  def scalbln(value1, value2)
+    scalbln(value1.to_f, value2.to_i64)
   end
 
-  def atan2(y, x)
-    LibM.atan2(y.to_f64, x.to_f64)
+  def fma(value1 : Float32, value2 : Float32, value3 : Float32)
+    LibM.fma_f32(value1, value2, value3)
   end
 
-  def cbrt(value)
-    LibM.cbrt(value.to_f64)
+  def fma(value1 : Float64, value2 : Float64, value3 : Float64)
+    LibM.fma_f64(value1, value2, value3)
   end
 
-  def cos(value : Float32)
-    LibM.cos_f32(value)
-  end
-
-  def cos(value : Float64)
-    LibM.cos_f64(value)
-  end
-
-  def cos(value)
-    cos(value.to_f64)
-  end
-
-  def erf(value)
-    LibM.erf(value.to_f64)
-  end
-
-  def erfc(value)
-    LibM.erfc(value.to_f64)
-  end
-
-  def exp(value : Float32)
-    LibM.exp_f32(value)
-  end
-
-  def exp(value : Float64)
-    LibM.exp_f64(value)
-  end
-
-  def exp(value)
-    exp(value.to_f64)
-  end
-
-  def gamma(value)
-    LibM.tgamma(value.to_f64)
-  end
-
-  def hypot(x, y)
-    LibM.hypot(x.to_f64, y.to_f64)
-  end
-
-  def ldexp(flt, int : Int)
-    LibM.ldexp(flt.to_f64, int)
-  end
-
-  def lgamma(value)
-    LibM.lgamma(value.to_f64)
-  end
-
-  def log(value : Float32)
-    LibM.log_f32(value)
-  end
-
-  def log(value : Float64)
-    LibM.log_f64(value)
-  end
-
-  def log(value)
-    log(value.to_f64)
+  def fma(value1, value2, value3)
+    fma(value1.to_f, value1.to_f, value3.to_f)
   end
 
   def log(numeric, base)
     log(numeric) / log(base)
-  end
-
-  def log2(value : Float32)
-    LibM.log2_f32(value)
-  end
-
-  def log2(value : Float64)
-    LibM.log2_f64(value)
-  end
-
-  def log2(value)
-    log2(value.to_f64)
-  end
-
-  def log10(value : Float32)
-    LibM.log10_f32(value)
-  end
-
-  def log10(value : Float64)
-    LibM.log10_f64(value)
-  end
-
-  def log10(value)
-    log10(value.to_f64)
-  end
-
-  def log1p(value)
-    LibM.log1p(value.to_f64)
   end
 
   def min(value1, value2)
@@ -261,42 +208,6 @@ module Math
 
   def max(value1, value2)
     value1 >= value2 ? value1 : value2
-  end
-
-  def sin(value : Float32)
-    LibM.sin_f32(value)
-  end
-
-  def sin(value : Float64)
-    LibM.sin_f64(value)
-  end
-
-  def sin(value)
-    sin(value.to_f64)
-  end
-
-  def sinh(value)
-    LibM.sinh(value.to_f64)
-  end
-
-  def tan(value)
-    LibM.tan(value.to_f64)
-  end
-
-  def tanh(value)
-    LibM.tanh(value.to_f64)
-  end
-
-  def sqrt(value : Float32)
-    LibM.sqrt_f32(value)
-  end
-
-  def sqrt(value : Float64)
-    LibM.sqrt_f64(value)
-  end
-
-  def sqrt(value : Int)
-    sqrt value.to_f64
   end
 
   def pw2ceil(v)
