@@ -142,7 +142,7 @@ module Spec
     getter file
     getter line
 
-    def initialize(@description, @file, @line, @parent)
+    def initialize(@description : String, @file, @line, @parent)
     end
 
     def report(result)

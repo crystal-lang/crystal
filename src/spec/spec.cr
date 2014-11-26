@@ -77,7 +77,7 @@ end
 require "./*"
 
 def describe(description, file = __FILE__, line = __LINE__)
-  Spec::RootContext.describe(description, file, line) do |context|
+  Spec::RootContext.describe(description.to_s, file, line) do |context|
     yield
   end
 end
