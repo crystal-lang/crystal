@@ -645,4 +645,24 @@ describe "Type inference: module" do
       Baz(Int32).new.foo
       )) { int32.metaclass }
   end
+
+  it "types union of module and class that includes it" do
+    assert_type(%(
+      module Moo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar
+        include Moo
+
+        def self.foo
+          2
+        end
+      end
+
+      Bar || Moo
+      )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
+  end
 end
