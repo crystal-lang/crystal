@@ -87,8 +87,8 @@ class BufferedIO(T)
   end
 
   def flush
-    @io << @out_buffer.to_s
-    @out_buffer = StringIO.new
+    @io << @out_buffer
+    @out_buffer.clear
   end
 
   private def fill_buffer

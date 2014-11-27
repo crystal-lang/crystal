@@ -107,6 +107,9 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def downcast(value, to_type, from_type : NonGenericModuleType | GenericClassType, already_loaded)
+    from_type = from_type.remove_alias
+    to_type = to_type.remove_alias
+
     if from_type == to_type
       value = to_lhs(value, from_type) unless already_loaded
     else
@@ -116,6 +119,9 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def downcast(value, to_type, from_type : Type, already_loaded)
+    from_type = from_type.remove_alias
+    to_type = to_type.remove_alias
+
     unless already_loaded
       value = to_lhs(value, from_type)
     end
@@ -233,15 +239,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     value
   end
 
-  def downcast_distinct(value, to_type : Type, from_type : AliasType)
-    downcast value, to_type, from_type.aliased_type, true
-  end
-
   def downcast_distinct(value, to_type : Type, from_type : Type)
     raise "Bug: trying to downcast #{to_type} <- #{from_type}"
   end
 
   def upcast(value, to_type, from_type)
+    from_type = from_type.remove_alias
+    to_type = to_type.remove_alias
+
     if to_type != from_type
       value = upcast_distinct(value, to_type, from_type)
     end
@@ -334,10 +339,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def upcast_distinct(value, to_type : NonGenericModuleType | GenericClassType, from_type : Type)
     upcast_distinct value, to_type.including_types.not_nil!, from_type
-  end
-
-  def upcast_distinct(value, to_type : AliasType, from_type : Type)
-    upcast_distinct value, to_type.aliased_type, from_type
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)

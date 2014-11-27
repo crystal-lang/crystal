@@ -626,4 +626,13 @@ describe "Block inference" do
       ),
       "expected block type to be a function type, not Int32"
   end
+
+  it "passes #262" do
+    assert_type(%(
+      require "prelude"
+
+      h = {} of String => Int32
+      h.map { true }
+      )) { array_of(bool) }
+  end
 end

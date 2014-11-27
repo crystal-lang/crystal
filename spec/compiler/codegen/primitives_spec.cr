@@ -73,4 +73,17 @@ describe "Code gen: primitives" do
       __LINE__
       ").to_i.should eq(3)
   end
+
+  it "codeges crystal_type_id with union type" do
+    run("
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.allocate || Bar.allocate
+      f.crystal_type_id == Foo.allocate.crystal_type_id
+      ").to_b.should be_true
+  end
 end

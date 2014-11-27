@@ -215,8 +215,12 @@ module Crystal
 
   class MetaclassType
     def common_ancestor(other : MetaclassType)
-      common = instance_type.common_ancestor(other.instance_type)
-      common.try &.metaclass
+      if instance_type.module? || other.instance_type.module?
+        nil
+      else
+        common = instance_type.common_ancestor(other.instance_type)
+        common.try &.metaclass
+      end
     end
   end
 

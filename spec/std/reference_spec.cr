@@ -49,4 +49,9 @@ describe "Reference" do
   it "does to_s for class if virtual" do
     [ReferenceSpecTestClassBase, ReferenceSpecTestClassSubclass].to_s.should eq("[ReferenceSpecTestClassBase, ReferenceSpecTestClassSubclass]")
   end
+
+  it "returns itself" do
+    x = "hello"
+    x.itself.should be(x)
+  end
 end

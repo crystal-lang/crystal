@@ -5,7 +5,7 @@ module Enumerable(T)
   end
 
   def all?
-    all? { |o| o }
+    all? &.itself
   end
 
   def any?
@@ -14,7 +14,7 @@ module Enumerable(T)
   end
 
   def any?
-    any? { |e| e }
+    any? &.itself
   end
 
   def compact_map
@@ -175,7 +175,7 @@ module Enumerable(T)
   end
 
   def max
-    max_by { |x| x }
+    max_by &.itself
   end
 
   def max_by(&block : T -> U)
@@ -196,11 +196,11 @@ module Enumerable(T)
   end
 
   def min
-    min_by { |x| x }
+    min_by &.itself
   end
 
   def minmax
-    minmax_by { |x| x }
+    minmax_by &.itself
   end
 
   def minmax_by(&block : T -> U)
@@ -279,7 +279,7 @@ module Enumerable(T)
   end
 
   def sum(initial = 0)
-    sum(initial) { |e| e }
+    sum initial, &.itself
   end
 
   def sum(initial = 0)

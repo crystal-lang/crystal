@@ -382,7 +382,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
-    type_id(type)
+    type_id(call_args[0], type)
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
