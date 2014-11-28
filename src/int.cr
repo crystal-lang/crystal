@@ -49,11 +49,11 @@ struct Int
   end
 
   def **(other : Int)
-    (to_f64 ** other).to_i
+    (to_f ** other)
   end
 
   def **(other)
-    to_f64 ** other
+    to_f ** other
   end
 
   def bit(bit)

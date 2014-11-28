@@ -117,8 +117,8 @@ module Math
   LOG2 = LibM.log_f64(2.0)
   LOG10 = LibM.log_f64(10.0)
 
-  {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp exp2 expm1 gamma ilogb j0 j1 log log10 log1p
-    log2 logb min max sin sinh sqrt tan tanh tgamma y0 y1) %}
+  {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp exp2 expm1 ilogb j0 j1 log log10 log1p
+    log2 logb min max sin sinh sqrt tan tanh y0 y1) %}
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
     end
@@ -131,6 +131,30 @@ module Math
       {{name.id}}(value.to_f)
     end
   {% end %}
+
+  def gamma(value : Float32)
+    LibM.tgamma_f32(value)
+  end
+
+  def gamma(value : Float64)
+    LibM.tgamma_f64(value)
+  end
+
+  def gamma(value)
+    LibM.tgamma(value.to_f)
+  end
+
+  def lgamma(value : Float32)
+    LibM.gamma_f32(value)
+  end
+
+  def lgamma(value : Float64)
+    LibM.gamma_f64(value)
+  end
+
+  def lgamma(value)
+    LibM.gamma(value.to_f)
+  end
 
   {% for name in %w(atan2 copysign fdim fmod hypot nextafter remainder) %}
     def {{name.id}}(value1 : Float32, value2 : Float32)
@@ -145,6 +169,30 @@ module Math
       {{name.id}}(value1.to_f, value1.to_f)
     end
   {% end %}
+
+  def max(value1 : Float32, value2 : Float32)
+    LibM.max_f32(value1, value2)
+  end
+
+  def max(value1 : Float64, value2 : Float64)
+    LibM.max_f64(value1, value2)
+  end
+
+  def max(value1, value2)
+    value1 >= value2 ? value1 : value2
+  end
+
+  def min(value1 : Float32, value2 : Float32)
+    LibM.min_f32(value1, value2)
+  end
+
+  def min(value1 : Float64, value2 : Float64)
+    LibM.min_f64(value1, value2)
+  end
+
+  def min(value1, value2)
+    value1 <= value2 ? value1 : value2
+  end
 
   {% for name in %w(jn yn) %}
     def {{name.id}}(value1 : Int32, value2 : Float32)
@@ -200,6 +248,9 @@ module Math
 
   def log(numeric, base)
     log(numeric) / log(base)
+  end
+
+  def min(value1 : Float)
   end
 
   def min(value1, value2)

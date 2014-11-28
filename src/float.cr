@@ -34,6 +34,10 @@ struct Float32
     LibM.trunc_f32(self)
   end
 
+  def **(other : Int32)
+    LibM.powi_f32(self, other)
+  end
+
   def **(other : Float32)
     LibM.pow_f32(self, other)
   end
@@ -84,6 +88,10 @@ struct Float64
 
   def trunc
     LibM.trunc_f64(self)
+  end
+
+  def **(other : Int32)
+    LibM.powi_f64(self, other)
   end
 
   def **(other : Float64)

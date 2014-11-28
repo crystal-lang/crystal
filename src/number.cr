@@ -42,7 +42,7 @@ struct Number
 
   def significant(digits, base = 10)
     if digits < 0
-      raise ArgumentError.new "digits should be non-negative"
+      raise DomainError.new "digits should be non-negative"
     end
 
     x = self.to_f
