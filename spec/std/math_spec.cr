@@ -1,8 +1,19 @@
 require "spec"
 
 describe "Math" do
+  describe "Functions manipulating signs" do
+    it "copysign" do
+      Math.copysign(6.9, -0.2).should eq(-6.9)
+    end
+  end
+
   describe "Order-related functions" do
-    #Math.min(2.1, 2.11).should eq(2.1)
+    Math.min(2.1, 2.11).should eq(2.1)
+    Math.max(3.2, 3.11).should eq(3.2)
+  end
+
+  describe "Functions for computing quotient and remainder" do
+    Math.div(10.2, 3.0).should eq(3)
   end
 
   describe "Roots" do
@@ -219,11 +230,7 @@ describe "Math" do
     end
   end
 
-# min max
-
-# copysign fdim nextafter
-
-# div max min rem
+# div rem
 
 # pw2ceil
 

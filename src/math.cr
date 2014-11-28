@@ -81,8 +81,6 @@ lib LibM
   fun exp2_f64 = exp2(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-  fun fdim_f32 = fdimf(value1 : Float32, value2 : Float32) : Float32
-  fun fdim_f64 = fdim(value1 : Float64, value2 : Float64) : Float64
   fun gamma_f32 = gammaf(value : Float32) : Float32
   fun gamma_f64 = gamma(value : Float64) : Float64
   fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
@@ -95,8 +93,6 @@ lib LibM
   fun log1p_f64 = log1p(value : Float64) : Float64
   fun logb_f32 = logbf(value : Float32) : Float32
   fun logb_f64 = logb(value : Float64) : Float64
-  fun nextafter_f32 = nextafterf(value1 : Float32, value2 : Float32) : Float32
-  fun nextafter_f64 = nextafter(value1 : Float64, value2 : Float64) : Float64
   fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
   fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
   fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32
@@ -120,7 +116,7 @@ module Math
   LOG10 = LibM.log_f64(10.0)
 
   {% for name in %w(acos acosh asin asinh atan atanh besselj0 besselj1 bessely0 bessely1 cbrt cos cosh erf erfc exp
-    exp2 expm1 ilogb log log10 log1p log2 logb min max sin sinh sqrt tan tanh) %}
+    exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
     end
@@ -158,7 +154,7 @@ module Math
     LibM.gamma(value.to_f)
   end
 
-  {% for name in %w(atan2 copysign fdim hypot nextafter) %}
+  {% for name in %w(atan2 copysign hypot min max) %}
     def {{name.id}}(value1 : Float32, value2 : Float32)
       LibM.{{name.id}}_f32(value1, value2)
     end
