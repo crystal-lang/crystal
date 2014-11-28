@@ -170,7 +170,7 @@ class Object
     end
   end
   
-  macro alias_method(old_method, new_method)
+  macro alias_method(new_method, old_method)
     def {{new_method.id}}(*args)
       {{old_method.id}}(*args)
     end
