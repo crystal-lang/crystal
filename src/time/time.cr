@@ -36,10 +36,10 @@ struct Time
   DP100 = 36524
   DP4   = 1461
 
-  module Kind
-    Unspecified = 0_i64
-    Utc         = 1_i64
-    Local       = 2_i64
+  enum Kind : Int64
+    Unspecified = 0
+    Utc         = 1
+    Local       = 2
   end
 
   KindShift = 62_i64
@@ -58,16 +58,16 @@ struct Time
     initialize Time.local_ticks
   end
 
-  def initialize(ticks : Int, kind = Kind::Local)
+  def initialize(ticks : Int, kind = Kind::Unspecified)
     if ticks < 0 || ticks > MAX_VALUE_TICKS
       raise ArgumentError.new "invalid ticks value"
     end
 
     @encoded = ticks.to_i64
-    @encoded |= kind << KindShift
+    @encoded |= kind.value << KindShift
   end
 
-  def initialize(year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0, kind = Kind::Local)
+  def initialize(year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0, kind = Kind::Unspecified)
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -79,7 +79,7 @@ struct Time
     end
 
     @encoded = TimeSpan.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
-    @encoded |= kind << KindShift
+    @encoded |= kind.value << KindShift
   end
 
   def +(other : TimeSpan)
@@ -194,7 +194,7 @@ struct Time
   end
 
   def kind
-    encoded.to_u64 >> KindShift
+    Kind.new((encoded.to_u64 >> KindShift).to_i64)
   end
 
   def utc?

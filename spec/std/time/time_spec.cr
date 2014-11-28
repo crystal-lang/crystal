@@ -467,6 +467,13 @@ describe Time do
     1.hours.ticks.should eq(TimeSpan::TicksPerHour)
   end
 
+  it "preserves kind when adding" do
+    time = Time.utc_now
+    time.kind.should eq(Time::Kind::Utc)
+
+    (time + 5.minutes).kind.should eq(Time::Kind::Utc)
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)
