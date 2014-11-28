@@ -1,12 +1,13 @@
 @[Link("m")] ifdef linux
 lib LibM
+  ### To be uncommented once LLVM is updated
   # LLVM binary operations
-  fun div_i32 = "llvm.sdiv"(value1 : Int32, value2 : Int32) : Int32
-  fun div_f32 = "llvm.fdiv"(value1 : Float32, value2 : Float32) : Float32
-  fun div_f64 = "llvm.fdiv"(value1 : Float64, value2 : Float64) : Float64
-  fun rem_i32 = "llvm.srem"(value1 : Int32, value2 : Int32) : Int32
-  fun rem_f32 = "llvm.frem"(value1 : Float32, value2 : Float32) : Float32
-  fun rem_f64 = "llvm.frem"(value1 : Float64, value2 : Float64) : Float64
+  # fun div_i32 = "llvm.sdiv"(value1 : Int32, value2 : Int32) : Int32
+  # fun div_f32 = "llvm.fdiv"(value1 : Float32, value2 : Float32) : Float32
+  # fun div_f64 = "llvm.fdiv"(value1 : Float64, value2 : Float64) : Float64
+  # fun rem_i32 = "llvm.srem"(value1 : Int32, value2 : Int32) : Int32
+  # fun rem_f32 = "llvm.frem"(value1 : Float32, value2 : Float32) : Float32
+  # fun rem_f64 = "llvm.frem"(value1 : Float64, value2 : Float64) : Float64
 
   # LLVM standard C library intrinsics
   fun ceil_f32 = "llvm.ceil.f32"(value : Float32) : Float32
@@ -25,10 +26,11 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
-  fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
-  fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  ### To be uncommented once LLVM is updated
+  # fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
+  # fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  # fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
+  # fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
@@ -154,7 +156,7 @@ module Math
     LibM.gamma(value.to_f)
   end
 
-  {% for name in %w(atan2 copysign hypot min max) %}
+  {% for name in %w(atan2 copysign hypot) %}
     def {{name.id}}(value1 : Float32, value2 : Float32)
       LibM.{{name.id}}_f32(value1, value2)
     end
@@ -168,65 +170,69 @@ module Math
     end
   {% end %}
 
-  def div(value1 : Int32, value2 : Int32)
-    LibM.div_i32(value1, value2)
-  end
-
-  def div(value1 : Float32, value2 : Float32)
-    LibM.div_f32(value1, value2)
-  end
-
-  def div(value1 : Float64, value2 : Float64)
-    LibM.div_f64(value1, value2)
-  end
-
-  def div(value1, value2)
-    LibM.div(value1.to_f, value2.to_f)
-  end
+  ### To be uncommented once LLVM is updated
+  # def div(value1 : Int32, value2 : Int32)
+  #   LibM.div_i32(value1, value2)
+  # end
+  #
+  # def div(value1 : Float32, value2 : Float32)
+  #   LibM.div_f32(value1, value2)
+  # end
+  #
+  # def div(value1 : Float64, value2 : Float64)
+  #   LibM.div_f64(value1, value2)
+  # end
+  #
+  # def div(value1, value2)
+  #   LibM.div(value1.to_f, value2.to_f)
+  # end
 
   def log(numeric, base)
     log(numeric) / log(base)
   end
 
-  def max(value1 : Float32, value2 : Float32)
-    LibM.max_f32(value1, value2)
-  end
-
-  def max(value1 : Float64, value2 : Float64)
-    LibM.max_f64(value1, value2)
-  end
+  ### To be uncommented once LLVM is updated
+  # def max(value1 : Float32, value2 : Float32)
+  #   LibM.max_f32(value1, value2)
+  # end
+  #
+  # def max(value1 : Float64, value2 : Float64)
+  #   LibM.max_f64(value1, value2)
+  # end
 
   def max(value1, value2)
     value1 >= value2 ? value1 : value2
   end
 
-  def min(value1 : Float32, value2 : Float32)
-    LibM.min_f32(value1, value2)
-  end
-
-  def min(value1 : Float64, value2 : Float64)
-    LibM.min_f64(value1, value2)
-  end
+  ### To be uncommented once LLVM is updated
+  #def min(value1 : Float32, value2 : Float32)
+  #  LibM.min_f32(value1, value2)
+  #end
+  #
+  #def min(value1 : Float64, value2 : Float64)
+  #  LibM.min_f64(value1, value2)
+  #end
 
   def min(value1, value2)
     value1 <= value2 ? value1 : value2
   end
 
-  def rem(value1 : Int32, value2 : Int32)
-    LibM.rem_i32(value1, value2)
-  end
+  ### To be uncommented once LLVM is updated
+  # def rem(value1 : Int32, value2 : Int32)
+  #   LibM.rem_i32(value1, value2)
+  # end
 
-  def rem(value1 : Float32, value2 : Float32)
-    LibM.rem_f32(value1, value2)
-  end
+  # def rem(value1 : Float32, value2 : Float32)
+  #   LibM.rem_f32(value1, value2)
+  # end
 
-  def rem(value1 : Float64, value2 : Float64)
-    LibM.rem_f64(value1, value2)
-  end
+  # def rem(value1 : Float64, value2 : Float64)
+  #   LibM.rem_f64(value1, value2)
+  # end
 
-  def rem(value1, value2)
-    LibM.rem(value1.to_f, value2.to_f)
-  end
+  # def rem(value1, value2)
+  #   LibM.rem(value1.to_f, value2.to_f)
+  # end
 
   {% for name in %w(besselj bessely) %}
     def {{name.id}}(value1 : Int32, value2 : Float32)

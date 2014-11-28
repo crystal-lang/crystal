@@ -3,9 +3,13 @@ require "spec"
 describe "Number" do
   describe "significant" do
     it "10 base " do
-      -1763.116.significant(2).should eq(-1800.0)
-      753.16.significant(3).should eq(753.0)
-      15.159.significant(1).should eq(20.0)
+      1234.567.significant(1).should eq(1000)
+      1234.567.significant(2).should eq(1200)
+      1234.567.significant(3).should eq(1230)
+      1234.567.significant(4).should eq(1235)
+      1234.567.significant(5).should be_close(1234.6, 1e-7)
+      1234.567.significant(6).should eq(1234.57)
+      1234.567.significant(7).should eq(1234.567)
     end
 
     it "2 base " do

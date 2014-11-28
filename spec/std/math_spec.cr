@@ -12,9 +12,9 @@ describe "Math" do
     Math.max(3.2, 3.11).should eq(3.2)
   end
 
-  describe "Functions for computing quotient and remainder" do
-    Math.div(10.2, 3.0).should eq(3)
-  end
+  ### Reminder to implement div and mod functions
+  # describe "Functions for computing quotient and remainder" do
+  # end
 
   describe "Roots" do
     it "cbrt" do
