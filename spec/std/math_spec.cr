@@ -1,6 +1,20 @@
 require "spec"
 
 describe "Math" do
+  describe "Mathematical constants" do
+    it "E" do
+      Math::E.should be_close(2.718281828459045, 1e-7)
+    end
+
+    it "LOG2" do
+      Math::LOG2.should be_close(0.6931471805599453, 1e-7)
+    end
+
+    it "LOG10" do
+      Math::LOG10.should be_close(2.302585092994046, 1e-7)
+    end
+  end
+
   describe "Functions manipulating signs" do
     it "copysign" do
       Math.copysign(6.9, -0.2).should eq(-6.9)
@@ -12,9 +26,8 @@ describe "Math" do
     Math.max(3.2, 3.11).should eq(3.2)
   end
 
-  ### Reminder to implement div and mod functions
-  # describe "Functions for computing quotient and remainder" do
-  # end
+  pending "Functions for computing quotient and remainder" do
+  end
 
   describe "Roots" do
     it "cbrt" do
