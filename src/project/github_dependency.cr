@@ -1,5 +1,5 @@
 class GitHubDependency < Dependency
-  def initialize(repo)
+  def initialize(repo, name)
     unless repo =~ /(.*)\/(.*)/
       raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
     end
@@ -8,14 +8,14 @@ class GitHubDependency < Dependency
     @repository = $2
     @target_dir = ".deps/#{@repository}"
 
-    super(@repository)
+    super(name || @repository)
   end
 
   def install
     unless Dir.exists?(@target_dir)
       `git clone https://github.com/#{@author}/#{@repository}.git #{@target_dir}`
     end
-    `ln -sf ../#{@target_dir}/src libs/#{@repository}`
+    `ln -sf ../#{@target_dir}/src libs/#{name}`
 
     if @locked_version
       if current_version != @locked_version

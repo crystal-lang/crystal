@@ -3,8 +3,8 @@ class Project
     def initialize(@project)
     end
 
-    def github(repository)
-      @project.dependencies << GitHubDependency.new(repository)
+    def github(repository, name = nil : String)
+      @project.dependencies << GitHubDependency.new(repository, name)
     end
   end
 end
