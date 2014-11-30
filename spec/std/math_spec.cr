@@ -189,11 +189,7 @@ describe "Math" do
 
   describe "Gamma functions" do
     it "gamma" do
-      ifdef darwin
-        Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-6)
-      else
-        Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-7)
-      end
+      Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-6)
       Math.gamma(3.2).should be_close(2.4239654799353683, 1e-7)
     end
 
