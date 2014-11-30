@@ -1,8 +1,20 @@
 ## Next
 
+* **(breaking change)** `require "foo"` always looks up in `CRYSTAL_PATH`. `require "./foo"` looks up relative to the requiring file.
+* Added `alias_method` macro (thanks @Exilor and @jtomschroeder).
+* Added some `Complex` number methods and many math methods, refactors and specs (thanks @scidom).
+* Inheriting generic classes is now possible.
+* Creating arrays of generic types (i.e.: `[] of Thread`) is now possible.
+* Allow using an alias in a block type (i.e.: `alias F = Int32 ->`, `&block : F`).
 * `json_mapping` macro supports a simpler syntax: `json_mapping({key1: Type1, key2: Type2})`.
 * Spec: added `be_a(type)` matcher.
 * Spec: added `be > ...` and similar matchers for `>=`, `<` and `<=`.
+* Added `File::file?` and `File::directory?`.
+* CSV parser can parse from String or IO.
+* When invoking the compiler like this: `crystal foo.cr -o foo` the `build` command is assumed instead of `run`.
+* Added short symbol notation for methods that are operators (i.e. `:+`, `:*`, `:[]`, etc.).
+* Added `TimeSpan#ago`, `TimeSpan#from_now`, `MonthSpan#ago` and `MonthSpan#from_now`.
+* Made `alias_method`'s arguments order match that of Ruby (`alias_method new_method, old_method`).
 
 ## 0.5.3 (2014-11-06)
 
