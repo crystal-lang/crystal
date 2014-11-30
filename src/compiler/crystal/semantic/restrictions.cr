@@ -114,7 +114,7 @@ module Crystal
         return self
       end
 
-      if parents.try &.any? &.is_restriction_of?(other, nil)
+      if parents.try &.any? &.is_restriction_of?(other, context.owner)
         return self
       end
 
@@ -385,6 +385,19 @@ module Crystal
   end
 
   class InheritedGenericClass
+    def is_restriction_of?(other : GenericClassInstanceType, owner)
+      return nil unless extended_class == other.generic_class
+
+      mapping.each do |name, node|
+        typevar_type = TypeLookup.lookup(extending_class, node)
+        unless other.type_vars[name].type.is_restriction_of?(typevar_type, owner)
+          return nil
+        end
+      end
+
+      self
+    end
+
     def is_restriction_of?(other : Type, owner)
       @extended_class.is_restriction_of?(other, owner)
     end
