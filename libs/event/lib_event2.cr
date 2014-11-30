@@ -3,17 +3,21 @@ lib LibEvent2
   type EventBase = Void*
   type Event = Void*
 
+  @[Flags]
   enum EventLoopFlags
-    EVLOOP_ONCE = 0x01
-    EVLOOP_NONBLOCK = 0x02
+    Once = 0x01
+    NonBlock = 0x02
   end
 
-  TIMEOUT = 0x01_u16
-  READ = 0x02_u16
-  WRITE = 0x04_u16
-  SIGNAL = 0x08_u16
-  PERSIST = 0x10_u16
-  ET = 0x20_u16
+  @[Flags]
+  enum EventFlags
+    Timeout = 0x01_u16
+    Read = 0x02_u16
+    Write = 0x04_u16
+    Signal = 0x08_u16
+    Persist = 0x10_u16
+    ET = 0x20_u16
+  end
 
   fun event_get_version : UInt8*
   fun event_base_new : EventBase
@@ -22,6 +26,6 @@ lib LibEvent2
   fun event_base_loopbreak(eb : EventBase) : Int32
   fun event_set_log_callback(callback : (Int32, UInt8*) -> Nil)
   fun event_enable_debug_mode()
-  fun event_new(eb : EventBase, s : Int32, events : UInt16, callback : (Int32, UInt16, Void*) ->, data : Void*) : Event
+  fun event_new(eb : EventBase, s : Int32, events : EventFlags, callback : (Int32, EventFlags, Void*) ->, data : Void*) : Event
   fun event_add(event : Event, timeout : C::TimeVal*) : Int32
 end
