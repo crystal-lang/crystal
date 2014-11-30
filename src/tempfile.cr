@@ -4,7 +4,12 @@ end
 
 class Tempfile < FileDescriptorIO
   def initialize(name)
-    @path = "#{ENV["TMPDIR"]? || "/tmp/"}#{name}.XXXXXX"
+    if tmpdir = ENV["TMPDIR"]?
+      tmpdir = "#{tmpdir}/" unless tmpdir.ends_with? '/'
+    else
+      tmpdir = "/tmp/"
+    end
+    @path = "#{tmpdir}#{name}.XXXXXX"
     super(C.mkstemp(@path))
   end
 

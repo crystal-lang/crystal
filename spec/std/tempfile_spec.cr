@@ -25,4 +25,20 @@ describe Tempfile do
     end
     File.exists?(tempfile.path).should be_true
   end
+
+  it "creates and writes with TMPDIR environment variable" do
+    old_tmpdir = ENV["TMPDIR"]?
+    ENV["TMPDIR"] = "/tmp"
+
+    begin
+      tempfile = Tempfile.new "foo"
+      tempfile.print "Hello!"
+      tempfile.close
+
+      File.exists?(tempfile.path).should be_true
+      File.read(tempfile.path).should eq("Hello!")
+    ensure
+      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+    end
+  end
 end
