@@ -30,8 +30,9 @@ class Crystal::Call
 
     # Another special case: initialize is only looked up one level,
     # so we must find the first one defined.
+    new_owner = owner
     while defs.empty? && def_name == "initialize"
-      new_owner = owner.superclass
+      new_owner = new_owner.superclass
       if new_owner
         defs = new_owner.lookup_defs(def_name)
       else

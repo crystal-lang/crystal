@@ -133,4 +133,31 @@ describe "Type inference: super" do
       Foo.new.foo(1)
       ), "undefined method 'foo'"
   end
+
+  it "finds super initialize if not explicitly defined in superclass, 1 (#273)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          super
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "finds super initialize if not explicitly defined in superclass, 2 (#273)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Foo < Base
+        def initialize
+          super
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
+  end
 end

@@ -170,6 +170,16 @@ class Crystal::Call
             matches = new_matches
           end
         end
+      elsif name == "super" && def_name == "initialize" && args.empty?
+        # If the superclass has no `new` and no `initialize`, we can safely
+        # define an empty initialize
+        has_new = owner.metaclass.has_def_without_parents?("new")
+        has_initialize = owner.has_def_without_parents?("initialize")
+        unless has_new || has_initialize
+          initialize_def = Def.new("initialize")
+          owner.add_def initialize_def
+          matches = Matches.new([Match.new(initialize_def, arg_types, MatchContext.new(owner, owner))], true)
+        end
       elsif !obj && owner != mod
         mod_matches = mod.lookup_matches(signature)
         matches = mod_matches unless mod_matches.empty?

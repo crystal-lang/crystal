@@ -315,6 +315,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement has_def?"
     end
 
+    def has_def_without_parents?(name)
+      raise "Bug: #{self} doesn't implement has_def_without_parents?"
+    end
+
     def remove_instance_var(name)
       raise "Bug: #{self} doesn't implement remove_instance_var"
     end
@@ -544,15 +548,17 @@ module Crystal
     end
 
     def has_def?(name)
-      defs = self.defs()
-      return false unless defs
-      return true if defs.has_key?(name)
+      return true if has_def_without_parents?(name)
 
       parents.try &.each do |parent|
         return true if parent.has_def?(name)
       end
 
       false
+    end
+
+    def has_def_without_parents?(name)
+      self.defs().try &.has_key?(name)
     end
   end
 
@@ -2121,6 +2127,10 @@ module Crystal
 
     def has_def?(name)
       union_types.any? &.has_def?(name)
+    end
+
+    def has_def_without_parents?(name)
+      union_types.any? &.has_def_without_parents?(name)
     end
 
     def each_concrete_type
