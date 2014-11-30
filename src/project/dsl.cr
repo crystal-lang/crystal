@@ -9,6 +9,6 @@ class Project
   end
 end
 
-def deps
-  with Project::DSL::Deps.new(Project::INSTANCE) yield
+def deps(project = Project::INSTANCE)
+  with Project::DSL::Deps.new(project) yield
 end
