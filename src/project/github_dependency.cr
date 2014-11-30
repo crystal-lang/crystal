@@ -6,7 +6,7 @@ class GitHubDependency < Dependency
 
     @author = $1
     @repository = $2
-    @target_dir = ".deps/#{@repository}"
+    @target_dir = ".deps/#{@author}-#{@repository}"
 
     super(name || @repository)
   end
