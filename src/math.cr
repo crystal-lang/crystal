@@ -144,7 +144,7 @@ module Math
       {{:ifdef.id}} darwin
         LibM.{{name.id}}_f64(value.to_f64).to_f32
       else
-        LibM.{{name.id}}_f64(value)
+        LibM.{{name.id}}_f32(value)
       {{:end.id}}
     end
 
