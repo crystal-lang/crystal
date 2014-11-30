@@ -1686,7 +1686,9 @@ module Crystal
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
             (char == 'l' && next_char == 'i' && next_char == 'b') ||
             (char == 'f' && next_char == 'u' && next_char == 'n') ||
-            (beginning_of_line && char == 'i' && next_char == 'f') ||
+            (beginning_of_line && char == 'i' && next_char == 'f' &&
+              (char = peek_next_char) && (!ident_part_or_end?(char) ||
+                char == 'd' && next_char == 'e' && next_char == 'f')) ||
             (char == 's' && next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't') ||
             (char == 'c' && (char = next_char) &&
               (char == 'a' && next_char == 's' && next_char == 'e') ||
