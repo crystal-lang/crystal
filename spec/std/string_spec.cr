@@ -455,6 +455,22 @@ describe "String" do
       str.@length.should eq(4)
       str.should eq("青い旅路")
     end
+
+    it "does with ascii char" do
+      str = "foo"
+      str2 = str + '/'
+      str2.should eq("foo/")
+      str2.bytesize.should eq(4)
+      str2.length.should eq(4)
+    end
+
+    it "does with unicode char" do
+      str = "fooba"
+      str2 = str + 'る'
+      str2.should eq("foobaる")
+      str2.bytesize.should eq(8)
+      str2.length.should eq(6)
+    end
   end
 
   it "does %" do

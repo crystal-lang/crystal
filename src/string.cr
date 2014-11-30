@@ -433,6 +433,28 @@ class String
     end
   end
 
+  def +(char : Char)
+    bytes :: UInt8[4]
+
+    count = 0
+    char.each_byte do |byte|
+      bytes[count] = byte
+      count += 1
+    end
+
+    size = bytesize + count
+    String.new(size) do |buffer|
+      buffer.copy_from(cstr, bytesize)
+      (buffer + bytesize).copy_from(bytes.buffer, count)
+
+      if length_known?
+        {size, @length + 1}
+      else
+        {size, 0}
+      end
+    end
+  end
+
   def *(times : Int)
     if times <= 0 || bytesize == 0
       return ""
