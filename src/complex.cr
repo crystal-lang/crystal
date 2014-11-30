@@ -19,18 +19,6 @@ struct Complex
     false
   end
 
-  def ceil
-    Complex.new(@real.ceil, @imag.ceil)
-  end
-
-  def floor
-    Complex.new(@real.floor, @imag.floor)
-  end
-
-  def round
-    Complex.new(@real.round, @imag.round)
-  end
-
   def to_s(io : IO)
     io << @real
     io << (@imag >= 0 ? " + " : " - ")
@@ -93,6 +81,18 @@ struct Complex
   def exp
     r = Math.exp(@real)
     Complex.new(r * Math.cos(@imag), r * Math.sin(@imag))
+  end
+
+  def log
+    Complex.new(Math.log(abs), phase)
+  end
+
+  def log2
+    log / Math::LOG2
+  end
+
+  def log10
+    log / Math::LOG10
   end
 
   def +(other : Complex)

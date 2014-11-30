@@ -4,7 +4,7 @@ class BitArray
   getter length
 
   def initialize(@length)
-    @bits = Pointer(UInt32).malloc((length / 32.0).ceil)
+    @bits = Pointer(UInt32).malloc((length / 32.0).ceil.to_i)
   end
 
   def [](index)

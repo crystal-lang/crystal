@@ -36,19 +36,6 @@ describe "Complex" do
     end
   end
 
-  it "ceil" do
-    Complex.new(3.24, -5.91).ceil.should eq(Complex.new(4, -5))
-  end
-
-  it "floor" do
-    Complex.new(-5.24, 7.99).floor.should eq(Complex.new(-6, 7))
-  end
-
-  it "round" do
-    Complex.new(-11.6, 2.3).round.should eq(Complex.new(-12, 2))
-    Complex.new(-11.1, 8.5).round.should eq(Complex.new(-11, 9))
-  end
-
   it "to_s" do
     Complex.new(1.25, 8.2).to_s.should eq("1.25 + 8.2i")
     Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
@@ -95,6 +82,20 @@ describe "Complex" do
 
   it "exp" do
     Complex.new(1.15, -5.1).exp.should eq(Complex.new(1.1937266270566773, 2.923901365414129))
+  end
+
+  describe "logarithms" do
+    it "log" do
+      Complex.new(1.25, -4.7).log.should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
+    end
+
+    it "log2" do
+      Complex.new(-9.1, 3.2).log2.should eq(Complex.new(3.2699671225858946, +4.044523592551345))
+    end
+
+    it "log10" do
+      Complex.new(2.11, 1.21).log10.should eq(Complex.new(0.38602142355392594, +0.22612668967405536))
+    end
   end
 
   describe "+" do

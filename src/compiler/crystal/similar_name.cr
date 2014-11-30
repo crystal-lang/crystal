@@ -5,7 +5,7 @@ module Crystal
     record Entry, value, distance
 
     def initialize(@name)
-      @tolerance = (name.length / 5.0).ceil
+      @tolerance = (name.length / 5.0).ceil.to_i
     end
 
     def test(name, value = name)

@@ -123,6 +123,12 @@ class ArgumentError < Exception
   end
 end
 
+class DomainError < Exception
+  def initialize(message = "Argument out of domain")
+    super(message)
+  end
+end
+
 class MissingKey < Exception
 end
 
