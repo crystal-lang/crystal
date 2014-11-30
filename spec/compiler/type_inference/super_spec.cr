@@ -160,4 +160,22 @@ describe "Type inference: super" do
       Foo.new
       )) { types["Foo"] }
   end
+
+  it "says correct error message when no overload matches in super call (#272)" do
+    assert_error %(
+      abstract class Foo
+        def initialize(x : Char)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(a, b)
+          super(a)
+        end
+      end
+
+      Bar.new(1, 2)
+      ),
+      "no overload matches 'Foo#initialize'"
+  end
 end

@@ -186,7 +186,7 @@ class Crystal::Call
       end
     end
 
-    if matches.empty? && owner.class? && owner.abstract
+    if matches.empty? && owner.class? && owner.abstract && name != "super"
       matches = owner.virtual_type.lookup_matches(signature)
     end
 
