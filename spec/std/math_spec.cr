@@ -35,7 +35,7 @@ describe "Math" do
       Math.cbrt(6.5).should be_close(1.866255578408624, 1e-7)
     end
 
-    it "sqrt" do      
+    it "sqrt" do
       Math.sqrt(5.2_f32).should be_close(2.280350850198276, 1e-7)
       Math.sqrt(5.2).should be_close(2.280350850198276, 1e-7)
       Math.sqrt(4_f32).should eq(2)
@@ -90,7 +90,7 @@ describe "Math" do
       Math.log(3.24_f32).should be_close(1.1755733298042381, 1e-7)
       Math.log(3.24).should be_close(1.1755733298042381, 1e-7)
       Math.log(0.3_f32, 3).should be_close(-1.0959032742893848, 1e-7)
-      Math.log(0.3, 3).should be_close(-1.0959032742893848, 1e-7)      
+      Math.log(0.3, 3).should be_close(-1.0959032742893848, 1e-7)
     end
 
     it "log2" do
@@ -128,7 +128,7 @@ describe "Math" do
     it "hypot" do
       Math.hypot(2.1_f32, 1.5_f32).should be_close(2.5806975801127883, 1e-7)
       Math.hypot(2.1, 1.5).should be_close(2.5806975801127883, 1e-7)
-    end  
+    end
   end
 
   describe "Inverse trigonometric functions" do
@@ -189,7 +189,11 @@ describe "Math" do
 
   describe "Gamma functions" do
     it "gamma" do
-      Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-7)
+      ifdef darwin
+        Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-6)
+      else
+        Math.gamma(3.2_f32).should be_close(2.4239654799353683, 1e-7)
+      end
       Math.gamma(3.2).should be_close(2.4239654799353683, 1e-7)
     end
 

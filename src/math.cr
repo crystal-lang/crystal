@@ -83,8 +83,15 @@ lib LibM
   fun exp2_f64 = exp2(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-  fun gamma_f32 = gammaf(value : Float32) : Float32
-  fun gamma_f64 = gamma(value : Float64) : Float64
+
+  ifdef darwin
+    fun gamma_f32 = lgammaf(value : Float32) : Float32
+    fun gamma_f64 = lgamma(value : Float64) : Float64
+  else
+    fun gamma_f32 = gammaf(value : Float32) : Float32
+    fun gamma_f64 = gamma(value : Float64) : Float64
+  end
+
   fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
   fun hypot_f64 = hypot(value1 : Float64, value2 : Float64) : Float64
   fun ilogb_f32 = ilogbf(value : Float32) : Int32
@@ -117,10 +124,28 @@ module Math
   LOG2 = LibM.log_f64(2.0)
   LOG10 = LibM.log_f64(10.0)
 
-  {% for name in %w(acos acosh asin asinh atan atanh besselj0 besselj1 bessely0 bessely1 cbrt cos cosh erf erfc exp
+  {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp
     exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
+    end
+
+    def {{name.id}}(value : Float64)
+      LibM.{{name.id}}_f64(value)
+    end
+
+    def {{name.id}}(value)
+      {{name.id}}(value.to_f)
+    end
+  {% end %}
+
+  {% for name in %w(besselj0 besselj1 bessely0 bessely1) %}
+    def {{name.id}}(value : Float32)
+      {{:ifdef.id}} darwin
+        LibM.{{name.id}}_f64(value.to_f64).to_f32
+      else
+        LibM.{{name.id}}_f64(value)
+      {{:end.id}}
     end
 
     def {{name.id}}(value : Float64)
@@ -145,7 +170,11 @@ module Math
   end
 
   def lgamma(value : Float32)
-    LibM.gamma_f32(value)
+    ifdef darwin
+      LibM.gamma_f64(value.to_f64).to_f32
+    else
+      LibM.gamma_f32(value)
+    end
   end
 
   def lgamma(value : Float64)
@@ -236,7 +265,11 @@ module Math
 
   {% for name in %w(besselj bessely) %}
     def {{name.id}}(value1 : Int32, value2 : Float32)
-      LibM.{{name.id}}_f32(value1, value2)
+      {{:ifdef.id}} darwin
+        LibM.{{name.id}}_f64(value1, value2.to_f64).to_f32
+      else
+        LibM.{{name.id}}_f32(value1, value2)
+      {{:end.id}}
     end
 
     def {{name.id}}(value1 : Int32, value2 : Float64)
