@@ -32,7 +32,10 @@ class Project
     @dependencies.each do |dep|
       lock[dep.name] = dep.locked_version.not_nil!
     end
-    File.write(".deps.lock", lock.to_json)
+    File.open(".deps.lock", "w") do |lock_file|
+      lock.to_pretty_json(lock_file)
+      lock_file.puts
+    end
   end
 end
 
