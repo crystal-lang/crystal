@@ -33,6 +33,10 @@ class Set(T)
     @hash.length
   end
 
+  def clear
+    @hash.clear
+  end
+
   def empty?
     @hash.empty?
   end
