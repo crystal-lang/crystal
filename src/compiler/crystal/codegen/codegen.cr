@@ -159,8 +159,8 @@ module Crystal
 
       alloca_vars @mod.vars, @mod
 
-      declare_const(@mod.types["ARGC_UNSAFE"] as Const)
-      declare_const(@mod.types["ARGV_UNSAFE"] as Const)
+      initialize_const(@mod.types["ARGC_UNSAFE"] as Const)
+      initialize_const(@mod.types["ARGV_UNSAFE"] as Const)
     end
 
     def wrap_builder(builder)
@@ -479,7 +479,7 @@ module Crystal
 
     def visit(node : EnumDef)
       node.enum_type.try &.types.each_value do |type|
-        declare_const(type as Const)
+        initialize_const(type as Const)
       end
       @last = llvm_nil
       false
@@ -642,7 +642,7 @@ module Crystal
       # Initialize constants if they are used
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        declare_const const
+        initialize_const const
         @last = llvm_nil
         return false
       end
@@ -878,11 +878,7 @@ module Crystal
           @last = initializer
         else
           global_name = const.llvm_name
-
-          global = @main_mod.globals[global_name]?
-          unless global
-            node.raise "Bug: global not found for #{const}"
-          end
+          global = declare_const(const, global_name)
 
           if @llvm_mod != @main_mod
             global = @llvm_mod.globals[global_name]?
@@ -908,9 +904,15 @@ module Crystal
     end
 
     def declare_const(const, global_name = const.llvm_name)
+      @main_mod.globals[global_name]? ||
+        @main_mod.globals.add(llvm_type(const.value.type), global_name)
+    end
+
+    def initialize_const(const, global_name = const.llvm_name)
       return unless const.used
 
-      global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
+      # It might be that the constant is already declared by not initialized
+      global = declare_const(const, global_name)
 
       in_const_block(const.container) do
         alloca_vars const.vars

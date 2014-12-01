@@ -243,4 +243,31 @@ describe "Codegen: const" do
       Foo::Y.value
       )).to_i.should eq(1)
   end
+
+  it "codegens constant that is declared later because of virtual dispatch" do
+    run(%(
+      class Base
+        def base
+        end
+      end
+
+      class Base2 < Base
+        def base
+        end
+      end
+
+      b = Base.new || Base2.new
+      b.base
+
+      class MyBase < Base
+        CONST = 1
+
+        def base
+          CONST
+        end
+      end
+
+      MyBase.new.base
+      )).to_i.should eq(1)
+  end
 end
