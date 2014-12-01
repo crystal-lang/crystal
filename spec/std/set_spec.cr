@@ -69,7 +69,7 @@ describe "Set" do
   it "does clear" do
     x = Set{1, 2, 3}
     x.to_a.should eq([1, 2, 3])
-    x.clear
+    x.clear.should be(x)
     x << 1
     x.to_a.should eq([1])
   end

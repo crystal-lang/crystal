@@ -35,6 +35,7 @@ class Set(T)
 
   def clear
     @hash.clear
+    self
   end
 
   def empty?
