@@ -37,9 +37,12 @@ module Crystal
 
     private def compute_fast_cover
       # Check which arg indices of the matches have types or type restrictions
-      indices = BitArray.new(arg_types.length)
+      args_length = arg_types.length
+      indices = BitArray.new(args_length)
+
       matches.each do |match|
-        match.def.args.each_with_index do |arg, i|
+        args_length.times do |i|
+          arg = match.def.args[i]
           if arg.type? || arg.restriction
             indices[i] = true
           end

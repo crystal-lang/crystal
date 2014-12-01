@@ -100,4 +100,14 @@ describe "Restrictions" do
       Int32.foo 1
       )) { int32 }
   end
+
+  it "passes #278" do
+    assert_error %(
+      def bar(x : String, y = nil : String)
+      end
+
+      bar(1 || "")
+      ),
+      "no overload matches"
+  end
 end
