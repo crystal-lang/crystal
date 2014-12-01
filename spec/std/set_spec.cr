@@ -66,6 +66,14 @@ describe "Set" do
     Set{"foo"}.to_s.should eq(%(Set{"foo"}))
   end
 
+  it "does clear" do
+    x = Set{1, 2, 3}
+    x.to_a.should eq([1, 2, 3])
+    x.clear
+    x << 1
+    x.to_a.should eq([1])
+  end
+
   it "compares hashes of sets" do
     h1 = { Set{1, 2, 3} => 1 }
     h2 = { Set{1, 2, 3} => 1 }
