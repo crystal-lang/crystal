@@ -3,19 +3,19 @@ require "json"
 
 def it_parses_json(string, expected_value, file = __FILE__, line = __LINE__)
   it "parses #{string}", file, line do
-    Json.parse(string).should eq(expected_value)
+    JSON.parse(string).should eq(expected_value)
   end
 end
 
 def it_raises_on_parse_json(string, file = __FILE__, line = __LINE__)
   it "raises on parse #{string}", file, line do
-    expect_raises Json::ParseException do
-      Json.parse(string)
+    expect_raises JSON::ParseException do
+      JSON.parse(string)
     end
   end
 end
 
-describe "Json::Parser" do
+describe "JSON::Parser" do
   it_parses_json "1", 1
   it_parses_json "2.5", 2.5
   it_parses_json %("hello"), "hello"
@@ -34,7 +34,7 @@ describe "Json::Parser" do
   it_parses_json "[0]", [0]
   it_parses_json " [ 0 ] ", [0]
 
-  it_parses_json "{}", {} of String => Json::Type
+  it_parses_json "{}", {} of String => JSON::Type
   it_parses_json %({"foo": 1}), {"foo" => 1}
   it_parses_json %({"foo": 1, "bar": 1.5}), {"foo" => 1, "bar" => 1.5}
   it_parses_json %({"fo\\no": 1}), {"fo\no" => 1}

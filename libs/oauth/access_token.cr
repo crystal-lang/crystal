@@ -22,7 +22,7 @@ class OAuth::AccessToken
     new token.not_nil!, secret.not_nil!, extra
   end
 
-  def self.new(pull : Json::PullParser)
+  def self.new(pull : JSON::PullParser)
     token = nil
     secret = nil
     extra = {} of String => String

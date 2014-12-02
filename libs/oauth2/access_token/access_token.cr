@@ -1,5 +1,5 @@
 abstract class OAuth2::AccessToken
-  def self.new(pull : Json::PullParser)
+  def self.new(pull : JSON::PullParser)
     token_type = nil
     access_token = nil
     expires_in = nil

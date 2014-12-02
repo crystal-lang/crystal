@@ -1,7 +1,7 @@
-# Json pretty printer
+# JSON pretty printer
 # ~~~~~~~~~~~~~~~~~~~
 #
-# Reads Json from STDIN and outputs it formatted and colored to STDOUT.
+# Reads JSON from STDIN and outputs it formatted and colored to STDOUT.
 #
 # Usage: echo '[1, {"two": "three"}, false]' | pretty_json
 
@@ -10,7 +10,7 @@ require "colorize"
 
 class PrettyPrinter
   def initialize(@input, @output)
-    @pull = Json::PullParser.new @input
+    @pull = JSON::PullParser.new @input
     @indent = 0
   end
 

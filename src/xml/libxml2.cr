@@ -3,7 +3,7 @@ require "./type"
 @[Link("xml2")]
 lib LibXML
   type InputBuffer = Void*
-  type XmlTextReader = Void*
+  type XMLTextReader = Void*
 
   XML_READER_TYPE_NONE                   = 0
   XML_READER_TYPE_ELEMENT                = 1
@@ -26,11 +26,11 @@ lib LibXML
 
   fun xmlParserInputBufferCreateStatic(mem : UInt8*, size : Int32, encoding : Int32) : InputBuffer
   fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int32) -> Int32, ioclose : Void* -> Int32, ioctx : Void*, enc : Int32) : InputBuffer
-  fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XmlTextReader
+  fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
 
-  fun xmlTextReaderRead(reader : XmlTextReader) : Int32
-  fun xmlTextReaderNodeType(reader : XmlTextReader) : Xml::Type
-  fun xmlTextReaderConstName(reader : XmlTextReader) : UInt8*
-  fun xmlTextReaderIsEmptyElement(reader : XmlTextReader) : Int32
-  fun xmlTextReaderConstValue(reader : XmlTextReader) : UInt8*
+  fun xmlTextReaderRead(reader : XMLTextReader) : Int32
+  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Type
+  fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int32
+  fun xmlTextReaderConstValue(reader : XMLTextReader) : UInt8*
 end

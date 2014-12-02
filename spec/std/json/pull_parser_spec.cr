@@ -1,7 +1,7 @@
 require "spec"
 require "json"
 
-class Json::PullParser
+class JSON::PullParser
   def assert(event_kind : Symbol)
     kind.should eq(event_kind)
     read_next
@@ -86,7 +86,7 @@ class Json::PullParser
   end
 
   def assert_error
-    expect_raises Json::ParseException do
+    expect_raises JSON::ParseException do
       read_next
     end
   end
@@ -94,16 +94,16 @@ end
 
 def assert_pull_parse(string)
   it "parses #{string}" do
-    parser = Json::PullParser.new string
-    parser.assert Json.parse(string)
+    parser = JSON::PullParser.new string
+    parser.assert JSON.parse(string)
     parser.kind.should eq(:EOF)
   end
 end
 
 def assert_pull_parse_error(string)
   it "errors on #{string}" do
-    expect_raises Json::ParseException do
-      parser = Json::PullParser.new string
+    expect_raises JSON::ParseException do
+      parser = JSON::PullParser.new string
       while parser.kind != :EOF
         parser.read_next
       end
@@ -111,7 +111,7 @@ def assert_pull_parse_error(string)
   end
 end
 
-describe "Json::PullParser" do
+describe "JSON::PullParser" do
   assert_pull_parse "null"
   assert_pull_parse "false"
   assert_pull_parse "true"
@@ -166,7 +166,7 @@ describe "Json::PullParser" do
       {"object", %({"foo": [1, 2], "bar": {"baz": [3]}})},
     ].each do |tuple|
       it "skips #{tuple[0]}" do
-        pull = Json::PullParser.new("[1, #{tuple[1]}, 2]")
+        pull = JSON::PullParser.new("[1, #{tuple[1]}, 2]")
         pull.read_array do
           pull.read_int.should eq(1)
           pull.skip
@@ -177,38 +177,38 @@ describe "Json::PullParser" do
   end
 
   it "reads bool or null" do
-    Json::PullParser.new("null").read_bool_or_null.should be_nil
-    Json::PullParser.new("false").read_bool_or_null.should be_false
+    JSON::PullParser.new("null").read_bool_or_null.should be_nil
+    JSON::PullParser.new("false").read_bool_or_null.should be_false
   end
 
   it "reads int or null" do
-    Json::PullParser.new("null").read_int_or_null.should be_nil
-    Json::PullParser.new("1").read_int_or_null.should eq(1)
+    JSON::PullParser.new("null").read_int_or_null.should be_nil
+    JSON::PullParser.new("1").read_int_or_null.should eq(1)
   end
 
   it "reads float or null" do
-    Json::PullParser.new("null").read_float_or_null.should be_nil
-    Json::PullParser.new("1.5").read_float_or_null.should eq(1.5)
+    JSON::PullParser.new("null").read_float_or_null.should be_nil
+    JSON::PullParser.new("1.5").read_float_or_null.should eq(1.5)
   end
 
   it "reads string or null" do
-    Json::PullParser.new("null").read_string_or_null.should be_nil
-    Json::PullParser.new(%("hello")).read_string_or_null.should eq("hello")
+    JSON::PullParser.new("null").read_string_or_null.should be_nil
+    JSON::PullParser.new(%("hello")).read_string_or_null.should eq("hello")
   end
 
   it "reads array or null" do
-    Json::PullParser.new("null").read_array_or_null { fail "expected block not to be called" }
+    JSON::PullParser.new("null").read_array_or_null { fail "expected block not to be called" }
 
-    pull = Json::PullParser.new(%([1]))
+    pull = JSON::PullParser.new(%([1]))
     pull.read_array_or_null do
       pull.read_int.should eq(1)
     end
   end
 
   it "reads object or null" do
-    Json::PullParser.new("null").read_object_or_null { fail "expected block not to be called" }
+    JSON::PullParser.new("null").read_object_or_null { fail "expected block not to be called" }
 
-    pull = Json::PullParser.new(%({"foo": 1}))
+    pull = JSON::PullParser.new(%({"foo": 1}))
     pull.read_object_or_null do |key|
       key.should eq("foo")
       pull.read_int.should eq(1)
@@ -217,7 +217,7 @@ describe "Json::PullParser" do
 
   describe "on key" do
     it "finds key" do
-      pull = Json::PullParser.new(%({"foo": 1, "bar": 2}))
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
       bar = nil
       pull.on_key("bar") do
@@ -228,7 +228,7 @@ describe "Json::PullParser" do
     end
 
     it "finds key" do
-      pull = Json::PullParser.new(%({"foo": 1, "bar": 2}))
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
       bar = nil
       pull.on_key("bar") do
@@ -239,7 +239,7 @@ describe "Json::PullParser" do
     end
 
     it "doesn't find key" do
-      pull = Json::PullParser.new(%({"foo": 1, "baz": 2}))
+      pull = JSON::PullParser.new(%({"foo": 1, "baz": 2}))
 
       bar = nil
       pull.on_key("bar") do
@@ -250,7 +250,7 @@ describe "Json::PullParser" do
     end
 
     it "finds key with bang" do
-      pull = Json::PullParser.new(%({"foo": 1, "bar": 2}))
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
       bar = nil
       pull.on_key!("bar") do
@@ -261,7 +261,7 @@ describe "Json::PullParser" do
     end
 
     it "doesn't find key with bang" do
-      pull = Json::PullParser.new(%({"foo": 1, "baz": 2}))
+      pull = JSON::PullParser.new(%({"foo": 1, "baz": 2}))
 
       expect_raises Exception, "json key not found: bar" do
         pull.on_key!("bar") do
@@ -270,7 +270,7 @@ describe "Json::PullParser" do
     end
 
     it "reads float when it is an int" do
-      pull = Json::PullParser.new(%(1))
+      pull = JSON::PullParser.new(%(1))
       f = pull.read_float
       f.should be_a(Float64)
       f.should eq(1.0)
@@ -278,7 +278,7 @@ describe "Json::PullParser" do
 
     ["1", "[1]", %({"x": [1]})].each do |value|
       it "yields all keys when skipping #{value}" do
-        pull = Json::PullParser.new(%({"foo": #{value}, "bar": 2}))
+        pull = JSON::PullParser.new(%({"foo": #{value}, "bar": 2}))
         pull.read_object do |key|
           key.should_not eq("")
           pull.skip

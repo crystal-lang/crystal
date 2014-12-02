@@ -8,7 +8,7 @@ class Object
       property {{key.id}} :: {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
     {% end %}
 
-    def initialize(_pull : Json::PullParser)
+    def initialize(_pull : JSON::PullParser)
       {% for key, value in properties %}
         _{{key.id}} = nil
       {% end %}

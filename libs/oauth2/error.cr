@@ -10,7 +10,7 @@ class OAuth2::Error < Exception
     end
   end
 
-  def self.new(pull : Json::PullParser)
+  def self.new(pull : JSON::PullParser)
     error = nil
     error_description = nil
 

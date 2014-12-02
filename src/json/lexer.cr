@@ -1,6 +1,6 @@
 require "string_pool"
 
-abstract class Json::Lexer
+abstract class JSON::Lexer
   getter token
   property skip
 

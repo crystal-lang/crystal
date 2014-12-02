@@ -1,7 +1,7 @@
 require "spec"
 require "json"
 
-describe "Json serialization" do
+describe "JSON serialization" do
   describe "from_json" do
     it "does Array(Nil)#from_json" do
       Array(Nil).from_json("[null, null]").should eq([nil, nil])

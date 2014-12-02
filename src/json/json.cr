@@ -1,4 +1,4 @@
-module Json
+module JSON
   class ParseException < Exception
     getter line_number
     getter column_number

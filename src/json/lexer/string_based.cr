@@ -1,4 +1,4 @@
-class Json::Lexer::StringBased < Json::Lexer
+class JSON::Lexer::StringBased < JSON::Lexer
   def initialize(string)
     super()
     @reader = CharReader.new(string)

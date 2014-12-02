@@ -1,4 +1,4 @@
-class Json::Token
+class JSON::Token
   property :type
   property :string_value
   property :int_value

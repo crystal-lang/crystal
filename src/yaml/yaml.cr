@@ -1,10 +1,10 @@
 require "./*"
 
-module Yaml
+module YAML
   alias Type = String | Hash(Type, Type) | Array(Type) | Nil
 
   def self.load(data)
-    parser = Yaml::Parser.new(data)
+    parser = YAML::Parser.new(data)
     begin
       parser.parse
     ensure
@@ -13,7 +13,7 @@ module Yaml
   end
 
   def self.load_all(data)
-    parser = Yaml::Parser.new(data)
+    parser = YAML::Parser.new(data)
     begin
       parser.parse_all
     ensure

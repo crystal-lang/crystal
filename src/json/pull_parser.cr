@@ -1,4 +1,4 @@
-class Json::PullParser
+class JSON::PullParser
   getter kind
   getter bool_value
   getter int_value

@@ -1,4 +1,4 @@
-module Xml
+module XML
   enum Type
     None                   = 0
     Element                = 1
@@ -17,6 +17,6 @@ module Xml
     SignificantWhitespace  = 14
     EndElement             = 15
     EndEntity              = 16
-    XmlDeclaration         = 17
+    Declaration            = 17
   end
 end

@@ -16,7 +16,7 @@ class Project
 
     # Load lockfile
     if File.file?(".deps.lock")
-      lock = Json.parse(File.read(".deps.lock")) as Hash
+      lock = JSON.parse(File.read(".deps.lock")) as Hash
       @dependencies.each do |dep|
         if locked_version = lock[dep.name]?
           dep.locked_version = locked_version as String

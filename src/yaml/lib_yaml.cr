@@ -1,5 +1,5 @@
 @[Link("yaml")]
-lib LibYaml
+lib LibYAML
   PARSER_SIZE = 480
   type Parser = Void*
 

@@ -12,11 +12,11 @@ class Object
   end
 
   def to_pretty_json(io : IO)
-    to_json Json::PrettyWriter.new(io)
+    to_json JSON::PrettyWriter.new(io)
   end
 end
 
-struct Json::ObjectBuilder(T)
+struct JSON::ObjectBuilder(T)
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
@@ -40,7 +40,7 @@ struct Json::ObjectBuilder(T)
   end
 end
 
-struct Json::ArrayBuilder(T)
+struct JSON::ArrayBuilder(T)
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
@@ -56,25 +56,25 @@ struct Json::ArrayBuilder(T)
   end
 end
 
-module Json::Builder
+module JSON::Builder
   def json_object
     self << "{"
-    yield Json::ObjectBuilder.new(self)
+    yield JSON::ObjectBuilder.new(self)
     self << "}"
   end
 
   def json_array
     self << "["
-    yield Json::ArrayBuilder.new(self)
+    yield JSON::ArrayBuilder.new(self)
     self << "]"
   end
 end
 
 module IO
-  include Json::Builder
+  include JSON::Builder
 end
 
-class Json::PrettyWriter
+class JSON::PrettyWriter
   include IO
 
   def initialize(@io)
@@ -87,7 +87,7 @@ class Json::PrettyWriter
   def json_object
     self << "{\n"
     @indent += 1
-    yield Json::ObjectBuilder.new(self, @indent)
+    yield JSON::ObjectBuilder.new(self, @indent)
     @indent -= 1
     self << '\n'
     @indent.times { @io << "  " }
@@ -97,7 +97,7 @@ class Json::PrettyWriter
   def json_array
     self << "[\n"
     @indent += 1
-    yield Json::ArrayBuilder.new(self, @indent)
+    yield JSON::ArrayBuilder.new(self, @indent)
     @indent -= 1
     self << '\n'
     @indent.times { @io << "  " }

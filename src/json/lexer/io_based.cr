@@ -1,4 +1,4 @@
-class Json::Lexer::IOBased < Json::Lexer
+class JSON::Lexer::IOBased < JSON::Lexer
   def initialize(io)
     super()
     @io = io

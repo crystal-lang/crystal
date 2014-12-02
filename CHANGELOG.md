@@ -1,5 +1,6 @@
 ## Next
 
+* **(breaking change)** Renamed `Json` to `JSON`, `Xml` to `XML` and `Yaml` to `YAML` to follow [a convention](https://github.com/manastech/crystal/issues/279).
 * **(breaking change)** `require "foo"` always looks up in `CRYSTAL_PATH`. `require "./foo"` looks up relative to the requiring file.
 * Added `alias_method` macro (thanks @Exilor and @jtomschroeder).
 * Added some `Complex` number methods and many math methods, refactors and specs (thanks @scidom).

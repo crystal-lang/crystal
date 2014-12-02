@@ -1,9 +1,9 @@
 require "spec"
 require "xml"
 
-describe Xml::Document do
+describe XML::Document do
   it "parses" do
-    doc = Xml.parse(%(\
+    doc = XML.parse(%(\
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
         <person id="1">
@@ -11,7 +11,7 @@ describe Xml::Document do
         </person>
       </people>
       ))
-    doc.should be_a(Xml::Document)
+    doc.should be_a(XML::Document)
     doc.child_nodes.length.should eq(1)
 
     people = doc.child_nodes.first

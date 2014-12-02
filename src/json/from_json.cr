@@ -1,25 +1,25 @@
 def Object.from_json(string_or_io)
-  parser = Json::PullParser.new(string_or_io)
+  parser = JSON::PullParser.new(string_or_io)
   new parser
 end
 
-def Nil.new(pull : Json::PullParser)
+def Nil.new(pull : JSON::PullParser)
   pull.read_null
 end
 
-def Bool.new(pull : Json::PullParser)
+def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-def Int32.new(pull : Json::PullParser)
+def Int32.new(pull : JSON::PullParser)
   pull.read_int.to_i
 end
 
-def Int64.new(pull : Json::PullParser)
+def Int64.new(pull : JSON::PullParser)
   pull.read_int.to_i64
 end
 
-def Float32.new(pull : Json::PullParser)
+def Float32.new(pull : JSON::PullParser)
   case pull.kind
   when :int
     value = pull.int_value.to_f32
@@ -30,7 +30,7 @@ def Float32.new(pull : Json::PullParser)
   end
 end
 
-def Float64.new(pull : Json::PullParser)
+def Float64.new(pull : JSON::PullParser)
   case pull.kind
   when :int
     value = pull.int_value.to_f
@@ -41,11 +41,11 @@ def Float64.new(pull : Json::PullParser)
   end
 end
 
-def String.new(pull : Json::PullParser)
+def String.new(pull : JSON::PullParser)
   pull.read_string
 end
 
-def Array.new(pull : Json::PullParser)
+def Array.new(pull : JSON::PullParser)
   ary = new
   pull.read_array do
     ary << T.new(pull)
@@ -53,7 +53,7 @@ def Array.new(pull : Json::PullParser)
   ary
 end
 
-def Hash.new(pull : Json::PullParser)
+def Hash.new(pull : JSON::PullParser)
   hash = new
   pull.read_object do |key|
     if pull.kind == :null
@@ -66,7 +66,7 @@ def Hash.new(pull : Json::PullParser)
 end
 
 struct TimeFormat
-  def from_json(pull : Json::PullParser)
+  def from_json(pull : JSON::PullParser)
     string = pull.read_string
     parse(string)
   end
