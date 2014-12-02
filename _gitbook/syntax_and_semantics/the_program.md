@@ -12,7 +12,7 @@ end
 add(1, 2)
 ```
 
-When invoking a method without a receiver, like `add(1, 2)`, if the method is not found in the current type or any of its ancestors then it will be searched in the program.
+When invoking a method without a receiver, like `add(1, 2)`, it will be searched in the program if not found in the current type or any of its ancestors.
 
 ```ruby
 def add(x, y)
@@ -53,7 +53,7 @@ class Foo
 end
 ```
 
-Variables declared in a program are not visible inside methods:
+Variables declared in a program are independent of methods:
 
 ``` ruby
 x = 1
@@ -65,7 +65,7 @@ end
 add(2)
 ```
 
-Parenthesis in method invocations are optional:
+Parentheses in method invocations are optional:
 
 ```ruby
 add 1, 2 # same as add(1, 2)
