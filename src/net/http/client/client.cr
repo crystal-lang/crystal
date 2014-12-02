@@ -39,7 +39,7 @@ class HTTP::Client
     end
 
     def self.{{method.id}}(url, headers = nil, body = nil)
-      exec :{{method.upcase}}, url, headers, body
+      exec {{method.upcase}}, url, headers, body
     end
   {% end %}
 
