@@ -1,3 +1,5 @@
+require "./type"
+
 @[Link("xml2")]
 lib LibXML
   type InputBuffer = Void*
@@ -27,7 +29,7 @@ lib LibXML
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XmlTextReader
 
   fun xmlTextReaderRead(reader : XmlTextReader) : Int32
-  fun xmlTextReaderNodeType(reader : XmlTextReader) : Int32
+  fun xmlTextReaderNodeType(reader : XmlTextReader) : Xml::Type
   fun xmlTextReaderConstName(reader : XmlTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XmlTextReader) : Int32
   fun xmlTextReaderConstValue(reader : XmlTextReader) : UInt8*

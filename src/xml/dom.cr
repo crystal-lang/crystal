@@ -1,6 +1,10 @@
 require "./reader"
 
 module Xml
+  def self.parse(string_or_io)
+    Document.parse(string_or_io)
+  end
+
   class Node
     property :name
     property :parent_node
@@ -57,20 +61,20 @@ module Xml
 
       while reader.read
         case reader.node_type
-        when :element
+        when Type::Element
           elem = Element.new
           elem.name = reader.name
           elem.parent_node = current
           current.append_child elem
-          current = elem unless reader.is_empty_element
-        when :end_element
+          current = elem unless reader.is_empty_element?
+        when Type::EndElement
           parent = current.parent_node
           if parent
             current = parent
           else
             raise "Invalid end element"
           end
-        when :text
+        when Type::Text
           text = Text.new
           text.value = reader.value
           current.append_child text
@@ -81,6 +85,7 @@ module Xml
     end
 
     def to_s(io)
+      io << "<?xml version='1.0' encoding='UTF-8'?>"
       child_nodes.first.to_s(io)
     end
   end
