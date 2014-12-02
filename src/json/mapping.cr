@@ -5,7 +5,13 @@ class Object
     {% end %}
 
     {% for key, value in properties %}
-      property {{key.id}} :: {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+      def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+        @{{key.id}} = _{{key.id}}
+      end
+
+      def {{key.id}}
+        @{{key.id}}
+      end
     {% end %}
 
     def initialize(_pull : JSON::PullParser)

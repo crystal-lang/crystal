@@ -61,6 +61,10 @@ class JSONWithSimpleMapping
   json_mapping({name: String, age: Int32})
 end
 
+class JSONWithKeywordsMapping
+  json_mapping({end: Int32, abstract: Int32})
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -144,5 +148,11 @@ describe "JSON mapping" do
   it "outputs with converter when nilable when emit_null is true" do
     json = JSONWithNilableTimeEmittingNull.new
     json.to_json.should eq(%({"value":null}))
+  end
+
+  it "parses json with keywords" do
+    json = JSONWithKeywordsMapping.from_json(%({"end": 1, "abstract": 2}))
+    json.end.should eq(1)
+    json.abstract.should eq(2)
   end
 end
