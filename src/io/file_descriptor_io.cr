@@ -24,7 +24,7 @@ class FileDescriptorIO
     bytes_written
   end
 
-  def seek(amount, whence)
+  def seek(amount, whence = SEEK_SET)
     C.lseek(@fd, C::SizeT.cast(amount), whence)
   end
 
