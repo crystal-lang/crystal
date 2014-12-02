@@ -6,13 +6,17 @@ lib C
   end
 
   ifdef x86_64
-    alias SizeT = UInt64
-    alias SSizeT = Int64
-    alias TimeT = Int64
+    alias IntT = Int64
+    alias UIntT = UInt64
   else
-    alias SSizeT = Int32
-    alias TimeT = Int32
+    alias IntT = Int32
+    alias UIntT = UInt32
   end
+
+  alias PtrDiffT = IntT
+  alias SizeT = UIntT
+  alias SSizeT = IntT
+  alias TimeT = IntT
 
   fun malloc(size : UInt32) : Void*
   fun realloc(ptr : Void*, size : UInt32) : Void*
