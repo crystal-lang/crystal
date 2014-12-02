@@ -675,6 +675,23 @@ class String
     ary
   end
 
+  def split(separator : Regex)
+    ary = Array(String).new
+    byte_offset = 0
+
+    while match = separator.match(self, byte_offset)
+      index = match.begin(0)
+      ary.push byte_slice(byte_offset, index - byte_offset)
+      byte_offset = index + match[0].bytesize
+    end
+
+    if byte_offset < bytesize
+      ary.push byte_slice(byte_offset)
+    end  
+
+    ary
+  end
+
   def lines
     split "\n"
   end

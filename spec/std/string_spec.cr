@@ -298,6 +298,11 @@ describe "String" do
       assert { "foo".split("").should eq(["f", "o", "o"]) }
       assert { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
     end
+
+    describe "by regex" do
+      assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
+      assert { "foo\n\tbar\n\t\n\tbaz".split(/(\n\t)+/).should eq(["foo", "bar", "baz"]) }
+    end
   end
 
   describe "starts_with?" do
