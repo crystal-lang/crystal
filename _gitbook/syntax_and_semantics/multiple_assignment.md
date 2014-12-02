@@ -8,8 +8,8 @@ name, age = "Crystal", 1
 # The above is the same as this:
 temp1 = "Crystal"
 temp2 = 1
-name = temp1
-aeg = temp2
+name  = temp1
+age   = temp2
 ```
 
 Note that because expressions are assigned to temporary variables it is possible to exchange variables’s contents in a single line:
