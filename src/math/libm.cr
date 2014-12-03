@@ -1,0 +1,73 @@
+@[Link("m")] ifdef linux
+lib LibM
+  # libm functions
+  fun acos_f32 = acosf(value : Float32) : Float32
+  fun acos_f64 = acos(value : Float64) : Float64
+  fun acosh_f32 = acoshf(value : Float32) : Float32
+  fun acosh_f64 = acosh(value : Float64) : Float64
+  fun asin_f32 = asinf(value : Float32) : Float32
+  fun asin_f64 = asin(value : Float64) : Float64
+  fun asinh_f32 = asinhf(value : Float32) : Float32
+  fun asinh_f64 = asinh(value : Float64) : Float64
+  fun atan2_f32 = atan2f(value1 : Float32, value2 : Float32) : Float32
+  fun atan2_f64 = atan2(value1 : Float64, value2 : Float64) : Float64
+  fun atan_f32 = atanf(value : Float32) : Float32
+  fun atan_f64 = atan(value : Float64) : Float64
+  fun atanh_f32 = atanhf(value : Float32) : Float32
+  fun atanh_f64 = atanh(value : Float64) : Float64
+  fun besselj0_f32 = j0f(value : Float32) : Float32
+  fun besselj0_f64 = j0(value : Float64) : Float64
+  fun besselj1_f32 = j1f(value : Float32) : Float32
+  fun besselj1_f64 = j1(value : Float64) : Float64
+  fun besselj_f32 = jnf(value1 : Int32, value2 : Float32) : Float32
+  fun besselj_f64 = jn(value1 : Int32, value2 : Float64) : Float64
+  fun bessely0_f32 = y0f(value : Float32) : Float32
+  fun bessely0_f64 = y0(value : Float64) : Float64
+  fun bessely1_f32 = y1f(value : Float32) : Float32
+  fun bessely1_f64 = y1(value : Float64) : Float64
+  fun bessely_f32 = ynf(value1 : Int32, value2 : Float32) : Float32
+  fun bessely_f64 = yn(value1 : Int32, value2 : Float64) : Float64
+  fun cbrt_f32 = cbrtf(value : Float32) : Float32
+  fun cbrt_f64 = cbrt(value : Float64) : Float64
+  fun cosh_f32 = coshf(value : Float32) : Float32
+  fun cosh_f64 = cosh(value : Float64) : Float64
+  fun erfc_f32 = erfcf(value : Float32) : Float32
+  fun erfc_f64 = erfc(value : Float64) : Float64
+  fun erf_f32 = erff(value : Float32) : Float32
+  fun erf_f64 = erf(value : Float64) : Float64
+  fun exp2_f32 = exp2f(value : Float32) : Float32
+  fun exp2_f64 = exp2(value : Float64) : Float64
+  fun expm1_f32 = expm1f(value : Float32) : Float32
+  fun expm1_f64 = expm1(value : Float64) : Float64
+
+  ifdef darwin
+    fun gamma_f32 = lgammaf(value : Float32) : Float32
+    fun gamma_f64 = lgamma(value : Float64) : Float64
+  else
+    fun gamma_f32 = gammaf(value : Float32) : Float32
+    fun gamma_f64 = gamma(value : Float64) : Float64
+  end
+
+  fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
+  fun hypot_f64 = hypot(value1 : Float64, value2 : Float64) : Float64
+  fun ilogb_f32 = ilogbf(value : Float32) : Int32
+  fun ilogb_f64 = ilogb(value : Float64) : Int32
+  fun ldexp_f32 = ldexpf(value1 : Float32, value2 : Int32) : Float32
+  fun ldexp_f64 = ldexp(value1 : Float64, value2 : Int32) : Float64
+  fun log1p_f32 = log1pf(value : Float32) : Float32
+  fun log1p_f64 = log1p(value : Float64) : Float64
+  fun logb_f32 = logbf(value : Float32) : Float32
+  fun logb_f64 = logb(value : Float64) : Float64
+  fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
+  fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
+  fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32
+  fun scalbn_f64 = scalbn(value1 : Float64, value2 : Int32) : Float64
+  fun sinh_f32 = sinhf(value : Float32) : Float32
+  fun sinh_f64 = sinh(value : Float64) : Float64
+  fun tan_f32 = tanf(value : Float32) : Float32
+  fun tan_f64 = tan(value : Float64) : Float64
+  fun tanh_f32 = tanhf(value : Float32) : Float32
+  fun tanh_f64 = tanh(value : Float64) : Float64
+  fun tgamma_f32 = tgammaf(value : Float32) : Float32
+  fun tgamma_f64 = tgamma(value : Float64) : Float64
+end
