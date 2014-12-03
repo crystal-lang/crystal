@@ -52,7 +52,7 @@ class Crystal::Call
 
     unbind_from @target_defs if @target_defs
     unbind_from block.break if block
-    @subclass_notifier.try &.remove_subclass_observer(self)
+    detach_subclass_observer
 
     @target_defs = nil
 
@@ -129,8 +129,7 @@ class Crystal::Call
   def lookup_matches_in(owner : NonGenericModuleType, arg_types)
     including_types = owner.including_types
     if including_types
-      owner.add_subclass_observer(self)
-      @subclass_notifier = owner
+      attach_subclass_observer owner
 
       lookup_matches_in(including_types, arg_types)
     else
@@ -141,8 +140,7 @@ class Crystal::Call
   def lookup_matches_in(owner : GenericClassType, arg_types)
     including_types = owner.including_types
     if including_types
-      owner.add_subclass_observer(self)
-      @subclass_notifier = owner
+      attach_subclass_observer owner
 
       lookup_matches_in(including_types, arg_types)
     else
@@ -210,8 +208,7 @@ class Crystal::Call
     end
 
     if owner.is_a?(VirtualType)
-      owner.base_type.add_subclass_observer(self)
-      @subclass_notifier = owner.base_type
+      attach_subclass_observer owner.base_type
     end
 
     instantiate matches, owner, self_type
@@ -717,5 +714,15 @@ class Crystal::Call
     end
 
     {typed_def, args}
+  end
+
+  def attach_subclass_observer(type)
+    detach_subclass_observer
+    type.add_subclass_observer(self)
+    @subclass_notifier = type
+  end
+
+  def detach_subclass_observer
+    @subclass_notifier.try &.remove_subclass_observer(self)
   end
 end
