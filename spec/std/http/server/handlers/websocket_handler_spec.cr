@@ -1,5 +1,5 @@
 require "spec"
-require "net/http/server"
+require "http/server"
 
 describe HTTP::WebSocketHandler do
   it "returns not found if the request is not an websocket upgrade" do

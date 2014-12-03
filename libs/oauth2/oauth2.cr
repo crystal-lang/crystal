@@ -1,4 +1,4 @@
 require "cgi"
-require "net/http"
+require "http/client"
 require "json"
 require "./**"

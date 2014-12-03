@@ -1,8 +1,6 @@
-require "./*"
-
 module HTTP
   def self.parse_headers_and_body(io)
-    headers = HTTP::Headers.new
+    headers = Headers.new
 
     while line = io.gets
       if line == "\r\n" || line == "\n"
@@ -42,3 +40,8 @@ module HTTP
     io << body if body
   end
 end
+
+require "./request"
+require "./response"
+require "./headers"
+

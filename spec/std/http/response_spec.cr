@@ -1,5 +1,5 @@
 require "spec"
-require "net/http"
+require "http/response"
 
 module HTTP
   describe Response do

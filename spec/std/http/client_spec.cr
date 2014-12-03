@@ -1,4 +1,4 @@
-require "net/http"
+require "http/client"
 
 module HTTP
   {% for method in %w(get post put head delete patch) %}

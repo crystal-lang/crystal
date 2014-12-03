@@ -1,17 +1,17 @@
 require "spec"
-require "net/http/websocket"
+require "http/web_socket"
 
 def packet(bytes)
   slice = Slice(UInt8).new(bytes.length) { |i| bytes[i].to_u8 }
   slice.pointer(bytes.length)
 end
 
-describe WebSocket do
+describe HTTP::WebSocket do
   describe "receive" do
     it "can read a small text packet" do
       data = packet([0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f])
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
@@ -25,7 +25,7 @@ describe WebSocket do
       data = packet([0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
                      0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f])
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(3)
 
@@ -48,7 +48,7 @@ describe WebSocket do
       data = packet([0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58,
                      0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58])
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(3)
 
@@ -72,7 +72,7 @@ describe WebSocket do
                      0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f])
 
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(10)
 
@@ -94,7 +94,7 @@ describe WebSocket do
     it "read ping packet" do
       data = packet([0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f])
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
@@ -109,7 +109,7 @@ describe WebSocket do
                      0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
                      0x80, 0x02, 0x6c, 0x6f])
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(64)
 
@@ -133,9 +133,9 @@ describe WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../../data/websocket_longpacket.bin").cstr
+      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin").cstr
       io = PointerIO.new(pointerof(data))
-      ws = WebSocket.new(io)
+      ws = HTTP::WebSocket.new(io)
 
       buffer = Slice(UInt8).new(2048)
 

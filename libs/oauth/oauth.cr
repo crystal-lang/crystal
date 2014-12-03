@@ -1,4 +1,4 @@
-require "net/http"
+require "http/client"
 require "uri"
 require "cgi"
 require "secure_random"

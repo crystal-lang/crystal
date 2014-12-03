@@ -7,7 +7,7 @@ class HTTP::Response
   getter headers
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = HTTP::Headers.new : HTTP::Headers, status_message = nil, @version = "HTTP/1.1")
+  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1")
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
     if (body = @body)
@@ -24,19 +24,19 @@ class HTTP::Response
   end
 
   def self.not_found
-    HTTP::Response.new(404, "Not Found", HTTP::Headers{"Content-Type": "text/plain"})
+    new(404, "Not Found", Headers{"Content-Type": "text/plain"})
   end
 
   def self.ok(content_type, body)
-    HTTP::Response.new(200, body, HTTP::Headers{"Content-Type": content_type})
+    new(200, body, Headers{"Content-Type": content_type})
   end
 
   def self.error(content_type, body)
-    HTTP::Response.new(500, body, HTTP::Headers{"Content-Type": content_type})
+    new(500, body, Headers{"Content-Type": content_type})
   end
 
   def self.unauthorized
-    HTTP::Response.new(401, "Unauthorized", HTTP::Headers{"Content-Type": "text/plain"})
+    new(401, "Unauthorized", Headers{"Content-Type": "text/plain"})
   end
 
   def to_io(io)

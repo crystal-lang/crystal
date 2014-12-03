@@ -1,7 +1,7 @@
 require "option_parser"
 require "file_utils"
 require "socket"
-require "net/http/common/common"
+require "http/common"
 require "colorize"
 require "tempfile"
 

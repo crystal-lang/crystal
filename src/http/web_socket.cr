@@ -1,4 +1,4 @@
-class WebSocket
+class HTTP::WebSocket
   OPCODE_CONT   = 0x0_u8
   OPCODE_TEXT   = 0x1_u8
   OPCODE_BINARY = 0x2_u8

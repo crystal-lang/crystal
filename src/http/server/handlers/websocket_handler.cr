@@ -1,6 +1,6 @@
 require "base64"
 require "openssl/sha1"
-require "net/http/websocket"
+require "../../web_socket"
 
 class HTTP::WebSocketHandler < HTTP::Handler
   def initialize(&@proc : WebSocketSession ->)

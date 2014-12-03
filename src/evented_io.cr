@@ -1,6 +1,6 @@
 require "fiber"
 require "event"
-require "net/http/server/server"
+require "http/server"
 
 def spawn(&block)
   Fiber.new(&block).resume

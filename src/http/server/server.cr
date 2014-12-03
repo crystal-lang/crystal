@@ -1,6 +1,6 @@
 require "openssl"
 require "socket"
-require "../common/common"
+require "../common"
 
 abstract class HTTP::Handler
   property :next

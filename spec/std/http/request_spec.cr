@@ -1,5 +1,5 @@
 require "spec"
-require "net/http"
+require "http/request"
 
 module HTTP
   describe Request do

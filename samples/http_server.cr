@@ -1,4 +1,4 @@
-require "net/http/server"
+require "http/server"
 
 server = HTTP::Server.new 8080, do |request|
   HTTP::Response.ok "text/plain", "Hello world!"

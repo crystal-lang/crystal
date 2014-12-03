@@ -3,7 +3,7 @@ require "socket"
 require "uri"
 require "cgi"
 require "base64"
-require "../common/common"
+require "../common"
 
 class HTTP::Client
   getter host

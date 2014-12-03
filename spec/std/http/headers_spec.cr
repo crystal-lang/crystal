@@ -1,5 +1,5 @@
 require "spec"
-require "net/http/common"
+require "http/headers"
 
 describe HTTP::Headers do
   it "is empty" do
