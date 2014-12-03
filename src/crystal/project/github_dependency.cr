@@ -25,13 +25,13 @@ module Crystal
 
     def install
       unless Dir.exists?(@target_dir)
-        `git clone https://github.com/#{@author}/#{@repository}.git #{@target_dir}`
+        exec "git clone git://github.com/#{@author}/#{@repository}.git #{@target_dir}"
       end
-      `ln -sf ../#{@target_dir}/src libs/#{name}`
+      exec "ln -sf ../#{@target_dir}/src libs/#{name}"
 
       if @locked_version
         if current_version != @locked_version
-          `git -C #{@target_dir} checkout -q #{@locked_version}`
+          exec "git -C #{@target_dir} checkout -q #{@locked_version}"
         end
       else
         @locked_version = current_version
@@ -39,7 +39,16 @@ module Crystal
     end
 
     def current_version
-      `git -C #{@target_dir} rev-parse HEAD`.chomp
+      exec("git -C #{@target_dir} rev-parse HEAD").chomp
+    end
+
+    private def exec(cmd)
+      result = `#{cmd}`
+      unless $?.success?
+        puts "Error executing command: #{cmd}"
+        exit 1
+      end
+      result
     end
   end
 end
