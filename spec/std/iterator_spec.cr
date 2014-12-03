@@ -38,19 +38,6 @@ describe Iterator do
     end
   end
 
-  describe "IntIterator" do
-    it "does next with times" do
-      n = 3
-      iterator = n.times
-      iterator.next.should eq(0)
-      iterator.next.should eq(1)
-      iterator.next.should eq(2)
-      expect_raises StopIteration do
-        iterator.next
-      end
-    end
-  end
-
   describe "map" do
     it "does map with Range iterator" do
       (1..3).iterator.map { |x| x * 2 }.to_a.should eq([2, 4, 6])
