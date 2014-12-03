@@ -1,12 +1,14 @@
 require "json"
-require "./*"
 
-class Project
-  INSTANCE = Project.new
+class Crystal::Project
   property dependencies
 
   def initialize
     @dependencies = [] of Dependency
+  end
+
+  def eval
+    with DSL.new(self) yield
   end
 
   def install_deps
@@ -39,5 +41,7 @@ class Project
   end
 end
 
-class ProjectError < Exception
+class Crystal::ProjectError < Exception
 end
+
+require "./*"
