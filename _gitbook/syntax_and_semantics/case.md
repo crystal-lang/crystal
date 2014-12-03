@@ -64,9 +64,9 @@ end
 
 # The above is the same as:
 tmp = num
-if num.even?
+if tmp.even?
   do_something
-elsif num.odd?
+elsif tmp.odd?
   do_something_else
 end
 ```
