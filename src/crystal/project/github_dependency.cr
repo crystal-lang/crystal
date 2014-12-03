@@ -38,6 +38,12 @@ module Crystal
       end
     end
 
+    def update
+      exec "rm -rf #{@target_dir}"
+      @locked_version = nil
+      install
+    end
+
     def current_version
       exec("git -C #{@target_dir} rev-parse HEAD").chomp
     end
