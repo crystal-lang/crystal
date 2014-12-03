@@ -9,6 +9,17 @@ module Crystal
       @repository = $2
       @target_dir = ".deps/#{@author}-#{@repository}"
 
+      unless name
+        case @repository
+        when /^crystal(?:_|-)(.*)$/
+          name = $1
+        when /^(.*)(?:_|-)crystal$/
+          name = $1
+        when /^(.*)\.cr$/
+          name = $1
+        end
+      end
+
       super(name || @repository)
     end
 

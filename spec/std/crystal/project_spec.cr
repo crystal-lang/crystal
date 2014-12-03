@@ -36,6 +36,28 @@ module Crystal
           end
         end
       end
+
+      %w(crystal_repo crystal-repo repo.cr repo_crystal repo-crystal).each do |repo_name|
+        it "guesses name from project name like #{repo_name}" do
+          project = Project.new
+          project.eval do
+            deps do
+              github "owner/#{repo_name}"
+            end
+          end
+          project.dependencies[0].name.should eq("repo")
+        end
+
+        it "doesn't guess name from project name when specifying name" do
+          project = Project.new
+          project.eval do
+            deps do
+              github "owner/#{repo_name}", name: "name"
+            end
+          end
+          project.dependencies[0].name.should eq("name")
+        end
+      end
     end
   end
 end
