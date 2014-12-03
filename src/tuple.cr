@@ -2,6 +2,10 @@ class Tuple
   include Enumerable(typeof((i = 0; self[i])))
   include Comparable(Tuple)
 
+  def self.new(*args)
+    args
+  end
+
   def [](index : Int)
     {% for i in 0 ... @length %}
       return self[{{i}}] if {{i}} == index
@@ -67,11 +71,11 @@ class Tuple
 
   def clone
     {% if true %}
-      {
+      Tuple.new(
         {% for i in 0 ... @length %}
           self[{{i}}].clone,
         {% end %}
-      }
+      )
     {% end %}
   end
 

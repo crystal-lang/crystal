@@ -100,4 +100,12 @@ describe "Tuple" do
     u[1].x.should eq(r2.x)
     u[1].should_not be(r2)
   end
+
+  it "does Tuple#new" do
+    Tuple.new(1, 2, 3).should eq({1, 2, 3})
+  end
+
+  it "clones empty tuple" do
+    Tuple.new.clone.should eq(Tuple.new)
+  end
 end
