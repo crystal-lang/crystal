@@ -1,5 +1,12 @@
-class Project
-  class DSL::Deps
+struct Crystal::Project::DSL
+  def initialize(@project)
+  end
+
+  def deps
+    with Deps.new(@project) yield
+  end
+
+  struct Deps
     def initialize(@project)
     end
 
@@ -7,8 +14,4 @@ class Project
       @project.dependencies << GitHubDependency.new(repository, name)
     end
   end
-end
-
-def deps(project = Project::INSTANCE)
-  with Project::DSL::Deps.new(project) yield
 end

@@ -158,8 +158,10 @@ module Crystal::Command
 
   private def self.deps(options)
     compiler = Compiler.new
-    sources = gather_sources(["./Projectfile"])
-    sources.insert 0, Compiler::Source.new("require", %(require "project_cli"))
+
+    gather_sources(["./Projectfile"])
+
+    sources = Compiler::Source.new("require", %(require "crystal/project_cli"))
 
     output_filename = tempfile "deps"
 

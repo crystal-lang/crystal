@@ -1,18 +1,18 @@
 require "json"
-require "./*"
 
-class Project
-  INSTANCE = Project.new
+class Crystal::Project
   property dependencies
 
   def initialize
     @dependencies = [] of Dependency
   end
 
+  def eval
+    with DSL.new(self) yield
+  end
+
   def install_deps
-    # Prepare required directories
-    Dir.mkdir_p ".deps"
-    Dir.mkdir_p "libs"
+    prepare_required_directories
 
     # Load lockfile
     if File.file?(".deps.lock")
@@ -27,7 +27,26 @@ class Project
     # Install al dependencies
     @dependencies.each &.install
 
-    # Save lockfile
+    save_lockfile
+  end
+
+  def update_deps(deps)
+    prepare_required_directories
+
+    deps = dependencies.map &.name if deps.empty?
+    deps.each do |dep_name|
+      find_dependency(dep_name).update
+    end
+
+    save_lockfile
+  end
+
+  def prepare_required_directories
+    Dir.mkdir_p ".deps"
+    Dir.mkdir_p "libs"
+  end
+
+  def save_lockfile
     lock = {} of String => String
     @dependencies.each do |dep|
       lock[dep.name] = dep.locked_version.not_nil!
@@ -37,7 +56,14 @@ class Project
       lock_file.puts
     end
   end
+
+  def find_dependency(name)
+    @dependencies.find { |dep| dep.name == name } ||
+      raise ProjectError.new("Could not find dependency '#{name}'")
+  end
 end
 
-class ProjectError < Exception
+class Crystal::ProjectError < Exception
 end
+
+require "./*"
