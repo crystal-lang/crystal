@@ -1,41 +1,15 @@
-require "./intrinsics"
 require "./libm"
 
 module Math
   extend self
 
   PI = 3.14159265358979323846
-  E = Intrinsics.exp_f64(1.0)
-  LOG2 = Intrinsics.log_f64(2.0)
-  LOG10 = Intrinsics.log_f64(10.0)
+  E = LibM.exp_f64(1.0)
+  LOG2 = LibM.log_f64(2.0)
+  LOG10 = LibM.log_f64(10.0)
 
-  {% for name in %w(cos exp log log2 log10 sin sqrt) %}
-    def {{name.id}}(value : Float32)
-      Intrinsics.{{name.id}}_f32(value)
-    end
-
-    def {{name.id}}(value : Float64)
-      Intrinsics.{{name.id}}_f64(value)
-    end
-
-    def {{name.id}}(value)
-      {{name.id}}(value.to_f)
-    end
-  {% end %}
-
-  def copysign(value1 : Float32, value2 : Float32)
-    Intrinsics.copysign_f32(value1, value2)
-  end
-
-  def copysign(value1 : Float64, value2 : Float64)
-    Intrinsics.copysign_f64(value1, value2)
-  end
-
-  def copysign(value1, value2)
-    copysign(value1.to_f, value1.to_f)
-  end
-
-  {% for name in %w(acos acosh asin asinh atan atanh cbrt cosh erf erfc exp2 expm1 ilogb log1p logb sinh tan tanh) %}
+  {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp
+    exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
     end
@@ -95,7 +69,7 @@ module Math
     LibM.gamma(value.to_f)
   end
 
-  {% for name in %w(atan2 hypot) %}
+  {% for name in %w(atan2 copysign hypot) %}
     def {{name.id}}(value1 : Float32, value2 : Float32)
       LibM.{{name.id}}_f32(value1, value2)
     end

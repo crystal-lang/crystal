@@ -19,27 +19,27 @@ struct Float32
   end
 
   def ceil
-    Intrinsics.ceil_f32(self)
+    LibM.ceil_f32(self)
   end
 
   def floor
-    Intrinsics.floor_f32(self)
+    LibM.floor_f32(self)
   end
 
   def round
-    Intrinsics.round_f32(self)
+    LibM.round_f32(self)
   end
 
   def trunc
-    Intrinsics.trunc_f32(self)
+    LibM.trunc_f32(self)
   end
 
   def **(other : Int32)
-    Intrinsics.powi_f32(self, other)
+    LibM.powi_f32(self, other)
   end
 
   def **(other : Float32)
-    Intrinsics.pow_f32(self, other)
+    LibM.pow_f32(self, other)
   end
 
   def **(other)
@@ -75,27 +75,27 @@ struct Float64
   end
 
   def ceil
-    Intrinsics.ceil_f64(self)
+    LibM.ceil_f64(self)
   end
 
   def floor
-    Intrinsics.floor_f64(self)
+    LibM.floor_f64(self)
   end
 
   def round
-    Intrinsics.round_f64(self)
+    LibM.round_f64(self)
   end
 
   def trunc
-    Intrinsics.trunc_f64(self)
+    LibM.trunc_f64(self)
   end
 
   def **(other : Int32)
-    Intrinsics.powi_f64(self, other)
+    LibM.powi_f64(self, other)
   end
 
   def **(other : Float64)
-    Intrinsics.pow_f64(self, other)
+    LibM.pow_f64(self, other)
   end
 
   def **(other)
