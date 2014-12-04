@@ -88,6 +88,7 @@ def it(description, file = __FILE__, line = __LINE__)
 
   Spec.formatter.before_example description
 
+  Spec::RootContext.before.try &.call()
   begin
     yield
     Spec::RootContext.report(:success, description, file, line)
@@ -98,6 +99,7 @@ def it(description, file = __FILE__, line = __LINE__)
     Spec::RootContext.report(:error, description, file, line, ex)
     Spec.abort! if Spec.fail_fast?
   end
+  Spec::RootContext.after.try &.call()
 end
 
 def pending(description, file = __FILE__, line = __LINE__, &block)
@@ -115,6 +117,14 @@ end
 
 def fail(msg, file = __FILE__, line = __LINE__)
   raise Spec::AssertionFailed.new(msg, file, line)
+end
+
+def before(&block : ->)
+  Spec::RootContext.before = block
+end
+
+def after(&block : ->)
+  Spec::RootContext.after = block
 end
 
 OptionParser.parse! do |opts|
