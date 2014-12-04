@@ -1,9 +1,6 @@
 @import url(pygment_black.css);
-
 @import url(pygment_white.css);
-
 @import url('http://fonts.googleapis.com/css?family=Open+Sans:400,700,300');
-
 @import url('http://fonts.googleapis.com/css?family=Cousine:400,700');
 .clearfix {
   *zoom: 1;
@@ -185,7 +182,7 @@ h3 {
   margin-top: 30px;
 }
 p {
-  margin-bottom: 5px;
+  margin-bottom: 20px;
 }
 a {
   color: #000000;
