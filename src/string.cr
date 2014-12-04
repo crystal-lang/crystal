@@ -687,7 +687,7 @@ class String
 
     if byte_offset < bytesize
       ary.push byte_slice(byte_offset)
-    end  
+    end
 
     ary
   end
