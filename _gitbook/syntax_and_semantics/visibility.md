@@ -4,7 +4,7 @@ Methods are public by default: the compiler will always let you invoke them. Bec
 
 Methods can be marked as `private` or `protected`.
 
-A `private` method can only be inovked without a receiver, that is, without something before the dot:
+A `private` method can only be invoked without a receiver, that is, without something before the dot:
 
 ``` ruby
 class Person

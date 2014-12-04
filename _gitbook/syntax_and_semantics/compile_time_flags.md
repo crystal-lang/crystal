@@ -46,7 +46,7 @@ end
 ```ruby
 lib C
   struct SomeStruct
-    # Eror: the next line gives a parser error
+    # Error: the next line gives a parser error
     ifdef linux
       some_field : Int32
     else

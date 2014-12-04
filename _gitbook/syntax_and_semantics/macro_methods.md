@@ -5,7 +5,7 @@ Just like `id`, you can invoke some other methods on AST nodes. The list here is
 ``` ruby
 class ASTNode
   # Returns a MacroId node with the *contents* of the node.
-  # For a SymbolLiteral, this is the symbol name witout
+  # For a SymbolLiteral, this is the symbol name without
   # the colon.
   # For a StringLiteral, this is the string's contents
   # without the quotes.

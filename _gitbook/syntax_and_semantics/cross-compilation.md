@@ -24,4 +24,4 @@ The first alternative is long and cumbersome, while the second one is much easie
 
 Cross-compiling can be done for other executables, but its main target is the compiler. If Crystal isn't available in some system you can try cross-compiling it there.
 
-**Note:** there currenty isn't a way to add more compile-time flags and not do a cross-compile at the same time.
+**Note:** there currently isn't a way to add more compile-time flags and not do a cross-compile at the same time.

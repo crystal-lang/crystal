@@ -15,7 +15,7 @@ Once you bind it, the function is available inside the `C` type as if it was a c
 C.cos(1.5) #=> 0.0707372
 ```
 
-You can ommit the parenthesis if the function doesn't have arguments (and ommit them in the call as well):
+You can omit the parenthesis if the function doesn't have arguments (and omit them in the call as well):
 
 ```ruby
 lib C
@@ -25,7 +25,7 @@ end
 C.getch
 ```
 
-If the return type is void you can ommit it:
+If the return type is void you can omit it:
 
 ```ruby
 lib C
