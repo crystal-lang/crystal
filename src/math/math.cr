@@ -1,4 +1,4 @@
-require "./intrinsics"
+require "./libllvm"
 require "./libm"
 
 module Math
