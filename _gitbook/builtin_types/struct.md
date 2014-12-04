@@ -1,6 +1,6 @@
 # Struct
 
-`Struct` is the base class of structs you create in your program. It is set as a struct' superstruct when you don't specify one:
+`Struct` is the base class of structs you create in your program. It is set as a struct's superstruct when you don't specify one:
 
 ```ruby
 struct Foo # < Struct

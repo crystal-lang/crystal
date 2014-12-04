@@ -29,7 +29,7 @@ ifdef linux && x86_64
 end
 ```
 
-These flags are generally used to conditionally in C bindings to conditionally define types and functions. For example the very well known `size_t` type is defined like this in Crystal:
+These flags are generally used in C bindings to conditionally define types and functions. For example the very well known `size_t` type is defined like this in Crystal:
 
 ```ruby
 lib C

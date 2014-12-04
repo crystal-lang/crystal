@@ -19,16 +19,16 @@ class ASTNode
   def stringify; end
 
   # Returns a BoolLiteral whose value is true if this node
-  # is equal to the other node
+  # is equal to the other node.
   def ==(other); end
 
   # Returns a BoolLiteral whose value is true if this node
-  # is not equal to the other node
+  # is not equal to the other node.
   def !=(other); end
 
-  # Returns a BoolLiteral that is true when this ASTNode
-  # is truthy. Falsey AST nodes are just NilLiteral or
-  # a BoolLiteral with a false value: every other ASTNode
+  # Returns a BoolLiteral whose value is true when this
+  # ASTNode is truthy. Falsey AST nodes are just NilLiteral
+  # or a BoolLiteral with a false value: every other ASTNode
   # is truthy.
   def !; end
 end
@@ -53,14 +53,14 @@ class ArrayLiteral < ASTNode
   def empty?; end
 
   # Similar to Array#first, but returns a NilLiteral
-  # if the array literal is empty
+  # if the array literal is empty.
   def first; end
 
   # Similar to Array#join(joiner)
   def join(joiner); end
 
   # Similar to Array#last, but returns a NilLiteral
-  # if the array literal is empty
+  # if the array literal is empty.
   def last; end
 
   def length; end
@@ -92,7 +92,7 @@ end
 
 class StringLiteral < ASTNode
   # Returns a StringLiteral with a substring of this
-  # node's value
+  # node's value.
   def [](RangeLiteral); end
 
   def capitalize; end
@@ -106,7 +106,7 @@ class StringLiteral < ASTNode
   def length; end
 
   # Similar to String#lines,
-  # but returns an ArrayLiteral of StringLiteral
+  # but returns an ArrayLiteral of StringLiteral.
   def lines; end
 
   # Similar to String#split(divider),

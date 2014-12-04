@@ -49,7 +49,7 @@ define_foo :struct
 
 (don't worry, you will almost never have to do something like the above)
 
-Macros are executed at compile time, and receive [AST nodes](http://en.wikipedia.org/wiki/Abstract_syntax_tree). Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.
+Macros are executed at compile time, and receive [AST nodes](http://en.wikipedia.org/wiki/Abstract_syntax_tree). By applying macro interpolations and controls they evaluate them to a string. This string must be parsed to a valid Crystal program.
 
 So, in the `getter` example, the macro receives a `SymbolLiteral` node. If we consider this alternative definition:
 
