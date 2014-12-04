@@ -1,3 +1,4 @@
+@[Link("m")] ifdef linux
 lib Intrinsics
   fun debugtrap = "llvm.debugtrap"
   fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, align : UInt32, is_volatile : Bool)

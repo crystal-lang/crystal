@@ -1,4 +1,3 @@
-@[Link("m")] ifdef linux
 lib Intrinsics
   ### To be uncommented once LLVM is updated
   # LLVM binary operations
