@@ -50,7 +50,7 @@ Note that there are no implicit conversions (except `to_unsafe`, explained later
 Because method names in Crystal must start with a lowercase letter, `fun` names must also start with a lowercase letter. If you need to bind to a C function that starts with a capital letter you can give the function another name for Crystal:
 
 ```ruby
-lib LibSDL("SDL")
+lib LibSDL
   fun init = SDL_Init(flags : UInt32) : Int32
 end
 ```

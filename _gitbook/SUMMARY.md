@@ -60,11 +60,12 @@
        * as
        * typeof
    * Attributes
-       * @:ThreadLocal
-       * @:Packed
-       * @:AlwaysInline
-       * @:NoInline
-       * @:ReturnsTwice
+       * @[ThreadLocal]
+       * @[Packed]
+       * @[AlwaysInline]
+       * @[NoInline]
+       * @[ReturnsTwice]
+       * [@[Raises]]([raises])
    * Requiring files
    * Low-level primitives
        * pointerof

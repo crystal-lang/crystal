@@ -3,19 +3,17 @@
 A `lib` declaration groups C functions and types that belong to a library.
 
 ```ruby
-lib LibPCRE("pcre")
+@[Link("pcre")]
+lib LibPCRE
 end
 ```
 
 Although not enforced by the compiler, a `lib`'s name usually starts with `Lib`.
 
-Here, `"pcre"` is the name of the library that will be passed to the linker (for example as `-lpcre`). The name can be ommited if the library is implicitly linked, as in the case of libc.
+Attributes are used to pass flags to the linker to find external libraries:
 
-If the name is a string that has its contents enclosed with backticks, it denotes a shell command that is executed and whose output is passed to the linker.
+* `@[Link("pcre")]` will pass `-lpcre` to the linker, but the compiler will first try to use [pkg-config](http://en.wikipedia.org/wiki/Pkg-config).
+* `@[Link(ldflags: "...")]` will pass those flags directly to the linker, without modification. For example: `@[Link(ldflags: "-lpcre")]`. A common technique is to use backticks to execute commands: `@[Link(ldflags: "`pkg-config libpcre --libs`")]`.
+* `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker (only useful in Mac OSX).
 
-```ruby
-lib LibPCRE("`pkg-config libpcre --libs`")
-end
-```
-
-**Note:** in the future the linker flags will probably be specified with attributes or with a better mechanism.
+Attributes can be ommited if the library is implicitly linked, as in the case of libc.

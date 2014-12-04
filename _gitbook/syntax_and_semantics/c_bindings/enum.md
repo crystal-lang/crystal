@@ -26,7 +26,7 @@ As in C, the first member of the enum has a value of zero and each successive va
 To use a value:
 
 ```ruby
-X::SomeEnum::One #=> 1
+X::SomeEnum::One #=> One
 ```
 
 You can specify the value of a member:
@@ -59,7 +59,7 @@ However, you can change this default type:
 
 ```ruby
 lib X
-  enum SomeEnum < Int8
+  enum SomeEnum : Int8
     Zero,
     Two = 2
   end
@@ -81,5 +81,3 @@ lib X
   fun some_fun(value : SomeEnum)
 end
 ```
-
-Doing so is exactly the same as using the enum's underlying type (`Int32` in the above example), only that the intent is a bit clearer.

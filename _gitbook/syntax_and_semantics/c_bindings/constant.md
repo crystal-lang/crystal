@@ -3,7 +3,8 @@
 You can also declare constants inside a `lib` declaration:
 
 ```ruby
-lib PCRE("pcre")
+@[Link("pcre")]
+lib PCRE
   INFO_CAPTURECOUNT = 2
 end
 

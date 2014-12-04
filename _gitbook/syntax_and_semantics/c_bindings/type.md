@@ -4,7 +4,7 @@ A `type` declaration inside a `lib` declares a kind of C `typedef`, but stronger
 
 ```ruby
 lib X
-  type MyInt : Int32
+  type MyInt = Int32
 end
 ```
 
@@ -12,7 +12,7 @@ Unlike C, `Int32` and `MyInt` are not interchangeable:
 
 ```ruby
 lib X
-  type MyInt : Int32
+  type MyInt = Int32
 
   fun some_fun(value : MyInt)
 end
