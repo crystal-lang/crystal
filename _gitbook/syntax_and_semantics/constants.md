@@ -10,7 +10,7 @@ module Earth
 end
 
 PI #=> 3.14
-Earth::RADIUS = 6_371_000
+Earth::RADIUS #=> 6_371_000
 ```
 
 Although not enforced by the compiler, constants are usually named with all capital letters and underscores to separate words.

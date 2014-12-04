@@ -65,7 +65,7 @@ lib X
   end
 end
 
-X::SomeEnum::Zero #=> 1_i8
+X::SomeEnum::Zero #=> 0_i8
 X::SomeEnum::Two  #=> 2_i8
 ```
 

@@ -21,6 +21,6 @@ A variable can be marked as thread local with an attribute:
 ```ruby
 lib C
   @:ThreadLocal
-  $errno = Int32
+  $errno : Int32
 end
 ```
