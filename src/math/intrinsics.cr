@@ -1,4 +1,4 @@
-@[Link(ldflags: "`(llvm-config-3.5 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config --libs --system-libs --ldflags 2>/dev/null)`")]
+@[Link("m")] ifdef linux
 lib Intrinsics
   ### To be uncommented once LLVM is updated
   # LLVM binary operations
