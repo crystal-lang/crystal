@@ -100,4 +100,3 @@ getter name
 ```
 
 This is because macro arguments are never evaluated, so it doesn't matter what `name` means here: for the macro it will only be some AST node.
-

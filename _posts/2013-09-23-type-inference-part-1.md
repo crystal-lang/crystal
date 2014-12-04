@@ -68,4 +68,3 @@ There is one thing that is not shown still. *Every* ocurrence of the variables h
 <img src="/images/type-inference/conditional-2.png" width="563" height="325" class="center"/>
 
 This way, each assignment knows that it is aimed to assign a `Boolean` to a `Int32 | Boolean` or `Int32` to `Int32 | Boolean`. This information is used in the codegen.
-

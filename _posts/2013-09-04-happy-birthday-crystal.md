@@ -377,4 +377,3 @@ of the compiler. Compilation times will be reduced drmatically (we hope!).
 And also, it's very likely that the language will grow a lot because
 of this, and we will have learned a lot of what it feels like to program in Crystal and what
 needs to be improved (debugging and profiling come to our minds). Dog-fooding, they call it :-)
-

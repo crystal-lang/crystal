@@ -108,4 +108,3 @@
    * Array
    * Hash
    * Regex
-
