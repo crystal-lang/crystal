@@ -132,7 +132,7 @@ struct Complex
       r = other.imag / other.real
       d = other.real + r * other.imag
       Complex.new((@real + @imag * r) / d, (@imag - @real * r) / d)
-    end 
+    end
   end
 
   def /(other : Number)
