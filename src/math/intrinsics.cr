@@ -1,4 +1,4 @@
-module Math::LLVM
+lib LibLLVM
   ### To be uncommented once LLVM is updated
   # LLVM binary operations
   # fun div_i32 = "llvm.sdiv"(value1 : Int32, value2 : Int32) : Int32

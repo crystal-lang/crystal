@@ -1,6 +1,5 @@
 @[Link("m")] ifdef linux
 lib LibM
-  # libm functions
   fun acos_f32 = acosf(value : Float32) : Float32
   fun acos_f64 = acos(value : Float64) : Float64
   fun acosh_f32 = acoshf(value : Float32) : Float32
@@ -39,7 +38,6 @@ lib LibM
   fun exp2_f64 = exp2(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-
   ifdef darwin
     fun gamma_f32 = lgammaf(value : Float32) : Float32
     fun gamma_f64 = lgamma(value : Float64) : Float64
@@ -47,7 +45,6 @@ lib LibM
     fun gamma_f32 = gammaf(value : Float32) : Float32
     fun gamma_f64 = gamma(value : Float64) : Float64
   end
-
   fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
   fun hypot_f64 = hypot(value1 : Float64, value2 : Float64) : Float64
   fun ilogb_f32 = ilogbf(value : Float32) : Int32

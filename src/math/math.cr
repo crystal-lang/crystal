@@ -5,9 +5,9 @@ module Math
   extend self
 
   PI = 3.14159265358979323846
-  E = exp_f64(1.0)
-  LOG2 = log_f64(2.0)
-  LOG10 = log_f64(10.0)
+  E = LibLLVM.exp_f64(1.0)
+  LOG2 = LibLLVM.log_f64(2.0)
+  LOG10 = LibLLVM.log_f64(10.0)
 
   {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp
     exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
