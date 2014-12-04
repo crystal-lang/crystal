@@ -1,21 +1,21 @@
-require "./libllvm"
+require "./intrinsics"
 require "./libm"
 
 module Math
   extend self
 
   PI = 3.14159265358979323846
-  E = LibLLVM.exp_f64(1.0)
-  LOG2 = LibLLVM.log_f64(2.0)
-  LOG10 = LibLLVM.log_f64(10.0)
+  E = Intrinsics.exp_f64(1.0)
+  LOG2 = Intrinsics.log_f64(2.0)
+  LOG10 = Intrinsics.log_f64(10.0)
 
   {% for name in %w(cos exp log log2 log10 sin sqrt) %}
     def {{name.id}}(value : Float32)
-      LibLLVM.{{name.id}}_f32(value)
+      Intrinsics.{{name.id}}_f32(value)
     end
 
     def {{name.id}}(value : Float64)
-      LibLLVM.{{name.id}}_f64(value)
+      Intrinsics.{{name.id}}_f64(value)
     end
 
     def {{name.id}}(value)
@@ -24,11 +24,11 @@ module Math
   {% end %}
 
   def copysign(value1 : Float32, value2 : Float32)
-    LibLLVM.copysign_f32(value1, value2)
+    Intrinsics.copysign_f32(value1, value2)
   end
 
   def copysign(value1 : Float64, value2 : Float64)
-    LibLLVM.copysign_f64(value1, value2)
+    Intrinsics.copysign_f64(value1, value2)
   end
 
   def copysign(value1, value2)

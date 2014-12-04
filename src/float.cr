@@ -19,27 +19,27 @@ struct Float32
   end
 
   def ceil
-    LibLLVM.ceil_f32(self)
+    Intrinsics.ceil_f32(self)
   end
 
   def floor
-    LibLLVM.floor_f32(self)
+    Intrinsics.floor_f32(self)
   end
 
   def round
-    LibLLVM.round_f32(self)
+    Intrinsics.round_f32(self)
   end
 
   def trunc
-    LibLLVM.trunc_f32(self)
+    Intrinsics.trunc_f32(self)
   end
 
   def **(other : Int32)
-    LibLLVM.powi_f32(self, other)
+    Intrinsics.powi_f32(self, other)
   end
 
   def **(other : Float32)
-    LibLLVM.pow_f32(self, other)
+    Intrinsics.pow_f32(self, other)
   end
 
   def **(other)
@@ -75,27 +75,27 @@ struct Float64
   end
 
   def ceil
-    LibLLVM.ceil_f64(self)
+    Intrinsics.ceil_f64(self)
   end
 
   def floor
-    LibLLVM.floor_f64(self)
+    Intrinsics.floor_f64(self)
   end
 
   def round
-    LibLLVM.round_f64(self)
+    Intrinsics.round_f64(self)
   end
 
   def trunc
-    LibLLVM.trunc_f64(self)
+    Intrinsics.trunc_f64(self)
   end
 
   def **(other : Int32)
-    LibLLVM.powi_f64(self, other)
+    Intrinsics.powi_f64(self, other)
   end
 
   def **(other : Float64)
-    LibLLVM.pow_f64(self, other)
+    Intrinsics.pow_f64(self, other)
   end
 
   def **(other)
