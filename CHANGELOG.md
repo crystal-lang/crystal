@@ -1,4 +1,4 @@
-## Next
+## 0.5.4 (2014-12-04)
 
 * **(breaking change)** `require "foo"` always looks up in `CRYSTAL_PATH`. `require "./foo"` looks up relative to the requiring file.
 * **(breaking change)** Renamed `Json` to `JSON`, `Xml` to `XML` and `Yaml` to `YAML` to follow [a convention](https://github.com/manastech/crystal/issues/279).
@@ -16,7 +16,6 @@
 * When invoking the compiler like this: `crystal foo.cr -o foo` the `build` command is assumed instead of `run`.
 * Added short symbol notation for methods that are operators (i.e. `:+`, `:*`, `:[]`, etc.).
 * Added `TimeSpan#ago`, `TimeSpan#from_now`, `MonthSpan#ago` and `MonthSpan#from_now`.
-* Made `alias_method`'s arguments order match that of Ruby (`alias_method new_method, old_method`).
 
 ## 0.5.3 (2014-11-06)
 
