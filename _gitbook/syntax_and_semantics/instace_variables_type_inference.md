@@ -151,7 +151,7 @@ The hierarchy graph now shows:
 
 You can see `@address` is `String?`, which is a short form notation of `String | Nil`. This means that the following gives a compile time error:
 
-```
+``` ruby
 # Error: undefined method 'length' for Nil
 john.address.length
 ```
