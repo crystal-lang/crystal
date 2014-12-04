@@ -18,6 +18,8 @@ lib LibM
   fun cos_f64 = "llvm.cos.f64"(value : Float64) : Float64
   fun exp_f32 = "llvm.exp.f32"(value : Float32) : Float32
   fun exp_f64 = "llvm.exp.f64"(value : Float64) : Float64
+  fun exp2_f32 = "llvm.exp2.f32"(value : Float32) : Float32
+  fun exp2_f64 = "llvm.exp2.f64"(value : Float64) : Float64
   fun floor_f32 = "llvm.floor.f32"(value : Float32) : Float32
   fun floor_f64 = "llvm.floor.f64"(value : Float64) : Float64
   fun log_f32 = "llvm.log.f32"(value : Float32) : Float32
@@ -79,11 +81,8 @@ lib LibM
   fun erfc_f64 = erfc(value : Float64) : Float64
   fun erf_f32 = erff(value : Float32) : Float32
   fun erf_f64 = erf(value : Float64) : Float64
-  fun exp2_f32 = exp2f(value : Float32) : Float32
-  fun exp2_f64 = exp2(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-
   ifdef darwin
     fun gamma_f32 = lgammaf(value : Float32) : Float32
     fun gamma_f64 = lgamma(value : Float64) : Float64
@@ -91,7 +90,6 @@ lib LibM
     fun gamma_f32 = gammaf(value : Float32) : Float32
     fun gamma_f64 = gamma(value : Float64) : Float64
   end
-
   fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32
   fun hypot_f64 = hypot(value1 : Float64, value2 : Float64) : Float64
   fun ilogb_f32 = ilogbf(value : Float32) : Int32
