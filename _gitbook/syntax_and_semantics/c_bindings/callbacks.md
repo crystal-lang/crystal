@@ -1,4 +1,4 @@
-# callbacks
+# Callbacks
 
 You can use function types in C declarations:
 
