@@ -3,6 +3,13 @@ def Object.from_json(string_or_io)
   new parser
 end
 
+def Array.from_json(string_or_io)
+  parser = JSON::PullParser.new(string_or_io)
+  new(parser) do |element|
+    yield element
+  end
+end
+
 def Nil.new(pull : JSON::PullParser)
   pull.read_null
 end
@@ -47,10 +54,16 @@ end
 
 def Array.new(pull : JSON::PullParser)
   ary = new
-  pull.read_array do
-    ary << T.new(pull)
+  new(pull) do |element|
+    ary << element
   end
   ary
+end
+
+def Array.new(pull : JSON::PullParser)
+  pull.read_array do
+    yield T.new(pull)
+  end
 end
 
 def Hash.new(pull : JSON::PullParser)

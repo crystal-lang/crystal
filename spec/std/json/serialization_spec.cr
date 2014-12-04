@@ -43,6 +43,14 @@ describe "JSON serialization" do
       io = StringIO.new "[1, 2, 3]"
       Array(Int32).from_json(io).should eq([1, 2, 3])
     end
+
+    it "does for Array(Int32) with block" do
+      elements = [] of Int32
+      Array(Int32).from_json("[1, 2, 3]") do |element|
+        elements << element
+      end
+      elements.should eq([1, 2, 3])
+    end
   end
 
   describe "to_json" do
