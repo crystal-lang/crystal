@@ -51,7 +51,7 @@ struct Number
 
     x = self.to_f
 
-    if x == 0 
+    if x == 0
         return x
     end
 

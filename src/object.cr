@@ -169,7 +169,7 @@ class Object
       @hash.\{{name.id}}(\{{*args}}) \{{block}}
     end
   end
-  
+
   macro alias_method(new_method, old_method)
     def {{new_method.id}}(*args)
       {{old_method.id}}(*args)
