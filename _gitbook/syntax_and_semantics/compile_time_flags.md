@@ -29,7 +29,7 @@ ifdef linux && x86_64
 end
 ```
 
-These flags are generally used to conditionally in C bindings to conditionally define types and functions. For example the very well known `size_t` type is defined like this in Crystal:
+These flags are generally used in C bindings to conditionally define types and functions. For example the very well known `size_t` type is defined like this in Crystal:
 
 ```ruby
 lib C
@@ -46,7 +46,7 @@ end
 ```ruby
 lib C
   struct SomeStruct
-    # Eror: the next line gives a parser error
+    # Error: the next line gives a parser error
     ifdef linux
       some_field : Int32
     else

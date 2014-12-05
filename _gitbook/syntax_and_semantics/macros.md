@@ -49,7 +49,7 @@ define_foo :struct
 
 (don't worry, you will almost never have to do something like the above)
 
-Macros are executed at compile time, and receive [AST nodes](http://en.wikipedia.org/wiki/Abstract_syntax_tree). Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.
+Macros are executed at compile time, and receive [AST nodes](http://en.wikipedia.org/wiki/Abstract_syntax_tree). By applying macro interpolations and controls they evaluate them to a string. This string must be parsed to a valid Crystal program.
 
 So, in the `getter` example, the macro receives a `SymbolLiteral` node. If we consider this alternative definition:
 
@@ -84,7 +84,7 @@ end
 #   def name
 #     @name
 #   end
-getter name
+getter :name
 ```
 
 The `id` method in macros gets rid of the colon from symbol literals and gets rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke `getter` like this:
@@ -100,4 +100,3 @@ getter name
 ```
 
 This is because macro arguments are never evaluated, so it doesn't matter what `name` means here: for the macro it will only be some AST node.
-

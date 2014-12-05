@@ -80,5 +80,3 @@ end
 
 p = even(7)
 {% endhighlight ruby %}
-
-

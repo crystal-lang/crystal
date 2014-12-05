@@ -8,7 +8,7 @@ lib U
   #
   #  union TimeZone {
   #    int some_int;
-  #    int some_float;
+  #    double some_float;
   #  };
   union IntOrFloat
     some_int : Int32

@@ -110,7 +110,7 @@ john.name.length
           ^~~~~~
 ```
 
-That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead an put a type restriction like `def initialize(@name : String)`, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create `Person` instance with types that have the same *interface* as a `String`, as long as you use a `Person`'s name like if it were a `String`.
+That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead and put a type restriction like `def initialize(@name : String)`, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create `Person` instance with types that have the same *interface* as a `String`, as long as you use a `Person`'s name like if it were a `String`.
 
 If you do want to have different `Person` types, one with `@name` being an `Int32` and one with `@name` being a `String`, you must use [generics](generics.html).
 
@@ -151,7 +151,7 @@ The hierarchy graph now shows:
 
 You can see `@address` is `String?`, which is a short form notation of `String | Nil`. This means that the following gives a compile time error:
 
-```
+``` ruby
 # Error: undefined method 'length' for Nil
 john.address.length
 ```

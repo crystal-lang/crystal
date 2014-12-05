@@ -1,4 +1,4 @@
-# callbacks
+# Callbacks
 
 You can use function types in C declarations:
 
@@ -18,7 +18,7 @@ f = ->(x : Int32) { x + 1 }
 X.callback(f)
 ```
 
-If you define the function inline in the same call you can ommit the argument types, the compiler will add the types for you based on the `fun` signature:
+If you define the function inline in the same call you can omit the argument types, the compiler will add the types for you based on the `fun` signature:
 
 ```ruby
 X.callback ->(x) { x + 1 }

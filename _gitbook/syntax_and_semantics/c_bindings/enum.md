@@ -43,7 +43,7 @@ end
 
 As you can see, some basic math is allowed for a member value: `+`, `-`, `*`, `/`, `&`, `|`, `<<`, `>>` and `%`.
 
-The type of an enum member is `Int32` by defualt, even if you specify a different type in a constant value:
+The type of an enum member is `Int32` by default, even if you specify a different type in a constant value:
 
 ```ruby
 lib X
@@ -65,7 +65,7 @@ lib X
   end
 end
 
-X::SomeEnum::Zero #=> 1_i8
+X::SomeEnum::Zero #=> 0_i8
 X::SomeEnum::Two  #=> 2_i8
 ```
 

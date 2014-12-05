@@ -1,4 +1,4 @@
-# variable
+# Variables
 
 Variables exposed by a C library can be declared inside a `lib` declaration using a global-variable-like declaration:
 
@@ -20,7 +20,7 @@ A variable can be marked as thread local with an attribute:
 
 ```ruby
 lib C
-  @:ThreadLocal
-  $errno = Int32
+  @[ThreadLocal]
+  $errno : Int32
 end
 ```
