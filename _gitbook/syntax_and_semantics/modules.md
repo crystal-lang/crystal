@@ -61,7 +61,7 @@ end
 Items.length #=> 3
 ```
 
-Both `include` and `extend` make constants defined in the module avialble to the including/extending type.
+Both `include` and `extend` make constants defined in the module available to the including/extending type.
 
 Both of them can be used at the top level to avoid writing a namespace over and over (although the chances of name clashes increase):
 
