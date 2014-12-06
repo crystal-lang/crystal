@@ -33,7 +33,7 @@ end
 
 This means that a `macro`'s body is not parsed using a regular Crystal parser. This also means that you can use macro interpolations and macro controls anywhere inside a `macro`'s body, which gives you greater flexibility.
 
-So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are `def`, `class`, `if`. The only ending is `end`. This rule is because you will probably want to generate Crystal code with macros. Remmeber this rule, because it will allow you to trick the macro parser for your benefit:
+So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are `def`, `class`, `if`. The only ending is `end`. This rule is because you will probably want to generate Crystal code with macros. Remember this rule, because it will allow you to trick the macro parser for your benefit:
 
 ``` ruby
 macro define_foo(kind)
