@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.13.1" data-basepath=".." data-revision="1417687948050">
+    <div class="book" data-github="manastech/crystal" data-level="3.13.1" data-basepath=".." data-revision="1417871706017">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1425,15 +1425,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variable.html">
+        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variables.html">
             
                 
-                    <a href="../syntax_and_semantics/c_bindings/variable.html">
+                    <a href="../syntax_and_semantics/c_bindings/variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.6.</b>
                         
-                         variable
+                         Variables
                     </a>
                 
             
@@ -1441,15 +1441,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constant.html">
+        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constants.html">
             
                 
-                    <a href="../syntax_and_semantics/c_bindings/constant.html">
+                    <a href="../syntax_and_semantics/c_bindings/constants.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.7.</b>
                         
-                         constant
+                         Constants
                     </a>
                 
             
@@ -1497,7 +1497,7 @@
                         
                             <b>3.14.10.</b>
                         
-                         callbacks
+                         Callbacks
                     </a>
                 
             
@@ -1902,15 +1902,15 @@
     
         <a href="../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 80%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/variables.html" title="Variables" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/constants.html" title="Constants" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
     
         <a href="../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 83.75%;"></a>
     
         <a href="../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 85%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="Callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
     
         <a href="../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 87.5%;"></a>
     
@@ -1945,7 +1945,7 @@
 <p>Just like <code>id</code>, you can invoke some other methods on AST nodes. The list here is fixed: you can&#39;t define your own macro methods.</p>
 <pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ASTNode</span></span>
   <span class="hljs-comment"># Returns a MacroId node with the *contents* of the node.</span>
-  <span class="hljs-comment"># For a SymbolLiteral, this is the symbol name witout</span>
+  <span class="hljs-comment"># For a SymbolLiteral, this is the symbol name without</span>
   <span class="hljs-comment"># the colon.</span>
   <span class="hljs-comment"># For a StringLiteral, this is the string's contents</span>
   <span class="hljs-comment"># without the quotes.</span>
@@ -1959,16 +1959,16 @@
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>stringify; <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Returns a BoolLiteral whose value is true if this node</span>
-  <span class="hljs-comment"># is equal to the other node</span>
+  <span class="hljs-comment"># is equal to the other node.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>==(other); <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Returns a BoolLiteral whose value is true if this node</span>
-  <span class="hljs-comment"># is not equal to the other node</span>
+  <span class="hljs-comment"># is not equal to the other node.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>!=(other); <span class="hljs-keyword">end</span>
 
-  <span class="hljs-comment"># Returns a BoolLiteral that is true when this ASTNode</span>
-  <span class="hljs-comment"># is truthy. Falsey AST nodes are just NilLiteral or</span>
-  <span class="hljs-comment"># a BoolLiteral with a false value: every other ASTNode</span>
+  <span class="hljs-comment"># Returns a BoolLiteral whose value is true when this</span>
+  <span class="hljs-comment"># ASTNode is truthy. Falsey AST nodes are just NilLiteral</span>
+  <span class="hljs-comment"># or a BoolLiteral with a false value: every other ASTNode</span>
   <span class="hljs-comment"># is truthy.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>!; <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
@@ -1993,14 +1993,14 @@
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>empty?; <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Similar to Array#first, but returns a NilLiteral</span>
-  <span class="hljs-comment"># if the array literal is empty</span>
+  <span class="hljs-comment"># if the array literal is empty.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>first; <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Similar to Array#join(joiner)</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>join(joiner); <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Similar to Array#last, but returns a NilLiteral</span>
-  <span class="hljs-comment"># if the array literal is empty</span>
+  <span class="hljs-comment"># if the array literal is empty.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>last; <span class="hljs-keyword">end</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>length; <span class="hljs-keyword">end</span>
@@ -2032,7 +2032,7 @@
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">StringLiteral</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">ASTNode</span></span></span>
   <span class="hljs-comment"># Returns a StringLiteral with a substring of this</span>
-  <span class="hljs-comment"># node's value</span>
+  <span class="hljs-comment"># node's value.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>[](<span class="hljs-constant">RangeLiteral</span>); <span class="hljs-keyword">end</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>capitalize; <span class="hljs-keyword">end</span>
@@ -2046,7 +2046,7 @@
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>length; <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Similar to String#lines,</span>
-  <span class="hljs-comment"># but returns an ArrayLiteral of StringLiteral</span>
+  <span class="hljs-comment"># but returns an ArrayLiteral of StringLiteral.</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>lines; <span class="hljs-keyword">end</span>
 
   <span class="hljs-comment"># Similar to String#split(divider),</span>

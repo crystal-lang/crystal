@@ -19,7 +19,7 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../../syntax_and_semantics/c_bindings/variable.html" />
+    <link rel="next" href="../../syntax_and_semantics/c_bindings/variables.html" />
     
     
     <link rel="prev" href="../../syntax_and_semantics/c_bindings/union.html" />
@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.14.5" data-basepath="../.." data-revision="1417687948050">
+    <div class="book" data-github="manastech/crystal" data-level="3.14.5" data-basepath="../.." data-revision="1417871706017">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1425,15 +1425,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variable.html">
+        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variables.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/variable.html">
+                    <a href="../../syntax_and_semantics/c_bindings/variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.6.</b>
                         
-                         variable
+                         Variables
                     </a>
                 
             
@@ -1441,15 +1441,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constant.html">
+        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constants.html">
             
                 
-                    <a href="../../syntax_and_semantics/c_bindings/constant.html">
+                    <a href="../../syntax_and_semantics/c_bindings/constants.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.7.</b>
                         
-                         constant
+                         Constants
                     </a>
                 
             
@@ -1497,7 +1497,7 @@
                         
                             <b>3.14.10.</b>
                         
-                         callbacks
+                         Callbacks
                     </a>
                 
             
@@ -1902,15 +1902,15 @@
     
         <a href="../../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter done " data-progress="3.14.5" style="left: 80%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
+        <a href="../../syntax_and_semantics/c_bindings/variables.html" title="Variables" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
+        <a href="../../syntax_and_semantics/c_bindings/constants.html" title="Constants" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
     
         <a href="../../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 83.75%;"></a>
     
         <a href="../../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 85%;"></a>
     
-        <a href="../../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
+        <a href="../../syntax_and_semantics/c_bindings/callbacks.html" title="Callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
     
         <a href="../../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 87.5%;"></a>
     
@@ -1974,7 +1974,7 @@
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>As you can see, some basic math is allowed for a member value: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>&amp;</code>, <code>|</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code> and <code>%</code>.</p>
-<p>The type of an enum member is <code>Int32</code> by defualt, even if you specify a different type in a constant value:</p>
+<p>The type of an enum member is <code>Int32</code> by default, even if you specify a different type in a constant value:</p>
 <pre><code class="lang-ruby">lib <span class="hljs-constant">X</span>
   enum <span class="hljs-constant">SomeEnum</span>
     <span class="hljs-constant">A</span> = <span class="hljs-number">1_</span>u32
@@ -1991,7 +1991,7 @@
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-constant">X::SomeEnum::Zero</span> <span class="hljs-comment">#=&gt; 1_i8</span>
+<span class="hljs-constant">X::SomeEnum::Zero</span> <span class="hljs-comment">#=&gt; 0_i8</span>
 <span class="hljs-constant">X::SomeEnum::Two</span>  <span class="hljs-comment">#=&gt; 2_i8</span>
 </code></pre>
 <p>You can use an enum as a type in a <code>fun</code> argument or <code>struct</code> or <code>union</code> members:</p>
@@ -2016,7 +2016,7 @@
         <a href="../../syntax_and_semantics/c_bindings/union.html" class="navigation navigation-prev " aria-label="Previous page: union"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../../syntax_and_semantics/c_bindings/variable.html" class="navigation navigation-next " aria-label="Next page: variable"><i class="fa fa-angle-right"></i></a>
+        <a href="../../syntax_and_semantics/c_bindings/variables.html" class="navigation navigation-next " aria-label="Next page: Variables"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

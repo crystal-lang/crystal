@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1417687948050">
+    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1417871706017">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1425,15 +1425,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variable.html">
+        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variables.html">
             
                 
-                    <a href="../syntax_and_semantics/c_bindings/variable.html">
+                    <a href="../syntax_and_semantics/c_bindings/variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.6.</b>
                         
-                         variable
+                         Variables
                     </a>
                 
             
@@ -1441,15 +1441,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constant.html">
+        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constants.html">
             
                 
-                    <a href="../syntax_and_semantics/c_bindings/constant.html">
+                    <a href="../syntax_and_semantics/c_bindings/constants.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.7.</b>
                         
-                         constant
+                         Constants
                     </a>
                 
             
@@ -1497,7 +1497,7 @@
                         
                             <b>3.14.10.</b>
                         
-                         callbacks
+                         Callbacks
                     </a>
                 
             
@@ -1902,15 +1902,15 @@
     
         <a href="../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 80%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/variables.html" title="Variables" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/constants.html" title="Constants" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
     
         <a href="../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 83.75%;"></a>
     
         <a href="../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 85%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="Callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
     
         <a href="../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 87.5%;"></a>
     
@@ -1966,7 +1966,7 @@
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>This means that a <code>macro</code>&#39;s body is not parsed using a regular Crystal parser. This also means that you can use macro interpolations and macro controls anywhere inside a <code>macro</code>&#39;s body, which gives you greater flexibility.</p>
-<p>So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are <code>def</code>, <code>class</code>, <code>if</code>. The only ending is <code>end</code>. This rule is because you will probably want to generate Crystal code with macros. Remmeber this rule, because it will allow you to trick the macro parser for your benefit:</p>
+<p>So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are <code>def</code>, <code>class</code>, <code>if</code>. The only ending is <code>end</code>. This rule is because you will probably want to generate Crystal code with macros. Remember this rule, because it will allow you to trick the macro parser for your benefit:</p>
 <pre><code class="lang-ruby">macro define_foo(kind)
   {{kind.id}} <span class="hljs-constant">Foo</span>
 
@@ -1978,7 +1978,7 @@
 define_foo <span class="hljs-symbol">:struct</span>
 </code></pre>
 <p>(don&#39;t worry, you will almost never have to do something like the above)</p>
-<p>Macros are executed at compile time, and receive <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">AST nodes</a>. Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.</p>
+<p>Macros are executed at compile time, and receive <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">AST nodes</a>. By applying macro interpolations and controls they evaluate them to a string. This string must be parsed to a valid Crystal program.</p>
 <p>So, in the <code>getter</code> example, the macro receives a <code>SymbolLiteral</code> node. If we consider this alternative definition:</p>
 <pre><code class="lang-ruby">macro getter(name)
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name}}
@@ -2006,7 +2006,7 @@ getter <span class="hljs-symbol">:name</span>
 <span class="hljs-comment">#   def name</span>
 <span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
 <span class="hljs-comment">#   end</span>
-getter name
+getter <span class="hljs-symbol">:name</span>
 </code></pre>
 <p>The <code>id</code> method in macros gets rid of the colon from symbol literals and gets rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke <code>getter</code> like this:</p>
 <pre><code class="lang-ruby">getter <span class="hljs-string">"name"</span>

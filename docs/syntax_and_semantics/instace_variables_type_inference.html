@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.6.3.7" data-basepath=".." data-revision="1417687948050">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.3.7" data-basepath=".." data-revision="1417871706017">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1425,15 +1425,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variable.html">
+        <li class="chapter " data-level="3.14.6" data-path="syntax_and_semantics/c_bindings/variables.html">
             
                 
-                    <a href="../syntax_and_semantics/c_bindings/variable.html">
+                    <a href="../syntax_and_semantics/c_bindings/variables.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.6.</b>
                         
-                         variable
+                         Variables
                     </a>
                 
             
@@ -1441,15 +1441,15 @@
         </li>
     
         
-        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constant.html">
+        <li class="chapter " data-level="3.14.7" data-path="syntax_and_semantics/c_bindings/constants.html">
             
                 
-                    <a href="../syntax_and_semantics/c_bindings/constant.html">
+                    <a href="../syntax_and_semantics/c_bindings/constants.html">
                         <i class="fa fa-check"></i>
                         
                             <b>3.14.7.</b>
                         
-                         constant
+                         Constants
                     </a>
                 
             
@@ -1497,7 +1497,7 @@
                         
                             <b>3.14.10.</b>
                         
-                         callbacks
+                         Callbacks
                     </a>
                 
             
@@ -1902,15 +1902,15 @@
     
         <a href="../syntax_and_semantics/c_bindings/enum.html" title="enum" class="chapter  " data-progress="3.14.5" style="left: 80%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/variable.html" title="variable" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/variables.html" title="Variables" class="chapter  " data-progress="3.14.6" style="left: 81.25%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/constant.html" title="constant" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/constants.html" title="Constants" class="chapter  " data-progress="3.14.7" style="left: 82.5%;"></a>
     
         <a href="../syntax_and_semantics/c_bindings/type.html" title="type" class="chapter  " data-progress="3.14.8" style="left: 83.75%;"></a>
     
         <a href="../syntax_and_semantics/c_bindings/alias.html" title="alias" class="chapter  " data-progress="3.14.9" style="left: 85%;"></a>
     
-        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
+        <a href="../syntax_and_semantics/c_bindings/callbacks.html" title="Callbacks" class="chapter  " data-progress="3.14.10" style="left: 86.25%;"></a>
     
         <a href="../builtin_types/README.html" title="Built-in types" class="chapter  new-chapter" data-progress="4" style="left: 87.5%;"></a>
     
@@ -2018,7 +2018,7 @@ in foo.cr:12: undefined method &#39;length&#39; for Int32
 
 john.name.length
           ^~~~~~
-</code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead an put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&#39;s name like if it were a <code>String</code>.</p>
+</code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead and put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&#39;s name like if it were a <code>String</code>.</p>
 <p>If you do want to have different <code>Person</code> types, one with <code>@name</code> being an <code>Int32</code> and one with <code>@name</code> being a <code>String</code>, you must use <a href="generics.html">generics</a>.</p>
 <p>Finally, if an instance variable is not assigned in all of the <code>initialize</code> defined in a class, it will be considered as also having the type <code>Nil</code>:</p>
 <pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
@@ -2049,9 +2049,10 @@ john.address = <span class="hljs-string">"Argentina"</span>
             @age : Int32
             @address : String?
 </code></pre><p>You can see <code>@address</code> is <code>String?</code>, which is a short form notation of <code>String | Nil</code>. This means that the following gives a compile time error:</p>
-<pre><code># Error: undefined method &#39;length&#39; for Nil
+<pre><code class="lang-ruby"><span class="hljs-comment"># Error: undefined method 'length' for Nil</span>
 john.address.length
-</code></pre><p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
+</code></pre>
+<p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
 
                     
                     </section>

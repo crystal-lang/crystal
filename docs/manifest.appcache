@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1417687948051
+# Revision 1417871706017
 
 CACHE:
 index.html
@@ -8,8 +8,8 @@ builtin_types/README.html
 builtin_types/char.html
 builtin_types/floating_point_types.html
 builtin_types/integer_types.html
-builtin_types/bool.html
 builtin_types/pointer.html
+builtin_types/bool.html
 builtin_types/reference.html
 builtin_types/struct.html
 builtin_types/symbol.html
@@ -31,7 +31,7 @@ syntax_and_semantics/break.html
 syntax_and_semantics/c_bindings/lib.html
 syntax_and_semantics/c_bindings/README.html
 syntax_and_semantics/c_bindings/callbacks.html
-syntax_and_semantics/c_bindings/constant.html
+syntax_and_semantics/c_bindings/constants.html
 syntax_and_semantics/c_bindings/enum.html
 syntax_and_semantics/c_bindings/fun.html
 syntax_and_semantics/c_bindings/alias.html
@@ -40,7 +40,7 @@ syntax_and_semantics/c_bindings/struct.html
 syntax_and_semantics/c_bindings/to_unsafe.html
 syntax_and_semantics/c_bindings/type.html
 syntax_and_semantics/c_bindings/union.html
-syntax_and_semantics/c_bindings/variable.html
+syntax_and_semantics/c_bindings/variables.html
 syntax_and_semantics/case.html
 syntax_and_semantics/classes_and_methods.html
 syntax_and_semantics/comments.html
