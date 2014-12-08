@@ -85,7 +85,7 @@ module Crystal
       ms = matches.map do |match|
         # Check that this call doesn't have a named arg not mentioned in new
         if named_args = @named_args
-          check_named_args_mismatch named_args, match.def
+          check_named_args_mismatch instance_type, named_args, match.def
         end
 
         new_def = match.def.expand_new_from_initialize(instance_type)

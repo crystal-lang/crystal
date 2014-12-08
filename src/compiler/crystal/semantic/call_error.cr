@@ -121,7 +121,7 @@ class Crystal::Call
 
       if named_args = @named_args
         defs_matching_args_length.each do |a_def|
-          check_named_args_mismatch named_args, a_def
+          check_named_args_mismatch owner, named_args, a_def
         end
       end
     end
@@ -136,34 +136,13 @@ class Crystal::Call
       msg << "no overload matches '#{full_name(owner, def_name)}'"
       msg << " with types #{args.map(&.type).join ", "}" if args.length > 0
       msg << "\n"
-      msg << "Overloads are:"
+
       defs.each do |a_def|
-        arg_names.push a_def.args.map(&.name)
-
-        msg << "\n - #{full_name(owner, def_name)}("
-        a_def.args.each_with_index do |arg, i|
-          msg << ", " if i > 0
-          msg << arg.name
-          if arg_type = arg.type?
-            msg << " : "
-            msg << arg_type
-          elsif res = arg.restriction
-            msg << " : "
-            if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.length == 1
-              if type_var = owner.type_vars[res.names[0]]?
-                msg << type_var.type
-              else
-                msg << res
-              end
-            else
-              msg << res
-            end
-          end
-        end
-
-        msg << ", &block" if a_def.yields
-        msg << ")"
+        arg_names.try &.push a_def.args.map(&.name)
       end
+
+      msg << "Overloads are:"
+      append_matches(owner, defs, msg)
 
       if matches
         cover = matches.cover
@@ -188,6 +167,50 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  def append_matches(owner, defs, str, matched_def = nil, argument_name = nil)
+    defs.each do |a_def|
+      str << "\n - "
+      append_def_full_name owner, a_def, str
+      if a_def.same?(matched_def)
+        str << " (trying this one)".colorize.blue
+      end
+      if a_def.args.any? { |arg| arg.default_value && arg.name == argument_name }
+        str << " (did you mean this one?)".colorize.yellow.bold
+      end
+    end
+  end
+
+  def append_def_full_name(owner, a_def, str)
+    str << full_name(owner, a_def.name)
+    str << '('
+    a_def.args.each_with_index do |arg, i|
+      str << ", " if i > 0
+      str << arg.name
+      if arg_default = arg.default_value
+        str << " = "
+        str << arg.default_value
+      end
+      if arg_type = arg.type?
+        str << " : "
+        str << arg_type
+      elsif res = arg.restriction
+        str << " : "
+        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.length == 1
+          if type_var = owner.type_vars[res.names[0]]?
+            str << type_var.type
+          else
+            str << res
+          end
+        else
+          str << res
+        end
+      end
+    end
+
+    str << ", &block" if a_def.yields
+    str << ")"
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
@@ -230,7 +253,7 @@ class Crystal::Call
     raise "wrong number of arguments for macro '#{def_name}' (#{args.length} for #{all_arguments_lengths.join ", "})"
   end
 
-  def check_named_args_mismatch(named_args, a_def)
+  def check_named_args_mismatch(owner, named_args, a_def)
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.name == named_arg.name }
       if found_index
@@ -248,6 +271,12 @@ class Crystal::Call
           if similar_name
             str << " (did you mean '#{similar_name}'?)".colorize.yellow.bold
           end
+
+          defs = owner.lookup_defs(a_def.name)
+
+          str << "\n"
+          str << "Matches are:"
+          append_matches owner, defs, str, matched_def: a_def, argument_name: named_arg.name
         end
         named_arg.raise msg
       end
