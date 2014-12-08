@@ -242,4 +242,33 @@ describe "Code gen: cast" do
       x.to_i
       )).to_i.should eq(1)
   end
+
+  it "allows casting nil to Void*" do
+    run(%(
+      (nil as Void*).address
+      )).to_i.should eq(0)
+  end
+
+  it "allows casting nilable type to Void* (1)" do
+    run(%(
+      a = 1 == 1 ? Reference.new : nil
+      (a as Void*).address
+      )).to_i.should_not eq(0)
+  end
+
+  it "allows casting nilable type to Void* (2)" do
+    run(%(
+      a = 1 == 2 ? Reference.new : nil
+      (a as Void*).address
+      )).to_i.should eq(0)
+  end
+
+  it "allows casting nilable type to Void* (3)" do
+    run(%(
+      class Foo
+      end
+      a = 1 == 1 ? Reference.new : (1 == 2 ? Foo.new : nil)
+      (a as Void*).address
+      )).to_i.should_not eq(0)
+  end
 end

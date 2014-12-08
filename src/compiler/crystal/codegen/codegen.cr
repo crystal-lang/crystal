@@ -789,7 +789,11 @@ module Crystal
       to_type = node.to.type.instance_type
 
       if to_type.pointer?
-        @last = cast_to last_value, to_type
+        if obj_type.nil_type?
+          @last = llvm_type(to_type).null
+        else
+          @last = cast_to last_value, to_type
+        end
       elsif obj_type.pointer?
         @last = cast_to last_value, to_type
       else

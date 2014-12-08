@@ -2179,6 +2179,10 @@ module Crystal
       @union_types.last
     end
 
+    def reference_like?
+      true
+    end
+
     def to_s(io)
       not_nil_type.to_s(io)
       io << "?"
