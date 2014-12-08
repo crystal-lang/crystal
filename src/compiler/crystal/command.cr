@@ -134,21 +134,23 @@ module Crystal::Command
         options.shift
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
-          target_filename = "./#{target_filename[cwd.length .. -1]}"
+          target_filename = "#{target_filename[cwd.length .. -1]}"
         end
         if splitted.length == 2
           target_line = splitted[1]
           options << "-l" << target_line
         end
+      elsif File.directory?(target_filename)
+        target_filename = "#{target_filename}/**"
       else
-        target_filename = "./spec/**"
+        error "'#{target_filename}' is not a file"
       end
     else
-      target_filename = "./spec/**"
+      target_filename = "spec/**"
     end
 
     compiler = Compiler.new
-    sources = [Compiler::Source.new("spec", %(require "#{target_filename}"))]
+    sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
 
     output_filename = tempfile "spec"
 
