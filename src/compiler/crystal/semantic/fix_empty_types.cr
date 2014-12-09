@@ -43,7 +43,7 @@ module Crystal
           @fixed.add(target_def.object_id)
 
           if !target_def.type? && target_def.owner.allocated
-            target_def.type = @mod.nil
+            target_def.type = @mod.no_return
           end
 
           target_def.accept_children self

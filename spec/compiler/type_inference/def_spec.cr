@@ -46,11 +46,11 @@ describe "Type inference: def" do
   end
 
   it "allows recursion" do
-    assert_type("def foo; foo; end; foo") { |mod| mod.nil }
+    assert_type("def foo; foo; end; foo") { no_return }
   end
 
   it "allows recursion with arg" do
-    assert_type("def foo(x); foo(x); end; foo 1") { |mod| mod.nil }
+    assert_type("def foo(x); foo(x); end; foo 1") { no_return }
   end
 
   it "types simple recursion" do
@@ -70,7 +70,7 @@ describe "Type inference: def" do
   end
 
   it "types mutual infinite recursion" do
-    assert_type("def foo; bar; end; def bar; foo; end; foo") { |mod| mod.nil }
+    assert_type("def foo; bar; end; def bar; foo; end; foo") { no_return }
   end
 
   it "types call with union argument" do

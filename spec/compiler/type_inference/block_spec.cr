@@ -635,4 +635,31 @@ describe "Block inference" do
       h.map { true }
       )) { array_of(bool) }
   end
+
+  it "allows invoking method on a object of a captured block with a type that was never instantiated" do
+    assert_type(%(
+      require "prelude"
+
+      class Bar
+        def initialize(@bar)
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      def foo(&block : Bar ->)
+        block
+      end
+
+      def method(bar)
+        bar.bar
+      end
+
+      foo do |bar|
+        method(bar).baz
+      end
+      )) { fun_of(types["Bar"], void) }
+  end
 end

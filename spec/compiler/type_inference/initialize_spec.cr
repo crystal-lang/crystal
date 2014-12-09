@@ -501,7 +501,7 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      )) { no_return }
   end
 
   it "doesn't type instance var as nilable if not used in method call" do
