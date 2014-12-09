@@ -164,6 +164,10 @@ module Crystal
 
       node = super
 
+      if (block = node.block) && (fun_literal = block.fun_literal)
+        block.fun_literal = fun_literal.transform(self)
+      end
+
       # Check if we have an untyped expression in this call, or an expression
       # whose type was never allocated. Replace it with raise.
       obj = node.obj

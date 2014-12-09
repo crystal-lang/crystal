@@ -1056,4 +1056,64 @@ describe "Code gen: block" do
       ary[0]
       )).to_i.should eq(1)
   end
+
+  it "codegens method invocation on a object of a captured block with a type that was never instantiated" do
+    build(%(
+      require "prelude"
+
+      class Bar
+        def initialize(@bar)
+        end
+
+        def bar
+          @bar
+        end
+
+        def baz(x)
+        end
+      end
+
+      def foo(&block : Bar ->)
+        block
+      end
+
+      def method(bar)
+        bar.bar
+      end
+
+      foo do |bar|
+        bar.baz method(bar).baz
+      end
+      ))
+  end
+
+  it "codegens method invocation on a object of a captured block with a type that was never instantiated (2)" do
+    build(%(
+      require "prelude"
+
+      class Bar
+        def initialize(@bar)
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      def foo(&block : Bar ->)
+        block
+      end
+
+      def method(bar)
+        bar.bar
+      end
+
+      def baz(x)
+      end
+
+      foo do |bar|
+        baz method(bar).baz
+      end
+      ))
+  end
 end
