@@ -32,6 +32,22 @@ class XML::Reader
     LibXML.xmlTextReaderIsEmptyElement(@reader) == 1
   end
 
+  def has_attributes?
+    LibXML.xmlTextReaderHasAttributes(@reader) == 1
+  end
+
+  def attributes_count
+    LibXML.xmlTextReaderAttributeCount(@reader)
+  end
+
+  def move_to_first_attribute
+    LibXML.xmlTextReaderMoveToFirstAttribute(@reader) == 1
+  end
+
+  def move_to_next_attribute
+    LibXML.xmlTextReaderMoveToNextAttribute(@reader) == 1
+  end
+
   def value
     String.new(LibXML.xmlTextReaderConstValue(@reader))
   end

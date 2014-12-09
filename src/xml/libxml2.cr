@@ -33,4 +33,8 @@ lib LibXML
   fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int32
   fun xmlTextReaderConstValue(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderHasAttributes(reader : XMLTextReader) : Int32
+  fun xmlTextReaderAttributeCount(reader : XMLTextReader) : Int32
+  fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int32
+  fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int32
 end
