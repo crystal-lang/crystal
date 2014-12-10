@@ -125,9 +125,9 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
 end
 
 def system(command : String)
-  Process.run("/bin/sh", {"-c", command}, output: STDOUT).success?
+  Process.run("/bin/sh", input: command, output: STDOUT).success?
 end
 
 def `(command)
-  Process.run("/bin/sh", {"-c", command}, output: true).output.not_nil!
+  Process.run("/bin/sh", input: command, output: true).output.not_nil!
 end
