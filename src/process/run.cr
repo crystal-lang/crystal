@@ -45,6 +45,7 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
 
   if input
     process_input = process_input.not_nil!
+    fork_input.not_nil!.close
 
     case input
     when String
