@@ -1,4 +1,4 @@
-require "gmp"
+require "./lib_gmp"
 
 struct BigInt < Int
   include Comparable(SignedInt)

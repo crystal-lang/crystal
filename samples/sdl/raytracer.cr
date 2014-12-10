@@ -1,6 +1,6 @@
 # Ported from Nimrod: https://gist.github.com/AdrianV/5774141
 
-require "sdl"
+require "./sdl/sdl"
 
 WIDTH = 1280
 HEIGHT = 720
@@ -209,9 +209,9 @@ def render(scene, surface)
                            (hh / 2.0 - yy) / hh * h,
                            -1.0).normalize
       pixel = trace(Ray.new(eye, dir), scene, 0.0)
-      r = Math.min(255, (pixel.x * 255.0).round)
-      g = Math.min(255, (pixel.y * 255.0).round)
-      b = Math.min(255, (pixel.z * 255.0).round)
+      r = Math.min(255, (pixel.x * 255.0).round.to_i)
+      g = Math.min(255, (pixel.y * 255.0).round.to_i)
+      b = Math.min(255, (pixel.z * 255.0).round.to_i)
       surface[i] = (b << 24) + (g << 16) + (r << 8)
       i += 1
     end

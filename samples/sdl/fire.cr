@@ -1,4 +1,4 @@
-require "sdl"
+require "./sdl/sdl"
 
 class Point
   MAX_LIFE = 50

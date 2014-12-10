@@ -1,4 +1,4 @@
-require "sdl"
+require "./sdl/sdl"
 
 class ColorMaker
   def initialize(delay)
