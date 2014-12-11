@@ -695,4 +695,17 @@ describe "Type inference: def overload" do
       ),
       "no overload matches"
   end
+
+  it "doesn't match with wrong number of type arguments (#313)" do
+    assert_error %(
+      class Foo(A, B)
+      end
+
+      def foo(x : Foo(Int32))
+      end
+
+      foo Foo(Int32, Int32).new
+      ),
+      "wrong number of type vars for Foo(A, B) (1 for 2)"
+  end
 end

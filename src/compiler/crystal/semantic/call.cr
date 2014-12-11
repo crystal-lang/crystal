@@ -156,7 +156,7 @@ class Crystal::Call
     signature = CallSignature.new(def_name, arg_types, block, named_args)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= owner.lookup_matches signature
+    matches ||= bubbling_exception { owner.lookup_matches signature }
 
     if matches.empty?
       if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?

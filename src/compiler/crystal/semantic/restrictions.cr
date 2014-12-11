@@ -311,7 +311,10 @@ module Crystal
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class as GenericClassType
-      return nil unless generic_class.type_vars.length == self.generic_class.type_vars.length
+
+      if generic_class.type_vars.length != other.type_vars.length
+        other.raise "wrong number of type vars for #{generic_class} (#{other.type_vars.length} for #{generic_class.type_vars.length})"
+      end
 
       i = 0
       type_vars.each do |name, type_var|
