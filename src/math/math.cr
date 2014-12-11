@@ -2,7 +2,6 @@ require "./libm"
 require "./stats"
 
 module Math
-  include Stats
   extend self
 
   PI = 3.14159265358979323846
@@ -204,5 +203,3 @@ module Math
     v += 1
   end
 end
-
-#require "./stats"

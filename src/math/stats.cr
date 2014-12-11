@@ -1,4 +1,4 @@
-module Stats
+module Math
   extend self
   
   def mean(value : StaticArray | Array | Tuple)
