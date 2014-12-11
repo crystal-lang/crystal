@@ -15,6 +15,7 @@ module Crystal
   class Program
     def lib_flags
       library_path = ["/usr/lib", "/usr/local/lib"]
+      has_pkg_config = nil
 
       String.build do |flags|
         link_attributes.reverse_each do |attr|
@@ -23,7 +24,11 @@ module Crystal
           end
 
           if libname = attr.lib
-            if libflags = pkg_config_flags(libname, attr.static?, library_path)
+            if has_pkg_config.nil?
+              has_pkg_config = Process.run("which", {"pkg-config"}, output: false).success?
+            end
+
+            if has_pkg_config && (libflags = pkg_config_flags(libname, attr.static?, library_path))
               flags << " " << libflags
             elsif attr.static? && (static_lib = find_static_lib(libname, library_path))
               flags << " " << static_lib
