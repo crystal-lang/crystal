@@ -24,4 +24,18 @@ describe OAuth::Consumer do
       uri.should eq("https://example.com/foo?oauth_token=request_token")
     end
   end
+
+  typeof(begin
+    consumer = OAuth::Consumer.new "example.com", "consumer_key", "consumer_secret", authorize_uri: "/foo"
+    consumer.get_request_token(oauth_callback: "foo.bar.baz")
+
+    request_token = OAuth::RequestToken.new "request_token", "request_secret"
+    consumer.get_access_token(request_token, "oauth_verifier")
+    consumer.get_access_token(request_token, "oauth_verifier", {"a": "b"})
+
+    access_token = OAuth::AccessToken.new "token", "secret"
+
+    http_client = HTTP::Client.new "example.com"
+    consumer.authenticate http_client, access_token
+  end)
 end
