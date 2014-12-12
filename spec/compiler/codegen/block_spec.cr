@@ -1116,4 +1116,47 @@ describe "Code gen: block" do
       end
       ))
   end
+
+  it "codegens bug with yield not_nil! that is never not nil" do
+    run(%(
+      lib C
+        fun exit(Int32) : NoReturn
+      end
+
+      class Object
+        def not_nil!
+          self
+        end
+      end
+
+      struct Nil
+        def not_nil!
+          C.exit(1)
+        end
+
+        def to_i
+          0
+        end
+      end
+
+      def foo
+        key = nil
+        if 1 == 2
+          yield key.not_nil!
+        end
+        yield 1
+      end
+
+      extra = nil
+
+      foo do |key|
+        if 1 == 1
+          extra = 1
+          extra + key
+        end
+      end
+
+      extra.to_i
+      )).to_i.should eq(1)
+  end
 end

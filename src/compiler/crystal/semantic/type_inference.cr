@@ -785,7 +785,15 @@ module Crystal
       check_call_in_initialize node
 
       @type_filters = nil
-      @unreachable = true if node.no_returns?
+
+      if node.no_returns?
+        # If any call argument is NoReturn don't mark this call as unreachable.
+        # We only do so if the call itself has type NoReturn and all argument
+        # types are avaialble (such as a raise call, or another call invoking raise).
+        unless node.args.any? &.type?.try &.no_return?
+          @unreachable = true
+        end
+      end
 
       false
     end

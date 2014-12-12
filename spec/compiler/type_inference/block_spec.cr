@@ -662,4 +662,32 @@ describe "Block inference" do
       end
       )) { fun_of(types["Bar"], void) }
   end
+
+
+  it "types bug with yield not_nil! that is never not nil" do
+    assert_type(%(
+      lib C
+        fun exit : NoReturn
+      end
+
+      def foo
+        key = nil
+        if 1 == 2
+          yield C.exit
+        end
+        yield 1
+      end
+
+      extra = nil
+
+      foo do |key|
+        if 1 == 1
+          extra = 1
+          extra + key
+        end
+      end
+
+      extra
+      )) { nilable(int32) }
+  end
 end
