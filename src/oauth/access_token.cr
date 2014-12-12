@@ -1,9 +1,12 @@
 class OAuth::AccessToken
   getter token
   getter secret
-  getter extra
 
   def initialize(@token, @secret, @extra = nil)
+  end
+
+  def extra
+    @extra ||= {} of String => String
   end
 
   def self.from_response(response)
@@ -49,7 +52,7 @@ class OAuth::AccessToken
     io.json_object do |object|
       object.field "oauth_token", @token
       object.field "oauth_token_secret", @secret
-      @extra.each do |key, value|
+      @extra.try &.each do |key, value|
         object.field key, value
       end
     end
