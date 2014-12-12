@@ -14,6 +14,12 @@ describe OAuth2::Client do
       uri = client.get_authorize_uri(scope: "foo bar")
       uri.should eq("https://localhost/baz?client_id=client_id&redirect_uri=uri&response_type=code&scope=foo%20bar")
     end
+
+    it "gets with state" do
+      client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri"
+      uri = client.get_authorize_uri(scope: "foo bar", state: "xyz")
+      uri.should eq("https://localhost/oauth2/authorize?client_id=client_id&redirect_uri=uri&response_type=code&scope=foo%20bar&state=xyz")
+    end
   end
 
   typeof(begin

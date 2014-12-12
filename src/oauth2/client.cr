@@ -9,12 +9,13 @@ class OAuth2::Client
     @redirect_uri = nil)
   end
 
-  def get_authorize_uri(scope = nil)
+  def get_authorize_uri(scope = nil, state = nil)
     query = CGI.build_form do |form|
       form.add "client_id", @client_id
       form.add "redirect_uri", @redirect_uri
       form.add "response_type", "code"
-      form.add "scope", scope
+      form.add "scope", scope unless scope.nil?
+      form.add "state", state unless state.nil?
     end
 
     URI.new(@scheme, @host, @port, @authorize_uri, query).to_s
