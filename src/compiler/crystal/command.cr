@@ -256,7 +256,7 @@ module Crystal::Command
         opts.on("--release", "Compile in release mode") do
           compiler.release = true
         end
-        opts.on("-s", "--stats", "Enable statistis output") do
+        opts.on("-s", "--stats", "Enable statistics output") do
           compiler.stats = true
         end
         opts.on("--single-module", "Generate a single LLVM module") do
