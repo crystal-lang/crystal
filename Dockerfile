@@ -9,7 +9,7 @@ ADD . /opt/crystal-head
 
 WORKDIR /opt/crystal-head
 ENV CRYSTAL_CONFIG_VERSION head
-ENV CRYSTAL_CONFIG_PATH src:libs:/opt/crystal-head/src:/opt/crystal-head/libs
+ENV CRYSTAL_CONFIG_PATH libs:/opt/crystal-head/src:/opt/crystal-head/libs
 
 RUN PATH=$PATH:/opt/llvm-3.5.0-1/bin crystal build --release src/compiler/crystal.cr
 

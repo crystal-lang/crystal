@@ -1,3 +1,8 @@
+## 0.5.5 (2014-12-12)
+
+* Removed `src` and crystal compiler `libs` directory from CRYSTAL_PATH.
+* Several bug fixes.
+
 ## 0.5.4 (2014-12-04)
 
 * **(breaking change)** `require "foo"` always looks up in `CRYSTAL_PATH`. `require "./foo"` looks up relative to the requiring file.

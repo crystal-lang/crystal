@@ -6,7 +6,7 @@ O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=src:libs:`pwd`/src:`pwd`/libs)
+EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 ifeq (Darwin,$(shell uname))
 	BUILD_PATH := PATH=`brew --prefix llvm`/bin:$$PATH LIBRARY_PATH=`brew --prefix crystal`/embedded/lib
 endif
