@@ -29,10 +29,18 @@ class OAuth2::Client
     end
   end
 
-  def get_access_token_using_refresh_token(refresh_token)
+  def get_access_token_using_refresh_token(refresh_token, scope = nil)
     get_access_token do |form|
       form.add("grant_type", "refresh_token")
       form.add("refresh_token", refresh_token)
+      form.add "scope", scope unless scope.nil?
+    end
+  end
+
+  def get_access_token_using_client_credentials(scope = nil)
+    get_access_token do |form|
+      form.add("grant_type", "client_credentials")
+      form.add("scope", scope) unless scope.nil?
     end
   end
 

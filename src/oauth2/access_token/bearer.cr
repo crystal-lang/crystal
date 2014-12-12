@@ -11,7 +11,7 @@ class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
 
   def to_json(io)
     io.json_object do |object|
-      object.field "token_type", "Bearer"
+      object.field "token_type", "bearer"
       object.field "access_token", access_token
       object.field "expires_in", expires_in
       object.field "refresh_token", refresh_token if refresh_token

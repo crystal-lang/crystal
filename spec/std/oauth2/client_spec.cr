@@ -26,5 +26,7 @@ describe OAuth2::Client do
     client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri", authorize_uri: "/baz"
     client.get_access_token_using_authorization_code("some_code")
     client.get_access_token_using_refresh_token("some_refresh_token")
+    client.get_access_token_using_refresh_token("some_refresh_token", scope: "some scope")
+    client.get_access_token_using_client_credentials(scope: "some scope")
   end)
 end
