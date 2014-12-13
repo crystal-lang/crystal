@@ -1943,28 +1943,55 @@ module Crystal
         if_var.nil_if_read = !!(then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read))
 
         if then_var && else_var
-          if_var.bind_to then_var unless then_unreachable
-          if_var.bind_to else_var unless else_unreachable
+          if then_unreachable
+            if_var.bind_to conditional_no_return(node.then, then_var)
+          else
+            if_var.bind_to then_var
+          end
+
+          if else_unreachable
+            if_var.bind_to conditional_no_return(node.else, else_var)
+          else
+            if_var.bind_to else_var
+          end
         elsif then_var
-          if_var.bind_to then_var unless then_unreachable
+          if then_unreachable
+            if_var.bind_to conditional_no_return(node.then, then_var)
+          else
+            if_var.bind_to then_var
+          end
+
           if cond_var
             if_var.bind_to cond_var
           elsif !else_unreachable
             if_var.bind_to @mod.nil_var
             if_var.nil_if_read = true
+          else
+            if_var.bind_to conditional_no_return(node.else, @mod.nil_var)
           end
         elsif else_var
-          if_var.bind_to else_var unless else_unreachable
+          if else_unreachable
+            if_var.bind_to conditional_no_return(node.else, else_var)
+          else
+            if_var.bind_to else_var
+          end
+
           if cond_var
             if_var.bind_to cond_var
           elsif !then_unreachable
             if_var.bind_to @mod.nil_var
             if_var.nil_if_read = true
+          else
+            if_var.bind_to conditional_no_return(node.then, @mod.nil_var)
           end
         end
 
         @vars[name] = if_var
       end
+    end
+
+    def conditional_no_return(node, var)
+       node.filtered_by NoReturnFilter.new(var)
     end
 
     def visit(node : While)

@@ -203,6 +203,33 @@ module Crystal
     end
   end
 
+  # In code like:
+  #
+  #   x = 1
+  #   if ...
+  #     x = "hi"
+  #     unreachable!
+  #   end
+  #
+  # `x` type must be Int32 after the `if`, because the String type
+  # doesn't matter afterwards as unreachable code comes. However, if
+  # `unreachable!` is only temporarily unreachable (because of type propagation
+  # that condition can change) we also want to bind `x` to String. But we
+  # want to do that conditionally on the `if`'s `then` block being NoReturn or
+  # not.
+  #
+  # This filter does that. It receives the var's type (String in this case)
+  # and applies a filter to the `then` (or `else`) part of the `if`: if it's
+  # no return, we return just that. If not, we return the var's type.
+  class NoReturnFilter < TypeFilter
+    def initialize(@var)
+    end
+
+    def apply(other)
+      other.try(&.no_return?) ? other : @var.type?
+    end
+  end
+
   struct TypeFilters
     def initialize
       @filters = {} of String => TypeFilter
