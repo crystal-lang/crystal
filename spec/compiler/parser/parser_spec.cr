@@ -799,8 +799,6 @@ describe "Parser" do
 
   it_parses "undef foo", Undef.new("foo")
 
-  it_parses "@:Foo", Attribute.new("Foo")
-  it_parses "@:Foo\n@:Bar", [Attribute.new("Foo"), Attribute.new("Bar")] of ASTNode
   it_parses "@[Foo]", Attribute.new("Foo")
   it_parses "@[Foo()]", Attribute.new("Foo")
   it_parses "@[Foo(1)]", Attribute.new("Foo", [1.int32] of ASTNode)
@@ -808,7 +806,6 @@ describe "Parser" do
   it_parses "@[Foo(1, foo: 2)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
   it_parses "@[Foo(1, foo: 2\n)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
 
-  it_parses "lib C\n@:Bar;end", LibDef.new("C", Attribute.new("Bar"))
   it_parses "lib C\n@[Bar]; end", LibDef.new("C", Attribute.new("Bar"))
 
   it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
@@ -964,6 +961,8 @@ describe "Parser" do
   assert_syntax_error "enum Foo < UInt16; end"
   assert_syntax_error "foo(1 2)"
   assert_syntax_error %(foo("bar" "baz"))
+
+  assert_syntax_error "@:Foo"
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end

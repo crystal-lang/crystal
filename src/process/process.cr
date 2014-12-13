@@ -1,5 +1,5 @@
 lib C
-  @:ReturnsTwice
+  @[ReturnsTwice]
   fun fork : Int32
 
   fun getpid : Int32

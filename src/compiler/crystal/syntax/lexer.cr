@@ -532,8 +532,6 @@ module Crystal
       when '@'
         start = current_pos
         case next_char
-        when ':'
-          next_char :"@:"
         when '['
           next_char :"@["
         else

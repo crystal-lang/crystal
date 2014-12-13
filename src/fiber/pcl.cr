@@ -11,7 +11,7 @@ lib Pcl
   fun co_set_data(cr : Coroutine, data : Void*) : Void*
 end
 
-@:NoInline
+@[NoInline]
 fun get_stack_top : Void*
   dummy :: Int32
   pointerof(dummy) as Void*
@@ -64,7 +64,7 @@ class Fiber
     end
   end
 
-  @:NoInline
+  @[NoInline]
   def resume(@arg = nil)
     if fiber = Fiber.current
       fiber.stack_top = get_stack_top

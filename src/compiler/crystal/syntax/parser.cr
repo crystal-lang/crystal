@@ -688,8 +688,6 @@ module Crystal
         parse_ident_or_global_call
       when :"->"
         parse_fun_literal
-      when :"@:"
-        parse_attribute_deprecated_syntax
       when :"@["
         parse_attribute
       when :NUMBER
@@ -930,14 +928,6 @@ module Crystal
       next_token_skip_space
 
       Attribute.new(name, args, named_args)
-    end
-
-    def parse_attribute_deprecated_syntax
-      next_token_skip_space
-      name = check_const
-      next_token_skip_space
-
-      Attribute.new(name)
     end
 
     def parse_begin
@@ -3379,8 +3369,6 @@ module Crystal
 
     def parse_lib_body_exp_without_location
       case @token.type
-      when :"@:"
-        parse_attribute_deprecated_syntax
       when :"@["
         parse_attribute
       when :IDENT

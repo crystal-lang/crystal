@@ -1,6 +1,6 @@
 lib C
   ifdef linux
-    @:ThreadLocal
+    @[ThreadLocal]
     $errno : Int32
   else
     $errno : Int32
