@@ -122,7 +122,7 @@ module Crystal::Command
     tempfile.close
 
     result = config.compile output_filename
-    execute output_filename, config.arguments
+    execute output_filename, config.arguments unless config.compiler.no_build?
   end
 
   private def self.run_specs(options)
