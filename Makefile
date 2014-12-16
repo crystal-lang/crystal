@@ -13,7 +13,7 @@ endif
 
 all: crystal
 spec: all_spec
-	CRYSTAL_BIN="$(O)/all_spec" crystal
+	$(O)/all_spec
 
 crystal: $(O)/crystal
 all_spec: $(O)/all_spec
