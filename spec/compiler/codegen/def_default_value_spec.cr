@@ -75,4 +75,23 @@ describe "Code gen: def with default value" do
       Foo.new("hello").x
       )) { int32 }
   end
+
+  it "resolves expanded call to current type, not to virtual type" do
+    assert_type(%(
+      class Foo
+        def foo(x = 1)
+          2
+        end
+      end
+
+      class Bar < Foo
+        def foo(x)
+          'a'
+        end
+      end
+
+      bar = Bar.new
+      bar.foo
+      )) { int32 }
+  end
 end

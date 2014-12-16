@@ -158,7 +158,10 @@ class Crystal::Def
         end
       end
 
-      expansion.body = Call.new(nil, name, new_args)
+      call = Call.new(nil, name, new_args)
+      call.is_expansion = true
+
+      expansion.body = call
     end
 
     expansion

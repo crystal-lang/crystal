@@ -1,6 +1,6 @@
 module Crystal
   class MatchContext
-    getter owner
+    property owner
     getter type_lookup
     getter free_vars
 

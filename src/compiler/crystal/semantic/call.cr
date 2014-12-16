@@ -9,6 +9,8 @@ class Crystal::Call
   property! parent_visitor
   property target_defs
   property expanded
+  property? is_expansion
+  @is_expansion = false
 
   def mod
     scope.program
@@ -156,7 +158,18 @@ class Crystal::Call
     signature = CallSignature.new(def_name, arg_types, block, named_args)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= bubbling_exception { owner.lookup_matches signature }
+
+    unless matches
+      # If this call is an expansion (because of default or named args) we must
+      # resolve the call in the type that defined the original method, without
+      # triggering a virtual lookup. But the context of lookup must be preseved.
+      if is_expansion?
+        matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
+        matches.each &.context.owner = owner
+      else
+        matches = bubbling_exception { owner.lookup_matches signature }
+      end
+    end
 
     if matches.empty?
       if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?

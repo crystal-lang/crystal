@@ -472,6 +472,7 @@ module Crystal
     def clone_without_location
       clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parenthesis)
       clone.name_length = name_length
+      clone.is_expansion = is_expansion?
       clone
     end
 
