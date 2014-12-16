@@ -112,4 +112,10 @@ describe "Char" do
     ('a' <=> 'a').should eq(0)
     ('b' <=> 'a').should be > 0
   end
+
+  it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
+    expect_raises do
+      (0x10ffff + 1).chr.each_byte { |b| }
+    end
+  end
 end
