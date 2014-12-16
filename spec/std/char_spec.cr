@@ -118,4 +118,8 @@ describe "Char" do
       (0x10ffff + 1).chr.each_byte { |b| }
     end
   end
+
+  it "does bytes" do
+    '\u{FF}'.bytes.should eq([195, 191])
+  end
 end

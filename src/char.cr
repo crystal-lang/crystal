@@ -167,6 +167,14 @@ struct Char
     end
   end
 
+  def bytes
+    bytes = [] of UInt8
+    each_byte do |byte|
+      bytes << byte
+    end
+    bytes
+  end
+
   def to_s
     String.new(4) do |buffer|
       appender = buffer.appender
