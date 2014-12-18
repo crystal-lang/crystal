@@ -460,6 +460,12 @@ describe "Parser" do
   it_parses "1 unless 3", Unless.new(3.int32, 1.int32)
   it_parses "1 while 3", While.new(3.int32, 1.int32, run_once: true)
   it_parses "1 until 3", Until.new(3.int32, 1.int32, run_once: true)
+
+  it_parses "foo if 3", If.new(3.int32, "foo".call)
+  it_parses "foo unless 3", Unless.new(3.int32, "foo".call)
+  it_parses "foo while 3", While.new(3.int32, "foo".call, run_once: true)
+  it_parses "foo until 3", Until.new(3.int32, "foo".call, run_once: true)
+
   it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int32), If.new(Assign.new("a".var, Call.new("a".var, "+", 20.int32)), Assign.new("a".var, Call.new("a".var, "+", 10.int32)))]
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", "a".call))
   it_parses "puts a unless true", Unless.new(true.bool, Call.new(nil, "puts", "a".call))
@@ -739,6 +745,11 @@ describe "Parser" do
   it_parses "a = 1; yield a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), [Rescue.new("a".var)])]
 
   it_parses "1 ensure 2", ExceptionHandler.new(1.int32, ensure: 2.int32)
+  it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
+
+  it_parses "foo ensure 2", ExceptionHandler.new("foo".call, ensure: 2.int32)
+  it_parses "foo rescue 2", ExceptionHandler.new("foo".call, [Rescue.new(2.int32)])
+
   it_parses "a = 1; a ensure a", [Assign.new("a".var, 1.int32), ExceptionHandler.new("a".var, ensure: "a".var)]
   it_parses "a = 1; yield a ensure a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), ensure: "a".var)]
 

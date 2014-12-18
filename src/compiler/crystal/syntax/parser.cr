@@ -2817,7 +2817,7 @@ module Crystal
       end
 
       case @token.value
-      when :if, :unless, :while, :rescue, :ensure
+      when :if, :unless, :while, :until, :rescue, :ensure
         return nil
       when :yield
         return nil if @stop_on_yield > 0
