@@ -71,26 +71,60 @@ struct CharReader
   end
 
   private def decode_char_at(pos)
+    # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
+
     first = byte_at(pos)
     if first < 0x80
       return yield first, 1
     end
 
-    second = byte_masked_at(pos + 1)
+    if first < 0xc2
+      invalid_byte_sequence
+    end
+
+    second = byte_at(pos + 1)
+    if (second & 0xc0) != 0x80
+      invalid_byte_sequence
+    end
+
     if first < 0xe0
-      return yield (first & 0x1f) << 6 | second, 2
+      return yield (first << 6) + (second - 0x3080), 2
     end
 
-    third = byte_masked_at(pos + 2)
+    third = byte_at(pos + 2)
+    if (third & 0xc0) != 0x80
+      invalid_byte_sequence
+    end
+
     if first < 0xf0
-      return yield (first & 0x0f) << 12 | (second << 6) | third, 3
+      if first == 0xe0 && second < 0xa0
+        invalid_byte_sequence
+      end
+
+      return yield (first << 12) + (second << 6) + (third - 0xE2080), 3
     end
 
-    fourth = byte_masked_at(pos + 3)
-    if first < 0xf8
-      return yield (first & 0x07) << 18 | (second << 12) | (third << 6) | fourth, 4
+    if first == 0xf0 && second < 0x90
+      invalid_byte_sequence
     end
 
+    if first == 0xf4 && second >= 0x90
+      invalid_byte_sequence
+    end
+
+    fourth = byte_at(pos + 3)
+    if (fourth & 0xc0) != 0x80
+      invalid_byte_sequence
+    end
+
+    if first < 0xf5
+      return yield (first << 18) + (second << 12) + (third << 6) + (fourth - 0x3C82080), 4
+    end
+
+    invalid_byte_sequence
+  end
+
+  private def invalid_byte_sequence
     raise "Invalid byte sequence in UTF-8 string"
   end
 
@@ -104,9 +138,5 @@ struct CharReader
 
   private def byte_at(i)
     @string.unsafe_byte_at(i).to_u32
-  end
-
-  private def byte_masked_at(i)
-    byte_at(i) & 0x3f
   end
 end
