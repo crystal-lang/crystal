@@ -206,7 +206,7 @@ module Crystal
         node.exp.accept self
 
         if node.output
-          @last.to_s(@str)
+          @last.to_s(@str, include_location: node.exp.is_a?(Yield))
         end
 
         false

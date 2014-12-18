@@ -276,4 +276,17 @@ describe "Type inference: macro" do
       Bar.new.foo
       )) { float64 }
   end
+
+  it "gives precise location info when doing yield inside macro" do
+    assert_error %(
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        1 + 'a'
+      end
+      ),
+      "Error in line 7"
+  end
 end

@@ -7,14 +7,14 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io)
-      visitor = ToSVisitor.new(io)
+    def to_s(io, include_location = false)
+      visitor = ToSVisitor.new(io, include_location)
       self.accept visitor
     end
   end
 
   class ToSVisitor < Visitor
-    def initialize(@str = StringIO.new)
+    def initialize(@str = StringIO.new, @include_location = false)
       @indent = 0
       @inside_macro = false
     end
@@ -232,6 +232,8 @@ module Crystal
     end
 
     def visit(node : Call)
+      output_location(node)
+
       if node.name == "`"
         visit_backtick(node.args[0])
         return false
@@ -1268,6 +1270,16 @@ module Crystal
         node.accept self
       end
       @str << newline
+    end
+
+    def output_location(node)
+      return unless @include_location
+
+      location = node.location
+      return unless location.is_a?(Location)
+
+      @str << ' '
+      location.to_s_as_comment(@str)
     end
 
     def to_s
