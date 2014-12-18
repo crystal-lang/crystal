@@ -3,6 +3,7 @@ before_install:
   - brew update
 install:
   - brew install gmp
+  - brew install bdw-gc
   - brew tap manastech/crystal
   - brew install crystal --with-llvm
 env: CRYSTAL_CONFIG_VERSION=ci
