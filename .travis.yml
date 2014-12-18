@@ -5,9 +5,7 @@ install:
   - brew install gmp
   - brew tap manastech/crystal
   - brew install crystal --with-llvm
-env:
-  - CRYSTAL_CONFIG_VERSION=ci
-  - LIBRARY_PATH=/usr/local/opt/crystal/embedded/lib
+env: CRYSTAL_CONFIG_VERSION=ci LIBRARY_PATH=/usr/local/opt/crystal/embedded/lib
 script:
   - make crystal spec
 notifications:
