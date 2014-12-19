@@ -1232,13 +1232,7 @@ module Crystal
         end
       end
 
-      if node.name.names.length == 1 && !node.name.global
-        scope = current_type
-        name = node.name.names.first
-      else
-        name = node.name.names.pop
-        scope = lookup_path_type node.name, create_modules_if_missing: true
-      end
+      scope, name = process_type_name(node.name)
 
       type = scope.types[name]?
 
@@ -1346,13 +1340,7 @@ module Crystal
         node.raise "can't declare module inside block"
       end
 
-      if node.name.names.length == 1 && !node.name.global
-        scope = current_type
-        name = node.name.names.first
-      else
-        name = node.name.names.pop
-        scope = lookup_path_type node.name, create_modules_if_missing: true
-      end
+      scope, name = process_type_name(node.name)
 
       type = scope.types[name]?
       if type
@@ -1665,13 +1653,7 @@ module Crystal
 
       check_valid_attributes node, ValidEnumDefAttributes, "enum"
 
-      if node.name.names.length == 1 && !node.name.global
-        scope = current_type
-        name = node.name.names.first
-      else
-        name = node.name.names.pop
-        scope = lookup_path_type node.name, create_modules_if_missing: true
-      end
+      scope, name = process_type_name(node.name)
 
       enum_type = scope.types[name]?
       if enum_type
@@ -2646,6 +2628,17 @@ module Crystal
         end
         node.attributes = attributes
       end
+    end
+
+    def process_type_name(node_name)
+      if node_name.names.length == 1 && !node_name.global
+        scope = current_type
+        name = node_name.names.first
+      else
+        name = node_name.names.pop
+        scope = lookup_path_type node_name, create_modules_if_missing: true
+      end
+      {scope, name}
     end
 
     def lookup_path_type(node : Self, create_modules_if_missing = false)
