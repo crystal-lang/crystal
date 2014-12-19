@@ -57,4 +57,27 @@ describe "Float" do
     Float64.cast(1_f32).should be_a(Float64)
     Float64.cast(1_f32).should eq(1)
   end
+
+  it "does nan?" do
+    1.5.nan?.should be_false
+    (0.0 / 0.0).nan?.should be_true
+  end
+
+  it "does infinite?" do
+    (0.0).infinite?.should be_nil
+    (-1.0/0.0).infinite?.should eq(-1)
+    (1.0/0.0).infinite?.should eq(1)
+
+    (0.0_f32).infinite?.should be_nil
+    (-1.0_f32/0.0_f32).infinite?.should eq(-1)
+    (1.0_f32/0.0_f32).infinite?.should eq(1)
+  end
+
+  it "does finite?" do
+    0.0.finite?.should be_true
+    1.5.finite?.should be_true
+    (1.0/0.0).finite?.should be_false
+    (-1.0/0.0).finite?.should be_false
+    (-0.0/0.0).finite?.should be_false
+  end
 end

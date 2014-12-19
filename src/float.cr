@@ -6,6 +6,22 @@ struct Float
   def +
     self
   end
+
+  def nan?
+    !(self == self)
+  end
+
+  macro def infinite? : Int32?
+    if nan? || self == 0 || self != 2 * self
+      nil
+    else
+      self > 0 ? 1 : -1
+    end
+  end
+
+  def finite?
+    !nan? && !infinite?
+  end
 end
 
 struct Float32
