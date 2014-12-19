@@ -11,7 +11,7 @@ struct Float
     !(self == self)
   end
 
-  macro def infinite? : Int32?
+  def infinite?
     if nan? || self == 0 || self != 2 * self
       nil
     else
