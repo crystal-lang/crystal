@@ -39,9 +39,14 @@ class Crystal::Call
     if obj_type.is_a?(LibType)
       recalculate_lib_call obj_type
       return
-    elsif !obj || obj_type
-      check_not_lib_out_args
     end
+
+    if !obj && (lib_type = scope()).is_a?(LibType)
+      recalculate_lib_call lib_type
+      return
+    end
+
+    check_not_lib_out_args
 
     if args.any? &.type?.try &.no_return?
       set_type mod.no_return

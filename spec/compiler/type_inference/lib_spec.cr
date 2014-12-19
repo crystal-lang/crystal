@@ -307,4 +307,16 @@ it "errors if unknown named arg" do
       1
       )) { int32 }
   end
+
+  it "allows invoking lib call without obj inside lib" do
+    assert_type(%(
+      lib Foo
+        fun foo : Int32
+
+        A = foo
+      end
+
+      Foo::A
+      )) { int32 }
+  end
 end
