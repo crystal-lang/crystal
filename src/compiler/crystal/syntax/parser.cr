@@ -3631,9 +3631,9 @@ module Crystal
     def parse_enum_def
       next_token_skip_space_or_newline
 
-      name = check_const
+      name = parse_ident allow_type_vars: false
+      skip_space
 
-      next_token_skip_space
       case @token.type
       when :":"
         next_token_skip_space_or_newline
@@ -3682,6 +3682,8 @@ module Crystal
 
       check_ident :end
       next_token_skip_space
+
+      raise "Bug: EnumDef name can only be a Path" unless name.is_a?(Path)
 
       EnumDef.new name, members, base_type
     end

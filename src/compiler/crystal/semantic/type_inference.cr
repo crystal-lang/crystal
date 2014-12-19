@@ -1237,7 +1237,7 @@ module Crystal
         name = node.name.names.first
       else
         name = node.name.names.pop
-        scope = lookup_path_type node.name, true
+        scope = lookup_path_type node.name, create_modules_if_missing: true
       end
 
       type = scope.types[name]?
@@ -1351,7 +1351,7 @@ module Crystal
         name = node.name.names.first
       else
         name = node.name.names.pop
-        scope = lookup_path_type node.name, true
+        scope = lookup_path_type node.name, create_modules_if_missing: true
       end
 
       type = scope.types[name]?
@@ -1665,10 +1665,18 @@ module Crystal
 
       check_valid_attributes node, ValidEnumDefAttributes, "enum"
 
-      enum_type = current_type.types[node.name]?
+      if node.name.names.length == 1 && !node.name.global
+        scope = current_type
+        name = node.name.names.first
+      else
+        name = node.name.names.pop
+        scope = lookup_path_type node.name, create_modules_if_missing: true
+      end
+
+      enum_type = scope.types[name]?
       if enum_type
         unless enum_type.is_a?(EnumType)
-          node.raise "#{node.name} is not a enum, it's a #{enum_type.type_desc}"
+          node.raise "#{name} is not a enum, it's a #{enum_type.type_desc}"
         end
       end
 
@@ -1685,7 +1693,7 @@ module Crystal
       is_flags = node.has_attribute?("Flags")
       all_value = 0_u64
       existed = !!enum_type
-      enum_type ||= EnumType.new(@mod, current_type, node.name, enum_base_type, is_flags)
+      enum_type ||= EnumType.new(@mod, scope, name, enum_base_type, is_flags)
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0
@@ -1729,7 +1737,7 @@ module Crystal
           end
         end
 
-        node.enum_type = current_type.types[node.name] = enum_type
+        node.enum_type = scope.types[name] = enum_type
       end
 
       node.type = mod.nil
