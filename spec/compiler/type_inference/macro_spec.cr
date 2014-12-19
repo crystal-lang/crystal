@@ -289,4 +289,20 @@ describe "Type inference: macro" do
       ),
       "Error in line 7"
   end
+
+  it "transforms with {{yield}} and call" do
+    assert_type(%(
+      macro foo
+        bar({{yield}})
+      end
+
+      def bar(value)
+        value
+      end
+
+      foo do
+        1 + 2
+      end
+      )) { int32 }
+  end
 end

@@ -35,7 +35,7 @@ module Crystal
       end
 
       begin
-        generated_source = @program.expand_macro owner, target_def.body
+        expanded_macro = @program.expand_macro owner, target_def.body
       rescue ex : Crystal::Exception
         target_def.raise "expanding macro", ex
       end
@@ -49,7 +49,7 @@ module Crystal
 
       arg_names = target_def.args.map(&.name)
 
-      generated_nodes = parse_macro_source(generated_source, the_macro, target_def, arg_names.to_set) do |parser|
+      generated_nodes = parse_macro_source(expanded_macro, the_macro, target_def, arg_names.to_set) do |parser|
         parser.parse_to_def(target_def)
       end
 
@@ -64,17 +64,22 @@ module Crystal
       target_def.body = generated_nodes
     end
 
-    def parse_macro_source(generated_source, the_macro, node, vars, inside_def = false)
-      parse_macro_source generated_source, the_macro, node, vars, inside_def, &.parse
+    def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false)
+      parse_macro_source expanded_macro, the_macro, node, vars, inside_def, &.parse
     end
 
-    def parse_macro_source(generated_source, the_macro, node, vars, inside_def = false)
+    def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false)
+      generated_source = expanded_macro.source
       begin
         parser = Parser.new(generated_source, [vars.dup])
         parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
         parser.visibility = node.visibility
         parser.def_nest = 1 if inside_def
-        normalize(yield parser)
+        generated_node = yield parser
+        if yields = expanded_macro.yields
+          generated_node = generated_node.transform(YieldsTransformer.new(yields))
+        end
+        normalize(generated_node)
       rescue ex : Crystal::SyntaxException
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s_with_source(generated_source)}\n#{"=" * 80}"
       end
@@ -82,6 +87,15 @@ module Crystal
   end
 
   class MacroExpander
+    # When a macro is expanded the result is a source code to be parsed.
+    # When a macro contains `{{yield}}`, instead of transforming the yielded
+    # node to a String, which would cause loss of location information (which could
+    # be added with a loc pragma, but it would be slow) a placeholder is created
+    # and later must be replaced. The mapping of placeholders is the `yields` property
+    # of this record. What must be replaced are argless calls whose name appear in this
+    # `yields` hash.
+    record ExpandedMacro, source, yields
+
     def initialize(@mod)
       @cache = {} of String => String
     end
@@ -89,13 +103,15 @@ module Crystal
     def expand(scope : Type, a_macro, call)
       visitor = MacroVisitor.new self, @mod, scope, a_macro, call
       a_macro.body.accept visitor
-      visitor.to_s
+      source = visitor.to_s
+      ExpandedMacro.new source, visitor.yields
     end
 
     def expand(scope : Type, node)
       visitor = MacroVisitor.new self, @mod, scope, node.location
       node.accept visitor
-      visitor.to_s
+      source = visitor.to_s
+      ExpandedMacro.new source, visitor.yields
     end
 
     def run(filename, args)
@@ -132,6 +148,7 @@ module Crystal
 
     class MacroVisitor < Visitor
       getter last
+      getter yields
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
@@ -206,7 +223,13 @@ module Crystal
         node.exp.accept self
 
         if node.output
-          @last.to_s(@str, include_location: node.exp.is_a?(Yield))
+          if node.exp.is_a?(Yield) && !@last.is_a?(Nop)
+            var_name = @mod.new_temp_var_name
+            yields = @yields ||= {} of String => ASTNode
+            yields[var_name] = @last
+            @last = Var.new(var_name)
+          end
+          @last.to_s(@str)
         end
 
         false
@@ -678,6 +701,15 @@ module Crystal
       def to_s(io)
         @str.to_s(io)
       end
+    end
+  end
+
+  class YieldsTransformer < Transformer
+    def initialize(@yields)
+    end
+
+    def transform(node : Call)
+      @yields[node.name]? || super
     end
   end
 end

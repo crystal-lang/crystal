@@ -23,16 +23,5 @@ module Crystal
     def to_s(io)
       io << filename << ":" << line_number << ":" << column_number
     end
-
-    def to_s_as_comment(io)
-      io << %(#<loc:")
-      io << filename
-      io << '"'
-      io << ','
-      io << line_number
-      io << ','
-      io << column_number
-      io << '>'
-    end
   end
 end

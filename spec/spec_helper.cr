@@ -103,6 +103,7 @@ def assert_macro(macro_args, macro_body, expected)
   program = Program.new
   call = Call.new(nil, "", yield program)
   result = program.expand_macro program, a_macro, call
+  result = result.source
   result = result[0 .. -2] if result.ends_with?(';')
   result.should eq(expected)
 end

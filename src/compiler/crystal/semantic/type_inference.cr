@@ -1080,12 +1080,12 @@ module Crystal
 
     def expand_macro(the_macro, node)
       begin
-        generated_source = yield
+        expanded_macro = yield
       rescue ex : Crystal::Exception
         node.raise "expanding macro", ex
       end
 
-      generated_nodes = @mod.parse_macro_source(generated_source, the_macro, node, Set.new(@vars.keys), inside_def: !!@typed_def)
+      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys), inside_def: !!@typed_def)
       generated_nodes.accept self
       generated_nodes
     end

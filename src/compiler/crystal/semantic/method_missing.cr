@@ -63,8 +63,8 @@ module Crystal
       a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
 
       fake_call = Call.new(nil, "method_missing", [name_node, args_node, block_node] of ASTNode)
-      generated_source = program.expand_macro self, method_missing, fake_call
-      generated_nodes = program.parse_macro_source(generated_source, method_missing, method_missing, args_nodes_names) do |parser|
+      expanded_macro = program.expand_macro self, method_missing, fake_call
+      generated_nodes = program.parse_macro_source(expanded_macro, method_missing, method_missing, args_nodes_names) do |parser|
         parser.parse_to_def(a_def)
       end
 
