@@ -155,6 +155,10 @@ class Crystal::Call
     end
   end
 
+  def lookup_matches_in(owner : LibType, arg_types, self_type = nil, def_name = self.name)
+    raise "lib fun call is not supported in dispatch"
+  end
+
   def lookup_matches_in(owner : Type, arg_types, self_type = nil, def_name = self.name)
     lookup_matches_in_type(owner, arg_types, self_type, def_name)
   end

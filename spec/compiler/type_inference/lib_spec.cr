@@ -319,4 +319,20 @@ it "errors if unknown named arg" do
       Foo::A
       )) { int32 }
   end
+
+  it "errors if lib fun call is part of dispatch" do
+    assert_error  %(
+      lib Foo
+        fun foo : Int32
+      end
+
+      class Bar
+        def foo
+        end
+      end
+
+      (Foo || Bar).foo
+      ),
+      "lib fun call is not supported in dispatch"
+  end
 end
