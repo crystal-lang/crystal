@@ -8,6 +8,7 @@ module Crystal
 
     property visibility
     property def_nest
+    getter? wants_doc
 
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
@@ -25,6 +26,11 @@ module Crystal
       @block_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
+      @wants_doc = false
+    end
+
+    def wants_doc=(@wants_doc)
+      @doc_enabled = true
     end
 
     def parse
@@ -212,6 +218,7 @@ module Crystal
     end
 
     def parse_op_assign
+      doc = @token.doc
       location = @token.location
 
       atomic = parse_question_colon
@@ -259,6 +266,8 @@ module Crystal
             push_var atomic
 
             atomic = Assign.new(atomic, value).at(location)
+            atomic.doc = doc
+            atomic
           end
         when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
           break unless can_be_assigned?(atomic)
@@ -738,16 +747,18 @@ module Crystal
           parse_yield_with_scope
         when :abstract
           check_not_inside_def("can't use abstract inside def") do
+            doc = @token.doc
+
             next_token_skip_space_or_newline
             case @token.type
             when :IDENT
               case @token.value
               when :def
-                parse_def is_abstract: true
+                parse_def is_abstract: true, doc: doc
               when :class
-                parse_class_def is_abstract: true
+                parse_class_def is_abstract: true, doc: doc
               when :struct
-                parse_class_def is_abstract: true, is_struct: true
+                parse_class_def is_abstract: true, is_struct: true, doc: doc
               else
                 unexpected_token
               end
@@ -897,6 +908,8 @@ module Crystal
     end
 
     def parse_attribute
+      doc = @token.doc
+
       next_token_skip_space
       name = check_const
       next_token_skip_space
@@ -927,7 +940,9 @@ module Crystal
       check :"]"
       next_token_skip_space
 
-      Attribute.new(name, args, named_args)
+      attr = Attribute.new(name, args, named_args)
+      attr.doc = doc
+      attr
     end
 
     def parse_begin
@@ -1147,9 +1162,12 @@ module Crystal
       CallArgs.new args, block, block_arg, nil, false
     end
 
-    def parse_class_def(is_abstract = false, is_struct = false)
+    def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
+      doc ||= @token.doc
+
       next_token_skip_space_or_newline
       name_column_number = @token.column_number
+
       name = parse_ident allow_type_vars: false
       skip_space
 
@@ -1170,7 +1188,9 @@ module Crystal
 
       raise "Bug: ClassDef name can only be a Path" unless name.is_a?(Path)
 
-      ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
+      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
+      class_def.doc = doc
+      class_def
     end
 
     def parse_type_vars
@@ -1203,6 +1223,7 @@ module Crystal
 
     def parse_module_def
       location = @token.location
+      doc = @token.doc
 
       next_token_skip_space_or_newline
 
@@ -1220,7 +1241,9 @@ module Crystal
 
       raise "Bug: ModuleDef name can only be a Path" unless name.is_a?(Path)
 
-      ModuleDef.new name, body, type_vars, name_column_number
+      module_def = ModuleDef.new name, body, type_vars, name_column_number
+      module_def.doc = doc
+      module_def
     end
 
     def parse_parenthesized_expression
@@ -1804,7 +1827,9 @@ module Crystal
       result
     end
 
-    def parse_def(is_abstract = false, check_return_type = false)
+    def parse_def(is_abstract = false, check_return_type = false, doc = nil)
+      doc ||= @token.doc
+
       instance_vars = prepare_parse_def
       a_def = parse_def_helper is_abstract: is_abstract, check_return_type: check_return_type
 
@@ -1815,6 +1840,7 @@ module Crystal
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
       a_def.uses_block_arg = @uses_block_arg
+      a_def.doc = doc
       @instance_vars = nil
       @calls_super = false
       @calls_initialize = false
@@ -1832,6 +1858,8 @@ module Crystal
     end
 
     def parse_macro
+      doc = @token.doc
+
       next_token_skip_space_or_newline
 
       if @token.keyword?(:def)
@@ -1919,6 +1947,7 @@ module Crystal
 
       node = Macro.new name, args, body, block_arg, splat_index
       node.name_column_number = name_column_number
+      node.doc = doc
       node
     end
 
@@ -2586,6 +2615,7 @@ module Crystal
 
     def parse_var_or_call(global = false, force_call = false)
       location = @token.location
+      doc = @token.doc
 
       name = @token.value.to_s
       name_column_number = @token.column_number
@@ -2638,34 +2668,37 @@ module Crystal
         block = parse_block(block)
       end
 
-      if block || block_arg || global
-        Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
-      else
-        if args
-          if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
-            sign = num.value[0].to_s
-            num.value = num.value.byte_slice(1)
-            Call.new(Var.new(name), sign, args)
-          else
-            Call.new(nil, name, args, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis)
-          end
+      node =
+        if block || block_arg || global
+          Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
         else
-          if @token.type == :"::"
-            next_token_skip_space_or_newline
-            declared_type = parse_single_type
-            declare_var = DeclareVar.new(Var.new(name), declared_type)
-            push_var declare_var
-            declare_var
-          elsif (!force_call && is_var)
-            if @block_arg_name && !@uses_block_arg && name == @block_arg_name
-              @uses_block_arg = true
+          if args
+            if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
+              sign = num.value[0].to_s
+              num.value = num.value.byte_slice(1)
+              Call.new(Var.new(name), sign, args)
+            else
+              Call.new(nil, name, args, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis)
             end
-            Var.new name
           else
-            Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
+            if @token.type == :"::"
+              next_token_skip_space_or_newline
+              declared_type = parse_single_type
+              declare_var = DeclareVar.new(Var.new(name), declared_type)
+              push_var declare_var
+              declare_var
+            elsif (!force_call && is_var)
+              if @block_arg_name && !@uses_block_arg && name == @block_arg_name
+                @uses_block_arg = true
+              end
+              Var.new name
+            else
+              Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
+            end
           end
         end
-      end
+      node.doc = doc
+      node
     end
 
     def preserve_last_call_has_parenthesis
@@ -3416,6 +3449,8 @@ module Crystal
     IdentOrConst = [:IDENT, :CONST]
 
     def parse_fun_def(require_body = false)
+      doc = @token.doc
+
       push_def if require_body
 
       next_token_skip_space_or_newline
@@ -3499,10 +3534,14 @@ module Crystal
 
       pop_def if require_body
 
-      FunDef.new name, args, return_type, varargs, body, real_name
+      fun_def = FunDef.new name, args, return_type, varargs, body, real_name
+      fun_def.doc = doc
+      fun_def
     end
 
     def parse_alias
+      doc = @token.doc
+
       next_token_skip_space_or_newline
       name = check_const
       next_token_skip_space_or_newline
@@ -3512,7 +3551,9 @@ module Crystal
       value = parse_single_type
       skip_space
 
-      Alias.new(name, value)
+      alias_node = Alias.new(name, value)
+      alias_node.doc = doc
+      alias_node
     end
 
     def parse_pointerof
@@ -3625,6 +3666,8 @@ module Crystal
     end
 
     def parse_enum_def
+      doc = @token.doc
+
       next_token_skip_space_or_newline
 
       name = parse_ident allow_type_vars: false
@@ -3681,7 +3724,9 @@ module Crystal
 
       raise "Bug: EnumDef name can only be a Path" unless name.is_a?(Path)
 
-      EnumDef.new name, members, base_type
+      enum_def = EnumDef.new name, members, base_type
+      enum_def.doc = doc
+      enum_def
     end
 
     def node_and_next_token(node)

@@ -19,11 +19,15 @@ module Crystal
     end
 
     def attributes
-      nil
     end
 
     def attributes=(attributes)
-      nil
+    end
+
+    def doc
+    end
+
+    def doc=(doc)
     end
 
     def has_attribute?(name)
@@ -436,6 +440,7 @@ module Crystal
     property :name_column_number
     property :has_parenthesis
     property :name_length
+    property :doc
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
       @name_length = nil
@@ -601,6 +606,7 @@ module Crystal
   class Assign < ASTNode
     property :target
     property :value
+    property :doc
 
     def initialize(@target, @value)
     end
@@ -850,6 +856,7 @@ module Crystal
     property :abstract
     property :attributes
     property :splat_index
+    property :doc
 
     def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false, @splat_index = nil)
       @body = Expressions.from body
@@ -909,6 +916,7 @@ module Crystal
     property :block_arg
     property :name_column_number
     property :splat_index
+    property :doc
 
     def initialize(@name, @args = [] of ASTNode, @body = Nop.new, @block_arg = nil, @splat_index = nil)
       @name_column_number = 0
@@ -1175,6 +1183,7 @@ module Crystal
     property :struct
     property :name_column_number
     property :attributes
+    property :doc
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0)
       @body = Expressions.from body
@@ -1203,6 +1212,7 @@ module Crystal
     property :body
     property :type_vars
     property :name_column_number
+    property :doc
 
     def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0)
       @body = Expressions.from body
@@ -1582,6 +1592,7 @@ module Crystal
     property :body
     property :real_name
     property :attributes
+    property :doc
 
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
     end
@@ -1651,6 +1662,7 @@ module Crystal
     property :members
     property :base_type
     property :attributes
+    property :doc
 
     def initialize(@name, @members = [] of ASTNode, @base_type = nil)
     end
@@ -1729,6 +1741,7 @@ module Crystal
   class Alias < ASTNode
     property :name
     property :value
+    property :doc
 
     def initialize(@name, @value)
     end
@@ -1803,6 +1816,7 @@ module Crystal
     property :name
     property :args
     property :named_args
+    property :doc
 
     def initialize(@name, @args = [] of ASTNode, @named_args = nil)
     end
