@@ -3,6 +3,8 @@ require "../exception"
 
 module Crystal
   class Lexer
+    property? doc_enabled
+
     def initialize(string)
       @reader = CharReader.new(string)
       @token = Token.new
@@ -10,6 +12,7 @@ module Crystal
       @column_number = 1
       @filename = ""
       @wants_regex = true
+      @doc_enabled = false
     end
 
     def filename=(filename)
@@ -33,8 +36,10 @@ module Crystal
           next_char_no_column_increment
           consume_loc_pragma
         else
-          while char != '\n' && char != '\0'
-            char = next_char_no_column_increment
+          if @doc_enabled
+            consume_doc
+          else
+            skip_comment
           end
         end
       end
@@ -947,6 +952,36 @@ module Crystal
       @wants_regex = true if reset_wants_regex
 
       @token
+    end
+
+    def consume_doc
+      char = current_char
+      start_pos = current_pos
+
+      # Ignore first whitespace after comment, like in `# some doc`
+      if char == ' '
+        char = next_char
+        start_pos = current_pos
+      end
+
+      while char != '\n' && char != '\0'
+        char = next_char_no_column_increment
+      end
+
+      if doc_buffer = @token.doc_buffer
+        doc_buffer << '\n'
+      else
+        @token.doc_buffer = doc_buffer = StringIO.new
+      end
+
+      doc_buffer.write slice_range(start_pos)
+    end
+
+    def skip_comment
+      char = current_char
+      while char != '\n' && char != '\0'
+        char = next_char_no_column_increment
+      end
     end
 
     def consume_whitespace
@@ -2033,6 +2068,7 @@ module Crystal
       @token.filename = @filename
       @token.location = nil
       @token.passed_backslash_newline = false
+      @token.doc_buffer = nil unless @token.type == :SPACE || @token.type == :NEWLINE
     end
 
     def next_token_skip_space
@@ -2076,6 +2112,10 @@ module Crystal
 
     def string_range(start_pos, end_pos)
       @reader.string.byte_slice(start_pos, end_pos - start_pos)
+    end
+
+    def slice_range(start_pos)
+      Slice.new(@reader.string.to_unsafe + start_pos, current_pos - start_pos)
     end
 
     def ident_start?(char)

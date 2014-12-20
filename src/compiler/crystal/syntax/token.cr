@@ -11,6 +11,7 @@ module Crystal
     property delimiter_state
     property macro_state
     property passed_backslash_newline
+    property doc_buffer
 
     record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields) do
       def self.default
@@ -38,6 +39,10 @@ module Crystal
       @delimiter_state = DelimiterState.default
       @macro_state = MacroState.default
       @passed_backslash_newline = false
+    end
+
+    def doc
+      @doc_buffer.try &.to_s
     end
 
     def location
