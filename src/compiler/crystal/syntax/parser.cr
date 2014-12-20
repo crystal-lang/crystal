@@ -472,6 +472,12 @@ module Crystal
             break
           end
         when :NEWLINE
+          # In these cases we don't want to chain a call
+          case atomic
+          when ClassDef, ModuleDef, EnumDef, FunDef, Def
+            break
+          end
+
           # Allow '.' after newline for chaining calls
           old_pos, old_line, old_column = current_pos, @line_number, @column_number
           @temp_token.copy_from @token
@@ -2148,6 +2154,7 @@ module Crystal
 
     def parse_def_helper(is_abstract = false, check_return_type = false)
       push_def
+      @doc_enabled = false
       @def_nest += 1
 
       next_token
@@ -2351,6 +2358,7 @@ module Crystal
       end
 
       @def_nest -= 1
+      @doc_enabled = @wants_doc
       pop_def
 
       node = Def.new name, args, body, receiver, block_arg, return_type, @yields, is_abstract, splat_index
