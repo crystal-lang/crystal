@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 SCRIPT_ROOT="$(dirname $(readlink $0 || echo $0))/.."
 CRYSTAL_DIR="$SCRIPT_ROOT/.build"
+export CRYSTAL_PATH=$SCRIPT_ROOT/src:libs
 if [ -x $CRYSTAL_DIR/crystal ]
 then
   echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
