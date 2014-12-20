@@ -4,6 +4,8 @@ module Crystal
   abstract class Type
     include Enumerable(self)
 
+    property doc
+
     def each
       yield self
     end

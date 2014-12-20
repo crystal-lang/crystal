@@ -418,6 +418,8 @@ module Crystal
       target.bind_to value
 
       const = Const.new(@mod, current_type, target.names.first, value, @types.dup, @scope)
+      const.doc ||= node.doc
+
       current_type.types[target.names.first] = const
 
       node.type = @mod.nil
@@ -468,6 +470,7 @@ module Crystal
       end
 
       check_valid_attributes node, ValidDefAttributes, "def"
+      node.doc ||= attributes_doc()
 
       target_type = case receiver = node.receiver
                     when Nil
@@ -1047,10 +1050,28 @@ module Crystal
         @mod.expand_macro (@scope || current_type), the_macro, node
       end
 
+      if node_doc = node.doc
+        generated_nodes.accept PropagateDocVisitor.new(node_doc)
+      end
+
       node.expanded = generated_nodes
       node.bind_to generated_nodes
 
       true
+    end
+
+    class PropagateDocVisitor < Visitor
+      def initialize(@doc)
+      end
+
+      def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
+        node.doc ||= @doc
+        false
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
     end
 
     def visit(node : MacroExpression)
@@ -1290,6 +1311,7 @@ module Crystal
         end
         type.abstract = node.abstract
         type.struct = node.struct
+        type.doc ||= node.doc
 
         if superclass.is_a?(InheritedGenericClass)
           superclass.extending_class = type
@@ -1353,6 +1375,7 @@ module Crystal
         else
           type = NonGenericModuleType.new @mod, scope, name
         end
+        type.doc ||= node.doc
         scope.types[name] = type
       end
 
@@ -1371,6 +1394,8 @@ module Crystal
       end
 
       alias_type = AliasType.new(@mod, current_type, node.name)
+      alias_type.doc = node.doc
+
       current_type.types[node.name] = alias_type
       node.value.accept self
       alias_type.aliased_type = node.value.type.instance_type
@@ -1560,6 +1585,8 @@ module Crystal
       end
 
       external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+      external.doc = node.doc
+
       if node_body = node.body
         vars = MetaVars.new
         args.each do |arg|
@@ -1676,6 +1703,7 @@ module Crystal
       all_value = 0_u64
       existed = !!enum_type
       enum_type ||= EnumType.new(@mod, scope, name, enum_base_type, is_flags)
+      enum_type.doc ||= node.doc || attributes_doc()
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0
@@ -1695,7 +1723,9 @@ module Crystal
             if enum_type.types.has_key?(member.name)
               member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
             end
-            enum_type.add_constant member
+            const_member = enum_type.add_constant member
+            const_member.doc = member.doc
+
             const_value.type = enum_type
             counter = is_flags ? counter * 2 : counter + 1
           when Def
@@ -2628,6 +2658,10 @@ module Crystal
         end
         node.attributes = attributes
       end
+    end
+
+    def attributes_doc
+      @attributes.try(&.first?).try &.doc
     end
 
     def process_type_name(node_name)

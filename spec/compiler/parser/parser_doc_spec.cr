@@ -15,6 +15,7 @@ describe "Parser doc" do
     {"constant assign", "A = 1"},
     {"alias", "alias Foo = Bar"},
     {"attribute", "@[Some]"},
+    {"private def", "private def foo\nend"},
     ].each do |tuple|
     desc, code = tuple
 

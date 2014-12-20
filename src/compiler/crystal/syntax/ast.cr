@@ -759,6 +759,7 @@ module Crystal
     property :name
     property :default_value
     property :restriction
+    property :doc
 
     def initialize(@name, @default_value = nil, @restriction = nil, @type = nil)
     end
@@ -1013,6 +1014,7 @@ module Crystal
   class VisibilityModifier < ASTNode
     property modifier
     property exp
+    property doc
 
     def initialize(@modifier, @exp)
     end

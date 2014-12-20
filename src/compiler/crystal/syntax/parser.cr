@@ -3312,9 +3312,15 @@ module Crystal
     end
 
     def parse_visibility_modifier(modifier)
+      doc = @token.doc
+
       next_token_skip_space
       exp = parse_op_assign
-      VisibilityModifier.new(modifier, exp)
+
+      modifier = VisibilityModifier.new(modifier, exp)
+      modifier.doc = doc
+      exp.doc = doc
+      modifier
     end
 
     def parse_yield_with_scope
@@ -3697,6 +3703,8 @@ module Crystal
         case @token.type
         when :CONST
           constant_name = @token.value.to_s
+          doc = @token.doc
+
           next_token_skip_space
           if @token.type == :"="
             next_token_skip_space_or_newline
@@ -3713,7 +3721,10 @@ module Crystal
             next_token_skip_statement_end
           end
 
-          members << Arg.new(constant_name, constant_value)
+          arg = Arg.new(constant_name, constant_value)
+          arg.doc = doc
+
+          members << arg
         when :IDENT
           if @token.value == :def
             members << parse_def

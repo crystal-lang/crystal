@@ -44,7 +44,11 @@ def assert_type(str)
   InferTypeResult.new(program, input)
 end
 
-def infer_type(node)
+def infer_type(code : String, wants_doc = false)
+  infer_type parse(code, wants_doc: wants_doc)
+end
+
+def infer_type(node : ASTNode, wants_doc = false)
   program = Program.new
   node = program.normalize node
   node = program.infer_type node
@@ -108,8 +112,10 @@ def assert_macro(macro_args, macro_body, expected)
   result.should eq(expected)
 end
 
-def parse(string)
-  Parser.parse string
+def parse(string, wants_doc = false)
+  parser = Parser.new(string)
+  parser.wants_doc = wants_doc
+  parser.parse
 end
 
 def build(code)
