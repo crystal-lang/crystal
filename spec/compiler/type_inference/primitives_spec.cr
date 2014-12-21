@@ -81,4 +81,15 @@ describe "Type inference: primitives" do
       x
       )) { (types["Hash"] as GenericClassType).instantiate([int32, char] of TypeVar) }
   end
+
+  it "computes correct hash value type if it's a function literal (#320)" do
+    assert_type(%(
+      require "prelude"
+
+      {"foo" => ->{ true }}
+      )) do
+        (types["Hash"] as GenericClassType).
+             instantiate([string, fun_of(bool)] of TypeVar)
+      end
+  end
 end

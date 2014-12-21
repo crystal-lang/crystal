@@ -97,7 +97,7 @@ module Crystal
       exps = Array(ASTNode).new(node.entries.length + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key, entry.value]).at(node)
+        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone]).at(node)
       end
       exps << temp_var.clone
 
@@ -128,8 +128,8 @@ module Crystal
       if of = node.of
         type_vars = [of.key, of.value] of ASTNode
       else
-        typeof_key = TypeOf.new(node.entries.map &.key).at(node)
-        typeof_value = TypeOf.new(node.entries.map &.value).at(node)
+        typeof_key = TypeOf.new(node.entries.map &.key.clone).at(node)
+        typeof_value = TypeOf.new(node.entries.map &.value.clone).at(node)
         type_vars = [typeof_key, typeof_value] of ASTNode
       end
 
@@ -144,7 +144,7 @@ module Crystal
         exps = Array(ASTNode).new(node.entries.length + 2)
         exps << Assign.new(temp_var.clone, constructor).at(node)
         node.entries.each do |entry|
-          exps << Call.new(temp_var.clone, "[]=", entry.key, entry.value).at(node)
+          exps << Call.new(temp_var.clone, "[]=", entry.key.clone, entry.value.clone).at(node)
         end
         exps << temp_var.clone
         Expressions.new(exps).at(node)
