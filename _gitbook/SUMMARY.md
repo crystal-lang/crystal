@@ -66,7 +66,7 @@
        * @[NoInline]
        * @[ReturnsTwice]
        * [@[Raises]]([raises])
-   * Requiring files
+   * [Requiring files](syntax_and_semantics/requiring_files.md)
    * Low-level primitives
        * pointerof
        * sizeof
@@ -108,3 +108,4 @@
    * Array
    * Hash
    * Regex
+
