@@ -210,4 +210,47 @@ describe "Type inference: doc" do
     bar_assign = foo.lookup_defs("bar=").first
     bar_assign.doc.should eq("Hello")
   end
+
+  it "stores doc for nodes defined in macro call (2)" do
+    result = infer_type %(
+      macro foo
+        class Foo
+        end
+      end
+
+      # Hello
+      foo
+    )
+    program = result.program
+    foo = program.types["Foo"]
+    foo.doc.should eq("Hello")
+  end
+
+  it "stores doc for class if reopening" do
+    result = infer_type %(
+      class Foo
+      end
+
+      # Hello
+      class Foo
+      end
+    )
+    program = result.program
+    foo = program.types["Foo"]
+    foo.doc.should eq("Hello")
+  end
+
+  it "stores doc for module if reopening" do
+    result = infer_type %(
+      module Foo
+      end
+
+      # Hello
+      module Foo
+      end
+    )
+    program = result.program
+    foo = program.types["Foo"]
+    foo.doc.should eq("Hello")
+  end
 end

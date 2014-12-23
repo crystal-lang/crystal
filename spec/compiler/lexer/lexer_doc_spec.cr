@@ -60,6 +60,31 @@ describe "Lexer doc" do
     token = lexer.next_token
     token.type.should eq(:NEWLINE)
     token.doc.should eq("hello\nworld")
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.doc.should eq("hello\nworld")
+  end
+
+  it "lexes with doc enabled and docs, one line comment with two newlines and another comment" do
+    lexer = Lexer.new(%(# hello\n\n    # world\n1))
+    lexer.doc_enabled = true
+
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    token.doc.should be_nil
+
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+    token.doc.should be_nil
+
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    token.doc.should eq("world")
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.doc.should eq("world")
   end
 
   it "resets doc after non newline or space token" do

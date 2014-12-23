@@ -1050,10 +1050,6 @@ module Crystal
         @mod.expand_macro (@scope || current_type), the_macro, node
       end
 
-      if node_doc = node.doc
-        generated_nodes.accept PropagateDocVisitor.new(node_doc)
-      end
-
       node.expanded = generated_nodes
       node.bind_to generated_nodes
 
@@ -1062,6 +1058,10 @@ module Crystal
 
     class PropagateDocVisitor < Visitor
       def initialize(@doc)
+      end
+
+      def visit(node : Expressions)
+        true
       end
 
       def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
@@ -1107,6 +1107,11 @@ module Crystal
       end
 
       generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys), inside_def: !!@typed_def)
+
+      if node_doc = node.doc
+        generated_nodes.accept PropagateDocVisitor.new(node_doc)
+      end
+
       generated_nodes.accept self
       generated_nodes
     end
@@ -1311,7 +1316,6 @@ module Crystal
         end
         type.abstract = node.abstract
         type.struct = node.struct
-        type.doc ||= node.doc
 
         if superclass.is_a?(InheritedGenericClass)
           superclass.extending_class = type
@@ -1319,6 +1323,8 @@ module Crystal
 
         scope.types[name] = type
       end
+
+      type.doc ||= node.doc
 
       pushing_type(type) do
         if created_new_type
@@ -1375,9 +1381,10 @@ module Crystal
         else
           type = NonGenericModuleType.new @mod, scope, name
         end
-        type.doc ||= node.doc
         scope.types[name] = type
       end
+
+      type.doc ||= node.doc
 
       pushing_type(type) do
         node.body.accept self

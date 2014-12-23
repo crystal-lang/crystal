@@ -1012,11 +1012,13 @@ module Crystal
         when '\n'
           next_char_no_column_increment
           @line_number += 1
+          @token.doc_buffer = nil
         when '\r'
           if next_char_no_column_increment != '\n'
             raise "expected '\\n' after '\\r'"
           end
           @line_number += 1
+          @token.doc_buffer = nil
         else
           break
         end
