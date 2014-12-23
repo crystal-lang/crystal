@@ -260,4 +260,11 @@ describe "File" do
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
   end
+
+  it "writes" do
+    filename = "#{__DIR__}/data/temp_write.txt"
+    File.write(filename, "hello")
+    File.read(filename).strip.should eq("hello")
+    File.delete(filename)
+  end
 end
