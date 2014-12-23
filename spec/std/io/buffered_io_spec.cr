@@ -49,4 +49,11 @@ describe "BufferedIO" do
     io.read_byte.should eq('o'.ord)
     io.read_char.should be_nil
   end
+
+  it "does new with block" do
+    str = StringIO.new
+    res = BufferedIO.new str, &.print "Hello"
+    res.should be(str)
+    str.to_s.should eq("Hello")
+  end
 end

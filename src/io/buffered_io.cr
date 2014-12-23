@@ -7,6 +7,13 @@ class BufferedIO(T)
     @out_buffer = StringIO.new
   end
 
+  def self.new(io)
+    buffered_io = new(io)
+    yield buffered_io
+    buffered_io.flush
+    io
+  end
+
   def gets
     String.build do |buffer|
       loop do
