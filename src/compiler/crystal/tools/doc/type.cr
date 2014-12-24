@@ -80,6 +80,8 @@ class Crystal::Doc::Type
   def instance_methods
     @instance_methods ||= begin
       case type = @type
+      when Program
+        [] of Method
       when DefContainer
         defs = [] of Method
         type.defs.try &.each do |def_name, defs_with_metadata|

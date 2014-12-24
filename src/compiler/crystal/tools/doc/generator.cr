@@ -9,7 +9,7 @@ class Crystal::Doc::Generator
     types = collect_subtypes(@program)
 
     program_type = type(@program)
-    if program_type.instance_methods.any? { |method| must_include? method }
+    if program_type.class_methods.any? { |method| must_include? method }
       types.insert 0, program_type
     end
 
