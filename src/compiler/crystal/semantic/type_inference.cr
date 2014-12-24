@@ -2738,6 +2738,11 @@ module Crystal
                 end
               else
                 next_type = NonGenericModuleType.new(@mod, base_lookup, name)
+
+                if @mod.wants_doc? && (location = node.location)
+                  next_type.locations << location
+                end
+
                 base_lookup.types[name] = next_type
               end
               base_lookup = next_type

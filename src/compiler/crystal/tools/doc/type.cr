@@ -1,5 +1,3 @@
-require "ecr/macros"
-
 class Crystal::Doc::Type
   getter type
 
@@ -169,7 +167,20 @@ class Crystal::Doc::Type
           included_modules << @generator.type(parent)
         end
       end
-      included_modules.sort_by! &.name
+      included_modules.sort_by! &.full_name
+    end
+  end
+
+  def extended_modules
+    @extended_modules ||= begin
+      parents = @type.metaclass.parents || [] of Crystal::Type
+      extended_modules = [] of Type
+      parents.each do |parent|
+        if parent.module? || parent.is_a?(IncludedGenericModule)
+          extended_modules << @generator.type(parent)
+        end
+      end
+      extended_modules.sort_by! &.full_name
     end
   end
 
@@ -186,7 +197,7 @@ class Crystal::Doc::Type
 
           subclasses << @generator.type(subclass)
         end
-        subclasses.sort_by! &.name
+        subclasses.sort_by! &.full_name
       else
         [] of Type
       end
@@ -222,6 +233,34 @@ class Crystal::Doc::Type
     append_type_vars io
   end
 
+  def path
+    if container = container()
+      "#{container.dir}/#{name}.html"
+    else
+      "#{name}.html"
+    end
+  end
+
+  def path_from(type)
+    "#{"../" * type.nesting}#{path}"
+  end
+
+  def dir
+    if container = container()
+      "#{container.dir}/#{name}"
+    else
+      name.to_s
+    end
+  end
+
+  def nesting
+    if container = container()
+      1 + container.nesting
+    else
+      0
+    end
+  end
+
   def doc
     @type.doc
   end
@@ -229,10 +268,6 @@ class Crystal::Doc::Type
   def to_s(io)
     io << name
     append_type_vars io
-  end
-
-  def render(__io__)
-    embed_ecr "#{__DIR__}/type.ecr", "__io__"
   end
 
   private def append_type_vars(io)

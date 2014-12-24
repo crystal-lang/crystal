@@ -259,4 +259,14 @@ describe "Type inference: doc" do
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
   end
+
+  it "stores locations for auto-generated module" do
+    result = infer_type %(
+      class Foo::Bar
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+    foo.locations.length.should eq(1)
+  end
 end

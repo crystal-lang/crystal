@@ -26,7 +26,7 @@ class Crystal::Doc::Generator
 
       File.open(filename, "w") do |file|
         io = BufferedIO.new(file)
-        type.render io
+        TypeTemplate.new(type).to_s io
         io.flush
       end
 

@@ -1,33 +1,65 @@
-<h1><%= kind %> <%= full_name %></h1>
+<html>
+<head>
+  <style>
+  body {
+    font-family: "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
+  }
+  </style>
+</head>
+<body>
+<h1><%= type.kind %> <%= type.full_name %></h1>
 
-<% if doc = doc() %>
+<% if doc = type.doc %>
   <h2>Overview</h2>
 
   <%= doc.gsub(/\n/, "<br\>") %>
 <% end %>
 
-<% unless subclasses.empty? %>
-  <h2>Direct Known Subclasses</h2>
-  <% subclasses.each_with_index do |subclass, i| %>
+<% if superclass = type.superclass %>
+  <h2>Superclass</h2>
+  <a href="<%= superclass.path_from(type) %>"><%= superclass.full_name %></a>
+<% end %>
+
+<% unless type.included_modules.empty? %>
+  <h2>Included modules</h2>
+  <% type.included_modules.each_with_index do |mod, i| %>
     <% if i > 0 %>,<% end %>
-    <%= subclass %>
+    <a href="<%= mod.path_from(type) %>"><%= mod.full_name %></a>
   <% end %>
 <% end %>
 
-<% unless class_methods.empty? %>
+<% unless type.extended_modules.empty? %>
+  <h2>Extended modules</h2>
+  <% type.extended_modules.each_with_index do |mod, i| %>
+    <% if i > 0 %>,<% end %>
+    <a href="<%= mod.path_from(type) %>"><%= mod.full_name %></a>
+  <% end %>
+<% end %>
+
+<% unless type.subclasses.empty? %>
+  <h2>Direct Known Subclasses</h2>
+  <% type.subclasses.each_with_index do |subclass, i| %>
+    <% if i > 0 %>,<% end %>
+    <a href="<%= subclass.path_from(type) %>"><%= subclass.full_name %></a>
+  <% end %>
+<% end %>
+
+<% unless type.class_methods.empty? %>
   <h2>Class Method summary</h2>
   <ul>
-    <% class_methods.each do |method| %>
+    <% type.class_methods.each do |method| %>
       <li><strong>.<%= method.name %></strong><%= method.args_to_s %></li>
     <% end %>
   </ul>
 <% end %>
 
-<% unless instance_methods.empty? %>
+<% unless type.instance_methods.empty? %>
   <h2>Instance Method summary</h2>
   <ul>
-    <% instance_methods.each do |method| %>
+    <% type.instance_methods.each do |method| %>
       <li><strong>#<%= method.name %></strong><%= method.args_to_s %></li>
     <% end %>
   </ul>
 <% end %>
+</body>
+</html>
