@@ -25,9 +25,9 @@ class Crystal::Doc::Generator
       end
 
       File.open(filename, "w") do |file|
-        BufferedIO.new(file) do |io|
-          type.render io
-        end
+        io = BufferedIO.new(file)
+        type.render io
+        io.flush
       end
 
       next if type.program?
