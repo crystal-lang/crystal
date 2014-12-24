@@ -26,6 +26,7 @@ module Crystal
     property? stats
     property  target_triple
     property? verbose
+    property? wants_doc
 
     def initialize
       @debug = false
@@ -37,6 +38,7 @@ module Crystal
       @single_module = false
       @stats = false
       @verbose = false
+      @wants_doc = false
     end
 
     def compile(source : Source, output_filename)
@@ -50,6 +52,7 @@ module Crystal
         program.flags = cross_compile_flags
       end
       program.flags << "release" if @release
+      program.wants_doc = wants_doc?
 
       node, original_node = parse program, sources
       node = infer_type program, node
@@ -68,6 +71,7 @@ module Crystal
 
           parser = Parser.new(source.code)
           parser.filename = source.filename
+          parser.wants_doc = wants_doc?
           parser.parse
         end
         node = Expressions.from(nodes)

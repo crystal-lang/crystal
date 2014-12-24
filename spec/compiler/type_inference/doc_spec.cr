@@ -6,10 +6,11 @@ describe "Type inference: doc" do
       # Hello
       class Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
+    foo.locations.length.should eq(1)
   end
 
   it "stores doc for abstract class" do
@@ -17,7 +18,7 @@ describe "Type inference: doc" do
       # Hello
       abstract class Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
@@ -28,10 +29,11 @@ describe "Type inference: doc" do
       # Hello
       struct Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
+    foo.locations.length.should eq(1)
   end
 
   it "stores doc for module" do
@@ -39,10 +41,11 @@ describe "Type inference: doc" do
       # Hello
       module Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
+    foo.locations.length.should eq(1)
   end
 
   it "stores doc for def" do
@@ -52,7 +55,7 @@ describe "Type inference: doc" do
         def bar
         end
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
@@ -66,7 +69,7 @@ describe "Type inference: doc" do
         private def bar
         end
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
@@ -81,7 +84,7 @@ describe "Type inference: doc" do
         def bar
         end
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
@@ -94,7 +97,7 @@ describe "Type inference: doc" do
         # Hello
         abstract def bar
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
@@ -108,7 +111,7 @@ describe "Type inference: doc" do
         macro bar
         end
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     bar = foo.metaclass.lookup_macros("bar").not_nil!.first
@@ -121,7 +124,7 @@ describe "Type inference: doc" do
       fun foo : Int32
         1
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.lookup_defs("foo").first
     foo.doc.should eq("Hello")
@@ -132,10 +135,11 @@ describe "Type inference: doc" do
       # Hello
       enum Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
+    foo.locations.length.should eq(1)
   end
 
   it "stores doc for enum with @[Flags]" do
@@ -144,7 +148,7 @@ describe "Type inference: doc" do
       @[Flags]
       enum Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
@@ -156,7 +160,7 @@ describe "Type inference: doc" do
         # Hello
         A = 1
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     a = foo.types["A"]
@@ -167,7 +171,7 @@ describe "Type inference: doc" do
     result = infer_type %(
       # Hello
       A = 1
-    )
+    ), wants_doc: true
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
@@ -177,10 +181,11 @@ describe "Type inference: doc" do
     result = infer_type %(
       # Hello
       alias A = Int32
-    )
+    ), wants_doc: true
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
+    a.locations.length.should eq(1)
   end
 
   it "stores doc for nodes defined in macro call" do
@@ -200,7 +205,7 @@ describe "Type inference: doc" do
         # Hello
         property bar
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
 
@@ -220,7 +225,7 @@ describe "Type inference: doc" do
 
       # Hello
       foo
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
@@ -234,10 +239,11 @@ describe "Type inference: doc" do
       # Hello
       class Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
+    foo.locations.length.should eq(2)
   end
 
   it "stores doc for module if reopening" do
@@ -248,7 +254,7 @@ describe "Type inference: doc" do
       # Hello
       module Foo
       end
-    )
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")

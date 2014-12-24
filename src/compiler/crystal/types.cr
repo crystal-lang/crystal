@@ -5,6 +5,11 @@ module Crystal
     include Enumerable(self)
 
     property doc
+    getter locations
+
+    def locations
+      @locations ||= [] of Location
+    end
 
     def each
       yield self

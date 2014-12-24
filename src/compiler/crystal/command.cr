@@ -5,6 +5,7 @@ module Crystal::Command
             build                    compile program file\n    \
             browser                  open an http server to browse program file\n    \
             deps                     install project dependencies\n    \
+            docs                     generate documentation\n    \
             eval                     eval code\n    \
             hierarchy                show type hierarchy\n    \
             run (default)            compile and run program file\n    \
@@ -30,6 +31,9 @@ module Crystal::Command
         when "deps".starts_with?(command)
           options.shift
           deps options
+        when "docs".starts_with?(command)
+          options.shift
+          docs options
         when "eval".starts_with?(command)
           options.shift
           eval options
@@ -149,26 +153,43 @@ module Crystal::Command
       target_filename = "spec/**"
     end
 
-    compiler = Compiler.new
     sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
 
     output_filename = tempfile "spec"
 
+    compiler = Compiler.new
     result = compiler.compile sources, output_filename
     execute output_filename, options
   end
 
   private def self.deps(options)
-    compiler = Compiler.new
-
     gather_sources(["./Projectfile"])
 
     sources = Compiler::Source.new("require", %(require "crystal/project_cli"))
 
     output_filename = tempfile "deps"
 
-    result = compiler.compile sources, output_filename
+    compiler = Compiler.new
+    compiler.compile sources, output_filename
     execute output_filename, options
+  end
+
+  private def self.docs(options)
+    if options.empty?
+      sources = [Compiler::Source.new("require", %(require "./src/**"))]
+      base_dirs = [File.expand_path("./src")]
+    else
+      filenames = options
+      sources = gather_sources(filenames)
+      base_dirs = sources.map { |source| File.dirname(source.filename) }
+    end
+
+    output_filename = tempfile "docs"
+
+    compiler = Compiler.new
+    compiler.wants_doc = true
+    result = compiler.compile sources, output_filename
+    Crystal.generate_docs result.program, base_dirs
   end
 
   private def self.types(options)
@@ -176,9 +197,10 @@ module Crystal::Command
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_build(command, options)
+  private def self.compile_no_build(command, options, wants_doc = false)
     config = create_compiler command, options, no_build: true
     config.compiler.no_build = true
+    config.compiler.wants_doc = wants_doc
     config.compile
   end
 

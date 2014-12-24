@@ -506,6 +506,7 @@ module Crystal
           if @program.add_to_requires(filename)
             parser = Parser.new File.read(filename)
             parser.filename = filename
+            parser.wants_doc = @program.wants_doc?
             nodes << parser.parse.transform(self)
           end
         end

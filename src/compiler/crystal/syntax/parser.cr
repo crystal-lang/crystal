@@ -30,7 +30,7 @@ module Crystal
     end
 
     def wants_doc=(@wants_doc)
-      @doc_enabled = true
+      @doc_enabled = @wants_doc
     end
 
     def parse

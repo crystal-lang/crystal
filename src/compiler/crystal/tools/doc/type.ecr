@@ -1,0 +1,33 @@
+<h1><%= kind %> <%= full_name %></h1>
+
+<% if doc = doc() %>
+  <h2>Overview</h2>
+
+  <%= doc.gsub(/\n/, "<br\>") %>
+<% end %>
+
+<% unless subclasses.empty? %>
+  <h2>Direct Known Subclasses</h2>
+  <% subclasses.each_with_index do |subclass, i| %>
+    <% if i > 0 %>,<% end %>
+    <%= subclass %>
+  <% end %>
+<% end %>
+
+<% unless class_methods.empty? %>
+  <h2>Class Method summary</h2>
+  <ul>
+    <% class_methods.each do |method| %>
+      <li><strong>.<%= method.name %></strong><%= method.args_to_s %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% unless instance_methods.empty? %>
+  <h2>Instance Method summary</h2>
+  <ul>
+    <% instance_methods.each do |method| %>
+      <li><strong>#<%= method.name %></strong><%= method.args_to_s %></li>
+    <% end %>
+  </ul>
+<% end %>

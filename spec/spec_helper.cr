@@ -45,11 +45,12 @@ def assert_type(str)
 end
 
 def infer_type(code : String, wants_doc = false)
-  infer_type parse(code, wants_doc: wants_doc)
+  infer_type parse(code, wants_doc: wants_doc), wants_doc: wants_doc
 end
 
 def infer_type(node : ASTNode, wants_doc = false)
   program = Program.new
+  program.wants_doc = wants_doc
   node = program.normalize node
   node = program.infer_type node
   InferTypeResult.new(program, node)

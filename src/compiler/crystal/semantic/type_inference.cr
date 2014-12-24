@@ -1324,7 +1324,7 @@ module Crystal
         scope.types[name] = type
       end
 
-      type.doc ||= node.doc
+      attach_doc type, node
 
       pushing_type(type) do
         if created_new_type
@@ -1342,6 +1342,15 @@ module Crystal
       node.type = @mod.nil
 
       false
+    end
+
+    def attach_doc(type, node)
+      return unless @mod.wants_doc?
+
+      type.doc ||= node.doc
+      if node_location = node.location
+        type.locations << node_location
+      end
     end
 
     def run_hooks(type_with_hooks, current_type, kind, node)
@@ -1384,7 +1393,7 @@ module Crystal
         scope.types[name] = type
       end
 
-      type.doc ||= node.doc
+      attach_doc type, node
 
       pushing_type(type) do
         node.body.accept self
@@ -1401,7 +1410,8 @@ module Crystal
       end
 
       alias_type = AliasType.new(@mod, current_type, node.name)
-      alias_type.doc = node.doc
+
+      attach_doc alias_type, node
 
       current_type.types[node.name] = alias_type
       node.value.accept self
@@ -1710,7 +1720,10 @@ module Crystal
       all_value = 0_u64
       existed = !!enum_type
       enum_type ||= EnumType.new(@mod, scope, name, enum_base_type, is_flags)
-      enum_type.doc ||= node.doc || attributes_doc()
+
+      attach_doc enum_type, node
+
+      enum_type.doc ||= attributes_doc()
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0

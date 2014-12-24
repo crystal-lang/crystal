@@ -16,6 +16,7 @@ module Crystal
     property vars
     property literal_expander
     property initialized_global_vars
+    property? wants_doc
 
     def initialize
       super(self, self, "main")
