@@ -1,5 +1,5 @@
 class Crystal::Doc::Generator
-  def initialize(@program, @base_dirs, @dir = "./docs")
+  def initialize(@program, @base_dirs, @dir = "./doc")
   end
 
   def run
@@ -16,7 +16,28 @@ class Crystal::Doc::Generator
     generate_docs types
   end
 
-  def generate_docs(types, dir = @dir)
+  def generate_docs(types)
+    copy_files
+    generate_list types
+    generate_types_docs types, @dir
+  end
+
+  def copy_files
+    Dir.mkdir_p "#{@dir}/css"
+    cp "index.html"
+    cp "main.html"
+    cp "css/style.css"
+  end
+
+  def cp(filename)
+    `cp #{__DIR__}/html/#{filename} #{@dir}/#{filename}`
+  end
+
+  def generate_list(types)
+    write_template "#{@dir}/list.html", ListTemplate.new(types)
+  end
+
+  def generate_types_docs(types, dir)
     types.each do |type|
       if type.program?
         filename = "#{dir}/toplevel.html"
@@ -24,11 +45,7 @@ class Crystal::Doc::Generator
         filename = "#{dir}/#{type.name}.html"
       end
 
-      File.open(filename, "w") do |file|
-        io = BufferedIO.new(file)
-        TypeTemplate.new(type).to_s io
-        io.flush
-      end
+      write_template filename, TypeTemplate.new(type)
 
       next if type.program?
 
@@ -36,8 +53,16 @@ class Crystal::Doc::Generator
       if subtypes && !subtypes.empty?
         dirname = "#{dir}/#{type.name}"
         Dir.mkdir_p dirname
-        generate_docs subtypes, dirname
+        generate_types_docs subtypes, dirname
       end
+    end
+  end
+
+  def write_template(filename, template)
+    File.open(filename, "w") do |file|
+      io = BufferedIO.new(file)
+      template.to_s io
+      io.flush
     end
   end
 
@@ -87,7 +112,7 @@ class Crystal::Doc::Generator
 
     parent.types.each_value do |type|
       case type
-      when AliasType, Const, LibType
+      when Const, LibType
         next
       end
 

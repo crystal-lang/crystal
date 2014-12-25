@@ -1,12 +1,15 @@
 require "ecr/macros"
 
 module Crystal::Doc
-  struct TypeTemplate
-    getter type
+  record TypeTemplate, type do
+    ecr_file "#{__DIR__}/html/type.html"
+  end
 
-    def initialize(@type)
-    end
+  record ListTemplate, types do
+    ecr_file "#{__DIR__}/html/list.html"
+  end
 
-    ecr_file "#{__DIR__}/type.ecr"
+  record ListItemsTemplate, types do
+    ecr_file "#{__DIR__}/html/list_items.html"
   end
 end

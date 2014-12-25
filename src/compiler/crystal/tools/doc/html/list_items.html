@@ -1,0 +1,10 @@
+<ul>
+  <% types.each do |type| %>
+    <li>
+      <a href="<%= type.path %>" target="main"><%= type.name %></a>
+      <% unless type.program? || type.types.empty? %>
+        <%= ListItemsTemplate.new(type.types) %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>

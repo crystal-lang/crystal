@@ -1,13 +1,15 @@
+<!DOCTYPE html>
 <html>
 <head>
-  <style>
-  body {
-    font-family: "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
-  }
-  </style>
+  <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
 </head>
 <body>
-<h1><%= type.kind %> <%= type.full_name %></h1>
+
+<% if type.program? %>
+  <h1><%= type.full_name %></h1>
+<% else %>
+  <h1><%= type.kind %> <%= type.full_name %></h1>
+<% end %>
 
 <% if doc = type.doc %>
   <h2>Overview</h2>
@@ -45,7 +47,11 @@
 <% end %>
 
 <% unless type.class_methods.empty? %>
-  <h2>Class Method summary</h2>
+  <% if type.program? %>
+    <h2>Method summary</h2>
+  <% else %>
+    <h2>Class Method summary</h2>
+  <% end %>
   <ul>
     <% type.class_methods.each do |method| %>
       <li><strong>.<%= method.name %></strong><%= method.args_to_s %></li>

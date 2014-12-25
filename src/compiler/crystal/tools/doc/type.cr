@@ -12,6 +12,8 @@ class Crystal::Doc::Type
       :class
     when .module?
       :module
+    when AliasType
+      :alias
     when EnumType
       :enum
     when NoReturnType, VoidType
@@ -187,6 +189,8 @@ class Crystal::Doc::Type
   def subclasses
     @subclasses ||= begin
       case type = @type
+      when .metaclass?
+        [] of Type
       when ClassType
         subclasses = [] of Type
         type.subclasses.each do |subclass|
@@ -234,7 +238,9 @@ class Crystal::Doc::Type
   end
 
   def path
-    if container = container()
+    if program?
+      "toplevel.html"
+    elsif container = container()
       "#{container.dir}/#{name}.html"
     else
       "#{name}.html"
@@ -242,7 +248,15 @@ class Crystal::Doc::Type
   end
 
   def path_from(type)
-    "#{"../" * type.nesting}#{path}"
+    type.path_to(self)
+  end
+
+  def path_to(filename : String)
+    "#{"../" * nesting}#{filename}"
+  end
+
+  def path_to(type : Type)
+    path_to type.path
   end
 
   def dir
