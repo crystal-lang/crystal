@@ -1,7 +1,7 @@
 module CGI
   # URL-decode a string.
   #
-  #     CGI.unescape("%27Stop%21%27+said+Fred") => "'Stop!' said Fred"
+  #     CGI.unescape("%27Stop%21%27+said+Fred") #=> "'Stop!' said Fred"
   def self.unescape(string : String)
     String.build { |io| unescape(string, io) }
   end
@@ -20,7 +20,7 @@ module CGI
 
   # URL-encode a string.
   #
-  #     CGI.escape("'Stop!' said Fred") => "%27Stop%21%27+said+Fred"
+  #     CGI.escape("'Stop!' said Fred") #=> "%27Stop%21%27+said+Fred"
   def self.escape(string : String)
     String.build { |io| escape(string, io) }
   end

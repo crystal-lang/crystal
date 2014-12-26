@@ -96,7 +96,7 @@ class Crystal::Doc::Type
             end
           end
         end
-        defs.sort_by! &.name
+        defs.sort_by! &.name.downcase
       else
         [] of Method
       end
@@ -109,7 +109,7 @@ class Crystal::Doc::Type
         case type = @type.metaclass
         when DefContainer
           defs = [] of Method
-          type.defs.try &.each do |def_name, defs_with_metadata|
+          type.defs.try &.each_value do |defs_with_metadata|
             defs_with_metadata.each do |def_with_metadata|
               a_def = def_with_metadata.def
               case a_def.visibility
@@ -134,7 +134,7 @@ class Crystal::Doc::Type
               end
             end
           end
-          defs.sort_by! &.name
+          defs.sort_by! &.name.downcase
         else
           [] of Method
         end
@@ -143,7 +143,7 @@ class Crystal::Doc::Type
       # but show them as `new`
       case type = @type
       when DefContainer
-        type.defs.try &.each do |def_name, defs_with_metadata|
+        type.defs.try &.each_value do |defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
             a_def = def_with_metadata.def
             if a_def.name == "initialize" && @generator.must_include?(a_def)
@@ -160,6 +160,25 @@ class Crystal::Doc::Type
     end
   end
 
+  def macros
+    @macros ||= begin
+      case type = @type.metaclass
+      when DefContainer
+        macros = [] of Macro
+        type.macros.try &.each_value do |the_macros|
+          the_macros.each do |a_macro|
+            if @generator.must_include? a_macro
+              macros << @generator.macro(a_macro)
+            end
+          end
+        end
+        macros.sort_by! &.name.downcase
+      else
+        [] of Macro
+      end
+    end
+  end
+
   def included_modules
     @included_modules ||= begin
       parents = @type.parents || [] of Crystal::Type
@@ -169,7 +188,7 @@ class Crystal::Doc::Type
           included_modules << @generator.type(parent)
         end
       end
-      included_modules.sort_by! &.full_name
+      included_modules.sort_by! &.full_name.downcase
     end
   end
 
@@ -182,7 +201,7 @@ class Crystal::Doc::Type
           extended_modules << @generator.type(parent)
         end
       end
-      extended_modules.sort_by! &.full_name
+      extended_modules.sort_by! &.full_name.downcase
     end
   end
 
@@ -201,7 +220,7 @@ class Crystal::Doc::Type
 
           subclasses << @generator.type(subclass)
         end
-        subclasses.sort_by! &.full_name
+        subclasses.sort_by! &.full_name.downcase
       else
         [] of Type
       end
@@ -277,6 +296,10 @@ class Crystal::Doc::Type
 
   def doc
     @type.doc
+  end
+
+  def formatted_doc
+    @generator.doc(self)
   end
 
   def to_s(io)

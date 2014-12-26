@@ -1,15 +1,15 @@
-class Crystal::Doc::Method
-  getter :def
+class Crystal::Doc::Macro
+  getter :macro
 
-  def initialize(@generator, @def)
+  def initialize(@generator, @macro)
   end
 
   def name
-    @def.name
+    @macro.name
   end
 
   def doc
-    @def.doc
+    @macro.doc
   end
 
   def formatted_doc
@@ -34,20 +34,12 @@ class Crystal::Doc::Method
   end
 
   def args_to_s(io)
-    return if @def.args.empty? && !@def.block_arg && !@def.yields
+    return if @macro.args.empty?
 
     io << '('
-    @def.args.each_with_index do |arg, i|
+    @macro.args.each_with_index do |arg, i|
       io << ", " if i > 0
       io << arg
-    end
-    if @def.block_arg
-      io << ", " unless @def.args.empty?
-      io << '&'
-      io << @def.block_arg
-    elsif @def.yields
-      io << ", " unless @def.args.empty?
-      io << "&block"
     end
     io << ')'
   end

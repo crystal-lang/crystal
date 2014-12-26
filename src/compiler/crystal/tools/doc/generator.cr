@@ -84,6 +84,14 @@ class Crystal::Doc::Generator
     must_include? a_def.location
   end
 
+  def must_include?(a_macro : Macro)
+    must_include? a_macro.macro
+  end
+
+  def must_include?(a_macro : Crystal::Macro)
+    must_include? a_macro.location
+  end
+
   def must_include?(location : Crystal::Location)
     case filename = location.filename
     when String
@@ -103,8 +111,12 @@ class Crystal::Doc::Generator
     Type.new(self, type)
   end
 
-  def method(type)
-    Method.new(self, type)
+  def method(method)
+    Method.new(self, method)
+  end
+
+  def macro(a_macro)
+    Macro.new(self, a_macro)
   end
 
   def collect_subtypes(parent)
@@ -119,6 +131,44 @@ class Crystal::Doc::Generator
       types << type(type) if must_include? type
     end
 
-    types.sort_by! &.name
+    types.sort_by! &.name.downcase
+  end
+
+  def summary(obj : Type | Method | Macro)
+    doc = obj.doc
+    return nil unless doc
+
+    summary doc
+  end
+
+  def summary(str : String)
+    first_line = process_doc(str).lines.first?
+    return nil unless first_line
+
+    dot_index = first_line =~ /\.($|\s)/
+    return first_line unless dot_index
+
+    first_line[0 .. dot_index]
+  end
+
+  def doc(obj : Type | Method | Macro)
+    doc = obj.doc
+    return nil unless doc
+
+    doc process_doc(doc)
+  end
+
+  def doc(str : String)
+    str.lines.map { |line| "<p>#{line}</p>" }.join
+  end
+
+  def process_doc(doc)
+    doc.gsub /\n+/ do |match|
+      if match.length == 1
+        " "
+      else
+        "\n"
+      end
+    end
   end
 end

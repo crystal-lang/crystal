@@ -11,10 +11,10 @@
   <h1><%= type.kind %> <%= type.full_name %></h1>
 <% end %>
 
-<% if doc = type.doc %>
+<% if doc = type.formatted_doc %>
   <h2>Overview</h2>
 
-  <%= doc.gsub(/\n/, "<br\>") %>
+  <%= doc %>
 <% end %>
 
 <% if superclass = type.superclass %>
@@ -54,7 +54,12 @@
   <% end %>
   <ul>
     <% type.class_methods.each do |method| %>
-      <li><strong>.<%= method.name %></strong><%= method.args_to_s %></li>
+      <li class="entry-summary">
+        <a href="#<%= method.anchor %>-class-method" class="signature"><strong>.<%= method.name %></strong><%= method.args_to_s %></a>
+        <% if summary = method.formatted_summary %>
+          <div class="summary"><%= summary %></div>
+        <% end %>
+      </li>
     <% end %>
   </ul>
 <% end %>
@@ -63,9 +68,72 @@
   <h2>Instance Method summary</h2>
   <ul>
     <% type.instance_methods.each do |method| %>
-      <li><strong>#<%= method.name %></strong><%= method.args_to_s %></li>
+      <li class="entry-summary">
+        <a href="#<%= method.anchor %>-instance-method" class="signature"><strong>#<%= method.name %></strong><%= method.args_to_s %></a>
+        <% if summary = method.formatted_summary %>
+          <div class="summary"><%= summary %></div>
+        <% end %>
+      </li>
     <% end %>
   </ul>
 <% end %>
+
+<% unless type.macros.empty? %>
+  <h2>Macro summary</h2>
+  <ul>
+    <% type.macros.each do |a_macro| %>
+      <li class="entry-summary">
+        <a href="#<%= a_macro.anchor %>-macro" class="signature"><strong><%= a_macro.name %></strong><%= a_macro.args_to_s %></a>
+        <% if summary = a_macro.formatted_summary %>
+          <div class="summary"><%= summary %></div>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% unless type.class_methods.empty? %>
+  <% if type.program? %>
+    <h2>Method detail</h2>
+  <% else %>
+    <h2>Class Method detail</h2>
+  <% end %>
+  <% type.class_methods.each do |method| %>
+    <div class="entry-detail">
+      <div class="signature" id="<%= method.anchor %>-class-method"><strong>.<%= method.name %></strong><%= method.args_to_s %></div>
+      <% if doc = method.formatted_doc %>
+        <div class="doc"><%= doc %></div>
+      <% end %>
+    </div>
+    <hr/>
+  <% end %>
+<% end %>
+
+<% unless type.instance_methods.empty? %>
+  <h2>Instance Method detail</h2>
+  <% type.instance_methods.each do |method| %>
+    <div class="entry-detail">
+      <div class="signature" id="<%= method.anchor %>-instance-method"><strong>.<%= method.name %></strong><%= method.args_to_s %></div>
+      <% if doc = method.formatted_doc %>
+        <div class="doc"><%= doc %></div>
+      <% end %>
+    </div>
+    <hr/>
+  <% end %>
+<% end %>
+
+<% unless type.macros.empty? %>
+  <h2>Macro detail</h2>
+  <% type.macros.each do |a_macro| %>
+    <div class="entry-detail">
+      <div class="signature" id="<%= a_macro.anchor %>-macro"><strong>.<%= a_macro.name %></strong><%= a_macro.args_to_s %></div>
+      <% if doc = a_macro.formatted_doc %>
+        <div class="doc"><%= doc %></div>
+      <% end %>
+    </div>
+    <hr/>
+  <% end %>
+<% end %>
+
 </body>
 </html>

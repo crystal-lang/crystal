@@ -1,3 +1,49 @@
 body {
   font-family: "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
 }
+
+.entry-summary {
+  padding-bottom: 4px;
+}
+
+.entry-summary .signature {
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  display: inline-block;
+  background: #f8f8f8;
+  color: #05a;
+  border: 1px solid #f0f0f0;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+}
+
+.entry-summary .signature:hover {
+  background: #CFEBFF;
+  border-color: #A4CCDA;
+}
+
+.entry-summary .summary {
+  padding-left: 32px;
+}
+
+.entry-summary a {
+  text-decoration: none;
+}
+
+.entry-detail .signature {
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  display: inline-block;
+  background: #E8F4FF;
+  border: 1px solid #d8d8e5
+  border-radius: 5px;
+}
+
+hr {
+  color: #ddd;
+  background-color: #ddd;
+  height: 1px;
+  border: 0;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
