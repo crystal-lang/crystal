@@ -1,0 +1,13 @@
+<% unless methods.empty? %>
+  <h2><%= title %></h2>
+  <ul>
+    <% methods.each do |method| %>
+      <li class="entry-summary">
+        <a href="#<%= method.anchor %>" class="signature"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_s %></a>
+        <% if summary = method.formatted_summary %>
+          <div class="summary"><%= summary %></div>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

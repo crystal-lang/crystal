@@ -5,7 +5,7 @@ class Crystal::Doc::Method
 
   getter :def
 
-  def initialize(@generator, @def)
+  def initialize(@generator, @type, @def, @class_method)
   end
 
   def name
@@ -20,8 +20,19 @@ class Crystal::Doc::Method
     @generator.source_link(@def)
   end
 
+  def prefix
+    @class_method ? '.' : '#'
+  end
+
   def anchor
-    CGI.escape(to_s)
+    String.build do |io|
+      CGI.escape(to_s, io)
+      if @class_method
+        io << "-class-method"
+      else
+        io << "-instance-method"
+      end
+    end
   end
 
   def to_s(io)

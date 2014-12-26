@@ -120,7 +120,7 @@ class Crystal::Doc::Type
             end
 
             if @generator.must_include? def_with_metadata.def
-              defs << @generator.method(def_with_metadata.def)
+              defs << method(def_with_metadata.def, false)
             end
           end
         end
@@ -158,7 +158,7 @@ class Crystal::Doc::Type
               end
 
               if @generator.must_include? a_def
-                defs << @generator.method(a_def)
+                defs << method(a_def, true)
               end
             end
           end
@@ -178,7 +178,7 @@ class Crystal::Doc::Type
               initialize = a_def.clone
               initialize.doc = a_def.doc
               initialize.name = "new"
-              class_methods << @generator.method(initialize)
+              class_methods << method(initialize, true)
             end
           end
         end
@@ -196,7 +196,7 @@ class Crystal::Doc::Type
         type.macros.try &.each_value do |the_macros|
           the_macros.each do |a_macro|
             if @generator.must_include? a_macro
-              macros << @generator.macro(a_macro)
+              macros << self.macro(a_macro)
             end
           end
         end
@@ -330,6 +330,14 @@ class Crystal::Doc::Type
 
   def doc
     @type.doc
+  end
+
+  def method(a_def, class_method)
+    @generator.method(self, a_def, class_method)
+  end
+
+  def macro(a_macro)
+    @generator.macro(self, a_macro)
   end
 
   def to_s(io)

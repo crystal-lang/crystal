@@ -1,0 +1,16 @@
+<% unless methods.empty? %>
+  <h2><%= title %></h2>
+  <% methods.each do |method| %>
+    <div class="entry-detail">
+      <div class="signature" id="<%= method.anchor %>"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_s %></div>
+      <% if doc = method.formatted_doc %>
+        <div class="doc"><%= doc %></div>
+      <% end %>
+      <% if source_link = method.source_link %>
+        <br/>
+        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
+      <% end %>
+    </div>
+    <hr/>
+  <% end %>
+<% end %>

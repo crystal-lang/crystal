@@ -28,29 +28,9 @@
   <a href="<%= superclass.path_from(type) %>"><%= superclass.full_name %></a>
 <% end %>
 
-<% unless type.included_modules.empty? %>
-  <h2>Included modules</h2>
-  <% type.included_modules.each_with_index do |mod, i| %>
-    <% if i > 0 %>,<% end %>
-    <a href="<%= mod.path_from(type) %>"><%= mod.full_name %></a>
-  <% end %>
-<% end %>
-
-<% unless type.extended_modules.empty? %>
-  <h2>Extended modules</h2>
-  <% type.extended_modules.each_with_index do |mod, i| %>
-    <% if i > 0 %>,<% end %>
-    <a href="<%= mod.path_from(type) %>"><%= mod.full_name %></a>
-  <% end %>
-<% end %>
-
-<% unless type.subclasses.empty? %>
-  <h2>Direct Known Subclasses</h2>
-  <% type.subclasses.each_with_index do |subclass, i| %>
-    <% if i > 0 %>,<% end %>
-    <a href="<%= subclass.path_from(type) %>"><%= subclass.full_name %></a>
-  <% end %>
-<% end %>
+<%= OtherTypesTemplate.new("Included Modules", type, type.included_modules) %>
+<%= OtherTypesTemplate.new("Extended Modules", type, type.extended_modules) %>
+<%= OtherTypesTemplate.new("Direct Known Subclasses", type, type.subclasses) %>
 
 <% unless type.constants.empty? %>
   <% if type.enum? %>
@@ -70,106 +50,13 @@
   </ul>
 <% end %>
 
-<% unless type.class_methods.empty? %>
-  <% if type.program? %>
-    <h2>Method Summary</h2>
-  <% else %>
-    <h2>Class Method Summary</h2>
-  <% end %>
-  <ul>
-    <% type.class_methods.each do |method| %>
-      <li class="entry-summary">
-        <a href="#<%= method.anchor %>-class-method" class="signature"><strong>.<%= method.name %></strong><%= method.args_to_s %></a>
-        <% if summary = method.formatted_summary %>
-          <div class="summary"><%= summary %></div>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
-<% end %>
+<%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
+<%= MethodSummaryTemplate.new("Instance Method Summary", type.instance_methods) %>
+<%= MethodSummaryTemplate.new("Macro Summary", type.macros) %>
 
-<% unless type.instance_methods.empty? %>
-  <h2>Instance Method Summary</h2>
-  <ul>
-    <% type.instance_methods.each do |method| %>
-      <li class="entry-summary">
-        <a href="#<%= method.anchor %>-instance-method" class="signature"><strong>#<%= method.name %></strong><%= method.args_to_s %></a>
-        <% if summary = method.formatted_summary %>
-          <div class="summary"><%= summary %></div>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
-<% end %>
-
-<% unless type.macros.empty? %>
-  <h2>Macro Summary</h2>
-  <ul>
-    <% type.macros.each do |a_macro| %>
-      <li class="entry-summary">
-        <a href="#<%= a_macro.anchor %>-macro" class="signature"><strong><%= a_macro.name %></strong><%= a_macro.args_to_s %></a>
-        <% if summary = a_macro.formatted_summary %>
-          <div class="summary"><%= summary %></div>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
-<% end %>
-
-<% unless type.class_methods.empty? %>
-  <% if type.program? %>
-    <h2>Method Detail</h2>
-  <% else %>
-    <h2>Class Method Detail</h2>
-  <% end %>
-  <% type.class_methods.each do |method| %>
-    <div class="entry-detail">
-      <div class="signature" id="<%= method.anchor %>-class-method"><strong>.<%= method.name %></strong><%= method.args_to_s %></div>
-      <% if doc = method.formatted_doc %>
-        <div class="doc"><%= doc %></div>
-      <% end %>
-      <% if source_link = method.source_link %>
-        <br/>
-        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
-      <% end %>
-    </div>
-    <hr/>
-  <% end %>
-<% end %>
-
-<% unless type.instance_methods.empty? %>
-  <h2>Instance Method Detail</h2>
-  <% type.instance_methods.each do |method| %>
-    <div class="entry-detail">
-      <div class="signature" id="<%= method.anchor %>-instance-method"><strong>#<%= method.name %></strong><%= method.args_to_s %></div>
-      <% if doc = method.formatted_doc %>
-        <div class="doc"><%= doc %></div>
-      <% end %>
-      <% if source_link = method.source_link %>
-        <br/>
-        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
-      <% end %>
-    </div>
-    <hr/>
-  <% end %>
-<% end %>
-
-<% unless type.macros.empty? %>
-  <h2>Macro Detail</h2>
-  <% type.macros.each do |a_macro| %>
-    <div class="entry-detail">
-      <div class="signature" id="<%= a_macro.anchor %>-macro"><strong>.<%= a_macro.name %></strong><%= a_macro.args_to_s %></div>
-      <% if doc = a_macro.formatted_doc %>
-        <div class="doc"><%= doc %></div>
-      <% end %>
-      <% if source_link = a_macro.source_link %>
-        <br/>
-        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
-      <% end %>
-    </div>
-    <hr/>
-  <% end %>
-<% end %>
+<%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
+<%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>
+<%= MethodDetailTemplate.new("Macro Detail", type.macros) %>
 
 </body>
 </html>

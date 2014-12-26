@@ -113,12 +113,12 @@ class Crystal::Doc::Generator
     Type.new(self, type)
   end
 
-  def method(method)
-    Method.new(self, method)
+  def method(type, method, class_method)
+    Method.new(self, type, method, class_method)
   end
 
-  def macro(a_macro)
-    Macro.new(self, a_macro)
+  def macro(type, a_macro)
+    Macro.new(self, type, a_macro)
   end
 
   def collect_subtypes(parent)
@@ -220,6 +220,6 @@ class Crystal::Doc::Generator
 
     return unless filename.starts_with? @base_dir
 
-    "#{repository}/#{filename[@base_dir.length .. -1]}#L#{location.line_number}"
+    "#{repository}#{filename[@base_dir.length .. -1]}#L#{location.line_number}"
   end
 end

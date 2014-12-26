@@ -5,7 +5,7 @@ class Crystal::Doc::Macro
 
   getter :macro
 
-  def initialize(@generator, @macro)
+  def initialize(@generator, @type, @macro)
   end
 
   def name
@@ -21,7 +21,14 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    CGI.escape(to_s)
+    String.build do |io|
+      CGI.escape(to_s, io)
+      io << "-macro"
+    end
+  end
+
+  def prefix
+    ""
   end
 
   def to_s(io)
