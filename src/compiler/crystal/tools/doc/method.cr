@@ -1,4 +1,8 @@
+require "./item"
+
 class Crystal::Doc::Method
+  include Item
+
   getter :def
 
   def initialize(@generator, @def)
@@ -10,14 +14,6 @@ class Crystal::Doc::Method
 
   def doc
     @def.doc
-  end
-
-  def formatted_doc
-    @generator.doc(self)
-  end
-
-  def formatted_summary
-    @generator.summary(self)
   end
 
   def anchor

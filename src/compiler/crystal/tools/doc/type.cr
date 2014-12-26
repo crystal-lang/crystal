@@ -1,4 +1,8 @@
+require "./item"
+
 class Crystal::Doc::Type
+  include Item
+
   getter type
 
   def initialize(@generator, @type : Crystal::Type)
@@ -47,12 +51,22 @@ class Crystal::Doc::Type
     when GenericType
       type.type_vars
     when InheritedGenericClass
-      type.mapping.values
+      type_mapping_values type
     when IncludedGenericModule
-      type.mapping.values
+      type_mapping_values type
     else
       nil
     end
+  end
+
+  private def type_mapping_values(type)
+    values = type.mapping.values
+    if values.any? &.is_a?(TypeOf)
+      values = values.map do |value|
+        value.is_a?(TypeOf) ? TypeOf.new([Var.new("...")] of ASTNode) : value
+      end
+    end
+    values
   end
 
   def superclass
@@ -71,6 +85,20 @@ class Crystal::Doc::Type
 
   def program?
     @type.is_a?(Program)
+  end
+
+  def enum?
+    kind == :enum
+  end
+
+  def alias?
+    kind == :alias
+  end
+
+  def alias_definition
+    alias_def = (@type as AliasType).aliased_type.to_s
+    alias_def = alias_def[1 .. -2] if alias_def.starts_with?('(')
+    alias_def
   end
 
   def types
@@ -179,6 +207,10 @@ class Crystal::Doc::Type
     end
   end
 
+  def constants
+    @constants ||= @generator.collect_constants(@type)
+  end
+
   def included_modules
     @included_modules ||= begin
       parents = @type.parents || [] of Crystal::Type
@@ -246,14 +278,16 @@ class Crystal::Doc::Type
   end
 
   def full_name(io)
-    if container = container()
-      io << container.full_name(io)
-      io << "::"
-      io << name
-    else
-      io << name
-    end
+    full_name_without_type_vars(io)
     append_type_vars io
+  end
+
+  def full_name_without_type_vars(io)
+    if container = container()
+      container.full_name_without_type_vars(io)
+      io << "::"
+    end
+    io << name
   end
 
   def path
@@ -296,10 +330,6 @@ class Crystal::Doc::Type
 
   def doc
     @type.doc
-  end
-
-  def formatted_doc
-    @generator.doc(self)
   end
 
   def to_s(io)

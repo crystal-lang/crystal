@@ -18,6 +18,11 @@
   <%= doc %>
 <% end %>
 
+<% if type.alias? %>
+  <h2>Alias Definition</h2>
+  <code><%= type.alias_definition %></code>
+<% end %>
+
 <% if superclass = type.superclass %>
   <h2>Superclass</h2>
   <a href="<%= superclass.path_from(type) %>"><%= superclass.full_name %></a>
@@ -47,11 +52,29 @@
   <% end %>
 <% end %>
 
+<% unless type.constants.empty? %>
+  <% if type.enum? %>
+    <h2>Enum Members</h2>
+  <% else %>
+    <h2>Constant Summary</h2>
+  <% end %>
+  <ul>
+    <% type.constants.each do |const| %>
+      <li class="entry-const">
+        <strong><%= const.name %></strong> = <code><%= const.value %></code>
+        <% if doc = const.formatted_doc %>
+          <div class="doc"><%= doc %></div>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
 <% unless type.class_methods.empty? %>
   <% if type.program? %>
-    <h2>Method summary</h2>
+    <h2>Method Summary</h2>
   <% else %>
-    <h2>Class Method summary</h2>
+    <h2>Class Method Summary</h2>
   <% end %>
   <ul>
     <% type.class_methods.each do |method| %>
@@ -66,7 +89,7 @@
 <% end %>
 
 <% unless type.instance_methods.empty? %>
-  <h2>Instance Method summary</h2>
+  <h2>Instance Method Summary</h2>
   <ul>
     <% type.instance_methods.each do |method| %>
       <li class="entry-summary">
@@ -80,7 +103,7 @@
 <% end %>
 
 <% unless type.macros.empty? %>
-  <h2>Macro summary</h2>
+  <h2>Macro Summary</h2>
   <ul>
     <% type.macros.each do |a_macro| %>
       <li class="entry-summary">
@@ -95,9 +118,9 @@
 
 <% unless type.class_methods.empty? %>
   <% if type.program? %>
-    <h2>Method detail</h2>
+    <h2>Method Detail</h2>
   <% else %>
-    <h2>Class Method detail</h2>
+    <h2>Class Method Detail</h2>
   <% end %>
   <% type.class_methods.each do |method| %>
     <div class="entry-detail">
@@ -111,7 +134,7 @@
 <% end %>
 
 <% unless type.instance_methods.empty? %>
-  <h2>Instance Method detail</h2>
+  <h2>Instance Method Detail</h2>
   <% type.instance_methods.each do |method| %>
     <div class="entry-detail">
       <div class="signature" id="<%= method.anchor %>-instance-method"><strong>.<%= method.name %></strong><%= method.args_to_s %></div>
@@ -124,7 +147,7 @@
 <% end %>
 
 <% unless type.macros.empty? %>
-  <h2>Macro detail</h2>
+  <h2>Macro Detail</h2>
   <% type.macros.each do |a_macro| %>
     <div class="entry-detail">
       <div class="signature" id="<%= a_macro.anchor %>-macro"><strong>.<%= a_macro.name %></strong><%= a_macro.args_to_s %></div>

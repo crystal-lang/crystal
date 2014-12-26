@@ -134,6 +134,18 @@ class Crystal::Doc::Generator
     types.sort_by! &.name.downcase
   end
 
+  def collect_constants(parent)
+    types = [] of Constant
+
+    parent.types.each_value do |type|
+      if type.is_a?(Const)
+        types << Constant.new(self, type)
+      end
+    end
+
+    types.sort_by! &.name.downcase
+  end
+
   def summary(obj : Type | Method | Macro)
     doc = obj.doc
     return nil unless doc
@@ -151,15 +163,15 @@ class Crystal::Doc::Generator
     first_line[0 .. dot_index]
   end
 
-  def doc(obj : Type | Method | Macro)
+  def doc(str : String)
+    str.lines.map { |line| "<p>#{line}</p>" }.join
+  end
+
+  def doc(obj)
     doc = obj.doc
     return nil unless doc
 
     doc process_doc(doc)
-  end
-
-  def doc(str : String)
-    str.lines.map { |line| "<p>#{line}</p>" }.join
   end
 
   def process_doc(doc)
