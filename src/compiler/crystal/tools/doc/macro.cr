@@ -16,6 +16,10 @@ class Crystal::Doc::Macro
     @macro.doc
   end
 
+  def source_link
+    @generator.source_link(@macro)
+  end
+
   def anchor
     CGI.escape(to_s)
   end

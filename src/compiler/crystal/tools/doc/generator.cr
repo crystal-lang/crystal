@@ -1,5 +1,7 @@
 class Crystal::Doc::Generator
-  def initialize(@program, @base_dirs, @dir = "./doc")
+  def initialize(@program, @included_dirs, @dir = "./doc")
+    @base_dir = `pwd`.chomp
+    compute_repository
   end
 
   def run
@@ -95,7 +97,7 @@ class Crystal::Doc::Generator
   def must_include?(location : Crystal::Location)
     case filename = location.filename
     when String
-      @base_dirs.any? { |base_dir| filename.starts_with? base_dir }
+      @included_dirs.any? { |included_dir| filename.starts_with? included_dir }
     when VirtualFile
       must_include? filename.expanded_location
     else
@@ -182,5 +184,42 @@ class Crystal::Doc::Generator
         "\n"
       end
     end
+  end
+
+  def compute_repository
+    remotes = `git remote -v`
+    return unless  $?.success?
+
+    remotes.lines.each do |line|
+      next unless line =~ /github\.com(?:\:|\/)(\w+)\/(\w+)/
+
+      user, repo = $1, $2
+      rev = `git rev-parse HEAD`.chomp
+
+      @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
+      break
+    end
+  end
+
+  def source_link(node)
+    repository = @repository
+    return unless repository
+
+    location = node.location
+    return unless location
+
+    filename = location.filename
+    if filename.is_a?(VirtualFile)
+      location = filename.expanded_location
+    end
+
+    return unless location
+
+    filename = location.filename
+    return unless filename.is_a?(String)
+
+    return unless filename.starts_with? @base_dir
+
+    "#{repository}/#{filename[@base_dir.length .. -1]}#L#{location.line_number}"
   end
 end

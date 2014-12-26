@@ -16,6 +16,10 @@ class Crystal::Doc::Method
     @def.doc
   end
 
+  def source_link
+    @generator.source_link(@def)
+  end
+
   def anchor
     CGI.escape(to_s)
   end

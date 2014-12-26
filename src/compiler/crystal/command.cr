@@ -177,11 +177,11 @@ module Crystal::Command
   private def self.docs(options)
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
-      base_dirs = [File.expand_path("./src")]
+      included_dirs = [File.expand_path("./src")]
     else
       filenames = options
       sources = gather_sources(filenames)
-      base_dirs = sources.map { |source| File.dirname(source.filename) }
+      included_dirs = sources.map { |source| File.dirname(source.filename) }
     end
 
     output_filename = tempfile "docs"
@@ -189,7 +189,7 @@ module Crystal::Command
     compiler = Compiler.new
     compiler.wants_doc = true
     result = compiler.compile sources, output_filename
-    Crystal.generate_docs result.program, base_dirs
+    Crystal.generate_docs result.program, included_dirs
   end
 
   private def self.types(options)

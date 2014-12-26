@@ -128,6 +128,10 @@
       <% if doc = method.formatted_doc %>
         <div class="doc"><%= doc %></div>
       <% end %>
+      <% if source_link = method.source_link %>
+        <br/>
+        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
+      <% end %>
     </div>
     <hr/>
   <% end %>
@@ -137,9 +141,13 @@
   <h2>Instance Method Detail</h2>
   <% type.instance_methods.each do |method| %>
     <div class="entry-detail">
-      <div class="signature" id="<%= method.anchor %>-instance-method"><strong>.<%= method.name %></strong><%= method.args_to_s %></div>
+      <div class="signature" id="<%= method.anchor %>-instance-method"><strong>#<%= method.name %></strong><%= method.args_to_s %></div>
       <% if doc = method.formatted_doc %>
         <div class="doc"><%= doc %></div>
+      <% end %>
+      <% if source_link = method.source_link %>
+        <br/>
+        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
       <% end %>
     </div>
     <hr/>
@@ -153,6 +161,10 @@
       <div class="signature" id="<%= a_macro.anchor %>-macro"><strong>.<%= a_macro.name %></strong><%= a_macro.args_to_s %></div>
       <% if doc = a_macro.formatted_doc %>
         <div class="doc"><%= doc %></div>
+      <% end %>
+      <% if source_link = a_macro.source_link %>
+        <br/>
+        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
       <% end %>
     </div>
     <hr/>
