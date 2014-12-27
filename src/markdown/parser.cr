@@ -211,6 +211,7 @@ class Markdown::Parser
     one_underscore = false
     two_underscores = false
     one_backtick = false
+    in_link = false
 
     while pos < bytesize
       case str[pos].chr
@@ -271,6 +272,26 @@ class Markdown::Parser
           end
           one_backtick = !one_backtick
         end
+      when '['
+        unless in_link
+          link = check_link str, (pos + 1), bytesize
+          if link
+            @renderer.text line.byte_slice(cursor, pos - cursor)
+            cursor = pos + 1
+            @renderer.begin_link link
+            in_link = true
+          end
+        end
+      when ']'
+        if in_link
+          @renderer.text line.byte_slice(cursor, pos - cursor)
+          cursor = pos + 1
+          @renderer.end_link
+
+          paren_idx = (str + pos + 1).as_enumerable(bytesize - pos - 1).index(')'.ord).not_nil!
+          pos += paren_idx + 2
+          cursor = pos
+        end
       end
       pos += 1
     end
@@ -293,6 +314,20 @@ class Markdown::Parser
     end
 
     !str[idx - 1].chr.whitespace?
+  end
+
+  def check_link(str, pos, bytesize)
+    str += pos
+    bytesize -= pos
+    bracket_idx = str.as_enumerable(bytesize).index ']'.ord
+    return nil unless bracket_idx
+    return nil unless bracket_idx < bytesize
+    return nil unless str[bracket_idx + 1] == '('.ord
+
+    paren_idx = (str + bracket_idx + 1).as_enumerable(bytesize - bracket_idx - 1).index ')'.ord
+    return nil unless paren_idx
+
+    String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
   end
 
   def next_line_is_all?(char)

@@ -6,6 +6,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     @found_inilne_method = false
     @inline_code_buffer = StringIO.new
     @inside_code = false
+    @inside_link = false
   end
 
   # For inline code we search if there's a method with that name in
@@ -43,8 +44,18 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     @inside_code = false
   end
 
+  def begin_link(language = nil)
+    super
+    @inside_link = true
+  end
+
+  def end_link
+    super
+    @inside_link = false
+  end
+
   def text(text)
-    if @inside_code
+    if @inside_code || @inside_link
       super
       return
     end

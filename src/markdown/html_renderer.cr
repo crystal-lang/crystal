@@ -70,6 +70,16 @@ class Markdown::HTMLRenderer
     @io << "</li>"
   end
 
+  def begin_link(url)
+    @io << %(<a href=")
+    @io << url
+    @io << %(">)
+  end
+
+  def end_link
+    @io << "</a>"
+  end
+
   def text(text)
     @io << text
   end
