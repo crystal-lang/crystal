@@ -3,9 +3,10 @@ require "./item"
 class Crystal::Doc::Constant
   include Item
 
-  getter :const
+  getter type
+  getter const
 
-  def initialize(@generator, @const)
+  def initialize(@generator, @type : Type, @const)
   end
 
   def doc

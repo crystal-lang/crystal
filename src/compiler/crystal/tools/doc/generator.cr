@@ -140,41 +140,59 @@ class Crystal::Doc::Generator
   def collect_constants(parent)
     types = [] of Constant
 
-    parent.types.each_value do |type|
+    parent.type.types.each_value do |type|
       if type.is_a?(Const)
-        types << Constant.new(self, type)
+        types << Constant.new(self, parent, type)
       end
     end
 
     types.sort_by! &.name.downcase
   end
 
-  def summary(obj : Type | Method | Macro)
+  def summary(type : Type)
     doc = obj.doc
     return nil unless doc
 
-    summary doc
+    summary type, doc
   end
 
-  def summary(str : String)
-    first_line = fetch_doc_lines(str).lines.first?
-    return nil unless first_line
-
-    dot_index = first_line =~ /\.($|\s)/
-    return first_line unless dot_index
-
-    first_line[0 .. dot_index]
-  end
-
-  def doc(str : String)
-    Markdown.to_html(str)
-  end
-
-  def doc(obj)
+  def summary(obj : Method | Macro | Constant)
     doc = obj.doc
     return nil unless doc
 
-    doc doc
+    summary obj.type, doc
+  end
+
+  def summary(type, string)
+    line = fetch_doc_lines(string).lines.first?
+    return nil unless line
+
+    dot_index = line =~ /\.($|\s)/
+    if dot_index
+      line = line[0 .. dot_index]
+    end
+
+    doc type, line
+  end
+
+  def doc(type : Type)
+    doc = type.doc
+    return nil unless doc
+
+    doc type, doc
+  end
+
+  def doc(obj : Method | Macro | Constant)
+    doc = obj.doc
+    return nil unless doc
+
+    doc obj.type, doc
+  end
+
+  def doc(type, string)
+    String.build do |io|
+      Markdown.parse string, MarkdownDocRenderer.new(type, io)
+    end
   end
 
   def fetch_doc_lines(doc)

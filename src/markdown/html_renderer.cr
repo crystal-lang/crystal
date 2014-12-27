@@ -70,10 +70,6 @@ class Markdown::HTMLRenderer
     @io << "</li>"
   end
 
-  def end_code
-    @io << "</code></pre>"
-  end
-
   def text(text)
     @io << text
   end

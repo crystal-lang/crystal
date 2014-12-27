@@ -3,6 +3,7 @@ require "./item"
 class Crystal::Doc::Macro
   include Item
 
+  getter type
   getter :macro
 
   def initialize(@generator, @type, @macro)

@@ -208,7 +208,7 @@ class Crystal::Doc::Type
   end
 
   def constants
-    @constants ||= @generator.collect_constants(@type)
+    @constants ||= @generator.collect_constants(self)
   end
 
   def included_modules
@@ -332,11 +332,24 @@ class Crystal::Doc::Type
     @type.doc
   end
 
-  def lookup_type(path : Path)
-    match = @type.lookup_type(path)
+  def lookup_type(path_or_names)
+    match = @type.lookup_type(path_or_names)
     return unless match.is_a?(Crystal::Type)
 
     @generator.type(match)
+  end
+
+  def lookup_method(name)
+    instance_methods.find { |method| method.name == name }
+  end
+
+  def lookup_method(name, args_count)
+    if args_count
+      instance_methods.find { |method| method.name == name && method.args.length == args_count }
+    else
+      methods = instance_methods.select { |method| method.name == name }
+      (methods.find { |method| method.args.empty? }) || methods.first?
+    end
   end
 
   def method(a_def, class_method)

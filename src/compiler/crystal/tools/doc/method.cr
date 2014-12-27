@@ -3,6 +3,7 @@ require "./item"
 class Crystal::Doc::Method
   include Item
 
+  getter type
   getter :def
 
   def initialize(@generator, @type, @def, @class_method)
@@ -10,6 +11,10 @@ class Crystal::Doc::Method
 
   def name
     @def.name
+  end
+
+  def args
+    @def.args
   end
 
   def doc
