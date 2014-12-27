@@ -4,6 +4,7 @@ require "../exception"
 module Crystal
   class Lexer
     property? doc_enabled
+    property? comments_enabled
 
     def initialize(string)
       @reader = CharReader.new(string)
@@ -13,6 +14,7 @@ module Crystal
       @filename = ""
       @wants_regex = true
       @doc_enabled = false
+      @comments_enabled = false
     end
 
     def filename=(filename)
@@ -21,6 +23,8 @@ module Crystal
 
     def next_token
       reset_token
+
+      start = current_pos
 
       # Skip comments
       if current_char == '#'
@@ -38,13 +42,13 @@ module Crystal
         else
           if @doc_enabled
             consume_doc
+          elsif @comments_enabled
+            return consume_comment(start)
           else
             skip_comment
           end
         end
       end
-
-      start = current_pos
 
       reset_wants_regex = true
 
@@ -951,6 +955,13 @@ module Crystal
 
       @wants_regex = true if reset_wants_regex
 
+      @token
+    end
+
+    def consume_comment(start_pos)
+      skip_comment
+      @token.type = :COMMENT
+      @token.value = string_range(start_pos)
       @token
     end
 
