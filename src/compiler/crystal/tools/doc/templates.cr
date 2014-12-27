@@ -24,4 +24,8 @@ module Crystal::Doc
   record OtherTypesTemplate, title, type, other_types do
     ecr_file "#{__DIR__}/html/other_types.html"
   end
+
+  record MainTemplate, body do
+    ecr_file "#{__DIR__}/html/main.html"
+  end
 end

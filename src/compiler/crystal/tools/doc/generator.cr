@@ -16,19 +16,39 @@ class Crystal::Doc::Generator
       types.insert 0, program_type
     end
 
-    generate_docs types
+    generate_docs program_type, types
   end
 
-  def generate_docs(types)
+  def generate_docs(program_type, types)
     copy_files
     generate_list types
     generate_types_docs types, @dir
+    generate_readme program_type
+  end
+
+  def generate_readme(program_type)
+    if File.file?("README.md")
+      filename = "README.md"
+    elsif File.file?("Readme.md")
+      filename = "Readme.md"
+    end
+
+    if filename
+      body = File.read(filename)
+    else
+      body = ""
+    end
+
+    body = String.build do |io|
+      Markdown.parse body, MarkdownDocRenderer.new(program_type, io)
+    end
+
+    write_template "#{@dir}/main.html", MainTemplate.new(body)
   end
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
     cp "index.html"
-    cp "main.html"
     cp "css/style.css"
   end
 
@@ -63,9 +83,9 @@ class Crystal::Doc::Generator
 
   def write_template(filename, template)
     File.open(filename, "w") do |file|
-      io = BufferedIO.new(file)
-      template.to_s io
-      io.flush
+      BufferedIO.new(file) do |io|
+        template.to_s io
+      end
     end
   end
 
