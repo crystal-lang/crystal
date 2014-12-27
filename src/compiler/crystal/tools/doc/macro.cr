@@ -46,6 +46,7 @@ class Crystal::Doc::Macro
     io << '('
     @macro.args.each_with_index do |arg, i|
       io << ", " if i > 0
+      io << '*' if @macro.splat_index == i
       io << arg
     end
     io << ')'

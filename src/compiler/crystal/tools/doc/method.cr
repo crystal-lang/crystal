@@ -50,6 +50,7 @@ class Crystal::Doc::Method
     io << '('
     @def.args.each_with_index do |arg, i|
       io << ", " if i > 0
+      io << '*' if @def.splat_index == i
       io << arg
     end
     if @def.block_arg
@@ -73,6 +74,7 @@ class Crystal::Doc::Method
     io << '('
     @def.args.each_with_index do |arg, i|
       io << ", " if i > 0
+      io << '*' if @def.splat_index == i
       arg_to_html arg, io
     end
     if block_arg = @def.block_arg
