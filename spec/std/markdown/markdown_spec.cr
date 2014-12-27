@@ -20,6 +20,7 @@ describe Markdown do
   assert_render "*Hello", "<p>*Hello</p>"
   assert_render "*Hello *", "<p>*Hello *</p>"
   assert_render "*Hello World*", "<p><em>Hello World</em></p>"
+  assert_render "これは　*みず* です", "<p>これは　<em>みず</em> です</p>"
 
   assert_render "**Hello**", "<p><strong>Hello</strong></p>"
   assert_render "**Hello **", "<p>**Hello **</p>"

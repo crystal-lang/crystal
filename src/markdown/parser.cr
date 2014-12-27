@@ -50,7 +50,7 @@ class Markdown::Parser
       pos += 1
     end
 
-    render_header level, line[pos .. -1]
+    render_header level, line.byte_slice(pos)
   end
 
   def render_header(level, line)
@@ -100,7 +100,7 @@ class Markdown::Parser
 
       break unless has_code_spaces? line
 
-      @renderer.text line[4 .. -1]
+      @renderer.text line.byte_slice(4)
       @line += 1
 
       if @line == @lines.length
@@ -134,7 +134,7 @@ class Markdown::Parser
       break unless starts_with_star? line
 
       @renderer.begin_list_item
-      process_line line[line.index('*').not_nil! + 1 .. -1]
+      process_line line.byte_slice(line.index('*').not_nil! + 1)
       @renderer.end_list_item
       @line += 1
 
@@ -176,7 +176,7 @@ class Markdown::Parser
       when '*'
         if pos + 1 < bytesize && str[pos + 1].chr == '*'
           if two_stars || has_closing?('*', 2, str, (pos + 2), bytesize)
-            @renderer.text String.new(Slice.new(str + cursor, pos - cursor))
+            @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
             cursor = pos + 1
             if two_stars
@@ -187,7 +187,7 @@ class Markdown::Parser
             two_stars = !two_stars
           end
         elsif one_star || has_closing?('*', 1, str, (pos + 1), bytesize)
-          @renderer.text String.new(Slice.new(str + cursor, pos - cursor))
+          @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
           if one_star
             @renderer.end_italic
@@ -199,7 +199,7 @@ class Markdown::Parser
       when '_'
         if pos + 1 < bytesize && str[pos + 1].chr == '_'
           if two_underscores || has_closing?('_', 2, str, (pos + 2), bytesize)
-            @renderer.text String.new(Slice.new(str + cursor, pos - cursor))
+            @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
             cursor = pos + 1
             if two_underscores
@@ -210,7 +210,7 @@ class Markdown::Parser
             two_underscores = !two_underscores
           end
         elsif one_underscore || has_closing?('_', 1, str, (pos + 1), bytesize)
-          @renderer.text String.new(Slice.new(str + cursor, pos - cursor))
+          @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
           if one_underscore
             @renderer.end_italic
@@ -221,7 +221,7 @@ class Markdown::Parser
         end
       when '`'
         if one_backtick || has_closing?('`', 1, str, (pos + 1), bytesize)
-          @renderer.text String.new(Slice.new(str + cursor, pos - cursor))
+          @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
           if one_backtick
             @renderer.end_inline_code
@@ -234,7 +234,7 @@ class Markdown::Parser
       pos += 1
     end
 
-    @renderer.text String.new(Slice.new(str + cursor, pos - cursor))
+    @renderer.text line.byte_slice(cursor, pos - cursor)
   end
 
   def empty?(line)
