@@ -44,8 +44,10 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     @inside_code = false
   end
 
-  def begin_link(language = nil)
-    super
+  def begin_link(url)
+    @io << %(<a href=")
+    @io << url
+    @io << %(" target="_blank">)
     @inside_link = true
   end
 

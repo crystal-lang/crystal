@@ -80,6 +80,14 @@ class Markdown::HTMLRenderer
     @io << "</a>"
   end
 
+  def image(url, alt)
+    @io << %(<img src=")
+    @io << url
+    @io << %(" alt=")
+    @io << alt
+    @io << %("/>)
+  end
+
   def text(text)
     @io << text
   end

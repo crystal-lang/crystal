@@ -272,6 +272,22 @@ class Markdown::Parser
           end
           one_backtick = !one_backtick
         end
+      when '!'
+        if pos + 1 < bytesize && str[pos + 1] == '['.ord
+          link = check_link str, (pos + 2), bytesize
+          if link
+            @renderer.text line.byte_slice(cursor, pos - cursor)
+
+            bracket_idx = (str + pos + 2).as_enumerable(bytesize - pos - 2).index(']'.ord).not_nil!
+            alt = line.byte_slice(pos + 2, bracket_idx)
+
+            @renderer.image link, alt
+
+            paren_idx = (str + pos + 2 + bracket_idx + 1).as_enumerable(bytesize - pos - 2 - bracket_idx - 1).index(')'.ord).not_nil!
+            pos += 2 + bracket_idx + 1 + paren_idx
+            cursor = pos + 1
+          end
+        end
       when '['
         unless in_link
           link = check_link str, (pos + 1), bytesize
@@ -285,12 +301,12 @@ class Markdown::Parser
       when ']'
         if in_link
           @renderer.text line.byte_slice(cursor, pos - cursor)
-          cursor = pos + 1
           @renderer.end_link
 
           paren_idx = (str + pos + 1).as_enumerable(bytesize - pos - 1).index(')'.ord).not_nil!
           pos += paren_idx + 2
           cursor = pos
+          in_link = false
         end
       end
       pos += 1
@@ -317,11 +333,24 @@ class Markdown::Parser
   end
 
   def check_link(str, pos, bytesize)
-    str += pos
-    bytesize -= pos
-    bracket_idx = str.as_enumerable(bytesize).index ']'.ord
-    return nil unless bracket_idx
-    return nil unless bracket_idx < bytesize
+    # We need to count nested brackets to do it right
+    bracket_count = 1
+    while pos < bytesize
+      case str[pos].chr
+      when '['
+        bracket_count += 1
+      when ']'
+        bracket_count -= 1
+        if bracket_count == 0
+          break
+        end
+      end
+      pos += 1
+    end
+
+    return nil unless bracket_count == 0
+    bracket_idx = pos
+
     return nil unless str[bracket_idx + 1] == '('.ord
 
     paren_idx = (str + bracket_idx + 1).as_enumerable(bytesize - bracket_idx - 1).index ')'.ord
