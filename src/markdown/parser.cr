@@ -19,11 +19,11 @@ class Markdown::Parser
     end
 
     if next_line_is_all?('=')
-      return render_header 1, line
+      return render_header 1, line, 2
     end
 
     if next_line_is_all?('-')
-      return render_header 2, line
+      return render_header 2, line, 2
     end
 
     pounds = count_pounds line
@@ -50,14 +50,14 @@ class Markdown::Parser
       pos += 1
     end
 
-    render_header level, line.byte_slice(pos)
+    render_header level, line.byte_slice(pos), 1
   end
 
-  def render_header(level, line)
+  def render_header(level, line, increment)
     @renderer.begin_header level
     process_line line
     @renderer.end_header level
-    @line += 2
+    @line += increment
 
     append_double_newline_if_has_more
   end

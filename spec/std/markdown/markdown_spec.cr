@@ -54,6 +54,8 @@ describe Markdown do
   assert_render "###### Hello", "<h6>Hello</h6>"
   assert_render "####### Hello", "<h6># Hello</h6>"
 
+  assert_render "# Hello\nWorld", "<h1>Hello</h1>\n\n<p>World</p>"
+
   assert_render "    Hello", "<pre><code>Hello</code></pre>"
   assert_render "    Hello\n    World", "<pre><code>Hello\nWorld</code></pre>"
   assert_render "    Hello\n\n    World", "<pre><code>Hello\n\nWorld</code></pre>"
