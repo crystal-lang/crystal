@@ -50,4 +50,8 @@ class Crystal::Doc::Macro
     end
     io << ')'
   end
+
+  def args_to_html
+    args_to_s
+  end
 end

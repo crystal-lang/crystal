@@ -1,6 +1,7 @@
 class Crystal::Doc::Generator
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
+    @types = {} of Crystal::Type => Doc::Type
     compute_repository
   end
 
@@ -110,7 +111,7 @@ class Crystal::Doc::Generator
   end
 
   def type(type)
-    Type.new(self, type)
+    @types[type] ||= Type.new(self, type)
   end
 
   def method(type, method, class_method)

@@ -332,6 +332,13 @@ class Crystal::Doc::Type
     @type.doc
   end
 
+  def lookup_type(path : Path)
+    match = @type.lookup_type(path)
+    return unless match.is_a?(Crystal::Type)
+
+    @generator.type(match)
+  end
+
   def method(a_def, class_method)
     @generator.method(self, a_def, class_method)
   end
