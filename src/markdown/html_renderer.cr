@@ -46,7 +46,7 @@ class Markdown::HTMLRenderer
     @io << "</code>"
   end
 
-  def begin_code
+  def begin_code(language = nil)
     @io << "<pre><code>"
   end
 

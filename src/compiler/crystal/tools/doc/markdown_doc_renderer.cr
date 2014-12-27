@@ -33,7 +33,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     end
   end
 
-  def begin_code
+  def begin_code(language = nil)
     super
     @inside_code = true
   end

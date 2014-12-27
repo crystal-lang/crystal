@@ -39,6 +39,10 @@ class Markdown::Parser
       return render_unordered_list
     end
 
+    if line.starts_with? "```"
+      return render_fenced_code
+    end
+
     render_paragraph
   end
 
@@ -108,6 +112,43 @@ class Markdown::Parser
       end
 
       newline
+    end
+
+    @renderer.end_code
+
+    append_double_newline_if_has_more
+  end
+
+  def render_fenced_code
+    line = @lines[@line]
+    language = line[3 .. -1].strip
+
+    if language.empty?
+      @renderer.begin_code
+    else
+      @renderer.begin_code language
+    end
+
+    @line += 1
+
+    if @line < @lines.length
+      while true
+        line = @lines[@line]
+
+        if line.starts_with? "```"
+          @line += 1
+          break
+        end
+
+        @renderer.text line
+        @line += 1
+
+        if @line == @lines.length
+          break
+        end
+
+        newline
+      end
     end
 
     @renderer.end_code
