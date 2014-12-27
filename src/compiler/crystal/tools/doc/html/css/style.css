@@ -47,3 +47,10 @@ hr {
   margin-top: 20px;
   margin-bottom: 10px;
 }
+
+pre {
+  padding: 5px 12px;
+  margin-top: 4px;
+  border: 1px solid #eef;
+  background: #f5f5ff;
+}

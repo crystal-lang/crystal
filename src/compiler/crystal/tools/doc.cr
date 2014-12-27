@@ -1,4 +1,5 @@
 require "cgi"
+require "markdown"
 
 module Crystal
   def self.generate_docs(program, base_dirs)

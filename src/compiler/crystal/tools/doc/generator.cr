@@ -156,7 +156,7 @@ class Crystal::Doc::Generator
   end
 
   def summary(str : String)
-    first_line = process_doc(str).lines.first?
+    first_line = fetch_doc_lines(str).lines.first?
     return nil unless first_line
 
     dot_index = first_line =~ /\.($|\s)/
@@ -166,17 +166,17 @@ class Crystal::Doc::Generator
   end
 
   def doc(str : String)
-    str.lines.map { |line| "<p>#{line}</p>" }.join
+    Markdown.to_html(str)
   end
 
   def doc(obj)
     doc = obj.doc
     return nil unless doc
 
-    doc process_doc(doc)
+    doc doc
   end
 
-  def process_doc(doc)
+  def fetch_doc_lines(doc)
     doc.gsub /\n+/ do |match|
       if match.length == 1
         " "
