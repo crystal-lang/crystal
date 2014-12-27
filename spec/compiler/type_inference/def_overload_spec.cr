@@ -708,4 +708,14 @@ describe "Type inference: def overload" do
       ),
       "wrong number of type vars for Foo(A, B) (1 for 2)"
   end
+
+  it "includes splat symbol in error message" do
+    assert_error %(
+      def foo(x : Int32, *bar)
+      end
+
+      foo 'a'
+      ),
+      "foo(x : Int32, *bar)"
+  end
 end

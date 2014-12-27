@@ -187,6 +187,7 @@ class Crystal::Call
     str << '('
     a_def.args.each_with_index do |arg, i|
       str << ", " if i > 0
+      str << '*' if a_def.splat_index == i
       str << arg.name
       if arg_default = arg.default_value
         str << " = "
