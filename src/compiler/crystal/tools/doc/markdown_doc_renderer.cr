@@ -1,6 +1,22 @@
 class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
-  def initialize(@type, io)
+  def self.new(type : Type, io)
+    new type, nil, io
+  end
+
+  def self.new(obj : Macro | Method, io)
+    new obj.type, obj.args.map(&.name), io
+  end
+
+  def self.new(obj : Constant, io)
+    new obj.type, nil, io
+  end
+
+  def initialize(@type, args, io)
     super(io)
+
+    if args && !args.empty?
+      @args_regex = Regex.new("\\b(#{args.map { |arg| Regex.escape(arg) }.join "|"})\\b")
+    end
 
     @inside_inline_code = false
     @found_inilne_method = false
@@ -148,6 +164,16 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       end
 
       match_text
+    end
+
+    if args_regex = @args_regex
+      text = text.gsub(args_regex) do |match_text|
+        "<code>#{match_text}</code>"
+      end
+    end
+
+    text = text.gsub(/true|false|nil/) do |match_text|
+      "<code>#{match_text}</code>"
     end
 
     super(text)

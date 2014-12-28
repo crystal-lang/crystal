@@ -33,6 +33,9 @@ describe Markdown do
   assert_render "__Hello__", "<p><strong>Hello</strong></p>"
   assert_render "__Hello __", "<p>__Hello __</p>"
 
+  assert_render "this_is_not_italic", "<p>this_is_not_italic</p>"
+  assert_render "this__is__not__bold", "<p>this__is__not__bold</p>"
+
   assert_render "`Hello`", "<p><code>Hello</code></p>"
 
   assert_render "Hello\n=", "<h1>Hello</h1>"
