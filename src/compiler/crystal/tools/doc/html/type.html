@@ -9,7 +9,7 @@
 <% if type.program? %>
   <h1><%= type.full_name %></h1>
 <% else %>
-  <h1><%= type.kind %> <%= type.full_name %></h1>
+  <h1><%= type.abstract? ? "abstract " : ""%><%= type.kind %> <%= type.full_name %></h1>
 <% end %>
 
 <% if doc = type.formatted_doc %>

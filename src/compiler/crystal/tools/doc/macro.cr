@@ -32,6 +32,14 @@ class Crystal::Doc::Macro
     ""
   end
 
+  def abstract?
+    false
+  end
+
+  def kind
+    "macro "
+  end
+
   def to_s(io)
     io << name
     args_to_s io

@@ -29,6 +29,14 @@ class Crystal::Doc::Method
     @class_method ? '.' : '#'
   end
 
+  def abstract?
+    @def.abstract
+  end
+
+  def kind
+    @class_method ? "def self." : "def "
+  end
+
   def anchor
     String.build do |io|
       CGI.escape(to_s, io)

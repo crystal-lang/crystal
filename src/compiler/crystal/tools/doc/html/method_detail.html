@@ -2,7 +2,10 @@
   <h2><%= title %></h2>
   <% methods.each do |method| %>
     <div class="entry-detail">
-      <div class="signature" id="<%= method.anchor %>"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_html %></div>
+      <div class="signature" id="<%= method.anchor %>">
+        <%= method.abstract? ? "abstract " : "" %>
+        <%= method.kind %><strong><%= method.name %></strong><%= method.args_to_html %>
+      </div>
       <% if doc = method.formatted_doc %>
         <div class="doc"><%= doc %></div>
       <% end %>

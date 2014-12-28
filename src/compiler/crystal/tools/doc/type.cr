@@ -59,6 +59,10 @@ class Crystal::Doc::Type
     end
   end
 
+  def abstract?
+    @type.abstract
+  end
+
   private def type_mapping_values(type)
     values = type.mapping.values
     if values.any? &.is_a?(TypeOf)
