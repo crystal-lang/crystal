@@ -20,7 +20,7 @@
 
 <% if type.alias? %>
   <h2>Alias Definition</h2>
-  <code><%= type.alias_definition %></code>
+  <code><%= type.formatted_alias_definition %></code>
 <% end %>
 
 <% if superclass = type.superclass %>
@@ -41,7 +41,7 @@
   <ul>
     <% type.constants.each do |const| %>
       <li class="entry-const">
-        <strong><%= const.name %></strong> = <code><%= const.value %></code>
+        <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
         <% if doc = const.formatted_doc %>
           <div class="doc"><%= doc %></div>
         <% end %>

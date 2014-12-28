@@ -60,7 +60,8 @@ describe Markdown do
   assert_render "    Hello\n    World", "<pre><code>Hello\nWorld</code></pre>"
   assert_render "    Hello\n\n    World", "<pre><code>Hello\n\nWorld</code></pre>"
   assert_render "    Hello\n\n   \n    World", "<pre><code>Hello\n\n\nWorld</code></pre>"
-  assert_render "    Hello\n   World", "<pre><code>Hello\n</code></pre>\n\n<p>World</p>"
+  assert_render "    Hello\n   World", "<pre><code>Hello</code></pre>\n\n<p>World</p>"
+  assert_render "    Hello\n\n\nWorld", "<pre><code>Hello</code></pre>\n\n<p>World</p>"
 
   assert_render "```crystal\nHello\nWorld\n```", "<pre><code>Hello\nWorld\n</code></pre>"
 

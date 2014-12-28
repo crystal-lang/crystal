@@ -59,30 +59,34 @@ pre {
   font-size: 14px;
 }
 
-pre code .c {
+.c {
   color: #969896;
 }
 
-pre code .n {
+.n {
   color: #0086b3;
 }
 
-pre code .t {
+.t {
   color: #0086b3;
 }
 
-pre code .s {
+.s {
   color: #df5000;
 }
 
-pre code .k {
+.i {
+  color: #7f5030;
+}
+
+.k {
   color: #a71d5d;
 }
 
-pre code .o {
+.o {
   color: #a71d5d;
 }
 
-pre code .m {
+.m {
   color: #795da3;
 }

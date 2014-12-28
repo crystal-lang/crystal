@@ -100,9 +100,12 @@ class Crystal::Doc::Type
   end
 
   def alias_definition
-    alias_def = (@type as AliasType).aliased_type.to_s
-    alias_def = alias_def[1 .. -2] if alias_def.starts_with?('(')
+    alias_def = (@type as AliasType).aliased_type
     alias_def
+  end
+
+  def formatted_alias_definition
+    type_to_html alias_definition
   end
 
   def types
@@ -286,6 +289,10 @@ class Crystal::Doc::Type
     append_type_vars io
   end
 
+  def full_name_without_type_vars
+    String.build { |io| full_name_without_type_vars(io) }
+  end
+
   def full_name_without_type_vars(io)
     if container = container()
       container.full_name_without_type_vars(io)
@@ -372,11 +379,93 @@ class Crystal::Doc::Type
   private def append_type_vars(io)
     if type_vars = type_vars()
       io << '('
-      type_vars.each_with_index do |type_var, i|
-        io << ", " if i > 0
-        io << type_var
-      end
+      type_vars.join(", ", io)
       io << ')'
     end
+  end
+
+  def node_to_html(node)
+    String.build { |io| node_to_html node, io }
+  end
+
+  def node_to_html(node : Path, io)
+    match = lookup_type(node)
+    if match
+      type_to_html match, io
+    else
+      io << node
+    end
+  end
+
+  def node_to_html(node : Generic, io)
+    node_to_html node.name, io
+    io << "("
+    node.type_vars.join(", ", io) do |type_var|
+      node_to_html type_var, io
+    end
+    io << ")"
+  end
+
+  def node_to_html(node : Fun, io)
+    if inputs = node.inputs
+      inputs.join(", ", io) do |input|
+        node_to_html input, io
+      end
+    end
+    io << " -> "
+    if output = node.output
+      node_to_html output, io
+    end
+  end
+
+  def node_to_html(node : Union, io)
+    node.types.join(" | ", io) do |elem|
+      node_to_html elem, io
+    end
+  end
+
+  def node_to_html(node, io)
+    io << node
+  end
+
+  def type_to_html(type)
+    String.build { |io| type_to_html(type, io) }
+  end
+
+  def type_to_html(type : Crystal::UnionType, io)
+    type.union_types.join(" | ", io) do |union_type|
+      type_to_html union_type, io
+    end
+  end
+
+  def type_to_html(type : Crystal::GenericClassInstanceType, io)
+    generic_class = @generator.type(type.generic_class)
+    io << %(<a href=")
+    io << generic_class.path_from(self)
+    io << %(">)
+    io << generic_class.full_name_without_type_vars
+    io << "</a>"
+    io << '('
+    type.type_vars.values.join(", ", io) do |type_var|
+      case type_var
+      when Var
+        type_to_html type_var.type, io
+      when Crystal::Type
+        type_to_html type_var, io
+      end
+    end
+    io << ')'
+  end
+
+  def type_to_html(type : Crystal::Type, io)
+    type_to_html @generator.type(type), io
+  end
+
+  def type_to_html(type : Type, io)
+    io << %(<a href=")
+    io << type.path_from(self)
+    io << %(">)
+    io << type.full_name
+    io << "</a>"
   end
 end

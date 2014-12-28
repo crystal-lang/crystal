@@ -105,7 +105,7 @@ class Crystal::Doc::Method
     io << arg.name
     if default_value = arg.default_value
       io << " = "
-      io << default_value
+      io << Highlighter.highlight(default_value.to_s)
     end
     if restriction = arg.restriction
       io << " : "
@@ -121,43 +121,7 @@ class Crystal::Doc::Method
     end
   end
 
-  def node_to_html(node : Path, io)
-    match = @type.lookup_type(node)
-    if match
-      io << %(<a href=")
-      io << match.path_from(@type)
-      io << %(">)
-      io << node
-      io << "</a>"
-    else
-      io << node
-    end
-  end
-
-  def node_to_html(node : Generic, io)
-    node_to_html node.name, io
-    io << "("
-    node.type_vars.each_with_index do |type_var, i|
-      io << ", " if i > 0
-      node_to_html type_var, io
-    end
-    io << ")"
-  end
-
-  def node_to_html(node : Fun, io)
-    if inputs = node.inputs
-      inputs.each_with_index do |input, i|
-        io << ", " if i > 0
-        node_to_html input, io
-      end
-    end
-    io << " -> "
-    if output = node.output
-      node_to_html output, io
-    end
-  end
-
   def node_to_html(node, io)
-    io << node
+    @type.node_to_html node, io
   end
 end

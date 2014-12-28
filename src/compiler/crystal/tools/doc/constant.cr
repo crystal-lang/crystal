@@ -20,4 +20,8 @@ class Crystal::Doc::Constant
   def value
     @const.value
   end
+
+  def formatted_value
+    Highlighter.highlight value.to_s
+  end
 end

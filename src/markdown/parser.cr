@@ -111,6 +111,10 @@ class Markdown::Parser
         break
       end
 
+      if next_lines_empty_of_code?
+        break
+      end
+
       newline
     end
 
@@ -415,6 +419,26 @@ class Markdown::Parser
 
     return false unless pos < bytesize
     str[pos].chr.whitespace?
+  end
+
+  def next_lines_empty_of_code?
+    line_number = @line
+
+    while line_number < @lines.length
+      line = @lines[line_number]
+
+      if empty? line
+        # Nothing
+      elsif has_code_spaces? line
+        return false
+      else
+        return true
+      end
+
+      line_number += 1
+    end
+
+    return true
   end
 
   def newline
