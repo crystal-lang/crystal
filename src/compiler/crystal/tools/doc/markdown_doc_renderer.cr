@@ -219,7 +219,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
                :lib, :fun, :type, :struct, :union, :enum, :macro, :ptr, :out, :require,
                :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?,
                :alias, :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :typeof, :for, :in,
-               :undef, :with, :self, :super, :private, :protected
+               :undef, :with, :self, :super, :private, :protected, "new"
             highlight token, "k", io
           when :true, :false, :nil
             highlight token, "n", io
