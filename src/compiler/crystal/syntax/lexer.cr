@@ -5,6 +5,7 @@ module Crystal
   class Lexer
     property? doc_enabled
     property? comments_enabled
+    property? count_whitespace
 
     def initialize(string)
       @reader = CharReader.new(string)
@@ -15,6 +16,7 @@ module Crystal
       @wants_regex = true
       @doc_enabled = false
       @comments_enabled = false
+      @count_whitespace = false
     end
 
     def filename=(filename)
@@ -996,6 +998,7 @@ module Crystal
     end
 
     def consume_whitespace
+      start_pos = current_pos
       @token.type = :SPACE
       next_char
       while true
@@ -1014,6 +1017,9 @@ module Crystal
         else
           break
         end
+      end
+      if @count_whitespace
+        @token.value = string_range(start_pos)
       end
     end
 

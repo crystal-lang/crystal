@@ -49,8 +49,39 @@ hr {
 }
 
 pre {
-  padding: 5px 12px;
+  padding: 10px 20px;
   margin-top: 4px;
-  border: 1px solid #eef;
-  background: #f5f5ff;
+  border-radius: 3px;
+  line-height: 1.45;
+  overflow: auto;
+  color: #333;
+  background: #f7f7f7;
+}
+
+pre code .c {
+  color: #969896;
+}
+
+pre code .n {
+  color: #0086b3;
+}
+
+pre code .t {
+  color: #0086b3;
+}
+
+pre code .s {
+  color: #df5000;
+}
+
+pre code .k {
+  color: #a71d5d;
+}
+
+pre code .o {
+  color: #a71d5d;
+}
+
+pre code .m {
+  color: #795da3;
 }

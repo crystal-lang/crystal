@@ -43,4 +43,22 @@ describe "Lexer comments" do
     token = lexer.next_token
     token.type.should eq(:EOF)
   end
+
+  it "lexes correct number of spaces" do
+    lexer = Lexer.new(%(1   2))
+    lexer.count_whitespace = true
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+    token.value.should eq("   ")
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
 end
