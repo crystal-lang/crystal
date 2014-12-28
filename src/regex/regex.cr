@@ -40,6 +40,10 @@ class Regex
     io << "/"
   end
 
+  def inspect(io : IO)
+    to_s io
+  end
+
   def self.escape(str)
     String.build do |result|
       str.each_byte do |byte|

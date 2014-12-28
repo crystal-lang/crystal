@@ -25,4 +25,8 @@ describe "Range" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
   end
+
+  it "does inspect" do
+    (1...5).inspect.should eq("1...5")
+  end
 end

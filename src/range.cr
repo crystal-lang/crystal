@@ -52,4 +52,8 @@ struct Range(B, E)
     io << (@exclusive ? "..." : "..")
     io << @end
   end
+
+  def inspect(io)
+    to_s(io)
+  end
 end
