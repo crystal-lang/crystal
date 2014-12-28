@@ -74,7 +74,7 @@ class StringPool
 
   private def hash(str, len)
     h = 0
-    str.as_enumerable(len).each do |c|
+    str.to_slice(len).each do |c|
       h = 31 * h + c
     end
     h

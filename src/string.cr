@@ -808,7 +808,7 @@ class String
   end
 
   def each_byte
-    cstr.as_enumerable(bytesize).each do |byte|
+    cstr.to_slice(bytesize).each do |byte|
       yield byte
     end
     self

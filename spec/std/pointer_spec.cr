@@ -17,8 +17,8 @@ describe "Pointer" do
 
   it "does index with count" do
     p1 = Pointer.malloc(4) { |i| i ** 2 }
-    p1.as_enumerable(4).index(4).should eq(2)
-    p1.as_enumerable(4).index(5).should be_nil
+    p1.to_slice(4).index(4).should eq(2)
+    p1.to_slice(4).index(5).should be_nil
   end
 
   describe "copy_from" do
@@ -115,7 +115,7 @@ describe "Pointer" do
     (a[0] + a[1] + a[2]).should eq(6)
 
     3.times do |i|
-      a.as_enumerable(3).includes?(i + 1).should be_true
+      a.to_slice(3).includes?(i + 1).should be_true
     end
   end
 

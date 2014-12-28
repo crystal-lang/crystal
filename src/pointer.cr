@@ -117,21 +117,8 @@ class Pointer(T)
     PointerAppender.new(self)
   end
 
-  def as_enumerable(size)
-    PointerEnumerable.new(self, size)
-  end
-
-  struct PointerEnumerable(T)
-    include Enumerable(T)
-
-    def initialize(@pointer : Pointer(T), @size)
-    end
-
-    def each
-      @size.times do |i|
-        yield @pointer[i]
-      end
-    end
+  def to_slice(length)
+    Slice.new(self, length)
   end
 end
 
