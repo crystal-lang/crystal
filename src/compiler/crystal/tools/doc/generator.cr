@@ -89,8 +89,16 @@ class Crystal::Doc::Generator
     end
   end
 
-  def must_include?(type : Type)
+  def must_include?(type : Doc::Type)
     must_include? type.type
+  end
+
+  def must_include?(type : Crystal::IncludedGenericModule)
+    must_include? type.module
+  end
+
+  def must_include?(type : Crystal::InheritedGenericClass)
+    must_include? type.extended_class
   end
 
   def must_include?(type : Crystal::Type)

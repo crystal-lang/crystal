@@ -113,7 +113,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
         end
 
         another_type = @type.lookup_type(type_name.split("::"))
-        if another_type
+        if another_type && @type.must_be_included?
           method = lookup_method another_type, method_name, method_args
           if method
             next method_link another_type, method, match_text
@@ -124,7 +124,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       # Type
       unless match[2].empty?
         another_type = @type.lookup_type(match_text.split("::"))
-        if another_type
+        if another_type && another_type.must_be_included?
           next type_link another_type, match_text
         end
       end
@@ -142,7 +142,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
         end
 
         method = lookup_method @type, method_name, method_args
-        if method
+        if method && method.must_be_included?
           next method_link @type, method, match_text
         end
       end

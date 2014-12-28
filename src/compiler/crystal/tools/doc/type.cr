@@ -275,6 +275,10 @@ class Crystal::Doc::Type
       else
         @generator.type(container)
       end
+    when IncludedGenericModule
+      @generator.type(type.module).container
+    when InheritedGenericClass
+      @generator.type(type.extended_class).container
     else
       nil
     end
@@ -321,6 +325,10 @@ class Crystal::Doc::Type
 
   def path_to(type : Type)
     path_to type.path
+  end
+
+  def link_from(type : Type)
+    type.type_to_html self
   end
 
   def dir
@@ -398,7 +406,20 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io)
-    node_to_html node.name, io
+    match = lookup_type(node.name)
+    if match
+      if match.must_be_included?
+        io << %(<a href=")
+        io << match.path_from(self)
+        io << %(">)
+        match.full_name_without_type_vars(io)
+        io << "</a>"
+      else
+        io << node.name
+      end
+    else
+      io << node.name
+    end
     io << "("
     node.type_vars.join(", ", io) do |type_var|
       node_to_html type_var, io
@@ -440,11 +461,15 @@ class Crystal::Doc::Type
 
   def type_to_html(type : Crystal::GenericClassInstanceType, io)
     generic_class = @generator.type(type.generic_class)
-    io << %(<a href=")
-    io << generic_class.path_from(self)
-    io << %(">)
-    io << generic_class.full_name_without_type_vars
-    io << "</a>"
+    if generic_class.must_be_included?
+      io << %(<a href=")
+      io << generic_class.path_from(self)
+      io << %(">)
+      generic_class.full_name_without_type_vars(io)
+      io << "</a>"
+    else
+      generic_class.full_name_without_type_vars(io)
+    end
     io << '('
     type.type_vars.values.join(", ", io) do |type_var|
       case type_var
@@ -462,10 +487,18 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Type, io)
-    io << %(<a href=")
-    io << type.path_from(self)
-    io << %(">)
-    io << type.full_name
-    io << "</a>"
+    if type.must_be_included?
+      io << %(<a href=")
+      io << type.path_from(self)
+      io << %(">)
+      type.full_name(io)
+      io << "</a>"
+    else
+      type.full_name(io)
+    end
+  end
+
+  def must_be_included?
+    @generator.must_include? self
   end
 end

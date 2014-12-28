@@ -124,4 +124,8 @@ class Crystal::Doc::Method
   def node_to_html(node, io)
     @type.node_to_html node, io
   end
+
+  def must_be_included?
+    @generator.must_include? @def
+  end
 end

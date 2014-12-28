@@ -2,6 +2,6 @@
   <h2><%= title %></h2>
   <% other_types.each_with_index do |other_type, i| %>
     <% if i > 0 %>,<% end %>
-    <a href="<%= other_type.path_from(type) %>"><%= other_type.full_name %></a>
+    <%= other_type.link_from(type) %>
   <% end %>
 <% end %>
