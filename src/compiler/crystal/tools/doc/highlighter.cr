@@ -30,6 +30,13 @@ module Crystal::Doc::Highlighter
         highlight token, "n", io
       when :CHAR
         highlight token.value.inspect, "s", io
+      when :SYMBOL
+        sym = token.value.to_s
+        if Symbol.needs_quotes?(sym)
+          highlight %(:#{sym.inspect}), "n", io
+        else
+          highlight ":#{sym}", "n", io
+        end
       when :CONST, :"::"
         highlight token, "t", io
       when :DELIMITER_START
@@ -79,6 +86,7 @@ module Crystal::Doc::Highlighter
 
     delimiter_end = token.delimiter_state.end
     case delimiter_end
+    when '/' then io << '/'
     when '"' then io << '"'
     when '`' then io << '`'
     when ')' then io << "%("

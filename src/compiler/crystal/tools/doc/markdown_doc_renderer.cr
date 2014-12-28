@@ -172,7 +172,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       end
     end
 
-    text = text.gsub(/true|false|nil/) do |match_text|
+    text = text.gsub(/\b(true|false|nil|self|super)\b/) do |match_text|
       "<code>#{match_text}</code>"
     end
 
