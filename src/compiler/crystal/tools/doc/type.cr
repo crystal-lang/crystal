@@ -399,7 +399,7 @@ class Crystal::Doc::Type
   def node_to_html(node : Path, io)
     match = lookup_type(node)
     if match
-      type_to_html match, io
+      type_to_html match, io, node.to_s
     else
       io << node
     end
@@ -453,22 +453,30 @@ class Crystal::Doc::Type
     String.build { |io| type_to_html(type, io) }
   end
 
-  def type_to_html(type : Crystal::UnionType, io)
+  def type_to_html(type : Crystal::UnionType, io, text = nil)
     type.union_types.join(" | ", io) do |union_type|
-      type_to_html union_type, io
+      type_to_html union_type, io, text
     end
   end
 
-  def type_to_html(type : Crystal::GenericClassInstanceType, io)
+  def type_to_html(type : Crystal::GenericClassInstanceType, io, text = nil)
     generic_class = @generator.type(type.generic_class)
     if generic_class.must_be_included?
       io << %(<a href=")
       io << generic_class.path_from(self)
       io << %(">)
-      generic_class.full_name_without_type_vars(io)
+      if text
+        io << text
+      else
+        generic_class.full_name_without_type_vars(io)
+      end
       io << "</a>"
     else
-      generic_class.full_name_without_type_vars(io)
+      if text
+        io << text
+      else
+        generic_class.full_name_without_type_vars(io)
+      end
     end
     io << '('
     type.type_vars.values.join(", ", io) do |type_var|
@@ -482,19 +490,27 @@ class Crystal::Doc::Type
     io << ')'
   end
 
-  def type_to_html(type : Crystal::Type, io)
-    type_to_html @generator.type(type), io
+  def type_to_html(type : Crystal::Type, io, text = nil)
+    type_to_html @generator.type(type), io, text
   end
 
-  def type_to_html(type : Type, io)
+  def type_to_html(type : Type, io, text = nil)
     if type.must_be_included?
       io << %(<a href=")
       io << type.path_from(self)
       io << %(">)
-      type.full_name(io)
+      if text
+        io << text
+      else
+        type.full_name(io)
+      end
       io << "</a>"
     else
-      type.full_name(io)
+      if text
+        io << text
+      else
+        type.full_name(io)
+      end
     end
   end
 
