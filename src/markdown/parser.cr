@@ -216,6 +216,7 @@ class Markdown::Parser
     two_underscores = false
     one_backtick = false
     in_link = false
+    last_is_space = true
 
     while pos < bytesize
       case str[pos].chr
@@ -244,7 +245,7 @@ class Markdown::Parser
         end
       when '_'
         if pos + 1 < bytesize && str[pos + 1].chr == '_'
-          if two_underscores || has_closing?('_', 2, str, (pos + 2), bytesize)
+          if two_underscores || (last_is_space && has_closing?('_', 2, str, (pos + 2), bytesize))
             @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
             cursor = pos + 1
@@ -255,7 +256,7 @@ class Markdown::Parser
             end
             two_underscores = !two_underscores
           end
-        elsif one_underscore || has_closing?('_', 1, str, (pos + 1), bytesize)
+        elsif one_underscore || (last_is_space && has_closing?('_', 1, str, (pos + 1), bytesize))
           @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
           if one_underscore
@@ -313,6 +314,7 @@ class Markdown::Parser
           in_link = false
         end
       end
+      last_is_space = pos < bytesize && str[pos].chr.whitespace?
       pos += 1
     end
 

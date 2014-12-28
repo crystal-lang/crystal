@@ -13,6 +13,10 @@ class Crystal::Doc::Macro
     @macro.name
   end
 
+  def args
+    @macro.args
+  end
+
   def doc
     @macro.doc
   end

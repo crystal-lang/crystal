@@ -70,7 +70,7 @@ class Crystal::Doc::Method
       io << ", " unless @def.args.empty?
       io << '&'
       io << @def.block_arg
-    elsif @def.yields
+    elsif yields = @def.yields
       io << ", " unless @def.args.empty?
       io << "&block"
     end

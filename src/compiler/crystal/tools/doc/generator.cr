@@ -177,21 +177,14 @@ class Crystal::Doc::Generator
     types.sort_by! &.name.downcase
   end
 
-  def summary(type : Type)
+  def summary(obj : Type | Method | Macro | Constant)
     doc = obj.doc
     return nil unless doc
 
-    summary type, doc
+    summary obj, doc
   end
 
-  def summary(obj : Method | Macro | Constant)
-    doc = obj.doc
-    return nil unless doc
-
-    summary obj.type, doc
-  end
-
-  def summary(type, string)
+  def summary(context, string)
     line = fetch_doc_lines(string).lines.first?
     return nil unless line
 
@@ -200,26 +193,19 @@ class Crystal::Doc::Generator
       line = line[0 .. dot_index]
     end
 
-    doc type, line
+    doc context, line
   end
 
-  def doc(type : Type)
-    doc = type.doc
-    return nil unless doc
-
-    doc type, doc
-  end
-
-  def doc(obj : Method | Macro | Constant)
+  def doc(obj : Type | Method | Macro | Constant)
     doc = obj.doc
     return nil unless doc
 
-    doc obj.type, doc
+    doc obj, doc
   end
 
-  def doc(type, string)
+  def doc(context, string)
     String.build do |io|
-      Markdown.parse string, MarkdownDocRenderer.new(type, io)
+      Markdown.parse string, MarkdownDocRenderer.new(context, io)
     end
   end
 
