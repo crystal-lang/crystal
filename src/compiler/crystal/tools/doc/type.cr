@@ -385,9 +385,11 @@ class Crystal::Doc::Type
   end
 
   private def append_type_vars(io)
+    type = @type
     if type_vars = type_vars()
       io << '('
       type_vars.join(", ", io)
+      io << '*' if type.is_a?(GenericType) && type.variadic
       io << ')'
     end
   end

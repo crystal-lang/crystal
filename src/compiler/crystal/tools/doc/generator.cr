@@ -102,6 +102,8 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(type : Crystal::Type)
+    return false if nodoc?(type)
+
     type.locations.any? do |type_location|
       must_include? type_location
     end
@@ -112,6 +114,8 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
+    return false if nodoc?(a_def)
+
     must_include? a_def.location
   end
 
@@ -120,6 +124,8 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_macro : Crystal::Macro)
+    return false if nodoc?(a_macro)
+
     must_include? a_macro.location
   end
 
@@ -136,6 +142,11 @@ class Crystal::Doc::Generator
 
   def must_include?(nil : Nil)
     false
+  end
+
+  def nodoc?(obj)
+    doc = obj.doc
+    doc && doc.strip == ":nodoc:"
   end
 
   def type(type)
