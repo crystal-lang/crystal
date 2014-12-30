@@ -24,7 +24,7 @@ describe "Code gen: next" do
 
       a = 0
       foo do |i|
-        next if i % 2 == 0
+        next if i.unsafe_mod(2) == 0
         a += i
       end
       a
@@ -125,7 +125,7 @@ describe "Code gen: next" do
         b = 0
         while a < 4
           a += 1
-          next if a % 2 == 0
+          next if a.unsafe_mod(2) == 0
           b += a
         end
         if b == i

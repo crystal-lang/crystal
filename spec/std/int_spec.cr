@@ -157,4 +157,9 @@ describe "Int" do
     expect_raises(DivisionByZero) { 1 / 0 }
     (4 / 2).should eq(2)
   end
+
+  it "raises when mods by zero" do
+    expect_raises(DivisionByZero) { 1 % 0 }
+    (4 % 2).should eq(0)
+  end
 end

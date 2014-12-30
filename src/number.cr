@@ -1,4 +1,8 @@
 struct Number
+  def +
+    self
+  end
+
   def step(limit = nil, by = 1)
     x = self
 

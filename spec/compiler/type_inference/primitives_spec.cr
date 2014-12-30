@@ -92,4 +92,34 @@ describe "Type inference: primitives" do
              instantiate([string, fun_of(bool)] of TypeVar)
       end
   end
+
+  it "extends from Number and doesn't find + method" do
+    assert_error %(
+      struct Foo < Number
+      end
+
+      Foo.new + 1
+      ),
+      "undefined method"
+  end
+
+  it "extends from Number and doesn't find >= method" do
+    assert_error %(
+      struct Foo < Number
+      end
+
+      Foo.new >= 1
+      ),
+      "undefined method"
+  end
+
+  it "extends from Number and doesn't find to_i method" do
+    assert_error %(
+      struct Foo < Number
+      end
+
+      Foo.new.to_i
+      ),
+      "undefined method"
+  end
 end

@@ -3,10 +3,6 @@ struct Float
     cast(0)
   end
 
-  def +
-    self
-  end
-
   def nan?
     !(self == self)
   end

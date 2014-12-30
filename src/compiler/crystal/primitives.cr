@@ -27,20 +27,34 @@ module Crystal
       floats = [float32, float64]
       nums = ints + floats
 
-      %w(+ - * /).each do |op|
-        nums.each do |another_number|
-          number.add_def Def.new(op, [Arg.new("other", type: another_number)], binary)
+      # The `/` operator is only defined for int vs float combinations.
+      # The `/` operator for int vs int is defined in Crystal on top
+      # of unsafe div.
+      # The same goes with the `%` operator.
+
+      %w(+ - *).each do |op|
+        nums.product(nums) do |num1, num2|
+          num1.add_def Def.new(op, [Arg.new("other", type: num2)], binary)
         end
       end
 
+      floats.product(ints) do |num1, num2|
+        num1.add_def Def.new("/", [Arg.new("other", type: num2)], binary)
+        num2.add_def Def.new("/", [Arg.new("other", type: num1)], binary)
+      end
+
+      floats.product(floats) do |num1, num2|
+        num1.add_def Def.new("/", [Arg.new("other", type: num2)], binary)
+      end
+
       %w(== < <= > >= !=).each do |op|
-        nums.each do |another_number|
-          number.add_def Def.new(op, [Arg.new("other", type: another_number)], binary)
+        nums.product(nums) do |num1, num2|
+          num1.add_def Def.new(op, [Arg.new("other", type: num2)], binary)
         end
         char.add_def Def.new(op, [Arg.new("other", type: char)], binary)
       end
 
-      %w(% << >> | & ^ unsafe_div unsafe_mod).each do |op|
+      %w(<< >> | & ^ unsafe_div unsafe_mod).each do |op|
         ints.each do |another_int|
           int.add_def Def.new(op, [Arg.new("other", type: another_int)], binary)
         end
@@ -53,7 +67,9 @@ module Crystal
       end
 
       %w(to_i to_i8 to_i16 to_i32 to_i64 to_u to_u8 to_u16 to_u32 to_u64 to_f to_f32 to_f64).each do |op|
-        number.add_def Def.new(op, body: cast)
+        nums.each do |num|
+          num.add_def Def.new(op, body: cast)
+        end
       end
 
       int.add_def Def.new("chr", body: cast)

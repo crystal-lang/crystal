@@ -75,7 +75,7 @@ describe "Codegen: while" do
 
       while i < 10
         i += 1
-        next if i % 2 == 0
+        next if i.unsafe_mod(2) == 0
         x += i
       end
       x

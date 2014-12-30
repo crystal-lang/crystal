@@ -42,10 +42,6 @@ describe "Code gen: primitives" do
     run(%(2 * 3)).to_i.should eq(6)
   end
 
-  it "codegens 8 / 3" do
-    run(%(8 / 3)).to_i.should eq(2)
-  end
-
   it "codegens 8.unsafe_div 3" do
     run(%(8.unsafe_div 3)).to_i.should eq(2)
   end
