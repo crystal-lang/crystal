@@ -15,6 +15,7 @@ module Crystal
 
     def define_object_primitives
       object.add_def Def.new("class", body: Primitive.new(:class))
+      object.add_def Def.new("crystal_type_id", body: Primitive.new(:object_crystal_type_id))
       # object.metaclass.add_def Def.new("name", body: Primitive.new(:class_name))
     end
 
@@ -62,10 +63,6 @@ module Crystal
 
     def define_reference_primitives
       reference.add_def Def.new("object_id", body: Primitive.new(:object_id))
-
-      [object, value, bool, char, int32, int64, float32, float64, symbol, reference].each do |type|
-        type.add_def Def.new("crystal_type_id", body: Primitive.new(:object_crystal_type_id))
-      end
     end
 
     def define_pointer_primitives
