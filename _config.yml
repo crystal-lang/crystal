@@ -1,3 +1,5 @@
 name: Crystal Programming Language
+description: Crystal Programming Language's blog
+url: http://crystal-lang.org
 pygments: true
 markdown: kramdown
