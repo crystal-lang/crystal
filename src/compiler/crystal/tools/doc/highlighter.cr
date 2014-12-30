@@ -52,7 +52,7 @@ module Crystal::Doc::Highlighter
           when :def, :if, :else, :elsif, :end,
                :class, :module, :include, :extend,
                :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
-               :lib, :fun, :type, :struct, :union, :enum, :macro, :ptr, :out, :require,
+               :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?,
                :alias, :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :typeof, :for, :in,
                :undef, :with, :self, :super, :private, :protected, "new"

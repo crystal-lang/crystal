@@ -767,10 +767,6 @@ module Crystal
         scan_ident(start)
       when 'p'
         case next_char
-        when 't'
-          if next_char == 'r'
-            return check_ident_or_keyword(:ptr, start)
-          end
         when 'o'
           if next_char == 'i' && next_char == 'n' && next_char == 't' && next_char == 'e' && next_char == 'r' && next_char == 'o' && next_char == 'f'
             return check_ident_or_keyword(:pointerof, start)
