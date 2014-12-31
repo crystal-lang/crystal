@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.12.1" data-basepath=".." data-revision="1419189331640">
+    <div class="book" data-github="manastech/crystal" data-level="3.12.1" data-basepath=".." data-revision="1419989394043">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1952,18 +1952,25 @@
                     <section class="normal" id="section-gitbook_46">
                     
                         <h1 id="cross-compilation">Cross-compilation</h1>
-<p>The compile-time flags can be redefined by compiling your program with <code>--cross-compile &quot;new flags&quot;</code>.</p>
-<p>For example, if you are on a Mac, the <code>uname -m -s</code> command says <code>Darwin x86_64</code>. On some linux 64 bits it will say <code>Linux x86_64</code>. We can compile a program in a Mac that will run on that Linux like this:</p>
-<pre><code class="lang-bash">crystal your_program.cr --cross-compile <span class="hljs-string">"Linux x86_64"</span>
+<p>Crystal supports a basic form of <a href="http://en.wikipedia.org/wiki/Cross_compiler" target="_blank">cross compilation</a>.</p>
+<p>In order to achieve this, the compiler executable provides two flags:</p>
+<ul>
+<li><code>--cross-compile</code>: the <a href="compile_time_flags.html">compile-time flags</a> to use</li>
+<li><code>--target</code>: the <a href="http://llvm.org/docs/LangRef.html#target-triple" target="_blank">LLVM Target Triple</a> to use</li>
+</ul>
+<p>To get the <code>--cross-compile</code> flags you can execute <code>uname -m -s</code> on a unix system. For example, if you are on a Mac, the <code>uname -m -s</code> command says &quot;Darwin x86_64&quot;. On some linux 64 bits it will say &quot;Linux x86_64&quot;.</p>
+<p>To get the <code>--target</code> flags you can execute <code>llvm-config --host-target</code> using an installed LLVM 3.5. For example on a Linux it could say &quot;x86_64-unknown-linux-gnu&quot;.</p>
+<p>Using these two, we can compile a program in a Mac that will run on that Linux like this:</p>
+<pre><code class="lang-bash">crystal your_program.cr --cross-compile <span class="hljs-string">"Linux x86_64"</span> --target <span class="hljs-string">"x86_64-unknown-linux-gnu"</span>
 </code></pre>
-<p>This will generate a <code>.bc</code> (LLVM bitcode) file and will print a line with a command to execute on the system we are trying to cross-compile to. For example:</p>
-<pre><code class="lang-bash">llc your_program.bc  -o your_program.s &amp;&amp; clang your_program.s -o your_program  -lpcre -lrt -lm -lgc -lunwind
+<p>This will generate a <code>.o</code> (<a href="http://en.wikipedia.org/wiki/Object_file" target="_blank">Object file</a>) and will print a line with a command to execute on the system we are trying to cross-compile to. For example:</p>
+<pre><code class="lang-bash">cc your_program.o -o your_program -lpcre -lrt -lm -lgc -lunwind
 </code></pre>
-<p>You must copy this <code>.bc</code> file to that system and execute those commands. Once you do this the executable will be available in that target system.</p>
+<p>You must copy this <code>.o</code> file to that system and execute those commands. Once you do this the executable will be available in that target system.</p>
 <p>This procedure is usually done with the compiler itself to port it to new platforms where a compiler is not yet available. Because in order to compile a Crystal compiler we need an older Crystal compiler, the only two ways to generate a compiler for a system where there isn&#39;t a compiler yet are:</p>
 <ul>
 <li>We checkout the latest version of the compiler written in Ruby, and from that compiler we compile the next versions until the current one.</li>
-<li>We create a <code>.bc</code> file in the target system and from that file we create a compile.</li>
+<li>We create a <code>.o</code> file in the target system and from that file we create a compile.</li>
 </ul>
 <p>The first alternative is long and cumbersome, while the second one is much easier.</p>
 <p>Cross-compiling can be done for other executables, but its main target is the compiler. If Crystal isn&#39;t available in some system you can try cross-compiling it there.</p>
