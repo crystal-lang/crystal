@@ -1,3 +1,15 @@
+## 0.5.6 (2014-31-12)
+
+* Added a `crystal doc` command to automatically generate documentation for a project using [Markdown](http://daringfireball.net/projects/markdown/) syntax. The style is still ugly but it's quite functional. Now we only need to start documenting things :-)
+* Removed the old `@:` attribute syntax.
+* Fixed [#311](https://github.com/manastech/crystal/issues/311): Issues with invoking lib functions in other ways (thanks @scidom).
+* Fixed [#314](https://github.com/manastech/crystal/issues/314): NoReturn information is not lazy.
+* Fixed [#317](https://github.com/manastech/crystal/issues/317): Fixes in UTF-8 encoding/decoding (thanks @yous).
+* Fixed [#319](https://github.com/manastech/crystal/issues/319): Unexpected EOF (thanks @Exilor).
+* `{{yield}}` inside macros now preserve the yielded node location, leading to much better error messages.
+* Added `Float#nan?`, `Float#infinite?` and `Float#finite?`.
+* Many other bug fixes and improvements.
+
 ## 0.5.5 (2014-12-12)
 
 * Removed `src` and crystal compiler `libs` directory from CRYSTAL_PATH.
