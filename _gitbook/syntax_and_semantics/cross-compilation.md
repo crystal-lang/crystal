@@ -14,7 +14,7 @@ To get the `--target` flags you can execute `llvm-config --host-target` using an
 Using these two, we can compile a program in a Mac that will run on that Linux like this:
 
 ```bash
-crystal your_program.cr --cross-compile "Linux x86_64" --target "x86_64-unknown-linux-gnu"
+crystal build your_program.cr --cross-compile "Linux x86_64" --target "x86_64-unknown-linux-gnu"
 ```
 
 This will generate a `.o` ([Object file](http://en.wikipedia.org/wiki/Object_file)) and will print a line with a command to execute on the system we are trying to cross-compile to. For example:

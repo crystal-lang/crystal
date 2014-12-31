@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.12.1" data-basepath=".." data-revision="1419989394043">
+    <div class="book" data-github="manastech/crystal" data-level="3.12.1" data-basepath=".." data-revision="1419989741630">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1961,7 +1961,7 @@
 <p>To get the <code>--cross-compile</code> flags you can execute <code>uname -m -s</code> on a unix system. For example, if you are on a Mac, the <code>uname -m -s</code> command says &quot;Darwin x86_64&quot;. On some linux 64 bits it will say &quot;Linux x86_64&quot;.</p>
 <p>To get the <code>--target</code> flags you can execute <code>llvm-config --host-target</code> using an installed LLVM 3.5. For example on a Linux it could say &quot;x86_64-unknown-linux-gnu&quot;.</p>
 <p>Using these two, we can compile a program in a Mac that will run on that Linux like this:</p>
-<pre><code class="lang-bash">crystal your_program.cr --cross-compile <span class="hljs-string">"Linux x86_64"</span> --target <span class="hljs-string">"x86_64-unknown-linux-gnu"</span>
+<pre><code class="lang-bash">crystal build your_program.cr --cross-compile <span class="hljs-string">"Linux x86_64"</span> --target <span class="hljs-string">"x86_64-unknown-linux-gnu"</span>
 </code></pre>
 <p>This will generate a <code>.o</code> (<a href="http://en.wikipedia.org/wiki/Object_file" target="_blank">Object file</a>) and will print a line with a command to execute on the system we are trying to cross-compile to. For example:</p>
 <pre><code class="lang-bash">cc your_program.o -o your_program -lpcre -lrt -lm -lgc -lunwind
