@@ -115,7 +115,7 @@ module Crystal::Command
   end
 
   private def self.run_command(options)
-    config = create_compiler "run", options
+    config = create_compiler "run", options, run: true
     if config.specified_output
       config.compile
       return
@@ -226,7 +226,7 @@ module Crystal::Command
     end
   end
 
-  private def self.create_compiler(command, options, no_build = false)
+  private def self.create_compiler(command, options, no_build = false, run = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -238,8 +238,10 @@ module Crystal::Command
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
       unless no_build
-        opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
-          compiler.cross_compile_flags = cross_compile
+        unless run
+          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
+            compiler.cross_compile_flags = cross_compile
+          end
         end
         opts.on("-d", "--debug", "Add symbolic debug info") do
           compiler.debug = true
@@ -287,8 +289,10 @@ module Crystal::Command
         opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
           compiler.n_threads = n_threads.to_i
         end
-        opts.on("--target TRIPLE", "Target triple") do |triple|
-          compiler.target_triple = triple
+        unless run
+          opts.on("--target TRIPLE", "Target triple") do |triple|
+            compiler.target_triple = triple
+          end
         end
         opts.on("--verbose", "Display executed commands") do
           compiler.verbose = true
