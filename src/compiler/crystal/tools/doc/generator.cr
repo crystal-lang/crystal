@@ -2,6 +2,7 @@ class Crystal::Doc::Generator
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
+    @is_crystal_repository = false
     compute_repository
   end
 
@@ -114,6 +115,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
+    return true if @is_crystal_repository && a_def.body.is_a?(Crystal::Primitive)
     return false if nodoc?(a_def)
 
     must_include? a_def.location
@@ -241,6 +243,11 @@ class Crystal::Doc::Generator
       rev = `git rev-parse HEAD`.chomp
 
       @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
+
+      if user == "manastech" && repo == "crystal"
+        @is_crystal_repository = true
+      end
+
       break
     end
   end

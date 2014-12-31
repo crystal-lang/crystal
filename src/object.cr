@@ -18,6 +18,7 @@ class Object
   # when y
   #   # something when y
   # end
+  # ```
   #
   # Is equivalent to this code:
   #

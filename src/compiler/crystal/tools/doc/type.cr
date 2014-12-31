@@ -155,7 +155,7 @@ class Crystal::Doc::Type
               body = a_def.body
 
               # Skip auto-generated allocate method
-              if body.is_a?(Primitive) && body.name == :allocate
+              if body.is_a?(Crystal::Primitive) && body.name == :allocate
                 next
               end
 

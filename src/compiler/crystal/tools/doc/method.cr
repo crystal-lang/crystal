@@ -18,7 +18,12 @@ class Crystal::Doc::Method
   end
 
   def doc
-    @def.doc
+    body = @def.body
+    if body.is_a?(Crystal::Primitive)
+      Primitive.doc @def, body
+    else
+      @def.doc
+    end
   end
 
   def source_link
@@ -110,6 +115,9 @@ class Crystal::Doc::Method
     if restriction = arg.restriction
       io << " : "
       node_to_html restriction, io
+    elsif type = arg.type?
+      io << " : "
+      @type.type_to_html type, io
     end
   end
 

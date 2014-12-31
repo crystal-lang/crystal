@@ -259,7 +259,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
-    if body.is_a?(Primitive)
+    if body.is_a?(Crystal::Primitive)
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
