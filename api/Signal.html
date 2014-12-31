@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Signal</h1>
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Extended Modules</h2>
+  
+    <a href="Signal.html">Signal</a>
+  
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>ABRT</strong> = <code><span class="n">6</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ALRM</strong> = <code><span class="n">15</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>BUS</strong> = <code><span class="n">10</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>CHLD</strong> = <code><span class="n">20</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>CLD</strong> = <code><span class="n">20</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>CONT</strong> = <code><span class="n">19</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EMT</strong> = <code><span class="n">7</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EXIT</strong> = <code><span class="n">0</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>FPE</strong> = <code><span class="n">8</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>HUP</strong> = <code><span class="n">1</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ILL</strong> = <code><span class="n">4</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>INFO</strong> = <code><span class="n">29</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>INT</strong> = <code><span class="n">2</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>IO</strong> = <code><span class="n">23</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>IOT</strong> = <code><span class="n">6</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>KILL</strong> = <code><span class="n">9</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PIPE</strong> = <code><span class="n">13</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PROF</strong> = <code><span class="n">27</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>QUIT</strong> = <code><span class="n">3</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SEGV</strong> = <code><span class="n">11</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>STOP</strong> = <code><span class="n">17</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SYS</strong> = <code><span class="n">12</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TERM</strong> = <code><span class="n">15</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TRAP</strong> = <code><span class="n">5</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TSTP</strong> = <code><span class="n">18</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TTIN</strong> = <code><span class="n">21</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TTOU</strong> = <code><span class="n">22</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>URG</strong> = <code><span class="n">16</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>USR1</strong> = <code><span class="n">30</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>USR2</strong> = <code><span class="n">31</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>VTLARM</strong> = <code><span class="n">26</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>WINCH</strong> = <code><span class="n">28</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>XCPU</strong> = <code><span class="n">24</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>XFSZ</strong> = <code><span class="n">25</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#trap%28signal%2C%20%26block%20%3A%20Int32%20-%3E%20%29-instance-method" class="signature"><strong>#trap</strong>(signal, &block : Int32 -> )</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="trap%28signal%2C%20%26block%20%3A%20Int32%20-%3E%20%29-instance-method">
+        
+        def <strong>trap</strong>(signal, &block : <a href="Int32.html">Int32</a> -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/signal.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

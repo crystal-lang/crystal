@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class OAuth2::AccessToken::Mac</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../../OAuth2/AccessToken.html">OAuth2::AccessToken</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#signature%28ts%2C%20nonce%2C%20method%2C%20uri%2C%20host%2C%20port%2C%20ext%2C%20mac_algorithm%2C%20mac_key%29-class-method" class="signature"><strong>.signature</strong>(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28access_token%2C%20expires_in%2C%20mac_algorithm%2C%20mac_key%2C%20refresh_token%20%3D%20nil%2C%20scope%20%3D%20nil%2C%20issued_at%20%3D%20Time.now.to_i%29-class-method" class="signature"><strong>.new</strong>(access_token, expires_in, mac_algorithm, mac_key, refresh_token = nil, scope = nil, issued_at = Time.now.to_i)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20self%29-instance-method" class="signature"><strong>#==</strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#authenticate%28request%20%3A%20HTTP%3A%3ARequest%2C%20ssl%29-instance-method" class="signature"><strong>#authenticate</strong>(request : HTTP::Request, ssl)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#issued_at-instance-method" class="signature"><strong>#issued_at</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#issued_at%3D%28issued_at%29-instance-method" class="signature"><strong>#issued_at=</strong>(issued_at)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mac_algorithm-instance-method" class="signature"><strong>#mac_algorithm</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mac_algorithm%3D%28mac_algorithm%29-instance-method" class="signature"><strong>#mac_algorithm=</strong>(mac_algorithm)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mac_key-instance-method" class="signature"><strong>#mac_key</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mac_key%3D%28mac_key%29-instance-method" class="signature"><strong>#mac_key=</strong>(mac_key)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_json%28io%29-instance-method" class="signature"><strong>#to_json</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#token_type-instance-method" class="signature"><strong>#token_type</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="signature%28ts%2C%20nonce%2C%20method%2C%20uri%2C%20host%2C%20port%2C%20ext%2C%20mac_algorithm%2C%20mac_key%29-class-method">
+        
+        def self.<strong>signature</strong>(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/mac.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28access_token%2C%20expires_in%2C%20mac_algorithm%2C%20mac_key%2C%20refresh_token%20%3D%20nil%2C%20scope%20%3D%20nil%2C%20issued_at%20%3D%20Time.now.to_i%29-class-method">
+        
+        def self.<strong>new</strong>(access_token, expires_in, mac_algorithm, mac_key, refresh_token = <span class="n">nil</span>, scope = <span class="n">nil</span>, issued_at = <span class="t">Time</span>.now.to_i)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/mac.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20self%29-instance-method">
+        
+        def <strong>==</strong>(other : self)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="authenticate%28request%20%3A%20HTTP%3A%3ARequest%2C%20ssl%29-instance-method">
+        
+        def <strong>authenticate</strong>(request : <a href="../../HTTP/Request.html">HTTP::Request</a>, ssl)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/mac.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="issued_at-instance-method">
+        
+        def <strong>issued_at</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="issued_at%3D%28issued_at%29-instance-method">
+        
+        def <strong>issued_at=</strong>(issued_at)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mac_algorithm-instance-method">
+        
+        def <strong>mac_algorithm</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mac_algorithm%3D%28mac_algorithm%29-instance-method">
+        
+        def <strong>mac_algorithm=</strong>(mac_algorithm)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mac_key-instance-method">
+        
+        def <strong>mac_key</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mac_key%3D%28mac_key%29-instance-method">
+        
+        def <strong>mac_key=</strong>(mac_key)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_json%28io%29-instance-method">
+        
+        def <strong>to_json</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/mac.cr#L44" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="token_type-instance-method">
+        
+        def <strong>token_type</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/mac.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

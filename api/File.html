@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class File</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="FileDescriptorIO.html">FileDescriptorIO</a>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>SEPARATOR</strong> = <code><span class="s">'/'</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#basename%28filename%2C%20suffix%29-class-method" class="signature"><strong>.basename</strong>(filename, suffix)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#basename%28filename%29-class-method" class="signature"><strong>.basename</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete%28filename%29-class-method" class="signature"><strong>.delete</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#directory%3F%28path%29-class-method" class="signature"><strong>.directory?</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dirname%28filename%29-class-method" class="signature"><strong>.dirname</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_line%28filename%2C%20%26block%29-class-method" class="signature"><strong>.each_line</strong>(filename, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exists%3F%28filename%29-class-method" class="signature"><strong>.exists?</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expand_path%28path%2C%20dir%20%3D%20nil%29-class-method" class="signature"><strong>.expand_path</strong>(path, dir = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#extname%28filename%29-class-method" class="signature"><strong>.extname</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#file%3F%28path%29-class-method" class="signature"><strong>.file?</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#join%28parts%20%3A%20Array%20%7C%20Tuple%29-class-method" class="signature"><strong>.join</strong>(parts : Array | Tuple)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#join%28%2Aparts%29-class-method" class="signature"><strong>.join</strong>(*parts)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lstat%28path%29-class-method" class="signature"><strong>.lstat</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28filename%2C%20mode%20%3D%20%22r%22%29-class-method" class="signature"><strong>.open</strong>(filename, mode = "r")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28filename%2C%20mode%20%3D%20%22r%22%2C%20%26block%29-class-method" class="signature"><strong>.open</strong>(filename, mode = "r", &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read%28filename%29-class-method" class="signature"><strong>.read</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_lines%28filename%29-class-method" class="signature"><strong>.read_lines</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rename%28old_filename%2C%20new_filename%29-class-method" class="signature"><strong>.rename</strong>(old_filename, new_filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size%28filename%29-class-method" class="signature"><strong>.size</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#stat%28path%29-class-method" class="signature"><strong>.stat</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write%28filename%2C%20content%29-class-method" class="signature"><strong>.write</strong>(filename, content)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28filename%2C%20mode%20%3D%20%22r%22%29-class-method" class="signature"><strong>.new</strong>(filename, mode = "r")</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="basename%28filename%2C%20suffix%29-class-method">
+        
+        def self.<strong>basename</strong>(filename, suffix)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L109" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="basename%28filename%29-class-method">
+        
+        def self.<strong>basename</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="delete%28filename%29-class-method">
+        
+        def self.<strong>delete</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L115" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="directory%3F%28path%29-class-method">
+        
+        def self.<strong>directory?</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L78" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dirname%28filename%29-class-method">
+        
+        def self.<strong>dirname</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L82" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_line%28filename%2C%20%26block%29-class-method">
+        
+        def self.<strong>each_line</strong>(filename, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L198" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exists%3F%28filename%29-class-method">
+        
+        def self.<strong>exists?</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expand_path%28path%2C%20dir%20%3D%20nil%29-class-method">
+        
+        def self.<strong>expand_path</strong>(path, dir = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L132" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="extname%28filename%29-class-method">
+        
+        def self.<strong>extname</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L122" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="file%3F%28path%29-class-method">
+        
+        def self.<strong>file?</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28parts%20%3A%20Array%20%7C%20Tuple%29-class-method">
+        
+        def self.<strong>join</strong>(parts : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L225" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28%2Aparts%29-class-method">
+        
+        def self.<strong>join</strong>(*parts)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L221" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lstat%28path%29-class-method">
+        
+        def self.<strong>lstat</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L60" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="open%28filename%2C%20mode%20%3D%20%22r%22%29-class-method">
+        
+        def self.<strong>open</strong>(filename, mode = <span class="s">"r"</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L173" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="open%28filename%2C%20mode%20%3D%20%22r%22%2C%20%26block%29-class-method">
+        
+        def self.<strong>open</strong>(filename, mode = <span class="s">"r"</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L177" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28filename%29-class-method">
+        
+        def self.<strong>read</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L186" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_lines%28filename%29-class-method">
+        
+        def self.<strong>read_lines</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L207" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rename%28old_filename%2C%20new_filename%29-class-method">
+        
+        def self.<strong>rename</strong>(old_filename, new_filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L254" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size%28filename%29-class-method">
+        
+        def self.<strong>size</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L250" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="stat%28path%29-class-method">
+        
+        def self.<strong>stat</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="write%28filename%2C%20content%29-class-method">
+        
+        def self.<strong>write</strong>(filename, content)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L215" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28filename%2C%20mode%20%3D%20%22r%22%29-class-method">
+        
+        def self.<strong>new</strong>(filename, mode = <span class="s">"r"</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path-instance-method">
+        
+        def <strong>path</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size-instance-method">
+        
+        def <strong>size</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file.cr#L262" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

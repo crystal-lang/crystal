@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class OAuth::Consumer</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28host%2C%20consumer_key%2C%20consumer_secret%2C%20port%20%3D%20443%2C%20scheme%20%3D%20%22https%22%2C%20request_token_uri%20%3D%20%22%2Foauth%2Frequest_token%22%2C%20authorize_uri%20%3D%20%22%2Foauth%2Fauthorize%22%2C%20access_token_uri%20%3D%20%22%2Foauth%2Faccess_token%22%29-class-method" class="signature"><strong>.new</strong>(host, consumer_key, consumer_secret, port = 443, scheme = "https", request_token_uri = "/oauth/request_token", authorize_uri = "/oauth/authorize", access_token_uri = "/oauth/access_token")</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#authenticate%28client%20%3A%20HTTP%3A%3AClient%2C%20token%20%3A%20AccessToken%29-instance-method" class="signature"><strong>#authenticate</strong>(client : HTTP::Client, token : AccessToken)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_access_token%28request_token%2C%20oauth_verifier%2C%20extra_params%20%3D%20nil%29-instance-method" class="signature"><strong>#get_access_token</strong>(request_token, oauth_verifier, extra_params = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_authorize_uri%28request_token%2C%20oauth_callback%20%3D%20nil%29-instance-method" class="signature"><strong>#get_authorize_uri</strong>(request_token, oauth_callback = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_request_token%28oauth_callback%20%3D%20%22oob%22%29-instance-method" class="signature"><strong>#get_request_token</strong>(oauth_callback = "oob")</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28host%2C%20consumer_key%2C%20consumer_secret%2C%20port%20%3D%20443%2C%20scheme%20%3D%20%22https%22%2C%20request_token_uri%20%3D%20%22%2Foauth%2Frequest_token%22%2C%20authorize_uri%20%3D%20%22%2Foauth%2Fauthorize%22%2C%20access_token_uri%20%3D%20%22%2Foauth%2Faccess_token%22%29-class-method">
+        
+        def self.<strong>new</strong>(host, consumer_key, consumer_secret, port = <span class="n">443</span>, scheme = <span class="s">"https"</span>, request_token_uri = <span class="s">"/oauth/request_token"</span>, authorize_uri = <span class="s">"/oauth/authorize"</span>, access_token_uri = <span class="s">"/oauth/access_token"</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/consumer.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="authenticate%28client%20%3A%20HTTP%3A%3AClient%2C%20token%20%3A%20AccessToken%29-instance-method">
+        
+        def <strong>authenticate</strong>(client : <a href="../HTTP/Client.html">HTTP::Client</a>, token : <a href="../OAuth/AccessToken.html">AccessToken</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/consumer.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_access_token%28request_token%2C%20oauth_verifier%2C%20extra_params%20%3D%20nil%29-instance-method">
+        
+        def <strong>get_access_token</strong>(request_token, oauth_verifier, extra_params = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/consumer.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_authorize_uri%28request_token%2C%20oauth_callback%20%3D%20nil%29-instance-method">
+        
+        def <strong>get_authorize_uri</strong>(request_token, oauth_callback = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/consumer.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_request_token%28oauth_callback%20%3D%20%22oob%22%29-instance-method">
+        
+        def <strong>get_request_token</strong>(oauth_callback = <span class="s">"oob"</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/consumer.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

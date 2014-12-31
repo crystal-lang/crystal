@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Enumerable(T)</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#all%3F-instance-method" class="signature"><strong>#all?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#all%3F%28%26block%29-instance-method" class="signature"><strong>#all?</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#any%3F-instance-method" class="signature"><strong>#any?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#any%3F%28%26block%29-instance-method" class="signature"><strong>#any?</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#compact_map%28%26block%29-instance-method" class="signature"><strong>#compact_map</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#count-instance-method" class="signature"><strong>#count</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#count%28%26block%29-instance-method" class="signature"><strong>#count</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#count%28item%29-instance-method" class="signature"><strong>#count</strong>(item)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_with_index%28%26block%29-instance-method" class="signature"><strong>#each_with_index</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_with_object%28obj%2C%20%26block%29-instance-method" class="signature"><strong>#each_with_object</strong>(obj, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#find%28if_none%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#find</strong>(if_none = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#first-instance-method" class="signature"><strong>#first</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#first%28count%20%3A%20Int%29-instance-method" class="signature"><strong>#first</strong>(count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#first%3F-instance-method" class="signature"><strong>#first?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#flat_map%28%26block%20%3A%20T%20-%3E%20Array%28U%29%29-instance-method" class="signature"><strong>#flat_map</strong>(&block : T -> Array(U))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#grep%28pattern%29-instance-method" class="signature"><strong>#grep</strong>(pattern)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#group_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#group_by</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#includes%3F%28obj%29-instance-method" class="signature"><strong>#includes?</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28%26block%29-instance-method" class="signature"><strong>#index</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28obj%29-instance-method" class="signature"><strong>#index</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#index_by</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inject%28%26block%29-instance-method" class="signature"><strong>#inject</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inject%28memo%2C%20%26block%29-instance-method" class="signature"><strong>#inject</strong>(memo, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#join%28separator%20%3D%20%22%22%29-instance-method" class="signature"><strong>#join</strong>(separator = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#join%28separator%2C%20io%2C%20%26block%29-instance-method" class="signature"><strong>#join</strong>(separator, io, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#join%28separator%2C%20io%29-instance-method" class="signature"><strong>#join</strong>(separator, io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#map</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map_with_index%28%26block%20%3A%20T%2C%20Int32%20-%3E%20U%29-instance-method" class="signature"><strong>#map_with_index</strong>(&block : T, Int32 -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#max-instance-method" class="signature"><strong>#max</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#max_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#max_by</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#min-instance-method" class="signature"><strong>#min</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#min_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#min_by</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minmax-instance-method" class="signature"><strong>#minmax</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minmax_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#minmax_by</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#none%3F%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#none?</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#one%3F%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#one?</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#partition%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#partition</strong>(&block : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reject%28%26block%20%3A%20T%20-%3E%20%29-instance-method" class="signature"><strong>#reject</strong>(&block : T -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#select%28%26block%20%3A%20T%20-%3E%20%29-instance-method" class="signature"><strong>#select</strong>(&block : T -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%28initial%20%3D%200%2C%20%26block%29-instance-method" class="signature"><strong>#sum</strong>(initial = 0, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%28initial%20%3D%200%29-instance-method" class="signature"><strong>#sum</strong>(initial = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#take%28count%20%3A%20Int%29-instance-method" class="signature"><strong>#take</strong>(count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_a-instance-method" class="signature"><strong>#to_a</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="all%3F-instance-method">
+        
+        def <strong>all?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="all%3F%28%26block%29-instance-method">
+        
+        def <strong>all?</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="any%3F-instance-method">
+        
+        def <strong>any?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="any%3F%28%26block%29-instance-method">
+        
+        def <strong>any?</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="compact_map%28%26block%29-instance-method">
+        
+        def <strong>compact_map</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="count-instance-method">
+        
+        def <strong>count</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L37" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="count%28%26block%29-instance-method">
+        
+        def <strong>count</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="count%28item%29-instance-method">
+        
+        def <strong>count</strong>(item)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L41" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_with_index%28%26block%29-instance-method">
+        
+        def <strong>each_with_index</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_with_object%28obj%2C%20%26block%29-instance-method">
+        
+        def <strong>each_with_object</strong>(obj, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="find%28if_none%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>find</strong>(if_none = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L60" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="first-instance-method">
+        
+        def <strong>first</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="first%28count%20%3A%20Int%29-instance-method">
+        
+        def <strong>first</strong>(count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="first%3F-instance-method">
+        
+        def <strong>first?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L76" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="flat_map%28%26block%20%3A%20T%20-%3E%20Array%28U%29%29-instance-method">
+        
+        def <strong>flat_map</strong>(&block : T -> <a href="Array.html">Array</a>(U))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L81" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="grep%28pattern%29-instance-method">
+        
+        def <strong>grep</strong>(pattern)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L87" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="group_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>group_by</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L91" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="includes%3F%28obj%29-instance-method">
+        
+        def <strong>includes?</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L104" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28%26block%29-instance-method">
+        
+        def <strong>index</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L108" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28obj%29-instance-method">
+        
+        def <strong>index</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L115" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>index_by</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L119" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inject%28%26block%29-instance-method">
+        
+        def <strong>inject</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L127" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inject%28memo%2C%20%26block%29-instance-method">
+        
+        def <strong>inject</strong>(memo, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L139" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>join</strong>(separator = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L146" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%2C%20io%2C%20%26block%29-instance-method">
+        
+        def <strong>join</strong>(separator, io, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L158" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%2C%20io%29-instance-method">
+        
+        def <strong>join</strong>(separator, io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L152" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>map</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L165" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map_with_index%28%26block%20%3A%20T%2C%20Int32%20-%3E%20U%29-instance-method">
+        
+        def <strong>map_with_index</strong>(&block : T, <a href="Int32.html">Int32</a> -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L171" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="max-instance-method">
+        
+        def <strong>max</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L177" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="max_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>max_by</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L181" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="min-instance-method">
+        
+        def <strong>min</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L198" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="min_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>min_by</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L229" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minmax-instance-method">
+        
+        def <strong>minmax</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L202" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minmax_by%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>minmax_by</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L206" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="none%3F%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>none?</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L246" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="one%3F%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>one?</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L251" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="partition%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>partition</strong>(&block : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L260" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reject%28%26block%20%3A%20T%20-%3E%20%29-instance-method">
+        
+        def <strong>reject</strong>(&block : T -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L269" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="select%28%26block%20%3A%20T%20-%3E%20%29-instance-method">
+        
+        def <strong>select</strong>(&block : T -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L275" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sum%28initial%20%3D%200%2C%20%26block%29-instance-method">
+        
+        def <strong>sum</strong>(initial = <span class="n">0</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L285" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sum%28initial%20%3D%200%29-instance-method">
+        
+        def <strong>sum</strong>(initial = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L281" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="take%28count%20%3A%20Int%29-instance-method">
+        
+        def <strong>take</strong>(count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L289" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_a-instance-method">
+        
+        def <strong>to_a</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/enumerable.cr#L298" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

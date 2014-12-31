@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct LLVM::Builder</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Struct.html">Struct</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#add%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#add</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#alloca%28type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#alloca</strong>(type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#and%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#and</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#array_malloc%28type%2C%20value%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#array_malloc</strong>(type, value, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ashr%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#ashr</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bit_cast%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#bit_cast</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#br%28block%29-instance-method" class="signature"><strong>#br</strong>(block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#call%28func%29-instance-method" class="signature"><strong>#call</strong>(func)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#call%28func%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%29-instance-method" class="signature"><strong>#call</strong>(func, args : Array(LLVM::Value))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cond%28cond%2C%20then_block%2C%20else_block%29-instance-method" class="signature"><strong>#cond</strong>(cond, then_block, else_block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exact_sdiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#exact_sdiv</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#extract_value%28value%2C%20index%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#extract_value</strong>(value, index, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fadd%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fadd</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fcmp%28op%2C%20lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fcmp</strong>(op, lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fdiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fdiv</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fmul%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fmul</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fp2si%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fp2si</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fp2ui%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fp2ui</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fpext%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fpext</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fptrunc%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fptrunc</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fsub%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#fsub</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, index : LLVM::Value, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gep%28value%2C%20indices%20%3A%20Array%28LLVM%3A%3AValueRef%29%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, indices : Array(LLVM::ValueRef), name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gep%28value%2C%20index1%20%3A%20LLVM%3A%3AValue%2C%20index2%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#global_string_pointer%28string%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#global_string_pointer</strong>(string, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#icmp%28op%2C%20lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#icmp</strong>(op, lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inbounds_gep%28value%2C%20index1%20%3A%20LLVM%3A%3AValue%2C%20index2%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#inbounds_gep</strong>(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inbounds_gep%28value%2C%20indices%20%3A%20Array%28LLVM%3A%3AValueRef%29%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#inbounds_gep</strong>(value, indices : Array(LLVM::ValueRef), name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inbounds_gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#inbounds_gep</strong>(value, index : LLVM::Value, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#insert_block-instance-method" class="signature"><strong>#insert_block</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#int2ptr%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#int2ptr</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#invoke%28fn%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20a_then%2C%20a_catch%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#invoke</strong>(fn, args : Array(LLVM::Value), a_then, a_catch, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#landing_pad%28type%2C%20personality%2C%20clauses%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#landing_pad</strong>(type, personality, clauses, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#load%28ptr%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#load</strong>(ptr, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lshr%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#lshr</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc%28type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#malloc</strong>(type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mul%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#mul</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#not%28value%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#not</strong>(value, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#or%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#or</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#phi%28type%2C%20incoming_blocks%20%3A%20Array%28LLVM%3A%3ABasicBlock%29%2C%20incoming_values%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#phi</strong>(type, incoming_blocks : Array(LLVM::BasicBlock), incoming_values : Array(LLVM::Value), name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#phi%28type%2C%20table%20%3A%20LLVM%3A%3APhiTable%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#phi</strong>(type, table : LLVM::PhiTable, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#position_at_end%28block%29-instance-method" class="signature"><strong>#position_at_end</strong>(block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ptr2int%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#ptr2int</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ret-instance-method" class="signature"><strong>#ret</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ret%28value%29-instance-method" class="signature"><strong>#ret</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sdiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#sdiv</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#select%28cond%2C%20a_then%2C%20a_else%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#select</strong>(cond, a_then, a_else, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sext%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#sext</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shl%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#shl</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#si2fp%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#si2fp</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#srem%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#srem</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#store%28value%2C%20ptr%29-instance-method" class="signature"><strong>#store</strong>(value, ptr)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sub%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#sub</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#trunc%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#trunc</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#udiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#udiv</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ui2fp%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#ui2fp</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unreachable-instance-method" class="signature"><strong>#unreachable</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#urem%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#urem</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xor%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#xor</strong>(lhs, rhs, name = "")</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#zext%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#zext</strong>(value, type, name = "")</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="add%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>add</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="alloca%28type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>alloca</strong>(type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="and%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>and</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="array_malloc%28type%2C%20value%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>array_malloc</strong>(type, value, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ashr%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>ashr</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bit_cast%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>bit_cast</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="br%28block%29-instance-method">
+        
+        def <strong>br</strong>(block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="call%28func%29-instance-method">
+        
+        def <strong>call</strong>(func)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="call%28func%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%29-instance-method">
+        
+        def <strong>call</strong>(func, args : <a href="../Array.html">Array</a>(<a href="../LLVM/Value.html">LLVM::Value</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cond%28cond%2C%20then_block%2C%20else_block%29-instance-method">
+        
+        def <strong>cond</strong>(cond, then_block, else_block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exact_sdiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>exact_sdiv</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="extract_value%28value%2C%20index%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>extract_value</strong>(value, index, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L89" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fadd%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fadd</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fcmp%28op%2C%20lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fcmp</strong>(op, lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L105" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fdiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fdiv</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fmul%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fmul</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fp2si%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fp2si</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fp2ui%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fp2ui</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fpext%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fpext</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fptrunc%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fptrunc</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fsub%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>fsub</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>gep</strong>(value, index : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gep%28value%2C%20indices%20%3A%20Array%28LLVM%3A%3AValueRef%29%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>gep</strong>(value, indices : <a href="../Array.html">Array</a>(LLVM::ValueRef), name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gep%28value%2C%20index1%20%3A%20LLVM%3A%3AValue%2C%20index2%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>gep</strong>(value, index1 : <a href="../LLVM/Value.html">LLVM::Value</a>, index2 : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="global_string_pointer%28string%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>global_string_pointer</strong>(string, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L123" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="icmp%28op%2C%20lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>icmp</strong>(op, lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L105" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inbounds_gep%28value%2C%20index1%20%3A%20LLVM%3A%3AValue%2C%20index2%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>inbounds_gep</strong>(value, index1 : <a href="../LLVM/Value.html">LLVM::Value</a>, index2 : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inbounds_gep%28value%2C%20indices%20%3A%20Array%28LLVM%3A%3AValueRef%29%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>inbounds_gep</strong>(value, indices : <a href="../Array.html">Array</a>(LLVM::ValueRef), name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inbounds_gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>inbounds_gep</strong>(value, index : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="insert_block-instance-method">
+        
+        def <strong>insert_block</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="int2ptr%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>int2ptr</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="invoke%28fn%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20a_then%2C%20a_catch%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>invoke</strong>(fn, args : <a href="../Array.html">Array</a>(<a href="../LLVM/Value.html">LLVM::Value</a>), a_then, a_catch, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L136" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="landing_pad%28type%2C%20personality%2C%20clauses%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>landing_pad</strong>(type, personality, clauses, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L127" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="load%28ptr%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>load</strong>(ptr, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L59" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lshr%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>lshr</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc%28type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>malloc</strong>(type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L63" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mul%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>mul</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="not%28value%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>not</strong>(value, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L111" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="or%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>or</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="phi%28type%2C%20incoming_blocks%20%3A%20Array%28LLVM%3A%3ABasicBlock%29%2C%20incoming_values%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>phi</strong>(type, incoming_blocks : <a href="../Array.html">Array</a>(<a href="../LLVM/BasicBlock.html">LLVM::BasicBlock</a>), incoming_values : <a href="../Array.html">Array</a>(<a href="../LLVM/Value.html">LLVM::Value</a>), name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="phi%28type%2C%20table%20%3A%20LLVM%3A%3APhiTable%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>phi</strong>(type, table : <a href="../LLVM/PhiTable.html">LLVM::PhiTable</a>, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="position_at_end%28block%29-instance-method">
+        
+        def <strong>position_at_end</strong>(block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ptr2int%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>ptr2int</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ret-instance-method">
+        
+        def <strong>ret</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L14" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ret%28value%29-instance-method">
+        
+        def <strong>ret</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sdiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>sdiv</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="select%28cond%2C%20a_then%2C%20a_else%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>select</strong>(cond, a_then, a_else, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L119" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sext%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>sext</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shl%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>shl</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="si2fp%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>si2fp</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="srem%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>srem</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="store%28value%2C%20ptr%29-instance-method">
+        
+        def <strong>store</strong>(value, ptr)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L55" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sub%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>sub</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_unsafe-instance-method">
+        
+        def <strong>to_unsafe</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L140" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="trunc%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>trunc</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="udiv%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>udiv</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ui2fp%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>ui2fp</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unreachable-instance-method">
+        
+        def <strong>unreachable</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L115" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="urem%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>urem</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xor%28lhs%2C%20rhs%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>xor</strong>(lhs, rhs, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="zext%28value%2C%20type%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>zext</strong>(value, type, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

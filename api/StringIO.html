@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class StringIO</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Reference.html">Reference</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="IO.html">IO</a>
+  
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28string%20%3A%20String%29-class-method" class="signature"><strong>.new</strong>(string : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28capacity%20%3D%2064%29-class-method" class="signature"><strong>.new</strong>(capacity = 64)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#buffer-instance-method" class="signature"><strong>#buffer</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bytesize-instance-method" class="signature"><strong>#bytesize</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#clear-instance-method" class="signature"><strong>#clear</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#read</strong>(slice : Slice(UInt8), count)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#write</strong>(slice : Slice(UInt8), count)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28string%20%3A%20String%29-class-method">
+        
+        def self.<strong>new</strong>(string : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L14" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28capacity%20%3D%2064%29-class-method">
+        
+        def self.<strong>new</strong>(capacity = <span class="n">64</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="buffer-instance-method">
+        
+        def <strong>buffer</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bytesize-instance-method">
+        
+        def <strong>bytesize</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="clear-instance-method">
+        
+        def <strong>clear</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="empty%3F-instance-method">
+        
+        def <strong>empty?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method">
+        
+        def <strong>read</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s-instance-method">
+        
+        def <strong>to_s</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%29-instance-method">
+        
+        def <strong>to_s</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method">
+        
+        def <strong>write</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/string_io.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

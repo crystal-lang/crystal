@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct Time</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Struct.html">Struct</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Comparable.html">Comparable(self)</a>
+  
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>DAYS_MONTH</strong> = <code>[<span class="n">0</span>, <span class="n">31</span>, <span class="n">28</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>]</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DAYS_MONTH_LEAP</strong> = <code>[<span class="n">0</span>, <span class="n">31</span>, <span class="n">29</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>, <span class="n">30</span>, <span class="n">31</span>]</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DP100</strong> = <code><span class="n">36524</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DP4</strong> = <code><span class="n">1461</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DP400</strong> = <code><span class="n">146097</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>KindMask</strong> = <code><span class="n">13835058055282163712</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>KindShift</strong> = <code><span class="n">62</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>MAX_VALUE_TICKS</strong> = <code><span class="n">3155378975999999999</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>MaxValue</strong> = <code><span class="k">new</span>(<span class="n">3155378975999999999</span>)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>MinValue</strong> = <code><span class="k">new</span>(<span class="n">0</span>)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TicksMask</strong> = <code><span class="n">4611686018427387903</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>UnixEpoch</strong> = <code><span class="n">621355968000000000</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#days_in_month%28year%2C%20month%29-class-method" class="signature"><strong>.days_in_month</strong>(year, month)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#leap_year%3F%28year%29-class-method" class="signature"><strong>.leap_year?</strong>(year)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#local_ticks-class-method" class="signature"><strong>.local_ticks</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#now-class-method" class="signature"><strong>.now</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parse%28time%2C%20pattern%29-class-method" class="signature"><strong>.parse</strong>(time, pattern)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#utc_now-class-method" class="signature"><strong>.utc_now</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#utc_ticks-class-method" class="signature"><strong>.utc_ticks</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28year%2C%20month%2C%20day%2C%20hour%20%3D%200%2C%20minute%20%3D%200%2C%20second%20%3D%200%2C%20millisecond%20%3D%200%2C%20kind%20%3D%20Kind%3A%3AUnspecified%29-class-method" class="signature"><strong>.new</strong>(year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0, kind = Kind::Unspecified)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28ticks%20%3A%20Int%2C%20kind%20%3D%20Kind%3A%3AUnspecified%29-class-method" class="signature"><strong>.new</strong>(ticks : Int, kind = Kind::Unspecified)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20MonthSpan%29-instance-method" class="signature"><strong>#+</strong>(other : MonthSpan)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20TimeSpan%29-instance-method" class="signature"><strong>#+</strong>(other : TimeSpan)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#-</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20Time%29-instance-method" class="signature"><strong>#-</strong>(other : Time)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20TimeSpan%29-instance-method" class="signature"><strong>#-</strong>(other : TimeSpan)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20MonthSpan%29-instance-method" class="signature"><strong>#-</strong>(other : MonthSpan)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20self%29-instance-method" class="signature"><strong>#<=></strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#add_ticks%28value%29-instance-method" class="signature"><strong>#add_ticks</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_day-instance-method" class="signature"><strong>#at_beginning_of_day</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_hour-instance-method" class="signature"><strong>#at_beginning_of_hour</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_minute-instance-method" class="signature"><strong>#at_beginning_of_minute</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_month-instance-method" class="signature"><strong>#at_beginning_of_month</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_quarter-instance-method" class="signature"><strong>#at_beginning_of_quarter</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_semester-instance-method" class="signature"><strong>#at_beginning_of_semester</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_week-instance-method" class="signature"><strong>#at_beginning_of_week</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_beginning_of_year-instance-method" class="signature"><strong>#at_beginning_of_year</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_day-instance-method" class="signature"><strong>#at_end_of_day</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_hour-instance-method" class="signature"><strong>#at_end_of_hour</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_minute-instance-method" class="signature"><strong>#at_end_of_minute</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_month-instance-method" class="signature"><strong>#at_end_of_month</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_quarter-instance-method" class="signature"><strong>#at_end_of_quarter</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_semester-instance-method" class="signature"><strong>#at_end_of_semester</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_week-instance-method" class="signature"><strong>#at_end_of_week</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_end_of_year-instance-method" class="signature"><strong>#at_end_of_year</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_midday-instance-method" class="signature"><strong>#at_midday</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#date-instance-method" class="signature"><strong>#date</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#day-instance-method" class="signature"><strong>#day</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#day_of_week-instance-method" class="signature"><strong>#day_of_week</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#day_of_year-instance-method" class="signature"><strong>#day_of_year</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hour-instance-method" class="signature"><strong>#hour</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#kind-instance-method" class="signature"><strong>#kind</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#local%3F-instance-method" class="signature"><strong>#local?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#millisecond-instance-method" class="signature"><strong>#millisecond</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minute-instance-method" class="signature"><strong>#minute</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#month-instance-method" class="signature"><strong>#month</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#second-instance-method" class="signature"><strong>#second</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ticks-instance-method" class="signature"><strong>#ticks</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#time_of_day-instance-method" class="signature"><strong>#time_of_day</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
+        
+          <div class="summary"><p>Returns the number of seconds since the Epoch</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28format%20%3A%20String%2C%20io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(format : String, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28format%20%3A%20String%29-instance-method" class="signature"><strong>#to_s</strong>(format : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#utc%3F-instance-method" class="signature"><strong>#utc?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#year-instance-method" class="signature"><strong>#year</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#def_at%28name%29-macro" class="signature"><strong>def_at</strong>(name)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="days_in_month%28year%2C%20month%29-class-method">
+        
+        def self.<strong>days_in_month</strong>(year, month)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L216" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="leap_year%3F%28year%29-class-method">
+        
+        def self.<strong>leap_year?</strong>(year)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L229" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="local_ticks-class-method">
+        
+        def self.<strong>local_ticks</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L388" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="now-class-method">
+        
+        def self.<strong>now</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L140" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse%28time%2C%20pattern%29-class-method">
+        
+        def self.<strong>parse</strong>(time, pattern)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L251" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="utc_now-class-method">
+        
+        def self.<strong>utc_now</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L144" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="utc_ticks-class-method">
+        
+        def self.<strong>utc_ticks</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L394" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28year%2C%20month%2C%20day%2C%20hour%20%3D%200%2C%20minute%20%3D%200%2C%20second%20%3D%200%2C%20millisecond%20%3D%200%2C%20kind%20%3D%20Kind%3A%3AUnspecified%29-class-method">
+        
+        def self.<strong>new</strong>(year, month, day, hour = <span class="n">0</span>, minute = <span class="n">0</span>, second = <span class="n">0</span>, millisecond = <span class="n">0</span>, kind = <span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L70" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28ticks%20%3A%20Int%2C%20kind%20%3D%20Kind%3A%3AUnspecified%29-class-method">
+        
+        def self.<strong>new</strong>(ticks : <a href="Int.html">Int</a>, kind = <span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20MonthSpan%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="MonthSpan.html">MonthSpan</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20TimeSpan%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="TimeSpan.html">TimeSpan</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L85" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L132" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20Time%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="Time.html">Time</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L136" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20TimeSpan%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="TimeSpan.html">TimeSpan</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L89" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20MonthSpan%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="MonthSpan.html">MonthSpan</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L97" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20self%29-instance-method">
+        
+        def <strong><=></strong>(other : self)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L208" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="add_ticks%28value%29-instance-method">
+        
+        def <strong>add_ticks</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L123" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_day-instance-method">
+        
+        def <strong>at_beginning_of_day</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L271" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_hour-instance-method">
+        
+        def <strong>at_beginning_of_hour</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L272" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_minute-instance-method">
+        
+        def <strong>at_beginning_of_minute</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L273" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_month-instance-method">
+        
+        def <strong>at_beginning_of_month</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L270" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_quarter-instance-method">
+        
+        def <strong>at_beginning_of_quarter</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L269" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_semester-instance-method">
+        
+        def <strong>at_beginning_of_semester</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L268" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_week-instance-method">
+        
+        def <strong>at_beginning_of_week</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L275" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_beginning_of_year-instance-method">
+        
+        def <strong>at_beginning_of_year</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L267" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_day-instance-method">
+        
+        def <strong>at_end_of_day</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L321" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_hour-instance-method">
+        
+        def <strong>at_end_of_hour</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L322" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_minute-instance-method">
+        
+        def <strong>at_end_of_minute</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L323" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_month-instance-method">
+        
+        def <strong>at_end_of_month</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L310" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_quarter-instance-method">
+        
+        def <strong>at_end_of_quarter</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L296" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_semester-instance-method">
+        
+        def <strong>at_end_of_semester</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L286" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_week-instance-method">
+        
+        def <strong>at_end_of_week</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L312" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_end_of_year-instance-method">
+        
+        def <strong>at_end_of_year</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L284" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_midday-instance-method">
+        
+        def <strong>at_midday</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L324" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="date-instance-method">
+        
+        def <strong>date</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L152" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="day-instance-method">
+        
+        def <strong>day</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L164" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="day_of_week-instance-method">
+        
+        def <strong>day_of_week</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L188" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="day_of_year-instance-method">
+        
+        def <strong>day_of_year</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L192" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L212" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hour-instance-method">
+        
+        def <strong>hour</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L237" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="kind-instance-method">
+        
+        def <strong>kind</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L196" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="local%3F-instance-method">
+        
+        def <strong>local?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L204" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="millisecond-instance-method">
+        
+        def <strong>millisecond</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L180" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minute-instance-method">
+        
+        def <strong>minute</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L172" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="month-instance-method">
+        
+        def <strong>month</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L160" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="second-instance-method">
+        
+        def <strong>second</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L176" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ticks-instance-method">
+        
+        def <strong>ticks</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L148" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="time_of_day-instance-method">
+        
+        def <strong>time_of_day</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L184" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i-instance-method">
+        
+        def <strong>to_i</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the number of seconds since the Epoch</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L256" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28format%20%3A%20String%2C%20io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(format : <a href="String.html">String</a>, io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L247" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28format%20%3A%20String%29-instance-method">
+        
+        def <strong>to_s</strong>(format : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L243" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="utc%3F-instance-method">
+        
+        def <strong>utc?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L200" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="year-instance-method">
+        
+        def <strong>year</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L156" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="def_at%28name%29-macro">
+        
+        macro <strong>def_at</strong>(name)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time.cr#L260" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

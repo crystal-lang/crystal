@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct HTML::Builder</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Struct.html">Struct</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#a%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#a</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#b%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#b</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#body%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#body</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#br-instance-method" class="signature"><strong>#br</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#build%28%26block%29-instance-method" class="signature"><strong>#build</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#div%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#div</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#em%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#em</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#h1%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#h1</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#h2%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#h2</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#h3%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#h3</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#head%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#head</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hr-instance-method" class="signature"><strong>#hr</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#html%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#html</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#i%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#i</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#img%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#img</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#input%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#input</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#li%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#li</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ol%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#ol</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#p%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#p</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#s%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#s</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#script%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#script</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#span%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#span</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#strong%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#strong</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#table%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#table</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tbody%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#tbody</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#td%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#td</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#text%28text%29-instance-method" class="signature"><strong>#text</strong>(text)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#textarea%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#textarea</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#thead%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#thead</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#title%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#title</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tr%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#tr</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#u%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#u</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ul%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method" class="signature"><strong>#ul</strong>(attrs = nil : Hash | ::Nil, &block)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="a%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>a</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="b%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>b</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="body%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>body</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="br-instance-method">
+        
+        def <strong>br</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="build%28%26block%29-instance-method">
+        
+        def <strong>build</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="div%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>div</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="em%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>em</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="h1%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>h1</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="h2%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>h2</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="h3%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>h3</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="head%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>head</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hr-instance-method">
+        
+        def <strong>hr</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="html%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>html</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="i%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>i</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="img%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>img</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="input%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>input</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="li%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>li</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ol%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>ol</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="p%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>p</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="s%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>s</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="script%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>script</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="span%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>span</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="strong%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>strong</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="table%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>table</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tbody%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>tbody</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="td%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>td</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="text%28text%29-instance-method">
+        
+        def <strong>text</strong>(text)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L38" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="textarea%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>textarea</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="thead%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>thead</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="title%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>title</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tr%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>tr</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="u%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>u</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ul%28attrs%20%3D%20nil%20%3A%20Hash%20%7C%20%3A%3ANil%2C%20%26block%29-instance-method">
+        
+        def <strong>ul</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a> | <a href="../Nil.html">::Nil</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/html/builder.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

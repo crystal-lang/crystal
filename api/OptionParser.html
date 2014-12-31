@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class OptionParser</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#parse%28args%2C%20%26block%29-class-method" class="signature"><strong>.parse</strong>(args, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parse%21%28%26block%29-class-method" class="signature"><strong>.parse!</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28args%29-class-method" class="signature"><strong>.new</strong>(args)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#banner%3D%28banner%29-instance-method" class="signature"><strong>#banner=</strong>(banner)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#on%28flag%2C%20description%2C%20%26block%20%3A%20String%20-%3E%20%29-instance-method" class="signature"><strong>#on</strong>(flag, description, &block : String -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#on%28short_flag%2C%20long_flag%2C%20description%2C%20%26block%20%3A%20String%20-%3E%20%29-instance-method" class="signature"><strong>#on</strong>(short_flag, long_flag, description, &block : String -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parse-instance-method" class="signature"><strong>#parse</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unknown_args%28%26unknown_args%20%3A%20Array%28String%29%2C%20Array%28String%29%20-%3E%20%29-instance-method" class="signature"><strong>#unknown_args</strong>(&unknown_args : Array(String), Array(String) -> )</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse%28args%2C%20%26block%29-class-method">
+        
+        def self.<strong>parse</strong>(args, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse%21%28%26block%29-class-method">
+        
+        def self.<strong>parse!</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28args%29-class-method">
+        
+        def self.<strong>new</strong>(args)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="banner%3D%28banner%29-instance-method">
+        
+        def <strong>banner=</strong>(banner)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L58" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="on%28flag%2C%20description%2C%20%26block%20%3A%20String%20-%3E%20%29-instance-method">
+        
+        def <strong>on</strong>(flag, description, &block : <a href="String.html">String</a> -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L60" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="on%28short_flag%2C%20long_flag%2C%20description%2C%20%26block%20%3A%20String%20-%3E%20%29-instance-method">
+        
+        def <strong>on</strong>(short_flag, long_flag, description, &block : <a href="String.html">String</a> -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L65" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse-instance-method">
+        
+        def <strong>parse</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L40" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L74" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unknown_args%28%26unknown_args%20%3A%20Array%28String%29%2C%20Array%28String%29%20-%3E%20%29-instance-method">
+        
+        def <strong>unknown_args</strong>(&unknown_args : <a href="Array.html">Array</a>(<a href="String.html">String</a>), <a href="Array.html">Array</a>(<a href="String.html">String</a>) -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/option_parser.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

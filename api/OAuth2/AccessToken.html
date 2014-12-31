@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract class OAuth2::AccessToken</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="../OAuth2/AccessToken/Bearer.html">OAuth2::AccessToken::Bearer</a>,
+  
+    <a href="../OAuth2/AccessToken/Mac.html">OAuth2::AccessToken::Mac</a>
+  
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28pull%20%3A%20JSON%3A%3APullParser%29-class-method" class="signature"><strong>.new</strong>(pull : JSON::PullParser)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28access_token%2C%20expires_in%2C%20refresh_token%20%3D%20nil%2C%20scope%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(access_token, expires_in, refresh_token = nil, scope = nil)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#access_token-instance-method" class="signature"><strong>#access_token</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#access_token%3D%28access_token%29-instance-method" class="signature"><strong>#access_token=</strong>(access_token)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#authenticate%28request%20%3A%20HTTP%3A%3ARequest%2C%20ssl%29-instance-method" class="signature"><strong>#authenticate</strong>(request : HTTP::Request, ssl)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#authenticate%28client%20%3A%20HTTP%3A%3AClient%29-instance-method" class="signature"><strong>#authenticate</strong>(client : HTTP::Client)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expires_in-instance-method" class="signature"><strong>#expires_in</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expires_in%3D%28expires_in%29-instance-method" class="signature"><strong>#expires_in=</strong>(expires_in)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#refresh_token-instance-method" class="signature"><strong>#refresh_token</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#refresh_token%3D%28refresh_token%29-instance-method" class="signature"><strong>#refresh_token=</strong>(refresh_token)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scope-instance-method" class="signature"><strong>#scope</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scope%3D%28scope%29-instance-method" class="signature"><strong>#scope=</strong>(scope)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28pull%20%3A%20JSON%3A%3APullParser%29-class-method">
+        
+        def self.<strong>new</strong>(pull : <a href="../JSON/PullParser.html">JSON::PullParser</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/access_token.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28access_token%2C%20expires_in%2C%20refresh_token%20%3D%20nil%2C%20scope%20%3D%20nil%29-class-method">
+        
+        def self.<strong>new</strong>(access_token, expires_in, refresh_token = <span class="n">nil</span>, scope = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/access_token.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="access_token-instance-method">
+        
+        def <strong>access_token</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="access_token%3D%28access_token%29-instance-method">
+        
+        def <strong>access_token=</strong>(access_token)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="authenticate%28request%20%3A%20HTTP%3A%3ARequest%2C%20ssl%29-instance-method">
+        abstract 
+        def <strong>authenticate</strong>(request : <a href="../HTTP/Request.html">HTTP::Request</a>, ssl)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/access_token.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="authenticate%28client%20%3A%20HTTP%3A%3AClient%29-instance-method">
+        
+        def <strong>authenticate</strong>(client : <a href="../HTTP/Client.html">HTTP::Client</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/access_token/access_token.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expires_in-instance-method">
+        
+        def <strong>expires_in</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expires_in%3D%28expires_in%29-instance-method">
+        
+        def <strong>expires_in=</strong>(expires_in)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="refresh_token-instance-method">
+        
+        def <strong>refresh_token</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="refresh_token%3D%28refresh_token%29-instance-method">
+        
+        def <strong>refresh_token=</strong>(refresh_token)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scope-instance-method">
+        
+        def <strong>scope</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scope%3D%28scope%29-instance-method">
+        
+        def <strong>scope=</strong>(scope)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

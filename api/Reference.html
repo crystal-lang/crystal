@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Reference</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p><a href="Reference.html">Reference</a> is the base class of classes you define in your program.
+It is set as a class' superclass when you don't specify one:</p>
+
+<pre><code><span class="k">class</span> <span class="t">MyClass</span> <span class="c"># < Reference</span>
+<span class="k">end</span></code></pre>
+
+<p>A reference type is passed by reference: when you pass it to methods,
+return it from methods or assign it to variables, a pointer is actually passed.</p>
+
+<p>Invoking <code></code><code>new</code> on a <a href="Reference.html">Reference</a> allocates a new instance on the heap.
+The instance's memory is automatically freed (garbage-collected) when
+the instance is no longer referred by any other entity in the program.</p>
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Object.html">Object</a>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="Array.html">Array(T)</a>,
+  
+    <a href="Benchmark/Report.html">Benchmark::Report</a>,
+  
+    <a href="Benchmark/Tms.html">Benchmark::Tms</a>,
+  
+    <a href="BitArray.html">BitArray</a>,
+  
+    <a href="Box.html">Box(T)</a>,
+  
+    <a href="BufferedIO.html">BufferedIO(T)</a>,
+  
+    <a href="Class.html">Class</a>,
+  
+    <a href="ConditionVariable.html">ConditionVariable</a>,
+  
+    <a href="Crypto/MD5.html">Crypto::MD5</a>,
+  
+    <a href="CSV/Builder.html">CSV::Builder</a>,
+  
+    <a href="CSV/Lexer.html">CSV::Lexer</a>,
+  
+    <a href="CSV/Parser.html">CSV::Parser</a>,
+  
+    <a href="DB/Sql/Literal.html">DB::Sql::Literal</a>,
+  
+    <a href="DB/Sql/MysqlDialect.html">DB::Sql::MysqlDialect</a>,
+  
+    <a href="DB/Sql/Node.html">DB::Sql::Node</a>,
+  
+    <a href="Dir.html">Dir</a>,
+  
+    <a href="ECR/Lexer.html">ECR::Lexer</a>,
+  
+    <a href="ECR/Lexer/Token.html">ECR::Lexer::Token</a>,
+  
+    <a href="Exception.html">Exception</a>,
+  
+    <a href="Fiber.html">Fiber</a>,
+  
+    <a href="File/Stat.html">File::Stat</a>,
+  
+    <a href="FileDescriptorIO.html">FileDescriptorIO</a>,
+  
+    <a href="FS/Entry.html">FS::Entry</a>,
+  
+    <a href="FS/FileSystem.html">FS::FileSystem</a>,
+  
+    <a href="FS/MemoryFileSystemBuilder.html">FS::MemoryFileSystemBuilder</a>,
+  
+    <a href="Hash.html">Hash(K, V)</a>,
+  
+    <a href="Hash/Entry.html">Hash::Entry(K, V)</a>,
+  
+    <a href="HTTP/Client.html">HTTP::Client</a>,
+  
+    <a href="HTTP/Handler.html">HTTP::Handler</a>,
+  
+    <a href="HTTP/Request.html">HTTP::Request</a>,
+  
+    <a href="HTTP/Response.html">HTTP::Response</a>,
+  
+    <a href="HTTP/Server.html">HTTP::Server</a>,
+  
+    <a href="HTTP/WebSocket.html">HTTP::WebSocket</a>,
+  
+    <a href="HTTP/WebSocketHandler/WebSocketSession.html">HTTP::WebSocketHandler::WebSocketSession</a>,
+  
+    <a href="IniFile.html">IniFile</a>,
+  
+    <a href="JSON/Lexer.html">JSON::Lexer</a>,
+  
+    <a href="JSON/Parser.html">JSON::Parser</a>,
+  
+    <a href="JSON/PrettyWriter.html">JSON::PrettyWriter</a>,
+  
+    <a href="JSON/PullParser.html">JSON::PullParser</a>,
+  
+    <a href="JSON/Token.html">JSON::Token</a>,
+  
+    <a href="LLVM/Context.html">LLVM::Context</a>,
+  
+    <a href="MatchData.html">MatchData</a>,
+  
+    <a href="Mutex.html">Mutex</a>,
+  
+    <a href="OAuth2/AccessToken.html">OAuth2::AccessToken</a>,
+  
+    <a href="OAuth2/Client.html">OAuth2::Client</a>,
+  
+    <a href="OAuth2/Session.html">OAuth2::Session</a>,
+  
+    <a href="OAuth/AccessToken.html">OAuth::AccessToken</a>,
+  
+    <a href="OAuth/Consumer.html">OAuth::Consumer</a>,
+  
+    <a href="OAuth/RequestToken.html">OAuth::RequestToken</a>,
+  
+    <a href="OpenSSL/HMAC.html">OpenSSL::HMAC</a>,
+  
+    <a href="OpenSSL/MD5.html">OpenSSL::MD5</a>,
+  
+    <a href="OpenSSL/SHA1.html">OpenSSL::SHA1</a>,
+  
+    <a href="OpenSSL/SSL/Context.html">OpenSSL::SSL::Context</a>,
+  
+    <a href="OpenSSL/SSL/Socket.html">OpenSSL::SSL::Socket</a>,
+  
+    <a href="OptionParser.html">OptionParser</a>,
+  
+    <a href="Regex.html">Regex</a>,
+  
+    <a href="Set.html">Set(T)</a>,
+  
+    <a href="Spec/Be.html">Spec::Be(T)</a>,
+  
+    <a href="Spec/BeAExpectation.html">Spec::BeAExpectation(T)</a>,
+  
+    <a href="Spec/BeExpectation.html">Spec::BeExpectation(T)</a>,
+  
+    <a href="Spec/BeFalseyExpectation.html">Spec::BeFalseyExpectation</a>,
+  
+    <a href="Spec/BeTruthyExpectation.html">Spec::BeTruthyExpectation</a>,
+  
+    <a href="Spec/CloseExpectation.html">Spec::CloseExpectation</a>,
+  
+    <a href="Spec/Context.html">Spec::Context</a>,
+  
+    <a href="Spec/EqualExpectation.html">Spec::EqualExpectation(T)</a>,
+  
+    <a href="Spec/Formatter.html">Spec::Formatter</a>,
+  
+    <a href="String.html">String</a>,
+  
+    <a href="String/Formatter.html">String::Formatter</a>,
+  
+    <a href="StringIO.html">StringIO</a>,
+  
+    <a href="StringPool.html">StringPool</a>,
+  
+    <a href="StringScanner.html">StringScanner</a>,
+  
+    <a href="TCPServer.html">TCPServer</a>,
+  
+    <a href="Thread.html">Thread(T, R)</a>,
+  
+    <a href="URI.html">URI</a>,
+  
+    <a href="XML/Node.html">XML::Node</a>,
+  
+    <a href="XML/Reader.html">XML::Reader</a>,
+  
+    <a href="YAML/Parser.html">YAML::Parser</a>
+  
+
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%21-instance-method" class="signature"><strong>#!</strong></a>
+        
+          <div class="summary"><p>Returns <code>false</code>: a reference is always truthy.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%28other%29-instance-method" class="signature"><strong>#==</strong>(other)</a>
+        
+          <div class="summary"><p>Returns <code>false</code> (<code>other</code> can only be a <a href="Value.html">Value</a> here).</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20self%29-instance-method" class="signature"><strong>#==</strong>(other : self)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this reference is the same as <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
+        
+          <div class="summary"><p>Returns <code>self</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+          <div class="summary"><p>Returns this reference's <a href="Reference.html#object_id-instance-method">#object_id</a> as the hash value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
+        
+          <div class="summary"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#object_id-instance-method" class="signature"><strong>#object_id</strong></a>
+        
+          <div class="summary"><p>Returns a <a href="UInt64.html">UInt64</a> that uniquely identifies this object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#same%3F%28other%20%3A%20Reference%29-instance-method" class="signature"><strong>#same?</strong>(other : Reference)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this reference is the same as <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#same%3F%28other%20%3A%20Nil%29-instance-method" class="signature"><strong>#same?</strong>(other : Nil)</a>
+        
+          <div class="summary"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%21-instance-method">
+        
+        def <strong>!</strong>
+      </div>
+      
+        <div class="doc"><p>Returns <code>false</code>: a reference is always truthy.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L41" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%29-instance-method">
+        
+        def <strong>==</strong>(other)
+      </div>
+      
+        <div class="doc"><p>Returns <code>false</code> (<code>other</code> can only be a <a href="Value.html">Value</a> here).</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20self%29-instance-method">
+        
+        def <strong>==</strong>(other : self)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this reference is the same as <code>other</code>. Invokes <a href="Reference.html#same%3F%28other%20%3A%20Reference%29-instance-method">#same?</a></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="clone-instance-method">
+        
+        def <strong>clone</strong>
+      </div>
+      
+        <div class="doc"><p>Returns <code>self</code>. Subclasses must override this method to provide
+custom clone behaviour.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+        <div class="doc"><p>Returns this reference's <a href="Reference.html#object_id-instance-method">#object_id</a> as the hash value.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L56" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="nil%3F-instance-method">
+        
+        def <strong>nil?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="object_id-instance-method">
+        
+        def <strong>object_id</strong>
+      </div>
+      
+        <div class="doc"><p>Returns a <a href="UInt64.html">UInt64</a> that uniquely identifies this object.</p>
+
+<p>The returned value is the memory address of this object.</p>
+
+<pre><code>ref <span class="o">=</span> <span class="t">Reference</span>.<span class="k">new</span>
+pointer <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Reference</span>).<span class="k">new</span>(ref.object_id)
+ref2 <span class="o">=</span> pointer <span class="k">as</span> <span class="t">Reference</span>
+ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true</span>
+</code></pre></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="same%3F%28other%20%3A%20Reference%29-instance-method">
+        
+        def <strong>same?</strong>(other : <a href="Reference.html">Reference</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this reference is the same as <code>other</code>. This is only
+<code>true</code> if this reference's #obejct_id is the same as <code>other</code>'s.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="same%3F%28other%20%3A%20Nil%29-instance-method">
+        
+        def <strong>same?</strong>(other : <a href="Nil.html">Nil</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L76" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Exception</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Reference.html">Reference</a>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="ArgumentError.html">ArgumentError</a>,
+  
+    <a href="Base64/Error.html">Base64::Error</a>,
+  
+    <a href="CSV/MalformedCSVError.html">CSV::MalformedCSVError</a>,
+  
+    <a href="DivisionByZero.html">DivisionByZero</a>,
+  
+    <a href="DomainError.html">DomainError</a>,
+  
+    <a href="EmptyEnumerable.html">EmptyEnumerable</a>,
+  
+    <a href="Errno.html">Errno</a>,
+  
+    <a href="GlobError.html">GlobError</a>,
+  
+    <a href="IndexOutOfBounds.html">IndexOutOfBounds</a>,
+  
+    <a href="JSON/ParseException.html">JSON::ParseException</a>,
+  
+    <a href="MissingKey.html">MissingKey</a>,
+  
+    <a href="OAuth2/Error.html">OAuth2::Error</a>,
+  
+    <a href="OAuth/Error.html">OAuth::Error</a>,
+  
+    <a href="OptionParser/Exception.html">OptionParser::Exception</a>,
+  
+    <a href="Spec/AssertionFailed.html">Spec::AssertionFailed</a>,
+  
+    <a href="TimeFormat/Error.html">TimeFormat::Error</a>
+  
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#unescape_linux_backtrace_frame%28frame%29-class-method" class="signature"><strong>.unescape_linux_backtrace_frame</strong>(frame)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28message%20%3D%20nil%20%3A%20String%20%7C%20%3A%3ANil%2C%20cause%20%3D%20nil%20%3A%20Exception%20%7C%20%3A%3ANil%29-class-method" class="signature"><strong>.new</strong>(message = nil : String | ::Nil, cause = nil : Exception | ::Nil)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#backtrace-instance-method" class="signature"><strong>#backtrace</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cause-instance-method" class="signature"><strong>#cause</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#message-instance-method" class="signature"><strong>#message</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unescape_linux_backtrace_frame%28frame%29-class-method">
+        
+        def self.<strong>unescape_linux_backtrace_frame</strong>(frame)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28message%20%3D%20nil%20%3A%20String%20%7C%20%3A%3ANil%2C%20cause%20%3D%20nil%20%3A%20Exception%20%7C%20%3A%3ANil%29-class-method">
+        
+        def self.<strong>new</strong>(message = <span class="n">nil</span> : <a href="String.html">String</a> | <a href="Nil.html">::Nil</a>, cause = <span class="n">nil</span> : <a href="Exception.html">Exception</a> | <a href="Nil.html">::Nil</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L76" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="backtrace-instance-method">
+        
+        def <strong>backtrace</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L82" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cause-instance-method">
+        
+        def <strong>cause</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="message-instance-method">
+        
+        def <strong>message</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L92" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

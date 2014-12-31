@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct LLVM::Type</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Struct.html">Struct</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#array%28element_type%2C%20count%29-class-method" class="signature"><strong>.array</strong>(element_type, count)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#double-class-method" class="signature"><strong>.double</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#float-class-method" class="signature"><strong>.float</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#function%28arg_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20return_type%2C%20varargs%20%3D%20false%29-class-method" class="signature"><strong>.function</strong>(arg_types : Array(LLVM::Type), return_type, varargs = false)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#int%28bits%29-class-method" class="signature"><strong>.int</strong>(bits)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pointer%28element_type%29-class-method" class="signature"><strong>.pointer</strong>(element_type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#struct%28element_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20name%20%3D%20nil%2C%20packed%20%3D%20false%29-class-method" class="signature"><strong>.struct</strong>(element_types : Array(LLVM::Type), name = nil, packed = false)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#struct%28name%20%3A%20String%2C%20packed%20%3D%20false%2C%20%26block%29-class-method" class="signature"><strong>.struct</strong>(name : String, packed = false, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#void-class-method" class="signature"><strong>.void</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28unwrap%29-class-method" class="signature"><strong>.new</strong>(unwrap)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#array%28count%29-instance-method" class="signature"><strong>#array</strong>(count)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#kind-instance-method" class="signature"><strong>#kind</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#null-instance-method" class="signature"><strong>#null</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#null_pointer-instance-method" class="signature"><strong>#null_pointer</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pointer-instance-method" class="signature"><strong>#pointer</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#undef-instance-method" class="signature"><strong>#undef</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unwrap-instance-method" class="signature"><strong>#unwrap</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#void%3F-instance-method" class="signature"><strong>#void?</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="array%28element_type%2C%20count%29-class-method">
+        
+        def self.<strong>array</strong>(element_type, count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="double-class-method">
+        
+        def self.<strong>double</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="float-class-method">
+        
+        def self.<strong>float</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="function%28arg_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20return_type%2C%20varargs%20%3D%20false%29-class-method">
+        
+        def self.<strong>function</strong>(arg_types : <a href="../Array.html">Array</a>(<a href="../LLVM/Type.html">LLVM::Type</a>), return_type, varargs = <span class="n">false</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="int%28bits%29-class-method">
+        
+        def self.<strong>int</strong>(bits)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pointer%28element_type%29-class-method">
+        
+        def self.<strong>pointer</strong>(element_type)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="struct%28element_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20name%20%3D%20nil%2C%20packed%20%3D%20false%29-class-method">
+        
+        def self.<strong>struct</strong>(element_types : <a href="../Array.html">Array</a>(<a href="../LLVM/Type.html">LLVM::Type</a>), name = <span class="n">nil</span>, packed = <span class="n">false</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="struct%28name%20%3A%20String%2C%20packed%20%3D%20false%2C%20%26block%29-class-method">
+        
+        def self.<strong>struct</strong>(name : <a href="../String.html">String</a>, packed = <span class="n">false</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="void-class-method">
+        
+        def self.<strong>void</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28unwrap%29-class-method">
+        
+        def self.<strong>new</strong>(unwrap)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="array%28count%29-instance-method">
+        
+        def <strong>array</strong>(count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L83" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-instance-method">
+        
+        def <strong>inspect</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L87" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="kind-instance-method">
+        
+        def <strong>kind</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L59" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="null-instance-method">
+        
+        def <strong>null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="null_pointer-instance-method">
+        
+        def <strong>null_pointer</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pointer-instance-method">
+        
+        def <strong>pointer</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L79" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size-instance-method">
+        
+        def <strong>size</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L55" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_unsafe-instance-method">
+        
+        def <strong>to_unsafe</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="undef-instance-method">
+        
+        def <strong>undef</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L75" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unwrap-instance-method">
+        
+        def <strong>unwrap</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="void%3F-instance-method">
+        
+        def <strong>void?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/type.cr#L63" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

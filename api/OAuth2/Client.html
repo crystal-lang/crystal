@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class OAuth2::Client</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28host%2C%20client_id%2C%20client_secret%2C%20port%20%3D%20443%2C%20scheme%20%3D%20%22https%22%2C%20authorize_uri%20%3D%20%22%2Foauth2%2Fauthorize%22%2C%20token_uri%20%3D%20%22%2Foauth2%2Ftoken%22%2C%20redirect_uri%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(host, client_id, client_secret, port = 443, scheme = "https", authorize_uri = "/oauth2/authorize", token_uri = "/oauth2/token", redirect_uri = nil)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#get_access_token_using_authorization_code%28authorization_code%29-instance-method" class="signature"><strong>#get_access_token_using_authorization_code</strong>(authorization_code)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_access_token_using_client_credentials%28scope%20%3D%20nil%29-instance-method" class="signature"><strong>#get_access_token_using_client_credentials</strong>(scope = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_access_token_using_refresh_token%28refresh_token%2C%20scope%20%3D%20nil%29-instance-method" class="signature"><strong>#get_access_token_using_refresh_token</strong>(refresh_token, scope = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_authorize_uri%28scope%20%3D%20nil%2C%20state%20%3D%20nil%29-instance-method" class="signature"><strong>#get_authorize_uri</strong>(scope = nil, state = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scope-instance-method" class="signature"><strong>#scope</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scope%3D%28scope%29-instance-method" class="signature"><strong>#scope=</strong>(scope)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28host%2C%20client_id%2C%20client_secret%2C%20port%20%3D%20443%2C%20scheme%20%3D%20%22https%22%2C%20authorize_uri%20%3D%20%22%2Foauth2%2Fauthorize%22%2C%20token_uri%20%3D%20%22%2Foauth2%2Ftoken%22%2C%20redirect_uri%20%3D%20nil%29-class-method">
+        
+        def self.<strong>new</strong>(host, client_id, client_secret, port = <span class="n">443</span>, scheme = <span class="s">"https"</span>, authorize_uri = <span class="s">"/oauth2/authorize"</span>, token_uri = <span class="s">"/oauth2/token"</span>, redirect_uri = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/client.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_access_token_using_authorization_code%28authorization_code%29-instance-method">
+        
+        def <strong>get_access_token_using_authorization_code</strong>(authorization_code)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/client.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_access_token_using_client_credentials%28scope%20%3D%20nil%29-instance-method">
+        
+        def <strong>get_access_token_using_client_credentials</strong>(scope = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/client.cr#L40" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_access_token_using_refresh_token%28refresh_token%2C%20scope%20%3D%20nil%29-instance-method">
+        
+        def <strong>get_access_token_using_refresh_token</strong>(refresh_token, scope = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/client.cr#L32" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_authorize_uri%28scope%20%3D%20nil%2C%20state%20%3D%20nil%29-instance-method">
+        
+        def <strong>get_authorize_uri</strong>(scope = <span class="n">nil</span>, state = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/client.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scope-instance-method">
+        
+        def <strong>scope</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scope%3D%28scope%29-instance-method">
+        
+        def <strong>scope=</strong>(scope)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

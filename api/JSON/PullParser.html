@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class JSON::PullParser</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28input%29-class-method" class="signature"><strong>.new</strong>(input)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#bool_value-instance-method" class="signature"><strong>#bool_value</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#float_value-instance-method" class="signature"><strong>#float_value</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#int_value-instance-method" class="signature"><strong>#int_value</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#kind-instance-method" class="signature"><strong>#kind</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#on_key%28key%2C%20%26block%29-instance-method" class="signature"><strong>#on_key</strong>(key, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#on_key%21%28key%2C%20%26block%29-instance-method" class="signature"><strong>#on_key!</strong>(key, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_array%28%26block%29-instance-method" class="signature"><strong>#read_array</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_array_or_null%28%26block%29-instance-method" class="signature"><strong>#read_array_or_null</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_begin_array-instance-method" class="signature"><strong>#read_begin_array</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_begin_object-instance-method" class="signature"><strong>#read_begin_object</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_bool-instance-method" class="signature"><strong>#read_bool</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_bool_or_null-instance-method" class="signature"><strong>#read_bool_or_null</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_end_array-instance-method" class="signature"><strong>#read_end_array</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_end_object-instance-method" class="signature"><strong>#read_end_object</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_float-instance-method" class="signature"><strong>#read_float</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_float_or_null-instance-method" class="signature"><strong>#read_float_or_null</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_int-instance-method" class="signature"><strong>#read_int</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_int_or_null-instance-method" class="signature"><strong>#read_int_or_null</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_next-instance-method" class="signature"><strong>#read_next</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_null-instance-method" class="signature"><strong>#read_null</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_null_or%28%26block%29-instance-method" class="signature"><strong>#read_null_or</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_object%28%26block%29-instance-method" class="signature"><strong>#read_object</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_object_key-instance-method" class="signature"><strong>#read_object_key</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_object_or_null%28%26block%29-instance-method" class="signature"><strong>#read_object_or_null</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_string-instance-method" class="signature"><strong>#read_string</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_string_or_null-instance-method" class="signature"><strong>#read_string_or_null</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#skip-instance-method" class="signature"><strong>#skip</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#string_value-instance-method" class="signature"><strong>#string_value</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28input%29-class-method">
+        
+        def self.<strong>new</strong>(input)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bool_value-instance-method">
+        
+        def <strong>bool_value</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L3" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="float_value-instance-method">
+        
+        def <strong>float_value</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="int_value-instance-method">
+        
+        def <strong>int_value</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="kind-instance-method">
+        
+        def <strong>kind</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="on_key%28key%2C%20%26block%29-instance-method">
+        
+        def <strong>on_key</strong>(key, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L153" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="on_key%21%28key%2C%20%26block%29-instance-method">
+        
+        def <strong>on_key!</strong>(key, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L159" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_array%28%26block%29-instance-method">
+        
+        def <strong>read_array</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L56" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_array_or_null%28%26block%29-instance-method">
+        
+        def <strong>read_array_or_null</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L136" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_begin_array-instance-method">
+        
+        def <strong>read_begin_array</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_begin_object-instance-method">
+        
+        def <strong>read_begin_object</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_bool-instance-method">
+        
+        def <strong>read_bool</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_bool_or_null-instance-method">
+        
+        def <strong>read_bool_or_null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L120" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_end_array-instance-method">
+        
+        def <strong>read_end_array</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_end_object-instance-method">
+        
+        def <strong>read_end_object</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L69" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_float-instance-method">
+        
+        def <strong>read_float</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L104" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_float_or_null-instance-method">
+        
+        def <strong>read_float_or_null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L128" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_int-instance-method">
+        
+        def <strong>read_int</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_int_or_null-instance-method">
+        
+        def <strong>read_int_or_null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L124" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_next-instance-method">
+        
+        def <strong>read_next</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L176" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_null-instance-method">
+        
+        def <strong>read_null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L88" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_null_or%28%26block%29-instance-method">
+        
+        def <strong>read_null_or</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L144" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_object%28%26block%29-instance-method">
+        
+        def <strong>read_object</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L79" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_object_key-instance-method">
+        
+        def <strong>read_object_key</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L74" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_object_or_null%28%26block%29-instance-method">
+        
+        def <strong>read_object_or_null</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L140" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_string-instance-method">
+        
+        def <strong>read_string</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L115" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_string_or_null-instance-method">
+        
+        def <strong>read_string_or_null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L132" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="skip-instance-method">
+        
+        def <strong>skip</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L277" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="string_value-instance-method">
+        
+        def <strong>string_value</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/pull_parser.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

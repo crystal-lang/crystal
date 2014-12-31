@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class DB::Sql::MysqlDialect</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#escape%28string%20%3A%20String%29-instance-method" class="signature"><strong>#escape</strong>(string : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#quote%28name%29-instance-method" class="signature"><strong>#quote</strong>(name)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_sql-instance-method" class="signature"><strong>#to_sql</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#visit%28node%20%3A%20Literal%29-instance-method" class="signature"><strong>#visit</strong>(node : Literal)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#visit%28node%20%3A%20Table%29-instance-method" class="signature"><strong>#visit</strong>(node : Table)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#visit%28node%20%3A%20Select%29-instance-method" class="signature"><strong>#visit</strong>(node : Select)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#visit%28node%20%3A%20BinaryOp%29-instance-method" class="signature"><strong>#visit</strong>(node : BinaryOp)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#visit%28node%20%3A%20Column%29-instance-method" class="signature"><strong>#visit</strong>(node : Column)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="escape%28string%20%3A%20String%29-instance-method">
+        
+        def <strong>escape</strong>(string : <a href="../../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L55" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="quote%28name%29-instance-method">
+        
+        def <strong>quote</strong>(name)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_sql-instance-method">
+        
+        def <strong>to_sql</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="visit%28node%20%3A%20Literal%29-instance-method">
+        
+        def <strong>visit</strong>(node : <a href="../../DB/Sql/Literal.html">Literal</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="visit%28node%20%3A%20Table%29-instance-method">
+        
+        def <strong>visit</strong>(node : <a href="../../DB/Sql/Table.html">Table</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="visit%28node%20%3A%20Select%29-instance-method">
+        
+        def <strong>visit</strong>(node : <a href="../../DB/Sql/Select.html">Select</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="visit%28node%20%3A%20BinaryOp%29-instance-method">
+        
+        def <strong>visit</strong>(node : <a href="../../DB/Sql/BinaryOp.html">BinaryOp</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="visit%28node%20%3A%20Column%29-instance-method">
+        
+        def <strong>visit</strong>(node : <a href="../../DB/Sql/Column.html">Column</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/db/sql/dialects/mysql.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class XML::Reader</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28str%20%3A%20String%29-class-method" class="signature"><strong>.new</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28io%20%3A%20IO%29-class-method" class="signature"><strong>.new</strong>(io : IO)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#attributes_count-instance-method" class="signature"><strong>#attributes_count</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_attributes%3F-instance-method" class="signature"><strong>#has_attributes?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#is_empty_element%3F-instance-method" class="signature"><strong>#is_empty_element?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#move_to_first_attribute-instance-method" class="signature"><strong>#move_to_first_attribute</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#move_to_next_attribute-instance-method" class="signature"><strong>#move_to_next_attribute</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name-instance-method" class="signature"><strong>#name</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#node_type-instance-method" class="signature"><strong>#node_type</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read-instance-method" class="signature"><strong>#read</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28str%20%3A%20String%29-class-method">
+        
+        def self.<strong>new</strong>(str : <a href="../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28io%20%3A%20IO%29-class-method">
+        
+        def self.<strong>new</strong>(io : <a href="../IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="attributes_count-instance-method">
+        
+        def <strong>attributes_count</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="has_attributes%3F-instance-method">
+        
+        def <strong>has_attributes?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="is_empty_element%3F-instance-method">
+        
+        def <strong>is_empty_element?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="move_to_first_attribute-instance-method">
+        
+        def <strong>move_to_first_attribute</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="move_to_next_attribute-instance-method">
+        
+        def <strong>move_to_next_attribute</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="name-instance-method">
+        
+        def <strong>name</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="node_type-instance-method">
+        
+        def <strong>node_type</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read-instance-method">
+        
+        def <strong>read</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="value-instance-method">
+        
+        def <strong>value</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/xml/reader.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

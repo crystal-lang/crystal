@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Process</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#exit%28status%20%3D%200%29-class-method" class="signature"><strong>.exit</strong>(status = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fork%28%26block%29-class-method" class="signature"><strong>.fork</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fork-class-method" class="signature"><strong>.fork</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pid-class-method" class="signature"><strong>.pid</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ppid-class-method" class="signature"><strong>.ppid</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#run%28command%2C%20args%20%3D%20nil%2C%20output%20%3D%20nil%20%3A%20IO%20%7C%20Bool%2C%20input%20%3D%20nil%20%3A%20String%20%7C%20IO%29-class-method" class="signature"><strong>.run</strong>(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#times-class-method" class="signature"><strong>.times</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#waitpid%28pid%29-class-method" class="signature"><strong>.waitpid</strong>(pid)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exit%28status%20%3D%200%29-class-method">
+        
+        def self.<strong>exit</strong>(status = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L32" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fork%28%26block%29-class-method">
+        
+        def self.<strong>fork</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L44" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fork-class-method">
+        
+        def self.<strong>fork</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L55" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pid-class-method">
+        
+        def self.<strong>pid</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ppid-class-method">
+        
+        def self.<strong>ppid</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L40" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="run%28command%2C%20args%20%3D%20nil%2C%20output%20%3D%20nil%20%3A%20IO%20%7C%20Bool%2C%20input%20%3D%20nil%20%3A%20String%20%7C%20IO%29-class-method">
+        
+        def self.<strong>run</strong>(command, args = <span class="n">nil</span>, output = <span class="n">nil</span> : <a href="IO.html">IO</a> | <a href="Bool.html">Bool</a>, input = <span class="n">nil</span> : <a href="String.html">String</a> | <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/run.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="times-class-method">
+        
+        def self.<strong>times</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="waitpid%28pid%29-class-method">
+        
+        def self.<strong>waitpid</strong>(pid)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+
+
+</body>
+</html>

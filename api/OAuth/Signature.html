@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct OAuth::Signature</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Struct.html">Struct</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28consumer_key%2C%20client_shared_secret%2C%20oauth_token%20%3D%20nil%2C%20token_shared_secret%20%3D%20nil%2C%20extra_params%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(consumer_key, client_shared_secret, oauth_token = nil, token_shared_secret = nil, extra_params = nil)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#authorization_header%28request%2C%20ssl%2C%20ts%2C%20nonce%29-instance-method" class="signature"><strong>#authorization_header</strong>(request, ssl, ts, nonce)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#base_string%28request%2C%20ssl%2C%20ts%2C%20nonce%29-instance-method" class="signature"><strong>#base_string</strong>(request, ssl, ts, nonce)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#compute%28request%2C%20ssl%2C%20ts%2C%20nonce%29-instance-method" class="signature"><strong>#compute</strong>(request, ssl, ts, nonce)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#key-instance-method" class="signature"><strong>#key</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28consumer_key%2C%20client_shared_secret%2C%20oauth_token%20%3D%20nil%2C%20token_shared_secret%20%3D%20nil%2C%20extra_params%20%3D%20nil%29-class-method">
+        
+        def self.<strong>new</strong>(consumer_key, client_shared_secret, oauth_token = <span class="n">nil</span>, token_shared_secret = <span class="n">nil</span>, extra_params = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/signature.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="authorization_header%28request%2C%20ssl%2C%20ts%2C%20nonce%29-instance-method">
+        
+        def <strong>authorization_header</strong>(request, ssl, ts, nonce)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/signature.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="base_string%28request%2C%20ssl%2C%20ts%2C%20nonce%29-instance-method">
+        
+        def <strong>base_string</strong>(request, ssl, ts, nonce)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/signature.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="compute%28request%2C%20ssl%2C%20ts%2C%20nonce%29-instance-method">
+        
+        def <strong>compute</strong>(request, ssl, ts, nonce)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/signature.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="key-instance-method">
+        
+        def <strong>key</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth/signature.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

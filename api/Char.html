@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct Char</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Value.html">Value</a>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>ZERO</strong> = <code></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%21%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#!=</strong>(other : Char)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#-</strong>(other : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#<</strong>(other : Char)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is less than <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#<=</strong>(other : Char)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is less than or equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#<=></strong>(other : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#==</strong>(other : Char)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#></strong>(other : Char)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is greater than <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#>=</strong>(other : Char)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is greater than or equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#alpha%3F-instance-method" class="signature"><strong>#alpha?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#alphanumeric%3F-instance-method" class="signature"><strong>#alphanumeric?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bytes-instance-method" class="signature"><strong>#bytes</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#control%3F-instance-method" class="signature"><strong>#control?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#digit%3F-instance-method" class="signature"><strong>#digit?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#downcase-instance-method" class="signature"><strong>#downcase</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dump%28io%29-instance-method" class="signature"><strong>#dump</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dump-instance-method" class="signature"><strong>#dump</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_byte%28%26block%29-instance-method" class="signature"><strong>#each_byte</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect-instance-method" class="signature"><strong>#inspect</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ord-instance-method" class="signature"><strong>#ord</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#succ-instance-method" class="signature"><strong>#succ</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i%28%26block%29-instance-method" class="signature"><strong>#to_i</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i%28base%2C%20or_else%20%3D%200%29-instance-method" class="signature"><strong>#to_i</strong>(base, or_else = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i%28base%2C%20%26block%29-instance-method" class="signature"><strong>#to_i</strong>(base, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upcase-instance-method" class="signature"><strong>#upcase</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#whitespace%3F-instance-method" class="signature"><strong>#whitespace?</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%21%3D%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong>!=</strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong><</strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is less than <code>other</code>.</p></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong><=</strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is less than or equal to <code>other</code>.</p></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong><=></strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong>==</strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is equal to <code>other</code>.</p></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong>></strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is greater than <code>other</code>.</p></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3D%28other%20%3A%20Char%29-instance-method">
+        
+        def <strong>>=</strong>(other : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is greater than or equal to <code>other</code>.</p></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="alpha%3F-instance-method">
+        
+        def <strong>alpha?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="alphanumeric%3F-instance-method">
+        
+        def <strong>alphanumeric?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L21" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bytes-instance-method">
+        
+        def <strong>bytes</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L172" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="control%3F-instance-method">
+        
+        def <strong>control?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="digit%3F-instance-method">
+        
+        def <strong>digit?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="downcase-instance-method">
+        
+        def <strong>downcase</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L29" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dump%28io%29-instance-method">
+        
+        def <strong>dump</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L85" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dump-instance-method">
+        
+        def <strong>dump</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_byte%28%26block%29-instance-method">
+        
+        def <strong>each_byte</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L145" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect-instance-method">
+        
+        def <strong>inspect</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-instance-method">
+        
+        def <strong>inspect</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L69" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ord-instance-method">
+        
+        def <strong>ord</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="succ-instance-method">
+        
+        def <strong>succ</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i-instance-method">
+        
+        def <strong>to_i</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L110" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i%28%26block%29-instance-method">
+        
+        def <strong>to_i</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L114" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i%28base%2C%20or_else%20%3D%200%29-instance-method">
+        
+        def <strong>to_i</strong>(base, or_else = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L122" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i%28base%2C%20%26block%29-instance-method">
+        
+        def <strong>to_i</strong>(base, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L126" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L189" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s-instance-method">
+        
+        def <strong>to_s</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L180" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upcase-instance-method">
+        
+        def <strong>upcase</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L37" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="whitespace%3F-instance-method">
+        
+        def <strong>whitespace?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L25" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

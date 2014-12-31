@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Pointer(T)</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Value.html">Value</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Comparable.html">Comparable(self)</a>
+  
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#malloc%28size%20%3A%20Int%29-class-method" class="signature"><strong>.malloc</strong>(size : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc%28size%20%3A%20Int%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method" class="signature"><strong>.malloc</strong>(size : Int, &block : Int32 -> T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc%28size%20%3A%20Int%2C%20value%20%3A%20T%29-class-method" class="signature"><strong>.malloc</strong>(size : Int, value : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc%28size%20%3A%20UInt64%29-class-method" class="signature"><strong>.malloc</strong>(size : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc_one%28value%20%3A%20T%29-class-method" class="signature"><strong>.malloc_one</strong>(value : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#null-class-method" class="signature"><strong>.null</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28offset%20%3A%20Int64%29-instance-method" class="signature"><strong>#+</strong>(offset : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#+</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20self%29-instance-method" class="signature"><strong>#-</strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#-</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20self%29-instance-method" class="signature"><strong>#<=></strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28offset%29-instance-method" class="signature"><strong>#[]</strong>(offset)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3D%28offset%2C%20value%20%3A%20T%29-instance-method" class="signature"><strong>#[]=</strong>(offset, value : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#address-instance-method" class="signature"><strong>#address</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#appender-instance-method" class="signature"><strong>#appender</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#copy_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#copy_from</strong>(source : Pointer(T), count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#copy_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#copy_to</strong>(target : Pointer(T), count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%21%28size%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#map!</strong>(size : Int, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#memcmp%28other%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#memcmp</strong>(other : Pointer(T), count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#move_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#move_from</strong>(source : Pointer(T), count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#move_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#move_to</strong>(target : Pointer(T), count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#realloc%28size%20%3A%20UInt64%29-instance-method" class="signature"><strong>#realloc</strong>(size : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#realloc%28size%20%3A%20Int%29-instance-method" class="signature"><strong>#realloc</strong>(size : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle%21%28size%20%3A%20Int%29-instance-method" class="signature"><strong>#shuffle!</strong>(size : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#swap%28i%2C%20j%29-instance-method" class="signature"><strong>#swap</strong>(i, j)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_slice%28length%29-instance-method" class="signature"><strong>#to_slice</strong>(length)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#value%3D%28value%20%3A%20T%29-instance-method" class="signature"><strong>#value=</strong>(value : T)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc%28size%20%3A%20Int%29-class-method">
+        
+        def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L90" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc%28size%20%3A%20Int%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method">
+        
+        def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>, &block : <a href="Int32.html">Int32</a> -> T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L104" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc%28size%20%3A%20Int%2C%20value%20%3A%20T%29-class-method">
+        
+        def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>, value : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc%28size%20%3A%20UInt64%29-class-method">
+        
+        def self.<strong>malloc</strong>(size : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc_one%28value%20%3A%20T%29-class-method">
+        
+        def self.<strong>malloc_one</strong>(value : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L110" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="null-class-method">
+        
+        def self.<strong>null</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L86" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28offset%20%3A%20Int64%29-instance-method">
+        
+        def <strong>+</strong>(offset : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20self%29-instance-method">
+        
+        def <strong>-</strong>(other : self)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20self%29-instance-method">
+        
+        def <strong><=></strong>(other : self)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28offset%29-instance-method">
+        
+        def <strong>[]</strong>(offset)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3D%28offset%2C%20value%20%3A%20T%29-instance-method">
+        
+        def <strong>[]=</strong>(offset, value : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="address-instance-method">
+        
+        def <strong>address</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="appender-instance-method">
+        
+        def <strong>appender</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L116" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="copy_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>copy_from</strong>(source : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L28" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="copy_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>copy_to</strong>(target : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%21%28size%20%3A%20Int%2C%20%26block%29-instance-method">
+        
+        def <strong>map!</strong>(size : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L80" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="memcmp%28other%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>memcmp</strong>(other : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="move_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>move_from</strong>(source : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L37" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="move_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>move_to</strong>(target : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="nil%3F-instance-method">
+        
+        def <strong>nil?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="realloc%28size%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>realloc</strong>(size : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="realloc%28size%20%3A%20Int%29-instance-method">
+        
+        def <strong>realloc</strong>(size : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L68" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle%21%28size%20%3A%20Int%29-instance-method">
+        
+        def <strong>shuffle!</strong>(size : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="swap%28i%2C%20j%29-instance-method">
+        
+        def <strong>swap</strong>(i, j)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L56" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_slice%28length%29-instance-method">
+        
+        def <strong>to_slice</strong>(length)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/pointer.cr#L120" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="value-instance-method">
+        
+        def <strong>value</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="value%3D%28value%20%3A%20T%29-instance-method">
+        
+        def <strong>value=</strong>(value : T)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

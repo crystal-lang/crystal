@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class HTTP::Client</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#delete%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.delete</strong>(url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exec%28method%2C%20url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.exec</strong>(method, url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.get</strong>(url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#head%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.head</strong>(url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28host%2C%20port%20%3D%20nil%2C%20ssl%20%3D%20false%2C%20%26block%29-class-method" class="signature"><strong>.new</strong>(host, port = nil, ssl = false, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#patch%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.patch</strong>(url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#post%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.post</strong>(url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#post_form%28url%2C%20form%2C%20headers%20%3D%20nil%29-class-method" class="signature"><strong>.post_form</strong>(url, form, headers = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#put%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method" class="signature"><strong>.put</strong>(url, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28host%2C%20port%20%3D%20nil%2C%20ssl%20%3D%20false%29-class-method" class="signature"><strong>.new</strong>(host, port = nil, ssl = false)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#basic_auth%28username%2C%20password%29-instance-method" class="signature"><strong>#basic_auth</strong>(username, password)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#before_request%28%26before_request%20%3A%20HTTP%3A%3ARequest%20-%3E%20%29-instance-method" class="signature"><strong>#before_request</strong>(&before_request : HTTP::Request -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#delete</strong>(path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exec%28method%20%3A%20String%2C%20path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#exec</strong>(method : String, path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exec%28request%20%3A%20HTTP%3A%3ARequest%29-instance-method" class="signature"><strong>#exec</strong>(request : HTTP::Request)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#get</strong>(path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#head%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#head</strong>(path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#host-instance-method" class="signature"><strong>#host</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#patch%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#patch</strong>(path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#port-instance-method" class="signature"><strong>#port</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#post%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#post</strong>(path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#post_form%28path%2C%20form%20%3A%20Hash%2C%20headers%20%3D%20nil%29-instance-method" class="signature"><strong>#post_form</strong>(path, form : Hash, headers = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#post_form%28path%2C%20form%20%3A%20String%2C%20headers%20%3D%20nil%29-instance-method" class="signature"><strong>#post_form</strong>(path, form : String, headers = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#put%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method" class="signature"><strong>#put</strong>(path, headers = nil, body = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ssl%3F-instance-method" class="signature"><strong>#ssl?</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="delete%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>delete</strong>(url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exec%28method%2C%20url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>exec</strong>(method, url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L110" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>get</strong>(url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="head%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>head</strong>(url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28host%2C%20port%20%3D%20nil%2C%20ssl%20%3D%20false%2C%20%26block%29-class-method">
+        
+        def self.<strong>new</strong>(host, port = <span class="n">nil</span>, ssl = <span class="n">false</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L17" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="patch%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>patch</strong>(url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="post%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>post</strong>(url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="post_form%28url%2C%20form%2C%20headers%20%3D%20nil%29-class-method">
+        
+        def self.<strong>post_form</strong>(url, form, headers = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L104" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="put%28url%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-class-method">
+        
+        def self.<strong>put</strong>(url, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28host%2C%20port%20%3D%20nil%2C%20ssl%20%3D%20false%29-class-method">
+        
+        def self.<strong>new</strong>(host, port = <span class="n">nil</span>, ssl = <span class="n">false</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="basic_auth%28username%2C%20password%29-instance-method">
+        
+        def <strong>basic_auth</strong>(username, password)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="before_request%28%26before_request%20%3A%20HTTP%3A%3ARequest%20-%3E%20%29-instance-method">
+        
+        def <strong>before_request</strong>(&before_request : <a href="../HTTP/Request.html">HTTP::Request</a> -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="close-instance-method">
+        
+        def <strong>close</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="delete%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>delete</strong>(path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exec%28method%20%3A%20String%2C%20path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>exec</strong>(method : <a href="../String.html">String</a>, path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exec%28request%20%3A%20HTTP%3A%3ARequest%29-instance-method">
+        
+        def <strong>exec</strong>(request : <a href="../HTTP/Request.html">HTTP::Request</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L62" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>get</strong>(path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="head%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>head</strong>(path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="host-instance-method">
+        
+        def <strong>host</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="patch%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>patch</strong>(path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="port-instance-method">
+        
+        def <strong>port</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="post%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>post</strong>(path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="post_form%28path%2C%20form%20%3A%20Hash%2C%20headers%20%3D%20nil%29-instance-method">
+        
+        def <strong>post_form</strong>(path, form : <a href="../Hash.html">Hash</a>, headers = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="post_form%28path%2C%20form%20%3A%20String%2C%20headers%20%3D%20nil%29-instance-method">
+        
+        def <strong>post_form</strong>(path, form : <a href="../String.html">String</a>, headers = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="put%28path%2C%20headers%20%3D%20nil%2C%20body%20%3D%20nil%29-instance-method">
+        
+        def <strong>put</strong>(path, headers = <span class="n">nil</span>, body = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L36" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ssl%3F-instance-method">
+        
+        def <strong>ssl?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/client/client.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

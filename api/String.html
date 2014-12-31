@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class String</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Reference.html">Reference</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Comparable.html">Comparable(self)</a>
+  
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>HEADER_SIZE</strong> = <code><span class="k">sizeof</span>(<span class="t">::</span><span class="t">Tuple</span>(<span class="t">Int32</span>, <span class="t">Int32</span>, <span class="t">Int32</span>))</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TYPE_ID</strong> = <code><span class="n">1</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#build%28capacity%20%3D%2064%2C%20%26block%29-class-method" class="signature"><strong>.build</strong>(capacity = 64, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28capacity%2C%20%26block%29-class-method" class="signature"><strong>.new</strong>(capacity, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28pull%20%3A%20JSON%3A%3APullParser%29-class-method" class="signature"><strong>.new</strong>(pull : JSON::PullParser)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28chars%20%3A%20%3A%3APointer%28UInt8%29%2C%20bytesize%2C%20length%20%3D%200%29-class-method" class="signature"><strong>.new</strong>(chars : ::Pointer(UInt8), bytesize, length = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28slice%20%3A%20Slice%28UInt8%29%29-class-method" class="signature"><strong>.new</strong>(slice : Slice(UInt8))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28chars%20%3A%20%3A%3APointer%28UInt8%29%29-class-method" class="signature"><strong>.new</strong>(chars : ::Pointer(UInt8))</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%25%28args%20%3A%20Array%29-instance-method" class="signature"><strong>#%</strong>(args : Array)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%25%28other%29-instance-method" class="signature"><strong>#%</strong>(other)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28times%20%3A%20Int%29-instance-method" class="signature"><strong>#*</strong>(times : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20self%29-instance-method" class="signature"><strong>#+</strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#+</strong>(char : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20self%29-instance-method" class="signature"><strong>#<=></strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20self%29-instance-method" class="signature"><strong>#==</strong>(other : self)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%7E%28regex%20%3A%20Regex%29-instance-method" class="signature"><strong>#=~</strong>(regex : Regex)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%7E%28other%29-instance-method" class="signature"><strong>#=~</strong>(other)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(start : Int, count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method" class="signature"><strong>#[]</strong>(range : Range(Int, Int))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(index : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ascii_only%3F-instance-method" class="signature"><strong>#ascii_only?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#byte_at%28index%29-instance-method" class="signature"><strong>#byte_at</strong>(index)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#byte_index%28byte%20%3A%20Int%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#byte_index</strong>(byte : Int, offset = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#byte_slice%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#byte_slice</strong>(start : Int, count : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#byte_slice%28start%20%3A%20Int%29-instance-method" class="signature"><strong>#byte_slice</strong>(start : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bytes-instance-method" class="signature"><strong>#bytes</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bytesize-instance-method" class="signature"><strong>#bytesize</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#camelcase-instance-method" class="signature"><strong>#camelcase</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#capitalize-instance-method" class="signature"><strong>#capitalize</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#char_at%28index%29-instance-method" class="signature"><strong>#char_at</strong>(index)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chars-instance-method" class="signature"><strong>#chars</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chomp-instance-method" class="signature"><strong>#chomp</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#codepoint_at%28index%29-instance-method" class="signature"><strong>#codepoint_at</strong>(index)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cstr-instance-method" class="signature"><strong>#cstr</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#delete</strong>(char : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#downcase-instance-method" class="signature"><strong>#downcase</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dump%28io%29-instance-method" class="signature"><strong>#dump</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dump-instance-method" class="signature"><strong>#dump</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_byte%28%26block%29-instance-method" class="signature"><strong>#each_byte</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_char%28%26block%29-instance-method" class="signature"><strong>#each_char</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_char_with_index%28%26block%29-instance-method" class="signature"><strong>#each_char_with_index</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ends_with%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#ends_with?</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ends_with%3F%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#ends_with?</strong>(char : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28char%20%3A%20Char%2C%20replacement%20%3A%20Char%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28char%20%3A%20Char%2C%20replacement%20%3A%20String%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28pattern%20%3A%20Regex%2C%20replacement%20%3A%20String%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, replacement : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28%26block%20%3A%20Char%20-%3E%20_%29-instance-method" class="signature"><strong>#gsub</strong>(&block : Char -> _)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#includes%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#includes?</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#includes%3F%28c%20%3A%20Char%29-instance-method" class="signature"><strong>#includes?</strong>(c : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28c%20%3A%20String%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : String, offset = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : Char, offset = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#length-instance-method" class="signature"><strong>#length</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lines-instance-method" class="signature"><strong>#lines</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lstrip-instance-method" class="signature"><strong>#lstrip</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reverse-instance-method" class="signature"><strong>#reverse</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rindex%28c%20%3A%20String%2C%20offset%20%3D%20length%20-%20c.length%29-instance-method" class="signature"><strong>#rindex</strong>(c : String, offset = length - c.length)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rindex%28c%20%3A%20Char%2C%20offset%20%3D%20length%20-%201%29-instance-method" class="signature"><strong>#rindex</strong>(c : Char, offset = length - 1)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rstrip-instance-method" class="signature"><strong>#rstrip</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scan%28pattern%2C%20%26block%29-instance-method" class="signature"><strong>#scan</strong>(pattern, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scan%28pattern%29-instance-method" class="signature"><strong>#scan</strong>(pattern)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28separator%20%3A%20Regex%29-instance-method" class="signature"><strong>#split</strong>(separator : Regex)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28separator%20%3A%20String%29-instance-method" class="signature"><strong>#split</strong>(separator : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Char, limit = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split-instance-method" class="signature"><strong>#split</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#starts_with%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#starts_with?</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#starts_with%3F%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#starts_with?</strong>(char : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#strip-instance-method" class="signature"><strong>#strip</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_f-instance-method" class="signature"><strong>#to_f</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_f32-instance-method" class="signature"><strong>#to_f32</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_f64-instance-method" class="signature"><strong>#to_f64</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i%28base%29-instance-method" class="signature"><strong>#to_i</strong>(base)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i16-instance-method" class="signature"><strong>#to_i16</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i32-instance-method" class="signature"><strong>#to_i32</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i64-instance-method" class="signature"><strong>#to_i64</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i8-instance-method" class="signature"><strong>#to_i8</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_json%28io%29-instance-method" class="signature"><strong>#to_json</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_slice-instance-method" class="signature"><strong>#to_slice</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_u16-instance-method" class="signature"><strong>#to_u16</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_u32-instance-method" class="signature"><strong>#to_u32</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_u64-instance-method" class="signature"><strong>#to_u64</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_u8-instance-method" class="signature"><strong>#to_u8</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tr%28from%20%3A%20String%2C%20to%20%3A%20String%29-instance-method" class="signature"><strong>#tr</strong>(from : String, to : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#underscore-instance-method" class="signature"><strong>#underscore</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_byte_at%28index%29-instance-method" class="signature"><strong>#unsafe_byte_at</strong>(index)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upcase-instance-method" class="signature"><strong>#upcase</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="build%28capacity%20%3D%2064%2C%20%26block%29-class-method">
+        
+        def self.<strong>build</strong>(capacity = <span class="n">64</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28capacity%2C%20%26block%29-class-method">
+        
+        def self.<strong>new</strong>(capacity, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28pull%20%3A%20JSON%3A%3APullParser%29-class-method">
+        
+        def self.<strong>new</strong>(pull : <a href="JSON/PullParser.html">JSON::PullParser</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/from_json.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28chars%20%3A%20%3A%3APointer%28UInt8%29%2C%20bytesize%2C%20length%20%3D%200%29-class-method">
+        
+        def self.<strong>new</strong>(chars : <a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>), bytesize, length = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28slice%20%3A%20Slice%28UInt8%29%29-class-method">
+        
+        def self.<strong>new</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28chars%20%3A%20%3A%3APointer%28UInt8%29%29-class-method">
+        
+        def self.<strong>new</strong>(chars : <a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28args%20%3A%20Array%29-instance-method">
+        
+        def <strong>%</strong>(args : <a href="Array.html">Array</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L922" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28other%29-instance-method">
+        
+        def <strong>%</strong>(other)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L928" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28times%20%3A%20Int%29-instance-method">
+        
+        def <strong>*</strong>(times : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L458" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20self%29-instance-method">
+        
+        def <strong>+</strong>(other : self)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L422" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28char%20%3A%20Char%29-instance-method">
+        
+        def <strong>+</strong>(char : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L436" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20self%29-instance-method">
+        
+        def <strong><=></strong>(other : self)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L406" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20self%29-instance-method">
+        
+        def <strong>==</strong>(other : self)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L400" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%7E%28regex%20%3A%20Regex%29-instance-method">
+        
+        def <strong>=~</strong>(regex : <a href="Regex.html">Regex</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L414" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%7E%28other%29-instance-method">
+        
+        def <strong>=~</strong>(other)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L418" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]</strong>(start : <a href="Int.html">Int</a>, count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L131" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method">
+        
+        def <strong>[]</strong>(range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L121" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L105" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ascii_only%3F-instance-method">
+        
+        def <strong>ascii_only?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L972" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="byte_at%28index%29-instance-method">
+        
+        def <strong>byte_at</strong>(index)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L193" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="byte_index%28byte%20%3A%20Int%2C%20offset%20%3D%200%29-instance-method">
+        
+        def <strong>byte_index</strong>(byte : <a href="Int.html">Int</a>, offset = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L549" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="byte_slice%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>byte_slice</strong>(start : <a href="Int.html">Int</a>, count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L163" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="byte_slice%28start%20%3A%20Int%29-instance-method">
+        
+        def <strong>byte_slice</strong>(start : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L181" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bytes-instance-method">
+        
+        def <strong>bytes</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L940" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bytesize-instance-method">
+        
+        def <strong>bytesize</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="camelcase-instance-method">
+        
+        def <strong>camelcase</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L723" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="capitalize-instance-method">
+        
+        def <strong>capitalize</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L222" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="char_at%28index%29-instance-method">
+        
+        def <strong>char_at</strong>(index)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L189" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chars-instance-method">
+        
+        def <strong>chars</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L802" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chomp-instance-method">
+        
+        def <strong>chomp</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L236" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="codepoint_at%28index%29-instance-method">
+        
+        def <strong>codepoint_at</strong>(index)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L185" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cstr-instance-method">
+        
+        def <strong>cstr</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L996" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="delete%28char%20%3A%20Char%29-instance-method">
+        
+        def <strong>delete</strong>(char : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L388" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="downcase-instance-method">
+        
+        def <strong>downcase</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L206" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dump%28io%29-instance-method">
+        
+        def <strong>dump</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L835" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dump-instance-method">
+        
+        def <strong>dump</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L829" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_byte%28%26block%29-instance-method">
+        
+        def <strong>each_byte</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L810" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_char%28%26block%29-instance-method">
+        
+        def <strong>each_char</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L780" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_char_with_index%28%26block%29-instance-method">
+        
+        def <strong>each_char_with_index</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L793" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="empty%3F-instance-method">
+        
+        def <strong>empty?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L396" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ends_with%3F%28str%20%3A%20String%29-instance-method">
+        
+        def <strong>ends_with?</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L893" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ends_with%3F%28char%20%3A%20Char%29-instance-method">
+        
+        def <strong>ends_with?</strong>(char : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L898" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28char%20%3A%20Char%2C%20replacement%20%3A%20Char%29-instance-method">
+        
+        def <strong>gsub</strong>(char : <a href="Char.html">Char</a>, replacement : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L357" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28char%20%3A%20Char%2C%20replacement%20%3A%20String%29-instance-method">
+        
+        def <strong>gsub</strong>(char : <a href="Char.html">Char</a>, replacement : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L349" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28pattern%20%3A%20Regex%2C%20replacement%20%3A%20String%29-instance-method">
+        
+        def <strong>gsub</strong>(pattern : <a href="Regex.html">Regex</a>, replacement : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L384" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28%26block%20%3A%20Char%20-%3E%20_%29-instance-method">
+        
+        def <strong>gsub</strong>(&block : <a href="Char.html">Char</a> -> _)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L336" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method">
+        
+        def <strong>gsub</strong>(pattern : <a href="Regex.html">Regex</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L365" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L932" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="includes%3F%28str%20%3A%20String%29-instance-method">
+        
+        def <strong>includes?</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L562" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="includes%3F%28c%20%3A%20Char%29-instance-method">
+        
+        def <strong>includes?</strong>(c : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L558" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28c%20%3A%20String%2C%20offset%20%3D%200%29-instance-method">
+        
+        def <strong>index</strong>(c : <a href="String.html">String</a>, offset = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L496" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method">
+        
+        def <strong>index</strong>(c : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L483" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-instance-method">
+        
+        def <strong>inspect</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L817" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="length-instance-method">
+        
+        def <strong>length</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L944" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lines-instance-method">
+        
+        def <strong>lines</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L695" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lstrip-instance-method">
+        
+        def <strong>lstrip</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L284" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reverse-instance-method">
+        
+        def <strong>reverse</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L744" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rindex%28c%20%3A%20String%2C%20offset%20%3D%20length%20-%20c.length%29-instance-method">
+        
+        def <strong>rindex</strong>(c : <a href="String.html">String</a>, offset = length <span class="o">-</span> c.length)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L531" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rindex%28c%20%3A%20Char%2C%20offset%20%3D%20length%20-%201%29-instance-method">
+        
+        def <strong>rindex</strong>(c : <a href="Char.html">Char</a>, offset = length <span class="o">-</span> <span class="n">1</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L516" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rstrip-instance-method">
+        
+        def <strong>rstrip</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L271" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scan%28pattern%2C%20%26block%29-instance-method">
+        
+        def <strong>scan</strong>(pattern, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L760" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scan%28pattern%29-instance-method">
+        
+        def <strong>scan</strong>(pattern)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L772" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28separator%20%3A%20Regex%29-instance-method">
+        
+        def <strong>split</strong>(separator : <a href="Regex.html">Regex</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L678" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28separator%20%3A%20String%29-instance-method">
+        
+        def <strong>split</strong>(separator : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L639" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method">
+        
+        def <strong>split</strong>(separator : <a href="Char.html">Char</a>, limit = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L605" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split-instance-method">
+        
+        def <strong>split</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L566" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="starts_with%3F%28str%20%3A%20String%29-instance-method">
+        
+        def <strong>starts_with?</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L880" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="starts_with%3F%28char%20%3A%20Char%29-instance-method">
+        
+        def <strong>starts_with?</strong>(char : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L885" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="strip-instance-method">
+        
+        def <strong>strip</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L253" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_f-instance-method">
+        
+        def <strong>to_f</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_f32-instance-method">
+        
+        def <strong>to_f32</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L97" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_f64-instance-method">
+        
+        def <strong>to_f64</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L101" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i-instance-method">
+        
+        def <strong>to_i</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i%28base%29-instance-method">
+        
+        def <strong>to_i</strong>(base)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i16-instance-method">
+        
+        def <strong>to_i16</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L65" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i32-instance-method">
+        
+        def <strong>to_i32</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L69" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i64-instance-method">
+        
+        def <strong>to_i64</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i8-instance-method">
+        
+        def <strong>to_i8</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_json%28io%29-instance-method">
+        
+        def <strong>to_json</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L133" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%29-instance-method">
+        
+        def <strong>to_s</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L992" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s-instance-method">
+        
+        def <strong>to_s</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L988" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_slice-instance-method">
+        
+        def <strong>to_slice</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L984" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_u16-instance-method">
+        
+        def <strong>to_u16</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L81" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_u32-instance-method">
+        
+        def <strong>to_u32</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L85" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_u64-instance-method">
+        
+        def <strong>to_u64</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L89" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_u8-instance-method">
+        
+        def <strong>to_u8</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L77" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_unsafe-instance-method">
+        
+        def <strong>to_unsafe</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L1000" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tr%28from%20%3A%20String%2C%20to%20%3A%20String%29-instance-method">
+        
+        def <strong>tr</strong>(from : <a href="String.html">String</a>, to : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L297" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="underscore-instance-method">
+        
+        def <strong>underscore</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L699" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_byte_at%28index%29-instance-method">
+        
+        def <strong>unsafe_byte_at</strong>(index)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L202" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upcase-instance-method">
+        
+        def <strong>upcase</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/string.cr#L214" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

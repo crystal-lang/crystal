@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct CharReader</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>A <a href="CharReader.html">CharReader</a> allows iterating a <a href="String.html">String</a> by Chars.</p>
+
+<p>As soon as you instantiate a <a href="CharReader.html">CharReader</a> it will decode the first
+char in the <a href="String.html">String</a>, which can be accesed by invoking <code></code><a href="CharReader.html#current_char-instance-method">#current_char</a>.
+At this point <code></code><a href="CharReader.html#pos-instance-method">#pos</a>, the current position in the string, will equal zero.
+Successive calls to <code></code><a href="CharReader.html#next_char-instance-method">#next_char</a> return the next chars in the string,
+advancing <code></code><a href="CharReader.html#pos-instance-method">#pos</a>.</p>
+
+<p>Note that the null character '\0' will be returned in <code></code><a href="CharReader.html#current_char-instance-method">#current_char</a> when
+the end is reached (as well as when the string is empty). Thus, <code></code><a href="CharReader.html#has_next%3F-instance-method">#has_next?</a>
+will return <code></code><code>false</code> only when <code></code><a href="CharReader.html#pos-instance-method">#pos</a> is equal to the string's length, in which
+case <code></code><a href="CharReader.html#current_char-instance-method">#current_char</a> will always be '\0'.</p>
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Struct.html">Struct</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Enumerable.html">Enumerable(Char)</a>
+  
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28string%29-class-method" class="signature"><strong>.new</strong>(string)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#current_char-instance-method" class="signature"><strong>#current_char</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#current_char_width-instance-method" class="signature"><strong>#current_char_width</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_next%3F-instance-method" class="signature"><strong>#has_next?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next_char-instance-method" class="signature"><strong>#next_char</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#peek_next_char-instance-method" class="signature"><strong>#peek_next_char</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pos-instance-method" class="signature"><strong>#pos</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pos%3D%28pos%29-instance-method" class="signature"><strong>#pos=</strong>(pos)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#string-instance-method" class="signature"><strong>#string</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28string%29-class-method">
+        
+        def self.<strong>new</strong>(string)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L21" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="current_char-instance-method">
+        
+        def <strong>current_char</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L17" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="current_char_width-instance-method">
+        
+        def <strong>current_char_width</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each%28%26block%29-instance-method">
+        
+        def <strong>each</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="has_next%3F-instance-method">
+        
+        def <strong>has_next?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L29" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_char-instance-method">
+        
+        def <strong>next_char</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="peek_next_char-instance-method">
+        
+        def <strong>peek_next_char</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pos-instance-method">
+        
+        def <strong>pos</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pos%3D%28pos%29-instance-method">
+        
+        def <strong>pos=</strong>(pos)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="string-instance-method">
+        
+        def <strong>string</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

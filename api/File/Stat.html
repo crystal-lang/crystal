@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class File::Stat</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28filename%20%3A%20String%29-class-method" class="signature"><strong>.new</strong>(filename : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28stat%20%3A%20C%3A%3AStat%29-class-method" class="signature"><strong>.new</strong>(stat : C::Stat)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#atime-instance-method" class="signature"><strong>#atime</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#blksize-instance-method" class="signature"><strong>#blksize</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#blockdev%3F-instance-method" class="signature"><strong>#blockdev?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#blocks-instance-method" class="signature"><strong>#blocks</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chardev%3F-instance-method" class="signature"><strong>#chardev?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ctime-instance-method" class="signature"><strong>#ctime</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dev-instance-method" class="signature"><strong>#dev</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#directory%3F-instance-method" class="signature"><strong>#directory?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#file%3F-instance-method" class="signature"><strong>#file?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gid-instance-method" class="signature"><strong>#gid</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ino-instance-method" class="signature"><strong>#ino</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect-instance-method" class="signature"><strong>#inspect</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mode-instance-method" class="signature"><strong>#mode</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mtime-instance-method" class="signature"><strong>#mtime</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#nlink-instance-method" class="signature"><strong>#nlink</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rdev-instance-method" class="signature"><strong>#rdev</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#setgid%3F-instance-method" class="signature"><strong>#setgid?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#setuid%3F-instance-method" class="signature"><strong>#setuid?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#socket%3F-instance-method" class="signature"><strong>#socket?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sticky%3F-instance-method" class="signature"><strong>#sticky?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#uid-instance-method" class="signature"><strong>#uid</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28filename%20%3A%20String%29-class-method">
+        
+        def self.<strong>new</strong>(filename : <a href="../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L88" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28stat%20%3A%20C%3A%3AStat%29-class-method">
+        
+        def self.<strong>new</strong>(stat : C::Stat)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atime-instance-method">
+        
+        def <strong>atime</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L97" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="blksize-instance-method">
+        
+        def <strong>blksize</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L101" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="blockdev%3F-instance-method">
+        
+        def <strong>blockdev?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L163" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="blocks-instance-method">
+        
+        def <strong>blocks</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L105" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chardev%3F-instance-method">
+        
+        def <strong>chardev?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L167" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ctime-instance-method">
+        
+        def <strong>ctime</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L109" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dev-instance-method">
+        
+        def <strong>dev</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L113" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="directory%3F-instance-method">
+        
+        def <strong>directory?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L171" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="file%3F-instance-method">
+        
+        def <strong>file?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L175" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gid-instance-method">
+        
+        def <strong>gid</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L117" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ino-instance-method">
+        
+        def <strong>ino</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L121" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect-instance-method">
+        
+        def <strong>inspect</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L159" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mode-instance-method">
+        
+        def <strong>mode</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L125" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="mtime-instance-method">
+        
+        def <strong>mtime</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L139" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="nlink-instance-method">
+        
+        def <strong>nlink</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L143" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rdev-instance-method">
+        
+        def <strong>rdev</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L147" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="setgid%3F-instance-method">
+        
+        def <strong>setgid?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L183" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="setuid%3F-instance-method">
+        
+        def <strong>setuid?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L179" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size-instance-method">
+        
+        def <strong>size</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L151" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="socket%3F-instance-method">
+        
+        def <strong>socket?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L187" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sticky%3F-instance-method">
+        
+        def <strong>sticky?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L191" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="uid-instance-method">
+        
+        def <strong>uid</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/file/stat.cr#L155" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

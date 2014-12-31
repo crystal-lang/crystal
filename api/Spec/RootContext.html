@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Spec::RootContext</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Spec/Context.html">Spec::Context</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#describe%28description%2C%20file%2C%20line%2C%20%26block%29-class-method" class="signature"><strong>.describe</strong>(description, file, line, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#matches%3F%28description%2C%20pattern%2C%20line%29-class-method" class="signature"><strong>.matches?</strong>(description, pattern, line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#print_results%28elapsed_time%29-class-method" class="signature"><strong>.print_results</strong>(elapsed_time)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#report%28kind%2C%20full_description%2C%20file%2C%20line%2C%20ex%20%3D%20nil%29-class-method" class="signature"><strong>.report</strong>(kind, full_description, file, line, ex = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#succeeded-class-method" class="signature"><strong>.succeeded</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#matches%3F%28pattern%2C%20line%29-instance-method" class="signature"><strong>#matches?</strong>(pattern, line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parent-instance-method" class="signature"><strong>#parent</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#print_results%28elapsed_time%29-instance-method" class="signature"><strong>#print_results</strong>(elapsed_time)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#report%28result%29-instance-method" class="signature"><strong>#report</strong>(result)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#succeeded-instance-method" class="signature"><strong>#succeeded</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="describe%28description%2C%20file%2C%20line%2C%20%26block%29-class-method">
+        
+        def self.<strong>describe</strong>(description, file, line, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L121" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="matches%3F%28description%2C%20pattern%2C%20line%29-class-method">
+        
+        def self.<strong>matches?</strong>(description, pattern, line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L130" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="print_results%28elapsed_time%29-class-method">
+        
+        def self.<strong>print_results</strong>(elapsed_time)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="report%28kind%2C%20full_description%2C%20file%2C%20line%2C%20ex%20%3D%20nil%29-class-method">
+        
+        def self.<strong>report</strong>(kind, full_description, file, line, ex = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L25" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="succeeded-class-method">
+        
+        def self.<strong>succeeded</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="matches%3F%28pattern%2C%20line%29-instance-method">
+        
+        def <strong>matches?</strong>(pattern, line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L134" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parent-instance-method">
+        
+        def <strong>parent</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L17" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="print_results%28elapsed_time%29-instance-method">
+        
+        def <strong>print_results</strong>(elapsed_time)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="report%28result%29-instance-method">
+        
+        def <strong>report</strong>(result)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="succeeded-instance-method">
+        
+        def <strong>succeeded</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/context.cr#L21" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

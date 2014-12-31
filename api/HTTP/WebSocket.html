@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class HTTP::WebSocket</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>OPCODE_BINARY</strong> = <code><span class="n">2</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OPCODE_CLOSE</strong> = <code><span class="n">8</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OPCODE_CONT</strong> = <code><span class="n">0</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OPCODE_PING</strong> = <code><span class="n">9</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OPCODE_PONG</strong> = <code><span class="n">10</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OPCODE_TEXT</strong> = <code><span class="n">1</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28io%29-class-method" class="signature"><strong>.new</strong>(io)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#receive%28buffer%20%3A%20Slice%28UInt8%29%29-instance-method" class="signature"><strong>#receive</strong>(buffer : Slice(UInt8))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#send%28data%29-instance-method" class="signature"><strong>#send</strong>(data)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28io%29-class-method">
+        
+        def self.<strong>new</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/web_socket.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="close-instance-method">
+        
+        def <strong>close</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/web_socket.cr#L112" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="receive%28buffer%20%3A%20Slice%28UInt8%29%29-instance-method">
+        
+        def <strong>receive</strong>(buffer : <a href="../Slice.html">Slice</a>(<a href="../UInt8.html">UInt8</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/web_socket.cr#L44" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="send%28data%29-instance-method">
+        
+        def <strong>send</strong>(data)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/web_socket.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

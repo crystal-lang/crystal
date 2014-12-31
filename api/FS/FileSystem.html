@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract class FS::FileSystem</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="../FS/FileContainer.html">FS::FileContainer</a>
+  
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="../FS/DirectoryFileSystem.html">FS::DirectoryFileSystem</a>,
+  
+    <a href="../FS/MemoryFileSystem.html">FS::MemoryFileSystem</a>
+  
+
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#combine%28a%2C%20b%29-instance-method" class="signature"><strong>#combine</strong>(a, b)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dir%3F%28path%29-instance-method" class="signature"><strong>#dir?</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#entries-instance-method" class="signature"><strong>#entries</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#entries%28%26block%20%3A%20Entry%20-%3E%20U%29-instance-method" class="signature"><strong>#entries</strong>(&block : Entry -> U)</a>
+        
+          <div class="summary"><p>enumerate top level entries of file system</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#entry%28path%29-instance-method" class="signature"><strong>#entry</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exists%3F%28path%29-instance-method" class="signature"><strong>#exists?</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#file%3F%28path%29-instance-method" class="signature"><strong>#file?</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#find_entries%28path%2C%20%26block%20%3A%20Entry%20-%3E%20U%29-instance-method" class="signature"><strong>#find_entries</strong>(path, &block : Entry -> U)</a>
+        
+          <div class="summary"><p>enumerate entries below specified relative <code>path</code> to the file system</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#find_entries%28path%29-instance-method" class="signature"><strong>#find_entries</strong>(path)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="combine%28a%2C%20b%29-instance-method">
+        
+        def <strong>combine</strong>(a, b)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dir%3F%28path%29-instance-method">
+        
+        def <strong>dir?</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="entries-instance-method">
+        
+        def <strong>entries</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="entries%28%26block%20%3A%20Entry%20-%3E%20U%29-instance-method">
+        abstract 
+        def <strong>entries</strong>(&block : <a href="../FS/Entry.html">Entry</a> -> U)
+      </div>
+      
+        <div class="doc"><p>enumerate top level entries of file system</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L32" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="entry%28path%29-instance-method">
+        
+        def <strong>entry</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exists%3F%28path%29-instance-method">
+        
+        def <strong>exists?</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L41" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="file%3F%28path%29-instance-method">
+        
+        def <strong>file?</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="find_entries%28path%2C%20%26block%20%3A%20Entry%20-%3E%20U%29-instance-method">
+        abstract 
+        def <strong>find_entries</strong>(path, &block : <a href="../FS/Entry.html">Entry</a> -> U)
+      </div>
+      
+        <div class="doc"><p>enumerate entries below specified relative <code>path</code> to the file system</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L37" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="find_entries%28path%29-instance-method">
+        
+        def <strong>find_entries</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/file_system.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

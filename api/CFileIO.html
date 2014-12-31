@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct CFileIO</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Struct.html">Struct</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="IO.html">IO</a>
+  
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28file%29-class-method" class="signature"><strong>.new</strong>(file)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cooked%28%26block%29-instance-method" class="signature"><strong>#cooked</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cooked%21-instance-method" class="signature"><strong>#cooked!</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fd-instance-method" class="signature"><strong>#fd</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#flush-instance-method" class="signature"><strong>#flush</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raw%28%26block%29-instance-method" class="signature"><strong>#raw</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raw%21-instance-method" class="signature"><strong>#raw!</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#read</strong>(slice : Slice(UInt8), count)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_nonblock%28length%29-instance-method" class="signature"><strong>#read_nonblock</strong>(length)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tty%3F-instance-method" class="signature"><strong>#tty?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#write</strong>(slice : Slice(UInt8), count)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#cooked_from_tc_mode%21-macro" class="signature"><strong>cooked_from_tc_mode!</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raw_from_tc_mode%21-macro" class="signature"><strong>raw_from_tc_mode!</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28file%29-class-method">
+        
+        def self.<strong>new</strong>(file)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L60" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="close-instance-method">
+        
+        def <strong>close</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L75" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cooked%28%26block%29-instance-method">
+        
+        def <strong>cooked</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L174" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cooked%21-instance-method">
+        
+        def <strong>cooked!</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L181" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fd-instance-method">
+        
+        def <strong>fd</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L79" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="flush-instance-method">
+        
+        def <strong>flush</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="raw%28%26block%29-instance-method">
+        
+        def <strong>raw</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L204" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="raw%21-instance-method">
+        
+        def <strong>raw!</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L211" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method">
+        
+        def <strong>read</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L63" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_nonblock%28length%29-instance-method">
+        
+        def <strong>read_nonblock</strong>(length)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L236" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tty%3F-instance-method">
+        
+        def <strong>tty?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L83" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method">
+        
+        def <strong>write</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/c_file_io.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cooked_from_tc_mode%21-macro">
+        
+        macro <strong>cooked_from_tc_mode!</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L188" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="raw_from_tc_mode%21-macro">
+        
+        macro <strong>raw_from_tc_mode!</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/console.cr#L219" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

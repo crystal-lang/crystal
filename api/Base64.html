@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Base64</h1>
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Extended Modules</h2>
+  
+    <a href="Base64.html">Base64</a>
+  
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>CHARS_SAFE</strong> = <code><span class="s">"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>CHARS_STD</strong> = <code><span class="s">"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DECODE_TABLE</strong> = <code><span class="t">Array</span>(<span class="t">Int8</span>).<span class="k">new</span>(<span class="n">256</span>) <span class="k">do</span> <span class="o">|</span>i<span class="o">|</span>
+  __temp_209 <span class="o">=</span> i.chr
+  <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'A'</span>, <span class="s">'Z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_209
+    (i <span class="o">-</span> <span class="n">65</span>).to_i8
+  <span class="k">else</span>
+    <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'a'</span>, <span class="s">'z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_209
+      (i <span class="o">-</span> <span class="n">71</span>).to_i8
+    <span class="k">else</span>
+      <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'0'</span>, <span class="s">'9'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_209
+        (i <span class="o">+</span> <span class="n">4</span>).to_i8
+      <span class="k">else</span>
+        <span class="k">if</span> <span class="k">if</span> __temp_210 <span class="o">=</span> <span class="s">'+'</span> <span class="o">===</span> __temp_209
+          __temp_210
+        <span class="k">else</span>
+          <span class="s">'-'</span> <span class="o">===</span> __temp_209
+        <span class="k">end</span>
+          <span class="n">62</span>
+        <span class="k">else</span>
+          <span class="k">if</span> <span class="k">if</span> __temp_211 <span class="o">=</span> <span class="s">'/'</span> <span class="o">===</span> __temp_209
+            __temp_211
+          <span class="k">else</span>
+            <span class="s">'_'</span> <span class="o">===</span> __temp_209
+          <span class="k">end</span>
+            <span class="n">63</span>
+          <span class="k">else</span>
+            <span class="k">if</span> <span class="k">if</span> __temp_212 <span class="o">=</span> <span class="s">'\n'</span> <span class="o">===</span> __temp_209
+              __temp_212
+            <span class="k">else</span>
+              <span class="s">'\r'</span> <span class="o">===</span> __temp_209
+            <span class="k">end</span>
+              <span class="n">-2</span>
+            <span class="k">else</span>
+              <span class="k">if</span> <span class="s">'='</span> <span class="o">===</span> __temp_209
+                <span class="n">-3</span>
+              <span class="k">else</span>
+                <span class="n">-1</span>
+              <span class="k">end</span>
+            <span class="k">end</span>
+          <span class="k">end</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>LINE_SIZE</strong> = <code><span class="n">60</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NL</strong> = <code><span class="s">'\n'</span>.ord.to_u8</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PAD</strong> = <code><span class="s">'='</span>.ord.to_u8</code>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#decode64%28data%29-instance-method" class="signature"><strong>#decode64</strong>(data)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode64%28data%29-instance-method" class="signature"><strong>#encode64</strong>(data)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#strict_decode64%28str%29-instance-method" class="signature"><strong>#strict_decode64</strong>(str)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#strict_encode64%28data%29-instance-method" class="signature"><strong>#strict_encode64</strong>(data)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#urlsafe_decode64%28str%29-instance-method" class="signature"><strong>#urlsafe_decode64</strong>(str)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#urlsafe_encode64%28data%29-instance-method" class="signature"><strong>#urlsafe_encode64</strong>(data)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="decode64%28data%29-instance-method">
+        
+        def <strong>decode64</strong>(data)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="encode64%28data%29-instance-method">
+        
+        def <strong>encode64</strong>(data)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="strict_decode64%28str%29-instance-method">
+        
+        def <strong>strict_decode64</strong>(str)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L62" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="strict_encode64%28data%29-instance-method">
+        
+        def <strong>strict_encode64</strong>(data)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="urlsafe_decode64%28str%29-instance-method">
+        
+        def <strong>urlsafe_decode64</strong>(str)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L66" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="urlsafe_encode64%28data%29-instance-method">
+        
+        def <strong>urlsafe_encode64</strong>(data)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

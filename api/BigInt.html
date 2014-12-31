@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct BigInt</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Int.html">Int</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Comparable.html">Comparable(BigInt)</a>,
+  
+    <a href="Comparable.html">Comparable(SignedInt)</a>,
+  
+    <a href="Comparable.html">Comparable(UnsignedInt)</a>
+  
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28%26block%29-class-method" class="signature"><strong>.new</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28str%20%3A%20String%29-class-method" class="signature"><strong>.new</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28num%20%3A%20SignedInt%29-class-method" class="signature"><strong>.new</strong>(num : SignedInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28num%20%3A%20UnsignedInt%29-class-method" class="signature"><strong>.new</strong>(num : UnsignedInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28mpz%20%3A%20MPZ%29-class-method" class="signature"><strong>.new</strong>(mpz : MPZ)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%25%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#%</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%25%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#%</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#*</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20SignedInt%29-instance-method" class="signature"><strong>#*</strong>(other : SignedInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20UnsignedInt%29-instance-method" class="signature"><strong>#*</strong>(other : UnsignedInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#+</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#+</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#-</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#-</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#--instance-method" class="signature"><strong>#-</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#/</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#/</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#<=></strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20SignedInt%29-instance-method" class="signature"><strong>#<=></strong>(other : SignedInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20UnsignedInt%29-instance-method" class="signature"><strong>#<=></strong>(other : UnsignedInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#abs-instance-method" class="signature"><strong>#abs</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#digits-instance-method" class="signature"><strong>#digits</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect-instance-method" class="signature"><strong>#inspect</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_big_i-instance-method" class="signature"><strong>#to_big_i</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28%26block%29-class-method">
+        
+        def self.<strong>new</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28str%20%3A%20String%29-class-method">
+        
+        def self.<strong>new</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28num%20%3A%20SignedInt%29-class-method">
+        
+        def self.<strong>new</strong>(num : <a href="SignedInt.html">SignedInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28num%20%3A%20UnsignedInt%29-class-method">
+        
+        def self.<strong>new</strong>(num : <a href="UnsignedInt.html">UnsignedInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28mpz%20%3A%20MPZ%29-class-method">
+        
+        def self.<strong>new</strong>(mpz : MPZ)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>%</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L105" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>%</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L111" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>*</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L77" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20SignedInt%29-instance-method">
+        
+        def <strong>*</strong>(other : <a href="SignedInt.html">SignedInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L81" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20UnsignedInt%29-instance-method">
+        
+        def <strong>*</strong>(other : <a href="UnsignedInt.html">UnsignedInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L85" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="--instance-method">
+        
+        def <strong>-</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L69" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>/</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L89" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>/</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong><=></strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20SignedInt%29-instance-method">
+        
+        def <strong><=></strong>(other : <a href="SignedInt.html">SignedInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L37" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20UnsignedInt%29-instance-method">
+        
+        def <strong><=></strong>(other : <a href="UnsignedInt.html">UnsignedInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L41" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abs-instance-method">
+        
+        def <strong>abs</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="digits-instance-method">
+        
+        def <strong>digits</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L134" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect-instance-method">
+        
+        def <strong>inspect</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L117" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-instance-method">
+        
+        def <strong>inspect</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L121" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_big_i-instance-method">
+        
+        def <strong>to_big_i</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L140" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%29-instance-method">
+        
+        def <strong>to_s</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L129" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s-instance-method">
+        
+        def <strong>to_s</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L125" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_unsafe-instance-method">
+        
+        def <strong>to_unsafe</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L158" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract struct Int</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Number.html">Number</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Comparable.html">Comparable(BigInt)</a>
+  
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="BigInt.html">BigInt</a>,
+  
+    <a href="Int16.html">Int16</a>,
+  
+    <a href="Int32.html">Int32</a>,
+  
+    <a href="Int64.html">Int64</a>,
+  
+    <a href="Int8.html">Int8</a>,
+  
+    <a href="UInt16.html">UInt16</a>,
+  
+    <a href="UInt32.html">UInt32</a>,
+  
+    <a href="UInt64.html">UInt64</a>,
+  
+    <a href="UInt8.html">UInt8</a>
+  
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#zero-class-method" class="signature"><strong>.zero</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%25%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#%</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%25%28x%20%3A%20Int%29-instance-method" class="signature"><strong>#%</strong>(x : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#&</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#&</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#&</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#&</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#&</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#&</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#&</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#&</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#*</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%2A%28other%29-instance-method" class="signature"><strong>#**</strong>(other)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%2A%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#**</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#+</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#-</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#/</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28x%20%3A%20Int%29-instance-method" class="signature"><strong>#/</strong>(x : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#<<</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#<<</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#<<</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#<<</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#<<</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#<<</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#<<</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#<<</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#<=></strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#>></strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#>></strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#>></strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#>></strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#>></strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#>></strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#>></strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#>></strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#^</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#^</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#^</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#^</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#^</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#^</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#^</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#^</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#abs-instance-method" class="signature"><strong>#abs</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bit%28bit%29-instance-method" class="signature"><strong>#bit</strong>(bit)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ceil-instance-method" class="signature"><strong>#ceil</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chr-instance-method" class="signature"><strong>#chr</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#day-instance-method" class="signature"><strong>#day</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#days-instance-method" class="signature"><strong>#days</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#divisible_by%3F%28num%29-instance-method" class="signature"><strong>#divisible_by?</strong>(num)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#downto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#downto</strong>(n, &block : self -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#even%3F-instance-method" class="signature"><strong>#even?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#floor-instance-method" class="signature"><strong>#floor</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gcd%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#gcd</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hour-instance-method" class="signature"><strong>#hour</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hours-instance-method" class="signature"><strong>#hours</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lcm%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#lcm</strong>(other : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#millisecond-instance-method" class="signature"><strong>#millisecond</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#milliseconds-instance-method" class="signature"><strong>#milliseconds</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minute-instance-method" class="signature"><strong>#minute</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minutes-instance-method" class="signature"><strong>#minutes</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#modulo%28other%29-instance-method" class="signature"><strong>#modulo</strong>(other)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#month-instance-method" class="signature"><strong>#month</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#months-instance-method" class="signature"><strong>#months</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#odd%3F-instance-method" class="signature"><strong>#odd?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#round-instance-method" class="signature"><strong>#round</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#second-instance-method" class="signature"><strong>#second</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#seconds-instance-method" class="signature"><strong>#seconds</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#succ-instance-method" class="signature"><strong>#succ</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#times%28%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#times</strong>(&block : self -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#to</strong>(n, &block : self -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_big_i-instance-method" class="signature"><strong>#to_big_i</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_json%28io%29-instance-method" class="signature"><strong>#to_json</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28base%20%3A%20Int%2C%20io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28base%20%3A%20Int%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#trunc-instance-method" class="signature"><strong>#trunc</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#upto</strong>(n, &block : self -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#year-instance-method" class="signature"><strong>#year</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#years-instance-method" class="signature"><strong>#years</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#|</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#|</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#|</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#|</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#|</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#|</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#|</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#|</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7E-instance-method" class="signature"><strong>#~</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#generate_to_s%28capacity%29-macro" class="signature"><strong>generate_to_s</strong>(capacity)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="zero-class-method">
+        
+        def self.<strong>zero</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>%</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L190" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28x%20%3A%20Int%29-instance-method">
+        
+        def <strong>%</strong>(x : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>&</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>*</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L182" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%2A%28other%29-instance-method">
+        
+        def <strong>**</strong>(other)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%2A%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>**</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L170" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L174" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong>/</strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L186" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28x%20%3A%20Int%29-instance-method">
+        
+        def <strong>/</strong>(x : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3D%3E%28other%20%3A%20BigInt%29-instance-method">
+        
+        def <strong><=></strong>(other : <a href="BigInt.html">BigInt</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L166" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abs-instance-method">
+        
+        def <strong>abs</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bit%28bit%29-instance-method">
+        
+        def <strong>bit</strong>(bit)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ceil-instance-method">
+        
+        def <strong>ceil</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chr-instance-method">
+        
+        def <strong>chr</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="day-instance-method">
+        
+        def <strong>day</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L224" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="days-instance-method">
+        
+        def <strong>days</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L228" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="divisible_by%3F%28num%29-instance-method">
+        
+        def <strong>divisible_by?</strong>(num)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L66" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="downto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
+        
+        def <strong>downto</strong>(n, &block : self -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L104" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="even%3F-instance-method">
+        
+        def <strong>even?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L70" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="floor-instance-method">
+        
+        def <strong>floor</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gcd%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>gcd</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L58" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L78" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hour-instance-method">
+        
+        def <strong>hour</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L232" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hours-instance-method">
+        
+        def <strong>hours</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L236" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lcm%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>lcm</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L62" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="millisecond-instance-method">
+        
+        def <strong>millisecond</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L256" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="milliseconds-instance-method">
+        
+        def <strong>milliseconds</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L260" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minute-instance-method">
+        
+        def <strong>minute</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L240" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minutes-instance-method">
+        
+        def <strong>minutes</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L244" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="modulo%28other%29-instance-method">
+        
+        def <strong>modulo</strong>(other)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L124" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="month-instance-method">
+        
+        def <strong>month</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L304" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="months-instance-method">
+        
+        def <strong>months</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L308" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="odd%3F-instance-method">
+        
+        def <strong>odd?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L74" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="round-instance-method">
+        
+        def <strong>round</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L38" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="second-instance-method">
+        
+        def <strong>second</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L248" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="seconds-instance-method">
+        
+        def <strong>seconds</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L252" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="succ-instance-method">
+        
+        def <strong>succ</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L82" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="times%28%26block%20%3A%20self%20-%3E%20%29-instance-method">
+        
+        def <strong>times</strong>(&block : self -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L86" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
+        
+        def <strong>to</strong>(n, &block : self -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L113" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_big_i-instance-method">
+        
+        def <strong>to_big_i</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/big_int/big_int.cr#L194" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_json%28io%29-instance-method">
+        
+        def <strong>to_json</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L121" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28base%20%3A%20Int%2C%20io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L134" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28base%20%3A%20Int%29-instance-method">
+        
+        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L128" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="trunc-instance-method">
+        
+        def <strong>trunc</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
+        
+        def <strong>upto</strong>(n, &block : self -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="year-instance-method">
+        
+        def <strong>year</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L312" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="years-instance-method">
+        
+        def <strong>years</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_span.cr#L316" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7E-instance-method">
+        
+        def <strong>~</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="generate_to_s%28capacity%29-macro">
+        
+        macro <strong>generate_to_s</strong>(capacity)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/int.cr#L174" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

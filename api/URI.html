@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class URI</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#parse%28string%20%3A%20String%29-class-method" class="signature"><strong>.parse</strong>(string : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(scheme = nil, host = nil, port = nil, path = nil, query = nil)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#full_path-instance-method" class="signature"><strong>#full_path</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#host-instance-method" class="signature"><strong>#host</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#host%3D%28host%29-instance-method" class="signature"><strong>#host=</strong>(host)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path%3D%28path%29-instance-method" class="signature"><strong>#path=</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#port-instance-method" class="signature"><strong>#port</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#port%3D%28port%29-instance-method" class="signature"><strong>#port=</strong>(port)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#query-instance-method" class="signature"><strong>#query</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#query%3D%28query%29-instance-method" class="signature"><strong>#query=</strong>(query)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scheme-instance-method" class="signature"><strong>#scheme</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scheme%3D%28scheme%29-instance-method" class="signature"><strong>#scheme=</strong>(scheme)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse%28string%20%3A%20String%29-class-method">
+        
+        def self.<strong>parse</strong>(string : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/uri.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%29-class-method">
+        
+        def self.<strong>new</strong>(scheme = <span class="n">nil</span>, host = <span class="n">nil</span>, port = <span class="n">nil</span>, path = <span class="n">nil</span>, query = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/uri.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="full_path-instance-method">
+        
+        def <strong>full_path</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/uri.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="host-instance-method">
+        
+        def <strong>host</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="host%3D%28host%29-instance-method">
+        
+        def <strong>host=</strong>(host)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path-instance-method">
+        
+        def <strong>path</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path%3D%28path%29-instance-method">
+        
+        def <strong>path=</strong>(path)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="port-instance-method">
+        
+        def <strong>port</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="port%3D%28port%29-instance-method">
+        
+        def <strong>port=</strong>(port)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="query-instance-method">
+        
+        def <strong>query</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="query%3D%28query%29-instance-method">
+        
+        def <strong>query=</strong>(query)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scheme-instance-method">
+        
+        def <strong>scheme</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scheme%3D%28scheme%29-instance-method">
+        
+        def <strong>scheme=</strong>(scheme)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/uri.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

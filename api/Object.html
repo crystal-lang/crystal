@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract class Object</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p><a href="Object.html">Object</a> is the base type of all Crystal objects.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="Reference.html">Reference</a>,
+  
+    <a href="Value.html">Value</a>
+  
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#from_json%28string_or_io%29-class-method" class="signature"><strong>.from_json</strong>(string_or_io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-class-method" class="signature"><strong>.inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%29-class-method" class="signature"><strong>.to_s</strong>(io)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%21%3D%28other%29-instance-method" class="signature"><strong>#!=</strong>(other)</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%3D%28other%29-instance-method" class="signature"><strong>#===</strong>(other)</a>
+        
+          <div class="summary"><p>Case equality.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%7E%28other%29-instance-method" class="signature"><strong>#=~</strong>(other)</a>
+        
+          <div class="summary"><p>Pattern match.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#class-instance-method" class="signature"><strong>#class</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#colorize-instance-method" class="signature"><strong>#colorize</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#colorize%28fore%29-instance-method" class="signature"><strong>#colorize</strong>(fore)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#crystal_type_id-instance-method" class="signature"><strong>#crystal_type_id</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect-instance-method" class="signature"><strong>#inspect</strong></a>
+        
+          <div class="summary"><p>Returns a <a href="String.html">String</a> representation of this object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Appends a string representation of this object to the given <a href="IO.html">IO</a> object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#itself-instance-method" class="signature"><strong>#itself</strong></a>
+        
+          <div class="summary"><p>Return <code>self</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#not_nil%21-instance-method" class="signature"><strong>#not_nil!</strong></a>
+        
+          <div class="summary"><p>Returns <code>self</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#should%28expectation%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%29-instance-method" class="signature"><strong>#should</strong>(expectation, file = __FILE__, line = __LINE__)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#should_not%28expectation%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%29-instance-method" class="signature"><strong>#should_not</strong>(expectation, file = __FILE__, line = __LINE__)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tap%28%26block%29-instance-method" class="signature"><strong>#tap</strong>(&block)</a>
+        
+          <div class="summary"><p>Yields <code>self</code> to the block, and then returns <code>self</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_json-instance-method" class="signature"><strong>#to_json</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_pretty_json%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_pretty_json</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_pretty_json-instance-method" class="signature"><strong>#to_pretty_json</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Appends a <a href="String.html">String</a> representation of this object to the given <a href="IO.html">IO</a> object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+          <div class="summary"><p>Returns a string representation of this object.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#try%28%26block%29-instance-method" class="signature"><strong>#try</strong>(&block)</a>
+        
+          <div class="summary"><p>Yields <code>self</code>.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#alias_method%28new_method%2C%20old_method%29-macro" class="signature"><strong>alias_method</strong>(new_method, old_method)</a>
+        
+          <div class="summary"><p>Defines <code>new_method</code> as an alias of <code>old_method</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#def_equals%28%2Afields%29-macro" class="signature"><strong>def_equals</strong>(*fields)</a>
+        
+          <div class="summary"><p>Defines an <code></code><code>==</code> method by comparing the given <code>fields</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#def_equals_and_hash%28%2Afields%29-macro" class="signature"><strong>def_equals_and_hash</strong>(*fields)</a>
+        
+          <div class="summary"><p>Defines <code></code><code>hash</code> and <code></code><code>==</code> method from the given <code>fields</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#def_hash%28%2Afields%29-macro" class="signature"><strong>def_hash</strong>(*fields)</a>
+        
+          <div class="summary"><p>Defines a <code></code><code>hash</code> method computed from the given <code>fields</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delegate%28method%2C%20to_object%29-macro" class="signature"><strong>delegate</strong>(method, to_object)</a>
+        
+          <div class="summary"><p>Delegate <code>method</code> to <code>to_object</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#forward_missing_to%28delegate%29-macro" class="signature"><strong>forward_missing_to</strong>(delegate)</a>
+        
+          <div class="summary"><p>Forwards missing methods to <code>delegate</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#getter%28%2Anames%29-macro" class="signature"><strong>getter</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines getter methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#getter%21%28%2Anames%29-macro" class="signature"><strong>getter!</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines raise-on-<code>nil</code> and nilable getter methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#getter%3F%28%2Anames%29-macro" class="signature"><strong>getter?</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines query getter methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#json_mapping%28properties%2C%20strict%20%3D%20false%29-macro" class="signature"><strong>json_mapping</strong>(properties, strict = false)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#property%28%2Anames%29-macro" class="signature"><strong>property</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines property methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#property%21%28%2Anames%29-macro" class="signature"><strong>property!</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines raise-on-<code>nil</code> property methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#property%3F%28%2Anames%29-macro" class="signature"><strong>property?</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines query property methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#setter%28%2Anames%29-macro" class="signature"><strong>setter</strong>(*names)</a>
+        
+          <div class="summary"><p>Defines setter methods for each of the given arguments.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="from_json%28string_or_io%29-class-method">
+        
+        def self.<strong>from_json</strong>(string_or_io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/from_json.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-class-method">
+        
+        def self.<strong>inspect</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/class.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%29-class-method">
+        
+        def self.<strong>to_s</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/class.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%21%3D%28other%29-instance-method">
+        
+        def <strong>!=</strong>(other)
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%3D%28other%29-instance-method">
+        
+        def <strong>===</strong>(other)
+      </div>
+      
+        <div class="doc"><p>Case equality.</p>
+
+<p>The <code></code><code>===</code> method is used in a <code></code><code>case ... when ... end</code> expression.</p>
+
+<p>For example, this code:</p>
+
+<pre><code><span class="k">case</span> value
+<span class="k">when</span> x
+  <span class="c"># something when x</span>
+<span class="k">when</span> y
+  <span class="c"># something when y</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>Is equivalent to this code:</p>
+
+<pre><code><span class="k">if</span> x <span class="o">===</span> value
+  <span class="c"># something when x</span>
+<span class="k">elsif</span> y <span class="o">===</span> value
+  <span class="c"># something when y</span>
+<span class="k">end</span>
+</code></pre>
+
+<p><a href="Object.html">Object</a> simply implements <code></code><code>===</code> by invoking <code></code><code>==</code>, but subclasses
+(notably <a href="Regex.html">Regex</a>) can override it to provide meaningful pattern-match semantics.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%7E%28other%29-instance-method">
+        
+        def <strong>=~</strong>(other)
+      </div>
+      
+        <div class="doc"><p>Pattern match.</p>
+
+<p>Overridden by descendants (notably <a href="Regex.html">Regex</a> and <a href="String.html">String</a>) to provide meaningful
+pattern-match semantics.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="class-instance-method">
+        
+        def <strong>class</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="colorize-instance-method">
+        
+        def <strong>colorize</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/colorize.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="colorize%28fore%29-instance-method">
+        
+        def <strong>colorize</strong>(fore)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/colorize.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="crystal_type_id-instance-method">
+        
+        def <strong>crystal_type_id</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect-instance-method">
+        
+        def <strong>inspect</strong>
+      </div>
+      
+        <div class="doc"><p>Returns a <a href="String.html">String</a> representation of this object.</p>
+
+<p>Similar to <code></code><a href="Object.html#to_s-instance-method">#to_s</a>, but usually returns more information about
+this object.</p>
+
+<p>Classes must usually <strong>not</strong> override this method. Instead,
+they must override <code></code><a href="Object.html#inspect%28io%20%3A%20IO%29-instance-method">#inspect(io)</a>, which must append to the
+given <a href="IO.html">IO</a> object.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+        <div class="doc"><p>Appends a string representation of this object
+to the given <a href="IO.html">IO</a> object.</p>
+
+<p>Similar to <code></code><a href="Object.html#to_s%28io%20%3A%20IO%29-instance-method">#to_s(io)</a>, but usually appends more information
+about this object.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L84" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="itself-instance-method">
+        
+        def <strong>itself</strong>
+      </div>
+      
+        <div class="doc"><p>Return <code>self</code>.</p>
+
+<pre><code>str <span class="o">=</span> <span class="s">"hello"</span>
+str.itself.object_id <span class="o">==</span> str.object_id <span class="c">#=> true</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L128" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="not_nil%21-instance-method">
+        
+        def <strong>not_nil!</strong>
+      </div>
+      
+        <div class="doc"><p>Returns <code>self</code>. <a href="Nil.html">Nil</a> overrides this method and raises an exception.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L118" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="should%28expectation%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%29-instance-method">
+        
+        def <strong>should</strong>(expectation, file = __FILE__, line = __LINE__)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L226" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="should_not%28expectation%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%29-instance-method">
+        
+        def <strong>should_not</strong>(expectation, file = __FILE__, line = __LINE__)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L232" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tap%28%26block%29-instance-method">
+        
+        def <strong>tap</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Yields <code>self</code> to the block, and then returns <code>self</code>.</p>
+
+<p>The primary purpose of this method is to "tap into" a method chain,
+in order to perform operations on intermediate results within the chain.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>)                .tap {<span class="o">|</span>x<span class="o">|</span> puts <span class="s">"original: </span><span class="i">#{</span></span>x.inspect<span class="s"><span class="i">}</span>"</span>}
+  .to_a                .tap {<span class="o">|</span>x<span class="o">|</span> puts <span class="s">"array: </span><span class="i">#{</span></span>x.inspect<span class="s"><span class="i">}</span>"</span>}
+  .select {<span class="o">|</span>x<span class="o">|</span> x<span class="o">%</span><span class="n">2</span><span class="o">==</span><span class="n">0</span>} .tap {<span class="o">|</span>x<span class="o">|</span> puts <span class="s">"evens: </span><span class="i">#{</span></span>x.inspect<span class="s"><span class="i">}</span>"</span>}
+  .map {<span class="o">|</span>x<span class="o">|</span> x<span class="o">*</span>x}       .tap {<span class="o">|</span>x<span class="o">|</span> puts <span class="s">"squares: </span><span class="i">#{</span></span>x.inspect<span class="s"><span class="i">}</span>"</span>}
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_json-instance-method">
+        
+        def <strong>to_json</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_pretty_json%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_pretty_json</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L14" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_pretty_json-instance-method">
+        
+        def <strong>to_pretty_json</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        abstract 
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+        <div class="doc"><p>Appends a <a href="String.html">String</a> representation of this object
+to the given <a href="IO.html">IO</a> object.</p>
+
+<p>An object must never append itself to the <code>io</code> argument,
+as this will in turn call <code></code><a href="Object.html#to_s%28io%20%3A%20IO%29-instance-method">#to_s(io)</a> on it.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L63" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s-instance-method">
+        
+        def <strong>to_s</strong>
+      </div>
+      
+        <div class="doc"><p>Returns a string representation of this object.</p>
+
+<p>Descendants must usually <strong>not</strong> override this method. Instead,
+they must override <code></code><a href="Object.html#to_s%28io%20%3A%20IO%29-instance-method">#to_s(io)</a>, which must append to the given
+<a href="IO.html">IO</a> object.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="try%28%26block%29-instance-method">
+        
+        def <strong>try</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Yields <code>self</code>. <a href="Nil.html">Nil</a> overrides this method and doesn't yield.</p>
+
+<p>This method is useful for dealing with nilable types, to safely
+perform operations only when the value is not <code>nil</code>.</p>
+
+<pre><code><span class="c"># First program argument in downcase, or nil</span>
+<span class="t">ARGV</span>[<span class="n">0</span>]?.try <span class="o">&</span>.downcase
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L113" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="alias_method%28new_method%2C%20old_method%29-macro">
+        
+        macro <strong>alias_method</strong>(new_method, old_method)
+      </div>
+      
+        <div class="doc"><p>Defines <code>new_method</code> as an alias of <code>old_method</code>.</p>
+
+<p>This creates a new method <code>new_method</code> that invokes <code>old_method</code>.</p>
+
+<p>Note that due to current language limitations this is only useful
+when neither named arguments nor blocks are involved.</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter name
+
+  <span class="k">def</span> <span class="m">initialize</span>(@name)
+  <span class="k">end</span>
+
+  alias_method full_name, name
+<span class="k">end</span>
+
+person <span class="o">=</span> <span class="t">Person</span>.<span class="k">new</span> <span class="s">"John"</span>
+person.name <span class="c">#=> "John"</span>
+person.full_name <span class="c">#=> "John"</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L528" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="def_equals%28%2Afields%29-macro">
+        
+        macro <strong>def_equals</strong>(*fields)
+      </div>
+      
+        <div class="doc"><p>Defines an <code></code><code>==</code> method by comparing the given <code>fields</code>.</p>
+
+<p>The generated <code></code><code>==</code> method has a <code>self</code> restriction.</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@name, @age)
+  <span class="k">end</span>
+
+  <span class="c"># Define a `==` method that compares @name and @age</span>
+  def_equals @name, @age
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L460" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="def_equals_and_hash%28%2Afields%29-macro">
+        
+        macro <strong>def_equals_and_hash</strong>(*fields)
+      </div>
+      
+        <div class="doc"><p>Defines <code></code><code>hash</code> and <code></code><code>==</code> method from the given <code>fields</code>.</p>
+
+<p>The generated <code></code><code>==</code> method has a <code>self</code> restriction.</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@name, @age)
+  <span class="k">end</span>
+
+  <span class="c"># Define a hash method based on @name and @age</span>
+  <span class="c"># Define a `==` method that compares @name and @age</span>
+  def_equals_and_hash @name, @age
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L483" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="def_hash%28%2Afields%29-macro">
+        
+        macro <strong>def_hash</strong>(*fields)
+      </div>
+      
+        <div class="doc"><p>Defines a <code></code><code>hash</code> method computed from the given <code>fields</code>.</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@name, @age)
+  <span class="k">end</span>
+
+  <span class="c"># Define a hash method based on @name and @age</span>
+  def_hash @name, @age
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L433" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="delegate%28method%2C%20to_object%29-macro">
+        
+        macro <strong>delegate</strong>(method, to_object)
+      </div>
+      
+        <div class="doc"><p>Delegate <code>method</code> to <code>to_object</code>.</p>
+
+<p>Note that due to current language limitations this is only useful
+when neither named arguments nor blocks are involved.</p>
+
+<pre><code><span class="k">class</span> <span class="t">StringWrapper</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@string)
+  <span class="k">end</span>
+
+  delegate downcase, @string
+  delegate gsub, @string
+<span class="k">end</span>
+
+wrapper <span class="o">=</span> <span class="t">StringWrapper</span>.<span class="k">new</span> <span class="s">"HELLO"</span>
+wrapper.downcase <span class="c">#=> "hello"</span>
+wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class="c">#=> "HALLO"</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L416" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="forward_missing_to%28delegate%29-macro">
+        
+        macro <strong>forward_missing_to</strong>(delegate)
+      </div>
+      
+        <div class="doc"><p>Forwards missing methods to <code>delegate</code>.
+<code></code><code></code>`
+class StringWrapper
+def initialize(@string)
+end</p>
+
+<p>forward_missing_to @string
+end</p>
+
+<p>wrapper = StringWrapper.new "HELLO"
+wrapper.downcase #=> "hello"
+wrapper.gsub(/E/, "A") #=> "HALLO"
+<code></code><code></code>`</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L501" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="getter%28%2Anames%29-macro">
+        
+        macro <strong>getter</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines getter methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name</span>
+    @name
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L159" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="getter%21%28%2Anames%29-macro">
+        
+        macro <strong>getter!</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines raise-on-<code>nil</code> and nilable getter methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter! name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name?</span>
+    @name
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">name</span>
+    @name.not_nil!
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter! <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L200" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="getter%3F%28%2Anames%29-macro">
+        
+        macro <strong>getter?</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines query getter methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter? name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name?</span>
+    @name
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  getter? <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L241" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="json_mapping%28properties%2C%20strict%20%3D%20false%29-macro">
+        
+        macro <strong>json_mapping</strong>(properties, strict = false)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/mapping.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="property%28%2Anames%29-macro">
+        
+        macro <strong>property</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines property methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  property name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name</span><span class="o">=</span>(@name)
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">name</span>
+    @name
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  property <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L319" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="property%21%28%2Anames%29-macro">
+        
+        macro <strong>property!</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines raise-on-<code>nil</code> property methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  property! name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name</span><span class="o">=</span>(@name)
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">name?</span>
+    @name
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">name</span>
+    @name.not_nil!
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  property! <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L358" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="property%3F%28%2Anames%29-macro">
+        
+        macro <strong>property?</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines query property methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  property? name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name</span><span class="o">=</span>(@name)
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">name?</span>
+    @name
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  property? <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L393" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="setter%28%2Anames%29-macro">
+        
+        macro <strong>setter</strong>(*names)
+      </div>
+      
+        <div class="doc"><p>Defines setter methods for each of the given arguments.</p>
+
+<p>Writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  setter name
+<span class="k">end</span>
+</code></pre>
+
+<p>Is the same as writing:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  <span class="k">def</span> <span class="m">name</span><span class="o">=</span>(@name)
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+
+<p>The arguments can be string literals, symbol literals or plain <code>names</code>:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Person</span>
+  setter <span class="n">:name</span>, <span class="s">"age"</span>
+<span class="k">end</span>
+</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/object.cr#L277" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

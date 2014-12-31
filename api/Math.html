@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Math</h1>
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Extended Modules</h2>
+  
+    <a href="Math.html">Math</a>
+  
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>E</strong> = <code><span class="t">LibM</span>.exp_f64(<span class="n">1.0</span>)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>LOG10</strong> = <code><span class="t">LibM</span>.log_f64(<span class="n">10.0</span>)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>LOG2</strong> = <code><span class="t">LibM</span>.log_f64(<span class="n">2.0</span>)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PI</strong> = <code><span class="n">3.14159265358979323846</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#acos%28value%29-instance-method" class="signature"><strong>#acos</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#acos%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#acos</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#acos%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#acos</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#acosh%28value%29-instance-method" class="signature"><strong>#acosh</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#acosh%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#acosh</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#acosh%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#acosh</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#asin%28value%29-instance-method" class="signature"><strong>#asin</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#asin%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#asin</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#asin%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#asin</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#asinh%28value%29-instance-method" class="signature"><strong>#asinh</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#asinh%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#asinh</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#asinh%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#asinh</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atan%28value%29-instance-method" class="signature"><strong>#atan</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atan%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#atan</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atan%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#atan</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atan2%28value1%2C%20value2%29-instance-method" class="signature"><strong>#atan2</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atan2%28value1%20%3A%20Float64%2C%20value2%20%3A%20Float64%29-instance-method" class="signature"><strong>#atan2</strong>(value1 : Float64, value2 : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atan2%28value1%20%3A%20Float32%2C%20value2%20%3A%20Float32%29-instance-method" class="signature"><strong>#atan2</strong>(value1 : Float32, value2 : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atanh%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#atanh</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atanh%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#atanh</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#atanh%28value%29-instance-method" class="signature"><strong>#atanh</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float32%29-instance-method" class="signature"><strong>#besselj</strong>(value1 : Int32, value2 : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj%28value1%2C%20value2%29-instance-method" class="signature"><strong>#besselj</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float64%29-instance-method" class="signature"><strong>#besselj</strong>(value1 : Int32, value2 : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj0%28value%29-instance-method" class="signature"><strong>#besselj0</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj0%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#besselj0</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj0%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#besselj0</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj1%28value%29-instance-method" class="signature"><strong>#besselj1</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj1%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#besselj1</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#besselj1%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#besselj1</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float32%29-instance-method" class="signature"><strong>#bessely</strong>(value1 : Int32, value2 : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely%28value1%2C%20value2%29-instance-method" class="signature"><strong>#bessely</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float64%29-instance-method" class="signature"><strong>#bessely</strong>(value1 : Int32, value2 : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely0%28value%29-instance-method" class="signature"><strong>#bessely0</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely0%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#bessely0</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely0%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#bessely0</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely1%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#bessely1</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely1%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#bessely1</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bessely1%28value%29-instance-method" class="signature"><strong>#bessely1</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cbrt%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#cbrt</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cbrt%28value%29-instance-method" class="signature"><strong>#cbrt</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cbrt%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#cbrt</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#copysign%28value1%20%3A%20Float32%2C%20value2%20%3A%20Float32%29-instance-method" class="signature"><strong>#copysign</strong>(value1 : Float32, value2 : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#copysign%28value1%20%3A%20Float64%2C%20value2%20%3A%20Float64%29-instance-method" class="signature"><strong>#copysign</strong>(value1 : Float64, value2 : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#copysign%28value1%2C%20value2%29-instance-method" class="signature"><strong>#copysign</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cos%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#cos</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cos%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#cos</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cos%28value%29-instance-method" class="signature"><strong>#cos</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cosh%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#cosh</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cosh%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#cosh</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cosh%28value%29-instance-method" class="signature"><strong>#cosh</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#erf%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#erf</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#erf%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#erf</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#erf%28value%29-instance-method" class="signature"><strong>#erf</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#erfc%28value%29-instance-method" class="signature"><strong>#erfc</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#erfc%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#erfc</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#erfc%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#erfc</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exp%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#exp</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exp%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#exp</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exp%28value%29-instance-method" class="signature"><strong>#exp</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exp2%28value%29-instance-method" class="signature"><strong>#exp2</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exp2%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#exp2</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exp2%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#exp2</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expm1%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#expm1</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expm1%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#expm1</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expm1%28value%29-instance-method" class="signature"><strong>#expm1</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gamma%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#gamma</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gamma%28value%29-instance-method" class="signature"><strong>#gamma</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gamma%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#gamma</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hypot%28value1%20%3A%20Float64%2C%20value2%20%3A%20Float64%29-instance-method" class="signature"><strong>#hypot</strong>(value1 : Float64, value2 : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hypot%28value1%2C%20value2%29-instance-method" class="signature"><strong>#hypot</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hypot%28value1%20%3A%20Float32%2C%20value2%20%3A%20Float32%29-instance-method" class="signature"><strong>#hypot</strong>(value1 : Float32, value2 : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ilogb%28value%29-instance-method" class="signature"><strong>#ilogb</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ilogb%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#ilogb</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ilogb%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#ilogb</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ldexp%28value1%2C%20value2%29-instance-method" class="signature"><strong>#ldexp</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ldexp%28value1%20%3A%20Float64%2C%20value2%20%3A%20Int32%29-instance-method" class="signature"><strong>#ldexp</strong>(value1 : Float64, value2 : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ldexp%28value1%20%3A%20Float32%2C%20value2%20%3A%20Int32%29-instance-method" class="signature"><strong>#ldexp</strong>(value1 : Float32, value2 : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lgamma%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#lgamma</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lgamma%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#lgamma</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lgamma%28value%29-instance-method" class="signature"><strong>#lgamma</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#log</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log%28value%29-instance-method" class="signature"><strong>#log</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log%28numeric%2C%20base%29-instance-method" class="signature"><strong>#log</strong>(numeric, base)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#log</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log10%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#log10</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log10%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#log10</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log10%28value%29-instance-method" class="signature"><strong>#log10</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log1p%28value%29-instance-method" class="signature"><strong>#log1p</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log1p%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#log1p</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log1p%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#log1p</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log2%28value%29-instance-method" class="signature"><strong>#log2</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log2%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#log2</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log2%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#log2</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#logb%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#logb</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#logb%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#logb</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#logb%28value%29-instance-method" class="signature"><strong>#logb</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#max%28value1%2C%20value2%29-instance-method" class="signature"><strong>#max</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#min%28value1%2C%20value2%29-instance-method" class="signature"><strong>#min</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pw2ceil%28v%29-instance-method" class="signature"><strong>#pw2ceil</strong>(v)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scalbln%28value1%2C%20value2%29-instance-method" class="signature"><strong>#scalbln</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scalbln%28value1%20%3A%20Float32%2C%20value2%20%3A%20Int64%29-instance-method" class="signature"><strong>#scalbln</strong>(value1 : Float32, value2 : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scalbln%28value1%20%3A%20Float64%2C%20value2%20%3A%20Int64%29-instance-method" class="signature"><strong>#scalbln</strong>(value1 : Float64, value2 : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scalbn%28value1%2C%20value2%29-instance-method" class="signature"><strong>#scalbn</strong>(value1, value2)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scalbn%28value1%20%3A%20Float64%2C%20value2%20%3A%20Int32%29-instance-method" class="signature"><strong>#scalbn</strong>(value1 : Float64, value2 : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scalbn%28value1%20%3A%20Float32%2C%20value2%20%3A%20Int32%29-instance-method" class="signature"><strong>#scalbn</strong>(value1 : Float32, value2 : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sin%28value%29-instance-method" class="signature"><strong>#sin</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sin%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#sin</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sin%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#sin</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sinh%28value%29-instance-method" class="signature"><strong>#sinh</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sinh%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#sinh</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sinh%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#sinh</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sqrt%28value%29-instance-method" class="signature"><strong>#sqrt</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sqrt%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#sqrt</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sqrt%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#sqrt</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tan%28value%29-instance-method" class="signature"><strong>#tan</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tan%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#tan</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tan%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#tan</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tanh%28value%29-instance-method" class="signature"><strong>#tanh</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tanh%28value%20%3A%20Float64%29-instance-method" class="signature"><strong>#tanh</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tanh%28value%20%3A%20Float32%29-instance-method" class="signature"><strong>#tanh</strong>(value : Float32)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="acos%28value%29-instance-method">
+        
+        def <strong>acos</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="acos%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>acos</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="acos%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>acos</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="acosh%28value%29-instance-method">
+        
+        def <strong>acosh</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="acosh%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>acosh</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="acosh%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>acosh</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="asin%28value%29-instance-method">
+        
+        def <strong>asin</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="asin%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>asin</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="asin%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>asin</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="asinh%28value%29-instance-method">
+        
+        def <strong>asinh</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="asinh%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>asinh</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="asinh%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>asinh</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atan%28value%29-instance-method">
+        
+        def <strong>atan</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atan%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>atan</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atan%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>atan</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atan2%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>atan2</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atan2%28value1%20%3A%20Float64%2C%20value2%20%3A%20Float64%29-instance-method">
+        
+        def <strong>atan2</strong>(value1 : <a href="Float64.html">Float64</a>, value2 : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atan2%28value1%20%3A%20Float32%2C%20value2%20%3A%20Float32%29-instance-method">
+        
+        def <strong>atan2</strong>(value1 : <a href="Float32.html">Float32</a>, value2 : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atanh%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>atanh</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atanh%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>atanh</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="atanh%28value%29-instance-method">
+        
+        def <strong>atanh</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float32%29-instance-method">
+        
+        def <strong>besselj</strong>(value1 : <a href="Int32.html">Int32</a>, value2 : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>besselj</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float64%29-instance-method">
+        
+        def <strong>besselj</strong>(value1 : <a href="Int32.html">Int32</a>, value2 : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj0%28value%29-instance-method">
+        
+        def <strong>besselj0</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj0%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>besselj0</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj0%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>besselj0</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj1%28value%29-instance-method">
+        
+        def <strong>besselj1</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj1%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>besselj1</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="besselj1%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>besselj1</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float32%29-instance-method">
+        
+        def <strong>bessely</strong>(value1 : <a href="Int32.html">Int32</a>, value2 : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>bessely</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely%28value1%20%3A%20Int32%2C%20value2%20%3A%20Float64%29-instance-method">
+        
+        def <strong>bessely</strong>(value1 : <a href="Int32.html">Int32</a>, value2 : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely0%28value%29-instance-method">
+        
+        def <strong>bessely0</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely0%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>bessely0</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely0%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>bessely0</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely1%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>bessely1</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely1%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>bessely1</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="bessely1%28value%29-instance-method">
+        
+        def <strong>bessely1</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cbrt%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>cbrt</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cbrt%28value%29-instance-method">
+        
+        def <strong>cbrt</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cbrt%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>cbrt</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="copysign%28value1%20%3A%20Float32%2C%20value2%20%3A%20Float32%29-instance-method">
+        
+        def <strong>copysign</strong>(value1 : <a href="Float32.html">Float32</a>, value2 : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="copysign%28value1%20%3A%20Float64%2C%20value2%20%3A%20Float64%29-instance-method">
+        
+        def <strong>copysign</strong>(value1 : <a href="Float64.html">Float64</a>, value2 : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="copysign%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>copysign</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cos%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>cos</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cos%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>cos</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cos%28value%29-instance-method">
+        
+        def <strong>cos</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cosh%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>cosh</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cosh%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>cosh</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cosh%28value%29-instance-method">
+        
+        def <strong>cosh</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="erf%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>erf</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="erf%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>erf</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="erf%28value%29-instance-method">
+        
+        def <strong>erf</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="erfc%28value%29-instance-method">
+        
+        def <strong>erfc</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="erfc%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>erfc</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="erfc%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>erfc</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exp%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>exp</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exp%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>exp</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exp%28value%29-instance-method">
+        
+        def <strong>exp</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exp2%28value%29-instance-method">
+        
+        def <strong>exp2</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exp2%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>exp2</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exp2%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>exp2</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expm1%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>expm1</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expm1%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>expm1</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expm1%28value%29-instance-method">
+        
+        def <strong>expm1</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gamma%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>gamma</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L48" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gamma%28value%29-instance-method">
+        
+        def <strong>gamma</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gamma%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>gamma</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L44" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hypot%28value1%20%3A%20Float64%2C%20value2%20%3A%20Float64%29-instance-method">
+        
+        def <strong>hypot</strong>(value1 : <a href="Float64.html">Float64</a>, value2 : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hypot%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>hypot</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hypot%28value1%20%3A%20Float32%2C%20value2%20%3A%20Float32%29-instance-method">
+        
+        def <strong>hypot</strong>(value1 : <a href="Float32.html">Float32</a>, value2 : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ilogb%28value%29-instance-method">
+        
+        def <strong>ilogb</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ilogb%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>ilogb</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ilogb%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>ilogb</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ldexp%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>ldexp</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ldexp%28value1%20%3A%20Float64%2C%20value2%20%3A%20Int32%29-instance-method">
+        
+        def <strong>ldexp</strong>(value1 : <a href="Float64.html">Float64</a>, value2 : <a href="Int32.html">Int32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ldexp%28value1%20%3A%20Float32%2C%20value2%20%3A%20Int32%29-instance-method">
+        
+        def <strong>ldexp</strong>(value1 : <a href="Float32.html">Float32</a>, value2 : <a href="Int32.html">Int32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lgamma%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>lgamma</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L56" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lgamma%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>lgamma</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lgamma%28value%29-instance-method">
+        
+        def <strong>lgamma</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L68" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>log</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log%28value%29-instance-method">
+        
+        def <strong>log</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log%28numeric%2C%20base%29-instance-method">
+        
+        def <strong>log</strong>(numeric, base)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L103" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>log</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log10%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>log10</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log10%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>log10</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log10%28value%29-instance-method">
+        
+        def <strong>log10</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log1p%28value%29-instance-method">
+        
+        def <strong>log1p</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log1p%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>log1p</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log1p%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>log1p</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log2%28value%29-instance-method">
+        
+        def <strong>log2</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log2%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>log2</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log2%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>log2</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="logb%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>logb</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="logb%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>logb</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="logb%28value%29-instance-method">
+        
+        def <strong>logb</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="max%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>max</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L116" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="min%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>min</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L129" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pw2ceil%28v%29-instance-method">
+        
+        def <strong>pw2ceil</strong>(v)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L194" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scalbln%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>scalbln</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L190" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scalbln%28value1%20%3A%20Float32%2C%20value2%20%3A%20Int64%29-instance-method">
+        
+        def <strong>scalbln</strong>(value1 : <a href="Float32.html">Float32</a>, value2 : <a href="Int64.html">Int64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L182" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scalbln%28value1%20%3A%20Float64%2C%20value2%20%3A%20Int64%29-instance-method">
+        
+        def <strong>scalbln</strong>(value1 : <a href="Float64.html">Float64</a>, value2 : <a href="Int64.html">Int64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L186" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scalbn%28value1%2C%20value2%29-instance-method">
+        
+        def <strong>scalbn</strong>(value1, value2)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scalbn%28value1%20%3A%20Float64%2C%20value2%20%3A%20Int32%29-instance-method">
+        
+        def <strong>scalbn</strong>(value1 : <a href="Float64.html">Float64</a>, value2 : <a href="Int32.html">Int32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="scalbn%28value1%20%3A%20Float32%2C%20value2%20%3A%20Int32%29-instance-method">
+        
+        def <strong>scalbn</strong>(value1 : <a href="Float32.html">Float32</a>, value2 : <a href="Int32.html">Int32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L168" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sin%28value%29-instance-method">
+        
+        def <strong>sin</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sin%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>sin</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sin%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>sin</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sinh%28value%29-instance-method">
+        
+        def <strong>sinh</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sinh%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>sinh</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sinh%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>sinh</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sqrt%28value%29-instance-method">
+        
+        def <strong>sqrt</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sqrt%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>sqrt</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sqrt%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>sqrt</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tan%28value%29-instance-method">
+        
+        def <strong>tan</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tan%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>tan</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tan%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>tan</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tanh%28value%29-instance-method">
+        
+        def <strong>tanh</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tanh%28value%20%3A%20Float64%29-instance-method">
+        
+        def <strong>tanh</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tanh%28value%20%3A%20Float32%29-instance-method">
+        
+        def <strong>tanh</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/math/math.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

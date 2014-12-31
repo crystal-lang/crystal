@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class HTTP::Request</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#from_io%28io%29-class-method" class="signature"><strong>.from_io</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28method%20%3A%20String%2C%20path%2C%20headers%20%3D%20Headers.new%20%3A%20Headers%2C%20body%20%3D%20nil%2C%20version%20%3D%20%22HTTP%2F1.1%22%29-class-method" class="signature"><strong>.new</strong>(method : String, path, headers = Headers.new : Headers, body = nil, version = "HTTP/1.1")</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#body-instance-method" class="signature"><strong>#body</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#headers-instance-method" class="signature"><strong>#headers</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#keep_alive%3F-instance-method" class="signature"><strong>#keep_alive?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#method-instance-method" class="signature"><strong>#method</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_io%28io%29-instance-method" class="signature"><strong>#to_io</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#uri-instance-method" class="signature"><strong>#uri</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#version-instance-method" class="signature"><strong>#version</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="from_io%28io%29-class-method">
+        
+        def self.<strong>from_io</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28method%20%3A%20String%2C%20path%2C%20headers%20%3D%20Headers.new%20%3A%20Headers%2C%20body%20%3D%20nil%2C%20version%20%3D%20%22HTTP%2F1.1%22%29-class-method">
+        
+        def self.<strong>new</strong>(method : <a href="../String.html">String</a>, path, headers = <span class="t">Headers</span>.<span class="k">new</span> : <a href="../HTTP/Headers.html">Headers</a>, body = <span class="n">nil</span>, version = <span class="s">"HTTP/1.1"</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="body-instance-method">
+        
+        def <strong>body</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="headers-instance-method">
+        
+        def <strong>headers</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="keep_alive%3F-instance-method">
+        
+        def <strong>keep_alive?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="method-instance-method">
+        
+        def <strong>method</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path-instance-method">
+        
+        def <strong>path</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_io%28io%29-instance-method">
+        
+        def <strong>to_io</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L38" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="uri-instance-method">
+        
+        def <strong>uri</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="version-instance-method">
+        
+        def <strong>version</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/request.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

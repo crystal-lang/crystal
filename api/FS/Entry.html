@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract class FS::Entry</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="../FS/DirectoryEntry.html">FS::DirectoryEntry</a>,
+  
+    <a href="../FS/FileEntry.html">FS::FileEntry</a>
+  
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28fs%20%3A%20FileSystem%2C%20path%20%3A%20String%29-class-method" class="signature"><strong>.new</strong>(fs : FileSystem, path : String)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#dir%3F-instance-method" class="signature"><strong>#dir?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#file%3F-instance-method" class="signature"><strong>#file?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name-instance-method" class="signature"><strong>#name</strong></a>
+        
+          <div class="summary"><p>the name of the file or directory</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+          <div class="summary"><p>the relative path from the filesystem requesting this path to the filesystem should get an equivalent entry</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28fs%20%3A%20FileSystem%2C%20path%20%3A%20String%29-class-method">
+        
+        def self.<strong>new</strong>(fs : <a href="../FS/FileSystem.html">FileSystem</a>, path : <a href="../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/base.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dir%3F-instance-method">
+        
+        def <strong>dir?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/base.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="file%3F-instance-method">
+        
+        def <strong>file?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/base.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="name-instance-method">
+        
+        def <strong>name</strong>
+      </div>
+      
+        <div class="doc"><p>the name of the file or directory</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/base.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path-instance-method">
+        
+        def <strong>path</strong>
+      </div>
+      
+        <div class="doc"><p>the relative path from the filesystem
+requesting this path to the filesystem
+should get an equivalent entry</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/base.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

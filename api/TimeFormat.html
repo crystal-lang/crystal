@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct TimeFormat</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Struct.html">Struct</a>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>ISO_8601_DATE</strong> = <code><span class="k">new</span>(<span class="s">"%F"</span>)</code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28pattern%20%3A%20String%29-class-method" class="signature"><strong>.new</strong>(pattern : String)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#format%28time%20%3A%20Time%2C%20io%20%3A%20IO%29-instance-method" class="signature"><strong>#format</strong>(time : Time, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#format%28time%20%3A%20Time%29-instance-method" class="signature"><strong>#format</strong>(time : Time)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#from_json%28pull%20%3A%20JSON%3A%3APullParser%29-instance-method" class="signature"><strong>#from_json</strong>(pull : JSON::PullParser)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parse%28string%29-instance-method" class="signature"><strong>#parse</strong>(string)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pattern-instance-method" class="signature"><strong>#pattern</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_json%28value%20%3A%20Time%2C%20io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_json</strong>(value : Time, io : IO)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28pattern%20%3A%20String%29-class-method">
+        
+        def self.<strong>new</strong>(pattern : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_format.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="format%28time%20%3A%20Time%2C%20io%20%3A%20IO%29-instance-method">
+        
+        def <strong>format</strong>(time : <a href="Time.html">Time</a>, io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_format.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="format%28time%20%3A%20Time%29-instance-method">
+        
+        def <strong>format</strong>(time : <a href="Time.html">Time</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_format.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="from_json%28pull%20%3A%20JSON%3A%3APullParser%29-instance-method">
+        
+        def <strong>from_json</strong>(pull : <a href="JSON/PullParser.html">JSON::PullParser</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/from_json.cr#L82" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse%28string%29-instance-method">
+        
+        def <strong>parse</strong>(string)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_format.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pattern-instance-method">
+        
+        def <strong>pattern</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/time/time_format.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_json%28value%20%3A%20Time%2C%20io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_json</strong>(value : <a href="Time.html">Time</a>, io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L197" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

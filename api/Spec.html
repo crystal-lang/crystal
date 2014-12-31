@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Spec</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>COLORS</strong> = <code>{<span class="n">:success</span> => <span class="n">:green</span>, <span class="n">:fail</span> => <span class="n">:red</span>, <span class="n">:error</span> => <span class="n">:red</span>, <span class="n">:pending</span> => <span class="n">:yellow</span>}</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>LETTERS</strong> = <code>{<span class="n">:success</span> => <span class="s">'.'</span>, <span class="n">:fail</span> => <span class="s">'F'</span>, <span class="n">:error</span> => <span class="s">'E'</span>, <span class="n">:pending</span> => <span class="s">'*'</span>}</code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#abort%21-class-method" class="signature"><strong>.abort!</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#aborted%3F-class-method" class="signature"><strong>.aborted?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#color%28str%2C%20status%29-class-method" class="signature"><strong>.color</strong>(str, status)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fail_fast%3D%28fail_fast%29-class-method" class="signature"><strong>.fail_fast=</strong>(fail_fast)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fail_fast%3F-class-method" class="signature"><strong>.fail_fast?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#formatter-class-method" class="signature"><strong>.formatter</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#formatter%3D%28formatter%29-class-method" class="signature"><strong>.formatter=</strong>(formatter)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#line%3D%28line%29-class-method" class="signature"><strong>.line=</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lines_cache-class-method" class="signature"><strong>.lines_cache</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#matches%3F%28description%2C%20file%2C%20line%29-class-method" class="signature"><strong>.matches?</strong>(description, file, line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pattern%3D%28pattern%29-class-method" class="signature"><strong>.pattern=</strong>(pattern)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_line%28file%2C%20line%29-class-method" class="signature"><strong>.read_line</strong>(file, line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#relative_file%28file%29-class-method" class="signature"><strong>.relative_file</strong>(file)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abort%21-class-method">
+        
+        def self.<strong>abort!</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="aborted%3F-class-method">
+        
+        def self.<strong>aborted?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="color%28str%2C%20status%29-class-method">
+        
+        def self.<strong>color</strong>(str, status)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fail_fast%3D%28fail_fast%29-class-method">
+        
+        def self.<strong>fail_fast=</strong>(fail_fast)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L69" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fail_fast%3F-class-method">
+        
+        def self.<strong>fail_fast?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="formatter-class-method">
+        
+        def self.<strong>formatter</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/formatter.cr#L67" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="formatter%3D%28formatter%29-class-method">
+        
+        def self.<strong>formatter=</strong>(formatter)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/formatter.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="line%3D%28line%29-class-method">
+        
+        def self.<strong>line=</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lines_cache-class-method">
+        
+        def self.<strong>lines_cache</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/source.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="matches%3F%28description%2C%20file%2C%20line%29-class-method">
+        
+        def self.<strong>matches?</strong>(description, file, line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pattern%3D%28pattern%29-class-method">
+        
+        def self.<strong>pattern=</strong>(pattern)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_line%28file%2C%20line%29-class-method">
+        
+        def self.<strong>read_line</strong>(file, line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/source.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="relative_file%28file%29-class-method">
+        
+        def self.<strong>relative_file</strong>(file)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/source.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+
+
+</body>
+</html>

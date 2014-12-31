@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>Top Level Namespace</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>ARGC_UNSAFE</strong> = <code><span class="c"># primitive: argc</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ARGV</strong> = <code>((<span class="t">ARGV_UNSAFE</span> <span class="o">+</span> <span class="n">1</span>).to_slice(<span class="t">ARGC_UNSAFE</span> <span class="o">-</span> <span class="n">1</span>)).map <span class="k">do</span> <span class="o">|</span>c_str<span class="o">|</span>
+  <span class="t">String</span>.<span class="k">new</span>(c_str)
+<span class="k">end</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ARGV_UNSAFE</strong> = <code><span class="c"># primitive: argv</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PROGRAM_NAME</strong> = <code><span class="t">String</span>.<span class="k">new</span>(<span class="t">ARGV_UNSAFE</span>.value)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>STDERR</strong> = <code><span class="t">CFileIO</span>.<span class="k">new</span>(<span class="t">C</span>.stderr)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>STDIN</strong> = <code><span class="t">CFileIO</span>.<span class="k">new</span>(<span class="t">C</span>.stdin)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>STDOUT</strong> = <code><span class="t">CFileIO</span>.<span class="k">new</span>(<span class="t">C</span>.stdout)</code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_get_exception%28unwind_ex%20%3A%20Pointer%28ABI%3A%3AUnwindException%29%29-class-method" class="signature"><strong>.__crystal_get_exception</strong>(unwind_ex : Pointer(ABI::UnwindException))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_malloc%28size%20%3A%20UInt32%29-class-method" class="signature"><strong>.__crystal_malloc</strong>(size : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_malloc_atomic%28size%20%3A%20UInt32%29-class-method" class="signature"><strong>.__crystal_malloc_atomic</strong>(size : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_personality%28version%20%3A%20Int32%2C%20actions%20%3A%20Int32%2C%20exception_class%20%3A%20UInt64%2C%20exception_object%20%3A%20Pointer%28ABI%3A%3AUnwindException%29%2C%20context%20%3A%20Pointer%28Void%29%29-class-method" class="signature"><strong>.__crystal_personality</strong>(version : Int32, actions : Int32, exception_class : UInt64, exception_object : Pointer(ABI::UnwindException), context : Pointer(Void))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_raise%28unwind_ex%20%3A%20Pointer%28ABI%3A%3AUnwindException%29%29-class-method" class="signature"><strong>.__crystal_raise</strong>(unwind_ex : Pointer(ABI::UnwindException))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_raise_string%28message%20%3A%20Pointer%28UInt8%29%29-class-method" class="signature"><strong>.__crystal_raise_string</strong>(message : Pointer(UInt8))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#__crystal_realloc%28ptr%20%3A%20Pointer%28Void%29%2C%20size%20%3A%20UInt32%29-class-method" class="signature"><strong>.__crystal_realloc</strong>(ptr : Pointer(Void), size : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%60%28command%29-class-method" class="signature"><strong>.`</strong>(command)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#abort%28message%2C%20status%20%3D%201%29-class-method" class="signature"><strong>.abort</strong>(message, status = 1)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#assert%28%26block%29-class-method" class="signature"><strong>.assert</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at_exit%28%26handler%20%3A%20-%3E%20%29-class-method" class="signature"><strong>.at_exit</strong>(&handler : -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be-class-method" class="signature"><strong>.be</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be%28value%29-class-method" class="signature"><strong>.be</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_close%28expected%2C%20delta%29-class-method" class="signature"><strong>.be_close</strong>(expected, delta)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_false-class-method" class="signature"><strong>.be_false</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_falsey-class-method" class="signature"><strong>.be_falsey</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_nil-class-method" class="signature"><strong>.be_nil</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_true-class-method" class="signature"><strong>.be_true</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_truthy-class-method" class="signature"><strong>.be_truthy</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#caller-class-method" class="signature"><strong>.caller</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#describe%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method" class="signature"><strong>.describe</strong>(description, file = __FILE__, line = __LINE__, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#eq%28value%29-class-method" class="signature"><strong>.eq</strong>(value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exit%28status%20%3D%200%29-class-method" class="signature"><strong>.exit</strong>(status = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fail%28msg%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%29-class-method" class="signature"><strong>.fail</strong>(msg, file = __FILE__, line = __LINE__)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fork%28%26block%29-class-method" class="signature"><strong>.fork</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fork-class-method" class="signature"><strong>.fork</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#get_stack_top-class-method" class="signature"><strong>.get_stack_top</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gets-class-method" class="signature"><strong>.gets</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#it%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method" class="signature"><strong>.it</strong>(description, file = __FILE__, line = __LINE__, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#loop%28%26block%29-class-method" class="signature"><strong>.loop</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#main%28argc%20%3A%20Int32%2C%20argv%20%3A%20Pointer%28Pointer%28UInt8%29%29%29-class-method" class="signature"><strong>.main</strong>(argc : Int32, argv : Pointer(Pointer(UInt8)))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#p%28obj%29-class-method" class="signature"><strong>.p</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pending%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method" class="signature"><strong>.pending</strong>(description, file = __FILE__, line = __LINE__, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#print%28obj%29-class-method" class="signature"><strong>.print</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#print%21%28obj%29-class-method" class="signature"><strong>.print!</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#puts-class-method" class="signature"><strong>.puts</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#puts%28obj%29-class-method" class="signature"><strong>.puts</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raise%28ex%20%3A%20Exception%29-class-method" class="signature"><strong>.raise</strong>(ex : Exception)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raise%28message%20%3A%20String%29-class-method" class="signature"><strong>.raise</strong>(message : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rand%28x%20%3A%20Int%29-class-method" class="signature"><strong>.rand</strong>(x : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rand%28x%20%3A%20Range%28Int32%2C%20Int32%29%29-class-method" class="signature"><strong>.rand</strong>(x : Range(Int32, Int32))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rand-class-method" class="signature"><strong>.rand</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sleep%28seconds%20%3A%20Float%29-class-method" class="signature"><strong>.sleep</strong>(seconds : Float)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sleep%28seconds%20%3A%20Int%29-class-method" class="signature"><strong>.sleep</strong>(seconds : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#srand%28x%29-class-method" class="signature"><strong>.srand</strong>(x)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#system%28command%20%3A%20String%29-class-method" class="signature"><strong>.system</strong>(command : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#with_color%28color%20%3A%20Symbol%29-class-method" class="signature"><strong>.with_color</strong>(color : Symbol)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#with_color-class-method" class="signature"><strong>.with_color</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#assert_responds_to%28var%2C%20method%29-macro" class="signature"><strong>assert_responds_to</strong>(var, method)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#be_a%28type%29-macro" class="signature"><strong>be_a</strong>(type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#collect_alias_method%28method%2C%20type%29-macro" class="signature"><strong>collect_alias_method</strong>(method, type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#debugger-macro" class="signature"><strong>debugger</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#embed_fs%28filename%29-macro" class="signature"><strong>embed_fs</strong>(filename)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expect_raises-macro" class="signature"><strong>expect_raises</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expect_raises%28klass%2C%20message%29-macro" class="signature"><strong>expect_raises</strong>(klass, message)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expect_raises%28klass%29-macro" class="signature"><strong>expect_raises</strong>(klass)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pp%28exp%29-macro" class="signature"><strong>pp</strong>(exp)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#record%28name%2C%20%2Afields%29-macro" class="signature"><strong>record</strong>(name, *fields)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#redefine_main%28name%20%3D%20main%29-macro" class="signature"><strong>redefine_main</strong>(name = main)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_get_exception%28unwind_ex%20%3A%20Pointer%28ABI%3A%3AUnwindException%29%29-class-method">
+        
+        def self.<strong>__crystal_get_exception</strong>(unwind_ex : <a href="Pointer.html">Pointer</a>(ABI::UnwindException))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/raise.cr#L130" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_malloc%28size%20%3A%20UInt32%29-class-method">
+        
+        def self.<strong>__crystal_malloc</strong>(size : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_malloc_atomic%28size%20%3A%20UInt32%29-class-method">
+        
+        def self.<strong>__crystal_malloc_atomic</strong>(size : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_personality%28version%20%3A%20Int32%2C%20actions%20%3A%20Int32%2C%20exception_class%20%3A%20UInt64%2C%20exception_object%20%3A%20Pointer%28ABI%3A%3AUnwindException%29%2C%20context%20%3A%20Pointer%28Void%29%29-class-method">
+        
+        def self.<strong>__crystal_personality</strong>(version : <a href="Int32.html">Int32</a>, actions : <a href="Int32.html">Int32</a>, exception_class : <a href="UInt64.html">UInt64</a>, exception_object : <a href="Pointer.html">Pointer</a>(ABI::UnwindException), context : <a href="Pointer.html">Pointer</a>(Void))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/raise.cr#L75" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_raise%28unwind_ex%20%3A%20Pointer%28ABI%3A%3AUnwindException%29%29-class-method">
+        
+        def self.<strong>__crystal_raise</strong>(unwind_ex : <a href="Pointer.html">Pointer</a>(ABI::UnwindException))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/raise.cr#L121" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_raise_string%28message%20%3A%20Pointer%28UInt8%29%29-class-method">
+        
+        def self.<strong>__crystal_raise_string</strong>(message : <a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/raise.cr#L147" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="__crystal_realloc%28ptr%20%3A%20Pointer%28Void%29%2C%20size%20%3A%20UInt32%29-class-method">
+        
+        def self.<strong>__crystal_realloc</strong>(ptr : <a href="Pointer.html">Pointer</a>(Void), size : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%60%28command%29-class-method">
+        
+        def self.<strong>`</strong>(command)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/run.cr#L131" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abort%28message%2C%20status%20%3D%201%29-class-method">
+        
+        def self.<strong>abort</strong>(message, status = <span class="n">1</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/main.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="assert%28%26block%29-class-method">
+        
+        def self.<strong>assert</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L112" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at_exit%28%26handler%20%3A%20-%3E%20%29-class-method">
+        
+        def self.<strong>at_exit</strong>(&handler :  -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/main.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be-class-method">
+        
+        def self.<strong>be</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L178" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be%28value%29-class-method">
+        
+        def self.<strong>be</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L150" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_close%28expected%2C%20delta%29-class-method">
+        
+        def self.<strong>be_close</strong>(expected, delta)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L174" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_false-class-method">
+        
+        def self.<strong>be_false</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L158" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_falsey-class-method">
+        
+        def self.<strong>be_falsey</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L166" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_nil-class-method">
+        
+        def self.<strong>be_nil</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L170" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_true-class-method">
+        
+        def self.<strong>be_true</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L154" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_truthy-class-method">
+        
+        def self.<strong>be_truthy</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L162" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="caller-class-method">
+        
+        def self.<strong>caller</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/exception.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="describe%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method">
+        
+        def self.<strong>describe</strong>(description, file = __FILE__, line = __LINE__, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L79" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="eq%28value%29-class-method">
+        
+        def self.<strong>eq</strong>(value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L146" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="exit%28status%20%3D%200%29-class-method">
+        
+        def self.<strong>exit</strong>(status = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/main.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fail%28msg%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%29-class-method">
+        
+        def self.<strong>fail</strong>(msg, file = __FILE__, line = __LINE__)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L116" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fork%28%26block%29-class-method">
+        
+        def self.<strong>fork</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L78" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fork-class-method">
+        
+        def self.<strong>fork</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L82" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="get_stack_top-class-method">
+        
+        def self.<strong>get_stack_top</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fiber/pcl.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gets-class-method">
+        
+        def self.<strong>gets</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io.cr#L216" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="it%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method">
+        
+        def self.<strong>it</strong>(description, file = __FILE__, line = __LINE__, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L85" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="loop%28%26block%29-class-method">
+        
+        def self.<strong>loop</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/prelude.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="main%28argc%20%3A%20Int32%2C%20argv%20%3A%20Pointer%28Pointer%28UInt8%29%29%29-class-method">
+        
+        def self.<strong>main</strong>(argc : <a href="Int32.html">Int32</a>, argv : <a href="Pointer.html">Pointer</a>(<a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L142" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="p%28obj%29-class-method">
+        
+        def self.<strong>p</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io.cr#L241" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pending%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method">
+        
+        def self.<strong>pending</strong>(description, file = __FILE__, line = __LINE__, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/spec.cr#L103" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="print%28obj%29-class-method">
+        
+        def self.<strong>print</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io.cr#L220" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="print%21%28obj%29-class-method">
+        
+        def self.<strong>print!</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io.cr#L225" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="puts-class-method">
+        
+        def self.<strong>puts</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io.cr#L236" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="puts%28obj%29-class-method">
+        
+        def self.<strong>puts</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io.cr#L231" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="raise%28ex%20%3A%20Exception%29-class-method">
+        
+        def self.<strong>raise</strong>(ex : <a href="Exception.html">Exception</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/raise.cr#L134" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="raise%28message%20%3A%20String%29-class-method">
+        
+        def self.<strong>raise</strong>(message : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/raise.cr#L143" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rand%28x%20%3A%20Int%29-class-method">
+        
+        def self.<strong>rand</strong>(x : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/random.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rand%28x%20%3A%20Range%28Int32%2C%20Int32%29%29-class-method">
+        
+        def self.<strong>rand</strong>(x : <a href="Range.html">Range</a>(<a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/random.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rand-class-method">
+        
+        def self.<strong>rand</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/random.cr#L14" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sleep%28seconds%20%3A%20Float%29-class-method">
+        
+        def self.<strong>sleep</strong>(seconds : <a href="Float.html">Float</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sleep%28seconds%20%3A%20Int%29-class-method">
+        
+        def self.<strong>sleep</strong>(seconds : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/process.cr#L86" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="srand%28x%29-class-method">
+        
+        def self.<strong>srand</strong>(x)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/random.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="system%28command%20%3A%20String%29-class-method">
+        
+        def self.<strong>system</strong>(command : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/process/run.cr#L127" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="with_color%28color%20%3A%20Symbol%29-class-method">
+        
+        def self.<strong>with_color</strong>(color : <a href="Symbol.html">Symbol</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/colorize.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="with_color-class-method">
+        
+        def self.<strong>with_color</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/colorize.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="assert_responds_to%28var%2C%20method%29-macro">
+        
+        macro <strong>assert_responds_to</strong>(var, method)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/macros.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="be_a%28type%29-macro">
+        
+        macro <strong>be_a</strong>(type)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L182" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="collect_alias_method%28method%2C%20type%29-macro">
+        
+        macro <strong>collect_alias_method</strong>(method, type)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/base.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="debugger-macro">
+        
+        macro <strong>debugger</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/intrinsics.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="embed_fs%28filename%29-macro">
+        
+        macro <strong>embed_fs</strong>(filename)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/fs/macros.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expect_raises-macro">
+        
+        macro <strong>expect_raises</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L186" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expect_raises%28klass%2C%20message%29-macro">
+        
+        macro <strong>expect_raises</strong>(klass, message)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L205" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expect_raises%28klass%29-macro">
+        
+        macro <strong>expect_raises</strong>(klass)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/spec/expectations.cr#L197" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pp%28exp%29-macro">
+        
+        macro <strong>pp</strong>(exp)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/macros.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="record%28name%2C%20%2Afields%29-macro">
+        
+        macro <strong>record</strong>(name, *fields)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/macros.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="redefine_main%28name%20%3D%20main%29-macro">
+        
+        macro <strong>redefine_main</strong>(name = main)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/main.cr#L40" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

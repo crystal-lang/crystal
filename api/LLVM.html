@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module LLVM</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>Double</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.double_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Float</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.float_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Int1</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.int1_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Int16</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.int16_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Int32</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.int32_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Int64</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.int64_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Int8</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.int8_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SizeT</strong> = <code><span class="t">Int64</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>Void</strong> = <code><span class="t">Type</span>.<span class="k">new</span>(<span class="t">LibLLVM</span>.void_type)</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>VoidPointer</strong> = <code><span class="t">Int8</span>.pointer</code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#array%28type%2C%20values%20%3A%20Array%28LLVM%3A%3AValue%29%29-class-method" class="signature"><strong>.array</strong>(type, values : Array(LLVM::Value))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#default_target_triple-class-method" class="signature"><strong>.default_target_triple</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#double%28value%20%3A%20Float64%29-class-method" class="signature"><strong>.double</strong>(value : Float64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#double%28string%20%3A%20String%29-class-method" class="signature"><strong>.double</strong>(string : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#float%28value%20%3A%20Float32%29-class-method" class="signature"><strong>.float</strong>(value : Float32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#float%28string%20%3A%20String%29-class-method" class="signature"><strong>.float</strong>(string : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#init_x86-class-method" class="signature"><strong>.init_x86</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#int%28type%2C%20value%29-class-method" class="signature"><strong>.int</strong>(type, value)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#multithreaded%3F-class-method" class="signature"><strong>.multithreaded?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#start_multithreaded-class-method" class="signature"><strong>.start_multithreaded</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#stop_multithreaded-class-method" class="signature"><strong>.stop_multithreaded</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#string%28string%29-class-method" class="signature"><strong>.string</strong>(string)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#struct%28values%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20packed%20%3D%20false%29-class-method" class="signature"><strong>.struct</strong>(values : Array(LLVM::Value), packed = false)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_io%28chars%2C%20io%29-class-method" class="signature"><strong>.to_io</strong>(chars, io)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="array%28type%2C%20values%20%3A%20Array%28LLVM%3A%3AValue%29%29-class-method">
+        
+        def self.<strong>array</strong>(type, values : <a href="Array.html">Array</a>(<a href="LLVM/Value.html">LLVM::Value</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L38" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="default_target_triple-class-method">
+        
+        def self.<strong>default_target_triple</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L68" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="double%28value%20%3A%20Float64%29-class-method">
+        
+        def self.<strong>double</strong>(value : <a href="Float64.html">Float64</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="double%28string%20%3A%20String%29-class-method">
+        
+        def self.<strong>double</strong>(string : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="float%28value%20%3A%20Float32%29-class-method">
+        
+        def self.<strong>float</strong>(value : <a href="Float32.html">Float32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="float%28string%20%3A%20String%29-class-method">
+        
+        def self.<strong>float</strong>(string : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="init_x86-class-method">
+        
+        def self.<strong>init_x86</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="int%28type%2C%20value%29-class-method">
+        
+        def self.<strong>int</strong>(type, value)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="multithreaded%3F-class-method">
+        
+        def self.<strong>multithreaded?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="start_multithreaded-class-method">
+        
+        def self.<strong>start_multithreaded</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="stop_multithreaded-class-method">
+        
+        def self.<strong>stop_multithreaded</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L58" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="string%28string%29-class-method">
+        
+        def self.<strong>string</strong>(string)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="struct%28values%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20packed%20%3D%20false%29-class-method">
+        
+        def self.<strong>struct</strong>(values : <a href="Array.html">Array</a>(<a href="LLVM/Value.html">LLVM::Value</a>), packed = <span class="n">false</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_io%28chars%2C%20io%29-class-method">
+        
+        def self.<strong>to_io</strong>(chars, io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/llvm/llvm.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+
+
+</body>
+</html>

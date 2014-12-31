@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class FileDescriptorIO</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="Reference.html">Reference</a>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="IO.html">IO</a>
+  
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="File.html">File</a>,
+  
+    <a href="TCPSocket.html">TCPSocket</a>,
+  
+    <a href="Tempfile.html">Tempfile</a>
+  
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>SEEK_CUR</strong> = <code><span class="t">C</span><span class="t">::</span><span class="t">SEEK_CUR</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SEEK_END</strong> = <code><span class="t">C</span><span class="t">::</span><span class="t">SEEK_END</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SEEK_SET</strong> = <code><span class="t">C</span><span class="t">::</span><span class="t">SEEK_SET</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28fd%29-class-method" class="signature"><strong>.new</strong>(fd)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fd-instance-method" class="signature"><strong>#fd</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#read</strong>(slice : Slice(UInt8), count)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#seek%28amount%2C%20whence%20%3D%20SEEK_SET%29-instance-method" class="signature"><strong>#seek</strong>(amount, whence = SEEK_SET)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#stat-instance-method" class="signature"><strong>#stat</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tell-instance-method" class="signature"><strong>#tell</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tty%3F-instance-method" class="signature"><strong>#tty?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#write</strong>(slice : Slice(UInt8), count)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28fd%29-class-method">
+        
+        def self.<strong>new</strong>(fd)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="close-instance-method">
+        
+        def <strong>close</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fd-instance-method">
+        
+        def <strong>fd</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method">
+        
+        def <strong>read</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L11" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="seek%28amount%2C%20whence%20%3D%20SEEK_SET%29-instance-method">
+        
+        def <strong>seek</strong>(amount, whence = <span class="t">SEEK_SET</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="stat-instance-method">
+        
+        def <strong>stat</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tell-instance-method">
+        
+        def <strong>tell</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tty%3F-instance-method">
+        
+        def <strong>tty?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method">
+        
+        def <strong>write</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

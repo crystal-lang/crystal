@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class HTTP::Response</h1>
+
+
+
+
+
+
+
+  <h2>Superclass</h2>
+  <a href="../Reference.html">Reference</a>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#default_status_message_for%28status_code%29-class-method" class="signature"><strong>.default_status_message_for</strong>(status_code)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#error%28content_type%2C%20body%29-class-method" class="signature"><strong>.error</strong>(content_type, body)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#from_io%28io%29-class-method" class="signature"><strong>.from_io</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#not_found-class-method" class="signature"><strong>.not_found</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ok%28content_type%2C%20body%29-class-method" class="signature"><strong>.ok</strong>(content_type, body)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unauthorized-class-method" class="signature"><strong>.unauthorized</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28status_code%2C%20body%20%3D%20nil%2C%20headers%20%3D%20Headers.new%20%3A%20Headers%2C%20status_message%20%3D%20nil%2C%20version%20%3D%20%22HTTP%2F1.1%22%29-class-method" class="signature"><strong>.new</strong>(status_code, body = nil, headers = Headers.new : Headers, status_message = nil, version = "HTTP/1.1")</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#body-instance-method" class="signature"><strong>#body</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#body%3F-instance-method" class="signature"><strong>#body?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#headers-instance-method" class="signature"><strong>#headers</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#status_code-instance-method" class="signature"><strong>#status_code</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#status_message-instance-method" class="signature"><strong>#status_message</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_io%28io%29-instance-method" class="signature"><strong>#to_io</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upgrade_handler-instance-method" class="signature"><strong>#upgrade_handler</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upgrade_handler%3D%28upgrade_handler%29-instance-method" class="signature"><strong>#upgrade_handler=</strong>(upgrade_handler)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#version-instance-method" class="signature"><strong>#version</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="default_status_message_for%28status_code%29-class-method">
+        
+        def self.<strong>default_status_message_for</strong>(status_code)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L60" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="error%28content_type%2C%20body%29-class-method">
+        
+        def self.<strong>error</strong>(content_type, body)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="from_io%28io%29-class-method">
+        
+        def self.<strong>from_io</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="not_found-class-method">
+        
+        def self.<strong>not_found</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ok%28content_type%2C%20body%29-class-method">
+        
+        def self.<strong>ok</strong>(content_type, body)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unauthorized-class-method">
+        
+        def self.<strong>unauthorized</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L38" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28status_code%2C%20body%20%3D%20nil%2C%20headers%20%3D%20Headers.new%20%3A%20Headers%2C%20status_message%20%3D%20nil%2C%20version%20%3D%20%22HTTP%2F1.1%22%29-class-method">
+        
+        def self.<strong>new</strong>(status_code, body = <span class="n">nil</span>, headers = <span class="t">Headers</span>.<span class="k">new</span> : <a href="../HTTP/Headers.html">Headers</a>, status_message = <span class="n">nil</span>, version = <span class="s">"HTTP/1.1"</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="body-instance-method">
+        
+        def <strong>body</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="body%3F-instance-method">
+        
+        def <strong>body?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="headers-instance-method">
+        
+        def <strong>headers</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="status_code-instance-method">
+        
+        def <strong>status_code</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="status_message-instance-method">
+        
+        def <strong>status_message</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_io%28io%29-instance-method">
+        
+        def <strong>to_io</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upgrade_handler-instance-method">
+        
+        def <strong>upgrade_handler</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upgrade_handler%3D%28upgrade_handler%29-instance-method">
+        
+        def <strong>upgrade_handler=</strong>(upgrade_handler)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="version-instance-method">
+        
+        def <strong>version</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/http/response.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module GC</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#add_finalizer%28object%29-class-method" class="signature"><strong>.add_finalizer</strong>(object)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#add_finalizer%28object%20%3A%20T%29-class-method" class="signature"><strong>.add_finalizer</strong>(object : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#collect-class-method" class="signature"><strong>.collect</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#disable-class-method" class="signature"><strong>.disable</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#enable-class-method" class="signature"><strong>.enable</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#free%28pointer%20%3A%20%3A%3APointer%28Void%29%29-class-method" class="signature"><strong>.free</strong>(pointer : ::Pointer(Void))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#init-class-method" class="signature"><strong>.init</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc%28size%20%3A%20UInt32%29-class-method" class="signature"><strong>.malloc</strong>(size : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#malloc_atomic%28size%20%3A%20UInt32%29-class-method" class="signature"><strong>.malloc_atomic</strong>(size : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#realloc%28pointer%20%3A%20%3A%3APointer%28Void%29%2C%20size%20%3A%20UInt32%29-class-method" class="signature"><strong>.realloc</strong>(pointer : ::Pointer(Void), size : UInt32)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="add_finalizer%28object%29-class-method">
+        
+        def self.<strong>add_finalizer</strong>(object)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="add_finalizer%28object%20%3A%20T%29-class-method">
+        
+        def self.<strong>add_finalizer</strong>(object : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/boehm.cr#L74" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="collect-class-method">
+        
+        def self.<strong>collect</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L17" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="disable-class-method">
+        
+        def self.<strong>disable</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="enable-class-method">
+        
+        def self.<strong>enable</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="free%28pointer%20%3A%20%3A%3APointer%28Void%29%29-class-method">
+        
+        def self.<strong>free</strong>(pointer : <a href="Pointer.html">Pointer</a>(Void))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="init-class-method">
+        
+        def self.<strong>init</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc/null.cr#L14" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc%28size%20%3A%20UInt32%29-class-method">
+        
+        def self.<strong>malloc</strong>(size : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="malloc_atomic%28size%20%3A%20UInt32%29-class-method">
+        
+        def self.<strong>malloc_atomic</strong>(size : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="realloc%28pointer%20%3A%20%3A%3APointer%28Void%29%2C%20size%20%3A%20UInt32%29-class-method">
+        
+        def self.<strong>realloc</strong>(pointer : <a href="Pointer.html">Pointer</a>(Void), size : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/gc.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+
+
+</body>
+</html>
