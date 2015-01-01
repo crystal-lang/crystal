@@ -806,6 +806,7 @@ describe "Parser" do
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
   it_parses "undef foo", Undef.new("foo")
+  it_parses "undef foo\nfoo", [Undef.new("foo"), "foo".call]
 
   it_parses "@[Foo]", Attribute.new("Foo")
   it_parses "@[Foo()]", Attribute.new("Foo")
@@ -971,6 +972,16 @@ describe "Parser" do
   assert_syntax_error %(foo("bar" "baz"))
 
   assert_syntax_error "@:Foo"
+
+  assert_syntax_error "false foo"
+  assert_syntax_error "nil foo"
+  assert_syntax_error "'a' foo"
+  assert_syntax_error %("hello" foo)
+  assert_syntax_error %(:bar foo)
+  assert_syntax_error "1 foo"
+  assert_syntax_error "1 then"
+  assert_syntax_error "return 1 foo"
+  assert_syntax_error "return false foo"
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end

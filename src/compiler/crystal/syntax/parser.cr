@@ -72,8 +72,17 @@ module Crystal
       last = parse_expression
       skip_space
 
-      unless @token.type == :","
+      case @token.type
+      when :","
+        # Continue
+      when :NEWLINE, :";"
         return last
+      else
+        if is_end_token
+          return last
+        else
+          unexpected_token
+        end
       end
 
       exps = [] of ASTNode
@@ -3307,7 +3316,7 @@ module Crystal
     def parse_undef
       next_token_skip_space
       name = check_ident
-      next_token_skip_space_or_newline
+      next_token_skip_space
       Undef.new name
     end
 
