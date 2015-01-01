@@ -39,7 +39,7 @@ class Markdown::Parser
       return render_unordered_list
     end
 
-    if line.starts_with? "```"
+    if starts_with_backticks? line
       return render_fenced_code
     end
 
@@ -84,7 +84,7 @@ class Markdown::Parser
         break
       end
 
-      if starts_with_star? line
+      if starts_with_star?(line) || starts_with_backticks?(line)
         break
       end
 
@@ -139,15 +139,15 @@ class Markdown::Parser
       while true
         line = @lines[@line]
 
-        if line.starts_with? "```"
-          @line += 1
-          break
-        end
-
         @renderer.text line
         @line += 1
 
-        if @line == @lines.length
+        if (@line == @lines.length)
+          break
+        end
+
+        if starts_with_backticks? @lines[@line]
+          @line += 1
           break
         end
 
@@ -381,6 +381,11 @@ class Markdown::Parser
     true
   end
 
+  def next_line_starts_with_backticks?
+    return false unless @line + 1 < @lines.length
+    starts_with_backticks? @lines[@line + 1]
+  end
+
   def count_pounds(line)
     bytesize = line.bytesize
     str = line.to_unsafe
@@ -421,6 +426,10 @@ class Markdown::Parser
 
     return false unless pos < bytesize
     str[pos].chr.whitespace?
+  end
+
+  def starts_with_backticks?(line)
+    line.starts_with? "```"
   end
 
   def next_lines_empty_of_code?
