@@ -48,7 +48,7 @@ class Person
 end
 ```
 
-If you redefine a method, the last once will take precedence.
+If you redefine a method, the last definition will take precedence.
 
 ``` ruby
 class Person

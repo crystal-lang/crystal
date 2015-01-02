@@ -10,7 +10,7 @@ end
 
 In the above form, the condition is first tested and, if *truthy*, the body is executed. That is, the body might never be executed.
 
-To execute the body at least once and then continue executing it while the condition is *truthy*, write the while as a prefix:
+To execute the body at least once and then continue executing it while the condition is *truthy*, write the while as a suffix:
 
 ``` ruby
 do_this while some_condition
@@ -25,7 +25,7 @@ begin
 end while some_condition
 ```
 
-A while's type is always `Nil`.
+A `while`'s type is always `Nil`.
 
 Similar to an `if`, if a `while`'s condition is a variable, the variable is guaranteed to not be `nil` inside the body. If the condition is an `var.is_a?(Type)` test, `var` is guaranteed to be of type Type inside the body. And if the condition is a `var.responds_to?(:method)`, `var` is guaranteed to be of a type that responds to that method.
 

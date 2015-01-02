@@ -12,7 +12,7 @@ name  = temp1
 age   = temp2
 ```
 
-Note that because expressions are assigned to temporary variables it is possible to exchange variables’s contents in a single line:
+Note that because expressions are assigned to temporary variables it is possible to exchange variables’ contents in a single line:
 
 ``` ruby
 a = 1
