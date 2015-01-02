@@ -32,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.9" data-basepath=".." data-revision="1419189331640">
+    <div class="book" data-github="manastech/crystal" data-level="3.9" data-basepath=".." data-revision="1420219253041">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1952,7 +1952,7 @@
                         <h1 id="requiring-files">Requiring files</h1>
 <p>Writing a program in a single file is OK for little snippets and small benchmark code. Big programs are better maintained and understood when split across different files.</p>
 <p>To make the compiler process other files you use <code>require &quot;...&quot;</code>. It accepts a single argument, a string literal, and it can come in many flavors.</p>
-<p>Once a file is required, the compiler remembers its absolute path and later requires of that same file will be ignored.</p>
+<p>Once a file is required, the compiler remembers its absolute path and later <code>require</code>s of that same file will be ignored.</p>
 <h2 id="require-filename-">require &quot;filename&quot;</h2>
 <p>This looks up &quot;filename&quot; in the require path.</p>
 <p>By default the require path is the location of the standard library that comes with the compiler, and the &quot;libs&quot; directory relative to the current working directory (given by <code>pwd</code> in a unix shell). These are the only places that are looked up.</p>
@@ -1988,14 +1988,14 @@
 <h2 id="other-forms">Other forms</h2>
 <p>In both cases you can use nested names and they will be looked up in nested directories:</p>
 <ul>
-<li>require &quot;foo/bar/baz&quot; will lookup &quot;foo/bar/baz.cr&quot; or &quot;foo/bar/baz/baz.cr&quot; in the require path.</li>
-<li>require &quot;./foo/bar/baz&quot; will lookup &quot;foo/bar/baz.cr&quot; or &quot;foo/bar/baz/baz.cr&quot; relative to the current file.</li>
+<li><code>require &quot;foo/bar/baz&quot;</code> will lookup &quot;foo/bar/baz.cr&quot; or &quot;foo/bar/baz/baz.cr&quot; in the require path.</li>
+<li><code>require &quot;./foo/bar/baz&quot;</code> will lookup &quot;foo/bar/baz.cr&quot; or &quot;foo/bar/baz/baz.cr&quot; relative to the current file.</li>
 </ul>
 <p>You can also use &quot;../&quot; to access parent directories relative to the current file, so <code>require &quot;../../foo/bar&quot;</code> works as well.</p>
 <p>In all of these cases you can use the special <code>*</code> and <code>**</code> suffixes:</p>
 <ul>
-<li>require &quot;foo/*&quot; will require all &quot;.cr&quot; files below the &quot;foo&quot; directory, but not below directories inside &quot;foo&quot;.</li>
-<li>require &quot;foo/**&quot; will require all &quot;.cr&quot; files below the &quot;foo&quot; directory, and below directories inside &quot;foo&quot;, recursively.</li>
+<li><code>require &quot;foo/*&quot;</code> will require all &quot;.cr&quot; files below the &quot;foo&quot; directory, but not below directories inside &quot;foo&quot;.</li>
+<li><code>require &quot;foo/**&quot;</code> will require all &quot;.cr&quot; files below the &quot;foo&quot; directory, and below directories inside &quot;foo&quot;, recursively.</li>
 </ul>
 
                     

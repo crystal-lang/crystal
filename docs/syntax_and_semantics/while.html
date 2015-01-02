@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.5.5" data-basepath=".." data-revision="1419189331640">
+    <div class="book" data-github="manastech/crystal" data-level="3.5.5" data-basepath=".." data-revision="1420219253041">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1958,7 +1958,7 @@
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>In the above form, the condition is first tested and, if <em>truthy</em>, the body is executed. That is, the body might never be executed.</p>
-<p>To execute the body at least once and then continue executing it while the condition is <em>truthy</em>, write the while as a prefix:</p>
+<p>To execute the body at least once and then continue executing it while the condition is <em>truthy</em>, write the while as a suffix:</p>
 <pre><code class="lang-ruby">do_this <span class="hljs-keyword">while</span> some_condition
 </code></pre>
 <p>If you need to execute multiple expressions, group them between <code>begin</code> and <code>end</code>:</p>
@@ -1967,7 +1967,7 @@
   do_that
 <span class="hljs-keyword">end</span> <span class="hljs-keyword">while</span> some_condition
 </code></pre>
-<p>A while&#39;s type is always <code>Nil</code>.</p>
+<p>A <code>while</code>&#39;s type is always <code>Nil</code>.</p>
 <p>Similar to an <code>if</code>, if a <code>while</code>&#39;s condition is a variable, the variable is guaranteed to not be <code>nil</code> inside the body. If the condition is an <code>var.is_a?(Type)</code> test, <code>var</code> is guaranteed to be of type Type inside the body. And if the condition is a <code>var.responds_to?(:method)</code>, <code>var</code> is guaranteed to be of a type that responds to that method.</p>
 <p>The type of a variable after a <code>while</code> depends on the type it had before the <code>while</code> and the type it had before leaving the <code>while</code>&#39;s body:</p>
 <pre><code class="lang-ruby">a = <span class="hljs-number">1</span>
