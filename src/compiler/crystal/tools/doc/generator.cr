@@ -49,12 +49,8 @@ class Crystal::Doc::Generator
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
-    cp "index.html"
-    cp "css/style.css"
-  end
-
-  def cp(filename)
-    `cp #{__DIR__}/html/#{filename} #{@dir}/#{filename}`
+    write_template "#{@dir}/index.html", IndexTemplate.new
+    write_template "#{@dir}/css/style.css", StyleTemplate.new
   end
 
   def generate_list(types)

@@ -28,4 +28,12 @@ module Crystal::Doc
   record MainTemplate, body do
     ecr_file "#{__DIR__}/html/main.html"
   end
+
+  struct IndexTemplate
+    ecr_file "#{__DIR__}/html/index.html"
+  end
+
+  struct StyleTemplate
+    ecr_file "#{__DIR__}/html/css/style.css"
+  end
 end
