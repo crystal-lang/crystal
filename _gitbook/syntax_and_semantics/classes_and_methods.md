@@ -1,6 +1,6 @@
 # Classes and methods
 
-A class is a blueprint from which individual objects are created. As an example, lets consider a `Person` class. You declare a class like this:
+A class is a blueprint from which individual objects are created. As an example, consider a `Person` class. You declare a class like this:
 
 ``` ruby
 class Person

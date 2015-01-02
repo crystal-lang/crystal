@@ -1,6 +1,6 @@
 # until
 
-An `until` executes its body until its condition is *truthy*. An `until` is just syntax sugar for a while with the condition negated:
+An `until` executes its body until its condition is *truthy*. An `until` is just syntax sugar for a `while` with the condition negated:
 
 ``` ruby
 until some_condition

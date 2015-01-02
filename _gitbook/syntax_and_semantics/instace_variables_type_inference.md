@@ -1,4 +1,4 @@
-# Instace variables type inference
+# Instance variables type inference
 
 Did you notice that in all of the previous examples we never said the types of a `Person`'s `@name` and `@age`? This is because the compiler inferred them for us.
 

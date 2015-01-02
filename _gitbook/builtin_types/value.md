@@ -2,7 +2,7 @@
 
 `Value` is the base class of the primitive types (`Nil`, `Bool`, `Char`, integers and floats), `Symbol`, `Pointer`, `Tuple`, `StaticArray` and all structs.
 
-As the name suggest, a `Value` is passed by value: when you pass it to methods ot return it from methods, a copy of the value is actually passed. This is not important for `nil`, bools, integers, floats, symbols, pointers and tuples, because they are immutable, but with mutable structs or with static arrays you have to be careful:
+As the name suggest, a `Value` is passed by value: when you pass it to methods or return it from methods, a copy of the value is actually passed. This is not important for `nil`, bools, integers, floats, symbols, pointers and tuples, because they are immutable, but with mutable structs or with static arrays you have to be careful:
 
 ```ruby
 struct Point
