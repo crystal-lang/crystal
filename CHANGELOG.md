@@ -1,3 +1,8 @@
+## 0.5.7 (2015-01-02)
+
+* Fixed: `doc` command had some hardcoded paths and didn't work
+* Added: `private def` at the top-level of a file is only available inside that file
+
 ## 0.5.6 (2014-31-12)
 
 * Added a `crystal doc` command to automatically generate documentation for a project using [Markdown](http://daringfireball.net/projects/markdown/) syntax. The style is still ugly but it's quite functional. Now we only need to start documenting things :-)
