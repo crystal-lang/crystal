@@ -698,6 +698,13 @@ module Crystal
     end
   end
 
+  # A module that is related to a file and contains its private defs.
+  class FileModule < NonGenericModuleType
+    def passed_as_self?
+      false
+    end
+  end
+
   abstract class ClassType < ModuleType
     include InheritableClass
 

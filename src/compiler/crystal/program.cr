@@ -119,8 +119,26 @@ module Crystal
       @def_macros = [] of Def
       @splat_expansions = {} of Def => Type
       @initialized_global_vars = Set(String).new
+      @file_modules = {} of String => FileModule
 
       define_primitives
+    end
+
+    def add_def(node : Def)
+      return super unless node.visibility == :private
+
+      location = node.location
+      return super unless location
+
+      filename = location.filename
+      return super unless filename.is_a?(String)
+
+      file_module = @file_modules[filename] ||= FileModule.new(self, self, filename)
+      file_module.add_def node
+    end
+
+    def lookup_private_matches(filename, signature)
+      @file_modules[filename]?.try &.lookup_matches(signature)
     end
 
     setter target_machine

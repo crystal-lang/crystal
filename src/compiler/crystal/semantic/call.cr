@@ -133,6 +133,10 @@ class Crystal::Call
     lookup_matches_in_type(owner, arg_types, self_type, def_name)
   end
 
+  def lookup_matches_in(owner : FileModule, arg_types)
+    lookup_matches_in mod, arg_types
+  end
+
   def lookup_matches_in(owner : NonGenericModuleType, arg_types)
     including_types = owner.including_types
     if including_types
@@ -176,7 +180,7 @@ class Crystal::Call
         matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
         matches.each &.context.owner = owner
       else
-        matches = bubbling_exception { owner.lookup_matches signature }
+        matches = bubbling_exception { lookup_matches_with_signature(owner, signature) }
       end
     end
 
@@ -201,7 +205,7 @@ class Crystal::Call
           matches = Matches.new([Match.new(initialize_def, arg_types, MatchContext.new(owner, owner))], true)
         end
       elsif !obj && owner != mod
-        mod_matches = mod.lookup_matches(signature)
+        mod_matches = lookup_matches_with_signature(mod, signature)
         matches = mod_matches unless mod_matches.empty?
       end
     end
@@ -238,6 +242,27 @@ class Crystal::Call
 
   def lookup_matches_in(owner : Nil, arg_types)
     raise "Bug: trying to lookup matches in nil in #{self}"
+  end
+
+  def lookup_matches_with_signature(owner : Program, signature)
+    location = self.location
+    if location && (filename = location.filename).is_a?(String)
+      matches = owner.lookup_private_matches filename, signature
+    end
+
+    if matches
+      if matches.empty?
+        matches = owner.lookup_matches signature
+      end
+    else
+      matches = owner.lookup_matches signature
+    end
+
+    matches
+  end
+
+  def lookup_matches_with_signature(owner, signature)
+    owner.lookup_matches signature
   end
 
   def instantiate(matches, owner, self_type = nil)
