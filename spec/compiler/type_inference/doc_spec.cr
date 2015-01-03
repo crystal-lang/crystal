@@ -175,6 +175,7 @@ describe "Type inference: doc" do
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
+    a.locations.length.should eq(1)
   end
 
   it "stores doc for alias" do

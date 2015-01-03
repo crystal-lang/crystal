@@ -178,7 +178,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types.each_value do |type|
-      if type.is_a?(Const)
+      if type.is_a?(Const) && must_include? type
         types << Constant.new(self, parent, type)
       end
     end
