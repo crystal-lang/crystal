@@ -1,25 +1,12 @@
 class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
-  def self.new(type : Type, io)
-    new type, nil, io
+  def self.new(obj : Constant | Macro | Method, io)
+    new obj.type, io
   end
 
-  def self.new(obj : Macro | Method, io)
-    new obj.type, obj.args.map(&.name), io
-  end
-
-  def self.new(obj : Constant, io)
-    new obj.type, nil, io
-  end
-
-  def initialize(@type, args, io)
+  def initialize(@type : Type, io)
     super(io)
 
-    if args && !args.empty?
-      @args_regex = Regex.new("\\b(#{args.map { |arg| Regex.escape(arg) }.join "|"})\\b")
-    end
-
     @inside_inline_code = false
-    @found_inilne_method = false
     @inline_code_buffer = StringIO.new
     @inside_code = false
     @inside_link = false
@@ -34,74 +21,25 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     super
     @inside_inline_code = true
     @inline_code_buffer.clear
-    @found_inilne_method = true
   end
 
   def end_inline_code
-    super
     @inside_inline_code = false
 
-    if @found_inilne_method
-      @io << @inline_code_buffer
-    else
-      @io << "<code>"
-      @io << @inline_code_buffer
-      @io << "</code>"
-    end
-  end
+    text = @inline_code_buffer.to_s
 
-  def begin_code(language = nil)
-    super
-    @inside_code = true
-  end
+    # Check method reference (without #, but must be the whole text)
+    if text =~ /\A(\w+(?:\?|\!)?)(\(.+?\))?\Z/
+      name = $1
+      args = $2
 
-  def end_code
-    super
-    @inside_code = false
-  end
-
-  def begin_link(url)
-    @io << %(<a href=")
-    @io << url
-    @io << %(" target="_blank">)
-    @inside_link = true
-  end
-
-  def end_link
-    super
-    @inside_link = false
-  end
-
-  def text(text)
-    if @inside_code
-      text = Highlighter.highlight text
-      super text
-      return
-    end
-
-    if @inside_link
-      super
-      return
-    end
-
-    # Check #method(...) reference
-    if @inside_inline_code
-      if text =~ /(\w+(?:\?|\!)?)(\(.+?\))?/
-        name = $1
-        args = $2
-
-        method = lookup_method @type, name, args
-        if method
-          text = method_link @type, method, "##{text}"
-        else
-          @found_inilne_method = false
-        end
-      else
-        @found_inilne_method = false
+      method = lookup_method @type, name, args
+      if method
+        text = method_link @type, method, "#{method.prefix}#{text}"
+        @io << text
+        super
+        return
       end
-
-      @inline_code_buffer << text
-      return
     end
 
     # Check Type#method(...) or Type or #method(...)
@@ -166,14 +104,48 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       match_text
     end
 
-    if args_regex = @args_regex
-      text = text.gsub(args_regex) do |match_text|
-        "<code>#{match_text}</code>"
-      end
+    @io << text
+
+    super
+  end
+
+  def begin_code(language = nil)
+    super
+    @inside_code = true
+  end
+
+  def end_code
+    super
+    @inside_code = false
+  end
+
+  def begin_link(url)
+    @io << %(<a href=")
+    @io << url
+    @io << %(" target="_blank">)
+    @inside_link = true
+  end
+
+  def end_link
+    super
+    @inside_link = false
+  end
+
+  def text(text)
+    if @inside_code
+      text = Highlighter.highlight text
+      super text
+      return
     end
 
-    text = text.gsub(/\b(true|false|nil|self|super)\b/) do |match_text|
-      "<code>#{match_text}</code>"
+    if @inside_link
+      super
+      return
+    end
+
+    if @inside_inline_code
+      @inline_code_buffer << text
+      return
     end
 
     super(text)
@@ -197,6 +169,8 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       args_count = args.chars.count(',') + 1
     end
 
-    type.lookup_method(name, args_count)
+    type.lookup_method(name, args_count) ||
+      type.lookup_class_method(name, args_count) ||
+      type.lookup_macro(name, args_count)
   end
 end

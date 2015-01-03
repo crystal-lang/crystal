@@ -68,4 +68,8 @@ class Crystal::Doc::Macro
   def args_to_html
     args_to_s
   end
+
+  def must_be_included?
+    @generator.must_include? @macro
+  end
 end

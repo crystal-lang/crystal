@@ -359,14 +359,38 @@ class Crystal::Doc::Type
   end
 
   def lookup_method(name)
-    instance_methods.find { |method| method.name == name }
+    lookup_in_methods instance_methods, name
   end
 
   def lookup_method(name, args_count)
+    lookup_in_methods instance_methods, name, args_count
+  end
+
+  def lookup_class_method(name)
+    lookup_in_methods class_methods, name
+  end
+
+  def lookup_class_method(name, args_count)
+    lookup_in_methods class_methods, name, args_count
+  end
+
+  def lookup_macro(name)
+    lookup_in_methods macros, name
+  end
+
+  def lookup_macro(name, args_count)
+    lookup_in_methods macros, name, args_count
+  end
+
+  private def lookup_in_methods(methods, name)
+    methods.find { |method| method.name == name }
+  end
+
+  private def lookup_in_methods(methods, name, args_count)
     if args_count
-      instance_methods.find { |method| method.name == name && method.args.length == args_count }
+      methods.find { |method| method.name == name && method.args.length == args_count }
     else
-      methods = instance_methods.select { |method| method.name == name }
+      methods = methods.select { |method| method.name == name }
       (methods.find { |method| method.args.empty? }) || methods.first?
     end
   end
