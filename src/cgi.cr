@@ -6,7 +6,7 @@ module CGI
     String.build { |io| unescape(string, io) }
   end
 
-  # URL-decode a string and write the result to an IO.
+  # URL-decode a string and write the result to an `IO`.
   def self.unescape(string : String, io : IO)
     i = 0
     bytesize = string.bytesize
@@ -25,7 +25,7 @@ module CGI
     String.build { |io| escape(string, io) }
   end
 
-  # URL-encode a string and write the result to an IO.
+  # URL-encode a string and write the result to an `IO`.
   def self.escape(string : String, io : IO)
     string.each_char do |char|
       if char.alphanumeric? || char == '_' || char == '.' || char == '-'
@@ -41,7 +41,7 @@ module CGI
     io
   end
 
-  # Parses an HTTP query string into a Hash(String, Array(String))
+  # Parses an HTTP query string into a `Hash(String, Array(String))`
   #
   #     CGI.parse("foo=bar&foo=baz&qux=zoo") #=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
   def self.parse(query : String)

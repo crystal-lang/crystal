@@ -11,18 +11,18 @@
 # The instance's memory is automatically freed (garbage-collected) when
 # the instance is no longer referred by any other entity in the program.
 class Reference
-  # Returns true if this reference is the same as other. Invokes #same?
+  # Returns true if this reference is the same as other. Invokes `same?`
   def ==(other : self)
     same?(other)
   end
 
-  # Returns false (other can only be a Value here).
+  # Returns false (other can only be a `Value` here).
   def ==(other)
     false
   end
 
   # Returns true if this reference is the same as other. This is only
-  # true if this reference's #obejct_id is the same as other's.
+  # true if this reference's `object_id` is the same as other's.
   def same?(other : Reference)
     object_id == other.object_id
   end
@@ -42,7 +42,7 @@ class Reference
     false
   end
 
-  # Returns this reference's #object_id as the hash value.
+  # Returns this reference's `object_id` as the hash value.
   def hash
     object_id
   end
