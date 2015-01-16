@@ -46,6 +46,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     type_id(type)
   end
 
+  def type_id(value, type : FileModule)
+    type_id(type)
+  end
+
   def type_id(value, type : NonGenericModuleType)
     type_id(value, type.including_types.not_nil!)
   end
