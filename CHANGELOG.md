@@ -1,3 +1,9 @@
+## 0.5.8 (2015-01-16)
+
+* Added `Random` and `Random::MT19937` (Mersenne Twister) classes (thanks @rhysd).
+* Docs: removed automatic linking. To link to classes and methods surround with backticks.
+* Fixed [#328](https://github.com/manastech/crystal/issues/328): `!=` bug.
+
 ## 0.5.7 (2015-01-02)
 
 * Fixed: `doc` command had some hardcoded paths and didn't work
