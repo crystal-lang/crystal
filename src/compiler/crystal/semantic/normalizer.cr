@@ -78,6 +78,11 @@ module Crystal
     #     end
     def transform(node : And)
       left = node.left
+
+      if left.is_a?(Expressions) && left.expressions.length == 1
+        left = left.expressions.first
+      end
+
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
                If.new(left, node.right, left.clone)
              elsif left.is_a?(Assign) && left.target.is_a?(Var)
@@ -106,6 +111,11 @@ module Crystal
     #     end
     def transform(node : Or)
       left = node.left
+
+      if left.is_a?(Expressions) && left.expressions.length == 1
+        left = left.expressions.first
+      end
+
       new_node = if left.is_a?(Var)
                    If.new(left, left.clone, node.right)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)

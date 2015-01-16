@@ -1292,12 +1292,7 @@ module Crystal
 
       unexpected_token "(" if @token.type == :"("
 
-      case exps.length
-      when 1
-        exps[0]
-      else
-        Expressions.new exps
-      end
+      Expressions.new exps
     end
 
     def parse_fun_literal

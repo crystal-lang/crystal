@@ -262,7 +262,7 @@ module Crystal
       @str << "::" if node.global
 
       if node_obj && (node.name == "[]" || node.name == "[]?")
-        in_parenthesis(need_parens) { node_obj.accept self }
+        in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
 
@@ -277,7 +277,7 @@ module Crystal
           @str << decorate_call(node, "]?")
         end
       elsif node_obj && node.name == "[]="
-        in_parenthesis(need_parens) { node_obj.accept self }
+        in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
 
@@ -289,9 +289,9 @@ module Crystal
         node.args[1].accept self
       elsif node_obj && !is_alpha(node.name) && node.args.length == 0
         @str << decorate_call(node, node.name)
-        in_parenthesis(need_parens) { node_obj.accept self }
+        in_parenthesis(need_parens, node_obj)
       elsif node_obj && !is_alpha(node.name) && node.args.length == 1
-        in_parenthesis(need_parens) { node_obj.accept self }
+        in_parenthesis(need_parens, node_obj)
 
         @str << " "
         @str << decorate_call(node, node.name)
@@ -299,7 +299,7 @@ module Crystal
         node.args[0].accept self
       else
         if node_obj
-          in_parenthesis(need_parens) { node_obj.accept self }
+          in_parenthesis(need_parens, node_obj)
           @str << "."
         end
         if node.name.ends_with?('=')
@@ -351,6 +351,16 @@ module Crystal
         @str << ")"
       else
         yield
+      end
+    end
+
+    def in_parenthesis(need_parens, node)
+      in_parenthesis(need_parens) do
+        if node.is_a?(Expressions) && node.expressions.length == 1
+          node.expressions.first.accept self
+        else
+          node.accept self
+        end
       end
     end
 
@@ -902,15 +912,15 @@ module Crystal
     end
 
     def to_s_binary(node, op)
-      left_needs_parens = node.left.is_a?(Assign)
-      in_parenthesis(left_needs_parens) { node.left.accept self }
+      left_needs_parens = node.left.is_a?(Assign) || node.left.is_a?(Expressions)
+      in_parenthesis(left_needs_parens, node.left)
 
       @str << " "
       @str << op
       @str << " "
 
-      right_needs_parens = node.right.is_a?(Assign)
-      in_parenthesis(right_needs_parens) { node.right.accept self }
+      right_needs_parens = node.right.is_a?(Assign) || node.right.is_a?(Expressions)
+      in_parenthesis(right_needs_parens, node.right)
       false
     end
 

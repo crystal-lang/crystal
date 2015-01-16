@@ -179,12 +179,12 @@ describe "Parser" do
   it_parses "1 / 2", Call.new(1.int32, "/", 2.int32)
   it_parses "1 / -2", Call.new(1.int32, "/", -2.int32)
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", 3.int32), "+", Call.new(4.int32, "/", 5.int32))
-  it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Call.new(3.int32, "+", 4.int32))
+  it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Expressions.new([Call.new(3.int32, "+", 4.int32)] of ASTNode))
   it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
   it_parses "1 + /foo/", Call.new(1.int32, "+", RegexLiteral.new(StringLiteral.new("foo")))
   it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
-  it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
+  it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new(Expressions.new(["a".var] of ASTNode), "/", "b".call)]
 
   it_parses "!1", Call.new(1.int32, "!")
   it_parses "- 1", Call.new(1.int32, "-")
@@ -294,7 +294,7 @@ describe "Parser" do
   it_parses "foo 1\n", "foo".call(1.int32)
   it_parses "foo 1;", "foo".call(1.int32)
   it_parses "foo 1, 2", "foo".call(1.int32, 2.int32)
-  it_parses "foo (1 + 2), 3", "foo".call(Call.new(1.int32, "+", 2.int32), 3.int32)
+  it_parses "foo (1 + 2), 3", "foo".call(Expressions.new([Call.new(1.int32, "+", 2.int32)] of ASTNode), 3.int32)
   it_parses "foo(1 + 2)", "foo".call(Call.new(1.int32, "+", 2.int32))
   it_parses "foo -1.0, -2.0", "foo".call(-1.float64, -2.float64)
   it_parses "foo(\n1)", "foo".call(1.int32)
@@ -537,7 +537,7 @@ describe "Parser" do
 
   it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo".path), While.new(true.bool)]
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
-  it_parses "(1)\nif true; end", [1.int32, If.new(true.bool)]
+  it_parses "(1)\nif true; end", [Expressions.new([1.int32] of ASTNode), If.new(true.bool)]
   it_parses "begin\n1\nend\nif true; end", [1.int32, If.new(true.bool)]
 
   it_parses "Foo::Bar", ["Foo", "Bar"].path
@@ -839,7 +839,7 @@ describe "Parser" do
   it_parses "foo(x, *bar, *baz, y)", Call.new(nil, "foo", ["x".call, "bar".call.splat, "baz".call.splat, "y".call] of ASTNode)
   it_parses "foo.bar=(*baz)", Call.new("foo".call, "bar=", "baz".call.splat)
   it_parses "foo.bar= *baz", Call.new("foo".call, "bar=", "baz".call.splat)
-  it_parses "foo.bar = (1).abs", Call.new("foo".call, "bar=", Call.new(1.int32, "abs"))
+  it_parses "foo.bar = (1).abs", Call.new("foo".call, "bar=", Call.new(Expressions.new([1.int32] of ASTNode), "abs"))
 
   it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
@@ -983,5 +983,5 @@ describe "Parser" do
   assert_syntax_error "return 1 foo"
   assert_syntax_error "return false foo"
 
-  it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
+  it_parses "if (\ntrue\n)\n1\nend", If.new(Expressions.new([true.bool] of ASTNode), 1.int32)
 end

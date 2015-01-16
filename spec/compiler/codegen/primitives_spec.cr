@@ -82,4 +82,12 @@ describe "Code gen: primitives" do
       f.crystal_type_id == Foo.allocate.crystal_type_id
       ").to_b.should be_true
   end
+
+  it "doesn't treat `(1 == 1) == true` as `1 == 1 == true` (#328)" do
+    run("(1 == 1) == true").to_b.should be_true
+  end
+
+  it "passes issue #328" do
+    run("((1 == 1) != (2 == 2))").to_b.should be_false
+  end
 end
