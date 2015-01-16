@@ -1,5 +1,4 @@
 class Random
-
   class MT19937
     N = 624
     M = 397
@@ -7,7 +6,7 @@ class Random
     UPPER_MASK = 0x80000000u32
     LOWER_MASK = 0x7fffffffu32
 
-    def initialize(seeds = Array(UInt32).new(4){ Intrinsics.read_cycle_counter.to_u32 })
+    def initialize(seeds = StaticArray(UInt32, 4).new { Intrinsics.read_cycle_counter.to_u32 })
       @mt = StaticArray(UInt32, 624).new(0u32)
       @mti = N + 1
       init_by_array(seeds)
@@ -71,8 +70,6 @@ class Random
     end
 
     def next_number()
-      mag01 = [0, MATRIX_A]
-
       if @mti >= N
         if @mti == N + 1
           init_genrand(5489u32)
@@ -82,18 +79,18 @@ class Random
 
         while kk < N - M
           y = (@mt[kk] & UPPER_MASK) | (@mt[kk+1] & LOWER_MASK)
-          @mt[kk] = @mt[kk+M] ^ (y >> 1) ^ mag01[y%2]
+          @mt[kk] = @mt[kk+M] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
           kk += 1
         end
 
         while kk < N - 1
           y = (@mt[kk] & UPPER_MASK) | (@mt[kk+1] & LOWER_MASK)
-          @mt[kk] = @mt[kk+M-N] ^ (y >> 1) ^ mag01[y%2]
+          @mt[kk] = @mt[kk+M-N] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
           kk += 1
         end
 
         y = (@mt[N-1] & UPPER_MASK) | (@mt[0] & LOWER_MASK)
-        @mt[N-1] = @mt[M-1] ^ (y >> 1) ^ mag01[y%2]
+        @mt[N-1] = @mt[M-1] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
 
 
         @mti = 0
