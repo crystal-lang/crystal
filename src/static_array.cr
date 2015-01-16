@@ -38,6 +38,14 @@ struct StaticArray(T, N)
     N
   end
 
+  def count
+    length
+  end
+
+  def size
+    length
+  end
+
   def []=(value : T)
     length.times do |i|
       buffer[i] = value

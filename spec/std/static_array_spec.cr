@@ -4,6 +4,8 @@ describe "StaticArray" do
   it "creates with new" do
     a = StaticArray(Int32, 3).new 0
     a.length.should eq(3)
+    a.size.should eq(3)
+    a.count.should eq(3)
   end
 
   it "creates with new and value" do
