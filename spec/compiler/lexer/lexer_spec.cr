@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-def it_lexes(string, type)
+private def it_lexes(string, type)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -8,7 +8,7 @@ def it_lexes(string, type)
   end
 end
 
-def it_lexes(string, type, value)
+private def it_lexes(string, type, value)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -17,7 +17,7 @@ def it_lexes(string, type, value)
   end
 end
 
-def it_lexes(string, type, value, number_kind)
+private def it_lexes(string, type, value, number_kind)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -27,53 +27,53 @@ def it_lexes(string, type, value, number_kind)
   end
 end
 
-def it_lexes_many(values, type)
+private def it_lexes_many(values, type)
   values.each do |value|
     it_lexes value, type, value
   end
 end
 
-def it_lexes_keywords(keywords)
+private def it_lexes_keywords(keywords)
   keywords.each do |keyword|
     it_lexes keyword.to_s, :IDENT, keyword
   end
 end
 
-def it_lexes_idents(idents)
+private def it_lexes_idents(idents)
   idents.each do |ident|
     it_lexes ident, :IDENT, ident
   end
 end
 
-def it_lexes_i32(values)
+private def it_lexes_i32(values)
   values.each { |value| it_lexes_number :i32, value }
 end
 
-def it_lexes_i64(values)
+private def it_lexes_i64(values)
   values.each { |value| it_lexes_number :i64, value }
 end
 
-def it_lexes_u64(values)
+private def it_lexes_u64(values)
   values.each { |value| it_lexes_number :u64, value }
 end
 
-def it_lexes_f32(values)
+private def it_lexes_f32(values)
   values.each { |value| it_lexes_number :f32, value }
 end
 
-def it_lexes_f64(values)
+private def it_lexes_f64(values)
   values.each { |value| it_lexes_number :f64, value }
 end
 
-def it_lexes_number(number_kind, value : Array)
+private def it_lexes_number(number_kind, value : Array)
   it_lexes value[0], :NUMBER, value[1], number_kind
 end
 
-def it_lexes_number(number_kind, value : String)
+private def it_lexes_number(number_kind, value : String)
   it_lexes value, :NUMBER, value, number_kind
 end
 
-def it_lexes_char(string, value)
+private def it_lexes_char(string, value)
   it "lexes #{string}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -82,29 +82,29 @@ def it_lexes_char(string, value)
   end
 end
 
-def it_lexes_operators(ops)
+private def it_lexes_operators(ops)
   ops.each do |op|
     it_lexes op.to_s, op
   end
 end
 
-def it_lexes_const(value)
+private def it_lexes_const(value)
   it_lexes value, :CONST, value
 end
 
-def it_lexes_instance_var(value)
+private def it_lexes_instance_var(value)
   it_lexes value, :INSTANCE_VAR, value
 end
 
-def it_lexes_class_var(value)
+private def it_lexes_class_var(value)
   it_lexes value, :CLASS_VAR, value
 end
 
-def it_lexes_globals(globals)
+private def it_lexes_globals(globals)
   it_lexes_many globals, :GLOBAL
 end
 
-def it_lexes_symbols(symbols)
+private def it_lexes_symbols(symbols)
   symbols.each do |symbol|
     value = symbol[1, symbol.length - 1]
     value = value[1, value.length - 2] if value.starts_with?("\"")
@@ -112,7 +112,7 @@ def it_lexes_symbols(symbols)
   end
 end
 
-def it_lexes_global_match_data_index(globals)
+private def it_lexes_global_match_data_index(globals)
   globals.each do |global|
     it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.length - 1].to_i
   end

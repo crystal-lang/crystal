@@ -1,6 +1,6 @@
 require "spec"
 
-def TimeSpan.expect_overflow
+private def expect_overflow
   expect_raises ArgumentError, "TimeSpan too big or too small" do
     yield
   end
@@ -28,20 +28,20 @@ describe TimeSpan do
   end
 
   it "days overflows" do
-    TimeSpan.expect_overflow do
+    expect_overflow do
       days = (Int64::MAX / TimeSpan::TicksPerDay).to_i32 + 1
       TimeSpan.new days, 0, 0, 0, 0
     end
   end
 
   it "max days" do
-    TimeSpan.expect_overflow do
+    expect_overflow do
       Int32::MAX.days
     end
   end
 
   it "min days" do
-    TimeSpan.expect_overflow do
+    expect_overflow do
       Int32::MIN.days
     end
   end

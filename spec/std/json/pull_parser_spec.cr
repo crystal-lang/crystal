@@ -92,7 +92,7 @@ class JSON::PullParser
   end
 end
 
-def assert_pull_parse(string)
+private def assert_pull_parse(string)
   it "parses #{string}" do
     parser = JSON::PullParser.new string
     parser.assert JSON.parse(string)
@@ -100,7 +100,7 @@ def assert_pull_parse(string)
   end
 end
 
-def assert_pull_parse_error(string)
+private def assert_pull_parse_error(string)
   it "errors on #{string}" do
     expect_raises JSON::ParseException do
       parser = JSON::PullParser.new string

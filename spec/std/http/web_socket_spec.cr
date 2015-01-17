@@ -1,7 +1,7 @@
 require "spec"
 require "http/web_socket"
 
-def packet(bytes)
+private def packet(bytes)
   slice = Slice(UInt8).new(bytes.length) { |i| bytes[i].to_u8 }
   slice.pointer(bytes.length)
 end

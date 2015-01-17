@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-def assert_token_column_number(lexer, type, column_number)
+private def assert_token_column_number(lexer, type, column_number)
   token = lexer.next_token
   token.type.should eq(type)
   token.column_number.should eq(column_number)

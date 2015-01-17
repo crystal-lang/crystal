@@ -1,7 +1,7 @@
 require "spec"
 require "option_parser"
 
-def expect_capture_option(args, option, value)
+private def expect_capture_option(args, option, value)
   flag = nil
   OptionParser.parse(args) do |opts|
     opts.on(option, "some flag") do |flag_value|
@@ -12,7 +12,7 @@ def expect_capture_option(args, option, value)
   args.length.should eq(0)
 end
 
-def expect_doesnt_capture_option(args, option)
+private def expect_doesnt_capture_option(args, option)
   flag = false
   OptionParser.parse(args) do |opts|
     opts.on(option, "some flag") do
@@ -22,7 +22,7 @@ def expect_doesnt_capture_option(args, option)
   flag.should be_false
 end
 
-def expect_missing_option(option)
+private def expect_missing_option(option)
   expect_raises OptionParser::MissingOption do
     OptionParser.parse([] of String) do |opts|
       opts.on(option, "some flag") do |flag_value|
@@ -31,7 +31,7 @@ def expect_missing_option(option)
   end
 end
 
-def expect_missing_option(args, option, flag)
+private def expect_missing_option(args, option, flag)
   expect_raises OptionParser::MissingOption, "Missing option: #{flag}" do
     OptionParser.parse(args) do |opts|
       opts.on(option, "some flag") do |flag_value|
