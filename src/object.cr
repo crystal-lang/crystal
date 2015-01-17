@@ -1,6 +1,18 @@
 # Object is the base type of all Crystal objects.
 class Object
-  # Returns true if this object is not equal to other.
+  # Boolean-negates this object.
+  abstract def !
+
+  # Returns true if this object is equal to `other`.
+  #
+  # Subclasses override this method to provide class-specific meaning.
+  abstract def ==(other)
+
+  # Returns true if this object is not equal to `other`.
+  #
+  # By default this method is implemented as `!(self == other)`
+  # so there's no need to override this unless there's a more efficient
+  # way to do it.
   def !=(other)
     !(self == other)
   end
@@ -31,7 +43,7 @@ class Object
   # ```
   #
   # Object simply implements `===` by invoking `==`, but subclasses
-  # (notably Regex) can override it to provide meaningful pattern-match semantics.
+  # (notably Regex) can override it to provide meaningful case-equality semantics.
   def ===(other)
     self == other
   end
@@ -43,6 +55,26 @@ class Object
   def =~(other)
     nil
   end
+
+  # Comparison operator. Returns 0 if the two objects are equal,
+  # a negative number if this object is considered less than `other`,
+  # or a positive number otherwise.
+  #
+  # Subclasses define this method to provide class-specific ordering.
+  #
+  # ```
+  # # Sort in a descending way
+  # [4, 7, 2].sort { |x, y| x <=> y } #=> [7, 4, 2]
+  # ```
+  abstract def <=>(other)
+
+  # Generates an `Int` hash value for this object.
+  #
+  # This method must have the property that `a == b` implies `a.hash == b.hash`.
+  #
+  # The hash value is used along with `==` by the `Hash` class to determine if two objects
+  # reference the same hash key.
+  abstract def hash
 
   # Returns a string representation of this object.
   #
