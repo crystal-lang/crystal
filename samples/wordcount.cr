@@ -15,7 +15,7 @@ def do_work(in_filenames, output_filename, ignore_case)
     out_file = STDOUT
   end
 
-  counts = Hash(String, Int32).new { |h, k| h[k] = 0 }
+  counts = Hash(String, Int32).new(0)
 
   in_files.each do |in_file|
     in_file.each_line do |line|
