@@ -2,12 +2,14 @@
 # You may use this code in any way you wish, and it is free.  No warrantee.
 # http://burtleburtle.net/bob/rand/isaacafa.html
 
-class Random
-  class ISAAC
+require "rng"
+
+class RNG
+  class ISAAC < RNG
     getter :rsl
     private getter :counter, :aa, :bb, :cc
 
-    def initialize(seeds = StaticArray(UInt32, 8).new { Random.new_seed })
+    def initialize(seeds = StaticArray(UInt32, 8).new { RNG.new_seed })
       @rsl = StaticArray(UInt32, 256).new { 0_u32 }
       @mm = StaticArray(UInt32, 256).new { 0_u32 }
       @counter = 0
@@ -15,7 +17,7 @@ class Random
       init_by_array(seeds)
     end
 
-    def next_number
+    def next_int
       if (@counter -= 1) == -1
         isaac
         @counter = 255
