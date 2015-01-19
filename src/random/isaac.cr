@@ -2,14 +2,14 @@
 # You may use this code in any way you wish, and it is free.  No warrantee.
 # http://burtleburtle.net/bob/rand/isaacafa.html
 
-require "rng"
+module Random
+  class ISAAC
+    include Random
 
-class RNG
-  class ISAAC < RNG
     getter :rsl
     private getter :counter, :aa, :bb, :cc
 
-    def initialize(seeds = StaticArray(UInt32, 8).new { RNG.new_seed })
+    def initialize(seeds = StaticArray(UInt32, 8).new { Random.new_seed })
       @rsl = StaticArray(UInt32, 256).new { 0_u32 }
       @mm = StaticArray(UInt32, 256).new { 0_u32 }
       @counter = 0

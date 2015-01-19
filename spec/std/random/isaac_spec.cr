@@ -1,7 +1,7 @@
 require "spec"
-require "rng/isaac"
+require "random/isaac"
 
-describe "RNG::ISAAC" do
+describe "Random::ISAAC" do
   it "generates random numbers as generated official implementation" do
     numbers = [
       0xc9d3bc51, 0x5bc24339, 0x23e22e3a, 0x5659b89a, 0x21c6dcfd, 0x168e10a4, 0x1df755f6, 0x99d3a910,
@@ -340,7 +340,7 @@ describe "RNG::ISAAC" do
       1952999273, 1954114848, 779384933,
     ]
 
-    m = RNG::ISAAC.new seed
+    m = Random::ISAAC.new seed
     numbers.each do |n|
       m.next_int.should eq(n)
     end

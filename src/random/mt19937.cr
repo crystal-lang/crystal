@@ -1,14 +1,14 @@
-require "rng"
+module Random
+  class MT19937
+    include Random
 
-class RNG
-  class MT19937 < RNG
     N = 624
     M = 397
     MATRIX_A = 0x9908b0dfu32
     UPPER_MASK = 0x80000000u32
     LOWER_MASK = 0x7fffffffu32
 
-    def initialize(seeds = StaticArray(UInt32, 4).new { RNG.new_seed })
+    def initialize(seeds = StaticArray(UInt32, 4).new { Random.new_seed })
       @mt = StaticArray(UInt32, 624).new(0u32)
       @mti = N + 1
       init_by_array(seeds)
