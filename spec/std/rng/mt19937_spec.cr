@@ -1,6 +1,7 @@
 require "spec"
+require "rng/mt19937"
 
-describe "Random::MT19937" do
+describe "RNG::MT19937" do
   it "generates random numbers as generated official implementation" do
 
     # 1000 generated rundom numbers by official C implementation
@@ -209,9 +210,9 @@ describe "Random::MT19937" do
         2643151863, 3896204135, 2416995901, 1397735321, 3460025646,
     ]
 
-    m = Random::MT19937.new [0x123, 0x234, 0x345, 0x456]
+    m = RNG::MT19937.new [0x123, 0x234, 0x345, 0x456]
     numbers.each do |n|
-      m.next_number.should eq(n)
+      m.next_int.should eq(n)
     end
   end
 end
