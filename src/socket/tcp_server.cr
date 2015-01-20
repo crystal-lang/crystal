@@ -21,6 +21,10 @@ class TCPServer < TCPSocket
     end
   end
 
+  def self.new(port : Int, backlog = 128)
+    new("::", port, backlog)
+  end
+
   def self.open(host, port, backlog = 128)
     server = new(host, port, backlog)
     begin
