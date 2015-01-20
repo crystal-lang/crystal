@@ -8,16 +8,25 @@ lib C
       zero : Int64
     end
 
+    struct SockAddrIn6
+      len : UInt8
+      family : UInt8
+      port : Int16
+      flowinfo : Int32
+      addr : StaticArray(UInt8, 16)
+      scope_id : UInt32
+    end
+
     struct SockAddrUn
       len : UInt8
       family : UInt8
-      path : StaticArray(UInt8, 108)
+      path : StaticArray(UInt8, 104)
     end
 
     struct SockAddr
       len : UInt8
       family : UInt8
-      data : StaticArray(UInt8, 16)*
+      data : StaticArray(UInt8, 14)*
     end
 
     AF_UNSPEC = 0_u8
@@ -52,7 +61,7 @@ lib C
 
     struct SockAddr
       family : UInt16
-      data : StaticArray(UInt8, 16)*
+      data : StaticArray(UInt8, 14)*
     end
 
     AF_UNSPEC = 0_u16
