@@ -655,4 +655,8 @@ describe "String" do
       end
     end
   end
+
+  it "has size (same as length)" do
+    "テスト".size.should eq(3)
+  end
 end

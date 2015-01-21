@@ -968,7 +968,10 @@ class String
 
     @length = count
   end
-  alias_method :size, :length
+
+  def size
+    length
+  end
 
   def ascii_only?
     @bytesize == 0 || length == @bytesize
