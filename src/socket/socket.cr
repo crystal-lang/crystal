@@ -20,7 +20,7 @@ lib C
     struct SockAddrUn
       len : UInt8
       family : UInt8
-      path : StaticArray(UInt8, 104)
+      path : UInt8*
     end
 
     struct SockAddr
