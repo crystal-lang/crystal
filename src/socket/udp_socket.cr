@@ -8,7 +8,7 @@ class UDPSocket < IPSocket
   end
 
   def bind(host, port)
-    getaddrinfo(host, port, nil, C::SOCK_STREAM, C::IPPROTO_TCP) do |ai|
+    getaddrinfo(host, port, nil, C::SOCK_DGRAM, C::IPPROTO_UDP) do |ai|
       if C.bind(fd, ai.addr, ai.addrlen) != 0
         raise Errno.new("Error binding TCP server at #{host}#{port}")
       end
@@ -16,7 +16,7 @@ class UDPSocket < IPSocket
   end
 
   def connect(host, port)
-    getaddrinfo(host, port, nil, C::SOCK_STREAM, C::IPPROTO_TCP) do |ai|
+    getaddrinfo(host, port, nil, C::SOCK_DGRAM, C::IPPROTO_UDP) do |ai|
       if C.connect(fd, ai.addr, ai.addrlen) != 0
         raise Errno.new("Error binding TCP server at #{host}#{port}")
       end
