@@ -563,13 +563,18 @@ class String
     !!index(str)
   end
 
-  def split
+  def split(limit = nil : Int32?)
+    if limit && limit <= 1
+      return [self]
+    end
+
     ary = Array(String).new
     single_byte_optimizable = single_byte_optimizable?
     index = 0
     i = 0
     looking_for_space = false
-    while i < bytesize
+    limit_reached = false
+    while i < bytesize && !limit_reached
       if looking_for_space
         while i < bytesize
           c = cstr[i]
@@ -579,6 +584,13 @@ class String
             piece_length = single_byte_optimizable ? piece_bytesize : 0
             ary.push String.new(cstr + index, piece_bytesize, piece_length)
             looking_for_space = false
+
+            if limit && ary.length + 1 == limit
+              looking_for_space = true # To push the rest of the string
+              limit_reached = true
+              index = i
+            end
+
             break
           end
         end
@@ -604,7 +616,7 @@ class String
 
   def split(separator : Char, limit = nil)
     if separator == ' '
-      return split
+      return split(limit)
     end
 
     if limit && limit <= 1
@@ -636,21 +648,31 @@ class String
     ary
   end
 
-  def split(separator : String)
+  def split(separator : String, limit = nil)
     ary = Array(String).new
     byte_offset = 0
     buffer = cstr
     separator_bytesize = separator.bytesize
 
+    if limit && limit <= 1
+      return [self]
+    end
+
     if separator.empty?
       # Special case: return all chars as strings
       each_char do |c|
         ary.push c.to_s
+        break if limit && ary.length + 1 == limit
       end
+
+      if limit && ary.size != length
+        ary.push(self[ary.size..-1])
+      end
+
       return ary
     elsif separator == " "
       # Another special case: split ignoring empty results
-      return split
+      return split(limit)
     end
 
     single_byte_optimizable = single_byte_optimizable?
@@ -664,6 +686,7 @@ class String
         ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
+        break if limit && ary.length + 1 == limit
       end
       i += 1
     end
@@ -675,7 +698,11 @@ class String
     ary
   end
 
-  def split(separator : Regex)
+  def split(separator : Regex, limit = nil)
+    if limit && limit <= 1
+      return [self]
+    end
+
     ary = Array(String).new
     byte_offset = 0
 
@@ -683,6 +710,7 @@ class String
       index = match.begin(0)
       ary.push byte_slice(byte_offset, index - byte_offset)
       byte_offset = index + match[0].bytesize
+      break if limit && ary.length + 1 == limit
     end
 
     if byte_offset < bytesize
