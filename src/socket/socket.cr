@@ -42,7 +42,12 @@ lib C
 
   SOCK_STREAM = 1
   SOL_SOCKET = 0xffff
-  SO_REUSEADDR = 0x0004
+
+  ifdef darwin
+    SO_REUSEADDR = 0x0004
+  else
+    SO_REUSEADDR = 0x0002
+  end
 end
 
 require "./*"
