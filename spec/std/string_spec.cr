@@ -287,6 +287,9 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 30).should eq(["foo", "bar", "baz", "qux"]) }
+      assert { "foo bar baz qux".split(' ', 1).should eq(["foo bar baz qux"]) }
+      assert { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
+      assert { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
       assert { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
     end
@@ -297,11 +300,20 @@ describe "String" do
       assert { "foo".split(":-").should eq(["foo"]) }
       assert { "foo".split("").should eq(["f", "o", "o"]) }
       assert { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
+      assert { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
+      assert { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
+      assert { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
+      assert { "a b c".split(" ", 2).should eq(["a", "b c"]) }
     end
 
     describe "by regex" do
       assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/(\n\t)+/).should eq(["foo", "bar", "baz"]) }
+      assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
+      assert { "foo,bar,baz,qux".split(/,/, 1).should eq(["foo,bar,baz,qux"]) }
+      assert { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
+      assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
+      assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
     end
   end
 
