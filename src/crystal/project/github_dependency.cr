@@ -1,6 +1,9 @@
+require "crystal/project/dependency"
+require "crystal/project/project_error"
+
 module Crystal
   class GitHubDependency < Dependency
-    def initialize(repo, name)
+    def initialize(repo, name = nil : String?)
       unless repo =~ /(.*)\/(.*)/
         raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
       end
