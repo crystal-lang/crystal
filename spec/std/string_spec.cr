@@ -283,6 +283,7 @@ describe "String" do
       assert { "   foo  bar".split(' ').should eq(["foo", "bar"]) }
       assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["foo", "bar", "baz"]) }
       assert { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
+      assert { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
       assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["foo", "bar", "baz"]) }
       assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }

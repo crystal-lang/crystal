@@ -574,7 +574,7 @@ class String
     i = 0
     looking_for_space = false
     limit_reached = false
-    while i < bytesize && !limit_reached
+    while i < bytesize
       if looking_for_space
         while i < bytesize
           c = cstr[i]
@@ -586,9 +586,7 @@ class String
             looking_for_space = false
 
             if limit && ary.length + 1 == limit
-              looking_for_space = true # To push the rest of the string
               limit_reached = true
-              index = i
             end
 
             break
@@ -604,6 +602,8 @@ class String
             break
           end
         end
+
+        break if limit_reached
       end
     end
     if looking_for_space
