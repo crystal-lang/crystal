@@ -82,6 +82,10 @@ def describe(description, file = __FILE__, line = __LINE__)
   end
 end
 
+def context(description, file = __FILE__, line = __LINE__, &block)
+  describe(description.to_s, file, line, &block)
+end
+
 def it(description, file = __FILE__, line = __LINE__)
   return if Spec.aborted?
   return unless Spec.matches?(description, file, line)

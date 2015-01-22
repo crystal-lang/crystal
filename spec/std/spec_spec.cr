@@ -40,4 +40,10 @@ describe "Spec matchers" do
       42.should_not be_falsey
     end
   end
+
+  context "should work as describe" do
+    it "is true" do
+      true.should be_truthy
+    end
+  end
 end
