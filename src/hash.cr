@@ -27,21 +27,43 @@ class Hash(K, V)
     end
   end
 
+  module IndifferentAccessComparator
+    def self.hash(sym : Symbol)
+      sym.to_s.downcase.hash
+    end
+
+    def self.equals?(str : String, sym : Symbol)
+      str == sym.to_s
+    end
+
+    def self.hash(object)
+      object.hash
+    end
+
+    def self.equals?(o1, o2)
+      o1 == o2
+    end
+  end
+
   getter length
 
-  def initialize(default_value = nil, block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
+  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
     @buckets = Pointer(Entry(K, V)?).malloc(11)
     @buckets_length = 11
     @length = 0
     @block = block
   end
 
-  def self.new(default_value : V)
-    new { default_value }
+  def self.new(comp = StandardComparator, &block : (Hash(K, V), K -> V))
+    new block, comp
   end
 
-  def self.new(&block : Hash(K, V), K -> V)
-    new nil, block
+  def self.new(default_value : V, comp = StandardComparator)
+    new(comp) { default_value }
+  end
+
+  def self.new(comparator)
+    new nil, comparator
   end
 
   def []=(key : K, value : V)
