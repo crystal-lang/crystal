@@ -82,8 +82,8 @@ def describe(description, file = __FILE__, line = __LINE__)
   end
 end
 
-def context(description, file = __FILE__, line = __LINE__, &block)
-  describe(description.to_s, file, line, &block)
+def context(description, file = __FILE__, line = __LINE__)
+  describe(description.to_s, file, line) { |ctx| yield ctx }
 end
 
 def it(description, file = __FILE__, line = __LINE__)
