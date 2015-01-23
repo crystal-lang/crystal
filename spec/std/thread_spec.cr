@@ -14,6 +14,13 @@ describe "Thread" do
     thread.join.should eq(20)
     a.should eq(3)
   end
+
+  it "raises inside thread and gets it on join" do
+    thread = Thread.new { raise "OH NO" }
+    expect_raises Exception, "OH NO" do
+      thread.join
+    end
+  end
 end
 
 describe "ConditionVariable" do

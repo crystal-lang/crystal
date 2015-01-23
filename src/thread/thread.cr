@@ -15,11 +15,20 @@ class Thread(T, R)
 
   def join
     PThread.join(@th, out ret)
+
+    if exception = @exception
+      raise exception
+    end
+
     (ret as R*).value
   end
 
   protected def start
-    ret = Pointer(R).malloc_one(@func.call(@arg))
-    PThread.exit(ret as Void*)
+    begin
+      ret = Pointer(R).malloc_one(@func.call(@arg))
+      PThread.exit(ret as Void*)
+    rescue ex
+      @exception = ex
+    end
   end
 end
