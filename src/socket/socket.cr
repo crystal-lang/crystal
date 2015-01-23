@@ -34,6 +34,9 @@ lib C
     AF_INET = 2_u8
     AF_INET6 = 10_u8
 
+    SOL_SOCKET = 0xffff
+    SO_REUSEADDR = 0x0004
+
     fun socket(domain : UInt8, t : Int32, protocol : Int32) : Int32
     fun socketpair(domain : UInt8, t : Int32, protocol : Int32, sockets : StaticArray(Int32, 2)*) : Int32
     fun inet_pton(af : UInt8, src : UInt8*, dst : Void*) : Int32
@@ -69,6 +72,9 @@ lib C
     AF_INET = 2_u16
     AF_INET6 = 10_u16
 
+    SOL_SOCKET = 1
+    SO_REUSEADDR = 2
+
     fun socket(domain : UInt16, t : Int32, protocol : Int32) : Int32
     fun socketpair(domain : UInt16, t : Int32, protocol : Int32, sockets : StaticArray(Int32, 2)*) : Int32
     fun inet_pton(af : UInt16, src : UInt8*, dst : Void*) : Int32
@@ -101,13 +107,6 @@ lib C
   IPPROTO_TCP = 6
   IPPROTO_UDP = 17
   IPPROTO_RAW = 255
-
-  SOL_SOCKET = 0xffff
-
-  ifdef darwin
-    SO_REUSEADDR = 0x0004
-  else
-    SO_REUSEADDR = 0x0002
 
   INET_ADDRSTRLEN = 16
   INET6_ADDRSTRLEN = 46
