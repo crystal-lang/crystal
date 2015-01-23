@@ -13,5 +13,9 @@ struct Crystal::Project::DSL
     def github(repository, name = nil : String)
       @project.dependencies << GitHubDependency.new(repository, name)
     end
+
+    def local(path, name = nil : String)
+      @project.dependencies << LocalDependency.new(path, name)
+    end
   end
 end

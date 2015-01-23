@@ -1,4 +1,5 @@
 require "json"
+require "crystal/project/project_error"
 
 class Crystal::Project
   property dependencies
@@ -61,9 +62,6 @@ class Crystal::Project
     @dependencies.find { |dep| dep.name == name } ||
       raise ProjectError.new("Could not find dependency '#{name}'")
   end
-end
-
-class Crystal::ProjectError < Exception
 end
 
 require "./*"
