@@ -23,7 +23,7 @@ module Crystal
 
     def install
       unless Dir.exists?(@target_dir)
-        exec "ln -sf #{@path} #{@target_dir}"
+        exec "ln -sf ../#{@path}/src #{@target_dir}"
       end
 
       @locked_version = current_version
