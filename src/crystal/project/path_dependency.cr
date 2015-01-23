@@ -1,3 +1,6 @@
+require "crystal/project/dependency"
+require "crystal/project/project_error"
+
 module Crystal
   class PathDependency < Dependency
     def initialize(@path, name = nil)
@@ -5,20 +8,11 @@ module Crystal
         raise ProjectError.new("Invalid path name: #{path}")
       end
 
-      @name = name || $2
+      super(name || $2)
+    end
 
-      unless @name
-        case @directory_name
-        when /^crystal($:_|-)(.*)$/
-          @name = $1
-        when /^(.*)(?:_|-)crystal$/
-          @name = $1
-        when /^(.*)\.cr$/
-          @name = $1
-        end
-      end
-
-      @target_dir = "libs/#{@name}"
+    def target_dir
+      "libs/#{name}"
     end
 
     def install
