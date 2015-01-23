@@ -1,17 +1,17 @@
 require "spec"
-require "crystal/project/local_dependency"
+require "crystal/project/path_dependency"
 
 module Crystal
-  describe "LocalDependency" do
+  describe "PathDependency" do
     describe "#initialize" do
       it "uses the directory's name as the dependency name" do
-        dependency = LocalDependency.new("../path")
+        dependency = PathDependency.new("../path")
 
         dependency.name.should eq("path")
       end
 
-      it "customizes local dependency name" do
-        dependency = LocalDependency.new("../path", "name")
+      it "customizes path dependency name" do
+        dependency = PathDependency.new("../path", "name")
 
         dependency.name.should eq("name")
       end

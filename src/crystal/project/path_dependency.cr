@@ -1,5 +1,5 @@
 module Crystal
-  class LocalDependency < Dependency
+  class PathDependency < Dependency
     def initialize(@path, name = nil)
       unless @path =~ /(.*\/)*(.*)/
         raise ProjectError.new("Invalid path name: #{path}")
