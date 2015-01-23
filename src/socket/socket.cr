@@ -117,12 +117,7 @@ end
 
 class Socket < FileDescriptorIO
   def afamily(family)
-    case family
-    when C::AF_INET6 then C::AF_INET6
-    when C::AF_INET  then C::AF_INET
-    when C::AF_UNIX  then C::AF_UNIX
-    else                  C::AF_UNSPEC
-    end
+    C::AF_UNSPEC.class.cast(family)
   end
 
   def inspect(io)
