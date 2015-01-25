@@ -1797,6 +1797,8 @@ module Crystal
     delegate pointer?, typedef
     delegate defs, typedef
     delegate macros, typedef
+    delegate passed_by_value?, typedef
+    delegate reference_like?, typedef
 
     def parents
       typedef_parents = typedef.parents

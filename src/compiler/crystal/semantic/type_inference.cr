@@ -279,7 +279,7 @@ module Crystal
     end
 
     def lookup_instance_var(node)
-      case scope = @scope
+      case scope = @scope.try &.remove_typedef
       when Nil
         node.raise "can't use instance variables at the top level"
       when Program

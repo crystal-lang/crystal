@@ -542,4 +542,22 @@ describe "Code gen: class" do
       ex.foo
       ))
   end
+
+  it "resolves type declaration when accessing instance var (#348)" do
+    build(%(
+      require "prelude"
+
+      lib C
+        type Foo = Int64[8]
+      end
+
+      class Bar
+        def initialize
+          @foo :: C::Foo
+        end
+      end
+
+      Bar.new.inspect
+      ))
+  end
 end
