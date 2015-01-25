@@ -27,24 +27,6 @@ class Hash(K, V)
     end
   end
 
-  module IndifferentAccessComparator
-    def self.hash(sym : Symbol)
-      sym.to_s.downcase.hash
-    end
-
-    def self.equals?(str : String, sym : Symbol)
-      str == sym.to_s
-    end
-
-    def self.hash(object)
-      object.hash
-    end
-
-    def self.equals?(o1, o2)
-      o1 == o2
-    end
-  end
-
   getter length
 
   def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)

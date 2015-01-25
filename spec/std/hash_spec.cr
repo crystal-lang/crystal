@@ -309,13 +309,6 @@ describe "Hash" do
     h["Foo"].should eq(1)
   end
 
-  it "works with indifferent access comparator" do
-    h = Hash(String, String).new(Hash::IndifferentAccessComparator)
-    h["foo"] = "bar"
-    h["foo"].should eq("bar")
-    h[:foo].should eq("bar")
-  end
-
   it "gets key index" do
     h = {1 => 2, 3 => 4}
     h.key_index(3).should eq(1)
