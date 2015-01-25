@@ -9,6 +9,8 @@ module Crystal
       end
 
       super(name || $2)
+
+      @target_dir = "libs/#{@name}"
     end
 
     def target_dir
