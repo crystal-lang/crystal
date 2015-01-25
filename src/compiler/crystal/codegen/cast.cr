@@ -49,7 +49,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : BoolType, value)
-    store_bool_in_union target_pointer, value
+    store_bool_in_union target_type, target_pointer, value
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilType, value)
@@ -317,7 +317,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def upcast_distinct(value, to_type : MixedUnionType, from_type : BoolType)
     union_ptr = alloca(llvm_type(to_type))
-    store_bool_in_union union_ptr, value
+    store_bool_in_union to_type, union_ptr, value
     union_ptr
   end
 
@@ -351,11 +351,18 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     store value, casted_value_ptr
   end
 
-  def store_bool_in_union(union_pointer, value)
+  def store_bool_in_union(union_type, union_pointer, value)
     store type_id(value, @mod.bool), union_type_id(union_pointer)
-    bool_as_i64 = builder.zext(value, llvm_type(@mod.int64))
-    casted_value_ptr = cast_to_pointer(union_value(union_pointer), @mod.int64)
-    store bool_as_i64, casted_value_ptr
+
+    # To store a boolean in a union
+    # we sign-extend it to the size in bits of the union
+    union_value_type = llvm_union_value_type(union_type)
+    union_size = @llvm_typer.size_of(union_value_type)
+    int_type = LLVM::Type.int((union_size * 8).to_i32)
+
+    bool_as_extended_int = builder.zext(value, int_type)
+    casted_value_ptr = bit_cast(union_value(union_pointer), int_type.pointer)
+    store bool_as_extended_int, casted_value_ptr
   end
 
   def store_nil_in_union(union_pointer, target_type)

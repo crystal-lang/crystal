@@ -357,7 +357,7 @@ module Crystal
 
     def size_of(type)
       if type.void?
-        0
+        0_u64
       else
         @layout.size_in_bytes type
       end
