@@ -334,7 +334,11 @@ module Crystal
         end
       end
 
-      call = Call.global("raise", StringLiteral.new(ex_msg))
+      build_raise ex_msg
+    end
+
+    def build_raise(msg)
+      call = Call.global("raise", StringLiteral.new(msg))
       call.accept TypeVisitor.new(@program)
       call
     end
@@ -481,7 +485,7 @@ module Crystal
         end
       else
         unless to_type.allocated
-          node.to.raise "can't cast to #{to_type} because it was never instantiated"
+          return build_raise "can't cast to #{to_type} because it was never instantiated"
         end
 
         resulting_type = obj_type.filter_by(to_type)
