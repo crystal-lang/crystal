@@ -327,7 +327,7 @@ describe "Lexer string" do
   end
 
   it "lexes heredoc" do
-    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE"
+    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE\nHERESY"
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE")
 
     token = lexer.next_token
@@ -336,6 +336,38 @@ describe "Lexer string" do
 
     token = lexer.next_token
     token.type.should eq(:EOF)
+  end
+
+  it "assigns correct location after heredoc (#346)" do
+    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE"
+    lexer = Lexer.new("<<-HERE\n#{string}\nHERE\n1")
+
+    token = lexer.next_token
+    token.type.should eq(:STRING)
+    token.value.should eq(string)
+    token.location.line_number.should eq(1)
+    token.location.column_number.should eq(1)
+
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    token.location.line_number.should eq(6)
+    token.location.column_number.should eq(5)
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.location.line_number.should eq(7)
+    token.location.column_number.should eq(1)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
+
+  it "raises on unterminated heredoc" do
+    lexer = Lexer.new("<<-HERE\nHello")
+
+    expect_raises Crystal::SyntaxException, /unterminated heredoc/ do
+      lexer.next_token
+    end
   end
 
   it "lexes string with unicode codepoint" do

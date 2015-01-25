@@ -129,6 +129,8 @@ module Crystal
             while true
               case char = next_char
               when '\n'
+                @line_number += 1
+                @column_number = 0
                 next_char
                 here_start = current_pos
                 break
@@ -144,6 +146,8 @@ module Crystal
               when '\0'
                 raise "unterminated heredoc"
               when '\n'
+                @line_number += 1
+                @column_number = 0
                 here_end = current_pos
                 is_here  = false
                 here.each_char do |c|
@@ -155,10 +159,13 @@ module Crystal
                 end
 
                 if is_here
-                  next_char
-                  @token.value = string_range(here_start, here_end)
-                  @token.type = :STRING
-                  break
+                  peek = peek_next_char
+                  if peek == '\n' || peek == '\0'
+                    next_char
+                    @token.value = string_range(here_start, here_end)
+                    @token.type = :STRING
+                    break
+                  end
                 end
               end
             end
