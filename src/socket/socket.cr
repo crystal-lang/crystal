@@ -26,7 +26,7 @@ lib C
     struct SockAddr
       len : UInt8
       family : UInt8
-      data : StaticArray(UInt8, 14)*
+      data : StaticArray(UInt8, 14)
     end
 
     AF_UNSPEC = 0_u8
@@ -64,7 +64,7 @@ lib C
 
     struct SockAddr
       family : UInt16
-      data : StaticArray(UInt8, 14)*
+      data : StaticArray(UInt8, 14)
     end
 
     AF_UNSPEC = 0_u16

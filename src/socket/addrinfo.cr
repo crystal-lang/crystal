@@ -10,7 +10,7 @@ lib C
     next : Addrinfo*
   end
 
-  fun freeaddrinfo(addr : Addrinfo*) : Int32
+  fun freeaddrinfo(addr : Addrinfo*) : Void
   fun gai_strerror(code : Int32) : UInt8*
   fun getaddrinfo(name : UInt8*, service : UInt8*, hints : Addrinfo*, pai : Addrinfo**) : Int32
   fun getnameinfo(addr : SockAddr*, addrlen : Int32, host : UInt8*, hostlen : Int32, serv : UInt8*, servlen : Int32, flags : Int32) : Int32
