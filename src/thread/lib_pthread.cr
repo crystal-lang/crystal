@@ -1,8 +1,18 @@
 lib PThread
   type Thread = Void*
-  type Mutex = Int64[8]
+
+  ifdef darwin
+    type Mutex = Int64[8]
+  else
+    ifdef x86_64
+      type Mutex = Int64[5]
+    else
+      type Mutex = Int64[3]
+    end
+  end
+
   type MutexAttr = Void*
-  type Cond = Int64[8]
+  type Cond = Int64[6]
   type CondAttr = Void*
 
   fun create = pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*)
