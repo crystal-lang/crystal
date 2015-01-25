@@ -1,4 +1,4 @@
-require "./html/escaped_string"
+require "html"
 
 struct HTML::Builder
   def initialize
@@ -18,7 +18,7 @@ struct HTML::Builder
         attrs.each do |name, value|
           @str << name
           @str << %(=")
-          @str << value.html_escape
+          @str << HTML.escape(value)
           @str << %(")
         end
       end
@@ -37,6 +37,6 @@ struct HTML::Builder
   end
 
   def text(text)
-    @str << text.html_escape
+    @str << HTML.escape(text)
   end
 end
