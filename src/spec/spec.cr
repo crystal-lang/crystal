@@ -113,8 +113,8 @@ def pending(description, file = __FILE__, line = __LINE__, &block)
   Spec::RootContext.report(:pending, description, file, line)
 end
 
-def assert
-  it("assert") { yield }
+def assert(file = __FILE__, line = __LINE__)
+  it("assert", file, line) { yield }
 end
 
 def fail(msg, file = __FILE__, line = __LINE__)
