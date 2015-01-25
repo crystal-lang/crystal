@@ -19,12 +19,12 @@ module Crystal
         project = Project.new
         project.eval do
           deps do
-            local "../path"
+            path "../path"
           end
         end
 
         project.dependencies.length.should eq(1)
-        project.dependencies[0].should be_a(LocalDependency)
+        project.dependencies[0].should be_a(PathDependency)
       end
     end
   end
