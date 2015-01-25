@@ -29,19 +29,23 @@ class Hash(K, V)
 
   getter length
 
-  def initialize(default_value = nil, block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
+  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
     @buckets = Pointer(Entry(K, V)?).malloc(11)
     @buckets_length = 11
     @length = 0
     @block = block
   end
 
-  def self.new(default_value : V)
-    new { default_value }
+  def self.new(comp = StandardComparator, &block : (Hash(K, V), K -> V))
+    new block, comp
   end
 
-  def self.new(&block : Hash(K, V), K -> V)
-    new nil, block
+  def self.new(default_value : V, comp = StandardComparator)
+    new(comp) { default_value }
+  end
+
+  def self.new(comparator)
+    new nil, comparator
   end
 
   def []=(key : K, value : V)
