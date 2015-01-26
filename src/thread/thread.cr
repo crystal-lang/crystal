@@ -8,25 +8,30 @@ class Thread(T, R)
   def initialize(arg : T, &func : T -> R)
     @func = func
     @arg = arg
-    PThread.create(out @th, nil, ->(data) {
+    ret = PThread.create(out @th, nil, ->(data) {
         (data as Thread(T, R)).start
       }, self as Void*)
+
+    if ret != 0
+      raise Errno.new("pthread_create")
+    end
   end
 
   def join
-    PThread.join(@th, out ret)
+    if PThread.join(@th, out _ret) != 0
+      raise Errno.new("pthread_join")
+    end
 
     if exception = @exception
       raise exception
     end
 
-    (ret as R*).value
+    @ret
   end
 
   protected def start
     begin
-      ret = Pointer(R).malloc_one(@func.call(@arg))
-      PThread.exit(ret as Void*)
+      @ret = @func.call(@arg)
     rescue ex
       @exception = ex
     end
