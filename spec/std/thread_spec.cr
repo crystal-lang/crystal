@@ -21,6 +21,12 @@ describe "Thread" do
       thread.join
     end
   end
+
+  it "gets a non-nilable value from join" do
+    thread = Thread.new { 1 }
+    value = thread.join
+    (value + 2).should eq(3)
+  end
 end
 
 describe "ConditionVariable" do

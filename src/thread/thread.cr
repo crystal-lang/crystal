@@ -26,7 +26,17 @@ class Thread(T, R)
       raise exception
     end
 
-    @ret
+    # TODO: We need to cast ret to R, otherwise it'll be nilable
+    # and we don't want that. But `@ret as R` gives
+    # `can't cast Nil to NoReturn` in the case when the Thread's body is
+    # NoReturn. The following trick works, but we should find another
+    # way to do it.
+    ret = @ret
+    if ret.is_a?(R) # Always true
+      ret
+    else
+      exit # unreachable, really
+    end
   end
 
   protected def start
