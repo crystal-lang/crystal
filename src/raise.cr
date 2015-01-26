@@ -76,6 +76,8 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   start = ABI.unwind_get_region_start(context)
   ip = ABI.unwind_get_ip(context)
   throw_offset = ip - 1 - start
+  return ABI::URC_CONTINUE_UNWIND if throw_offset == -1
+
   lsd = ABI.unwind_get_language_specific_data(context)
   # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
