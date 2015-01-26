@@ -1,22 +1,21 @@
-class TCPSocket < FileDescriptorIO
+require "./ip_socket"
+
+class TCPSocket < IPSocket
   def initialize(host, port)
-    server = C.gethostbyname(host)
-    unless server
-      raise Errno.new("Error resolving hostname '#{host}'")
+    getaddrinfo(host, port, nil, C::SOCK_STREAM, C::IPPROTO_TCP) do |ai|
+      sock = C.socket(afamily(ai.family), ai.socktype, ai.protocol)
+      raise Errno.new("Error opening socket") if sock <= 0
+
+      if C.connect(sock, ai.addr, ai.addrlen) != 0
+        raise Errno.new("Error connecting to '#{host}:#{port}'")
+      end
+
+      super sock
     end
+  end
 
-    sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
-
-    addr = C::SockAddrIn.new
-    addr.family = C::AF_INET
-    addr.addr = (server.value.addrlist[0] as UInt32*).value
-    addr.port = C.htons(port)
-
-    if C.connect(sock, pointerof(addr), 16) != 0
-      raise Errno.new("Error connecting to '#{host}:#{port}'")
-    end
-
-    super sock
+  def initialize(fd : Int32)
+    super fd
   end
 
   def self.open(host, port)

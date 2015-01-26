@@ -1,28 +1,44 @@
-class TCPServer
-  def initialize(port, backlog = 128)
-    @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
+require "./tcp_socket"
 
-    optval = 1
-    C.setsockopt(@sock, C::SOL_SOCKET, C::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
+class TCPServer < TCPSocket
+  def initialize(host, port, backlog = 128)
+    getaddrinfo(host, port, nil, C::SOCK_STREAM, C::IPPROTO_TCP) do |ai|
+      sock = C.socket(afamily(ai.family), ai.socktype, ai.protocol)
+      raise Errno.new("Error opening socket") if sock <= 0
 
-    addr = C::SockAddrIn.new
-    addr.family = C::AF_INET
-    addr.addr = 0_u32
-    addr.port = C.htons(port)
-    if C.bind(@sock, pointerof(addr), 16) != 0
-      raise Errno.new("Error binding TCP server at #{port}")
+      optval = 1
+      C.setsockopt(sock, C::SOL_SOCKET, C::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
+
+      if C.bind(sock, ai.addr as C::SockAddr*, ai.addrlen) != 0
+        raise Errno.new("Error binding TCP server at #{host}#{port}")
+      end
+
+      if C.listen(sock, backlog) != 0
+        raise Errno.new("Error listening TCP server at #{host}#{port}")
+      end
+
+      super sock
     end
+  end
 
-    if C.listen(@sock, backlog) != 0
-      raise Errno.new("Error listening TCP server at #{port}")
+  def self.new(port : Int, backlog = 128)
+    new("::", port, backlog)
+  end
+
+  def self.open(host, port, backlog = 128)
+    server = new(host, port, backlog)
+    begin
+      yield server
+    ensure
+      server.close
     end
   end
 
   def accept
-    client_addr = C::SockAddrIn.new
-    client_addr_len = 16
-    client_fd = C.accept(@sock, pointerof(client_addr), pointerof(client_addr_len))
-    FileDescriptorIO.new(client_fd)
+    client_addr :: C::SockAddrIn6
+    client_addr_len = sizeof(C::SockAddrIn6)
+    client_fd = C.accept(fd, pointerof(client_addr) as C::SockAddr*, pointerof(client_addr_len))
+    TCPSocket.new(client_fd)
   end
 
   def accept
