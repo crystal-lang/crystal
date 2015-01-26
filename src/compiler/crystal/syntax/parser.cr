@@ -2260,12 +2260,7 @@ module Crystal
             found_splat = true
           end
           if block_arg = extras.block_arg
-            block_arg_fun = block_arg.fun
-            if block_arg_fun.is_a?(Fun)
-              @yields = block_arg_fun.inputs.try(&.length) || 0
-            else
-              @yields = 0
-            end
+            compute_block_arg_yields block_arg
             check :")"
             break
           elsif @token.type == :","
@@ -2290,12 +2285,7 @@ module Crystal
             found_splat = true
           end
           if block_arg = extras.block_arg
-            block_arg_fun = block_arg.fun
-            if block_arg_fun.is_a?(Fun)
-              @yields = block_arg_fun.inputs.try(&.length) || 0
-            else
-              @yields = 0
-            end
+            compute_block_arg_yields block_arg
             break
           elsif @token.type == :","
             next_token_skip_space_or_newline
@@ -2312,6 +2302,10 @@ module Crystal
       when :":"
         unexpected_token unless check_return_type
         # Skip
+      when :"&"
+        next_token_skip_space_or_newline
+        block_arg = parse_block_arg(extra_assigns)
+        compute_block_arg_yields block_arg
       else
         if is_abstract && @token.type == :EOF
           # OK
@@ -2369,6 +2363,15 @@ module Crystal
       node.name_column_number = name_column_number
       node.visibility = @visibility
       node
+    end
+
+    def compute_block_arg_yields(block_arg)
+      block_arg_fun = block_arg.fun
+      if block_arg_fun.is_a?(Fun)
+        @yields = block_arg_fun.inputs.try(&.length) || 0
+      else
+        @yields = 0
+      end
     end
 
     record ArgExtras, block_arg, default_value, splat

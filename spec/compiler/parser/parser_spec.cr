@@ -260,6 +260,8 @@ describe "Parser" do
   it_parses "def foo; yield 1; yield; end", Def.new("foo", body: [Yield.new([1.int32] of ASTNode), Yield.new] of ASTNode, yields: 1)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)])
   it_parses "def foo(&block); end", Def.new("foo", block_arg: BlockArg.new("block"), yields: 0)
+  it_parses "def foo &block ; end", Def.new("foo", block_arg: BlockArg.new("block"), yields: 0)
+  it_parses "def foo &block : Int -> Double ; end", Def.new("foo", block_arg: BlockArg.new("block", Fun.new(["Int".path] of ASTNode, "Double".path)), yields: 1)
   it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block"), yields: 0)
   it_parses "def foo a, &block\nend", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block"), yields: 0)
   it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: BlockArg.new("block", Fun.new(["Int".path] of ASTNode, "Double".path)), yields: 1)
