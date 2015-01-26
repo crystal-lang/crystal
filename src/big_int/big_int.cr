@@ -175,7 +175,12 @@ struct Int
     if self < 0
       -(abs + other)
     else
-      BigInt.new { |mpz|  LibGMP.ui_sub(mpz, self.to_u64, other) }
+      # The line below segfault on linux 32 bits for a (yet) unknown reason:
+      #
+      #     BigInt.new { |mpz| LibGMP.ui_sub(mpz, self.to_u64, other) }
+      #
+      # So for now we do it a bit slower.
+      to_big_i - other
     end
   end
 
