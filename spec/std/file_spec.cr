@@ -1,18 +1,18 @@
 require "spec"
 
-def base
+private def base
   Dir.working_directory
 end
 
-def tmpdir
+private def tmpdir
   "/tmp"
 end
 
-def rootdir
+private def rootdir
   "/"
 end
 
-def home
+private def home
   ENV["HOME"]
 end
 
