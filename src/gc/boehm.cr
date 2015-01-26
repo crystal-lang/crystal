@@ -33,7 +33,7 @@ end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
 lib PThread
-  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*)
+  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : Int32
   fun join = GC_pthread_join(thread : Thread, value : Void**) : Int32
 end
 

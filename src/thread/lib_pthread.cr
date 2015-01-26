@@ -15,7 +15,7 @@ lib PThread
   type Cond = Int64[6]
   type CondAttr = Void*
 
-  fun create = pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*)
+  fun create = pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : Int32
   fun exit = pthread_exit(value : Void*)
   fun join = pthread_join(thread : Thread, value : Void**) : Int32
 
