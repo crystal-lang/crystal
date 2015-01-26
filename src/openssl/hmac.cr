@@ -19,7 +19,7 @@ class OpenSSL::HMAC
     key_slice = key.to_slice
     data_slice = data.to_slice
     buffer = Slice(UInt8).new(128)
-    LibCrypto.hmac(evp, key_slice, key_slice.length, data_slice, data_slice.length.to_u64, buffer, out buffer_len)
+    LibCrypto.hmac(evp, key_slice, key_slice.length, data_slice, C::SizeT.cast(data_slice.length), buffer, out buffer_len)
     buffer[0, buffer_len.to_i]
   end
 
