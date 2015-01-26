@@ -1,13 +1,26 @@
 lib C
-  struct Addrinfo
-    flags : Int32
-    family : Int32
-    socktype : Int32
-    protocol : Int32
-    addrlen : Int32
-    addr : SockAddr*
-    canonname : UInt8*
-    next : Addrinfo*
+  ifdef darwin
+    struct Addrinfo
+      flags : Int32
+      family : Int32
+      socktype : Int32
+      protocol : Int32
+      addrlen : Int32
+      canonname : UInt8*
+      addr : SockAddr*
+      next : Addrinfo*
+    end
+  else
+    struct Addrinfo
+      flags : Int32
+      family : Int32
+      socktype : Int32
+      protocol : Int32
+      addrlen : Int32
+      addr : SockAddr*
+      canonname : UInt8*
+      next : Addrinfo*
+    end
   end
 
   fun freeaddrinfo(addr : Addrinfo*) : Void

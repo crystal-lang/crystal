@@ -32,7 +32,7 @@ lib C
     AF_UNSPEC = 0_u8
     AF_UNIX = 1_u8
     AF_INET = 2_u8
-    AF_INET6 = 10_u8
+    AF_INET6 = 30_u8
 
     SOL_SOCKET = 0xffff
     SO_REUSEADDR = 0x0004
