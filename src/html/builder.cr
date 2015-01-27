@@ -18,7 +18,7 @@ struct HTML::Builder
         attrs.each do |name, value|
           @str << name
           @str << %(=")
-          @str << HTML.escape(value)
+          HTML.escape(value, @str)
           @str << %(")
         end
       end
