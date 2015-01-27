@@ -7,10 +7,13 @@ class TCPSocket < IPSocket
       raise Errno.new("Error opening socket") if sock <= 0
 
       if C.connect(sock, ai.addr, ai.addrlen) != 0
+        next false if ai.next
         raise Errno.new("Error connecting to '#{host}:#{port}'")
       end
 
       super sock
+
+      true
     end
   end
 

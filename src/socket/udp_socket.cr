@@ -13,16 +13,22 @@ class UDPSocket < IPSocket
       C.setsockopt(fd, C::SOL_SOCKET, C::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
 
       if C.bind(fd, ai.addr, ai.addrlen) != 0
+        next false if ai.next
         raise Errno.new("Error binding UDP socket at #{host}:#{port}")
       end
+
+      true
     end
   end
 
   def connect(host, port)
     getaddrinfo(host, port, nil, C::SOCK_DGRAM, C::IPPROTO_UDP) do |ai|
       if C.connect(fd, ai.addr, ai.addrlen) != 0
+        next false if ai.next
         raise Errno.new("Error connecting UDP socket at #{host}:#{port}")
       end
+
+      true
     end
   end
 end

@@ -10,14 +10,18 @@ class TCPServer < TCPSocket
       C.setsockopt(sock, C::SOL_SOCKET, C::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
 
       if C.bind(sock, ai.addr as C::SockAddr*, ai.addrlen) != 0
+        next false if ai.next
         raise Errno.new("Error binding TCP server at #{host}#{port}")
       end
 
       if C.listen(sock, backlog) != 0
+        next false if ai.next
         raise Errno.new("Error listening TCP server at #{host}#{port}")
       end
 
       super sock
+
+      true
     end
   end
 
