@@ -1,3 +1,5 @@
+require "html"
+
 struct HTML::Builder
   def initialize
     @str = StringIO.new
@@ -16,8 +18,7 @@ struct HTML::Builder
         attrs.each do |name, value|
           @str << name
           @str << %(=")
-          # TODO: escape html entities
-          @str << value
+          @str << HTML.escape(value)
           @str << %(")
         end
       end
@@ -36,6 +37,6 @@ struct HTML::Builder
   end
 
   def text(text)
-    @str << text
+    @str << HTML.escape(text)
   end
 end
