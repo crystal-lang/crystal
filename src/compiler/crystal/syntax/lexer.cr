@@ -261,9 +261,23 @@ module Crystal
         when '<'
           delimited_pair :string, '<', '>'
         when 'i'
-          if peek_next_char == '('
+          case peek_next_char
+          when '('
             next_char
             next_char :SYMBOL_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '(', ')', 0)
+          when '{'
+            next_char
+            next_char :SYMBOL_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '{', '}', 0)
+          when '['
+            next_char
+            next_char :SYMBOL_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '[', ']', 0)
+          when '<'
+            next_char
+            next_char :SYMBOL_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '<', '>', 0)
           else
             @token.type = :"%"
           end
@@ -294,9 +308,23 @@ module Crystal
             raise "unknown %x char"
           end
         when 'w'
-          if peek_next_char == '('
+          case peek_next_char
+          when '('
             next_char
             next_char :STRING_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:string_array, '(', ')', 0)
+          when '{'
+            next_char
+            next_char :STRING_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:string_array, '{', '}', 0)
+          when '['
+            next_char
+            next_char :STRING_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:string_array, '[', ']', 0)
+          when '<'
+            next_char
+            next_char :STRING_ARRAY_START
+            @token.delimiter_state = Token::DelimiterState.new(:string_array, '<', '>', 0)
           else
             @token.type = :"%"
           end
@@ -1991,14 +2019,14 @@ module Crystal
         end
       end
 
-      if current_char == ')'
+      if current_char == @token.delimiter_state.end
         next_char
         @token.type = :STRING_ARRAY_END
         return @token
       end
 
       start = current_pos
-      while !current_char.whitespace? && current_char != '\0' && current_char != ')'
+      while !current_char.whitespace? && current_char != '\0' && current_char != @token.delimiter_state.end
         next_char
       end
 
