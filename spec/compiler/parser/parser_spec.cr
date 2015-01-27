@@ -595,6 +595,7 @@ describe "Parser" do
   it_parses "A = 1", Assign.new("A".path, 1.int32)
 
   it_parses "puts %w(one two)", Call.new(nil, "puts", (["one".string, "two".string] of ASTNode).array)
+  it_parses "puts %w{one two}", Call.new(nil, "puts", (["one".string, "two".string] of ASTNode).array)
   it_parses "puts %i(one two)", Call.new(nil, "puts", (["one".symbol, "two".symbol] of ASTNode).array)
   it_parses "puts {{1}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{*1}}", Call.new(nil, "puts", MacroExpression.new(1.int32.splat))
