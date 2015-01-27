@@ -76,6 +76,7 @@ module Crystal
         next_char
         @line_number += 1
         @column_number = 1
+        reset_regex_flags = false
         consume_newlines
       when '\r'
         if next_char == '\n'

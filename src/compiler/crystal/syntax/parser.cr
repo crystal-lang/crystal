@@ -966,6 +966,7 @@ module Crystal
     end
 
     def parse_begin
+      slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
       parse_exception_handler exps
