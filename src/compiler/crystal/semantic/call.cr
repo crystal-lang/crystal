@@ -594,7 +594,7 @@ class Crystal::Call
         end
       else
         if block_arg_fun_output
-          raise "can't deduce type of block"
+          cant_infer_block_return_type
         else
           block.body.type = mod.void
         end
@@ -603,7 +603,9 @@ class Crystal::Call
       block.accept parent_visitor
 
       if output = block_arg_fun_output
-        raise "can't infer block type" unless block.body.type?
+        unless block.body.type?
+          cant_infer_block_return_type
+        end
 
         block_type = block.body.type
         matched = MatchesLookup.match_arg(block_type, output, match.context)
@@ -619,6 +621,10 @@ class Crystal::Call
     end
 
     yield_vars
+  end
+
+  private def cant_infer_block_return_type
+    raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/manastech/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
   end
 
   class MatchTypeLookup < TypeLookup
