@@ -49,6 +49,8 @@ module Crystal
       end
 
       exp = parse_multi_assign
+
+      slash_is_regex!
       skip_statement_end
 
       if is_end_token
@@ -237,6 +239,8 @@ module Crystal
         when :SPACE
           next_token
         when :"="
+          slash_is_regex!
+
           if atomic.is_a?(Call) && atomic.name == "[]"
             next_token_skip_space_or_newline
 
@@ -398,6 +402,7 @@ module Crystal
             method = @token.type.to_s
             method_column_number = @token.column_number
 
+            slash_is_regex!
             next_token_skip_space_or_newline
             right = parse_{{next_operator.id}}
             left = ({{node.id}}).at(location)
@@ -1083,9 +1088,12 @@ module Crystal
     end
 
     def parse_while_or_until(klass)
+      slash_is_regex!
       next_token_skip_space_or_newline
 
       cond = parse_expression
+
+      slash_is_regex!
       skip_statement_end
 
       body = parse_expressions
@@ -1572,6 +1580,8 @@ module Crystal
     end
 
     def parse_array_literal
+      slash_is_regex!
+
       exps = [] of ASTNode
 
       open(:array_literal) do
@@ -1580,6 +1590,7 @@ module Crystal
           exps << parse_expression
           skip_space_or_newline
           if @token.type == :","
+            slash_is_regex!
             next_token_skip_space_or_newline
           end
         end
@@ -1600,6 +1611,7 @@ module Crystal
       line = @line_number
       column = @token.column_number
 
+      slash_is_regex!
       next_token_skip_space_or_newline
 
       if @token.type == :"}"
@@ -1620,6 +1632,7 @@ module Crystal
               check :"=>"
             end
           when :","
+            slash_is_regex!
             next_token_skip_space_or_newline
             return parse_tuple first_key, location
           when :"}"
@@ -1628,12 +1641,15 @@ module Crystal
             check :"=>"
           end
         end
+        slash_is_regex!
         next_token_skip_space_or_newline
         parse_hash_literal first_key, location, allow_of
       end
     end
 
     def parse_hash_literal(first_key, location, allow_of)
+      slash_is_regex!
+
       line = @line_number
       column = @token.column_number
 
@@ -1643,6 +1659,7 @@ module Crystal
         entries << HashLiteral::Entry.new(first_key, parse_op_assign)
         skip_space_or_newline
         if @token.type == :","
+          slash_is_regex!
           next_token_skip_space_or_newline
         end
 
@@ -1659,10 +1676,12 @@ module Crystal
               check :"=>"
             end
           end
+          slash_is_regex!
           next_token_skip_space_or_newline
           entries << HashLiteral::Entry.new(key, parse_op_assign)
           skip_space_or_newline
           if @token.type == :","
+            slash_is_regex!
             next_token_skip_space_or_newline
           end
         end
@@ -1722,6 +1741,7 @@ module Crystal
     end
 
     def parse_case
+      slash_is_regex!
       next_token_skip_space_or_newline
       unless @token.keyword?(:when)
         cond = parse_expression
@@ -1736,6 +1756,7 @@ module Crystal
         when :IDENT
           case @token.value
           when :when
+            slash_is_regex!
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
             while true
@@ -1752,6 +1773,7 @@ module Crystal
                 next_token_skip_space_or_newline
                 break
               else
+                slash_is_regex!
                 case @token.type
                 when :","
                   next_token_skip_space_or_newline
@@ -1767,6 +1789,7 @@ module Crystal
               end
             end
 
+            slash_is_regex!
             when_body = parse_expressions
             skip_space_or_newline
             whens << When.new(when_conds, when_body)
@@ -1774,6 +1797,7 @@ module Crystal
             if whens.length == 0
               unexpected_token @token.to_s, "expecting when"
             end
+            slash_is_regex!
             next_token_skip_statement_end
             a_else = parse_expressions
             skip_statement_end
@@ -2333,6 +2357,7 @@ module Crystal
         if is_abstract
           body = Nop.new
         else
+          slash_is_regex!
           skip_statement_end
 
           if @token.keyword?(:end)
@@ -2511,6 +2536,7 @@ module Crystal
     end
 
     def parse_if(check_end = true)
+      slash_is_regex!
       next_token_skip_space_or_newline
 
       cond = parse_op_assign
@@ -2518,6 +2544,7 @@ module Crystal
     end
 
     def parse_if_after_condition(cond, check_end)
+      slash_is_regex!
       skip_statement_end
 
       a_then = parse_expressions
@@ -2784,6 +2811,8 @@ module Crystal
         @last_call_has_parenthesis = false
         nil
       when :"("
+        slash_is_regex!
+
         args = [] of ASTNode
 
         open(:call) do
@@ -2806,6 +2835,7 @@ module Crystal
 
             skip_space_or_newline
             if @token.type == :","
+              slash_is_regex!
               next_token_skip_space_or_newline
             else
               check :")"
@@ -2818,6 +2848,7 @@ module Crystal
 
         CallArgs.new args, nil, nil, nil, false
       when :SPACE
+        slash_is_not_regex!
         next_token
         @last_call_has_parenthesis = false
 
@@ -2886,6 +2917,7 @@ module Crystal
         skip_space
 
         if @token.type == :","
+          slash_is_regex!
           next_token_skip_space_or_newline
         else
           break

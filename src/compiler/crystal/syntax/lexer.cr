@@ -17,6 +17,7 @@ module Crystal
       @doc_enabled = false
       @comments_enabled = false
       @count_whitespace = false
+      @slash_is_regex = true
     end
 
     def filename=(filename)
@@ -52,21 +53,21 @@ module Crystal
         end
       end
 
-      reset_wants_regex = true
+      reset_regex_flags = true
 
       case current_char
       when '\0'
         @token.type = :EOF
       when ' ', '\t'
         consume_whitespace
-        reset_wants_regex = false
+        reset_regex_flags = false
       when '\\'
         if next_char == '\n'
           @line_number += 1
           @column_number = 1
           @token.passed_backslash_newline = true
           consume_whitespace
-          reset_wants_regex = false
+          reset_regex_flags = false
         else
           unknown_token
         end
@@ -235,6 +236,9 @@ module Crystal
         char = next_char
         if char == '='
           next_char :"/="
+        elsif @slash_is_regex
+          @token.type = :DELIMITER_START
+          @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/', 0)
         elsif char.whitespace? || char == '\0' || char == ';'
           @token.type = :"/"
         elsif @wants_regex
@@ -330,7 +334,9 @@ module Crystal
       when ']' then next_char :"]"
       when ',' then next_char :","
       when '?' then next_char :"?"
-      when ';' then next_char :";"
+      when ';' then
+        reset_regex_flags = false
+        next_char :";"
       when ':'
         char = next_char
         case char
@@ -958,9 +964,20 @@ module Crystal
         end
       end
 
-      @wants_regex = true if reset_wants_regex
+      if reset_regex_flags
+        @wants_regex = true
+        @slash_is_regex = false
+      end
 
       @token
+    end
+
+    def slash_is_regex!
+      @slash_is_regex = true
+    end
+
+    def slash_is_not_regex!
+      @slash_is_regex = false
     end
 
     def consume_comment(start_pos)

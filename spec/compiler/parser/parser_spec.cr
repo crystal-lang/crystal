@@ -114,6 +114,10 @@ class Crystal::ASTNode
   end
 end
 
+private def regex(string, modifiers = 0)
+  RegexLiteral.new(StringLiteral.new(string), modifiers)
+end
+
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
   it "parses #{string}", file, line do
     parser = Parser.new(string)
@@ -181,7 +185,7 @@ describe "Parser" do
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", 3.int32), "+", Call.new(4.int32, "/", 5.int32))
   it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Expressions.new([Call.new(3.int32, "+", 4.int32)] of ASTNode))
   it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
-  it_parses "1 + /foo/", Call.new(1.int32, "+", RegexLiteral.new(StringLiteral.new("foo")))
+  it_parses "1 + /foo/", Call.new(1.int32, "+", regex("foo"))
   it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new(Expressions.new(["a".var] of ASTNode), "/", "b".call)]
@@ -647,14 +651,28 @@ describe "Parser" do
   it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Union.new(["Foo".path, "Bar".path] of ASTNode))
   it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
 
-  it_parses "/foo/", RegexLiteral.new(StringLiteral.new("foo"))
-  it_parses "/foo/i", RegexLiteral.new(StringLiteral.new("foo"), Regex::IGNORE_CASE)
-  it_parses "/foo/m", RegexLiteral.new(StringLiteral.new("foo"), Regex::MULTILINE)
-  it_parses "/foo/x", RegexLiteral.new(StringLiteral.new("foo"), Regex::EXTENDED)
-  it_parses "/foo/imximx", RegexLiteral.new(StringLiteral.new("foo"), Regex::IGNORE_CASE | Regex::MULTILINE | Regex::EXTENDED)
-  it_parses "/fo\\so/", RegexLiteral.new(StringLiteral.new("fo\\so"))
+  it_parses "/foo/", regex("foo")
+  it_parses "/foo/i", regex("foo", Regex::IGNORE_CASE)
+  it_parses "/foo/m", regex("foo", Regex::MULTILINE)
+  it_parses "/foo/x", regex("foo", Regex::EXTENDED)
+  it_parses "/foo/imximx", regex("foo", Regex::IGNORE_CASE | Regex::MULTILINE | Regex::EXTENDED)
+  it_parses "/fo\\so/", regex("fo\\so")
   it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
-  it_parses "%r(foo(bar))", RegexLiteral.new(StringLiteral.new("foo(bar)"))
+  it_parses "%r(foo(bar))", regex("foo(bar)")
+  it_parses "/ /", regex(" ")
+  it_parses "/ hi /", regex(" hi ")
+  it_parses "self / number", Call.new("self".var, "/", "number".call)
+  it_parses "a == / /", Call.new("a".call, "==", regex(" "))
+  it_parses "/ /", regex(" ")
+  it_parses "/ /; / /", [regex(" "), regex(" ")] of ASTNode
+  it_parses "/ /\n/ /", [regex(" "), regex(" ")] of ASTNode
+  it_parses "a = / /", Assign.new("a".var, regex(" "))
+  it_parses "a; if / /; / /; elsif / /; / /; end", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
+  it_parses "a; while / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
+  it_parses "[/ /, / /]", ArrayLiteral.new([regex(" "), regex(" ")] of ASTNode)
+  it_parses "{/ / => / /, / / => / /}", HashLiteral.new([HashLiteral::Entry.new(regex(" "), regex(" ")), HashLiteral::Entry.new(regex(" "), regex(" "))])
+  it_parses "{/ /, / /}", TupleLiteral.new([regex(" "), regex(" ")] of ASTNode)
+  it_parses "begin; / /; end", regex(" ")
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
@@ -665,7 +683,11 @@ describe "Parser" do
   it_parses "$~", Call.new(Path.global("MatchData"), "last")
   it_parses "$1", Call.new(Call.new(Path.global("MatchData"), "last"), "[]", 1.int32)
   it_parses "foo $1", Call.new(nil, "foo", Call.new(Call.new(Path.global("MatchData"), "last"), "[]", 1.int32))
-  it_parses "foo /a/", Call.new(nil, "foo", RegexLiteral.new(StringLiteral.new("a")))
+  it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
+  it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
+  it_parses "foo(/ /)", Call.new(nil, "foo", regex(" "))
+  it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
+  it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
 
   it_parses "$?", Call.new(Path.global(["Process", "Status"]), "last")
   it_parses "foo $?", Call.new(nil, "foo", Call.new(Path.global(["Process", "Status"]), "last"))
@@ -694,6 +716,7 @@ describe "Parser" do
   it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nelse\n3\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)])
+  it_parses "case / /; when / /; / /; else; / /; end", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
 
   it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
@@ -704,6 +727,7 @@ describe "Parser" do
   it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
+  it_parses "def foo; / /; end", Def.new("foo", body: regex(" "))
 
   it_parses "\"foo\#{bar}baz\"", StringInterpolation.new(["foo".string, "bar".call, "baz".string])
 
