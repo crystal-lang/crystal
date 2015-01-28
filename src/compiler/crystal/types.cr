@@ -151,6 +151,10 @@ module Crystal
       self
     end
 
+    def has_in_type_vars?(type)
+      false
+    end
+
     def is_implicitly_converted_in_c_to?(expected_type)
       if self.nil_type? && (expected_type.pointer? || expected_type.fun?)
         # OK: nil will be sent as pointer
@@ -1424,6 +1428,18 @@ module Crystal
       super || generic_class.implements?(other_type)
     end
 
+    def has_in_type_vars?(type)
+      type_vars.each_value do |type_var|
+        case type_var
+        when Var
+          return true if type_var.type.includes_type?(type) || type_var.type.has_in_type_vars?(type)
+        when Type
+          return true if type_var.includes_type?(type) || type_var.has_in_type_vars?(type)
+        end
+      end
+      false
+    end
+
     def to_s(io)
       generic_class.append_full_name(io)
       io << "("
@@ -1595,6 +1611,10 @@ module Crystal
 
     def metaclass
       program.tuple.instantiate tuple_types.map(&.metaclass)
+    end
+
+    def has_in_type_vars?(type)
+      tuple_types.any? { |tuple_type| tuple_type.includes_type?(type) || tuple_type.has_in_type_vars?(type) }
     end
 
     def to_s(io)

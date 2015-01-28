@@ -56,4 +56,31 @@ describe "Type inference: tuples" do
       ),
       "recursive splat expansion"
   end
+
+  it "errors on recusrive splat expansion (1) (#361)" do
+    assert_error %(
+      require "prelude"
+
+      def foo type, *args
+        foo 1, args.to_a
+      end
+
+      foo "foo", 1
+      ),
+      "recursive splat expansion"
+  end
+
+  it "errors on recursive splat expansion (2) (#361)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      def foo type, *args
+        foo 1, Foo(typeof(args)).new
+      end
+
+      foo "foo", 1
+      ),
+      "recursive splat expansion"
+  end
 end

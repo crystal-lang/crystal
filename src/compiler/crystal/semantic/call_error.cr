@@ -315,7 +315,7 @@ class Crystal::Call
     if a_def.splat_index
       current_splat_type = args.values.last.type
       if previous_splat_type = mod.splat_expansions[a_def]?
-        if current_splat_type.is_a?(TupleInstanceType) && current_splat_type.tuple_types[0] == previous_splat_type
+        if current_splat_type.has_in_type_vars?(previous_splat_type)
           raise "recursive splat expansion: #{previous_splat_type}, #{current_splat_type}, ..."
         end
       end
