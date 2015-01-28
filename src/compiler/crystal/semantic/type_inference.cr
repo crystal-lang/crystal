@@ -1409,6 +1409,15 @@ module Crystal
         node.raise "can't declare alias inside block"
       end
 
+      existing_type = current_type.types[node.name]?
+      if existing_type
+        if existing_type.is_a?(AliasType)
+          node.raise "alias #{node.name} is already defined"
+        else
+          node.raise "can't alias #{node.name} because it's already defined as a #{existing_type.type_desc}"
+        end
+      end
+
       alias_type = AliasType.new(@mod, current_type, node.name)
 
       attach_doc alias_type, node
@@ -1860,6 +1869,10 @@ module Crystal
         node.bind_to type.value
         type.used = true
       when Type
+        if type.is_a?(AliasType) && @in_type_args == 0 && !type.aliased_type?
+          node.raise "infinite recursive definition of alias #{type}"
+        end
+
         node.type = check_type_in_type_args(type.remove_alias_if_simple)
       when ASTNode
         node.syntax_replacement = type

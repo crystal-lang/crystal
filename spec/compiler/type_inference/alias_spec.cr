@@ -67,4 +67,33 @@ describe "type inference: alias" do
       1
       )) { int32 }
   end
+
+  it "errors if alias already defined" do
+    assert_error %(
+      alias A = String
+      alias A = Int32
+      ),
+      "alias A is already defined"
+  end
+
+  it "errors if alias is already defined as another type" do
+    assert_error %(
+      alias String = Int32
+      ),
+      "can't alias String because it's already defined as a class"
+  end
+
+  it "errors if defining infinite recursive alias" do
+    assert_error %(
+      alias A = A
+      ),
+      "infinite recursive definition of alias A"
+  end
+
+  it "errors if defining infinite recursive alias in union" do
+    assert_error %(
+      alias A = Int32 | A
+      ),
+      "infinite recursive definition of alias A"
+  end
 end
