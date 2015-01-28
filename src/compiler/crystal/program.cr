@@ -27,11 +27,10 @@ module Crystal
       @object.abstract = true
 
       @types["Reference"] = @reference = NonGenericClassType.new self, self, "Reference", @object
-      @types["Value"] = @value = ValueType.new self, self, "Value", @object
+      @types["Value"] = @value = AbstractValueType.new self, self, "Value", @object
       @value.abstract = true
 
-      @types["Number"] = @number = ValueType.new self, self, "Number", @value
-      @number.abstract = true
+      @types["Number"] = @number = AbstractValueType.new self, self, "Number", @value
 
       @types["NoReturn"] = @no_return = NoReturnType.new self
       @types["Void"] = @void = VoidType.new self
@@ -39,8 +38,7 @@ module Crystal
       @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, 1
       @types["Char"] = @char = CharType.new self, self, "Char", @value, 4
 
-      @types["Int"] = @int = ValueType.new self, self, "Int", @number
-      @int.abstract = true
+      @types["Int"] = @int = AbstractValueType.new self, self, "Int", @number
 
       @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, 1, 1, :i8
       @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, 1, 2, :u8
@@ -51,8 +49,7 @@ module Crystal
       @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, 8, 7, :i64
       @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, 8, 8, :u64
 
-      @types["Float"] = @float = ValueType.new self, self, "Float", @number
-      @float.abstract = true
+      @types["Float"] = @float = AbstractValueType.new self, self, "Float", @number
 
       @types["Float32"] = @float32 = FloatType.new self, self, "Float32", @float, 4, 9
       @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, 8, 10

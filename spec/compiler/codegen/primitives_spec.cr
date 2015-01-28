@@ -90,4 +90,15 @@ describe "Code gen: primitives" do
   it "passes issue #328" do
     run("((1 == 1) != (2 == 2))").to_b.should be_false
   end
+
+  it "codegens pointer of int" do
+    run(%(
+      ptr = Pointer(Int).malloc(1_u64)
+      ptr.value = 1
+      ptr.value = 2_u8
+      ptr.value = 3_u16
+      ptr.value = 4_u32
+      (ptr.value + 1).to_i32
+      )).to_i.should eq(5)
+  end
 end

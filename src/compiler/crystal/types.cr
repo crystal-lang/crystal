@@ -1141,10 +1141,12 @@ module Crystal
     end
   end
 
-  class ValueType < NonGenericClassType
+  class AbstractValueType < NonGenericClassType
     def initialize(program, container, name, superclass, add_subclass = true)
       super
-      self.struct = true
+      @struct = true
+      @abstract = true
+      @allocated = true
     end
 
     def value?
@@ -1152,7 +1154,11 @@ module Crystal
     end
 
     def passed_by_value?
-      false
+      true
+    end
+
+    def including_types
+      program.union_of all_subclasses
     end
   end
 

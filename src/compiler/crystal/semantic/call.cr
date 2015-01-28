@@ -159,6 +159,11 @@ class Crystal::Call
     end
   end
 
+  def lookup_matches_in(owner : AbstractValueType, arg_types)
+    attach_subclass_observer owner
+    lookup_matches_in(owner.including_types, arg_types)
+  end
+
   def lookup_matches_in(owner : LibType, arg_types, self_type = nil, def_name = self.name)
     raise "lib fun call is not supported in dispatch"
   end

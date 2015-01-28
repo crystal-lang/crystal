@@ -181,7 +181,7 @@ module Crystal
       llvm_type(type.remove_alias)
     end
 
-    def create_llvm_type(type : NonGenericModuleType | GenericClassType)
+    def create_llvm_type(type : NonGenericModuleType | GenericClassType | AbstractValueType)
       if including_type = type.including_types
         llvm_type(including_type)
       else
@@ -198,6 +198,10 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : StaticArrayInstanceType)
+      llvm_type type
+    end
+
+    def create_llvm_struct_type(type : AbstractValueType)
       llvm_type type
     end
 

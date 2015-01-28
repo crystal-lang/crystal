@@ -158,6 +158,16 @@ module Crystal
     end
   end
 
+  class AbstractValueType
+    def common_ancestor(other : Type)
+      if other.implements?(self)
+        self
+      else
+        nil
+      end
+    end
+  end
+
   class GenericClassType
     def common_ancestor(other : Type)
       if other.implements?(self)
@@ -209,6 +219,10 @@ module Crystal
     end
 
     def common_ancestor(other : NonGenericModuleType)
+      other.common_ancestor(self)
+    end
+
+    def common_ancestor(other : AbstractValueType)
       other.common_ancestor(self)
     end
   end
