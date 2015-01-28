@@ -446,6 +446,50 @@ describe "Lexer string" do
     token.type.should eq(:EOF)
   end
 
+  it "lexes regex string with special chars with /.../" do
+    lexer = Lexer.new(%(/\\w/))
+
+    token = lexer.next_token
+    token.type.should eq(:DELIMITER_START)
+    token.delimiter_state.end.should eq('/')
+    token.delimiter_state.nest.should eq('/')
+    token.delimiter_state.open_count.should eq(0)
+
+    delimiter_state = token.delimiter_state
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:STRING)
+    token.value.should eq("\\w")
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:DELIMITER_END)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
+
+  it "lexes regex string with special chars with %r(...)" do
+    lexer = Lexer.new(%(%r(\\w)))
+
+    token = lexer.next_token
+    token.type.should eq(:DELIMITER_START)
+    token.delimiter_state.end.should eq(')')
+    token.delimiter_state.nest.should eq('(')
+    token.delimiter_state.open_count.should eq(0)
+
+    delimiter_state = token.delimiter_state
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:STRING)
+    token.value.should eq("\\w")
+
+    token = lexer.next_string_token(delimiter_state)
+    token.type.should eq(:DELIMITER_END)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
+
   it "lexes string with backslash" do
     lexer = Lexer.new(%("hello \\\n    world"1))
 

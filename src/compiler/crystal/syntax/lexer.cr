@@ -1547,7 +1547,7 @@ module Crystal
         @token.value = string_nest.to_s
         @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
       when '\\'
-        if string_end == '/'
+        if delimiter_state.kind == :regex
           char = next_char
           next_char
           @token.type = :STRING
