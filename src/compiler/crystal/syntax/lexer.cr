@@ -252,79 +252,37 @@ module Crystal
         case next_char
         when '='
           next_char :"%="
-        when '('
-          delimited_pair :string, '(', ')'
-        when '['
-          delimited_pair :string, '[', ']'
-        when '{'
-          delimited_pair :string, '{', '}'
-        when '<'
-          delimited_pair :string, '<', '>'
+        when '(', '[', '{', '<'
+          delimited_pair :string, current_char, closing_char
         when 'i'
           case peek_next_char
-          when '('
-            next_char
+          when '(', '{', '[', '<'
+            start_char = next_char
             next_char :SYMBOL_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '(', ')', 0)
-          when '{'
-            next_char
-            next_char :SYMBOL_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '{', '}', 0)
-          when '['
-            next_char
-            next_char :SYMBOL_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '[', ']', 0)
-          when '<'
-            next_char
-            next_char :SYMBOL_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, '<', '>', 0)
+            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char), 0)
           else
             @token.type = :"%"
           end
         when 'r'
           case next_char
-          when '('
-            delimited_pair :regex, '(', ')'
-          when '['
-            delimited_pair :regex, '[', ']'
-          when '{'
-            delimited_pair :regex, '{', '}'
-          when '<'
-            delimited_pair :regex, '<', '>'
+          when '(', '[', '{', '<'
+            delimited_pair :regex, current_char, closing_char
           else
             raise "unknown %r char"
           end
         when 'x'
           case next_char
-          when '('
-            delimited_pair :command, '(', ')'
-          when '['
-            delimited_pair :command, '[', ']'
-          when '{'
-            delimited_pair :command, '{', '}'
-          when '<'
-            delimited_pair :command, '<', '>'
+          when '(', '[', '{', '<'
+            delimited_pair :command, current_char, closing_char
           else
             raise "unknown %x char"
           end
         when 'w'
           case peek_next_char
-          when '('
-            next_char
+          when '(', '{', '[', '<'
+            start_char = next_char
             next_char :STRING_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:string_array, '(', ')', 0)
-          when '{'
-            next_char
-            next_char :STRING_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:string_array, '{', '}', 0)
-          when '['
-            next_char
-            next_char :STRING_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:string_array, '[', ']', 0)
-          when '<'
-            next_char
-            next_char :STRING_ARRAY_START
-            @token.delimiter_state = Token::DelimiterState.new(:string_array, '<', '>', 0)
+            @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char), 0)
           else
             @token.type = :"%"
           end
@@ -1844,14 +1802,9 @@ module Crystal
             if delimiter_state
               whitespace = false
             else
-              char = next_char
-              case char
-              when '('
-                delimiter_state = Token::DelimiterState.new(:string, '(', ')', 1)
-              when '['
-                delimiter_state = Token::DelimiterState.new(:string, '[', ']', 1)
-              when '<'
-                delimiter_state = Token::DelimiterState.new(:string, '<', '>', 1)
+              case char = next_char
+              when '(', '[', '<', '{'
+                delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
               else
                 whitespace = false
               end
@@ -2196,6 +2149,16 @@ module Crystal
 
     def ident_part_or_end?(char)
       ident_part?(char) || char == '?' || char == '!'
+    end
+
+    def closing_char(char = current_char)
+      case char
+      when '<' then '>'
+      when '(' then ')'
+      when '[' then ']'
+      when '{' then '}'
+      else          char
+      end
     end
 
     def skip_space
