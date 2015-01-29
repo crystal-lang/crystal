@@ -145,6 +145,10 @@ describe "Enumerable" do
     end
   end
 
+  it "to_h" do
+    Tuple.new({:a, :b}, {:c, :d}).to_h.should eq({a: :b, c: :d})
+  end
+
   it "indexes by" do
     ["foo", "hello", "goodbye", "something"].index_by(&.length).should eq({
         3 => "foo",
