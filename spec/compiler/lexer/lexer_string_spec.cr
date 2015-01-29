@@ -179,30 +179,26 @@ describe "Lexer string" do
 
   it "lexes string with unicode codepoint" do
     lexer = Lexer.new "\"\\uFEDA\""
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token = lexer.next_string_token(token.delimiter_state)
-    token.type.should eq(:STRING)
-    (token.value as String).char_at(0).ord.should eq(0xFEDA)
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_start_correctly
+    tester.next_unicode_tokens_should_be(0xFEDA)
   end
 
   it "lexes string with unicode codepoint in curly" do
     lexer = Lexer.new "\"\\u{A5}\""
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token = lexer.next_string_token(token.delimiter_state)
-    token.type.should eq(:STRING)
-    (token.value as String).char_at(0).ord.should eq(0xA5)
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_start_correctly
+    tester.next_unicode_tokens_should_be(0xA5)
   end
 
   it "lexes string with unicode codepoint in curly multiple times" do
     lexer = Lexer.new "\"\\u{A5 A6 10FFFF}\""
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token = lexer.next_string_token(token.delimiter_state)
-    token.type.should eq(:STRING)
-    string = token.value as String
-    string.chars.map(&.ord).should eq([0xA5, 0xA6, 0x10FFFF])
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_start_correctly
+    tester.next_unicode_tokens_should_be([0xA5, 0xA6, 0x10FFFF])
   end
 
   assert_syntax_error "\"\\uFEDZ\"", "expected hexadecimal character in unicode escape"
@@ -211,119 +207,51 @@ describe "Lexer string" do
 
   it "lexes backtick string" do
     lexer = Lexer.new(%(`hello`))
+    tester = LexerObjects::Strings.new(lexer)
 
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token.delimiter_state.end.should eq('`')
-    token.delimiter_state.nest.should eq('`')
-    token.delimiter_state.open_count.should eq(0)
-
-    delimiter_state = token.delimiter_state
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:STRING)
-    token.value.should eq("hello")
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:DELIMITER_END)
-
-    token = lexer.next_token
-    token.type.should eq(:EOF)
+    tester.string_should_be_delimited_by('`', '`')
+    tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
   end
 
   it "lexes regex string" do
     lexer = Lexer.new(%(/hello/))
+    tester = LexerObjects::Strings.new(lexer)
 
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token.delimiter_state.end.should eq('/')
-    token.delimiter_state.nest.should eq('/')
-    token.delimiter_state.open_count.should eq(0)
-
-    delimiter_state = token.delimiter_state
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:STRING)
-    token.value.should eq("hello")
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:DELIMITER_END)
-
-    token = lexer.next_token
-    token.type.should eq(:EOF)
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be("hello")
+    tester.string_should_end_correctly
   end
 
   it "lexes regex string with special chars with /.../" do
     lexer = Lexer.new(%(/\\w/))
+    tester = LexerObjects::Strings.new(lexer)
 
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token.delimiter_state.end.should eq('/')
-    token.delimiter_state.nest.should eq('/')
-    token.delimiter_state.open_count.should eq(0)
-
-    delimiter_state = token.delimiter_state
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:STRING)
-    token.value.should eq("\\w")
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:DELIMITER_END)
-
-    token = lexer.next_token
-    token.type.should eq(:EOF)
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be("\\w")
+    tester.string_should_end_correctly
   end
 
   it "lexes regex string with special chars with %r(...)" do
     lexer = Lexer.new(%(%r(\\w)))
 
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token.delimiter_state.end.should eq(')')
-    token.delimiter_state.nest.should eq('(')
-    token.delimiter_state.open_count.should eq(0)
+    tester = LexerObjects::Strings.new(lexer)
 
-    delimiter_state = token.delimiter_state
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:STRING)
-    token.value.should eq("\\w")
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:DELIMITER_END)
-
-    token = lexer.next_token
-    token.type.should eq(:EOF)
+    tester.string_should_be_delimited_by('(', ')')
+    tester.next_string_token_should_be("\\w")
+    tester.string_should_end_correctly
   end
 
   it "lexes string with backslash" do
     lexer = Lexer.new(%("hello \\\n    world"1))
+    tester = LexerObjects::Strings.new(lexer)
 
-    token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
-    token.delimiter_state.end.should eq('"')
-    token.delimiter_state.nest.should eq('"')
-    token.delimiter_state.open_count.should eq(0)
-
-    delimiter_state = token.delimiter_state
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:STRING)
-    token.value.should eq("hello ")
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:STRING)
-    token.value.should eq("world")
-
-    token = lexer.next_string_token(delimiter_state)
-    token.type.should eq(:DELIMITER_END)
-
-    token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.line_number.should eq(2)
-
-    token = lexer.next_token
-    token.type.should eq(:EOF)
+    tester.string_should_be_delimited_by('"', '"')
+    tester.next_string_token_should_be("hello ")
+    tester.next_string_token_should_be("world")
+    tester.string_should_end_correctly(eof: false)
+    tester.next_token_should_be(:NUMBER)
+    tester.token_should_be_at(line: 2)
+    tester.should_have_reached_eof
   end
 end

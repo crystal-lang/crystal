@@ -24,6 +24,13 @@ module LexerObjects
       end
     end
 
+    def next_unicode_tokens_should_be(expected_unicode_codes)
+      codes = Array.wrap(expected_unicode_codes)
+      @token = lexer.next_string_token(token.delimiter_state)
+      token.type.should eq(:STRING)
+      (token.value as String).chars.map(&.ord).should eq(codes)
+    end
+
     def next_string_token_should_be(expected_string)
       @token = lexer.next_string_token(token.delimiter_state)
       token.type.should eq(:STRING)
@@ -56,20 +63,22 @@ module LexerObjects
       token.type.should eq(:"}")
     end
 
-    def token_should_be_at(line = 1, column = 1)
-      token.line_number.should eq(line)
-      token.column_number.should eq(column)
+    def token_should_be_at(line = nil, column = nil)
+      token.line_number.should eq(line) if line
+      token.column_number.should eq(column) if column
     end
 
-    def next_token_should_be_at(line = 1, column = 1)
+    def next_token_should_be_at(line = nil, column = nil)
       @token = lexer.next_token
       token_should_be_at(line: line, column: column)
     end
 
-    def string_should_end_correctly
+    def string_should_end_correctly(eof = true)
       @token = lexer.next_string_token(token.delimiter_state)
       token.type.should eq(:DELIMITER_END)
-      should_have_reached_eof
+      if eof
+        should_have_reached_eof
+      end
     end
 
     def should_have_reached_eof
