@@ -439,7 +439,7 @@ module Crystal
           case char = @token.value.to_s[0]
           when '+', '-'
             left = Call.new(left, char.to_s, [NumberLiteral.new(@token.value.to_s.byte_slice(1), @token.number_kind)] of ASTNode, name_column_number: @token.column_number).at(location)
-            next_token_skip_space_or_newline
+            next_token_skip_space
           else
             return left
           end
