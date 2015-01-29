@@ -1,0 +1,82 @@
+module LexerObjects
+  class Strings
+    def initialize(@lexer)
+      @token = Token.new
+    end
+
+    def string_should_be_delimited_by(expected_start, expected_end)
+      string_should_start_correctly
+      token.delimiter_state.nest.should eq(expected_start)
+      token.delimiter_state.end.should eq(expected_end)
+      token.delimiter_state.open_count.should eq(0)
+    end
+
+    def string_should_start_correctly
+      @token = lexer.next_token
+      token.type.should eq(:DELIMITER_START)
+    end
+
+    def next_token_should_be(expected_type, expected_value = nil)
+      @token = lexer.next_token
+      token.type.should eq(expected_type)
+      if expected_value
+        token.value.should eq(expected_value)
+      end
+    end
+
+    def next_string_token_should_be(expected_string)
+      @token = lexer.next_string_token(token.delimiter_state)
+      token.type.should eq(:STRING)
+      token.value.should eq(expected_string)
+    end
+
+    def next_string_token_should_be_opening
+      @token = lexer.next_string_token(token.delimiter_state)
+      token.type.should eq(:STRING)
+      token.value.should eq(token.delimiter_state.nest.to_s)
+      token.delimiter_state.open_count.should eq(1)
+    end
+
+    def next_string_token_should_be_closing
+      @token = lexer.next_string_token(token.delimiter_state)
+      token.type.should eq(:STRING)
+      token.value.should eq(token.delimiter_state.end.to_s)
+      token.delimiter_state.open_count.should eq(0)
+    end
+
+    def string_should_have_an_interpolation_of(interpolated_variable_name)
+      @token = lexer.next_string_token(token.delimiter_state)
+      token.type.should eq(:INTERPOLATION_START)
+
+      @token = lexer.next_token
+      token.type.should eq(:IDENT)
+      token.value.should eq(interpolated_variable_name)
+
+      @token = lexer.next_token
+      token.type.should eq(:"}")
+    end
+
+    def token_should_be_at(line = 1, column = 1)
+      token.line_number.should eq(line)
+      token.column_number.should eq(column)
+    end
+
+    def next_token_should_be_at(line = 1, column = 1)
+      @token = lexer.next_token
+      token_should_be_at(line: line, column: column)
+    end
+
+    def string_should_end_correctly
+      @token = lexer.next_string_token(token.delimiter_state)
+      token.type.should eq(:DELIMITER_END)
+      should_have_reached_eof
+    end
+
+    def should_have_reached_eof
+      @token = lexer.next_token
+      token.type.should eq(:EOF)
+    end
+
+    private getter :lexer, :token
+  end
+end
