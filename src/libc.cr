@@ -8,9 +8,11 @@ lib LibC
   ifdef x86_64
     alias IntT = Int64
     alias UIntT = UInt64
+    alias LongT = Int64
   else
     alias IntT = Int32
     alias UIntT = UInt32
+    alias LongT = Int32
   end
 
   alias PtrDiffT = IntT

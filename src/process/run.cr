@@ -1,6 +1,5 @@
 lib LibC
   fun execvp(file : UInt8*, argv : UInt8**) : Int32
-  fun select(nfds : Int32, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : Void*) : Int32
 end
 
 def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
@@ -69,46 +68,39 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
   end
 
   while process_input || process_output
-    nfds = 0
-    wfds = Process::FdSet.new
-    rfds = Process::FdSet.new
+    wios = nil
+    rios = nil
 
     if process_input
-      wfds.set(process_input)
-      nfds = Math.max(nfds, process_input.fd)
+      wios = {process_input}
     end
 
     if process_output
-      rfds.set(process_output)
-      nfds = Math.max(nfds, process_output.fd)
+      rios = {process_output}
     end
 
     buffer :: UInt8[2048]
 
-    case LibC.select(nfds + 1, pointerof(rfds) as Void*, pointerof(wfds) as Void*, nil, nil)
-    when 0
-      raise "Timeout"
-    when -1
-      raise Errno.new("Error waiting with select()")
-    else
-      if process_input && wfds.is_set(process_input)
-        bytes = input_io.not_nil!.read(buffer.to_slice)
-        if bytes == 0
-          process_input.close
-          process_input = nil
-        else
-          process_input.write(buffer.to_slice, bytes)
-        end
-      end
+    ios = IO.select(rios, wios)
+    next unless ios
 
-      if process_output && rfds.is_set(process_output)
-        bytes = process_output.read(buffer.to_slice)
-        if bytes == 0
-          process_output.close
-          process_output = nil
-        else
-          status_output.not_nil!.write(buffer.to_slice, bytes)
-        end
+    if process_input && ios.includes? process_input
+      bytes = input_io.not_nil!.read(buffer.to_slice)
+      if bytes == 0
+        process_input.close
+        process_input = nil
+      else
+        process_input.write(buffer.to_slice, bytes)
+      end
+    end
+
+    if process_output && ios.includes? process_output
+      bytes = process_output.read(buffer.to_slice)
+      if bytes == 0
+        process_output.close
+        process_output = nil
+      else
+        status_output.not_nil!.write(buffer.to_slice, bytes)
       end
     end
   end

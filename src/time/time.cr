@@ -6,9 +6,15 @@ lib LibC
     tv_nsec : LibC::TimeT
   end
 
+  ifdef darwin
+    alias UsecT = Int32
+  else
+    alias UsecT = LongT
+  end
+
   struct TimeVal
     tv_sec  : LibC::TimeT
-    tv_usec : Int32
+    tv_usec : LibC::UsecT
   end
 
   struct TimeZone
