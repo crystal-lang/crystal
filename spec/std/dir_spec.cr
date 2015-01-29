@@ -74,4 +74,30 @@ describe "Dir" do
       end
     end
   end
+
+  describe "chdir" do
+    it "should work" do
+      cwd = Dir.working_directory
+      Dir.chdir("..")
+      Dir.working_directory.should_not eq(cwd)
+      Dir.cd(cwd)
+      Dir.working_directory.should eq(cwd)
+    end
+
+    it "raises" do
+      expect_raises do
+        Dir.chdir("/nope")
+      end
+    end
+
+    it "accepts a block" do
+      cwd = Dir.working_directory
+
+      Dir.chdir("..") do
+        Dir.working_directory.should_not eq(cwd)
+      end
+
+      Dir.working_directory.should eq(cwd)
+    end
+  end
 end
