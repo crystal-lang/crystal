@@ -1,5 +1,5 @@
 @[Link("pcre")]
-lib PCRE
+lib LibPCRE
   type Pcre = Void*
   fun compile = pcre_compile(pattern : UInt8*, options : Int32, errptr : UInt8**, erroffset : Int32*, tableptr : Void*) : Pcre
   fun exec = pcre_exec(code : Pcre, extra : Void*, subject : UInt8*, length : Int32, offset : Int32, options : Int32,
@@ -12,4 +12,4 @@ lib PCRE
   $pcre_malloc : (UInt32 -> Void*)
 end
 
-PCRE.pcre_malloc = ->GC.malloc(UInt32)
+LibPCRE.pcre_malloc = ->GC.malloc(UInt32)

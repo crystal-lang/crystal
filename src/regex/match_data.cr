@@ -27,7 +27,7 @@ class MatchData
   end
 
   def [](group_name : String)
-    ret = PCRE.get_named_substring(@code, @string, @ovector, @length + 1, group_name, out value)
+    ret = LibPCRE.get_named_substring(@code, @string, @ovector, @length + 1, group_name, out value)
     raise ArgumentError.new("Match group named '#{group_name}' does not exist") if ret < 0
     String.new(value)
   end

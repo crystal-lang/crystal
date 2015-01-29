@@ -8,7 +8,7 @@ class Thread(T, R)
   def initialize(arg : T, &func : T -> R)
     @func = func
     @arg = arg
-    ret = PThread.create(out @th, nil, ->(data) {
+    ret = LibPThread.create(out @th, nil, ->(data) {
         (data as Thread(T, R)).start
       }, self as Void*)
 
@@ -18,7 +18,7 @@ class Thread(T, R)
   end
 
   def join
-    if PThread.join(@th, out _ret) != 0
+    if LibPThread.join(@th, out _ret) != 0
       raise Errno.new("pthread_join")
     end
 

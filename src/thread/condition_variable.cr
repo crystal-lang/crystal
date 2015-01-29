@@ -1,18 +1,18 @@
 class ConditionVariable
   def initialize
-    PThread.cond_init(out @cond, nil)
+    LibPThread.cond_init(out @cond, nil)
   end
 
   def signal
-    PThread.cond_signal(self)
+    LibPThread.cond_signal(self)
   end
 
   def wait(mutex : Mutex)
-    PThread.cond_wait(self, mutex)
+    LibPThread.cond_wait(self, mutex)
   end
 
   def finalize
-    PThread.cond_destroy(pointerof(@cond))
+    LibPThread.cond_destroy(pointerof(@cond))
   end
 
   def to_unsafe

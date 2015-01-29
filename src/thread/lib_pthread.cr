@@ -1,4 +1,4 @@
-lib PThread
+lib LibPThread
   type Thread = Void*
 
   ifdef darwin

@@ -1,4 +1,4 @@
-lib Termios
+lib LibTermios
   alias Cc = Char
   alias Tcflag = UInt64
 
@@ -165,9 +165,9 @@ lib Termios
 
   end
 
-  fun cfmakeraw(termios_p : Termios::Struct*) : Int32
-  fun tcgetattr(fd : Int32, termios_p : Termios::Struct*) : Int32
-  fun tcsetattr(fd : Int32, optional_actions : OptionalActions, termios_p : Termios::Struct*) : Int32
+  fun cfmakeraw(termios_p : LibTermios::Struct*) : Int32
+  fun tcgetattr(fd : Int32, termios_p : LibTermios::Struct*) : Int32
+  fun tcsetattr(fd : Int32, optional_actions : OptionalActions, termios_p : LibTermios::Struct*) : Int32
 end
 
 struct CFileIO
@@ -179,26 +179,26 @@ struct CFileIO
   end
 
   def cooked!
-    if Termios.tcgetattr(fd, out mode) != 0
+    if LibTermios.tcgetattr(fd, out mode) != 0
       raise Errno.new "can't set IO#cooked!"
     end
     cooked_from_tc_mode!
   end
 
   macro cooked_from_tc_mode!
-    mode.iflag |= Termios::IFlag::BRKINT |
-                  Termios::IFlag::ISTRIP |
-                  Termios::IFlag::ICRNL  |
-                  Termios::IFlag::IXON
-    mode.oflag |= Termios::OFlag::OPOST
-    mode.lflag |= Termios::LFlag::ECHO   |
-                  Termios::LFlag::ECHOE  |
-                  Termios::LFlag::ECHOK  |
-                  Termios::LFlag::ECHONL |
-                  Termios::LFlag::ICANON |
-                  Termios::LFlag::ISIG   |
-                  Termios::LFlag::IEXTEN
-    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, pointerof(mode))
+    mode.iflag |= LibTermios::IFlag::BRKINT |
+                  LibTermios::IFlag::ISTRIP |
+                  LibTermios::IFlag::ICRNL  |
+                  LibTermios::IFlag::IXON
+    mode.oflag |= LibTermios::OFlag::OPOST
+    mode.lflag |= LibTermios::LFlag::ECHO   |
+                  LibTermios::LFlag::ECHOE  |
+                  LibTermios::LFlag::ECHOK  |
+                  LibTermios::LFlag::ECHONL |
+                  LibTermios::LFlag::ICANON |
+                  LibTermios::LFlag::ISIG   |
+                  LibTermios::LFlag::IEXTEN
+    LibTermios.tcsetattr(fd, LibTermios::OptionalActions::TCSANOW, pointerof(mode))
   end
 
   def raw
@@ -209,7 +209,7 @@ struct CFileIO
   end
 
   def raw!
-    if Termios.tcgetattr(fd, out mode) != 0
+    if LibTermios.tcgetattr(fd, out mode) != 0
       raise Errno.new "can't set IO#raw!"
     end
 
@@ -217,19 +217,19 @@ struct CFileIO
   end
 
   macro raw_from_tc_mode!
-    Termios.cfmakeraw(pointerof(mode))
-    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, pointerof(mode))
+    LibTermios.cfmakeraw(pointerof(mode))
+    LibTermios.tcsetattr(fd, LibTermios::OptionalActions::TCSANOW, pointerof(mode))
   end
 
   private def preserving_tc_mode(msg)
-    if Termios.tcgetattr(fd, out mode) != 0
+    if LibTermios.tcgetattr(fd, out mode) != 0
       raise Errno.new msg
     end
     before = mode
     begin
       yield mode
     ensure
-      Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, pointerof(before))
+      LibTermios.tcsetattr(fd, LibTermios::OptionalActions::TCSANOW, pointerof(before))
     end
   end
 

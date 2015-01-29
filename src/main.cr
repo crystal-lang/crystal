@@ -1,4 +1,4 @@
-lib CrystalMain
+lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
@@ -40,7 +40,7 @@ end
 macro redefine_main(name = main)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     GC.init
-    {{yield CrystalMain.__crystal_main(argc, argv)}}
+    {{yield LibCrystalMain.__crystal_main(argc, argv)}}
     0
   rescue ex
     puts ex

@@ -1,4 +1,4 @@
-lib ABI
+lib LibABI
   struct UnwindException
     exception_class : LibC::SizeT
     exception_cleanup : LibC::SizeT
@@ -72,11 +72,11 @@ struct LEBReader
   end
 end
 
-fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
-  start = ABI.unwind_get_region_start(context)
-  ip = ABI.unwind_get_ip(context)
+fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : LibABI::UnwindException*, context : Void*) : Int32
+  start = LibABI.unwind_get_region_start(context)
+  ip = LibABI.unwind_get_ip(context)
   throw_offset = ip - 1 - start
-  lsd = ABI.unwind_get_language_specific_data(context)
+  lsd = LibABI.unwind_get_language_specific_data(context)
   # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
   leb = LEBReader.new(lsd)
@@ -97,29 +97,29 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
 
     if cs_addr != 0
       if cs_offset <= throw_offset && throw_offset <= cs_offset + cs_length
-        if (actions & ABI::UA_SEARCH_PHASE) > 0
+        if (actions & LibABI::UA_SEARCH_PHASE) > 0
           # puts "found"
-          return ABI::URC_HANDLER_FOUND
+          return LibABI::URC_HANDLER_FOUND
         end
 
-        if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, ABI::EH_REGISTER_0, LibC::SizeT.cast(exception_object.address))
-          ABI.unwind_set_gr(context, ABI::EH_REGISTER_1, LibC::SizeT.cast(exception_object.value.exception_type_id))
-          ABI.unwind_set_ip(context, start + cs_addr)
+        if (actions & LibABI::UA_HANDLER_FRAME) > 0
+          LibABI.unwind_set_gr(context, LibABI::EH_REGISTER_0, LibC::SizeT.cast(exception_object.address))
+          LibABI.unwind_set_gr(context, LibABI::EH_REGISTER_1, LibC::SizeT.cast(exception_object.value.exception_type_id))
+          LibABI.unwind_set_ip(context, start + cs_addr)
           # puts "install"
-          return ABI::URC_INSTALL_CONTEXT
+          return LibABI::URC_INSTALL_CONTEXT
         end
       end
     end
   end
 
   # puts "continue"
-  return ABI::URC_CONTINUE_UNWIND
+  return LibABI::URC_CONTINUE_UNWIND
 end
 
 @[Raises]
-fun __crystal_raise(unwind_ex : ABI::UnwindException*) : NoReturn
-  ret = ABI.unwind_raise_exception(unwind_ex)
+fun __crystal_raise(unwind_ex : LibABI::UnwindException*) : NoReturn
+  ret = LibABI.unwind_raise_exception(unwind_ex)
   LibC.printf "Could not raise"
   # caller.each do |point|
     # puts point
@@ -127,12 +127,12 @@ fun __crystal_raise(unwind_ex : ABI::UnwindException*) : NoReturn
   LibC.exit(ret)
 end
 
-fun __crystal_get_exception(unwind_ex : ABI::UnwindException*) : UInt64
+fun __crystal_get_exception(unwind_ex : LibABI::UnwindException*) : UInt64
   unwind_ex.value.exception_object
 end
 
 def raise(ex : Exception)
-  unwind_ex = Pointer(ABI::UnwindException).malloc(1)
+  unwind_ex = Pointer(LibABI::UnwindException).malloc(1)
   unwind_ex.value.exception_class = LibC::SizeT.zero
   unwind_ex.value.exception_cleanup = LibC::SizeT.zero
   unwind_ex.value.exception_object = ex.object_id

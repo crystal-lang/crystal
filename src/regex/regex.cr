@@ -10,15 +10,15 @@ class Regex
   getter source
 
   def initialize(@source, modifiers = 0)
-    @re = PCRE.compile(@source, modifiers | UTF_8, out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, modifiers | UTF_8, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
-    PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, out @captures)
+    LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
   def match(str, pos = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
-    ret = PCRE.exec(@re, nil, str, str.bytesize, pos, options, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, nil, str, str.bytesize, pos, options, ovector, ovector_size)
     if ret > 0
       MatchData.last = MatchData.new(self, @re, str, pos, ovector, @captures)
     else
