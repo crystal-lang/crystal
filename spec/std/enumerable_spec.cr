@@ -60,12 +60,24 @@ describe "Enumerable" do
     assert { [1, 2, 3].min_by { |x| -x }.should eq(3) }
   end
 
+  describe "min_of" do
+    assert { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+  end
+
   describe "max_by" do
     assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
   end
 
+  describe "max_of" do
+    assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+  end
+
   describe "minmax_by" do
     assert { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
+  end
+
+  describe "minmax_of" do
+    assert { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
   end
 
   describe "take" do

@@ -179,20 +179,35 @@ module Enumerable(T)
   end
 
   def max_by(&block : T -> U)
-    min :: U
+    max :: U
     obj :: T
     found = false
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > min
-        min = value
+      if i == 0 || value > max
+        max = value
         obj = elem
       end
       found = true
     end
 
     found ? obj : raise EmptyEnumerable.new
+  end
+
+  def max_of(&block : T -> U)
+    max :: U
+    found = false
+
+    each_with_index do |elem, i|
+      value = yield elem
+      if i == 0 || value > max
+        max = value
+      end
+      found = true
+    end
+
+    found ? max : raise EmptyEnumerable.new
   end
 
   def min
@@ -226,6 +241,25 @@ module Enumerable(T)
     found ? {objmin, objmax} : raise EmptyEnumerable.new
   end
 
+  def minmax_of(&block : T -> U)
+    min :: U
+    max :: U
+    found = false
+
+    each_with_index do |elem, i|
+      value = yield elem
+      if i == 0 || value < min
+        min = value
+      end
+      if i == 0 || value > max
+        max = value
+      end
+      found = true
+    end
+
+    found ? {min, max} : raise EmptyEnumerable.new
+  end
+
   def min_by(&block : T -> U)
     min :: U
     obj :: T
@@ -241,6 +275,21 @@ module Enumerable(T)
     end
 
     found ? obj : raise EmptyEnumerable.new
+  end
+
+  def min_of(&block : T -> U)
+    min :: U
+    found = false
+
+    each_with_index do |elem, i|
+      value = yield elem
+      if i == 0 || value < min
+        min = value
+      end
+      found = true
+    end
+
+    found ? min : raise EmptyEnumerable.new
   end
 
   def none?(&block : T -> U)
