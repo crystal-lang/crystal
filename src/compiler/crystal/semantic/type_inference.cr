@@ -929,11 +929,11 @@ module Crystal
 
     # Rewrite:
     #
-    #     C::Struct.new arg0: value0, argN: value0
+    #     LibFoo::Struct.new arg0: value0, argN: value0
     #
     # To:
     #
-    #   temp = C::Struct.new
+    #   temp = LibFoo::Struct.new
     #   temp.arg0 = value0
     #   temp.argN = valueN
     #   temp

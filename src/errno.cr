@@ -1,4 +1,4 @@
-lib C
+lib LibC
   ifdef linux
     @[ThreadLocal]
     $errno : Int32
@@ -11,6 +11,6 @@ end
 
 class Errno < Exception
   def initialize(message)
-    super "#{message}: #{String.new(C.strerror(C.errno))}"
+    super "#{message}: #{String.new(LibC.strerror(LibC.errno))}"
   end
 end

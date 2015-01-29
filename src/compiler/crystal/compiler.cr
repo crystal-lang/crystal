@@ -194,13 +194,13 @@ module Crystal
           jobs_count += 1
 
           if jobs_count >= @n_threads
-            C.waitpid(-1, out stat_loc, 0)
+            LibC.waitpid(-1, out stat_loc, 0)
             jobs_count -= 1
           end
         end
 
         while jobs_count > 0
-          C.waitpid(-1, out stat_loc, 0)
+          LibC.waitpid(-1, out stat_loc, 0)
           jobs_count -= 1
         end
       end

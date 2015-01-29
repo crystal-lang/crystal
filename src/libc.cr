@@ -1,4 +1,4 @@
-lib C
+lib LibC
   ifdef darwin
     alias ModeT = UInt16
   elsif linux
@@ -23,5 +23,5 @@ lib C
   fun free(ptr : Void*)
   fun time(t : Int64) : Int64
   fun free(ptr : Void*)
-  fun memcmp(p1 : Void*, p2 : Void*, size : C::SizeT) : Int32
+  fun memcmp(p1 : Void*, p2 : Void*, size : LibC::SizeT) : Int32
 end

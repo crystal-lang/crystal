@@ -1,4 +1,4 @@
-lib C
+lib LibC
   enum FCNTL
     F_GETFL = 3
     F_SETFL = 4
@@ -37,12 +37,12 @@ lib C
   fun waitpid(pid : Int32, stat_loc : Int32*, options : Int32) : Int32
   fun open(path : UInt8*, oflag : Int32, ...) : Int32
   fun dup2(fd : Int32, fd2 : Int32) : Int32
-  fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SSizeT
-  fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SSizeT
+  fun read(fd : Int32, buffer : UInt8*, nbyte : LibC::SizeT) : LibC::SSizeT
+  fun write(fd : Int32, buffer : UInt8*, nbyte : LibC::SizeT) : LibC::SSizeT
   fun pipe(filedes : Int32[2]*) : Int32
 
   # In fact lseek's offset is off_t, but it matches the definition of size_t
-  fun lseek(fd : Int32, offset : C::SizeT, whence : Int32) : Int32
+  fun lseek(fd : Int32, offset : LibC::SizeT, whence : Int32) : Int32
   fun close(fd : Int32) : Int32
   fun isatty(fd : Int32) : Int32
 end
@@ -66,7 +66,7 @@ module IO
   end
 
   def self.pipe
-    if C.pipe(out pipe_fds) != 0
+    if LibC.pipe(out pipe_fds) != 0
       raise Errno.new("Could not create pipe")
     end
 
@@ -74,7 +74,7 @@ module IO
   end
 
   def reopen(other)
-    if C.dup2(self.fd, other.fd) == -1
+    if LibC.dup2(self.fd, other.fd) == -1
       raise Errno.new("Could not reopen file descriptor")
     end
 

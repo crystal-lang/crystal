@@ -1,18 +1,18 @@
 require "time"
 
-lib C
+lib LibC
   ifdef darwin
     struct Stat
       st_dev : Int32
       st_ino : Int32
-      st_mode : C::ModeT
+      st_mode : LibC::ModeT
       st_nlink : UInt16
       st_uid : UInt32
       st_gid : UInt32
       st_rdev : Int32
-      st_atimespec : C::TimeSpec
-      st_mtimespec : C::TimeSpec
-      st_ctimespec : C::TimeSpec
+      st_atimespec : LibC::TimeSpec
+      st_mtimespec : LibC::TimeSpec
+      st_ctimespec : LibC::TimeSpec
       st_size : Int64
       st_blocks : Int64
       st_blksize : Int32
@@ -28,7 +28,7 @@ lib C
         st_dev : UInt64
         st_ino : UInt64
         st_nlink : UInt64
-        st_mode : C::ModeT
+        st_mode : LibC::ModeT
         st_uid : UInt32
         st_gid : UInt32
         __pad0 : UInt32
@@ -36,9 +36,9 @@ lib C
         st_size : Int64
         st_blksize : Int64
         st_blocks : Int64
-        st_atimespec : C::TimeSpec
-        st_mtimespec : C::TimeSpec
-        st_ctimespec : C::TimeSpec
+        st_atimespec : LibC::TimeSpec
+        st_mtimespec : LibC::TimeSpec
+        st_ctimespec : LibC::TimeSpec
         __unused0 : Int64
         __unused1 : Int64
         __unused2 : Int64
@@ -48,7 +48,7 @@ lib C
         st_dev : UInt64
         __pad1 : UInt16
         st_ino : UInt32
-        st_mode : C::ModeT
+        st_mode : LibC::ModeT
         st_nlink : UInt32
         st_uid : UInt32
         st_gid : UInt32
@@ -57,9 +57,9 @@ lib C
         st_size : UInt32
         st_blksize : Int32
         st_blocks : Int32
-        st_atimespec : C::TimeSpec
-        st_mtimespec : C::TimeSpec
-        st_ctimespec : C::TimeSpec
+        st_atimespec : LibC::TimeSpec
+        st_mtimespec : LibC::TimeSpec
+        st_ctimespec : LibC::TimeSpec
         __unused4 : UInt64
         __unused5 : UInt64
       end
@@ -86,12 +86,12 @@ end
 class File
   class Stat
     def initialize(filename : String)
-      if C.stat(filename, out @stat) != 0
+      if LibC.stat(filename, out @stat) != 0
         raise Errno.new("Unable to get stat for '#{filename}'")
       end
     end
 
-    def initialize(@stat : C::Stat)
+    def initialize(@stat : LibC::Stat)
     end
 
     def atime
@@ -161,35 +161,35 @@ class File
     end
 
     def blockdev?
-      (@stat.st_mode & C::S_IFMT) == C::S_IFBLK
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFBLK
     end
 
     def chardev?
-      (@stat.st_mode & C::S_IFMT) == C::S_IFCHR
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFCHR
     end
 
     def directory?
-      (@stat.st_mode & C::S_IFMT) == C::S_IFDIR
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFDIR
     end
 
     def file?
-      (@stat.st_mode & C::S_IFMT) == C::S_IFREG
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFREG
     end
 
     def setuid?
-      (@stat.st_mode & C::S_IFMT) == C::S_ISUID
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISUID
     end
 
     def setgid?
-      (@stat.st_mode & C::S_IFMT) == C::S_ISGID
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISGID
     end
 
     def socket?
-      (@stat.st_mode & C::S_IFMT) == C::S_IFSOCK
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFSOCK
     end
 
     def sticky?
-      (@stat.st_mode & C::S_IFMT) == C::S_ISVTX
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISVTX
     end
   end
 end

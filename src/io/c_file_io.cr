@@ -1,4 +1,4 @@
-lib C
+lib LibC
   ifdef windows
     struct IoBuf
       data : Int32[8]
@@ -9,11 +9,11 @@ lib C
   end
 
   fun fopen(filename : UInt8*, mode : UInt8*) : File
-  fun fwrite(buf : UInt8*, size : C::SizeT, count : C::SizeT, fp : File) : SizeT
+  fun fwrite(buf : UInt8*, size : LibC::SizeT, count : LibC::SizeT, fp : File) : SizeT
   fun fclose(file : File) : Int32
   fun feof(file : File) : Int32
   fun fflush(file : File) : Int32
-  fun fread(buffer : UInt8*, size : C::SizeT, nitems : C::SizeT, file : File) : Int32
+  fun fread(buffer : UInt8*, size : LibC::SizeT, nitems : LibC::SizeT, file : File) : Int32
   fun access(filename : UInt8*, how : Int32) : Int32
   fun fileno(file : File) : Int32
   fun realpath(path : UInt8*, resolved_path : UInt8*) : UInt8*
@@ -61,36 +61,36 @@ struct CFileIO
   end
 
   def read(slice : Slice(UInt8), count)
-    C.fread(slice.pointer(count), C::SizeT.cast(1), C::SizeT.cast(count), @file)
+    LibC.fread(slice.pointer(count), LibC::SizeT.cast(1), LibC::SizeT.cast(count), @file)
   end
 
   def write(slice : Slice(UInt8), count)
-    C.fwrite(slice.pointer(count), C::SizeT.cast(1), C::SizeT.cast(count), @file)
+    LibC.fwrite(slice.pointer(count), LibC::SizeT.cast(1), LibC::SizeT.cast(count), @file)
   end
 
   def flush
-    C.fflush @file
+    LibC.fflush @file
   end
 
   def close
-    C.fclose @file
+    LibC.fclose @file
   end
 
   def fd
-    C.fileno(@file)
+    LibC.fileno(@file)
   end
 
   def tty?
-    C.isatty(fd) == 1
+    LibC.isatty(fd) == 1
   end
 end
 
 ifdef windows
-  STDIN = CFileIO.new(C.__iob_func)
-  STDOUT = CFileIO.new(C.__iob_func + 1)
-  STDERR = CFileIO.new(C.__iob_func + 2)
+  STDIN = CFileIO.new(LibC.__iob_func)
+  STDOUT = CFileIO.new(LibC.__iob_func + 1)
+  STDERR = CFileIO.new(LibC.__iob_func + 2)
 else
-  STDIN = CFileIO.new(C.stdin)
-  STDOUT = CFileIO.new(C.stdout)
-  STDERR = CFileIO.new(C.stderr)
+  STDIN = CFileIO.new(LibC.stdin)
+  STDOUT = CFileIO.new(LibC.stdout)
+  STDERR = CFileIO.new(LibC.stderr)
 end

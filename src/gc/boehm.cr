@@ -17,8 +17,8 @@ lib LibGC
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int32
 
-  fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : C::SizeT*, free_bytes : C::SizeT*, unmapped_bytes : C::SizeT*, bytes_since_gc : C::SizeT*, total_bytes : C::SizeT*)
-  fun set_max_heap_size = GC_set_max_heap_size(C::SizeT)
+  fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : LibC::SizeT*, free_bytes : LibC::SizeT*, unmapped_bytes : LibC::SizeT*, bytes_since_gc : LibC::SizeT*, total_bytes : LibC::SizeT*)
+  fun set_max_heap_size = GC_set_max_heap_size(LibC::SizeT)
 
   fun get_start_callback = GC_get_start_callback : Void*
   fun set_start_callback = GC_set_start_callback(callback : ->)

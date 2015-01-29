@@ -11,7 +11,7 @@ module Readline
     line = LibReadline.readline(prompt)
     if line
       LibReadline.add_history(line) if add_history
-      String.new(line).tap { C.free(line) }
+      String.new(line).tap { LibC.free(line) }
     else
       nil
     end

@@ -11,7 +11,7 @@
 # This generates windows.exe
 
 require "intrinsics"
-require "c"
+require "libc"
 require "macros"
 require "object"
 require "reference"
@@ -58,7 +58,7 @@ require "random"
 # require "errno"
 # require "main"
 
-lib C
+lib LibC
   fun exit(status : Int32) : NoReturn
 end
 
@@ -110,7 +110,7 @@ def raise(ex : Exception)
     puts msg
   end
 
-  C.exit(1)
+  LibC.exit(1)
 end
 
 rand(1..10).times do |i|

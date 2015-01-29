@@ -1,13 +1,13 @@
 fun __crystal_malloc(size : UInt32) : Void*
-  C.malloc(size)
+  LibC.malloc(size)
 end
 
 fun __crystal_malloc_atomic(size : UInt32) : Void*
-  C.malloc(size)
+  LibC.malloc(size)
 end
 
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  C.realloc(ptr, size)
+  LibC.realloc(ptr, size)
 end
 
 module GC
@@ -24,7 +24,7 @@ module GC
   end
 
   def self.free(pointer : Void*)
-    C.free(pointer)
+    LibC.free(pointer)
   end
 
   def self.add_finalizer(object)

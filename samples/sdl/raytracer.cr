@@ -241,4 +241,4 @@ start = SDL.ticks
 render scene, surface
 ms = SDL.ticks - start
 puts "Rendered in #{ms} ms"
-C.getchar
+gets

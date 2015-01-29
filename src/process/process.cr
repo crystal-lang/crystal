@@ -1,4 +1,4 @@
-lib C
+lib LibC
   @[ReturnsTwice]
   fun fork : Int32
 
@@ -30,15 +30,15 @@ end
 
 module Process
   def self.exit(status = 0)
-    C.exit(status)
+    LibC.exit(status)
   end
 
   def self.pid
-    C.getpid()
+    LibC.getpid()
   end
 
   def self.ppid
-    C.getppid()
+    LibC.getppid()
   end
 
   def self.fork(&block)
@@ -53,13 +53,13 @@ module Process
   end
 
   def self.fork
-    pid = C.fork
+    pid = LibC.fork
     pid = nil if pid == 0
     pid
   end
 
   def self.waitpid(pid)
-    if C.waitpid(pid, out exit_code, 0) == -1
+    if LibC.waitpid(pid, out exit_code, 0) == -1
       raise Errno.new("Error during waitpid")
     end
 
@@ -69,8 +69,8 @@ module Process
   record Tms, utime, stime, cutime, cstime
 
   def self.times
-    hertz = C.sysconf(C::SC_CLK_TCK).to_f
-    C.times(out tms)
+    hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f
+    LibC.times(out tms)
     Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)
   end
 end
@@ -87,14 +87,14 @@ def sleep(seconds : Int)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
   end
-  C.sleep seconds.to_u32
+  LibC.sleep seconds.to_u32
 end
 
 def sleep(seconds : Float)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
   end
-  C.usleep (seconds * 1E6).to_u32
+  LibC.usleep (seconds * 1E6).to_u32
 end
 
 require "./*"

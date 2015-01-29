@@ -51,7 +51,7 @@ lib LibGMP
 
   ## Memory
 
-  fun set_memory_functions = __gmp_set_memory_functions(malloc : C::SizeT -> Void*, realloc : Void*, C::SizeT, C::SizeT -> Void*, free : Void*, C::SizeT ->)
+  fun set_memory_functions = __gmp_set_memory_functions(malloc : LibC::SizeT -> Void*, realloc : Void*, LibC::SizeT, LibC::SizeT -> Void*, free : Void*, LibC::SizeT ->)
 end
 
 LibGMP.set_memory_functions(

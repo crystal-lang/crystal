@@ -1,4 +1,4 @@
-lib C
+lib LibC
   ifdef darwin
     struct Addrinfo
       flags : Int32

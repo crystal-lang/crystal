@@ -49,12 +49,12 @@ lib LibCrypto
   end
 
   fun md5_init = MD5_Init(c : MD5Context*) : Int32
-  fun md5_update = MD5_Update(c : MD5Context*, data : Void*, len : C::SizeT) : Int32
+  fun md5_update = MD5_Update(c : MD5Context*, data : Void*, len : LibC::SizeT) : Int32
   fun md5_final = MD5_Final(md : UInt8*, c : MD5Context*) : Int32
   fun md5_transform = MD5_Transform(c : MD5Context*, b : UInt8*)
-  fun md5 = MD5(data : UInt8*, lengh : C::SizeT, md : UInt8*) : UInt8*
+  fun md5 = MD5(data : UInt8*, lengh : LibC::SizeT, md : UInt8*) : UInt8*
 
-  fun sha1 = SHA1(data : UInt8*, length : C::SizeT, md : UInt8*) : UInt8*
+  fun sha1 = SHA1(data : UInt8*, length : LibC::SizeT, md : UInt8*) : UInt8*
 
   type EVP_MD = Void*
 
@@ -71,7 +71,7 @@ lib LibCrypto
   fun evp_sha512    = EVP_sha512 : EVP_MD
 
   fun hmac = HMAC(evp : EVP_MD, key : UInt8*, key_len : Int32,
-                  d : UInt8*, n : C::SizeT, md : UInt8*, md_len : UInt32*) : UInt8*
+                  d : UInt8*, n : LibC::SizeT, md : UInt8*, md_len : UInt32*) : UInt8*
 
   fun rand_bytes = RAND_bytes(buf : UInt8*, num : Int32) : Int32
   fun err_get_error = ERR_get_error : UInt64

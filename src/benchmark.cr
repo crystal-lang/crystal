@@ -18,8 +18,8 @@ module Benchmark
 
     def to_s(io : IO)
       chars = StaticArray(UInt8, 50).new(0_u8)
-      C.sprintf(chars, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
-      io.write Slice.new(chars.buffer, C.strlen(chars.buffer))
+      LibC.sprintf(chars, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
+      io.write Slice.new(chars.buffer, LibC.strlen(chars.buffer))
     end
   end
 

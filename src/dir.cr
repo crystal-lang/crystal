@@ -1,4 +1,4 @@
-lib C
+lib LibC
   type Dir = Void*
 
   ifdef darwin
@@ -21,17 +21,17 @@ lib C
 
   ifdef linux
     struct Glob
-      pathc : C::SizeT
+      pathc : LibC::SizeT
       pathv : UInt8**
-      offs : C::SizeT
+      offs : LibC::SizeT
       flags : Int32
       dummy : UInt8[40]
     end
   elsif darwin
     struct Glob
-      pathc : C::SizeT
+      pathc : LibC::SizeT
       matchc : Int32
-      offs : C::SizeT
+      offs : LibC::SizeT
       flags : Int32
       pathv : UInt8**
       dummy : UInt8[48]
@@ -63,7 +63,7 @@ lib C
   fun opendir(name : UInt8*) : Dir*
   fun closedir(dir : Dir*) : Int32
 
-  fun mkdir(path : UInt8*, mode : C::ModeT) : Int32
+  fun mkdir(path : UInt8*, mode : LibC::ModeT) : Int32
   fun rmdir(path : UInt8*) : Int32
 
   ifdef darwin
@@ -92,8 +92,8 @@ class Dir
   end
 
   def self.working_directory
-    dir = C.getcwd(nil, 0)
-    String.new(dir).tap { C.free(dir as Void*) }
+    dir = LibC.getcwd(nil, 0)
+    String.new(dir).tap { LibC.free(dir as Void*) }
   end
 
   def self.chdir path
@@ -115,17 +115,17 @@ class Dir
   end
 
   def self.list(dirname)
-    dir = C.opendir(dirname)
+    dir = LibC.opendir(dirname)
     unless dir
       raise Errno.new("Error listing directory '#{dirname}'")
     end
 
     begin
-      while ent = C.readdir(dir)
+      while ent = LibC.readdir(dir)
         yield String.new(ent.value.name.buffer), Type.new(ent.value.type)
       end
     ensure
-      C.closedir(dir)
+      LibC.closedir(dir)
     end
   end
 
@@ -158,20 +158,20 @@ class Dir
   end
 
   def self.glob(patterns : Enumerable(String))
-    paths = C::Glob.new
-    flags = C::GlobFlags::BRACE|C::GlobFlags::TILDE
+    paths = LibC::Glob.new
+    flags = LibC::GlobFlags::BRACE | LibC::GlobFlags::TILDE
     errfunc = -> (_path : UInt8*, _errno : Int32) { 0 }
 
     patterns.each do |pattern|
-      result = C.glob(pattern, flags, errfunc, pointerof(paths))
+      result = LibC.glob(pattern, flags, errfunc, pointerof(paths))
 
-      if result == C::GlobErrors::NOSPACE
+      if result == LibC::GlobErrors::NOSPACE
         raise GlobError.new "Ran out of memory"
-      elsif result == C::GlobErrors::ABORTED
+      elsif result == LibC::GlobErrors::ABORTED
         raise GlobError.new "Read error"
       end
 
-      flags |= C::GlobFlags::APPEND
+      flags |= LibC::GlobFlags::APPEND
     end
 
     Slice(UInt8*).new(paths.pathv, paths.pathc.to_i32).each do |path|
@@ -180,18 +180,18 @@ class Dir
 
     nil
   ensure
-    C.globfree(pointerof(paths))
+    LibC.globfree(pointerof(paths))
   end
 
   def self.exists?(path)
-    if C.stat(path, out stat) != 0
+    if LibC.stat(path, out stat) != 0
       return false
     end
     File::Stat.new(stat).directory?
   end
 
   def self.mkdir(path, mode=0777)
-    if C.mkdir(path, C::ModeT.cast(mode)) == -1
+    if LibC.mkdir(path, LibC::ModeT.cast(mode)) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0
@@ -217,7 +217,7 @@ class Dir
   end
 
   def self.rmdir(path)
-    if C.rmdir(path) == -1
+    if LibC.rmdir(path) == -1
       raise Errno.new("Unable to remove directory '#{path}'")
     end
     0

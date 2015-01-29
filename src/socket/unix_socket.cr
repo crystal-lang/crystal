@@ -1,14 +1,14 @@
 class UNIXSocket < Socket
   getter :path
 
-  def initialize(@path : String, socktype = C::SOCK_STREAM)
-    sock = C.socket(C::AF_UNIX, socktype, 0)
+  def initialize(@path : String, socktype = LibC::SOCK_STREAM)
+    sock = LibC.socket(LibC::AF_UNIX, socktype, 0)
     raise Errno.new("Error opening socket") if sock <= 0
 
-    addr = C::SockAddrUn.new
-    addr.family = C::AF_UNIX
+    addr = LibC::SockAddrUn.new
+    addr.family = LibC::AF_UNIX
     addr.path = path.to_unsafe
-    if C.connect(sock, pointerof(addr) as C::SockAddr*, sizeof(C::SockAddrUn)) != 0
+    if LibC.connect(sock, pointerof(addr) as LibC::SockAddr*, sizeof(LibC::SockAddrUn)) != 0
       raise Errno.new("Error connecting to '#{path}'")
     end
 
@@ -19,7 +19,7 @@ class UNIXSocket < Socket
     super fd
   end
 
-  def self.open(path, socktype = C::SOCK_STREAM)
+  def self.open(path, socktype = LibC::SOCK_STREAM)
     sock = new(path, socktype)
     begin
       yield sock
@@ -28,15 +28,15 @@ class UNIXSocket < Socket
     end
   end
 
-  def self.pair(path, socktype = C::SOCK_STREAM)
+  def self.pair(path, socktype = LibC::SOCK_STREAM)
     fds = StaticArray(Int32, 2).new { 0_i32 }
-    if C.socketpair(C::AF_UNIX, socktype, 0, pointerof(fds)) != 0
+    if LibC.socketpair(LibC::AF_UNIX, socktype, 0, pointerof(fds)) != 0
       raise Errno.new("socketpair:")
     end
     fds.map { |fd| UNIXSocket.new(fd) }
   end
 
-  def self.pair(path, socktype = C::SOCK_STREAM)
+  def self.pair(path, socktype = LibC::SOCK_STREAM)
     left, right = pair(path, socktype)
     begin
       yield left, right

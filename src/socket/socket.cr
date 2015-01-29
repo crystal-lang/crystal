@@ -1,4 +1,4 @@
-lib C
+lib LibC
   ifdef darwin
     struct SockAddrIn
       len : UInt8
@@ -117,24 +117,24 @@ end
 
 class Socket < FileDescriptorIO
   def afamily(family)
-    C::AF_UNSPEC.class.cast(family)
+    LibC::AF_UNSPEC.class.cast(family)
   end
 
   def inspect(io)
     io << "#<#{self.class}:fd #{@fd}>"
   end
 
-  def self.inet_ntop(sa : C::SockAddrIn6)
-    ip_address = GC.malloc_atomic(C::INET6_ADDRSTRLEN.to_u32) as UInt8*
+  def self.inet_ntop(sa : LibC::SockAddrIn6)
+    ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    C.inet_ntop(C::AF_INET6, pointerof(addr) as Void*, ip_address, C::INET6_ADDRSTRLEN)
+    LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::INET6_ADDRSTRLEN)
     String.new(ip_address)
   end
 
-  def self.inet_ntop(sa : C::SockAddrIn)
-    ip_address = GC.malloc_atomic(C::INET_ADDRSTRLEN.to_u32) as UInt8*
+  def self.inet_ntop(sa : LibC::SockAddrIn)
+    ip_address = GC.malloc_atomic(LibC::INET_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    C.inet_ntop(C::AF_INET, pointerof(addr) as Void*, ip_address, C::INET_ADDRSTRLEN)
+    LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::INET_ADDRSTRLEN)
     String.new(ip_address)
   end
 end

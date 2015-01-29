@@ -19,7 +19,7 @@ module Event
 
     def add_timer_event(time, callback, data = nil)
       event = LibEvent2.event_new(@base, -1, 0_u16, callback, data)
-      t :: C::TimeVal
+      t :: LibC::TimeVal
       t.tv_sec = time.to_i64
       t.tv_usec = 0
       LibEvent2.event_add(event, pointerof(t))
@@ -27,7 +27,7 @@ module Event
 
     def add_interval_event(time, callback, data = nil)
       event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::Persist, callback, data)
-      t :: C::TimeVal
+      t :: LibC::TimeVal
       t.tv_sec = time.to_i64
       t.tv_usec = 0
       LibEvent2.event_add(event, pointerof(t))

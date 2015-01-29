@@ -162,12 +162,12 @@ describe "Code gen: fun" do
     run(%(
       require "prelude"
 
-      lib C
-        fun qsort(base : Void*, nel : C::SizeT, width : C::SizeT, callback : (Void*, Void* -> Int32))
+      lib LibC
+        fun qsort(base : Void*, nel : LibC::SizeT, width : LibC::SizeT, callback : (Void*, Void* -> Int32))
       end
 
       ary = [3, 1, 4, 2]
-      C.qsort((ary.buffer as Void*), C::SizeT.cast(ary.length), C::SizeT.cast(sizeof(Int32)), ->(a : Void*, b : Void*) {
+      LibC.qsort((ary.buffer as Void*), LibC::SizeT.cast(ary.length), LibC::SizeT.cast(sizeof(Int32)), ->(a : Void*, b : Void*) {
         a = a as Int32*
         b = b as Int32*
         a.value <=> b.value

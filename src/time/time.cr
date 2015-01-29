@@ -1,13 +1,13 @@
 require "./**"
 
-lib C
+lib LibC
   struct TimeSpec
-    tv_sec  : C::TimeT
-    tv_nsec : C::TimeT
+    tv_sec  : LibC::TimeT
+    tv_nsec : LibC::TimeT
   end
 
   struct TimeVal
-    tv_sec  : C::TimeT
+    tv_sec  : LibC::TimeT
     tv_usec : Int32
   end
 
@@ -398,7 +398,7 @@ struct Time
   end
 
   private def self.compute_ticks
-    C.gettimeofday(out tp, out tzp)
+    LibC.gettimeofday(out tp, out tzp)
     ticks = tp.tv_sec.to_i64 * TimeSpan::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
     yield ticks, tp, tzp

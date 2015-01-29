@@ -54,7 +54,7 @@ class ColorMaker
   end
 
   def make_alpha_color(multiplier)
-    rand = C.rand.to_u32
+    rand = Random::DEFAULT.next_int
     r = ((rand >> 16) % 256).to_i
     g = ((rand >> 8) % 256).to_i
     b = (rand % 256).to_i
@@ -116,7 +116,6 @@ SDL.show_cursor
 
 surface = SDL.set_video_mode width, height, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT | LibSDL::FULLSCREEN
 
-C.srand 1337_u32
 frames = 0_u32
 start = SDL.ticks
 

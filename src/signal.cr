@@ -1,4 +1,4 @@
-lib C
+lib LibC
   fun signal(sig : Int32, handler : Int32 ->)
 end
 
@@ -43,7 +43,7 @@ module Signal
   def trap(signal, &block : Int32 ->)
     handlers = @@handlers ||= {} of Int32 => Int32 ->
     handlers[signal] = block
-    C.signal signal, ->handler(Int32)
+    LibC.signal signal, ->handler(Int32)
   end
 
   protected def handler(num)

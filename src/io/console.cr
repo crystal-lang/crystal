@@ -234,22 +234,22 @@ struct CFileIO
   end
 
   def read_nonblock(length)
-    before = C.fcntl(fd, C::FCNTL::F_GETFL)
-    C.fcntl(fd, C::FCNTL::F_SETFL, before | C::O_NONBLOCK)
+    before = LibC.fcntl(fd, LibC::FCNTL::F_GETFL)
+    LibC.fcntl(fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
 
     begin
       String.new(length) do |buffer|
         read_length = read Slice.new(buffer, length)
         if read_length == 0
           raise "read_nonblock: read nothing"
-        elsif C.errno == C::EWOULDBLOCK
+        elsif LibC.errno == LibC::EWOULDBLOCK
           raise Errno.new "exception in read_nonblock"
         else
           {read_length.to_i, 0}
         end
       end
     ensure
-      C.fcntl(fd, C::FCNTL::F_SETFL, before)
+      LibC.fcntl(fd, LibC::FCNTL::F_SETFL, before)
     end
   end
 end

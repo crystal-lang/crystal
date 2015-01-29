@@ -27,5 +27,5 @@ lib LibEvent2
   fun event_set_log_callback(callback : (Int32, UInt8*) -> Nil)
   fun event_enable_debug_mode()
   fun event_new(eb : EventBase, s : Int32, events : EventFlags, callback : (Int32, EventFlags, Void*) ->, data : Void*) : Event
-  fun event_add(event : Event, timeout : C::TimeVal*) : Int32
+  fun event_add(event : Event, timeout : LibC::TimeVal*) : Int32
 end

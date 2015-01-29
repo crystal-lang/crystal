@@ -120,16 +120,16 @@ struct Float64
 
   def to_s
     String.new(22) do |buffer|
-      C.sprintf(buffer, "%g", self)
-      len = C.strlen(buffer)
+      LibC.sprintf(buffer, "%g", self)
+      len = LibC.strlen(buffer)
       {len, len}
     end
   end
 
   def to_s(io : IO)
     chars = StaticArray(UInt8, 22).new(0_u8)
-    C.sprintf(chars, "%g", self)
-    io.write(chars.to_slice, C.strlen(chars.buffer))
+    LibC.sprintf(chars, "%g", self)
+    io.write(chars.to_slice, LibC.strlen(chars.buffer))
   end
 
   def hash

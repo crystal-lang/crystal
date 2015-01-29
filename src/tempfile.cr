@@ -1,4 +1,4 @@
-lib C
+lib LibC
   fun mkstemp(result : UInt8*) : Int32
 end
 
@@ -10,7 +10,7 @@ class Tempfile < FileDescriptorIO
       tmpdir = "/tmp/"
     end
     @path = "#{tmpdir}#{name}.XXXXXX"
-    super(C.mkstemp(@path))
+    super(LibC.mkstemp(@path))
   end
 
   getter path

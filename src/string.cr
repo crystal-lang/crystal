@@ -1,4 +1,4 @@
-lib C
+lib LibC
   fun atoi(str : UInt8*) : Int32
   fun atoll(str : UInt8*) : Int64
   fun atof(str : UInt8*) : Float64
@@ -20,7 +20,7 @@ class String
   end
 
   def self.new(chars : UInt8*)
-    new(chars, C.strlen(chars))
+    new(chars, LibC.strlen(chars))
   end
 
   def self.new(chars : UInt8*, bytesize, length = 0)
@@ -51,11 +51,11 @@ class String
   end
 
   def to_i
-    C.atoi cstr
+    LibC.atoi cstr
   end
 
   def to_i(base)
-    C.strtol(cstr, nil, base)
+    LibC.strtol(cstr, nil, base)
   end
 
   def to_i8
@@ -71,7 +71,7 @@ class String
   end
 
   def to_i64
-    C.atoll cstr
+    LibC.atoll cstr
   end
 
   def to_u8
@@ -87,7 +87,7 @@ class String
   end
 
   def to_u64
-    C.strtoull(cstr, nil, 10)
+    LibC.strtoull(cstr, nil, 10)
   end
 
   def to_f
@@ -95,11 +95,11 @@ class String
   end
 
   def to_f32
-    C.strtof cstr, nil
+    LibC.strtof cstr, nil
   end
 
   def to_f64
-    C.atof cstr
+    LibC.atof cstr
   end
 
   def [](index : Int)

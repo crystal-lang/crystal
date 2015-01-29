@@ -128,7 +128,7 @@ struct BigInt < Int
 
   def to_s(io)
     str = to_cstr
-    io.write Slice.new(str, C.strlen(str))
+    io.write Slice.new(str, LibC.strlen(str))
   end
 
   def digits

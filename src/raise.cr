@@ -1,7 +1,7 @@
 lib ABI
   struct UnwindException
-    exception_class : C::SizeT
-    exception_cleanup : C::SizeT
+    exception_class : LibC::SizeT
+    exception_cleanup : LibC::SizeT
     private1 : UInt64
     private2 : UInt64
     exception_object : UInt64
@@ -32,10 +32,10 @@ lib ABI
   end
 
   fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : Int32
-  fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : C::SizeT
-  fun unwind_get_ip = _Unwind_GetIP(context : Void*) : C::SizeT
-  fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : C::SizeT) : C::SizeT
-  fun unwind_set_gr = _Unwind_SetGR(context : Void*, index : Int32, value : C::SizeT)
+  fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : LibC::SizeT
+  fun unwind_get_ip = _Unwind_GetIP(context : Void*) : LibC::SizeT
+  fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : LibC::SizeT) : LibC::SizeT
+  fun unwind_set_gr = _Unwind_SetGR(context : Void*, index : Int32, value : LibC::SizeT)
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
 
@@ -103,8 +103,8 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
         end
 
         if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, ABI::EH_REGISTER_0, C::SizeT.cast(exception_object.address))
-          ABI.unwind_set_gr(context, ABI::EH_REGISTER_1, C::SizeT.cast(exception_object.value.exception_type_id))
+          ABI.unwind_set_gr(context, ABI::EH_REGISTER_0, LibC::SizeT.cast(exception_object.address))
+          ABI.unwind_set_gr(context, ABI::EH_REGISTER_1, LibC::SizeT.cast(exception_object.value.exception_type_id))
           ABI.unwind_set_ip(context, start + cs_addr)
           # puts "install"
           return ABI::URC_INSTALL_CONTEXT
@@ -120,11 +120,11 @@ end
 @[Raises]
 fun __crystal_raise(unwind_ex : ABI::UnwindException*) : NoReturn
   ret = ABI.unwind_raise_exception(unwind_ex)
-  C.printf "Could not raise"
+  LibC.printf "Could not raise"
   # caller.each do |point|
     # puts point
   # end
-  C.exit(ret)
+  LibC.exit(ret)
 end
 
 fun __crystal_get_exception(unwind_ex : ABI::UnwindException*) : UInt64
@@ -133,8 +133,8 @@ end
 
 def raise(ex : Exception)
   unwind_ex = Pointer(ABI::UnwindException).malloc(1)
-  unwind_ex.value.exception_class = C::SizeT.zero
-  unwind_ex.value.exception_cleanup = C::SizeT.zero
+  unwind_ex.value.exception_class = LibC::SizeT.zero
+  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
   unwind_ex.value.exception_object = ex.object_id
   unwind_ex.value.exception_type_id = ex.crystal_type_id
   __crystal_raise(unwind_ex)

@@ -10,13 +10,13 @@ class File < FileDescriptorIO
     o = 0
     case mode[0]
     when 'r'
-      m = C::O_RDONLY
+      m = LibC::O_RDONLY
     when 'w'
-      m = C::O_WRONLY
-      o = C::O_CREAT | C::O_TRUNC
+      m = LibC::O_WRONLY
+      o = LibC::O_CREAT | LibC::O_TRUNC
     when 'a'
-      m = C::O_WRONLY
-      o = C::O_CREAT | C::O_APPEND
+      m = LibC::O_WRONLY
+      o = LibC::O_CREAT | LibC::O_APPEND
     else
       raise "invalid access mode #{mode}"
     end
@@ -27,7 +27,7 @@ class File < FileDescriptorIO
     when 2
       case mode[1]
       when '+'
-        m = C::O_RDWR
+        m = LibC::O_RDWR
       when 'b'
         # Nothing
       else
@@ -39,7 +39,7 @@ class File < FileDescriptorIO
 
     oflag = m | o
 
-    fd = C.open(filename, oflag, C::S_IRWXU)
+    fd = LibC.open(filename, oflag, LibC::S_IRWXU)
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
@@ -51,25 +51,25 @@ class File < FileDescriptorIO
   getter path
 
   def self.stat(path)
-    if C.stat(path, out stat) != 0
+    if LibC.stat(path, out stat) != 0
       raise Errno.new("Unable to get stat for '#{path}'")
     end
     Stat.new(path)
   end
 
   def self.lstat(path)
-    if C.lstat(path, out stat) != 0
+    if LibC.lstat(path, out stat) != 0
       raise Errno.new("Unable to get lstat for '#{path}'")
     end
     Stat.new(stat)
   end
 
   def self.exists?(filename)
-    C.access(filename, C::F_OK) == 0
+    LibC.access(filename, LibC::F_OK) == 0
   end
 
   def self.file?(path)
-    if C.stat(path, out stat) != 0
+    if LibC.stat(path, out stat) != 0
       return false
     end
     File::Stat.new(stat).file?
@@ -113,7 +113,7 @@ class File < FileDescriptorIO
   end
 
   def self.delete(filename)
-    err = C.unlink(filename)
+    err = LibC.unlink(filename)
     if err == -1
       raise Errno.new("Error deleting file '#{filename}'")
     end
@@ -252,7 +252,7 @@ class File < FileDescriptorIO
   end
 
   def self.rename(old_filename, new_filename)
-    code = C.rename(old_filename, new_filename)
+    code = LibC.rename(old_filename, new_filename)
     if code != 0
       raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
     end

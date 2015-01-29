@@ -206,7 +206,7 @@ module Crystal::Command
 
   private def self.execute(output_filename, run_args)
     # TODO: fix system to make output flush on newline if it's a tty
-    exit_status = C.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
+    exit_status = LibC.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
     if exit_status != 0
       puts "Program terminated abnormally with error code: #{exit_status}"
     end

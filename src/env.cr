@@ -1,4 +1,4 @@
-lib C
+lib LibC
   $environ : UInt8**
   fun getenv(name : UInt8*) : UInt8*?
   fun setenv(name : UInt8*, value : UInt8*, overwrite : Int32) : Int32
@@ -16,21 +16,21 @@ module ENV
   end
 
   def self.[]?(key : String)
-    str = C.getenv key
+    str = LibC.getenv key
     str ? String.new(str) : nil
   end
 
   def self.[]=(key : String, value : String)
-    C.setenv key, value, 1
+    LibC.setenv key, value, 1
   end
 
   def self.has_key?(key : String)
-    !!C.getenv(key)
+    !!LibC.getenv(key)
   end
 
   def self.delete(key : String)
     if value = self[key]?
-      C.unsetenv(key)
+      LibC.unsetenv(key)
       value
     else
       nil
@@ -38,7 +38,7 @@ module ENV
   end
 
   def self.each
-    environ_ptr = C.environ
+    environ_ptr = LibC.environ
     while environ_ptr
       environ_value = environ_ptr.value
       if environ_value

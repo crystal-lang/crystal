@@ -1,5 +1,5 @@
 require "intrinsics"
-require "c"
+require "libc"
 require "macros"
 require "object"
 require "reference"

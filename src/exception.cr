@@ -5,11 +5,11 @@ ifdef darwin
 
     REG_IP = -1
 
-    fun get_context = unw_getcontext(context : C::SizeT*) : Int32
-    fun init_local = unw_init_local(cursor : C::SizeT*, context : C::SizeT*) : Int32
-    fun step = unw_step(cursor : C::SizeT*) : Int32
-    fun get_reg = unw_get_reg(cursor : C::SizeT*, regnum : Int32, reg : C::SizeT*) : Int32
-    fun get_proc_name = unw_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
+    fun get_context = unw_getcontext(context : LibC::SizeT*) : Int32
+    fun init_local = unw_init_local(cursor : LibC::SizeT*, context : LibC::SizeT*) : Int32
+    fun step = unw_step(cursor : LibC::SizeT*) : Int32
+    fun get_reg = unw_get_reg(cursor : LibC::SizeT*, regnum : Int32, reg : LibC::SizeT*) : Int32
+    fun get_proc_name = unw_get_proc_name(cursor : LibC::SizeT*, name : UInt8*, size : Int32, offset : LibC::SizeT*) : Int32
   end
 elsif linux
   ifdef x86_64
@@ -20,11 +20,11 @@ elsif linux
 
       REG_IP = -1
 
-      fun get_context = _Ux86_64_getcontext(context : C::SizeT*) : Int32
-      fun init_local = _ULx86_64_init_local(cursor : C::SizeT*, context : C::SizeT*) : Int32
-      fun step = _ULx86_64_step(cursor : C::SizeT*) : Int32
-      fun get_reg = _ULx86_64_get_reg(cursor : C::SizeT*, regnum : Int32, reg : C::SizeT*) : Int32
-      fun get_proc_name = _ULx86_64_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
+      fun get_context = _Ux86_64_getcontext(context : LibC::SizeT*) : Int32
+      fun init_local = _ULx86_64_init_local(cursor : LibC::SizeT*, context : LibC::SizeT*) : Int32
+      fun step = _ULx86_64_step(cursor : LibC::SizeT*) : Int32
+      fun get_reg = _ULx86_64_get_reg(cursor : LibC::SizeT*, regnum : Int32, reg : LibC::SizeT*) : Int32
+      fun get_proc_name = _ULx86_64_get_proc_name(cursor : LibC::SizeT*, name : UInt8*, size : Int32, offset : LibC::SizeT*) : Int32
     end
   else
     @[Link("unwind")]
@@ -34,18 +34,18 @@ elsif linux
 
       REG_IP = -1
 
-      fun get_context = getcontext(context : C::SizeT*) : Int32
-      fun init_local = _ULx86_init_local(cursor : C::SizeT*, context : C::SizeT*) : Int32
-      fun step = _ULx86_step(cursor : C::SizeT*) : Int32
-      fun get_reg = _ULx86_get_reg(cursor : C::SizeT*, regnum : Int32, reg : C::SizeT*) : Int32
-      fun get_proc_name = _ULx86_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
+      fun get_context = getcontext(context : LibC::SizeT*) : Int32
+      fun init_local = _ULx86_init_local(cursor : LibC::SizeT*, context : LibC::SizeT*) : Int32
+      fun step = _ULx86_step(cursor : LibC::SizeT*) : Int32
+      fun get_reg = _ULx86_get_reg(cursor : LibC::SizeT*, regnum : Int32, reg : LibC::SizeT*) : Int32
+      fun get_proc_name = _ULx86_get_proc_name(cursor : LibC::SizeT*, name : UInt8*, size : Int32, offset : LibC::SizeT*) : Int32
     end
   end
 end
 
 def caller
-  cursor = Pointer(C::SizeT).malloc(Unwind::CURSOR_SIZE)
-  context = Pointer(C::SizeT).malloc(Unwind::CONTEXT_SIZE)
+  cursor = Pointer(LibC::SizeT).malloc(Unwind::CURSOR_SIZE)
+  context = Pointer(LibC::SizeT).malloc(Unwind::CONTEXT_SIZE)
 
   Unwind.get_context(context)
   Unwind.init_local(cursor, context)

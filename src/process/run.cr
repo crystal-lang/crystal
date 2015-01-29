@@ -1,4 +1,4 @@
-lib C
+lib LibC
   fun execvp(file : UInt8*, argv : UInt8**) : Int32
   fun select(nfds : Int32, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : Void*) : Int32
 end
@@ -33,8 +33,8 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
       fork_input.reopen(STDIN)
     end
 
-    C.execvp(command, argv.buffer)
-    C.exit 127
+    LibC.execvp(command, argv.buffer)
+    LibC.exit 127
   end
 
   if pid == -1
@@ -85,7 +85,7 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
 
     buffer :: UInt8[2048]
 
-    case C.select(nfds + 1, pointerof(rfds) as Void*, pointerof(wfds) as Void*, nil, nil)
+    case LibC.select(nfds + 1, pointerof(rfds) as Void*, pointerof(wfds) as Void*, nil, nil)
     when 0
       raise "Timeout"
     when -1
