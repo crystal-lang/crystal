@@ -1164,6 +1164,14 @@ module Crystal
     def including_types
       program.union_of all_subclasses
     end
+
+    def cover
+      all_subclasses.select { |c| !c.abstract }
+    end
+
+    def cover_length
+      cover.length
+    end
   end
 
   alias TypeVar = Type | ASTNode

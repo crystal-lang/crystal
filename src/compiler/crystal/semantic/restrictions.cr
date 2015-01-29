@@ -572,4 +572,21 @@ module Crystal
       true
     end
   end
+
+  class AbstractValueType
+    def restrict(other : Type, context)
+      if self == other
+        self
+      elsif other.is_a?(UnionType)
+        types = other.union_types.compact_map do |t|
+          restrict(t, context) as Type?
+        end
+        program.type_merge types
+      elsif other.is_subclass_of?(self)
+        other
+      else
+        nil
+      end
+    end
+  end
 end

@@ -101,4 +101,14 @@ describe "Code gen: primitives" do
       (ptr.value + 1).to_i32
       )).to_i.should eq(5)
   end
+
+  it "sums two numbers out of an [] of Number" do
+    run(%(
+      p = Pointer(Number).malloc(2_u64)
+      p.value = 1
+      (p + 1_i64).value = 1.5
+
+      (p.value + (p + 1_i64).value).to_f32
+      )).to_f32.should eq(2.5)
+  end
 end
