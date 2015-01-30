@@ -52,7 +52,11 @@ module Crystal
     end
 
     def subclasses
-      raise "Bug: #{self} doesn't implement subclasses"
+      [] of Type
+    end
+
+    def all_subclasses
+      [] of Type
     end
 
     def leaf?

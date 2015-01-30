@@ -690,6 +690,10 @@ module Crystal
         @last = node
       end
 
+      def visit(node : MacroType)
+        @last = node
+      end
+
       def visit(node : ASTNode)
         node.raise "can't execute #{node.class_desc} in a macro"
       end

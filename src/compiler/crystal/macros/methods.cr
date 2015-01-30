@@ -531,6 +531,10 @@ module Crystal
         interpret_argless_method(method, args) { MacroType.instance_vars(type) }
       when "superclass"
         interpret_argless_method(method, args) { MacroType.superclass(type) }
+      when "subclasses"
+        interpret_argless_method(method, args) { MacroType.subclasses(type) }
+      when "all_subclasses"
+        interpret_argless_method(method, args) { MacroType.all_subclasses(type) }
       else
         super
       end
@@ -559,6 +563,14 @@ module Crystal
       superclass ? MacroType.new(superclass) : NilLiteral.new
     rescue
       NilLiteral.new
+    end
+
+    def self.subclasses(type)
+      ArrayLiteral.map(type.subclasses) { |subtype| MacroType.new(subtype) }
+    end
+
+    def self.all_subclasses(type)
+      ArrayLiteral.map(type.all_subclasses) { |subtype| MacroType.new(subtype) }
     end
   end
 

@@ -631,4 +631,43 @@ describe "Code gen: macro" do
       end
       ))
   end
+
+  it "executs subclasses" do
+    run(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      class Qux < Baz
+      end
+
+      names = {{ Foo.subclasses.map &.name }}
+      names.join("-")
+      )).to_string.should eq("Bar-Baz")
+  end
+
+  it "executs all_subclasses" do
+    run(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Bar
+      end
+
+      names = {{ Foo.all_subclasses.map &.name }}
+      names.join("-")
+      )).to_string.should eq("Bar-Baz")
+  end
 end
