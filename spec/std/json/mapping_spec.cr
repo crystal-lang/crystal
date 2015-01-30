@@ -65,6 +65,10 @@ class JSONWithKeywordsMapping
   json_mapping({end: Int32, abstract: Int32})
 end
 
+class JSONWithAny
+  json_mapping({name: String, any: JSON::Any})
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -154,5 +158,12 @@ describe "JSON mapping" do
     json = JSONWithKeywordsMapping.from_json(%({"end": 1, "abstract": 2}))
     json.end.should eq(1)
     json.abstract.should eq(2)
+  end
+
+  it "parses json with any" do
+    json = JSONWithAny.from_json(%({"name": "Hi", "any": [{"x": 1}, 2, "hey", true, false, 1.5, null]}))
+    json.name.should eq("Hi")
+    json.any.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
+    json.to_json.should eq(%({"name":"Hi","any":[{"x":1},2,"hey",true,false,1.5,null]}))
   end
 end

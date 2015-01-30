@@ -9,7 +9,7 @@ class JSON::PullParser
     @lexer = Lexer.new input
     @kind = :EOF
     @bool_value = false
-    @int_value = 0
+    @int_value = 0_i64
     @float_value = 0.0
     @string_value = ""
     @object_stack = [] of Symbol
