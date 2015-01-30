@@ -15,6 +15,10 @@ struct Int
     unsafe_div x
   end
 
+  def fdiv(other)
+    to_f / other
+  end
+
   def %(x : Int)
     if x == 0
       raise DivisionByZero.new
