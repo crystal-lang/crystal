@@ -93,6 +93,10 @@ module Crystal
 
       node.value = node.value.transform self
 
+      unless node.value.type?
+        return untyped_expression node
+      end
+
       if target.is_a?(Path)
         const.not_nil!.initialized = true
         @const_being_initialized = nil

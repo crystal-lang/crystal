@@ -106,4 +106,14 @@ describe "Code gen: var" do
       x.foo
       )).to_i.should eq(1)
   end
+
+  it "codegens assignment that can never be reached" do
+    build(%(
+      require "prelude"
+
+      if 1 == 1 && (x = nil)
+        z = x
+      end
+      ))
+  end
 end
