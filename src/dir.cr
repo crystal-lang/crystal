@@ -97,7 +97,7 @@ class Dir
   end
 
   def self.chdir path
-    if C.chdir(path) != 0
+    if LibC.chdir(path) != 0
       raise Errno.new("Error while changing directory")
     end
   end
