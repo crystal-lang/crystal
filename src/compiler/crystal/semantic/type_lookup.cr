@@ -46,7 +46,7 @@ module Crystal
     end
 
     def end_visit(node : Metaclass)
-      @type = type.virtual_type
+      @type = type.metaclass.virtual_type
     end
 
     def visit(node : Generic)

@@ -305,4 +305,30 @@ describe "Type inference: macro" do
       end
       )) { int32 }
   end
+
+  it "can return class type in macro def" do
+    assert_type(%(
+      macro def foo : Int32.class
+        Int32
+      end
+
+      foo
+      )) { types["Int32"].metaclass }
+  end
+
+  it "can return virtual class type in macro def" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      macro def foo : Foo.class
+        1 == 1 ? Foo : Bar
+      end
+
+      foo
+      )) { types["Foo"].metaclass.virtual_type }
+  end
 end
