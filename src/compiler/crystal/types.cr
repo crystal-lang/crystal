@@ -162,6 +162,9 @@ module Crystal
       elsif expected_type.is_a?(FunInstanceType) && self.is_a?(FunInstanceType) && expected_type.return_type == program.void && expected_type.arg_types == self.arg_types
         # OK: fun will be cast to return void
         true
+      elsif self.is_a?(NilablePointerType) && self.pointer_type == expected_type
+        # OK: nilable pointer is just a pointer
+        true
       else
         false
       end

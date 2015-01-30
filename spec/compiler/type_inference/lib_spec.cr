@@ -335,4 +335,15 @@ it "errors if unknown named arg" do
       ),
       "lib fun call is not supported in dispatch"
   end
+
+  it "allows passing nil or pointer to arg expecting pointer" do
+    assert_type(%(
+      lib Foo
+        fun foo(x : Int32*) : Int64
+      end
+
+      a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
+      Foo.foo(a)
+      )) { int64 }
+  end
 end
