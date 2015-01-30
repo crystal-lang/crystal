@@ -59,6 +59,7 @@ lib C
   end
 
   fun getcwd(buffer : UInt8*, size : Int32) : UInt8*
+  fun chdir = chdir(path : UInt8*) : Int32
   fun opendir(name : UInt8*) : Dir*
   fun closedir(dir : Dir*) : Int32
 
@@ -73,7 +74,9 @@ lib C
 
   fun glob(pattern : UInt8*, flags : GlobFlags, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
   fun globfree(result : Glob*)
+
 end
+
 
 class Dir
   enum Type : UInt8
@@ -91,6 +94,24 @@ class Dir
   def self.working_directory
     dir = C.getcwd(nil, 0)
     String.new(dir).tap { C.free(dir as Void*) }
+  end
+
+  def self.chdir path
+    if C.chdir(path) != 0
+      raise Errno.new("Error while changing directory")
+    end
+  end
+
+  def self.chdir(path)
+    old = working_directory
+    chdir(path)
+    yield
+  ensure
+    chdir(old) if old
+  end
+
+  def self.cd path
+    chdir(path)
   end
 
   def self.list(dirname)
