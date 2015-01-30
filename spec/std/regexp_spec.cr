@@ -21,20 +21,50 @@ describe "Regex" do
     expect_raises(IndexOutOfBounds) { $1 }
   end
 
-  it "capture named group" do
-    ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-    $~["g1"].should eq("oo")
-    $~["g2"].should eq("ba")
+  describe "MatchData#[]" do
+    it "raises if outside match range with []" do
+      "foo" =~ /foo/
+      expect_raises(IndexOutOfBounds) { $~[1] }
+    end
+
+    it "capture named group" do
+      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
+      $~["g1"].should eq("oo")
+      $~["g2"].should eq("ba")
+    end
+
+    it "capture empty group" do
+      ("foo" =~ /(?<g1>.*)foo/).should eq(0)
+      $~["g1"].should eq("")
+    end
+
+    it "raises exception when named group doesn't exist" do
+      ("foo" =~ /foo/).should eq(0)
+      expect_raises(ArgumentError) { $~["group"] }
+    end
   end
 
-  it "capture empty group" do
-    ("foo" =~ /(?<g1>.*)foo/).should eq(0)
-    $~["g1"].should eq("")
-  end
+  describe "MatchData#[]?" do
+    it "returns nil if outside match range with []" do
+      "foo" =~ /foo/
+      $~[1]?.should be_nil
+    end
 
-  it "raises exception when named group doesn't exist" do
-    ("foo" =~ /foo/).should eq(0)
-    expect_raises(ArgumentError) { $~["group"] }
+    it "capture named group" do
+      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
+      $~["g1"]?.should eq("oo")
+      $~["g2"]?.should eq("ba")
+    end
+
+    it "capture empty group" do
+      ("foo" =~ /(?<g1>.*)foo/).should eq(0)
+      $~["g1"]?.should eq("")
+    end
+
+    it "returns nil exception when named group doesn't exist" do
+      ("foo" =~ /foo/).should eq(0)
+      $~["group"]?.should be_nil
+    end
   end
 
   it "matches multiline" do

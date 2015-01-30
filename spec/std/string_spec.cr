@@ -51,6 +51,8 @@ describe "String" do
       assert { "FooBar"[/x/, 1]?.should be_nil }
       assert { "FooBar"[/(x)/, 1]?.should be_nil }
       assert { "FooBar"[/o(o)/, 2]?.should be_nil }
+      assert { "FooBar"[/o(?<this>o)/, "this"].should eq "o" }
+      assert { "FooBar"[/(?<this>x)/, "that"]?.should be_nil }
     end
   end
 

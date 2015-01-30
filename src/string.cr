@@ -174,7 +174,7 @@ class String
 
   def []?(regex : Regex, group)
     match = match(regex)
-    match[group] if match && group <= match.length
+    match[group]? if match
   end
 
   def byte_slice(start : Int, count : Int)
