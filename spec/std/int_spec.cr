@@ -72,6 +72,14 @@ describe "Int" do
     assert { 5.divmod(3).should eq({1, 2}) }
   end
 
+  describe "fdiv" do
+    assert { 1.fdiv(1).should eq 1.0 }
+    assert { 1.fdiv(2).should eq 0.5 }
+    assert { 1.fdiv(0.5).should eq 2.0 }
+    assert { 0.fdiv(1).should eq 0.0 }
+    assert { 1.fdiv(0).should eq 1.0/0.0 }
+  end
+
   describe "~" do
     assert { (~1).should eq(-2) }
     assert { (~1_u32).should eq(4294967294) }

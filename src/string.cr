@@ -160,6 +160,23 @@ class String
     end
   end
 
+  def [](regex : Regex)
+    self[regex]?.not_nil!
+  end
+
+  def [](regex : Regex, group)
+    self[regex, group]?.not_nil!
+  end
+
+  def []?(regex : Regex)
+    self[regex, 0]?
+  end
+
+  def []?(regex : Regex, group)
+    match = match(regex)
+    match[group] if match && group <= match.length
+  end
+
   def byte_slice(start : Int, count : Int)
     return "" if count <= 0
 
@@ -783,6 +800,11 @@ class String
       end
       {@bytesize, @length}
     end
+  end
+
+
+  def match(regex : Regex)
+    regex.match self
   end
 
   def scan(pattern)

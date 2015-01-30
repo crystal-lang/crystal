@@ -18,6 +18,10 @@ struct Float
   def finite?
     !nan? && !infinite?
   end
+
+  def fdiv(other)
+    self / other
+  end
 end
 
 struct Float32

@@ -33,6 +33,14 @@ describe "Float" do
     assert { 2.9.ceil.should eq(3) }
   end
 
+  describe "fdiv" do
+    assert { 1.0.fdiv(1).should eq 1.0 }
+    assert { 1.0.fdiv(2).should eq 0.5 }
+    assert { 1.0.fdiv(0.5).should eq 2.0 }
+    assert { 0.0.fdiv(1).should eq 0.0 }
+    assert { 1.0.fdiv(0).should eq 1.0/0.0 }
+  end
+
   describe "to_s" do
     it "does to_s for f32 and f64" do
       12.34.to_s.should eq("12.34")
