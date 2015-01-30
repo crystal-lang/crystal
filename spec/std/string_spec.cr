@@ -43,6 +43,15 @@ describe "String" do
     it "gets with single char" do
       ";"[0 .. -2].should eq("")
     end
+
+    describe "with a regex" do
+      assert { "FooBar"[/o+/].should eq "oo" }
+      assert { "FooBar"[/([A-Z])/, 1].should eq "F" }
+      assert { "FooBar"[/x/]?.should be_nil }
+      assert { "FooBar"[/x/, 1]?.should be_nil }
+      assert { "FooBar"[/(x)/, 1]?.should be_nil }
+      assert { "FooBar"[/o(o)/, 2]?.should be_nil }
+    end
   end
 
   describe "byte_slice" do
