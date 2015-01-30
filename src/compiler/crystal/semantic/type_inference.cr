@@ -2734,17 +2734,17 @@ module Crystal
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
         target_type = type
         if node.names.length > 1
-          target_type = target_type.lookup_type(node.names[1 .. -1])
+          target_type = lookup_type target_type, node.names[1 .. -1], node
         end
       else
         base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)
-        target_type = base_lookup.lookup_type node
+        target_type = lookup_type base_lookup, node, node
 
         unless target_type
           if create_modules_if_missing
             next_type = base_lookup
             node.names.each do |name|
-              next_type = base_lookup.lookup_type([name])
+              next_type = lookup_type base_lookup, [name], node
               if next_type
                 if next_type.is_a?(ASTNode)
                   node.raise "execpted #{name} to be a type"
@@ -2776,6 +2776,12 @@ module Crystal
       end
 
       target_type
+    end
+
+    def lookup_type(base_type, names, node)
+      base_type.lookup_type names
+    rescue ex
+      node.raise ex.message
     end
 
     def check_primitive_like(node)

@@ -269,4 +269,34 @@ describe "Type inference: generic class" do
       p.value
       )) { types["Foo"] }
   end
+
+  it "allows T::Type with T a generic type" do
+    assert_type(%(
+      class MyType
+        class Bar
+        end
+      end
+
+      class Foo(T)
+        def bar
+          T::Bar.new
+        end
+      end
+
+      Foo(MyType).new.bar
+      )) { types["MyType"].types["Bar"] }
+  end
+
+  it "error on T::Type with T a generic type that's a union" do
+    assert_error %(
+      class Foo(T)
+        def self.bar
+          T::Bar
+        end
+      end
+
+      Foo(Char | String).bar
+      ),
+      "can't lookup type in union (Char | String)"
+  end
 end

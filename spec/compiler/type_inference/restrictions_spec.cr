@@ -110,4 +110,27 @@ describe "Restrictions" do
       ),
       "no overload matches"
   end
+
+  it "errors on T::Type that's union when used from type restriction" do
+    assert_error %(
+      def foo(x : T)
+        T::Baz
+      end
+
+      foo(1 || 1.5)
+      ),
+      "can't lookup type in union (Int32 | Float64)"
+  end
+
+  it "errors on T::Type that's a union when used from block type restriction" do
+    assert_error %(
+      class Foo(T)
+        def self.foo(&block : T::Baz ->)
+        end
+      end
+
+      Foo(Int32 | Float64).foo { 1 + 2 }
+      ),
+      "can't lookup type in union (Int32 | Float64)"
+  end
 end

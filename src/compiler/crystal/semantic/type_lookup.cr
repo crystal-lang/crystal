@@ -119,6 +119,8 @@ module Crystal
   class Type
     def lookup_type(node : Path)
       (node.global ? program : self).lookup_type(node.names)
+    rescue ex
+      node.raise ex.message
     end
 
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
@@ -169,16 +171,26 @@ module Crystal
 
   class GenericClassInstanceType
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      if (names.length == 1) && (type_var = type_vars[names[0]]?)
+      if !names.empty? && (type_var = type_vars[names[0]]?)
         case type_var
         when Var
-          return type_var.type
+          type_var_type = type_var.type
         else
-          return type_var
+          type_var_type = type_var
         end
-      end
 
-      generic_class.lookup_type(names, already_looked_up, lookup_in_container)
+        if names.length > 1
+          if type_var_type.is_a?(Type)
+            type_var_type.lookup_type(names[1 .. -1], already_looked_up, lookup_in_container)
+          else
+            raise "#{names[0]} is not a type, it's #{type_var_type}"
+          end
+        else
+          type_var_type
+        end
+      else
+        generic_class.lookup_type(names, already_looked_up, lookup_in_container)
+      end
     end
   end
 
@@ -209,6 +221,12 @@ module Crystal
       end
 
       @extended_class.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+  end
+
+  class UnionType
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      raise "can't lookup type in union #{self}"
     end
   end
 
