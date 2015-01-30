@@ -336,7 +336,7 @@ module Enumerable(T)
   end
 
   def take(count : Int)
-    ary = [] of T
+    ary = Array(T).new(count)
     each_with_index do |e, i|
       break if i == count
       ary << e
