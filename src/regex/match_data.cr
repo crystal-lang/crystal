@@ -18,18 +18,32 @@ class MatchData
     @ovector[n * 2 + 1]
   end
 
-  def [](n)
-    check_index_out_of_bounds n
+  def []?(n)
+    return unless valid_group?(n)
 
     start = @ovector[n * 2]
     finish = @ovector[n * 2 + 1]
     @string.byte_slice(start, finish - start)
   end
 
-  def [](group_name : String)
+  def [](n)
+    check_index_out_of_bounds n
+
+    self[n]?.not_nil!
+  end
+
+  def []?(group_name : String)
     ret = LibPCRE.get_named_substring(@code, @string, @ovector, @length + 1, group_name, out value)
-    raise ArgumentError.new("Match group named '#{group_name}' does not exist") if ret < 0
+    return if ret < 0
     String.new(value)
+  end
+
+  def [](group_name : String)
+    match = self[group_name]?
+    unless match
+      raise ArgumentError.new("Match group named '#{group_name}' does not exist")
+    end
+    match
   end
 
   def to_s(io : IO)
@@ -47,7 +61,11 @@ class MatchData
   end
 
   private def check_index_out_of_bounds(index)
-    raise IndexOutOfBounds.new if index > @length
+    raise IndexOutOfBounds.new unless valid_group?(index)
+  end
+
+  private def valid_group?(index)
+    index <= @length
   end
 
   def self.last=(@@last : MatchData?)
