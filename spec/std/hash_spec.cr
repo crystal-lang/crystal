@@ -204,6 +204,11 @@ describe "Hash" do
     end
   end
 
+  it "does to_h" do
+    h = {a: 1}
+    h.to_h.should be(h)
+  end
+
   it "clones" do
     h1 = {1 => 2, 3 => 4}
     h2 = h1.clone

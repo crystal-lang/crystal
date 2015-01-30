@@ -332,6 +332,10 @@ class Hash(K, V)
     io << "{...}" unless executed
   end
 
+  def to_h
+    self
+  end
+
   def rehash
     new_size = calculate_new_size(@length)
     @buckets = @buckets.realloc(new_size)
