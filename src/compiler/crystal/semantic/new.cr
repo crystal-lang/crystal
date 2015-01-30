@@ -2,7 +2,7 @@ module Crystal
   class Call
     def define_new(scope, arg_types)
       instance_type = scope.instance_type
-      if instance_type.abstract
+      if instance_type.abstract && !instance_type.is_a?(VirtualType)
         raise "can't instantiate abstract class #{scope}"
       end
 

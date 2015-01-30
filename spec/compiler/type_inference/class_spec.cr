@@ -768,4 +768,25 @@ describe "Type inference: class" do
       Foo.new(0)
       )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
   end
+
+  it "doesn't error on new on abstract virtual type class" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Bar
+      bar = ptr.value.new(1)
+      bar.x
+      )) { int32 }
+  end
 end
