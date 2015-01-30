@@ -802,6 +802,11 @@ class String
     end
   end
 
+
+  def match(regex : Regex)
+    regex.match self
+  end
+
   def scan(pattern)
     byte_offset = 0
 

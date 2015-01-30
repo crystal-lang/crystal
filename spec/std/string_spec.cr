@@ -678,6 +678,10 @@ describe "String" do
     end
   end
 
+  it "has match" do
+    "FooBar".match(/oo/).should_not be_nil
+  end
+
   it "has size (same as length)" do
     "テスト".size.should eq(3)
   end
