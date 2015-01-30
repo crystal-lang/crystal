@@ -120,6 +120,12 @@ class Pointer(T)
   def to_slice(length)
     Slice.new(self, length)
   end
+
+  def crstr
+    String.build do |io|
+      io.write Slice.new(self, C.strlen(self))
+    end
+  end
 end
 
 struct PointerAppender(T)

@@ -130,4 +130,9 @@ describe "Pointer" do
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end
+
+  it "converts a C style string to a Crystal style string" do
+    c_str = "Hello".cstr
+    c_str.crstr.should eq("Hello")
+  end
 end
