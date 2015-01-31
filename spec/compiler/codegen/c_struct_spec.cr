@@ -308,4 +308,19 @@ describe "Code gen: struct" do
       s = LibC.foo(1)
       ))
   end
+
+  it "does to_s" do
+    run(%(
+      require "prelude"
+
+      lib LibFoo
+        struct Point
+          x, y : Int32
+        end
+      end
+
+      point = LibFoo::Point.new x: 1, y: 2
+      point.to_s
+      )).to_string.should eq("LibFoo::Point(@x=1, @y=2)")
+  end
 end

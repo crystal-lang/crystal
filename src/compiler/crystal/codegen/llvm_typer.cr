@@ -73,6 +73,14 @@ module Crystal
       FUN_TYPE
     end
 
+    def create_llvm_type(type : CStructType)
+      llvm_struct_type(type)
+    end
+
+    def create_llvm_type(type : CUnionType)
+      llvm_struct_type(type)
+    end
+
     def create_llvm_type(type : InstanceVarContainer)
       final_type = llvm_struct_type(type)
       unless type.struct?
@@ -161,14 +169,6 @@ module Crystal
       end
     end
 
-    def create_llvm_type(type : CStructType)
-      llvm_struct_type(type)
-    end
-
-    def create_llvm_type(type : CUnionType)
-      llvm_struct_type(type)
-    end
-
     def create_llvm_type(type : TypeDefType)
       llvm_type type.typedef
     end
@@ -205,6 +205,31 @@ module Crystal
       llvm_type type
     end
 
+    def create_llvm_struct_type(type : CStructType)
+      LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
+        @struct_cache[type] = a_struct
+        type.vars.map { |name, var| llvm_embedded_c_type(var.type) as LLVM::Type }
+      end
+    end
+
+    def create_llvm_struct_type(type : CUnionType)
+      max_size = 0
+      max_type = nil
+      type.vars.each do |name, var|
+        var_type = var.type
+        unless var_type.void?
+          llvm_type = llvm_embedded_c_type(var_type)
+          size = size_of(llvm_type)
+          if size > max_size
+            max_size = size
+            max_type = llvm_type
+          end
+        end
+      end
+
+      LLVM::Type.struct([max_type.not_nil!] of LLVM::Type, type.llvm_name)
+    end
+
     def create_llvm_struct_type(type : InstanceVarContainer)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @struct_cache[type] = a_struct
@@ -232,31 +257,6 @@ module Crystal
         end
         element_types
       end
-    end
-
-    def create_llvm_struct_type(type : CStructType)
-      LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
-        @struct_cache[type] = a_struct
-        type.vars.map { |name, var| llvm_embedded_c_type(var.type) as LLVM::Type }
-      end
-    end
-
-    def create_llvm_struct_type(type : CUnionType)
-      max_size = 0
-      max_type = nil
-      type.vars.each do |name, var|
-        var_type = var.type
-        unless var_type.void?
-          llvm_type = llvm_embedded_c_type(var_type)
-          size = size_of(llvm_type)
-          if size > max_size
-            max_size = size
-            max_type = llvm_type
-          end
-        end
-      end
-
-      LLVM::Type.struct([max_type.not_nil!] of LLVM::Type, type.llvm_name)
     end
 
     def create_llvm_struct_type(type : Type)

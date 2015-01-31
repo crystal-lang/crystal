@@ -541,17 +541,21 @@ module Crystal
     end
 
     def self.instance_vars(type)
-      unless type.is_a?(InstanceVarContainer)
+      case type
+      when CStructType
+        is_struct = true
+      when InstanceVarContainer
+        is_struct = false
+      else
         return ArrayLiteral.new
       end
 
       all_ivars = type.all_instance_vars
-
       ivars = Array(ASTNode).new(all_ivars.length)
       all_ivars.each do |name, ivar|
         # An instance var might not have a type, so we skip it
         if ivar_type = ivar.type?
-          ivars.push MetaVar.new(name[1 .. -1], ivar_type)
+          ivars.push MetaVar.new((is_struct ? name : name[1 .. -1]), ivar_type)
         end
       end
 

@@ -1915,15 +1915,17 @@ module Crystal
     end
   end
 
-  abstract class CStructOrUnionType < NamedType
+  abstract class CStructOrUnionType < NonGenericClassType
     include DefContainer
     include DefInstanceContainer
 
     getter vars
 
     def initialize(program, container, name)
-      super(program, container, name)
+      super(program, container, name, program.struct)
       @vars = {} of String => Var
+      @struct = true
+      @allocated = true
     end
 
     def passed_by_value?
@@ -1932,10 +1934,6 @@ module Crystal
 
     def primitive_like?
       true
-    end
-
-    def parents
-      nil
     end
   end
 
@@ -1951,16 +1949,36 @@ module Crystal
       end
     end
 
+    def has_instance_var_in_initialize?(name)
+      true
+    end
+
+    def lookup_instance_var(name)
+      @vars[remove_at_from_var_name(name)].not_nil!
+    end
+
+    def all_instance_vars
+      @vars
+    end
+
+    def index_of_var(name)
+      @vars.key_index(remove_at_from_var_name(name)).not_nil!
+    end
+
+    def index_of_instance_var(name)
+      index_of_var(name)
+    end
+
+    private def remove_at_from_var_name(name)
+      name.starts_with?('@') ? name[1 .. -1] : name
+    end
+
     def metaclass
       @metaclass ||= begin
         metaclass = MetaclassType.new(program, self)
         metaclass.add_def Def.new("new", body: Primitive.new(:struct_new))
         metaclass
       end
-    end
-
-    def index_of_var(name)
-      @vars.key_index(name).not_nil!
     end
 
     def type_desc
