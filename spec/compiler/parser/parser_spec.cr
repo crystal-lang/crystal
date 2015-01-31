@@ -1016,5 +1016,8 @@ describe "Parser" do
   assert_syntax_error "return 1 foo"
   assert_syntax_error "return false foo"
 
+  assert_syntax_error "def foo(x, *args : Int32); end"
+  assert_syntax_error "def foo(*args : Int32); end"
+
   it_parses "if (\ntrue\n)\n1\nend", If.new(Expressions.new([true.bool] of ASTNode), 1.int32)
 end

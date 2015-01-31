@@ -2435,32 +2435,34 @@ module Crystal
         next_token_skip_space
       end
 
-      if @token.type == :"="
-        if found_splat || splat
-          unexpected_token
-        end
+      unless splat
+        if @token.type == :"="
+          if found_splat || splat
+            unexpected_token
+          end
 
-        next_token_skip_space_or_newline
+          next_token_skip_space_or_newline
 
-        case @token.type
-        when :__LINE__, :__FILE__, :__DIR__
-          default_value = MagicConstant.new(@token.type).at(@token.location)
-          next_token
+          case @token.type
+          when :__LINE__, :__FILE__, :__DIR__
+            default_value = MagicConstant.new(@token.type).at(@token.location)
+            next_token
+          else
+            default_value = parse_op_assign
+          end
+
+          skip_space
         else
-          default_value = parse_op_assign
+          if found_default_value && !splat
+            raise "argument must have a default value", arg_location
+          end
         end
 
-        skip_space
-      else
-        if found_default_value && !splat
-          raise "argument must have a default value", arg_location
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+          location = @token.location
+          restriction = parse_single_type
         end
-      end
-
-      if @token.type == :":"
-        next_token_skip_space_or_newline
-        location = @token.location
-        restriction = parse_single_type
       end
 
       raise "Bug: arg_name is nil" unless arg_name
