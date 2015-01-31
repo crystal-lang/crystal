@@ -111,7 +111,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
   def begin_code(language = nil)
     super
-    @inside_code = true
+    @inside_code = true if !language || language == "crystal"
   end
 
   def end_code
