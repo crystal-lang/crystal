@@ -116,7 +116,7 @@ class SocketError < Exception
 end
 
 class Socket < FileDescriptorIO
-  class Addr
+  struct Addr
     property :family, :port, :ip_address, :path
 
     def initialize(@family, @port, @ip_address)
