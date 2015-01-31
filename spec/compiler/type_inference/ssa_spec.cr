@@ -177,13 +177,13 @@ describe "Type inference: ssa" do
 
   it "types a var that is declared in a while with out" do
     assert_type(%(
-      lib C
+      lib LibC
         fun foo(x : Int32*)
       end
 
       a = 'a'
       while 1 == 2
-        C.foo(out x)
+        LibC.foo(out x)
         a = x
       end
       a
@@ -255,7 +255,7 @@ describe "Type inference: ssa" do
 
   it "types a var after begin rescue with no-return in rescue" do
     assert_type(%(
-      lib C
+      lib LibC
         fun exit : NoReturn
       end
 
@@ -264,7 +264,7 @@ describe "Type inference: ssa" do
         a = 'a'
         a = "hello"
       rescue ex
-        C.exit
+        LibC.exit
       end
       a
       )) { union_of [int32, char, string] of Type }
@@ -385,7 +385,7 @@ describe "Type inference: ssa" do
 
   it "types if with unreachable in then" do
     assert_type("
-      lib C
+      lib LibC
         fun exit : NoReturn
       end
 
@@ -393,7 +393,7 @@ describe "Type inference: ssa" do
         a = 1
       else
         a = 'a'
-        C.exit
+        LibC.exit
       end
 
       a

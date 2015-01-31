@@ -56,13 +56,13 @@ describe "Type inference: fun" do
 
   it "allows passing fun type if it is typedefed" do
     assert_type("
-      lib C
+      lib LibC
         type Callback = Int32 -> Int32
         fun foo(x : Callback) : Float64
       end
 
       f = ->(x : Int32) { x + 1 }
-      C.foo f
+      LibC.foo f
       ") { float64 }
   end
 
@@ -74,17 +74,13 @@ describe "Type inference: fun" do
       "undefined local variable or method 'a'"
   end
 
-  # it "types int -> int fun literal as a block" do
-  #   assert_type("def foo(&block : Int32 ->); block; end; foo { |x| x + 2 }") { fun_of(int32, int32) }
-  # end
-
-  it "allows implicit cast of fun to return void in C function" do
+  it "allows implicit cast of fun to return void in LibC function" do
     assert_type("
-      lib C
+      lib LibC
         fun atexit(fun : -> ) : Int32
       end
 
-      C.atexit ->{ 1 }
+      LibC.atexit ->{ 1 }
       ") { int32 }
   end
 
@@ -174,12 +170,12 @@ describe "Type inference: fun" do
 
   it "allows passing nil as fun callback" do
     assert_type("
-      lib C
+      lib LibC
         type Cb = Int32 ->
         fun bla(Cb) : Int32
       end
 
-      C.bla(nil)
+      LibC.bla(nil)
       ") { int32 }
   end
 
@@ -284,7 +280,7 @@ describe "Type inference: fun" do
 
   it "allows passing NoReturn type for any return type (1)" do
     assert_type("
-      lib C
+      lib LibC
         fun exit : NoReturn
       end
 
@@ -292,32 +288,32 @@ describe "Type inference: fun" do
         f.call
       end
 
-      foo ->{ C.exit }
+      foo ->{ LibC.exit }
       ") { no_return }
   end
 
   it "allows passing NoReturn type for any return type (2)" do
     assert_type("
-      lib C
+      lib LibC
         fun exit : NoReturn
         fun foo(x : -> Int32) : Int32
       end
 
-      C.foo ->{ C.exit }
+      LibC.foo ->{ LibC.exit }
       ") { int32 }
   end
 
   it "allows passing NoReturn type for any return type (3)" do
     assert_type("
-      lib C
+      lib LibC
         fun exit : NoReturn
         struct S
           x : -> Int32
         end
       end
 
-      s = C::S.new
-      s.x = ->{ C.exit }
+      s = LibC::S.new
+      s.x = ->{ LibC.exit }
       s.x
       ") { fun_of(int32) }
   end
@@ -331,11 +327,11 @@ describe "Type inference: fun" do
 
   it "allows new on fun type that is a typedef" do
     assert_type("
-      lib C
+      lib LibC
         type F = Int32 -> Int32
       end
 
-      C::F.new { |x| x + 1 }
+      LibC::F.new { |x| x + 1 }
       ") { fun_of(int32, int32) }
   end
 
@@ -383,13 +379,13 @@ describe "Type inference: fun" do
       "function argument 'x' must have a type"
   end
 
-  it "allows passing function to C without specifying types" do
+  it "allows passing function to LibC without specifying types" do
     assert_type(%(
-      lib C
+      lib LibC
         fun foo(x : Int32 -> Int32) : Float64
       end
 
-      C.foo ->(x) { x + 1 }
+      LibC.foo ->(x) { x + 1 }
       )) { float64 }
   end
 
@@ -468,23 +464,23 @@ describe "Type inference: fun" do
 
   it "gives correct error message when fun return type is incorrect (#219)" do
     assert_error %(
-      lib Foo
+      lib LibFoo
         fun bar(f : Int32 -> Int32)
       end
 
-      Foo.bar ->(x) { 1.1 }
+      LibFoo.bar ->(x) { 1.1 }
       ),
-      "argument 'f' of 'Foo#bar' must be a function returning Int32, not Float64"
+      "argument 'f' of 'LibFoo#bar' must be a function returning Int32, not Float64"
   end
 
   it "doesn't capture closured var if using typeof" do
     assert_type(%(
-      lib Foo
+      lib LibFoo
         fun foo(x : ->) : Int32
       end
 
       a = 1
-      Foo.foo ->{
+      LibFoo.foo ->{
         typeof(a)
         2
       }

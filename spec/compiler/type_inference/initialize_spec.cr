@@ -289,13 +289,13 @@ describe "Type inference: initialize" do
 
   it "doesn't type instance var as nilable if out" do
     assert_type(%(
-      lib C
+      lib LibC
         fun foo(x : Int32*)
       end
 
       class Foo
         def initialize
-          C.foo(out @x)
+          LibC.foo(out @x)
           @x + 2
         end
 

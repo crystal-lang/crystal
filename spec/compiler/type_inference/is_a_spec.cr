@@ -71,7 +71,7 @@ describe "Type inference: is_a?" do
 
   it "applies filter inside block" do
     assert_type("
-      lib C
+      lib LibC
         fun exit : NoReturn
       end
 
@@ -82,7 +82,7 @@ describe "Type inference: is_a?" do
       foo do
         a = 1
         unless a.is_a?(Int32)
-          C.exit
+          LibC.exit
         end
       end
 

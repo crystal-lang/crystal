@@ -232,29 +232,29 @@ describe "Code gen: fun" do
 
   it "allows fun type of enum type" do
     run("
-      lib Foo
+      lib LibFoo
         enum MyEnum
           X = 1
         end
       end
 
-      ->(x : Foo::MyEnum) {
+      ->(x : LibFoo::MyEnum) {
         x
-      }.call(Foo::MyEnum::X)
+      }.call(LibFoo::MyEnum::X)
       ").to_i.should eq(1)
   end
 
   it "allows fun type of enum type with base type" do
     run("
-      lib Foo
+      lib LibFoo
         enum MyEnum : UInt16
           X = 1
         end
       end
 
-      ->(x : Foo::MyEnum) {
+      ->(x : LibFoo::MyEnum) {
         x
-      }.call(Foo::MyEnum::X)
+      }.call(LibFoo::MyEnum::X)
       ").to_i.should eq(1)
   end
 
@@ -312,22 +312,22 @@ describe "Code gen: fun" do
 
   it "builds fun type from fun" do
     build("
-      lib C
+      lib LibC
         fun foo : ->
       end
 
-      x = C.foo
+      x = LibC.foo
       x.call
       ")
   end
 
   it "builds nilable fun type from fun" do
     build("
-      lib C
+      lib LibC
         fun foo : (->)?
       end
 
-      x = C.foo
+      x = LibC.foo
       if x
         x.call
       end

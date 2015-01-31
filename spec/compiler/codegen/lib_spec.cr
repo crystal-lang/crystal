@@ -3,32 +3,32 @@ require "../../spec_helper"
 describe "Code gen: lib" do
   pending "codegens lib var set and get" do
     run("
-      lib C
+      lib LibC
         $errno : Int32
       end
 
-      C.errno = 1
-      C.errno
+      LibC.errno = 1
+      LibC.errno
       ").to_i.should eq(1)
   end
 
   it "call to void function" do
     run("
-      lib C
+      lib LibC
         fun srandom(x : UInt32) : Void
       end
 
       def foo
-        C.srandom(0_u32)
+        LibC.srandom(0_u32)
       end
 
       foo
     ")
   end
 
-  it "allows passing type to C if it has a coverter with to_unsafe" do
+  it "allows passing type to LibC if it has a coverter with to_unsafe" do
     build("
-      lib C
+      lib LibC
         fun foo(x : Int32) : Int32
       end
 
@@ -38,15 +38,15 @@ describe "Code gen: lib" do
         end
       end
 
-      C.foo Foo.new
+      LibC.foo Foo.new
       ")
   end
 
-  it "allows passing type to C if it has a coverter with to_unsafe (bug)" do
+  it "allows passing type to LibC if it has a coverter with to_unsafe (bug)" do
     build(%(
       require "prelude"
 
-      lib C
+      lib LibC
         fun foo(x : UInt8*)
       end
 
@@ -54,7 +54,7 @@ describe "Code gen: lib" do
         yield 1
       end
 
-      C.foo(foo &.to_s)
+      LibC.foo(foo &.to_s)
       ))
   end
 
@@ -62,12 +62,12 @@ describe "Code gen: lib" do
     build(%(
       require "prelude"
 
-      lib C
+      lib LibC
         $x : ->
       end
 
-      C.x = ->{}
-      C.x.call
+      LibC.x = ->{}
+      LibC.x.call
       ))
   end
 
@@ -77,11 +77,11 @@ describe "Code gen: lib" do
         A
       end
 
-      lib C
+      lib LibC
         fun foo(x : Foo)
       end
 
-      C.foo(Foo::A)
+      LibC.foo(Foo::A)
       ))
   end
 
@@ -91,11 +91,11 @@ describe "Code gen: lib" do
         A
       end
 
-      lib C
+      lib LibC
         fun foo : Foo
       end
 
-      C.foo
+      LibC.foo
       ))
   end
 end

@@ -78,7 +78,7 @@ describe "Codegen: const" do
   end
 
   it "define a constant in lib" do
-    run("lib Foo; A = 1; end; Foo::A").to_i.should eq(1)
+    run("lib LibFoo; A = 1; end; LibFoo::A").to_i.should eq(1)
   end
 
   it "invokes block in const" do

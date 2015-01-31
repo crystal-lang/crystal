@@ -95,16 +95,16 @@ describe "Code gen: pointer" do
 
   it "sets value of pointer to struct" do
     run("
-      lib C
+      lib LibC
         struct Color
           r, g, b, a : UInt8
         end
       end
 
-      color = Pointer(C::Color).malloc(1_u64)
+      color = Pointer(LibC::Color).malloc(1_u64)
       color.value.r = 10_u8
 
-      color2 = Pointer(C::Color).malloc(1_u64)
+      color2 = Pointer(LibC::Color).malloc(1_u64)
       color2.value.r = 20_u8
 
       color.value = color2.value

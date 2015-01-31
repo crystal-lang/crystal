@@ -66,11 +66,11 @@ describe "Code gen: void" do
 
   it "codegens no return assignment" do
     build("
-      lib C
+      lib LibC
         fun exit : NoReturn
       end
 
-      a = C.exit
+      a = LibC.exit
       a
       ")
   end

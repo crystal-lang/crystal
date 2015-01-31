@@ -2,31 +2,31 @@ require "../../spec_helper"
 
 describe "Type inference: struct" do
   it "types struct" do
-    result = assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; Foo::Bar") { types["Foo"].types["Bar"].metaclass }
+    result = assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; LibFoo::Bar") { types["LibFoo"].types["Bar"].metaclass }
     mod = result.program
 
-    bar = mod.types["Foo"].types["Bar"] as CStructType
+    bar = mod.types["LibFoo"].types["Bar"] as CStructType
     bar.vars["x"].type.should eq(mod.int32)
     bar.vars["y"].type.should eq(mod.float64)
   end
 
   it "types Struct#new" do
-    assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; Foo::Bar.new") do
-      types["Foo"].types["Bar"]
+    assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; LibFoo::Bar.new") do
+      types["LibFoo"].types["Bar"]
     end
   end
 
   it "types struct setter" do
-    assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar.x = 1") { int32 }
+    assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; bar = LibFoo::Bar.new; bar.x = 1") { int32 }
   end
 
   it "types struct getter" do
-    assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar.x") { int32 }
+    assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; bar = LibFoo::Bar.new; bar.x") { int32 }
   end
 
   it "types struct getter to struct" do
     assert_type("
-      lib Foo
+      lib LibFoo
         struct Baz
           y : Int32
         end
@@ -34,14 +34,14 @@ describe "Type inference: struct" do
           x : Baz
         end
       end
-      bar = Pointer(Foo::Bar).malloc(1_u64)
+      bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x
-    ") { types["Foo"].types["Baz"] }
+    ") { types["LibFoo"].types["Baz"] }
   end
 
   it "types struct getter multiple levels via new" do
     assert_type("
-      lib Foo
+      lib LibFoo
         struct Baz
           y : Int32
         end
@@ -49,37 +49,37 @@ describe "Type inference: struct" do
           x : Baz
         end
       end
-      bar = Pointer(Foo::Bar).malloc(1_u64)
+      bar = Pointer(LibFoo::Bar).malloc(1_u64)
       bar.value.x.y
     ") { int32 }
   end
 
   it "types struct getter with keyword name" do
-    assert_type("lib Foo; struct Bar; type : Int32; end; end; bar = Foo::Bar.new; bar.type") { int32 }
+    assert_type("lib LibFoo; struct Bar; type : Int32; end; end; bar = LibFoo::Bar.new; bar.type") { int32 }
   end
 
   it "errors on struct if no field" do
-    assert_error "lib Foo; struct Bar; x : Int32; end; end; f = Foo::Bar.new; f.y = 'a'",
-      "struct Foo::Bar has no field 'y'"
+    assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.y = 'a'",
+      "struct LibFoo::Bar has no field 'y'"
   end
 
   it "errors on struct setter if different type" do
-    assert_error "lib Foo; struct Bar; x : Int32; end; end; f = Foo::Bar.new; f.x = 'a'",
-      "field 'x' of struct Foo::Bar has type Int32, not Char"
+    assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.x = 'a'",
+      "field 'x' of struct LibFoo::Bar has type Int32, not Char"
   end
 
   it "errors on struct setter if different type via new" do
-    assert_error "lib Foo; struct Bar; x : Int32; end; end; f = Pointer(Foo::Bar).malloc(1_u64); f.value.x = 'a'",
-      "field 'x' of struct Foo::Bar has type Int32, not Char"
+    assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = Pointer(LibFoo::Bar).malloc(1_u64); f.value.x = 'a'",
+      "field 'x' of struct LibFoo::Bar has type Int32, not Char"
   end
 
   it "types struct getter on pointer type" do
-    assert_type("lib Foo; struct Bar; x : Int32*; end; end; b = Foo::Bar.new; b.x") { pointer_of(int32) }
+    assert_type("lib LibFoo; struct Bar; x : Int32*; end; end; b = LibFoo::Bar.new; b.x") { pointer_of(int32) }
   end
 
   it "errors if setting closure" do
     assert_error %(
-      lib Foo
+      lib LibFoo
         struct Bar
           x : ->
         end
@@ -87,7 +87,7 @@ describe "Type inference: struct" do
 
       a = 1
 
-      bar = Foo::Bar.new
+      bar = LibFoo::Bar.new
       bar.x = -> { a }
       ),
       "can't set closure as C struct member"
@@ -95,7 +95,7 @@ describe "Type inference: struct" do
 
   it "errors if already defined" do
     assert_error %(
-      lib C
+      lib LibC
         struct Foo
           x : Int32
         end
@@ -109,7 +109,7 @@ describe "Type inference: struct" do
 
   it "errors if already defined with another type" do
     assert_error %(
-      lib C
+      lib LibC
         enum Foo
           X
         end
@@ -123,7 +123,7 @@ describe "Type inference: struct" do
 
   it "errors if already defined with another type (2)" do
     assert_error %(
-      lib C
+      lib LibC
         union Foo
           x : Int32
         end
@@ -137,14 +137,14 @@ describe "Type inference: struct" do
 
   it "allows inline forward declaration" do
     assert_type(%(
-      lib C
+      lib LibC
         struct Node
           next : Node*
         end
       end
 
-      node = C::Node.new
+      node = LibC::Node.new
       node.next
-      )) { pointer_of(types["C"].types["Node"]) }
+      )) { pointer_of(types["LibC"].types["Node"]) }
   end
 end

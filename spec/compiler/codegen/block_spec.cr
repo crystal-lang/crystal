@@ -812,12 +812,12 @@ describe "Code gen: block" do
 
   it "codegens block with return and yield and no return" do
     run("
-      lib C
+      lib LibC
         fun exit : NoReturn
       end
 
       def foo(key)
-        foo(key) { C.exit }
+        foo(key) { LibC.exit }
       end
 
       def foo(key)
@@ -1119,7 +1119,7 @@ describe "Code gen: block" do
 
   it "codegens bug with yield not_nil! that is never not nil" do
     run(%(
-      lib C
+      lib LibC
         fun exit(Int32) : NoReturn
       end
 
@@ -1131,7 +1131,7 @@ describe "Code gen: block" do
 
       struct Nil
         def not_nil!
-          C.exit(1)
+          LibC.exit(1)
         end
 
         def to_i
