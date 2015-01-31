@@ -59,11 +59,11 @@ describe "Type inference: primitives" do
 
   it "errors when comparing void (#225)" do
     assert_error %(
-      lib Foo
+      lib LibFoo
         fun foo
       end
 
-      Foo.foo == 1
+      LibFoo.foo == 1
       ), "undefined method '==' for Void"
   end
 

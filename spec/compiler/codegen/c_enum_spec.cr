@@ -1,22 +1,22 @@
 require "../../spec_helper"
 
-CodeGenCEnumString = "lib Foo; enum Bar; X, Y, Z = 10, W; end end"
+CodeGenCEnumString = "lib LibFoo; enum Bar; X, Y, Z = 10, W; end end"
 
 describe "Code gen: c enum" do
   it "codegens enum value" do
-    run("#{CodeGenCEnumString}; Foo::Bar::X").to_i.should eq(0)
+    run("#{CodeGenCEnumString}; LibFoo::Bar::X").to_i.should eq(0)
   end
 
   it "codegens enum value 2" do
-    run("#{CodeGenCEnumString}; Foo::Bar::Y").to_i.should eq(1)
+    run("#{CodeGenCEnumString}; LibFoo::Bar::Y").to_i.should eq(1)
   end
 
   it "codegens enum value 3" do
-    run("#{CodeGenCEnumString}; Foo::Bar::Z").to_i.should eq(10)
+    run("#{CodeGenCEnumString}; LibFoo::Bar::Z").to_i.should eq(10)
   end
 
   it "codegens enum value 4" do
-    run("#{CodeGenCEnumString}; Foo::Bar::W").to_i.should eq(11)
+    run("#{CodeGenCEnumString}; LibFoo::Bar::W").to_i.should eq(11)
   end
 
   [
@@ -33,20 +33,20 @@ describe "Code gen: c enum" do
   ].each do |test_case|
     it "codegens enum with #{test_case[0]} " do
       run("
-        lib Foo
+        lib LibFoo
           enum Bar
             X = #{test_case[0]}
           end
         end
 
-        Foo::Bar::X
+        LibFoo::Bar::X
         ").to_i.should eq(test_case[1])
     end
   end
 
   it "codegens enum that refers to another enum constant" do
     run("
-      lib Foo
+      lib LibFoo
         enum Bar
           A = 1
           B = A + 1
@@ -54,13 +54,13 @@ describe "Code gen: c enum" do
         end
       end
 
-      Foo::Bar::C
+      LibFoo::Bar::C
       ").to_i.should eq(3)
   end
 
   it "codegens enum that refers to another constant" do
     run("
-      lib Foo
+      lib LibFoo
         X = 10
         enum Bar
           A = X
@@ -69,7 +69,7 @@ describe "Code gen: c enum" do
         end
       end
 
-      Foo::Bar::C
+      LibFoo::Bar::C
       ").to_i.should eq(12)
   end
 end

@@ -547,13 +547,13 @@ describe "Code gen: class" do
     build(%(
       require "prelude"
 
-      lib C
+      lib LibC
         type Foo = Int64[8]
       end
 
       class Bar
         def initialize
-          @foo :: C::Foo
+          @foo :: LibC::Foo
         end
       end
 

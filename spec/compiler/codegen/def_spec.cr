@@ -19,10 +19,10 @@ describe "Code gen: def" do
 
   it "call external function 'putchar'" do
     run("
-      lib C
+      lib LibC
         fun putchar(c : Char) : Char
       end
-      C.putchar '\\0'
+      LibC.putchar '\\0'
       ").to_i.should eq(0)
   end
 
@@ -32,12 +32,12 @@ describe "Code gen: def" do
 
   it "uses var after external" do
     run("
-      lib C
+      lib LibC
         fun putchar(c : Char) : Char
       end
 
       a = 1
-      C.putchar '\\0'
+      LibC.putchar '\\0'
       a
       ").to_i.should eq(1)
   end

@@ -226,25 +226,25 @@ describe "Type inference: closure" do
 
   it "errors if sending closured fun literal to C" do
     assert_error %(
-      lib C
+      lib LibC
         fun foo(callback : ->)
       end
 
       a = 1
-      C.foo(-> { a })
+      LibC.foo(-> { a })
       ),
       "can't send closure to C function"
   end
 
   it "errors if sending closured fun pointer to C (1)" do
     assert_error %(
-      lib C
+      lib LibC
         fun foo(callback : ->)
       end
 
       class Foo
         def foo
-          C.foo(->bar)
+          LibC.foo(->bar)
         end
 
         def bar
@@ -258,7 +258,7 @@ describe "Type inference: closure" do
 
   it "errors if sending closured fun pointer to C (2)" do
     assert_error %(
-      lib C
+      lib LibC
         fun foo(callback : ->)
       end
 
@@ -268,7 +268,7 @@ describe "Type inference: closure" do
       end
 
       foo = Foo.new
-      C.foo(->foo.bar)
+      LibC.foo(->foo.bar)
       ),
       "can't send closure to C function"
   end

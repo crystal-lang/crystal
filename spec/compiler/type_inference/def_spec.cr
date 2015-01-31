@@ -38,11 +38,11 @@ describe "Type inference: def" do
   end
 
   it "types putchar with Char" do
-    assert_type("lib C; fun putchar(c : Char) : Char; end; C.putchar 'a'") { char }
+    assert_type("lib LibC; fun putchar(c : Char) : Char; end; LibC.putchar 'a'") { char }
   end
 
   it "types getchar with Char" do
-    assert_type("lib C; fun getchar : Char; end; C.getchar") { char }
+    assert_type("lib LibC; fun getchar : Char; end; LibC.getchar") { char }
   end
 
   it "allows recursion" do

@@ -187,14 +187,14 @@ describe "Type inference: const" do
 
   it "doesn't error if using c enum" do
     assert_type(%(
-      lib C
+      lib LibC
         enum Foo
           A = 1
         end
       end
 
-      C::Foo::A
-      )) { types["C"].types["Foo"] }
+      LibC::Foo::A
+      )) { types["LibC"].types["Foo"] }
   end
 
   it "errors if constant depends on a global initialized later" do

@@ -62,12 +62,12 @@ describe "Type inference: pointer" do
 
   it "types nil or pointer type with typedef" do
     result = assert_type(%(
-      lib C
+      lib LibC
         type T = Void*
         fun foo : T?
       end
-      C.foo
-      )) { |mod| union_of(mod.nil, mod.types["C"].types["T"]) }
+      LibC.foo
+      )) { |mod| union_of(mod.nil, mod.types["LibC"].types["T"]) }
     result.node.type.should be_a(NilablePointerType)
   end
 
@@ -88,12 +88,12 @@ describe "Type inference: pointer" do
 
   it "types pointer value on typedef" do
     assert_type(%(
-      lib C
+      lib LibC
         type Foo = Int32*
         fun foo : Foo
       end
 
-      C.foo.value
+      LibC.foo.value
       )) { int32 }
   end
 end
