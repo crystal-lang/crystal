@@ -116,6 +116,16 @@ class SocketError < Exception
 end
 
 class Socket < FileDescriptorIO
+  struct Addr
+    property :family, :ip_port, :ip_address, :path
+
+    def initialize(@family, @ip_port, @ip_address)
+    end
+
+    def initialize(@family, @path)
+    end
+  end
+
   def afamily(family)
     LibC::AF_UNSPEC.class.cast(family)
   end

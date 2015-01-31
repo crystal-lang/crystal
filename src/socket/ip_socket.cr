@@ -1,5 +1,29 @@
 class IPSocket < Socket
-  # Yields LibC::Addrinfo to the block while the block returns true and there are more LibC::Addrinfo results.
+  macro sockname(name, method)
+    def {{name.id}}
+      addr :: LibC::SockAddrIn6
+      addrlen = sizeof(LibC::SockAddrIn6)
+
+      if LibC.{{method.id}}(fd, pointerof(addr) as LibC::SockAddr*, pointerof(addrlen)) != 0
+        raise Errno.new("{{method.id}}")
+      end
+
+      if addrlen == sizeof(LibC::SockAddrIn6)
+        family_name = "AF_INET6"
+        addr = (pointerof(addr) as LibC::SockAddrIn6*).value
+      else
+        family_name = "AF_INET"
+        addr = (pointerof(addr) as LibC::SockAddrIn*).value
+      end
+
+      Addr.new(family_name, LibC.htons(addr.port.to_i32).to_u16, Socket.inet_ntop(addr))
+    end
+  end
+
+  sockname :addr, :getsockname
+  sockname :peeraddr, :getpeername
+
+  # Yields LibC::Addrinfo to the block while the block returns false and there are more LibC::Addrinfo results.
   #
   # The block must return true if it succeeded using that addressinfo
   # (to connect or bind, for example), and false otherwise. If it returns false and
