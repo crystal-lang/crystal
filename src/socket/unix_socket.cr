@@ -28,21 +28,29 @@ class UNIXSocket < Socket
     end
   end
 
-  def self.pair(path, socktype = LibC::SOCK_STREAM)
+  def self.pair(socktype = LibC::SOCK_STREAM, protocol = 0)
     fds = StaticArray(Int32, 2).new { 0_i32 }
-    if LibC.socketpair(LibC::AF_UNIX, socktype, 0, pointerof(fds)) != 0
+    if LibC.socketpair(LibC::AF_UNIX, socktype, protocol, pointerof(fds)) != 0
       raise Errno.new("socketpair:")
     end
     fds.map { |fd| UNIXSocket.new(fd) }
   end
 
-  def self.pair(path, socktype = LibC::SOCK_STREAM)
-    left, right = pair(path, socktype)
+  def self.pair(socktype = LibC::SOCK_STREAM, protocol = 0)
+    left, right = pair(socktype, protocol)
     begin
       yield left, right
     ensure
       left.close
       right.close
     end
+  end
+
+  def addr
+    Addr.new("AF_UNIX", path.to_s)
+  end
+
+  def peeraddr
+    Addr.new("AF_UNIX", path.to_s)
   end
 end
