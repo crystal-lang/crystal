@@ -233,7 +233,7 @@ describe "Type inference: closure" do
       a = 1
       LibC.foo(-> { a })
       ),
-      "can't send closure to C function"
+      "can't send closure to C function (closured vars: a)"
   end
 
   it "errors if sending closured fun pointer to C (1)" do
@@ -253,7 +253,7 @@ describe "Type inference: closure" do
 
       Foo.new.foo
       ),
-      "can't send closure to C function"
+      "can't send closure to C function (closured vars: self)"
   end
 
   it "errors if sending closured fun pointer to C (2)" do
@@ -270,7 +270,28 @@ describe "Type inference: closure" do
       foo = Foo.new
       LibC.foo(->foo.bar)
       ),
-      "can't send closure to C function"
+      "can't send closure to C function (closured vars: self)"
+  end
+
+  it "errors if sending closured fun pointer to C (3)" do
+    assert_error %(
+      lib LibC
+        fun foo(callback : ->)
+      end
+
+      class Foo
+        def initialize
+          @a = 1
+        end
+
+        def foo
+          LibC.foo(->{ @a })
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "can't send closure to C function (closured vars: @a)"
   end
 
   it "transforms block to fun literal" do

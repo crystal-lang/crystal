@@ -284,21 +284,54 @@ module Crystal
       source.lines.to_s_with_line_numbers
     end
 
+    class ClosuredVarsCollector < Visitor
+      getter vars
+
+      def self.collect(a_def)
+        visitor = new a_def
+        a_def.accept visitor
+        visitor.vars
+      end
+
+      def initialize(@a_def)
+        @vars = [] of ASTNode
+      end
+
+      def visit(node : Var)
+        if @a_def.vars.try &.[node.name].closured
+          @vars << node
+        end
+      end
+
+      def visit(node : InstanceVar)
+        @vars << node
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
+    end
+
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
         case arg
         when FunLiteral
           if arg.def.closure
+            vars = ClosuredVarsCollector.collect arg.def
+            unless vars.empty?
+              message += " (closured vars: #{vars.join ", "})"
+            end
+
             arg.raise message
           end
         when FunPointer
           if arg.obj.try &.type?.try &.passed_as_self?
-            arg.raise message
+            arg.raise "#{message} (closured vars: self)"
           end
 
           owner = arg.call.target_def.owner
           if owner.passed_as_self?
-            arg.raise message
+            arg.raise "#{message} (closured vars: self)"
           end
         end
       end
