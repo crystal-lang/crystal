@@ -1903,7 +1903,9 @@ module Crystal
       codepoint = 0
       found_curly = false
       found_space = false
+      found_digit = false
       char = '\0'
+
       6.times do
         char = next_char
         case char
@@ -1920,10 +1922,11 @@ module Crystal
         else
           hex_value = char_to_hex(char) { expected_hexacimal_character_in_unicode_escape }
           codepoint = 16 * codepoint + hex_value
+          found_digit = true
         end
       end
 
-      if codepoint == 0
+      if !found_digit
         expected_hexacimal_character_in_unicode_escape
       elsif codepoint > 0x10FFFF
         raise "invalid unicode codepoint (too large)"

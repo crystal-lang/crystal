@@ -353,6 +353,13 @@ describe "Lexer" do
     (token.value as Char).ord.should eq(0xFEDA)
   end
 
+  it "lexes char with unicode codepoint and curly with zeros" do
+    lexer = Lexer.new "'\\u{0}'"
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    (token.value as Char).ord.should eq(0)
+  end
+
   it "lexes char with unicode codepoint and curly" do
     lexer = Lexer.new "'\\u{A5}'"
     token = lexer.next_token
