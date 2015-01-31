@@ -77,11 +77,12 @@ class Crystal::Doc::Type
     case type = @type
     when ClassType
       superclass = type.superclass
-      if superclass
-        @generator.type(superclass)
-      else
-        nil
-      end
+    when InheritedGenericClass
+      superclass = type.extended_class.superclass
+    end
+
+    if superclass
+      @generator.type(superclass)
     else
       nil
     end
@@ -542,5 +543,21 @@ class Crystal::Doc::Type
 
   def must_be_included?
     @generator.must_include? self
+  end
+
+  def superclass_hierarchy
+    hierarchy = [self]
+    superclass = self.superclass
+    while superclass
+      hierarchy << superclass
+      superclass = superclass.superclass
+    end
+    String.build do |io|
+      hierarchy.reverse.each_with_index do |type, index|
+        io << %(<div style="padding-left: ) <<  (index * 20) << %(px">)
+        type_to_html type, io
+        io << "</div>"
+      end
+    end
   end
 end

@@ -23,9 +23,9 @@
   <code><%= type.formatted_alias_definition %></code>
 <% end %>
 
-<% if superclass = type.superclass %>
-  <h2>Superclass</h2>
-  <%= superclass.link_from(type) %>
+<% if type.superclass %>
+  <h2>Superclass hierarchy</h2>
+  <%= type.superclass_hierarchy %>
 <% end %>
 
 <%= OtherTypesTemplate.new("Included Modules", type, type.included_modules) %>
