@@ -117,9 +117,9 @@ end
 
 class Socket < FileDescriptorIO
   struct Addr
-    property :family, :port, :ip_address, :path
+    property :family, :ip_port, :ip_address, :path
 
-    def initialize(@family, @port, @ip_address)
+    def initialize(@family, @ip_port, @ip_address)
     end
 
     def initialize(@family, @path)

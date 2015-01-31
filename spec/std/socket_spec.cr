@@ -46,7 +46,7 @@ describe "TCPSocket" do
   it "sends and receives messages" do
     TCPServer.open("::", 12345) do |server|
       server.addr.family.should eq("AF_INET6")
-      server.addr.port.should eq(12345)
+      server.addr.ip_port.should eq(12345)
       server.addr.ip_address.should eq("::")
 
       TCPSocket.open("localhost", 12345) do |client|
@@ -56,7 +56,7 @@ describe "TCPSocket" do
         sock = server.accept
 
         sock.addr.family.should eq("AF_INET6")
-        sock.addr.port.should eq(12345)
+        sock.addr.ip_port.should eq(12345)
         sock.addr.ip_address.should eq("::ffff:127.0.0.1")
 
         sock.peeraddr.family.should eq("AF_INET6")
@@ -77,7 +77,7 @@ describe "UDPSocket" do
     server.bind("::", 12346)
 
     server.addr.family.should eq("AF_INET6")
-    server.addr.port.should eq(12346)
+    server.addr.ip_port.should eq(12346)
     server.addr.ip_address.should eq("::")
 
     client = UDPSocket.new(LibC::AF_INET)
@@ -86,7 +86,7 @@ describe "UDPSocket" do
     client.addr.family.should eq("AF_INET")
     client.addr.ip_address.should eq("127.0.0.1")
     client.peeraddr.family.should eq("AF_INET")
-    client.peeraddr.port.should eq(12346)
+    client.peeraddr.ip_port.should eq(12346)
     client.peeraddr.ip_address.should eq("127.0.0.1")
 
     client << "message"
