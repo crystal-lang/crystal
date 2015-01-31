@@ -35,6 +35,11 @@ module Crystal
           dependency.name.should eq("name")
         end
       end
+
+      it "gets the target_dir" do
+        dependency = GitHubDependency.new("owner/repo")
+        dependency.target_dir.should eq(".deps/owner-repo")
+      end
     end
   end
 end

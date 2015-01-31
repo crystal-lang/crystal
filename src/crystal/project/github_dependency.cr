@@ -3,6 +3,8 @@ require "crystal/project/project_error"
 
 module Crystal
   class GitHubDependency < Dependency
+    getter target_dir
+
     def initialize(repo, name = nil : String?)
       unless repo =~ /(.*)\/(.*)/
         raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
@@ -10,12 +12,9 @@ module Crystal
 
       @author = $1
       @repository = $2
+      @target_dir = ".deps/#{@author}-#{@repository}"
 
       super(name || @repository)
-    end
-
-    def target_dir
-      @_target_dir ||= ".deps/#{@author}-#{@repository}"
     end
 
     def install
