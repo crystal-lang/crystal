@@ -52,4 +52,8 @@ class FileDescriptorIO
   def tty?
     LibC.isatty(fd) == 1
   end
+
+  def to_fd_io
+    self
+  end
 end

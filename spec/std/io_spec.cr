@@ -24,15 +24,6 @@ describe "IO" do
       end
     end
 
-    it "returns the ios with an error condition" do
-      with_pipe do |read, write|
-        Thread.new do
-          IO.select(nil, nil, {write}).includes?(write).should be_true
-        end
-        write.close
-      end
-    end
-
     it "times out" do
       with_pipe do |read, write|
         IO.select({read}, nil, nil, 0.00001).should be_nil

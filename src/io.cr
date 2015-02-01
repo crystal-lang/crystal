@@ -66,17 +66,11 @@ module IO
   #
   # If timeout_sec is nil, this method blocks until an IO is ready.
   def self.select(read_ios, write_ios, error_ios, timeout_sec : C::TimeT|Int32|Float?)
-    read_ios  ||= [] of FileDescriptorIO
-    write_ios ||= [] of FileDescriptorIO
-    error_ios ||= [] of FileDescriptorIO
+    ios = [] of FileDescriptorIO
 
-    # This is ugly, something like
-    #   ios = read_ios.to_a.concat(write_ios).concat(error_ios)
-    # would be nicer, but fails to compile
-    ios = Array(typeof(read_ios[0])|typeof(write_ios[0])|typeof(error_ios[0])).new
-    read_ios.each  {|io| ios << io }
-    write_ios.each {|io| ios << io }
-    error_ios.each {|io| ios << io }
+    read_ios.try &.each { |io| ios << io.to_fd_io }
+    write_ios.try &.each { |io| ios << io.to_fd_io }
+    error_ios.try &.each { |io| ios << io.to_fd_io }
 
     nfds = ios.max_of(&.fd) + 1
     read_fdset  = FdSet.from_ios(read_ios)
@@ -96,7 +90,6 @@ module IO
       timeout.tv_sec = sec
       timeout.tv_usec = LibC::UsecT.cast(usec)
       timeout_ptr = pointerof(timeout)
-
     else
       timeout_ptr = Pointer(LibC::TimeVal).null
     end

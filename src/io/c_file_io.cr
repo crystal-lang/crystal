@@ -83,6 +83,10 @@ struct CFileIO
   def tty?
     LibC.isatty(fd) == 1
   end
+
+  def to_fd_io
+    FileDescriptorIO.new(fd)
+  end
 end
 
 ifdef windows

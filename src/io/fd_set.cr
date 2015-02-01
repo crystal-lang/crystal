@@ -3,7 +3,7 @@ struct IO::FdSet
 
   def self.from_ios(ios)
     fdset = new
-    ios.each do |io|
+    ios.try &.each do |io|
       fdset.set io
     end
     fdset
@@ -11,6 +11,7 @@ struct IO::FdSet
 
   def initialize
     @fdset :: Int32[32]
+    @fdset = StaticArray(Int32, 32).new(0)
   end
 
   def set(io)
