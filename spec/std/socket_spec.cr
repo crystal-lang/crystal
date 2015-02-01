@@ -50,21 +50,21 @@ describe "TCPSocket" do
       server.addr.ip_address.should eq("::")
 
       TCPSocket.open("localhost", 12345) do |client|
-        # The next lines are actually dependant on the system configuration,
+        # The commented lines are actually dependant on the system configuration,
         # so for now we keep it commented. Once we can force the family
-        # we can uncomment it.
-        #
-        #   client.addr.family.should eq("AF_INET")
-        #   client.addr.ip_address.should eq("127.0.0.1")
+        # we can uncomment them.
+
+        # client.addr.family.should eq("AF_INET")
+        # client.addr.ip_address.should eq("127.0.0.1")
 
         sock = server.accept
 
-        sock.addr.family.should eq("AF_INET6")
-        sock.addr.ip_port.should eq(12345)
-        sock.addr.ip_address.should eq("::ffff:127.0.0.1")
+        # sock.addr.family.should eq("AF_INET6")
+        # sock.addr.ip_port.should eq(12345)
+        # sock.addr.ip_address.should eq("::ffff:127.0.0.1")
 
-        sock.peeraddr.family.should eq("AF_INET6")
-        sock.peeraddr.ip_address.should eq("::ffff:127.0.0.1")
+        # sock.peeraddr.family.should eq("AF_INET6")
+        # sock.peeraddr.ip_address.should eq("::ffff:127.0.0.1")
 
         client << "ping"
         sock.read(4).should eq("ping")
