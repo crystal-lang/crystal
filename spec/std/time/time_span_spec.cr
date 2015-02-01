@@ -207,5 +207,7 @@ describe TimeSpan do
     t1.total_minutes.should be_close(1563.07, 1e-02)
     t1.total_seconds.should be_close(93784, 1e-01)
     t1.total_milliseconds.should be_close(9.3784e+07, 1e+01)
+    t1.to_f.should be_close(93784, 1e-01)
+    t1.to_i.should eq(93784)
   end
 end

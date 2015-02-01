@@ -220,6 +220,7 @@ describe Time do
   it "gets unix epoch seconds" do
     t1 = Time.new 2014, 10, 30, 21, 18, 13
     t1.to_i.should eq(1414703893)
+    t1.to_f.should be_close(1414703893, 1e-01)
   end
 
   it "to_s" do

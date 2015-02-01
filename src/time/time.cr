@@ -257,6 +257,10 @@ struct Time
     (ticks - UnixEpoch) / TimeSpan::TicksPerSecond
   end
 
+  def to_f
+    (ticks - UnixEpoch) / TimeSpan::TicksPerSecond.to_f
+  end
+
   macro def_at(name)
     def at_{{name.id}}
       year, month, day, day_year = year_month_day_day_year
@@ -264,13 +268,13 @@ struct Time
     end
   end
 
-  def_at(beginning_of_year)    { Time.new(year, 1, 1) }
+  def_at(beginning_of_year)     { Time.new(year, 1, 1) }
   def_at(beginning_of_semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1) }
-  def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
-  def_at(beginning_of_month)   { Time.new(year, month, 1) }
-  def_at(beginning_of_day)     { Time.new(year, month, day) }
-  def_at(beginning_of_hour)    { Time.new(year, month, day, hour) }
-  def_at(beginning_of_minute)  { Time.new(year, month, day, hour, minute) }
+  def_at(beginning_of_quarter)  { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
+  def_at(beginning_of_month)    { Time.new(year, month, 1) }
+  def_at(beginning_of_day)      { Time.new(year, month, day) }
+  def_at(beginning_of_hour)     { Time.new(year, month, day, hour) }
+  def_at(beginning_of_minute)   { Time.new(year, month, day, hour, minute) }
 
   def at_beginning_of_week
     dow = day_of_week
