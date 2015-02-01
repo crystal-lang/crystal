@@ -74,10 +74,10 @@ describe "Complex" do
   end
 
   it "sqrt" do
-    Complex.new(1.32, 7.25).sqrt.should eq(Complex.new(2.0843687106374236, 1.739135682425128))
-    Complex.new(7.11, -0.9).sqrt.should eq(Complex.new(2.671772413453534, -0.1684275194002508))
-    Complex.new(-2.2, 6.22).sqrt.should eq(Complex.new(1.4828360708935342, 2.0973323087062226))
-    Complex.new(-8.3, -1.11).sqrt.should eq(Complex.new(0.1922159681400434, -2.8873771797962275))
+    Complex.new(1.32, 7.25).sqrt.should  be_close(Complex.new(2.0843687106374236, 1.739135682425128), 1e-15)
+    Complex.new(7.11, -0.9).sqrt.should  be_close(Complex.new(2.671772413453534, -0.1684275194002508), 1e-15)
+    Complex.new(-2.2, 6.22).sqrt.should  be_close(Complex.new(1.4828360708935342, 2.0973323087062226), 1e-15)
+    Complex.new(-8.3, -1.11).sqrt.should be_close(Complex.new(0.1922159681400434, -2.8873771797962275), 1e-15)
   end
 
   it "exp" do
