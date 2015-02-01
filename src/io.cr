@@ -66,13 +66,18 @@ module IO
   #
   # If timeout_sec is nil, this method blocks until an IO is ready.
   def self.select(read_ios, write_ios, error_ios, timeout_sec : C::TimeT|Int32|Float?)
-    ios = [] of FileDescriptorIO
+    nfds = 0
+    read_ios.try &.each do |io|
+      nfds = io.fd if io.fd > nfds
+    end
+    write_ios.try &.each do |io|
+      nfds = io.fd if io.fd > nfds
+    end
+    error_ios.try &.each do |io|
+      nfds = io.fd if io.fd > nfds
+    end
+    nfds += 1
 
-    read_ios.try &.each { |io| ios << io.to_fd_io }
-    write_ios.try &.each { |io| ios << io.to_fd_io }
-    error_ios.try &.each { |io| ios << io.to_fd_io }
-
-    nfds = ios.max_of(&.fd) + 1
     read_fdset  = FdSet.from_ios(read_ios)
     write_fdset = FdSet.from_ios(write_ios)
     error_fdset = FdSet.from_ios(error_ios)
@@ -101,9 +106,17 @@ module IO
     when -1
       raise Errno.new("Error waiting with select()")
     else
-      ios.select {|io|
-        {read_fdset, write_fdset, error_fdset}.any?(&.is_set(io))
-      }
+      ios = [] of IO
+      read_ios.try &.each do |io|
+        ios << io if read_fdset.is_set(io)
+      end
+      write_ios.try &.each do |io|
+        ios << io if write_fdset.is_set(io)
+      end
+      error_ios.try &.each do |io|
+        ios << io if error_fdset.is_set(io)
+      end
+      ios
     end
   end
 

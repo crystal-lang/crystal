@@ -10,7 +10,6 @@ struct IO::FdSet
   end
 
   def initialize
-    @fdset :: Int32[32]
     @fdset = StaticArray(Int32, 32).new(0)
   end
 
