@@ -50,7 +50,11 @@ describe "TCPSocket" do
       server.addr.ip_address.should eq("::")
 
       TCPSocket.open("localhost", 12345) do |client|
-        client.addr.family.should eq("AF_INET")
+        # The next line is actually dependant on the system configuration,
+        # so for now we keep it commented. Once we can force the family
+        # we can uncomment it.
+        #
+        #   client.addr.family.should eq("AF_INET")
         client.addr.ip_address.should eq("127.0.0.1")
 
         sock = server.accept
