@@ -2,7 +2,7 @@ lib LibC
   fun execvp(file : UInt8*, argv : UInt8**) : Int32
 end
 
-def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
+def Process.run(command, args = nil, output = nil : IO | Bool | Symbol, error = nil : IO | Bool | Symbol, input = nil : String | IO)
   argv = [command.cstr]
   if args
     args.each do |arg|
@@ -11,8 +11,32 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
   end
   argv << Pointer(UInt8).null
 
+  if output.is_a?(Symbol) && output != :error
+    raise ArgumentError.new("output must be an true, false, an IO or :error, not #{error.inspect}")
+  end
+
+  if error.is_a?(Symbol) && error != :output
+    raise ArgumentError.new("error must be an true, false, an IO or :output, not #{error.inspect}")
+  end
+
+  if output == :error && error == :output
+    raise ArgumentError.new("Can't redirect error to output while output is redirected to error")
+  end
+
+  if output == :error && error == false
+    output = false
+  end
+
+  if error == :output && output == false
+    error = false
+  end
+
   if output
     process_output, fork_output = IO.pipe
+  end
+
+  if error
+    process_error, fork_error = IO.pipe
   end
 
   if input
@@ -25,6 +49,13 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
       null.reopen(STDOUT)
     elsif fork_output
       fork_output.reopen(STDOUT)
+    end
+
+    if error == false
+      null = File.new("/dev/null", "r+")
+      null.reopen(STDERR)
+    elsif fork_error
+      fork_error.reopen(STDERR)
     end
 
     if process_input && fork_input
@@ -67,7 +98,18 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
     end
   end
 
-  while process_input || process_output
+  if error
+    fork_error.not_nil!.close
+
+    case error
+    when true
+      status_error = StringIO.new
+    when IO
+      status_error = error
+    end
+  end
+
+  while process_input || process_output || process_error
     wios = nil
     rios = nil
 
@@ -75,8 +117,12 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
       wios = {process_input}
     end
 
-    if process_output
+    if process_output && process_error
+      rios = {process_output, process_error}
+    elsif process_output
       rios = {process_output}
+    elsif process_error
+      rios = {process_error}
     end
 
     buffer :: UInt8[2048]
@@ -99,8 +145,30 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
       if bytes == 0
         process_output.close
         process_output = nil
+      elsif output == :error
+        if error.nil?
+          STDERR.write(buffer.to_slice, bytes)
+        else
+          status_error.not_nil!.write(buffer.to_slice, bytes)
+        end
       else
         status_output.not_nil!.write(buffer.to_slice, bytes)
+      end
+    end
+
+    if process_error && ios.includes? process_error
+      bytes = process_error.read(buffer.to_slice)
+      if bytes == 0
+        process_error.close
+        process_error = nil
+      elsif error == :output
+        if output.nil?
+          STDOUT.write(buffer.to_slice, bytes)
+        else
+          status_output.not_nil!.write(buffer.to_slice, bytes)
+        end
+      else
+        status_error.not_nil!.write(buffer.to_slice, bytes)
       end
     end
   end
@@ -109,6 +177,10 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
 
   if output == true
     status.output = status_output.to_s
+  end
+
+  if error == true
+    status.error = status_error.to_s
   end
 
   Process::Status.last = status
