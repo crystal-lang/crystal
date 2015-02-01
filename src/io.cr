@@ -1,3 +1,5 @@
+require "./time"
+
 lib LibC
   enum FCNTL
     F_GETFL = 3
@@ -40,6 +42,7 @@ lib LibC
   fun read(fd : Int32, buffer : UInt8*, nbyte : LibC::SizeT) : LibC::SSizeT
   fun write(fd : Int32, buffer : UInt8*, nbyte : LibC::SizeT) : LibC::SSizeT
   fun pipe(filedes : Int32[2]*) : Int32
+  fun select(nfds : Int32, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : TimeVal*) : Int32
 
   # In fact lseek's offset is off_t, but it matches the definition of size_t
   fun lseek(fd : Int32, offset : LibC::SizeT, whence : Int32) : Int32
@@ -48,6 +51,69 @@ lib LibC
 end
 
 module IO
+  def self.select(read_ios, write_ios = nil, error_ios = nil)
+    select(read_ios, write_ios, error_ios, nil).not_nil!
+  end
+
+  # Returns an array of all given IOs that are
+  # * ready to read if they appeared in read_ios
+  # * ready to write if they appeared in write_ios
+  # * have an error condition if they appeared in error_ios
+  #
+  # If the optional timeout_sec is given, nil is returned if no
+  # IO was ready after the specified amount of seconds passed. Fractions
+  # are supported.
+  #
+  # If timeout_sec is nil, this method blocks until an IO is ready.
+  def self.select(read_ios, write_ios, error_ios, timeout_sec : C::TimeT|Int32|Float?)
+    read_ios  ||= [] of FileDescriptorIO
+    write_ios ||= [] of FileDescriptorIO
+    error_ios ||= [] of FileDescriptorIO
+
+    # This is ugly, something like
+    #   ios = read_ios.to_a.concat(write_ios).concat(error_ios)
+    # would be nicer, but fails to compile
+    ios = Array(typeof(read_ios[0])|typeof(write_ios[0])|typeof(error_ios[0])).new
+    read_ios.each  {|io| ios << io }
+    write_ios.each {|io| ios << io }
+    error_ios.each {|io| ios << io }
+
+    nfds = ios.max_of(&.fd) + 1
+    read_fdset  = FdSet.from_ios(read_ios)
+    write_fdset = FdSet.from_ios(write_ios)
+    error_fdset = FdSet.from_ios(error_ios)
+
+    if timeout_sec
+      sec = LibC::TimeT.cast(timeout_sec)
+
+      if timeout_sec.is_a? Float
+        usec = (timeout_sec-sec) * 10e6
+      else
+        usec = 0
+      end
+
+      timeout = LibC::TimeVal.new
+      timeout.tv_sec = sec
+      timeout.tv_usec = LibC::UsecT.cast(usec)
+      timeout_ptr = pointerof(timeout)
+
+    else
+      timeout_ptr = Pointer(LibC::TimeVal).null
+    end
+
+    ret = LibC.select(nfds, read_fdset, write_fdset, error_fdset, timeout_ptr)
+    case ret
+    when 0 # Timeout
+      nil
+    when -1
+      raise Errno.new("Error waiting with select()")
+    else
+      ios.select {|io|
+        {read_fdset, write_fdset, error_fdset}.any?(&.is_set(io))
+      }
+    end
+  end
+
   # Reads count bytes from this IO into slice
   abstract def read(slice : Slice(UInt8), count)
 

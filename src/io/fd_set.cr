@@ -1,5 +1,13 @@
-struct Process::FdSet
+struct IO::FdSet
   NFDBITS = sizeof(Int32) * 8
+
+  def self.from_ios(ios)
+    fdset = new
+    ios.each do |io|
+      fdset.set io
+    end
+    fdset
+  end
 
   def initialize
     @fdset :: Int32[32]
@@ -14,7 +22,7 @@ struct Process::FdSet
   end
 
   def to_unsafe
-    pointerof(@fdset)
+    pointerof(@fdset) as Void*
   end
 end
 
