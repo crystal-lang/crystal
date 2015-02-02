@@ -402,6 +402,36 @@ class String
     gsub(pattern) { replacement }
   end
 
+  # Yields each char in this string to the block,
+  # returns the number of times the block returned a truthy value.
+  #
+  # ```
+  # "aabbcc".count {|c| ['a', 'b'].includes?(c) } #=> 4
+  # ```
+  def count
+    count = 0
+    each_char do |char|
+      count += 1 if yield char
+    end
+    count
+  end
+
+  # Counts the occurrences of other in this string.
+  #
+  # ```
+  # "aabbcc".count('a') #=> 2
+  # ```
+  def count(other : Char)
+    count {|char| char == other }
+  end
+
+  # Sets should be a list of strings following the rules
+  # described at Char#in_set?. Returns the number of characters
+  # in this string that matched the given set.
+  def count(*sets)
+    count {|char| char.in_set?(*sets) }
+  end
+
   def delete(char : Char)
     String.build(bytesize) do |buffer|
       each_char do |my_char|

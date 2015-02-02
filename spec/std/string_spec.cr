@@ -687,4 +687,18 @@ describe "String" do
   it "has size (same as length)" do
     "テスト".size.should eq(3)
   end
+
+  describe "count" do
+    assert { "hello world".count("lo").should eq(5) }
+    assert { "hello world".count("lo", "o").should eq(2) }
+    assert { "hello world".count("hello", "^l").should eq(4) }
+    assert { "hello world".count("ej-m").should eq(4) }
+    assert { "hello^world".count("\\^aeiou").should eq(4) }
+    assert { "hello-world".count("a\\-eo").should eq(4) }
+    assert { "hello world\\r\\n".count("\\").should eq(2) }
+    assert { "hello world\\r\\n".count("\\A").should eq(0) }
+    assert { "hello world\\r\\n".count("X-\\w").should eq(3) }
+    assert { "aabbcc".count('a').should eq(2) }
+    assert { "aabbcc".count {|c| ['a', 'b'].includes?(c) }.should eq(4) }
+  end
 end
