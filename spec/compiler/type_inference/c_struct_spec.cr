@@ -163,4 +163,86 @@ describe "Type inference: struct" do
       LibC::Foo.new.a
       ), flags: "some_flag") { int32 }
   end
+
+  it "includes another struct" do
+    assert_type(%(
+      lib LibC
+        struct Foo
+          a : Int32
+        end
+
+        struct Bar
+          include Foo
+        end
+      end
+
+      LibC::Bar.new.a
+      )) { int32 }
+  end
+
+  it "errors if includes non-cstruct type" do
+    assert_error %(
+      lib LibC
+        union Foo
+          a : Int32
+        end
+
+        struct Bar
+          include Foo
+        end
+      end
+
+      LibC::Bar.new.a
+      ),
+      "can only include C struct, not union"
+  end
+
+  it "errors if includes unknown type" do
+    assert_error %(
+      lib LibC
+        struct Bar
+          include Foo
+        end
+      end
+
+      LibC::Bar.new.a
+      ),
+      "undefined constant Foo"
+  end
+
+  it "errors if includes and field already exists" do
+    assert_error %(
+      lib LibC
+        struct Foo
+          a : Int32
+        end
+
+        struct Bar
+          a : Float64
+          include Foo
+        end
+      end
+
+      LibC::Bar.new.a
+      ),
+      "struct LibC::Foo has a field named 'a', which LibC::Bar already defines"
+  end
+
+  it "errors if includes and field already exists, the other way around" do
+    assert_error %(
+      lib LibC
+        struct Foo
+          a : Int32
+        end
+
+        struct Bar
+          include Foo
+          a : Float64
+        end
+      end
+
+      LibC::Bar.new.a
+      ),
+      "struct LibC::Bar already defines a field named 'a'"
+  end
 end

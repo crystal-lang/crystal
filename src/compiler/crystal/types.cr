@@ -1935,16 +1935,9 @@ module Crystal
     def primitive_like?
       true
     end
-  end
 
-  class CStructType < CStructOrUnionType
-    property :packed
-    @packed = false
-
-    def add_var(var)
-      @vars[var.name] = var
-      add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:struct_set))
-      add_def Def.new(var.name, body: Primitive.new(:struct_get))
+    def has_var?(name)
+      @vars.has_key?(name)
     end
 
     def has_instance_var_in_initialize?(name)
@@ -1969,6 +1962,17 @@ module Crystal
 
     private def remove_at_from_var_name(name)
       name.starts_with?('@') ? name[1 .. -1] : name
+    end
+  end
+
+  class CStructType < CStructOrUnionType
+    property :packed
+    @packed = false
+
+    def add_var(var)
+      @vars[var.name] = var
+      add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:struct_set))
+      add_def Def.new(var.name, body: Primitive.new(:struct_get))
     end
 
     def metaclass

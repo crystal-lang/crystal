@@ -26,6 +26,7 @@ module Crystal
       @block_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
+      @inside_c_struct = false
       @wants_doc = false
     end
 
@@ -3477,7 +3478,10 @@ module Crystal
         when :type
           parse_type_def
         when :struct
-          parse_struct_or_union StructDef
+          @inside_c_struct = true
+          node = parse_struct_or_union StructDef
+          @inside_c_struct = false
+          node
         when :union
           parse_struct_or_union UnionDef
         when :enum
@@ -3702,32 +3706,19 @@ module Crystal
           case @token.value
           when :ifdef
             exps << parse_ifdef(mode: :struct_or_union)
+          when :include
+            if @inside_c_struct
+              location = @token.location
+              exps << parse_include.at(location)
+            else
+              parse_struct_or_union_fields exps
+            end
           when :else
             break
           when :end
             break
           else
-            names = [] of String
-            names << @token.value.to_s
-
-            next_token_skip_space_or_newline
-
-            while @token.type == :","
-              next_token_skip_space_or_newline
-              names << check_ident
-              next_token_skip_space_or_newline
-            end
-
-            check :":"
-            next_token_skip_space_or_newline
-
-            type = parse_single_type
-
-            skip_statement_end
-
-            names.each do |name|
-              exps << Arg.new(name, nil, type)
-            end
+            parse_struct_or_union_fields exps
           end
         when :";", :NEWLINE
           skip_statement_end
@@ -3737,6 +3728,38 @@ module Crystal
       end
 
       exps
+    end
+
+    def parse_struct_or_union_fields(exps)
+      args = [] of Arg
+
+      arg = Arg.new(@token.value.to_s)
+      arg.location = @token.location
+      args << arg
+
+      next_token_skip_space_or_newline
+
+      while @token.type == :","
+        next_token_skip_space_or_newline
+
+        arg = Arg.new(check_ident)
+        arg.location = @token.location
+        args << arg
+
+        next_token_skip_space_or_newline
+      end
+
+      check :":"
+      next_token_skip_space_or_newline
+
+      type = parse_single_type
+
+      skip_statement_end
+
+      args.each do |an_arg|
+        an_arg.restriction = type
+        exps << an_arg
+      end
     end
 
     def parse_enum_def

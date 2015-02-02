@@ -2663,7 +2663,28 @@ module Crystal
       def visit(field : Arg)
         field.accept @type_inference
         field_type = @type_inference.check_primitive_like field.restriction.not_nil!
+
+        if @struct_or_union.has_var?(field.name)
+          field.raise "#{@struct_or_union.type_desc} #{@struct_or_union} already defines a field named '#{field.name}'"
+        end
         @struct_or_union.add_var Var.new(field.name, field_type)
+      end
+
+      def visit(node : Include)
+        node.name.accept @type_inference
+        type = node.name.type.instance_type
+        unless type.is_a?(CStructType)
+          node.name.raise "can only include C struct, not #{type.type_desc}"
+        end
+
+        type.vars.each_value do |var|
+          if @struct_or_union.has_var?(var.name)
+            node.raise "struct #{type} has a field named '#{var.name}', which #{@struct_or_union} already defines"
+          end
+          @struct_or_union.add_var(var)
+        end
+
+        false
       end
 
       def visit(node : ASTNode)
