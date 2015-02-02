@@ -427,17 +427,44 @@ class String
 
   # Sets should be a list of strings following the rules
   # described at Char#in_set?. Returns the number of characters
-  # in this string that matched the given set.
+  # in this string that match the given set.
   def count(*sets)
     count {|char| char.in_set?(*sets) }
   end
 
-  def delete(char : Char)
+  # Yields each char in this string to the block.
+  # Returns a new string with all characters for which the
+  # block returned a truthy value removed.
+  #
+  # ```
+  # "aabbcc".delete {|c| ['a', 'b'].includes?(c) } #=> "cc"
+  # ```
+  def delete
     String.build(bytesize) do |buffer|
-      each_char do |my_char|
-        buffer << my_char unless my_char == char
+      each_char do |char|
+        buffer << char unless yield char
       end
     end
+  end
+
+  # Returns a new string with all occurrences of char removed.
+  #
+  # ```
+  # "aabbcc".delete('b') #=> "aacc"
+  # ```
+  def delete(char : Char)
+    delete {|my_char|  my_char == char }
+  end
+
+  # Sets should be a list of strings following the rules
+  # described at Char#in_set?. Returns a new string with
+  # all characters that match the given set removed.
+  #
+  # ```
+  # "aabbccdd".delete("a-c") #=> "dd"
+  # ```
+  def delete(*sets)
+    delete {|char| char.in_set?(*sets) }
   end
 
   def empty?

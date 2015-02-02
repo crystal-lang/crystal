@@ -359,14 +359,27 @@ describe "String" do
     end
   end
 
-  it "deletes one char" do
-    deleted = "foobar".delete('o')
-    deleted.bytesize.should eq(4)
-    deleted.should eq("fbar")
+  describe "delete" do
+    assert { "foobar".delete {|char| char == 'o' }.should eq("fbar") }
+    assert { "hello world".delete("lo").should eq("he wrd") }
+    assert { "hello world".delete("lo", "o").should eq("hell wrld") }
+    assert { "hello world".delete("hello", "^l").should eq("ll wrld") }
+    assert { "hello world".delete("ej-m").should eq("ho word") }
+    assert { "hello^world".delete("\\^aeiou").should eq("hllwrld") }
+    assert { "hello-world".delete("a\\-eo").should eq("hllwrld") }
+    assert { "hello world\\r\\n".delete("\\").should eq("hello worldrn") }
+    assert { "hello world\\r\\n".delete("\\A").should eq("hello world\\r\\n") }
+    assert { "hello world\\r\\n".delete("X-\\w").should eq("hello orldrn") }
 
-    deleted = "foobar".delete('x')
-    deleted.bytesize.should eq(6)
-    deleted.should eq("foobar")
+    it "deletes one char" do
+      deleted = "foobar".delete('o')
+      deleted.bytesize.should eq(4)
+      deleted.should eq("fbar")
+
+      deleted = "foobar".delete('x')
+      deleted.bytesize.should eq(6)
+      deleted.should eq("foobar")
+    end
   end
 
   it "reverses string" do
