@@ -113,6 +113,50 @@ describe "Char" do
     ('b' <=> 'a').should be > 0
   end
 
+  describe "in_set?" do
+    assert { 'a'.in_set?("a").should be_true }
+    assert { 'a'.in_set?("b").should be_false }
+    assert { 'a'.in_set?("a-c").should be_true }
+    assert { 'b'.in_set?("a-c").should be_true }
+    assert { 'c'.in_set?("a-c").should be_true }
+    assert { 'c'.in_set?("a-bc").should be_true }
+    assert { 'b'.in_set?("a-bc").should be_true }
+    assert { 'd'.in_set?("a-c").should be_false }
+    assert { 'b'.in_set?("^a-c").should be_false }
+    assert { 'd'.in_set?("^a-c").should be_true }
+    assert { 'a'.in_set?("ab-c").should be_true }
+    assert { 'a'.in_set?("\\^ab-c").should be_true }
+    assert { '^'.in_set?("\\^ab-c").should be_true }
+    assert { '^'.in_set?("a^b-c").should be_true }
+    assert { '^'.in_set?("ab-c^").should be_true }
+    assert { '^'.in_set?("a0-^").should be_true }
+    assert { '^'.in_set?("^-c").should be_true }
+    assert { '^'.in_set?("a^-c").should be_true }
+    assert { '\\'.in_set?("ab-c\\").should be_true }
+    assert { '\\'.in_set?("a\\b-c").should be_false }
+    assert { '\\'.in_set?("a0-\\c").should be_true }
+    assert { '\\'.in_set?("a\\-c").should be_false }
+    assert { '-'.in_set?("a-c").should be_false }
+    assert { '-'.in_set?("a-c").should be_false }
+    assert { '-'.in_set?("a\\-c").should be_true }
+    assert { '-'.in_set?("-c").should be_true }
+    assert { '-'.in_set?("a-").should be_true }
+    assert { '-'.in_set?("^-c").should be_false }
+    assert { '-'.in_set?("^\\-c").should be_false }
+    assert { 'b'.in_set?("^\\-c").should be_true }
+    assert { '-'.in_set?("a^-c").should be_false }
+    assert { 'a'.in_set?("a", "ab").should be_true }
+    assert { 'a'.in_set?("a", "^b").should be_true }
+    assert { 'a'.in_set?("a", "b").should be_false }
+    assert { 'a'.in_set?("ab", "ac", "ad").should be_true }
+
+    it "rejects invalid ranges" do
+      expect_raises do
+        'a'.in_set?("c-a")
+      end
+    end
+  end
+
   it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
     expect_raises do
       (0x10ffff + 1).chr.each_byte { |b| }
