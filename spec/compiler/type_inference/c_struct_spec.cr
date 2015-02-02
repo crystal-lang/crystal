@@ -147,4 +147,20 @@ describe "Type inference: struct" do
       node.next
       )) { pointer_of(types["LibC"].types["Node"]) }
   end
+
+  it "supports ifdef inside struct" do
+    assert_type(%(
+      lib LibC
+        struct Foo
+          ifdef some_flag
+            a : Int32
+          else
+            a : Float64
+          end
+        end
+      end
+
+      LibC::Foo.new.a
+      ), flags: "some_flag") { int32 }
+  end
 end

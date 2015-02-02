@@ -2593,23 +2593,24 @@ module Crystal
       Unless.new cond, a_then, a_else
     end
 
-    def parse_ifdef(check_end = true, inside_lib = false)
+    def parse_ifdef(check_end = true, mode = :normal)
       next_token_skip_space_or_newline
 
       cond = parse_flags_or
       skip_statement_end
 
-      a_then = inside_lib ? parse_lib_body : parse_expressions
+      a_then = parse_ifdef_body(mode)
       skip_statement_end
+
 
       a_else = nil
       if @token.type == :IDENT
         case @token.value
         when :else
           next_token_skip_statement_end
-          a_else = inside_lib ? parse_lib_body : parse_expressions
+          a_else = parse_ifdef_body(mode)
         when :elsif
-          a_else = parse_ifdef check_end: false, inside_lib: inside_lib
+          a_else = parse_ifdef check_end: false, mode: mode
         end
       end
 
@@ -2619,6 +2620,17 @@ module Crystal
       end
 
       IfDef.new cond, a_then, a_else
+    end
+
+    def parse_ifdef_body(mode)
+      case mode
+      when :lib
+        parse_lib_body
+      when :struct_or_union
+        parse_struct_or_union_body
+      else
+        parse_expressions
+      end
     end
 
     parse_operator :flags_or, :flags_and, "Or.new left, right", ":\"||\""
@@ -3471,7 +3483,7 @@ module Crystal
         when :enum
           parse_enum_def
         when :ifdef
-          parse_ifdef check_end: true, inside_lib: true
+          parse_ifdef check_end: true, mode: :lib
         else
           unexpected_token
         end
@@ -3674,20 +3686,24 @@ module Crystal
       next_token_skip_space_or_newline
       name = check_const
       next_token_skip_statement_end
-      fields = parse_struct_or_union_fields
+      body = parse_struct_or_union_body
       check_ident :end
       next_token_skip_space
 
-      klass.new name, fields
+      klass.new name, Expressions.from(body)
     end
 
-    def parse_struct_or_union_fields
-      fields = [] of Arg
+    def parse_struct_or_union_body
+      exps = [] of ASTNode
 
       while true
         case @token.type
         when :IDENT
           case @token.value
+          when :ifdef
+            exps << parse_ifdef(mode: :struct_or_union)
+          when :else
+            break
           when :end
             break
           else
@@ -3710,15 +3726,17 @@ module Crystal
             skip_statement_end
 
             names.each do |name|
-              fields << Arg.new(name, nil, type)
+              exps << Arg.new(name, nil, type)
             end
           end
+        when :";", :NEWLINE
+          skip_statement_end
         else
           break
         end
       end
 
-      fields
+      exps
     end
 
     def parse_enum_def

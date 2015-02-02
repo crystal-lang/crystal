@@ -30,8 +30,9 @@ end
 
 record InferTypeResult, program, node
 
-def assert_type(str)
+def assert_type(str, flags = nil)
   program = Program.new
+  program.flags = flags if flags
   input = parse str
   input = program.normalize input
   input = program.infer_type input

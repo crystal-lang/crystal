@@ -1941,12 +1941,10 @@ module Crystal
     property :packed
     @packed = false
 
-    def vars=(vars)
-      vars.each do |var|
-        @vars[var.name] = var
-        add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:struct_set))
-        add_def Def.new(var.name, body: Primitive.new(:struct_get))
-      end
+    def add_var(var)
+      @vars[var.name] = var
+      add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:struct_set))
+      add_def Def.new(var.name, body: Primitive.new(:struct_get))
     end
 
     def has_instance_var_in_initialize?(name)
@@ -1987,12 +1985,10 @@ module Crystal
   end
 
   class CUnionType < CStructOrUnionType
-    def vars=(vars)
-      vars.each do |var|
-        @vars[var.name] = var
-        add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:union_set))
-        add_def Def.new(var.name, body: Primitive.new(:union_get))
-      end
+    def add_var(var)
+      @vars[var.name] = var
+      add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:union_set))
+      add_def Def.new(var.name, body: Primitive.new(:union_get))
     end
 
     def metaclass

@@ -2656,6 +2656,21 @@ module Crystal
       end
     end
 
+    class StructOrUnionVisitor < Visitor
+      def initialize(@type_inference, @struct_or_union)
+      end
+
+      def visit(field : Arg)
+        field.accept @type_inference
+        field_type = @type_inference.check_primitive_like field.restriction.not_nil!
+        @struct_or_union.add_var Var.new(field.name, field_type)
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
+    end
+
     def process_struct_or_union_def(node, klass)
       type = current_type.types[node.name]?
       if type
@@ -2669,12 +2684,7 @@ module Crystal
       end
 
       pushing_type(type) do
-        fields = node.fields.map do |field|
-          field.accept self
-          field_type = check_primitive_like field.restriction.not_nil!
-          Var.new(field.name, field_type)
-        end
-        type.vars = fields
+        node.body.accept StructOrUnionVisitor.new(self, type)
       end
     end
 

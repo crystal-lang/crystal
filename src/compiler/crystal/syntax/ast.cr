@@ -1633,29 +1633,30 @@ module Crystal
 
   abstract class StructOrUnionDef < ASTNode
     property :name
-    property :fields
+    property :body
 
-    def initialize(@name, @fields = [] of Arg)
+    def initialize(@name, body = nil)
+      @body = Expressions.from(body)
     end
 
     def accept_children(visitor)
-      @fields.each &.accept visitor
+      @body.accept visitor
     end
 
-    def_equals_and_hash @name, @fields
+    def_equals_and_hash @name, @body
   end
 
   class StructDef < StructOrUnionDef
     property :attributes
 
     def clone_without_location
-      StructDef.new(@name, @fields.clone)
+      StructDef.new(@name, @body.clone)
     end
   end
 
   class UnionDef < StructOrUnionDef
     def clone_without_location
-      UnionDef.new(@name, @fields.clone)
+      UnionDef.new(@name, @body.clone)
     end
   end
 

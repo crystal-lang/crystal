@@ -457,10 +457,12 @@ module Crystal
     end
 
     def transform(node : StructDef)
+      node.body = node.body.transform(self)
       node
     end
 
     def transform(node : UnionDef)
+      node.body = node.body.transform(self)
       node
     end
 

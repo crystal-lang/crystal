@@ -1003,13 +1003,9 @@ module Crystal
       @str << " "
       @str << node.name.to_s
       @str << newline
-      with_indent do
-        node.fields.each do |field|
-          append_indent
-          field.accept self
-          @str << newline
-        end
-      end
+      @inside_struct_or_union = true
+      accept_with_indent node.body
+      @inside_struct_or_union = false
       append_indent
       @str << keyword("end")
       false

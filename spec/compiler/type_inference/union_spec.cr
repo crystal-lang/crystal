@@ -44,4 +44,20 @@ describe "Type inference: union" do
       (types["Bar"] as GenericClassType).instantiate([union_of(int32, char)] of TypeVar)
     end
   end
+
+  it "supports ifdef inside union" do
+    assert_type(%(
+      lib LibC
+        union Foo
+          ifdef some_flag
+            a : Int32
+          else
+            a : Float64
+          end
+        end
+      end
+
+      LibC::Foo.new.a
+      ), flags: "some_flag") { int32 }
+  end
 end
