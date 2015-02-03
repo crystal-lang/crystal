@@ -12,3 +12,6 @@ notifications:
   irc: "irc.freenode.net#crystal-lang"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
+branches:
+  only:
+    - master
