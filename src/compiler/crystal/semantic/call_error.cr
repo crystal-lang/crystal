@@ -173,7 +173,7 @@ class Crystal::Call
     defs.each do |a_def|
       str << "\n - "
       append_def_full_name owner, a_def, str
-      if a_def.same?(matched_def)
+      if defs.length > 1 && a_def.same?(matched_def)
         str << " (trying this one)".colorize.blue
       end
       if a_def.args.any? { |arg| arg.default_value && arg.name == argument_name }
