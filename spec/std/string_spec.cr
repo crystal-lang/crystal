@@ -714,4 +714,12 @@ describe "String" do
     assert { "aabbcc".count('a').should eq(2) }
     assert { "aabbcc".count {|c| ['a', 'b'].includes?(c) }.should eq(4) }
   end
+
+  describe "squeeze" do
+    assert { "aaabbbccc".squeeze {|c| ['a', 'b'].includes?(c) }.should eq("abccc") }
+    assert { "aaabbbccc".squeeze {|c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
+    assert { "a       bbb".squeeze.should eq("a b") }
+    assert { "a    bbb".squeeze(' ').should eq("a bbb") }
+    assert { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
+  end
 end

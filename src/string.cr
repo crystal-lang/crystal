@@ -467,6 +467,53 @@ class String
     delete {|char| char.in_set?(*sets) }
   end
 
+  # Yields each char in this string to the block.
+  # Returns a new string, that has all characters removed,
+  # that were the same as the previous one and for which the given
+  # block returned a truthy value.
+  #
+  # ```
+  # "aaabbbccc".squeeze {|c| ['a', 'b'].includes?(c) } #=> "abccc"
+  # "aaabbbccc".squeeze {|c| ['a', 'c'].includes?(c) } #=> "abbbc"
+  # ```
+  def squeeze
+    previous = nil
+    String.build(bytesize) do |buffer|
+      each_char do |char|
+        buffer << char unless yield(char) && previous == char
+        previous = char
+      end
+    end
+  end
+
+  # Returns a new string, with all runs of char replaced by one instance.
+  #
+  # ```
+  # "a    bbb".squeeze(' ') #=> "a bbb"
+  # ```
+  def squeeze(char : Char)
+    squeeze {|my_char| char == my_char }
+  end
+
+  # Sets should be a list of strings following the rules
+  # described at Char#in_set?. Returns a new string with all
+  # runs of the same character replaced by one instance, if
+  # they match the given set.
+  #
+  # If no set is given, all characters are matched.
+  #
+  # ```
+  # "aaabbbcccddd".squeeze("b-d") #=> "aaabcd"
+  # "a       bbb".squeeze #=> "a b"
+  # ```
+  def squeeze(*sets)
+    if sets.empty?
+      squeeze { true }
+    else
+      squeeze {|char| char.in_set?(*sets) }
+    end
+  end
+
   def empty?
     bytesize == 0
   end
