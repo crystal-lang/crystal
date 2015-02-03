@@ -1117,6 +1117,7 @@ module Crystal
         @block_arg_count += 1
 
         obj = Var.new(block_arg_name)
+        @wants_regex = false
         next_token_skip_space
 
         location = @token.location
