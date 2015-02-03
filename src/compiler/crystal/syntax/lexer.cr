@@ -240,7 +240,7 @@ module Crystal
         elsif @slash_is_regex
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/', 0)
-        elsif char.whitespace? || char == '\0' || char == ';'
+        elsif char.whitespace? || char == '\0' || char == ';' || char == '('
           @token.type = :"/"
         elsif @wants_regex
           @token.type = :DELIMITER_START
