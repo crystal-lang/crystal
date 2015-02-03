@@ -21,6 +21,10 @@ class Set(T)
     @hash[object] = true
   end
 
+  def merge(elems)
+    elems.each { |elem| self << elem }
+  end
+
   def includes?(object)
     @hash.has_key?(object)
   end

@@ -14,6 +14,7 @@ module Crystal
     record Result, program, node, original_node
 
     property  cross_compile_flags
+    property  flags
     property? debug
     property? dump_ll
     property  link_flags
@@ -39,6 +40,7 @@ module Crystal
       @stats = false
       @verbose = false
       @wants_doc = false
+      @flags = [] of String
     end
 
     def compile(source : Source, output_filename)
@@ -52,6 +54,7 @@ module Crystal
         program.flags = cross_compile_flags
       end
       program.flags << "release" if @release
+      program.flags.merge @flags
       program.wants_doc = wants_doc?
 
       node, original_node = parse program, sources
@@ -59,6 +62,10 @@ module Crystal
       build program, node, sources, output_filename unless @no_build
 
       Result.new program, node, original_node
+    end
+
+    def add_flag(flag)
+      @flags << flag
     end
 
     private def parse(program, sources)

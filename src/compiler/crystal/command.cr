@@ -248,6 +248,10 @@ module Crystal::Command
         end
       end
 
+      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+        compiler.add_flag flag
+      end
+
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit 1
