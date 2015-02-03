@@ -4,6 +4,10 @@ lib LibC
 
   fun getpid : Int32
   fun getppid : Int32
+  fun getsid(pid : Int32) : Int32
+  fun setsid() : Int32
+  fun getpgid(pid : Int32) : Int32
+  fun setpgid(pid : Int32, pgid : Int32) : Int32
   fun exit(status : Int32) : NoReturn
 
   ifdef x86_64
@@ -39,6 +43,29 @@ module Process
 
   def self.ppid
     LibC.getppid()
+  end
+
+  def self.setsid
+    sid = LibC.setsid()
+    raise Errno.new("setsid") if sid < 0
+    sid
+  end
+
+  def self.getsid(pid = nil)
+    sid = LibC.getsid(pid || self.pid)
+    raise Errno.new("getsid") if sid < 0
+    sid
+  end
+
+  def self.getpgid(pid = nil)
+    pgid = LibC.getpgid(pid || LibC.getpid())
+    raise Errno.new("getpgid") if pgid < 0
+    pgid
+  end
+
+  def self.setpgid(pid, pgid)
+    pid = LibC.setpgid(pid, pgid)
+    raise Errno.new("setpgid") if pid < 0
   end
 
   def self.fork(&block)
