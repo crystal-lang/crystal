@@ -141,6 +141,24 @@ module Spec
       "expected #{@target} not to be #{@op} #{@expected}"
     end
   end
+
+  class MatchExpectation(T)
+    def initialize(@value : T)
+    end
+
+    def match(value)
+      @target = value
+      @target =~ @value
+    end
+
+    def failure_message
+      "expected: #{@target.inspect}\nto match: #{@value.inspect}"
+    end
+
+    def negative_failure_message
+      "expected: value #{@target.inspect}\n to not match: #{@value.inspect}"
+    end
+  end
 end
 
 def eq(value)
@@ -177,6 +195,10 @@ end
 
 def be
   Spec::Be
+end
+
+def match(value)
+  Spec::MatchExpectation.new value
 end
 
 macro be_a(type)
