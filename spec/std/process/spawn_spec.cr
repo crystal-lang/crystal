@@ -7,9 +7,19 @@ describe "Process" do
       Process.waitpid(pid).should eq(0)
     end
 
-    it "executes a command and nullifies STDERR" do
+    it "executes a command as tuple and nullifies STDERR" do
       pid = Process.spawn({"ls", "*"}, error: "/dev/null")
       Process.waitpid(pid).should_not eq(0)
+    end
+
+    it "executes a command as array" do
+      pid = Process.spawn(["ls", "/"], output: "/dev/null")
+      Process.waitpid(pid).should eq(0)
+    end
+
+    it "returns status 127 if command couldn't be executed" do
+      pid = Process.spawn("foobarbaz", error: false)
+      Process.waitpid(pid).should eq(127)
     end
 
     it "exports environment variables and redirects STDOUT" do
@@ -21,7 +31,7 @@ describe "Process" do
       end
     end
 
-    it "writes to STDIN" do
+    it "writes String to STDIN" do
       IO.pipe do |r, w|
         pid = Process.spawn("cat -", input: "my input\nmessage\n", output: w)
         w.close
@@ -52,6 +62,28 @@ describe "Process" do
       sleep(0.01)
       Process.getsid(pid).should_not eq(Process.getsid)
       Process.waitpid(pid).should eq(0)
+    end
+  end
+
+  describe "system" do
+    it "executes a shell command" do
+      system("/bin/ls", output: false).should eq(true)
+      system("foobarbaz", error: false).should eq(false)
+    end
+
+    it "executes a command as tuple" do
+      system({"/bin/ls", "."}, output: false).should eq(true)
+      system({"/bin/ls", "*"}, error: false).should eq(false)
+    end
+
+    it "sends file to input and reads ouput" do
+      File.open(__FILE__, "r") do |file|
+        IO.pipe do |r, w|
+          system("/bin/cat", input: file, output: w).should eq(true)
+          w.close
+          r.gets_to_end.should eq(File.read(__FILE__))
+        end
+      end
     end
   end
 end
