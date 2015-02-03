@@ -470,16 +470,28 @@ describe "Array" do
     b.should eq(a)
   end
 
-  it "does reverse" do
+  it "does reverse with an odd number of elements" do
     a = [1, 2, 3]
     a.reverse.should eq([3, 2, 1])
     a.should eq([1, 2, 3])
   end
 
-  it "does reverse!" do
+  it "does reverse with an even number of elements" do
+    a = [1, 2, 3, 4]
+    a.reverse.should eq([4, 3, 2, 1])
+    a.should eq([1, 2, 3, 4])
+  end
+
+  it "does reverse! with an odd number of elements" do
     a = [1, 2, 3, 4, 5]
     a.reverse!
     a.should eq([5, 4, 3, 2, 1])
+  end
+
+  it "does reverse! with an even number of elements" do
+    a = [1, 2, 3, 4, 5, 6]
+    a.reverse!
+    a.should eq([6, 5, 4, 3, 2, 1])
   end
 
   describe "rindex" do

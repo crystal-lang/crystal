@@ -469,7 +469,7 @@ class Array(T)
   def reverse!
     i = 0
     j = length - 1
-    while i != j
+    while i < j
       @buffer.swap i, j
       i += 1
       j -= 1
