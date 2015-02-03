@@ -75,6 +75,19 @@ describe "Dir" do
     end
   end
 
+  it "tests glob with a single pattern with block" do
+    result = [] of String
+    Dir.glob("#{__DIR__}/*.cr") do |filename|
+      result << filename
+    end
+
+    Dir.list(__DIR__) do |file|
+      next unless file.ends_with?(".cr")
+
+      result.includes?(File.join(__DIR__, file)).should be_true
+    end
+  end
+
   describe "chdir" do
     it "should work" do
       cwd = Dir.working_directory

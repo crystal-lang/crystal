@@ -149,6 +149,12 @@ class Dir
     glob(patterns)
   end
 
+  def self.glob(*patterns)
+    glob(patterns) do |pattern|
+      yield pattern
+    end
+  end
+
   def self.glob(patterns : Enumerable(String))
     paths = [] of String
     glob(patterns) do |path|
