@@ -2,6 +2,7 @@ lib LibC
   @[ReturnsTwice]
   fun fork : Int32
 
+  fun kill(pid : Int32, signal : Int32) : Int32
   fun getpid : Int32
   fun getppid : Int32
   fun getsid(pid : Int32) : Int32
@@ -91,6 +92,14 @@ module Process
     end
 
     exit_code >> 8
+  end
+
+  def self.kill(pid, signal = Signal::TERM)
+    ret = LibC.kill(pid, signal)
+    if ret == -1
+      raise Errno.new("Error while killing pid #{pid}")
+    end
+    ret == 0
   end
 
   record Tms, utime, stime, cutime, cstime
