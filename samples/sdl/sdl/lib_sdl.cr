@@ -144,15 +144,18 @@ lib LibSDL
   fun show_cursor = SDL_ShowCursor(toggle : Int32) : Int32
   fun get_ticks = SDL_GetTicks : UInt32
   fun flip = SDL_Flip(screen : Surface*) : Int32
-  fun main = SDL_main(argc : Int32, argv : UInt8*) : Int32
+
+  ifdef linux
+    fun main = SDL_main(argc : Int32, argv : UInt8*) : Int32
+  end
 end
 
-fun main(argc : Int32, argv : UInt8*)
-  return LibSDL.main(argc, argv)
+ifdef linux
+  fun main(argc : Int32, argv : UInt8*)
+    return LibSDL.main(argc, argv)
+  end
+else
+  redefine_main(SDL_main) do |main|
+    {{main}}
+  end
 end
-
-#undef main
-#
-#redefine_main(SDL_main) do |main|
-#  {{main}}
-#end
