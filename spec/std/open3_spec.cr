@@ -18,7 +18,7 @@ describe "Open3" do
         output, status = Open3.capture2({"ls", ".", "*"}, env: { LANG: "C" })
         output.should match(/src/)
         output.should_not match(/No such file or directory/)
-        status.should eq(2)
+        status.should_not eq(0)
       end
     end
 
