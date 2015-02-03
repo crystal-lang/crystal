@@ -111,6 +111,88 @@ struct Char
     self == ' ' || 9 <= ord <= 13
   end
 
+  # Returns true if this char is matched by the given sets.
+  #
+  # Each parameter defines a set, the character is matched against
+  # the intersection of those, in other words it needs to
+  # match all sets.
+  #
+  # If a set starts with a ^, it is negated. The sequence c1-c2
+  # means all characters between and including c1 and c2
+  # and is known as a range.
+  #
+  # The backslash character \ can be used to escape ^ or - and
+  # is otherwise ignored unless it appears at the end of a range
+  # or the end of a a set.
+  #
+  # ```
+  # 'l'.in_set? "lo"          #=> true
+  # 'l'.in_set? "lo", "o"     #=>  false
+  # 'l'.in_set? "hello", "^l" #=> false
+  # 'l'.in_set? "j-m"         #=> true
+  #
+  # '^'.in_set? "\\^aeiou"    #=> true
+  # '-'.in_set? "a\\-eo"      #=> true
+  #
+  # '\\'.in_set? "\\"         #=> true
+  # '\\'.in_set? "\\A"        #=> false
+  # '\\'.in_set? "X-\\w"      #=> true
+  # ```
+  def in_set? *sets
+    raise ArgumentError.new "No set given" if sets.empty?
+
+    if sets.size > 1
+      return sets.all? {|set| in_set?(set) }
+    end
+
+    set = sets.first
+    not_negated = true
+    range = false
+    previous = nil
+
+    set.each_char do |char|
+      case char
+      when '^'
+        unless previous # beginning of set
+          not_negated = false
+          previous = char
+          next
+        end
+      when '-'
+        if previous && previous != '\\'
+          range = true
+
+          if previous == '^' # ^- at the beginning
+            previous = '^'
+            not_negated = true
+          end
+
+          next
+        else # at the beginning of the set or escaped
+          return not_negated if self == char
+        end
+      end
+
+      if range && previous
+        raise ArgumentError.new "Invalid range #{previous}-#{char}" if previous > char
+
+        return not_negated if previous <= self <= char
+
+        range = false
+      elsif char != '\\'
+        return not_negated if self == char
+      end
+
+
+      previous = char
+    end
+
+    return not_negated if range && self == '-'
+    return not_negated if previous == '\\' && self == previous
+
+    !not_negated
+  end
+
   # Returns the ASCII downcase equivalent of this char.
   #
   # ```

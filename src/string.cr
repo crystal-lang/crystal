@@ -402,11 +402,115 @@ class String
     gsub(pattern) { replacement }
   end
 
-  def delete(char : Char)
+  # Yields each char in this string to the block,
+  # returns the number of times the block returned a truthy value.
+  #
+  # ```
+  # "aabbcc".count {|c| ['a', 'b'].includes?(c) } #=> 4
+  # ```
+  def count
+    count = 0
+    each_char do |char|
+      count += 1 if yield char
+    end
+    count
+  end
+
+  # Counts the occurrences of other in this string.
+  #
+  # ```
+  # "aabbcc".count('a') #=> 2
+  # ```
+  def count(other : Char)
+    count {|char| char == other }
+  end
+
+  # Sets should be a list of strings following the rules
+  # described at Char#in_set?. Returns the number of characters
+  # in this string that match the given set.
+  def count(*sets)
+    count {|char| char.in_set?(*sets) }
+  end
+
+  # Yields each char in this string to the block.
+  # Returns a new string with all characters for which the
+  # block returned a truthy value removed.
+  #
+  # ```
+  # "aabbcc".delete {|c| ['a', 'b'].includes?(c) } #=> "cc"
+  # ```
+  def delete
     String.build(bytesize) do |buffer|
-      each_char do |my_char|
-        buffer << my_char unless my_char == char
+      each_char do |char|
+        buffer << char unless yield char
       end
+    end
+  end
+
+  # Returns a new string with all occurrences of char removed.
+  #
+  # ```
+  # "aabbcc".delete('b') #=> "aacc"
+  # ```
+  def delete(char : Char)
+    delete {|my_char|  my_char == char }
+  end
+
+  # Sets should be a list of strings following the rules
+  # described at Char#in_set?. Returns a new string with
+  # all characters that match the given set removed.
+  #
+  # ```
+  # "aabbccdd".delete("a-c") #=> "dd"
+  # ```
+  def delete(*sets)
+    delete {|char| char.in_set?(*sets) }
+  end
+
+  # Yields each char in this string to the block.
+  # Returns a new string, that has all characters removed,
+  # that were the same as the previous one and for which the given
+  # block returned a truthy value.
+  #
+  # ```
+  # "aaabbbccc".squeeze {|c| ['a', 'b'].includes?(c) } #=> "abccc"
+  # "aaabbbccc".squeeze {|c| ['a', 'c'].includes?(c) } #=> "abbbc"
+  # ```
+  def squeeze
+    previous = nil
+    String.build(bytesize) do |buffer|
+      each_char do |char|
+        buffer << char unless yield(char) && previous == char
+        previous = char
+      end
+    end
+  end
+
+  # Returns a new string, with all runs of char replaced by one instance.
+  #
+  # ```
+  # "a    bbb".squeeze(' ') #=> "a bbb"
+  # ```
+  def squeeze(char : Char)
+    squeeze {|my_char| char == my_char }
+  end
+
+  # Sets should be a list of strings following the rules
+  # described at Char#in_set?. Returns a new string with all
+  # runs of the same character replaced by one instance, if
+  # they match the given set.
+  #
+  # If no set is given, all characters are matched.
+  #
+  # ```
+  # "aaabbbcccddd".squeeze("b-d") #=> "aaabcd"
+  # "a       bbb".squeeze #=> "a b"
+  # ```
+  def squeeze(*sets)
+    if sets.empty?
+      squeeze { true }
+    else
+      squeeze {|char| char.in_set?(*sets) }
     end
   end
 
