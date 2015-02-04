@@ -161,6 +161,15 @@ module Enumerable(T)
       yield elem, io
     end
   end
+  
+  def last
+    last, count = first, 0
+    each do |e|
+      count += 1
+      last = e
+    end
+    count > 0 ? last : raise EmptyEnumerable.new
+  end
 
   def map(&block : T -> U)
     ary = [] of U
