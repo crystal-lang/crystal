@@ -503,6 +503,7 @@ module Crystal
             break
           end
         when :"."
+          @wants_regex = false
           next_token_skip_space_or_newline
 
           if @token.type == :INSTANCE_VAR
