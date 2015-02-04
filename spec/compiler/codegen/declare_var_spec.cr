@@ -90,4 +90,34 @@ describe "Code gen: declare var" do
       Foo.new.x
       ").to_i.should eq(1)
   end
+
+  it "doesn't break on inherited declared var (#390)" do
+    run(%(
+      class Foo
+        def initialize
+          # @x :: Int32
+          @x = 1
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          @x :: Int32
+          @x = 1
+          @y = 2
+        end
+
+        def x
+          @x
+        end
+
+        def y
+          @y
+        end
+      end
+
+      bar = Bar.new
+      bar.x + bar.y
+      )).to_i.should eq(3)
+  end
 end
