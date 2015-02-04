@@ -163,12 +163,11 @@ module Enumerable(T)
   end
   
   def last
-    last, count = first, 0
+    last = first
     each do |e|
-      count += 1
       last = e
     end
-    count > 0 ? last : raise EmptyEnumerable.new
+    last
   end
 
   def map(&block : T -> U)
