@@ -86,6 +86,12 @@ class HTTP::Server
     end
   end
 
+  ifdef evented
+    private def handle_client(sock)
+      spawn { previous_def }
+    end
+  end
+
   def self.build_middleware(handlers, last_handler = nil : Request -> Response)
     if handlers.empty?
       raise ArgumentError.new "no handlers specified"

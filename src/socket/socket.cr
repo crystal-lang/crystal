@@ -4,5 +4,10 @@ require "./addrinfo"
 class SocketError < Exception
 end
 
-# require "./sync/socket"
-require "./evented/*"
+ifdef evented
+  require "./evented/*"
+else
+  require "./sync/socket"
+end
+
+require "./common/*"

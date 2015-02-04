@@ -20,13 +20,4 @@ class TCPSocket < IPSocket
   def initialize(fd : Int32)
     super fd
   end
-
-  def self.open(host, port)
-    sock = new(host, port)
-    begin
-      yield sock
-    ensure
-      sock.close
-    end
-  end
 end

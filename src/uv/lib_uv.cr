@@ -127,12 +127,16 @@ lib LibUV
     retcode : Int32
   end
 
+  type CloseCallback = (Handle*) ->
   type TimerCallback = (Timer*, Int32) ->
   type AllocCallback = (Handle*, LibC::SizeT, Buf*) ->
   type ReadCallback = (Stream*, LibC::SSizeT, Buf*) ->
   type WriteCallback = (Write*, Int32) ->
   type ConnectCallback = (Connect*, Int32) ->
   type GetAddrInfoCallback = (GetAddrInfoReq*, Int32, LibC::Addrinfo*) ->
+  type ConnectionCallback = (Stream*, Int32) ->
+
+  fun close = uv_close(Handle*, CloseCallback)
 
   fun timer_init = uv_timer_init(Loop, Timer*)
   fun timer_start = uv_timer_start(t : Timer*, cb : TimerCallback, timeout : UInt64, repeat : UInt64) : Int32
@@ -142,9 +146,12 @@ lib LibUV
   fun read_start = uv_read_start(Stream*, AllocCallback, ReadCallback) : Int32
   fun read_stop = uv_read_stop(Stream*) : Int32
   fun write = uv_write(Write*, Stream*, Buf*, UInt32, WriteCallback) : Int32
+  fun listen = uv_listen(Stream*, Int32, ConnectionCallback) : Int32
+  fun accept = uv_accept(server : Stream*, client : Stream*) : Int32
 
   fun tcp_init = uv_tcp_init(Loop, Tcp*) : Int32
   fun tcp_connect = uv_tcp_connect(Connect*, Tcp*, LibC::SockAddr*, ConnectCallback) : Int32
+  fun tcp_bind = uv_tcp_bind(Tcp*, LibC::SockAddr*, Int32) : Int32
 
   fun getaddrinfo = uv_getaddrinfo(loop : Loop, req : GetAddrInfoReq*, cb : GetAddrInfoCallback, node : UInt8*,
                                     service : UInt8*, hints : LibC::Addrinfo*) : Int32

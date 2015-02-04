@@ -7,7 +7,7 @@ class TCPSocket
   def initialize(host, port)
     LibUV.tcp_init(UV::Loop::DEFAULT, out @tcp)
     @tcp.data = self as Void*
-    @current_buf :: LibUV::Buf
+    @current_buf = LibUV::Buf.new
     @reading = false
 
     getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
@@ -27,6 +27,14 @@ class TCPSocket
         raise "Could not connect"
       end
     end
+  end
+
+  def initialize(server : Stream*)
+    LibUV.tcp_init(UV::Loop::DEFAULT, out @tcp)
+    LibUV.accept(server, stream)
+    @tcp.data = self as Void*
+    @current_buf :: LibUV::Buf
+    @reading = false
   end
 
   private def getaddrinfo(host, port, family, socktype, protocol = LibC::IPPROTO_IP)
@@ -107,6 +115,12 @@ class TCPSocket
   end
 
   def close
+    @tcp.data = Fiber.current as Void*
+    LibUV.close((pointerof(@tcp) as LibUV::Handle*), ->(handle) {
+      fiber = handle.value.data as Fiber
+      fiber.resume
+    })
+    Fiber.yield
   end
 
   def set_nread(n)
