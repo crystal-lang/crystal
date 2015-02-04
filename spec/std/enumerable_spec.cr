@@ -25,6 +25,19 @@ describe "Enumerable" do
       end
     end
   end
+  
+  describe "last" do
+    it "returns the last element" do
+      (0..5).last.should eq(5)
+      (0...5).last.should eq(4)
+    end
+
+    it "raises if empty" do
+      expect_raises EmptyEnumerable do
+        (5...5).last
+      end
+    end
+  end
 
   describe "min" do
     assert { [1, 2, 3].min.should eq(1) }
