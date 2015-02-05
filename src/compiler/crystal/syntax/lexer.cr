@@ -1741,8 +1741,10 @@ module Crystal
 
       until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (whitespace && !delimiter_state && char == 'e')
         is_macro = false
+        is_abstract_def = false
         if !delimiter_state && whitespace &&
           (
+            (char == 'a' && next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace? && next_char == 'd' && next_char == 'e' && next_char == 'f' && (is_abstract_def = true)) ||
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
             (char == 'l' && next_char == 'i' && next_char == 'b') ||
             (char == 'f' && next_char == 'u' && next_char == 'n') ||
@@ -1776,7 +1778,7 @@ module Crystal
             end
           end
 
-          nest += 1
+          nest += 1 unless is_abstract_def
           whitespace = true
           beginning_of_line = false
         elsif !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(next_char)
