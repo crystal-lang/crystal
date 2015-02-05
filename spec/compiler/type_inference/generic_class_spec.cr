@@ -299,4 +299,15 @@ describe "Type inference: generic class" do
       ),
       "can't lookup type in union (Char | String)"
   end
+
+  it "instantiates generic class with default argument in initialize (#394)" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(x = 1)
+        end
+      end
+
+      Foo(Int32).new
+      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
+  end
 end

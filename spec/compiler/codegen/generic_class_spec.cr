@@ -88,4 +88,19 @@ describe "Code gen: generic class type" do
       p.value.x
       )).to_i.should eq(2)
   end
+
+  it "instantiates generic class with default argument in initialize (#394)" do
+    run(%(
+      class Foo(T)
+        def initialize(@x = 1)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x + 1
+      )).to_i.should eq(2)
+  end
 end

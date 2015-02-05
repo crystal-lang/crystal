@@ -183,7 +183,10 @@ class Crystal::Call
       # triggering a virtual lookup. But the context of lookup must be preseved.
       if is_expansion?
         matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
-        matches.each &.context.owner = owner
+        matches.each do |match|
+          match.context.owner = owner
+          match.context.type_lookup = owner
+        end
       else
         matches = bubbling_exception { lookup_matches_with_signature(owner, signature) }
       end
