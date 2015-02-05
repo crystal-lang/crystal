@@ -521,13 +521,13 @@ module Crystal
           node.raise "can't cast #{obj_type} to #{to_type}"
         end
       else
-        unless to_type.allocated
-          return build_raise "can't cast to #{to_type} because it was never instantiated"
-        end
-
         resulting_type = obj_type.filter_by(to_type)
         unless resulting_type
           node.raise "can't cast #{obj_type} to #{to_type}"
+        end
+
+        unless to_type.allocated
+          return build_raise "can't cast to #{to_type} because it was never instantiated"
         end
       end
 
