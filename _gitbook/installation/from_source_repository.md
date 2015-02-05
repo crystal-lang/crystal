@@ -7,7 +7,7 @@ You will also need LLVM 3.5 present in the path. If you are using Mac and the Ho
 Then clone the repository:
 
 ```
-git clone git@github.com:manastech/crystal.git
+git clone https://github.com/manastech/crystal.git
 ```
 
 and you're ready to start hacking.
