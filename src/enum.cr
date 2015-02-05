@@ -75,6 +75,10 @@ struct Enum
     value == other.value
   end
 
+  def hash
+    value.hash
+  end
+
   macro def self.names : Array(String)
     {% if @enum_flags %}
       {{ @enum_members.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
