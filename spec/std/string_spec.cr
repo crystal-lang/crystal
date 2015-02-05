@@ -54,6 +54,11 @@ describe "String" do
       assert { "FooBar"[/o(?<this>o)/, "this"].should eq "o" }
       assert { "FooBar"[/(?<this>x)/, "that"]?.should be_nil }
     end
+
+    it "gets with a string" do
+      "FooBar"["Bar"].should eq "Bar"
+    end
+
   end
 
   describe "byte_slice" do
