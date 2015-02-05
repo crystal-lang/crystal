@@ -14,7 +14,7 @@ class BufferedIO(T)
     io
   end
 
-  def gets
+  def gets(delimiter : Char)
     String.build do |buffer|
       loop do
         fill_buffer if @buffer_rem.empty?
@@ -27,7 +27,7 @@ class BufferedIO(T)
           end
         end
 
-        endl = @buffer_rem.index('\n'.ord.to_u8)
+        endl = @buffer_rem.index(delimiter.ord.to_u8)
         if endl
           buffer.write @buffer_rem, endl + 1
           @buffer_rem += (endl + 1)

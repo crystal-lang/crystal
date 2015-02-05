@@ -14,6 +14,14 @@ describe "BufferedIO" do
     io.gets.should eq("#{big_line}\n")
   end
 
+  it "does gets with char delimiter" do
+    io = BufferedIO.new(StringIO.new("hello world"))
+    io.gets('w').should eq("hello w")
+    io.gets('r').should eq("or")
+    io.gets('r').should eq("ld")
+    io.gets('r').should eq(nil)
+  end
+
   it "does puts" do
     str = StringIO.new
     io = BufferedIO.new(str)

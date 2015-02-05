@@ -68,6 +68,14 @@ describe "StringIO" do
     io.gets.should eq(nil)
   end
 
+  it "gets with char as delimiter" do
+    io = StringIO.new("hello world")
+    io.gets('w').should eq("hello w")
+    io.gets('r').should eq("or")
+    io.gets('r').should eq("ld")
+    io.gets('r').should eq(nil)
+  end
+
   it "reads all remaining content" do
     io = StringIO.new("foo\nbar\nbaz\n")
     io.gets.should eq("foo\n")

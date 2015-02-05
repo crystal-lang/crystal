@@ -236,6 +236,10 @@ module IO
   end
 
   def gets
+    gets '\n'
+  end
+
+  def gets(delimiter : Char)
     buffer = StringIO.new
     while true
       unless ch = read_char
@@ -243,7 +247,7 @@ module IO
       end
 
       buffer << ch
-      break if ch == '\n'
+      break if ch == delimiter
     end
     buffer.to_s
   end
