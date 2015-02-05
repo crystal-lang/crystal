@@ -87,7 +87,7 @@ module Crystal::Command
 
   private def self.eval(args)
     if args.empty?
-      program_source = STDIN.gets_to_end
+      program_source = STDIN.read
       program_args = [] of String
     else
       double_dash_index = args.index("--")
