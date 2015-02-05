@@ -1901,7 +1901,9 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.keyword?(:def)
-        return parse_def_helper check_return_type: true
+        a_def = parse_def_helper check_return_type: true
+        a_def.doc = doc
+        return a_def
       end
 
       push_def
