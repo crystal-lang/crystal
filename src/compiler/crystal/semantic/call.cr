@@ -527,7 +527,7 @@ class Crystal::Call
       end
       block_arg_fun_output = block_arg_fun.output
     else
-      block_arg_type = ident_lookup.lookup_node_type(block_arg_fun)
+      block_arg_type = ident_lookup.lookup_node_type(block_arg_fun).remove_typedef
       unless block_arg_type.is_a?(FunInstanceType)
         block_arg_fun.raise "expected block type to be a function type, not #{block_arg_type}"
         return

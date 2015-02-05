@@ -474,4 +474,18 @@ describe "Type inference: closure" do
     fn = (a_def.body as FunLiteral)
     fn.def.closure.should be_true
   end
+
+  it "can use fun typedef as block type" do
+    assert_type(%(
+      lib LibC
+        alias F = Int32 -> Int32
+      end
+
+      def foo(&block : LibC::F)
+        block
+      end
+
+      foo { |x| x + 1 }
+      )) { fun_of(int32, int32) }
+  end
 end
