@@ -42,6 +42,10 @@ struct Range(B, E)
   def covers?(value)
     includes?(value)
   end
+  
+  def last
+    @exclusive ? super : @end
+  end
 
   def ===(value)
     includes?(value)
