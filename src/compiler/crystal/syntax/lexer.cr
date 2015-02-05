@@ -1740,6 +1740,7 @@ module Crystal
       char = current_char
 
       until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (whitespace && !delimiter_state && char == 'e')
+        is_macro = false
         if !delimiter_state && whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
@@ -1756,7 +1757,7 @@ module Crystal
               ((char == 'o') ||
                (char == 'e' && next_char == 'f'))) ||
             (char == 'm' && (char = next_char) &&
-              (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o') ||
+              (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && (is_macro = true)) ||
               (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e')) ||
             (char == 'u' && next_char == 'n' && (char = next_char) &&
               (char == 'i' && next_char == 'o' && next_char == 'n') ||
@@ -1765,6 +1766,16 @@ module Crystal
             (beginning_of_line && char == 'w' && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e')) &&
             !ident_part_or_end?(next_char)
           char = current_char
+
+          if is_macro && char.whitespace?
+            old_pos = @reader.pos
+            if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char)
+              char = current_char
+            else
+              @reader.pos = old_pos
+            end
+          end
+
           nest += 1
           whitespace = true
           beginning_of_line = false
