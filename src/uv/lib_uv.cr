@@ -75,6 +75,12 @@ lib LibUV
     include Stream
   end
 
+  struct Prepare
+    include Handle
+    prepare_cb : Void*
+    queue : Void*[2]
+  end
+
   struct Req
     data : Void*
     type : Int32
@@ -204,6 +210,7 @@ lib LibUV
   type GetAddrInfoCallback = (GetAddrInfoReq*, Int32, LibC::Addrinfo*) ->
   type ConnectionCallback = (Stream*, Int32) ->
   type FsCallback = (FsReq*) ->
+  type PrepareCallback = (Prepare*) ->
 
   fun close = uv_close(Handle*, CloseCallback)
 
@@ -211,6 +218,10 @@ lib LibUV
   fun fs_read = uv_fs_read(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
   fun fs_write = uv_fs_write(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
   fun fs_close = uv_fs_close(loop : Loop, req : FsReq*, file : LibC::SSizeT, cb : FsCallback) : Int32
+
+  fun prepare_init = uv_prepare_init(Loop, Prepare*) : Int32
+  fun prepare_start = uv_prepare_start(Prepare*, PrepareCallback) : Int32
+  fun prepare_stop = uv_prepare_stop(Prepare*) : Int32
 
   fun timer_init = uv_timer_init(Loop, Timer*)
   fun timer_start = uv_timer_start(t : Timer*, cb : TimerCallback, timeout : UInt64, repeat : UInt64) : Int32
