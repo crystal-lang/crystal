@@ -232,12 +232,20 @@ module Crystal
     end
 
     def visit(node : Call)
+      visit_call node
+    end
+
+    def visit_call(node, ignore_obj = false)
       if node.name == "`"
         visit_backtick(node.args[0])
         return false
       end
 
-      node_obj = node.obj
+      if ignore_obj
+        node_obj = nil
+      else
+        node_obj = node.obj
+      end
 
       need_parens =
         case node_obj
@@ -338,6 +346,21 @@ module Crystal
         end
       end
       if block = node.block
+        # Check if this is foo &.bar
+        first_block_arg = block.args.first?
+        if first_block_arg
+          block_body = block.body
+          if block_body.is_a?(Call)
+            block_obj = block_body.obj
+            if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
+              @str << "(&."
+              visit_call block_body, ignore_obj: true
+              @str << ")"
+              return false
+            end
+          end
+        end
+
         @str << " "
         block.accept self
       end

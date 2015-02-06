@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 private def expect_to_s(original, expected = original, file = __FILE__, line = __LINE__)
-  it "does to_s of #{original.inspect}" do
+  it "does to_s of #{original.inspect}", file, line do
     Parser.parse(original).to_s.should eq(expected), file, line
   end
 end
@@ -23,4 +23,6 @@ describe "ASTNode#to_s" do
   expect_to_s %(/\\(group\\)/)
   expect_to_s %(/\\//), "/\\//"
   expect_to_s %(/\#{1 / 2}/)
+  expect_to_s %(foo &.bar), %(foo(&.bar))
+  expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
 end
