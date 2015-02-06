@@ -34,6 +34,13 @@ class Fiber
     end
   end
 
+  def initialize
+    @cr = LibPcl.co_current
+    @proc = ->{}
+    @stack_top = @stack = Pointer(Void).null
+    LibPcl.co_set_data(@cr, self as Void*)
+  end
+
   def run
     @arg = @proc.call
     LibC.free(@stack)
@@ -82,7 +89,7 @@ class Fiber
     if current_data = LibPcl.co_get_data(LibPcl.co_current)
       current_data as Fiber
     else
-      nil
+      raise "Could not get the current fiber"
     end
   end
 
@@ -102,4 +109,9 @@ class Fiber
   end
 
   LibPcl.co_thread_init
+  @@root = new
+
+  def self.root
+    @@root
+  end
 end
