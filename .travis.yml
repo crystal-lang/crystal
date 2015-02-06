@@ -10,7 +10,11 @@ env: CRYSTAL_CONFIG_VERSION=ci LIBRARY_PATH=/usr/local/opt/crystal/embedded/lib
 script:
   - PATH=$PATH:llvm-3.5.0-1/bin make crystal spec
 notifications:
-  irc: "irc.freenode.net#crystal-lang"
+  irc:
+    channels:
+      - "irc.freenode.net#crystal-lang"
+    use_notice: true
+    skip_join: true
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
 branches:
