@@ -10,11 +10,13 @@ class TCPServer < TCPSocket
       LibC.setsockopt(sock, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
 
       if LibC.bind(sock, ai.addr as LibC::SockAddr*, ai.addrlen) != 0
+        LibC.close(sock)
         next false if ai.next
         raise Errno.new("Error binding TCP server at #{host}#{port}")
       end
 
       if LibC.listen(sock, backlog) != 0
+        LibC.close(sock)
         next false if ai.next
         raise Errno.new("Error listening TCP server at #{host}#{port}")
       end

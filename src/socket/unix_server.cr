@@ -11,10 +11,12 @@ class UNIXServer < UNIXSocket
     addr.family = LibC::AF_UNIX
     addr.path = path.to_unsafe
     if LibC.bind(sock, pointerof(addr) as LibC::SockAddr*, sizeof(LibC::SockAddrUn)) != 0
+      LibC.close(sock)
       raise Errno.new("Error binding UNIX server at #{path}")
     end
 
     if LibC.listen(sock, backlog) != 0
+      LibC.close(sock)
       raise Errno.new("Error listening UNIX server at #{path}")
     end
 
