@@ -1,4 +1,4 @@
-require "socket"
+require "socket/addrinfo"
 
 @[Link("uv")]
 lib LibUV
