@@ -2584,8 +2584,6 @@ module Crystal
 
       add_def fun_call
       add_def Def.new("arity", body: NumberLiteral.new(fun_types.length - 1))
-      add_def Def.new("pointer", body: Primitive.new(:fun_pointer, @program.pointer_of(@program.void)))
-      add_def Def.new("closure?", body: Primitive.new(:fun_closure?, @program.bool))
     end
 
     def struct?

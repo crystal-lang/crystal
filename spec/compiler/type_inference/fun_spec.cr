@@ -342,22 +342,6 @@ describe "Type inference: fun" do
       ") { fun_of(int32, int32) }
   end
 
-  it "says wrong number of arguments in new on fun type" do
-    assert_error "
-      alias F = Int32 -> Int32
-      F.new(1) { |x| x + 1 }
-      ",
-      "wrong number of arguments for (Int32 -> Int32)#new (1 for 0)"
-  end
-
-  it "says expects block in new on fun type" do
-    assert_error "
-      alias F = Int32 -> Int32
-      F.new
-      ",
-      "(Int32 -> Int32)#new is expected to be invoked with a block, but no block was given"
-  end
-
   it "says wrong number of block args in new on fun type" do
     assert_error "
       alias F = Int32 -> Int32

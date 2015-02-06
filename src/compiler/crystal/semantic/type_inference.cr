@@ -903,12 +903,12 @@ module Crystal
 
     def special_fun_type_new_call(node, fun_type)
       if node.args.length != 0
-        node.raise "wrong number of arguments for #{fun_type}#new (#{node.args.length} for 0)"
+        return false
       end
 
       block = node.block
       unless block
-        node.raise "#{fun_type}#new is expected to be invoked with a block, but no block was given"
+        return false
       end
 
       if block.args.length > fun_type.fun_types.length - 1
@@ -2285,7 +2285,7 @@ module Crystal
         node.type = mod.string
       when :class
         node.type = scope.metaclass
-      when :fun_call, :fun_closure?, :fun_pointer
+      when :fun_call
         # Nothing to do
       when :pointer_diff
         node.type = mod.int64
