@@ -127,6 +127,74 @@ lib LibUV
     retcode : Int32
   end
 
+  enum FsType
+    UNKNOWN = -1
+    CUSTOM
+    OPEN
+    CLOSE
+    READ
+    WRITE
+    SENDFILE
+    STAT
+    LSTAT
+    FSTAT
+    FTRUNCATE
+    UTIME
+    FUTIME
+    ACCESS
+    CHMOD
+    FCHMOD
+    FSYNC
+    FDATASYNC
+    UNLINK
+    RMDIR
+    MKDIR
+    MKDTEMP
+    RENAME
+    SCANDIR
+    LINK
+    SYMLINK
+    READLINK
+    CHOWN
+    FCHOWN
+  end
+
+  struct Timespec
+    tv_sec : Int64
+    tv_nsec : Int64
+  end
+
+  struct Stat
+    st_dev : UInt64
+    st_mode : UInt64
+    st_nlink : UInt64
+    st_uid : UInt64
+    st_gid : UInt64
+    st_rdev : UInt64
+    st_ino : UInt64
+    st_size : UInt64
+    st_blksize : UInt64
+    st_blocks : UInt64
+    st_flags : UInt64
+    st_gen : UInt64
+    st_atim : Timespec
+    st_mtim : Timespec
+    st_ctim : Timespec
+    st_birthtim : Timespec
+  end
+
+  struct FsReq
+    include Req
+    fs_type : FsType
+    loop : Loop
+    cb : Void*
+    result : LibC::SSizeT
+    ptr : Void*
+    path : UInt8*
+    statbuf : Stat
+    private_fields : UInt8[128]
+  end
+
   type CloseCallback = (Handle*) ->
   type TimerCallback = (Timer*, Int32) ->
   type AllocCallback = (Handle*, LibC::SizeT, Buf*) ->
@@ -135,8 +203,14 @@ lib LibUV
   type ConnectCallback = (Connect*, Int32) ->
   type GetAddrInfoCallback = (GetAddrInfoReq*, Int32, LibC::Addrinfo*) ->
   type ConnectionCallback = (Stream*, Int32) ->
+  type FsCallback = (FsReq*) ->
 
   fun close = uv_close(Handle*, CloseCallback)
+
+  fun fs_open = uv_fs_open(loop : Loop, req : FsReq*, path : UInt8*, flags : Int32, mode : Int32, cb : FsCallback) : Int32
+  fun fs_read = uv_fs_read(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
+  fun fs_write = uv_fs_write(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
+  fun fs_close = uv_fs_close(loop : Loop, req : FsReq*, file : LibC::SSizeT, cb : FsCallback) : Int32
 
   fun timer_init = uv_timer_init(Loop, Timer*)
   fun timer_start = uv_timer_start(t : Timer*, cb : TimerCallback, timeout : UInt64, repeat : UInt64) : Int32
