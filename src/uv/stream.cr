@@ -29,12 +29,14 @@ abstract class UV::Stream < UV::Handle
         buf.value = this.@current_buf
       },
       ->(stream, nread, buf) {
-        this = stream.value.data as TCPSocket
-        this.set_nread nread
-        this.@current_fiber.not_nil!.resume
+        if nread != 0
+          this = stream.value.data as TCPSocket
+          this.set_nread nread
+          this.@current_fiber.not_nil!.resume
 
-        unless this.@reading
-          LibUV.read_stop(stream)
+          unless this.@reading
+            LibUV.read_stop(stream)
+          end
         end
       })
 
