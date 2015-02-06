@@ -1135,6 +1135,10 @@ module Crystal
             call.args << exp
           end
         else
+          # At this point we want to attach the "do" to the next call,
+          # so we set this var to true to make the parser think the call
+          # has parenthesis and so a "do" must be attached to it
+          @last_call_has_parenthesis = true
           call = parse_var_or_call(force_call: true).at(location)
 
           if call.is_a?(Call)
