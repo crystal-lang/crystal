@@ -7,11 +7,19 @@ module Random
     Intrinsics.read_cycle_counter.to_u32
   end
 
-  abstract def next_int
+  abstract def next_u32
+
+  def next_bool
+    next_u32.even?
+  end
+
+  def next_int
+    next_u32.to_i32
+  end
 
   def next_float
     # Divided by 2^32-1
-    next_int * (1.0/4294967295.0)
+    next_u32 * (1.0/4294967295.0)
   end
 
   def rand
@@ -20,7 +28,7 @@ module Random
 
   def rand(x : Int)
     if x > 0
-      next_int % x
+      (next_u32 % x).to_i32
     else
       raise ArgumentError.new "incorrect rand value: #{x}"
     end

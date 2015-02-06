@@ -40,4 +40,8 @@ describe "Random" do
       rand(1...1)
     end
   end
+
+  it "gets a random bool" do
+    Random::DEFAULT.next_bool.should be_a(Bool)
+  end
 end
