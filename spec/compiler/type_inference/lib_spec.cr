@@ -364,4 +364,32 @@ it "errors if unknown named arg" do
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
   end
+
+  it "supports forward references (#399)" do
+    assert_type(%(
+      lib LibFoo
+        fun foo() : Bar*
+
+        struct Bar
+        end
+      end
+
+      LibFoo.foo
+      )) { pointer_of(types["LibFoo"].types["Bar"]) }
+  end
+
+  it "supports forward references with struct inside struct (#399)" do
+    assert_type(%(
+      lib LibFoo
+        struct Bar
+          x : Foo*
+        end
+
+        struct Foo
+        end
+      end
+
+      LibFoo::Bar.new.x
+      )) { pointer_of(types["LibFoo"].types["Foo"]) }
+  end
 end

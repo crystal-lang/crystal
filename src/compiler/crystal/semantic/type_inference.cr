@@ -70,6 +70,7 @@ module Crystal
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
       @attributes  = nil
+      @lib_def_pass = 0
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -412,6 +413,8 @@ module Crystal
     end
 
     def type_assign(target : Path, value, node)
+      return if @lib_def_pass == 2
+
       type = current_type.types[target.names.first]?
       if type
         target.raise "already initialized constant #{target}"
@@ -1407,6 +1410,8 @@ module Crystal
     end
 
     def visit(node : Alias)
+      return false if @lib_def_pass == 2
+
       if inside_block?
         node.raise "can't declare alias inside block"
       end
@@ -1473,7 +1478,11 @@ module Crystal
       end
 
       pushing_type(type) do
+        @lib_def_pass = 1
         node.body.accept self
+        @lib_def_pass = 2
+        node.body.accept self
+        @lib_def_pass = 0
       end
 
       node.type = @mod.nil
@@ -1585,6 +1594,8 @@ module Crystal
     end
 
     def visit(node : FunDef)
+      return false if @lib_def_pass == 1
+
       if inside_block?
         node.raise "can't declare fun inside block"
       end
@@ -1667,6 +1678,8 @@ module Crystal
     end
 
     def end_visit(node : TypeDef)
+      return if @lib_def_pass == 2
+
       type = current_type.types[node.name]?
       if type
         node.raise "#{node.name} is already defined"
@@ -1677,15 +1690,20 @@ module Crystal
     end
 
     def visit(node : StructDef)
-      check_valid_attributes node, ValidStructDefAttributes, "struct"
+      if @lib_def_pass == 1
+        check_valid_attributes node, ValidStructDefAttributes, "struct"
+      end
 
       type = process_struct_or_union_def(node, CStructType) do |t|
         unless t.is_a?(CStructType)
           node.raise "#{node.name} is already defined as #{t.type_desc}"
         end
       end
-      if node.has_attribute?("Packed")
-        (type as CStructType).packed = true
+
+      if @lib_def_pass == 1
+        if node.has_attribute?("Packed")
+          (type as CStructType).packed = true
+        end
       end
 
       false
@@ -1702,6 +1720,8 @@ module Crystal
     end
 
     def visit(node : EnumDef)
+      return false if @lib_def_pass == 2
+
       if inside_block?
         node.raise "can't declare enum inside block"
       end
@@ -2706,8 +2726,10 @@ module Crystal
         type = current_type.types[node.name] = klass.new @mod, current_type, node.name
       end
 
-      pushing_type(type) do
-        node.body.accept StructOrUnionVisitor.new(self, type)
+      if @lib_def_pass == 2
+        pushing_type(type) do
+          node.body.accept StructOrUnionVisitor.new(self, type)
+        end
       end
     end
 
