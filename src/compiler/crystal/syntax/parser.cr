@@ -1626,8 +1626,7 @@ module Crystal
         next_token_skip_space
         new_hash_literal([] of HashLiteral::Entry, line, column)
       else
-        # "{foo:" or "{Foo:" means a hash literal with symbol key
-        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
+        if hash_symbol_key?
           first_key = SymbolLiteral.new(@token.value.to_s)
           next_token
         else
@@ -1672,7 +1671,7 @@ module Crystal
         end
 
         while @token.type != :"}"
-          if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
+          if hash_symbol_key?
             key = SymbolLiteral.new(@token.value.to_s)
             next_token
           else
@@ -1697,6 +1696,10 @@ module Crystal
       end
 
       new_hash_literal entries, line, column, allow_of: allow_of
+    end
+
+    def hash_symbol_key?
+      (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
     end
 
     def parse_tuple(first_exp, location)

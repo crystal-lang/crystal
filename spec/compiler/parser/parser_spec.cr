@@ -716,6 +716,7 @@ describe "Parser" do
   it_parses "{A: 1, 3 => 4, B: 2}", HashLiteral.new([HashLiteral::Entry.new("A".symbol, 1.int32), HashLiteral::Entry.new(3.int32, 4.int32), HashLiteral::Entry.new("B".symbol, 2.int32)])
   it_parses %({"foo": 1}), HashLiteral.new([HashLiteral::Entry.new("foo".string, 1.int32)])
   it_parses %({"foo": 1, "bar": 2}), HashLiteral.new([HashLiteral::Entry.new("foo".string, 1.int32), HashLiteral::Entry.new("bar".string, 2.int32)])
+  it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new(["A", "B"]), 1.int32), HashLiteral::Entry.new(Path.new(["C", "D"]), 2.int32)])
 
   it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
 
