@@ -19,7 +19,14 @@ describe "BufferedIO" do
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
     io.gets('r').should eq("ld")
-    io.gets('r').should eq(nil)
+    io.gets('r').should be_nil
+  end
+
+  it "does gets with unicode char delimiter" do
+    io = BufferedIO.new(StringIO.new("こんにちは"))
+    io.gets('ち').should eq("こんにち")
+    io.gets('ち').should eq("は")
+    io.gets('ち').should be_nil
   end
 
   it "does puts" do
