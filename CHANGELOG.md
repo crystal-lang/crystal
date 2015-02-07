@@ -1,4 +1,4 @@
-## Next
+## 0.5.9 (2015-02-07)
 
 * `Random` is now a module, with static methods that default to the `Random::MT19937` class.
 * Added `Random::ISAAC` engine (thanks @ysbaddaden!)
