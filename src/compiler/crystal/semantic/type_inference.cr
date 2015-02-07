@@ -877,13 +877,6 @@ module Crystal
         when FunPointer
           next unless arg.args.empty?
 
-          if arg_obj = arg.obj
-            arg_obj.accept self
-            scope = arg_obj.type
-          else
-            scope = @scope || current_type
-          end
-
           method ||= obj_type.lookup_first_def(node.name, false)
           return unless method
 
