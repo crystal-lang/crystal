@@ -1762,7 +1762,7 @@ module Crystal
           case member
           when Arg
             if existed
-              member.raise "can't reopen enum and add more constants to it"
+              node.raise "can't reopen enum and add more constants to it"
             end
 
             if default_value = member.default_value

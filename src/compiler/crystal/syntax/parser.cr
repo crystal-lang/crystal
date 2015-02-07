@@ -3796,6 +3796,7 @@ module Crystal
       until @token.keyword?(:end)
         case @token.type
         when :CONST
+          location = @token.location
           constant_name = @token.value.to_s
           doc = @token.doc
 
@@ -3815,7 +3816,7 @@ module Crystal
             next_token_skip_statement_end
           end
 
-          arg = Arg.new(constant_name, constant_value)
+          arg = Arg.new(constant_name, constant_value).at(location)
           arg.doc = doc
 
           members << arg
