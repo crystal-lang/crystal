@@ -1,3 +1,31 @@
+## Next
+
+* `Random` is now a module, with static methods that default to the `Random::MT19937` class.
+* Added `Random::ISAAC` engine (thanks @ysbaddaden!)
+# Added `String#size` (thanks @zamith!)
+* Added `limit` to all `String#split` variants (thanks @jhass!)
+* Raising inside a Thread is now rescued and re-raised on join (thanks @jhass!)
+* Added `path` option to Projectfile for `crystal deps` (thanks @naps62!)
+* Many fixes towards making Crystal work on linux 32 bits.
+* Huge refactors, additions and improvements for sockets: Socket, IPSocket, TCPSocket, TCPServer, UDPSocket, UNIXSocket, UNIXServer (thanks @ysbaddaden!)
+* Allow regex with empty spaces in various places.
+* Added `HTML.escape(String)` (thanks @naps62!)
+* Added support for `%w[...]`, `%w{...}`, `%w<...>` as alternatives to `%w(...)`. Same goes for `%i(...)` (thanks @zamith!)
+* Added `Enumerable#min_of`, `Enumerable#max_of` and `Enumerable#minmax_of`, `Enumerable#to_h`, `Dir.chdir` and `Number#fdiv` (thanks @jhass!)
+* Added `String#match`, `String#[]`, `String#[]?` and `MatchData#[]?  ` related to regexes (thanks @jhass!)
+* Allow `T::Bar` when T is a generic type argument.
+* Added `subclasses` and `all_subclasses` in macros.
+* Now you can invoke `to_s` and `inspect` on C structs and unions, making debugging C bindings much easier!
+* Added `#to_f` and `#to_i` to `Time` and `TimeSpan` (thanks @epitron!)
+* Added `IO.select` (thanks @jhass!)
+* Now you can use `ifdef` inside C structs and unions.
+* Added `include` inside C structs, to include other struct fields (useful for composition and avoiding an explicit indirection).
+* Added `Char#in_set?`, `String#count`, `String#delete` and `String#squeeze` (thanks @jhass!)
+* Added `-D flag` option to the compiler to set compile-time flags to use in `ifdef`.
+* More support for forward declarations inside C libs.
+* Rewritten some `Function` primitives in Crystal itself, and added methods for obtaining the pointer and closure data, as well as for recreating a function from these.
+* Lots of bugs fixed.
+
 ## 0.5.8 (2015-01-16)
 
 * Added `Random` and `Random::MT19937` (Mersenne Twister) classes (thanks @rhysd).
