@@ -2,8 +2,13 @@ lib LibC
   @[ReturnsTwice]
   fun fork : Int32
 
+  fun kill(pid : Int32, signal : Int32) : Int32
   fun getpid : Int32
   fun getppid : Int32
+  fun getsid(pid : Int32) : Int32
+  fun setsid() : Int32
+  fun getpgid(pid : Int32) : Int32
+  fun setpgid(pid : Int32, pgid : Int32) : Int32
   fun exit(status : Int32) : NoReturn
 
   ifdef x86_64
@@ -41,6 +46,29 @@ module Process
     LibC.getppid()
   end
 
+  def self.setsid
+    sid = LibC.setsid()
+    raise Errno.new("setsid") if sid < 0
+    sid
+  end
+
+  def self.getsid(pid = nil)
+    sid = LibC.getsid(pid || self.pid)
+    raise Errno.new("getsid") if sid < 0
+    sid
+  end
+
+  def self.getpgid(pid = nil)
+    pgid = LibC.getpgid(pid || LibC.getpid())
+    raise Errno.new("getpgid") if pgid < 0
+    pgid
+  end
+
+  def self.setpgid(pid, pgid)
+    pid = LibC.setpgid(pid, pgid)
+    raise Errno.new("setpgid") if pid < 0
+  end
+
   def self.fork(&block)
     pid = self.fork()
 
@@ -64,6 +92,14 @@ module Process
     end
 
     exit_code >> 8
+  end
+
+  def self.kill(pid, signal = Signal::TERM)
+    ret = LibC.kill(pid, signal)
+    if ret == -1
+      raise Errno.new("Error while killing pid #{pid}")
+    end
+    ret == 0
   end
 
   record Tms, utime, stime, cutime, cstime

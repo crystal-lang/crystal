@@ -25,7 +25,7 @@ module Crystal
 
           if libname = attr.lib
             if has_pkg_config.nil?
-              has_pkg_config = Process.run("which", {"pkg-config"}, output: false).success?
+              has_pkg_config = system({"which", "pkg-config"}, output: false)
             end
 
             if has_pkg_config && (libflags = pkg_config_flags(libname, attr.static?, library_path))

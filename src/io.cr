@@ -145,6 +145,16 @@ module IO
     {FileDescriptorIO.new(pipe_fds[0]), FileDescriptorIO.new(pipe_fds[1])}
   end
 
+  def self.pipe
+    read, write = pipe
+    begin
+      yield read, write
+    ensure
+      read.close rescue nil
+      write.close rescue nil
+    end
+  end
+
   def reopen(other)
     if LibC.dup2(self.fd, other.fd) == -1
       raise Errno.new("Could not reopen file descriptor")
