@@ -24,6 +24,7 @@
 * Added `-D flag` option to the compiler to set compile-time flags to use in `ifdef`.
 * More support for forward declarations inside C libs.
 * Rewritten some `Function` primitives in Crystal itself, and added methods for obtaining the pointer and closure data, as well as for recreating a function from these.
+* Added a `Logger` class (thanks @ysbaddaden!)
 * Lots of bugs fixed.
 
 ## 0.5.8 (2015-01-16)

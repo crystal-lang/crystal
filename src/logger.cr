@@ -1,19 +1,64 @@
+# The Logger class provides a simple but sophisticated logging utility that you can use to output messages.
+#
+# The messages have associated levels, such as INFO or ERROR that indicate their importance.
+# You can then give the Logger a level, and only messages at that level of higher will be printed.
+#
+# For instance, in a production system, you may have your Logger set to INFO or even WARN.
+# When you are developing the system, however, you probably want to know about the program’s internal state,
+# and would set the Logger to DEBUG.
+#
+# ### Example
+#
+# ```crystal
+# require "logger"
+#
+# log = Logger.new(STDOUT)
+# log.level = Logger::WARN
+#
+# log.debug("Created logger")
+# log.info("Program started")
+# log.warn("Nothing to do!")
+#
+# begin
+#   File.each_line(path) do |line|
+#     unless line =~ /^(\w+) = (.*)$/
+#       log.error("Line in wrong format: #{line}")
+#     end
+#   end
+# rescue err
+#   log.fatal("Caught exception; exiting")
+#   log.fatal(err)
+# end
+# ```
 class Logger(T)
   property :level, :progname, :formatter
 
-  enum Severity : Int32
-    UNKNOWN = 5
-    FATAL = 4
-    ERROR = 3
-    WARN = 2
-    INFO = 1
-    DEBUG = 0
+  # A logger severity level
+  enum Severity
+    # Low-level information for developers
+    DEBUG
+
+    # Generic (useful) information about system operation
+    INFO
+
+    # A warning
+    WARN
+
+    # A handleable error condition
+    ERROR
+
+    # An unhandleable error that results in a program crash
+    FATAL
+
+    UNKNOWN
   end
 
-  alias Formatter = String, Time, String, String ->
+  alias Formatter = String, Time, String, String, IO ->
 
-  DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message|
-    "#{severity[0]}, [#{datetime} ##{Process.pid}] #{severity.rjust(5)} -- #{progname}: #{message}"
+  # :nodoc:
+  DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
+    io << severity[0] << ", [" << datetime << " #" << Process.pid << "] "
+    io << severity.rjust(5) << " -- " << progname << ": " << message
   end
 
   def initialize(@io : T)
@@ -55,16 +100,18 @@ class Logger(T)
 
   def log(severity, message, progname = nil)
     return if severity < level
-    @io.puts format(severity, Time.now, progname || @progname, message)
+    format(severity, Time.now, progname || @progname, message, @io)
+    @io.puts
   end
 
   def log(severity, progname = nil)
     return if severity < level
-    @io.puts format(severity, Time.now, progname || @progname, yield)
+    format(severity, Time.now, progname || @progname, yield, @io)
+    @io.puts
   end
 
-  def format(severity, datetime, progname, message)
+  def format(severity, datetime, progname, message, io)
     label = severity == Severity::UNKNOWN ? "ANY" : severity.to_s
-    formatter.call(label, Time.now, progname.to_s, message)
+    formatter.call(label, Time.now, progname.to_s, message.to_s, io)
   end
 end

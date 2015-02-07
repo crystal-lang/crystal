@@ -22,6 +22,15 @@ describe "Logger" do
     end
   end
 
+  it "logs any object" do
+    IO.pipe do |r, w|
+      logger = Logger.new(w)
+      logger.info 12345
+
+      r.gets.should match(/12345/)
+    end
+  end
+
   it "formats message" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
@@ -35,8 +44,8 @@ describe "Logger" do
   it "uses custom formatter" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
-      logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message|
-        "#{severity[0]} #{progname}: #{message}"
+      logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
+        io << severity[0] << " " << progname << ": " << message
       end
       logger.warn "message", "prog"
 
