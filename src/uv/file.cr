@@ -9,8 +9,8 @@ class UV::File
     req.data = Fiber.current as Void*
 
     LibUV.fs_open(Loop::DEFAULT, pointerof(req), filename, oflag, File::DEFAULT_CREATE_MODE, ->(fs) {
-      fiber = fs.value.data as Fiber
-      fiber.resume
+      LibUV.fs_req_cleanup(fs)
+      (fs.value.data as Fiber).resume
     })
     Fiber.yield
 
@@ -25,6 +25,7 @@ class UV::File
     req :: LibUV::FsReq
     req.data = Fiber.current as Void*
     LibUV.fs_close(Loop::DEFAULT, pointerof(req), @handle, ->(fs) {
+      LibUV.fs_req_cleanup(fs)
       (fs.value.data as Fiber).resume
     })
     Fiber.yield
@@ -38,8 +39,8 @@ class UV::File
     buf.len = LibC::SizeT.cast(Math.min(slice.length, count))
 
     LibUV.fs_read(Loop::DEFAULT, pointerof(req), @handle, pointerof(buf), 1_u32, -1_i64, ->(fs) {
-      fiber = fs.value.data as Fiber
-      fiber.resume
+      LibUV.fs_req_cleanup(fs)
+      (fs.value.data as Fiber).resume
     })
     Fiber.yield
 
@@ -55,8 +56,8 @@ class UV::File
     buf.len = LibC::SizeT.cast(Math.min(slice.length, count))
 
     LibUV.fs_write(Loop::DEFAULT, pointerof(req), @handle, pointerof(buf), 1_u32, -1_i64, ->(fs) {
-      fiber = fs.value.data as Fiber
-      fiber.resume
+      LibUV.fs_req_cleanup(fs)
+      (fs.value.data as Fiber).resume
     })
     Fiber.yield
 

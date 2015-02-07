@@ -218,6 +218,7 @@ lib LibUV
   fun fs_read = uv_fs_read(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
   fun fs_write = uv_fs_write(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
   fun fs_close = uv_fs_close(loop : Loop, req : FsReq*, file : LibC::SSizeT, cb : FsCallback) : Int32
+  fun fs_req_cleanup = uv_fs_req_cleanup(FsReq*)
 
   fun prepare_init = uv_prepare_init(Loop, Prepare*) : Int32
   fun prepare_start = uv_prepare_start(Prepare*, PrepareCallback) : Int32
