@@ -67,6 +67,6 @@ class Logger
   end
 
   def format(severity, datetime, progname, message)
-    @io << formatter.call(SEV_LABEL[severity], Time.now, progname.to_s, message) + "\n"
+    formatter.call(SEV_LABEL[severity], Time.now, progname.to_s, message) + "\n"
   end
 end
