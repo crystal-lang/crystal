@@ -1,8 +1,8 @@
 require "./ip_socket"
 
 class UDPSocket < IPSocket
-  def initialize(family = LibC::AF_INET)
-    super LibC.socket(family, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP).tap do |sock|
+  def initialize(family = Socket::Family::INET : Socket::Family)
+    super LibC.socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP).tap do |sock|
       raise Errno.new("Error opening socket") if sock <= 0
     end
   end

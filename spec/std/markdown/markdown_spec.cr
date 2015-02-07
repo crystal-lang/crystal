@@ -82,4 +82,9 @@ describe Markdown do
   assert_render "Hello ![world](http://foo.com)!", %(<p>Hello <img src="http://foo.com" alt="world"/>!</p>)
 
   assert_render "[![foo](bar)](baz)", %(<p><a href="baz"><img src="bar" alt="foo"/></a></p>)
+
+  assert_render "***", "<hr/>"
+  assert_render "---", "<hr/>"
+  assert_render "___", "<hr/>"
+  assert_render "  *  *  *  ", "<hr/>"
 end

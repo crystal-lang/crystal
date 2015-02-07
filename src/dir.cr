@@ -74,21 +74,84 @@ lib LibC
 
   fun glob(pattern : UInt8*, flags : GlobFlags, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
   fun globfree(result : Glob*)
-
 end
 
-
+# Objects of class Dir are directory streams representing directories in the underlying file system.
+# They provide a variety of ways to list directories and their contents. See also `File`.
+#
+# The directory used in these examples contains the two regular files (config.h and main.rb),
+# the parent directory (..), and the directory itself (.).
 class Dir
-  enum Type : UInt8
-    UNKNOWN = 0
-    FIFO = 1
-    CHR = 2
-    DIR = 4
-    BLK = 6
-    REG = 8
-    LNK = 10
-    SOCK = 12
-    WHT = 14
+  include Enumerable(String)
+
+  getter path
+
+  # Returns a new directory object for the named directory.
+  def initialize(@path)
+    @dir = LibC.opendir(@path)
+    unless @dir
+      raise Errno.new("Error opening directory '#{@path}'")
+    end
+  end
+
+  # Alias for `new(path)`
+  def self.open(path)
+    new path
+  end
+
+  # Opens a directory and yields it, closing it at the end of the block.
+  # Returns the value of the block.
+  def self.open(path)
+    dir = new path
+    begin
+      yield dir
+    ensure
+      dir.close
+    end
+  end
+
+  # Calls the block once for each entry in this directory,
+  # passing the filename of each entry as a parameter to the block.
+  #
+  # ```
+  # d = Dir.new("testdir")
+  # d.each  {|x| puts "Got #{x}" }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # Got .
+  # Got ..
+  # Got config.h
+  # Got main.rb
+  # ```
+  def each
+    while entry = read
+      yield entry
+    end
+  end
+
+  # Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.
+  #
+  # ```
+  # d = Dir.new("testdir")
+  # d.read   #=> "."
+  # d.read   #=> ".."
+  # d.read   #=> "config.h"
+  # ```
+  def read
+    ent = LibC.readdir(@dir)
+    if ent
+      String.new(ent.value.name.buffer)
+    else
+      nil
+    end
+  end
+
+  # Closes the directory stream.
+  def close
+    LibC.closedir(@dir)
   end
 
   def self.working_directory
@@ -96,43 +159,46 @@ class Dir
     String.new(dir).tap { LibC.free(dir as Void*) }
   end
 
+  # Changes the current working directory of the process to the given string.
   def self.chdir path
     if LibC.chdir(path) != 0
       raise Errno.new("Error while changing directory")
     end
   end
 
+  # Changes the current working directory of the process to the given string
+  # and invokes the block, restoring the original working directory
+  # when the block exists.
   def self.chdir(path)
     old = working_directory
-    chdir(path)
-    yield
-  ensure
-    chdir(old) if old
+    begin
+      chdir(path)
+      yield
+    ensure
+      chdir(old)
+    end
   end
 
+  # Alias for `chdir`.
   def self.cd path
     chdir(path)
   end
 
-  def self.list(dirname)
-    dir = LibC.opendir(dirname)
-    unless dir
-      raise Errno.new("Error listing directory '#{dirname}'")
-    end
-
-    begin
-      while ent = LibC.readdir(dir)
-        yield String.new(ent.value.name.buffer), Type.new(ent.value.type)
+  # Calls the block once for each entry in the named directory,
+  # passing the filename of each entry as a parameter to the block.
+  def self.foreach(dirname)
+    Dir.open(dirname) do |dir|
+      dir.each do |filename|
+        yield filename
       end
-    ensure
-      LibC.closedir(dir)
     end
   end
 
+  # Returns an array containing all of the filenames in the given directory.
   def self.entries(dirname)
     entries = [] of String
-    list(dirname) do |name, type|
-      entries << name
+    foreach(dirname) do |filename|
+      entries << filename
     end
     entries
   end
@@ -227,6 +293,10 @@ class Dir
       raise Errno.new("Unable to remove directory '#{path}'")
     end
     0
+  end
+
+  def to_s(io)
+    io << "#<Dir:" << @path << ">"
   end
 end
 

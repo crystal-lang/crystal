@@ -39,7 +39,7 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  %w(begin do if unless class struct module def while until case macro fun lib union ifdef).each do |keyword|
+  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "ifdef", "macro def"].each do |keyword|
     it "lexes macro with nested #{keyword}" do
       lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
 
@@ -136,6 +136,34 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
   end
+
+    it "lexes macro with nested abstract def" do
+      lexer = Lexer.new(%(hello\n  abstract def {{world}} end end))
+
+      token = lexer.next_macro_token(Token::MacroState.default, false)
+      token.type.should eq(:MACRO_LITERAL)
+      token.value.should eq("hello\n  abstract def ")
+      token.macro_state.nest.should eq(0)
+
+      token = lexer.next_macro_token(token.macro_state, false)
+      token.type.should eq(:MACRO_EXPRESSION_START)
+
+      token_before_expression = token.clone
+
+      token = lexer.next_token
+      token.type.should eq(:IDENT)
+      token.value.should eq("world")
+
+      lexer.next_token.type.should eq(:"}")
+      lexer.next_token.type.should eq(:"}")
+
+      token = lexer.next_macro_token(token_before_expression.macro_state, false)
+      token.type.should eq(:MACRO_LITERAL)
+      token.value.should eq(" ")
+
+      token = lexer.next_macro_token(token.macro_state, false)
+      token.type.should eq(:MACRO_END)
+    end
 
   it "reaches end" do
     lexer = Lexer.new(%(fail))

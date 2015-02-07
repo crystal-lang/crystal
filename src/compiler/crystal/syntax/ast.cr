@@ -2051,8 +2051,8 @@ module Crystal
     def_equals_and_hash value
   end
 
-  # Ficticious node to represent a type inside a macro
-  class MacroType < ASTNode
+  # Ficticious node to represent a type
+  class TypeNode < ASTNode
     def initialize(@type)
     end
 

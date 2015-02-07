@@ -91,4 +91,8 @@ class Markdown::HTMLRenderer
   def text(text)
     @io << text
   end
+
+  def horizontal_rule
+    @io << "<hr/>"
+  end
 end

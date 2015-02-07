@@ -314,8 +314,11 @@ module Crystal
 
         if !has_long_name? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           if FileUtils.cmp(bc_name, bc_name_new)
-            File.delete bc_name_new
-            must_compile = false
+            # If the user cancelled a previous compilation it might be that the .o file is empty
+            if File.size(o_name) > 0
+              File.delete bc_name_new
+              must_compile = false
+            end
           end
         end
 

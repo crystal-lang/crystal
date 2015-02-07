@@ -556,7 +556,7 @@ module Crystal
       node
     end
 
-    def transform(node : MacroType)
+    def transform(node : TypeNode)
       node
     end
 

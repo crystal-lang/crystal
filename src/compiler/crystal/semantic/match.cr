@@ -1,7 +1,7 @@
 module Crystal
   class MatchContext
     property owner
-    getter type_lookup
+    property type_lookup
     getter free_vars
 
     def initialize(@owner, @type_lookup, @free_vars = nil)

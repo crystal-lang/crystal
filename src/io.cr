@@ -145,6 +145,16 @@ module IO
     {FileDescriptorIO.new(pipe_fds[0]), FileDescriptorIO.new(pipe_fds[1])}
   end
 
+  def self.pipe
+    r, w = IO.pipe
+    begin
+      yield r, w
+    ensure
+      r.close
+      w.close
+    end
+  end
+
   def reopen(other)
     if LibC.dup2(self.fd, other.fd) == -1
       raise Errno.new("Could not reopen file descriptor")
@@ -226,7 +236,7 @@ module IO
     count
   end
 
-  def gets_to_end
+  def read
     buffer :: UInt8[2048]
     String.build do |str|
       while (read_bytes = read(buffer.to_slice)) > 0
@@ -236,6 +246,10 @@ module IO
   end
 
   def gets
+    gets '\n'
+  end
+
+  def gets(delimiter : Char)
     buffer = StringIO.new
     while true
       unless ch = read_char
@@ -243,7 +257,7 @@ module IO
       end
 
       buffer << ch
-      break if ch == '\n'
+      break if ch == delimiter
     end
     buffer.to_s
   end

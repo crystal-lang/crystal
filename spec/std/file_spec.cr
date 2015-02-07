@@ -267,4 +267,8 @@ describe "File" do
     File.read(filename).strip.should eq("hello")
     File.delete(filename)
   end
+
+  it "does to_s" do
+    File.new(__FILE__).to_s.should eq("#<File:#{__FILE__}>")
+  end
 end

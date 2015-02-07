@@ -35,6 +35,10 @@ class Markdown::Parser
       return render_code
     end
 
+    if is_horizontal_rule? line
+      return render_horizontal_rule
+    end
+
     if starts_with_star? line
       return render_unordered_list
     end
@@ -450,6 +454,37 @@ class Markdown::Parser
     end
 
     return true
+  end
+
+  def is_horizontal_rule?(line)
+    non_space_char = nil
+    count = 1
+
+    line.each_char do |char|
+      next if char.whitespace?
+
+      if non_space_char
+        if char == non_space_char
+          count += 1
+        else
+          return false
+        end
+      else
+        case char
+        when '*', '-', '_'
+          non_space_char = char
+        else
+          return false
+        end
+      end
+    end
+
+    count >= 3
+  end
+
+  def render_horizontal_rule
+    @renderer.horizontal_rule
+    @line += 1
   end
 
   def newline

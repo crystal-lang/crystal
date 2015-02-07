@@ -375,26 +375,6 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "does closure? false" do
-    run("
-      ->{ 1 }.closure?
-      ").to_b.should be_false
-  end
-
-  it "does closure? false" do
-    run("
-      a = 1
-      ->{ a }.closure?
-      ").to_b.should be_true
-  end
-
-  it "does pointer" do
-    address = run("
-      ->{}.pointer.address
-      ").to_i
-    address.should be > 0
-  end
-
   it "does new on fun type" do
     run("
       alias F = Int32 -> Int32

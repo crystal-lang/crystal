@@ -201,4 +201,17 @@ describe "Type inference: cast" do
       b
       )) { array_of(int32) }
   end
+
+  it "should error if can't cast even if not instantiated" do
+    assert_error %(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new as Bar
+      ),
+      "can't cast Foo to Bar"
+  end
 end

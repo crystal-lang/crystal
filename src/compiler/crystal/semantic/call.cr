@@ -183,7 +183,10 @@ class Crystal::Call
       # triggering a virtual lookup. But the context of lookup must be preseved.
       if is_expansion?
         matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
-        matches.each &.context.owner = owner
+        matches.each do |match|
+          match.context.owner = owner
+          match.context.type_lookup = owner
+        end
       else
         matches = bubbling_exception { lookup_matches_with_signature(owner, signature) }
       end
@@ -524,7 +527,7 @@ class Crystal::Call
       end
       block_arg_fun_output = block_arg_fun.output
     else
-      block_arg_type = ident_lookup.lookup_node_type(block_arg_fun)
+      block_arg_type = ident_lookup.lookup_node_type(block_arg_fun).remove_typedef
       unless block_arg_type.is_a?(FunInstanceType)
         block_arg_fun.raise "expected block type to be a function type, not #{block_arg_type}"
         return

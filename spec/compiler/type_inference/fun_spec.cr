@@ -342,22 +342,6 @@ describe "Type inference: fun" do
       ") { fun_of(int32, int32) }
   end
 
-  it "says wrong number of arguments in new on fun type" do
-    assert_error "
-      alias F = Int32 -> Int32
-      F.new(1) { |x| x + 1 }
-      ",
-      "wrong number of arguments for (Int32 -> Int32)#new (1 for 0)"
-  end
-
-  it "says expects block in new on fun type" do
-    assert_error "
-      alias F = Int32 -> Int32
-      F.new
-      ",
-      "(Int32 -> Int32)#new is expected to be invoked with a block, but no block was given"
-  end
-
   it "says wrong number of block args in new on fun type" do
     assert_error "
       alias F = Int32 -> Int32
@@ -386,6 +370,36 @@ describe "Type inference: fun" do
       end
 
       LibC.foo ->(x) { x + 1 }
+      )) { float64 }
+  end
+
+  it "allows passing function to LibC without specifying types, using a global method" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32 -> Int32) : Float64
+      end
+
+      def callback(x)
+        x + 1
+      end
+
+      LibC.foo ->callback
+      )) { float64 }
+  end
+
+  it "allows passing function to LibC without specifying types, using a class method" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32 -> Int32) : Float64
+      end
+
+      class Foo
+        def self.callback(x)
+          x + 1
+        end
+      end
+
+      LibC.foo ->Foo.callback
       )) { float64 }
   end
 

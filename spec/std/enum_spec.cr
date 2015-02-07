@@ -64,4 +64,8 @@ describe Enum do
       SpecEnumFlags.values.should eq([SpecEnumFlags::One, SpecEnumFlags::Two, SpecEnumFlags::Three])
     end
   end
+
+  it "has hash" do
+    SpecEnum::Two.hash.should eq(1.hash)
+  end
 end

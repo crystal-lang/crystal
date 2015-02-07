@@ -57,7 +57,7 @@ describe "Dir" do
 
   it "tests glob with a single pattern" do
     result = Dir["#{__DIR__}/*.cr"]
-    Dir.list(__DIR__) do |file|
+    Dir.foreach(__DIR__) do |file|
       next unless file.ends_with?(".cr")
 
       result.includes?(File.join(__DIR__, file)).should be_true
@@ -68,7 +68,7 @@ describe "Dir" do
     result = Dir["#{__DIR__}/*.cr", "#{__DIR__}/{io,html}/*.cr"]
 
     {__DIR__, "#{__DIR__}/io", "#{__DIR__}/html"}.each do |dir|
-      Dir.list(dir) do |file|
+      Dir.foreach(dir) do |file|
         next unless file.ends_with?(".cr")
         result.includes?(File.join(dir, file)).should be_true
       end
@@ -81,7 +81,7 @@ describe "Dir" do
       result << filename
     end
 
-    Dir.list(__DIR__) do |file|
+    Dir.foreach(__DIR__) do |file|
       next unless file.ends_with?(".cr")
 
       result.includes?(File.join(__DIR__, file)).should be_true
@@ -112,5 +112,38 @@ describe "Dir" do
 
       Dir.working_directory.should eq(cwd)
     end
+  end
+
+  it "opens with new" do
+    filenames = [] of String
+
+    dir = Dir.new(__DIR__)
+    dir.each do |filename|
+      filenames << filename
+    end
+    dir.close
+
+    filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "opens with open" do
+    filenames = [] of String
+
+    Dir.open(__DIR__) do |dir|
+      dir.each do |filename|
+        filenames << filename
+      end
+    end
+
+    filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "lists entries" do
+    filenames = Dir.entries(__DIR__)
+    filenames.includes?("dir_spec.cr").should be_true
+  end
+
+  it "does to_s" do
+    Dir.new(__DIR__).to_s.should eq("#<Dir:#{__DIR__}>")
   end
 end

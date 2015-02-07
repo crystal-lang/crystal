@@ -451,7 +451,7 @@ module Crystal
         when Const
           @last = matched_type.value
         when Type
-          @last = MacroType.new(matched_type)
+          @last = TypeNode.new(matched_type)
         when ASTNode
           @last = matched_type
         else
@@ -621,16 +621,16 @@ module Crystal
         when "@class_name"
           return @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
-          return @last = MacroType.instance_vars(@scope)
+          return @last = TypeNode.instance_vars(@scope)
         when "@length"
           scope = @scope.try &.instance_type
           if scope.is_a?(TupleInstanceType)
             return @last = NumberLiteral.new(scope.tuple_types.length)
           end
         when "@superclass"
-          return @last = MacroType.superclass(@scope)
+          return @last = TypeNode.superclass(@scope)
         when "@type"
-          return @last = MacroType.new(@scope)
+          return @last = TypeNode.new(@scope)
         when "@enum_members"
           scope = @scope.try &.instance_type
           if scope.is_a?(EnumType)
@@ -690,7 +690,7 @@ module Crystal
         @last = node
       end
 
-      def visit(node : MacroType)
+      def visit(node : TypeNode)
         @last = node
       end
 

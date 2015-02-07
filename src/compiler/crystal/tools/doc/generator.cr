@@ -183,7 +183,8 @@ class Crystal::Doc::Generator
       end
     end
 
-    types.sort_by! &.name.downcase
+    types.sort_by! &.name.downcase unless parent.type.is_a?(EnumType)
+    types
   end
 
   def summary(obj : Type | Method | Macro | Constant)

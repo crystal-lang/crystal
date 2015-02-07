@@ -19,6 +19,8 @@ module Crystal
         @empty_md_list,                          # List of imported entities
         ""                                       # Split debug filename
       ])
+      LibLLVM.add_named_metadata_operand mod, "llvm.module.flags", metadata([2, "Dwarf Version", 2])
+      LibLLVM.add_named_metadata_operand mod, "llvm.module.flags", metadata([2, "Debug Info Version", 1])
     end
 
     def fun_metadatas
@@ -57,8 +59,8 @@ module Crystal
     def fun_type
       # TODO: fill with something meaningful
       metadata([
-        786453, 0, "", 0, 0, 0, 0, 0, 0, nil, metadata([metadata([
-          786468, nil, "int", nil, 0, 32, 32, 0, 0, 5
+        786453, 0, nil, "", 0, 0, 0, 0, 0, 0, nil, metadata([metadata([
+          786468, nil, nil, "int", nil, 0, 32, 32, 0, 0, 5
         ])]), 0, 0
       ])
     end

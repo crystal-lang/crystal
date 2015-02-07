@@ -419,7 +419,7 @@ module Crystal
       when "type"
         interpret_argless_method(method, args) do
           if type = @type
-            MacroType.new(type)
+            TypeNode.new(type)
           else
             NilLiteral.new
           end
@@ -520,7 +520,7 @@ module Crystal
     end
   end
 
-  class MacroType
+  class TypeNode
     def interpret(method, args, block, interpreter)
       case method
       when "abstract?"
@@ -528,13 +528,13 @@ module Crystal
       when "name"
         interpret_argless_method(method, args) { StringLiteral.new(type.to_s) }
       when "instance_vars"
-        interpret_argless_method(method, args) { MacroType.instance_vars(type) }
+        interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
       when "superclass"
-        interpret_argless_method(method, args) { MacroType.superclass(type) }
+        interpret_argless_method(method, args) { TypeNode.superclass(type) }
       when "subclasses"
-        interpret_argless_method(method, args) { MacroType.subclasses(type) }
+        interpret_argless_method(method, args) { TypeNode.subclasses(type) }
       when "all_subclasses"
-        interpret_argless_method(method, args) { MacroType.all_subclasses(type) }
+        interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       else
         super
       end
@@ -564,17 +564,17 @@ module Crystal
 
     def self.superclass(type)
       superclass = type.superclass
-      superclass ? MacroType.new(superclass) : NilLiteral.new
+      superclass ? TypeNode.new(superclass) : NilLiteral.new
     rescue
       NilLiteral.new
     end
 
     def self.subclasses(type)
-      ArrayLiteral.map(type.subclasses) { |subtype| MacroType.new(subtype) }
+      ArrayLiteral.map(type.subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
     def self.all_subclasses(type)
-      ArrayLiteral.map(type.all_subclasses) { |subtype| MacroType.new(subtype) }
+      ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
     end
   end
 

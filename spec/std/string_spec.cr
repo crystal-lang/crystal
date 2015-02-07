@@ -54,6 +54,11 @@ describe "String" do
       assert { "FooBar"[/o(?<this>o)/, "this"].should eq "o" }
       assert { "FooBar"[/(?<this>x)/, "that"]?.should be_nil }
     end
+
+    it "gets with a string" do
+      "FooBar"["Bar"].should eq "Bar"
+    end
+
   end
 
   describe "byte_slice" do
@@ -721,5 +726,19 @@ describe "String" do
     assert { "a       bbb".squeeze.should eq("a b") }
     assert { "a    bbb".squeeze(' ').should eq("a bbb") }
     assert { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
+  end
+
+  describe "ljust" do
+    assert { "123".ljust(2).should eq("123") }
+    assert { "123".ljust(5).should eq("123  ") }
+    assert { "12".ljust(7, '-').should eq("12-----") }
+    assert { "12".ljust(7, 'あ').should eq("12あああああ") }
+  end
+
+  describe "rjust" do
+    assert { "123".rjust(2).should eq("123") }
+    assert { "123".rjust(5).should eq("  123") }
+    assert { "12".rjust(7, '-').should eq("-----12") }
+    assert { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 end

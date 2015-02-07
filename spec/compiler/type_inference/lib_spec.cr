@@ -346,4 +346,50 @@ it "errors if unknown named arg" do
       Foo.foo(a)
       )) { int64 }
   end
+
+  it "correctly attached link flags if there's an ifdef" do
+    result = infer_type(%(
+      @[Link("SDL")]
+      @[Link("SDLMain")]
+      @[Link(framework: "Cocoa")] ifdef some_flag
+      lib LibSDL
+        fun init = SDL_Init(flags : UInt32) : Int32
+      end
+
+      LibSDL.init(0_u32)
+      ))
+    sdl = result.program.types["LibSDL"] as LibType
+    attrs = sdl.link_attributes.not_nil!
+    attrs.length.should eq(2)
+    attrs[0].lib.should eq("SDL")
+    attrs[1].lib.should eq("SDLMain")
+  end
+
+  it "supports forward references (#399)" do
+    assert_type(%(
+      lib LibFoo
+        fun foo() : Bar*
+
+        struct Bar
+        end
+      end
+
+      LibFoo.foo
+      )) { pointer_of(types["LibFoo"].types["Bar"]) }
+  end
+
+  it "supports forward references with struct inside struct (#399)" do
+    assert_type(%(
+      lib LibFoo
+        struct Bar
+          x : Foo*
+        end
+
+        struct Foo
+        end
+      end
+
+      LibFoo::Bar.new.x
+      )) { pointer_of(types["LibFoo"].types["Foo"]) }
+  end
 end

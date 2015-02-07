@@ -503,6 +503,7 @@ module Crystal
             break
           end
         when :"."
+          @wants_regex = false
           next_token_skip_space_or_newline
 
           if @token.type == :INSTANCE_VAR
@@ -1117,6 +1118,7 @@ module Crystal
         @block_arg_count += 1
 
         obj = Var.new(block_arg_name)
+        @wants_regex = false
         next_token_skip_space
 
         location = @token.location
@@ -1133,6 +1135,10 @@ module Crystal
             call.args << exp
           end
         else
+          # At this point we want to attach the "do" to the next call,
+          # so we set this var to true to make the parser think the call
+          # has parenthesis and so a "do" must be attached to it
+          @last_call_has_parenthesis = true
           call = parse_var_or_call(force_call: true).at(location)
 
           if call.is_a?(Call)
@@ -1620,8 +1626,7 @@ module Crystal
         next_token_skip_space
         new_hash_literal([] of HashLiteral::Entry, line, column)
       else
-        # "{foo:" or "{Foo:" means a hash literal with symbol key
-        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
+        if hash_symbol_key?
           first_key = SymbolLiteral.new(@token.value.to_s)
           next_token
         else
@@ -1666,7 +1671,7 @@ module Crystal
         end
 
         while @token.type != :"}"
-          if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
+          if hash_symbol_key?
             key = SymbolLiteral.new(@token.value.to_s)
             next_token
           else
@@ -1691,6 +1696,10 @@ module Crystal
       end
 
       new_hash_literal entries, line, column, allow_of: allow_of
+    end
+
+    def hash_symbol_key?
+      (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
     end
 
     def parse_tuple(first_exp, location)
@@ -1899,7 +1908,9 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.keyword?(:def)
-        return parse_def_helper check_return_type: true
+        a_def = parse_def_helper check_return_type: true
+        a_def.doc = doc
+        return a_def
       end
 
       push_def
@@ -3785,6 +3796,7 @@ module Crystal
       until @token.keyword?(:end)
         case @token.type
         when :CONST
+          location = @token.location
           constant_name = @token.value.to_s
           doc = @token.doc
 
@@ -3804,7 +3816,7 @@ module Crystal
             next_token_skip_statement_end
           end
 
-          arg = Arg.new(constant_name, constant_value)
+          arg = Arg.new(constant_name, constant_value).at(location)
           arg.doc = doc
 
           members << arg

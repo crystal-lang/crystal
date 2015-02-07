@@ -555,19 +555,19 @@ describe "MacroExpander" do
   describe "type methods" do
     it "executes name" do
       assert_macro("x", "{{x.name}}", %("String")) do |program|
-        [MacroType.new(program.string)] of ASTNode
+        [TypeNode.new(program.string)] of ASTNode
       end
     end
 
     it "executes instance_vars" do
       assert_macro("x", "{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
-        [MacroType.new(program.string)] of ASTNode
+        [TypeNode.new(program.string)] of ASTNode
       end
     end
 
     it "executes superclass" do
       assert_macro("x", "{{x.superclass}}", %(Reference)) do |program|
-        [MacroType.new(program.string)] of ASTNode
+        [TypeNode.new(program.string)] of ASTNode
       end
     end
   end

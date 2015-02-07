@@ -486,6 +486,23 @@ class Crystal::Doc::Type
     end
   end
 
+  def type_to_html(type : Crystal::FunInstanceType, io, text = nil)
+    type.arg_types.join(", ", io) do |arg_type|
+      type_to_html arg_type, io
+    end
+    io << " -> "
+    return_type = type.return_type
+    type_to_html return_type, io unless return_type.void?
+  end
+
+  def type_to_html(type : Crystal::TupleInstanceType, io, text = nil)
+    io << "{"
+    type.tuple_types.join(", ", io) do |tuple_type|
+      type_to_html tuple_type, io
+    end
+    io << "}"
+  end
+
   def type_to_html(type : Crystal::GenericClassInstanceType, io, text = nil)
     generic_class = @generator.type(type.generic_class)
     if generic_class.must_be_included?

@@ -146,7 +146,7 @@ module Crystal
       # are not going to be used.
       @needs_value = true
 
-      @empty_md_list = metadata([0])
+      @empty_md_list = metadata([] of Int32)
 
       @subprograms = {} of LLVM::Module => Array(LLVM::Value?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
