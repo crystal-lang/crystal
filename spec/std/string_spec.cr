@@ -722,4 +722,14 @@ describe "String" do
     assert { "a    bbb".squeeze(' ').should eq("a bbb") }
     assert { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
   end
+
+  describe "ljust" do
+    assert { "123".ljust(5).should eq("123  ") }
+    assert { "12".ljust(7, '-').should eq("12-----") }
+  end
+
+  describe "rjust" do
+    assert { "123".rjust(5).should eq("  123") }
+    assert { "12".rjust(7, '-').should eq("-----12") }
+  end
 end
