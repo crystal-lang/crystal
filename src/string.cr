@@ -906,6 +906,21 @@ class String
     end
   end
 
+  def ljust(len, chr = ' ')
+    if length >= len
+      self
+    else
+      self + chr.to_s * (len - length)
+    end
+  end
+
+  def rjust(len, chr = ' ')
+    if length >= len
+      self
+    else
+      chr.to_s * (len - length) + self
+    end
+  end
 
   def match(regex : Regex)
     regex.match self
