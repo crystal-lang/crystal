@@ -399,7 +399,7 @@ module Crystal
       false
     end
 
-    def visit(node : MacroType)
+    def visit(node : TypeNode)
       node.type.to_s(@str)
       false
     end

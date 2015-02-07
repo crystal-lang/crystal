@@ -860,24 +860,50 @@ module Crystal
       method = nil
 
       node.args.each_with_index do |arg, index|
-        next unless arg.is_a?(FunLiteral)
-        next unless arg.def.args.any? { |def_arg| !def_arg.restriction && !def_arg.type? }
+        case arg
+        when FunLiteral
+          next unless arg.def.args.any? { |def_arg| !def_arg.restriction && !def_arg.type? }
 
-        method ||= obj_type.lookup_first_def(node.name, false)
-        return unless method
+          method ||= obj_type.lookup_first_def(node.name, false)
+          return unless method
 
-        method_arg = method.args[index]?
-        next unless method_arg
+          check_lib_call_arg(method, index) do |method_arg_type|
+            arg.def.args.each_with_index do |def_arg, def_arg_index|
+              if !def_arg.restriction && !def_arg.type?
+                def_arg.type = method_arg_type.fun_types[def_arg_index]?
+              end
+            end
+          end
+        when FunPointer
+          next unless arg.args.empty?
 
-        method_arg_type = method_arg.type
-        next unless method_arg_type.is_a?(FunInstanceType)
+          if arg_obj = arg.obj
+            arg_obj.accept self
+            scope = arg_obj.type
+          else
+            scope = @scope || current_type
+          end
 
-        arg.def.args.each_with_index do |def_arg, def_arg_index|
-          if !def_arg.restriction && !def_arg.type?
-            def_arg.type = method_arg_type.fun_types[def_arg_index]?
+          method ||= obj_type.lookup_first_def(node.name, false)
+          return unless method
+
+          check_lib_call_arg(method, index) do |method_arg_type|
+            method_arg_type.arg_types.each do |arg_type|
+              arg.args.push TypeNode.new(arg_type)
+            end
           end
         end
       end
+    end
+
+    def check_lib_call_arg(method, arg_index)
+      method_arg = method.args[arg_index]?
+      return unless method_arg
+
+      method_arg_type = method_arg.type
+      return unless method_arg_type.is_a?(FunInstanceType)
+
+      yield method_arg_type
     end
 
     # Check if it's FunType#new

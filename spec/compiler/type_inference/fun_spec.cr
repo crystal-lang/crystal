@@ -373,6 +373,36 @@ describe "Type inference: fun" do
       )) { float64 }
   end
 
+  it "allows passing function to LibC without specifying types, using a global method" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32 -> Int32) : Float64
+      end
+
+      def callback(x)
+        x + 1
+      end
+
+      LibC.foo ->callback
+      )) { float64 }
+  end
+
+  it "allows passing function to LibC without specifying types, using a class method" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32 -> Int32) : Float64
+      end
+
+      class Foo
+        def self.callback(x)
+          x + 1
+        end
+      end
+
+      LibC.foo ->Foo.callback
+      )) { float64 }
+  end
+
   it "allows writing a function type with Function" do
     assert_type(%(
       Function(Int32, Int32)
