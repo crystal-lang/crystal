@@ -1796,6 +1796,10 @@ module Crystal
             const_member = enum_type.add_constant member
             const_member.doc = member.doc
 
+            if member_location = member.location
+              const_member.locations << member_location
+            end
+
             const_value.type = enum_type
             counter = is_flags ? counter * 2 : counter + 1
           when Def

@@ -165,6 +165,7 @@ describe "Type inference: doc" do
     foo = program.types["Foo"]
     a = foo.types["A"]
     a.doc.should eq("Hello")
+    a.locations.length.should eq(1)
   end
 
   it "stores doc for constant" do
