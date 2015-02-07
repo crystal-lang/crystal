@@ -3,6 +3,7 @@ struct Process::Status
   property exit
   property input
   property output
+  property error
 
   def initialize(@pid)
   end
