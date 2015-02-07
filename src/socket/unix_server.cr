@@ -1,10 +1,10 @@
 require "./unix_socket"
 
 class UNIXServer < UNIXSocket
-  def initialize(@path : String, socktype = LibC::SOCK_STREAM, backlog = 128)
+  def initialize(@path : String, socktype =  Socket::Type::STREAM : Socket::Type, backlog = 128)
     File.delete(path) if File.exists?(path)
 
-    sock = LibC.socket(LibC::AF_UNIX, socktype, 0)
+    sock = LibC.socket(LibC::AF_UNIX, socktype.value, 0)
     raise Errno.new("Error opening socket") if sock <= 0
 
     addr = LibC::SockAddrUn.new

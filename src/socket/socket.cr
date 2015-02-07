@@ -29,6 +29,8 @@ lib LibC
       data : StaticArray(UInt8, 14)
     end
 
+    alias AddressFamilyType = UInt8
+
     AF_UNSPEC = 0_u8
     AF_UNIX = 1_u8
     AF_INET = 2_u8
@@ -66,6 +68,8 @@ lib LibC
       family : UInt16
       data : StaticArray(UInt8, 14)
     end
+
+    alias AddressFamilyType = UInt16
 
     AF_UNSPEC = 0_u16
     AF_UNIX = 1_u16
@@ -116,6 +120,26 @@ class SocketError < Exception
 end
 
 class Socket < FileDescriptorIO
+  enum Type
+    STREAM = LibC::SOCK_STREAM
+    DGRAM  = LibC::SOCK_DGRAM
+    RAW    = LibC::SOCK_RAW
+  end
+
+  enum Protocol
+    IP  = LibC::IPPROTO_IP
+    TCP = LibC::IPPROTO_TCP
+    UDP = LibC::IPPROTO_UDP
+    RAW = LibC::IPPROTO_RAW
+  end
+
+  enum Family : LibC::AddressFamilyType
+    UNSPEC = LibC::AF_UNSPEC
+    UNIX   = LibC::AF_UNIX
+    INET   = LibC::AF_INET
+    INET6  = LibC::AF_INET6
+  end
+
   struct Addr
     property :family, :ip_port, :ip_address, :path
 

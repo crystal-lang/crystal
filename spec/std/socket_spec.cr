@@ -77,14 +77,14 @@ end
 
 describe "UDPSocket" do
   it "sends and receives messages" do
-    server = UDPSocket.new(LibC::AF_INET6)
+    server = UDPSocket.new(Socket::Family::INET6)
     server.bind("::", 12346)
 
     server.addr.family.should eq("AF_INET6")
     server.addr.ip_port.should eq(12346)
     server.addr.ip_address.should eq("::")
 
-    client = UDPSocket.new(LibC::AF_INET)
+    client = UDPSocket.new(Socket::Family::INET)
     client.connect("localhost", 12346)
 
     client.addr.family.should eq("AF_INET")
