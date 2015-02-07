@@ -35,9 +35,9 @@ describe "Logger" do
   it "uses custom formatter" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
-      logger.formatter = ->(severity : String, datetime : Time, progname : String, message : String) {
+      logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message|
         "#{severity[0]} #{progname}: #{message}"
-      }
+      end
       logger.warn "message", "prog"
 
       r.gets.should eq("W prog: message\n")
