@@ -2,7 +2,7 @@
 
 * `Random` is now a module, with static methods that default to the `Random::MT19937` class.
 * Added `Random::ISAAC` engine (thanks @ysbaddaden!)
-# Added `String#size` (thanks @zamith!)
+* Added `String#size` (thanks @zamith!)
 * Added `limit` to all `String#split` variants (thanks @jhass!)
 * Raising inside a Thread is now rescued and re-raised on join (thanks @jhass!)
 * Added `path` option to Projectfile for `crystal deps` (thanks @naps62!)
