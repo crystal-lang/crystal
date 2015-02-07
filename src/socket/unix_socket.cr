@@ -9,6 +9,7 @@ class UNIXSocket < Socket
     addr.family = LibC::AF_UNIX
     addr.path = path.to_unsafe
     if LibC.connect(sock, pointerof(addr) as LibC::SockAddr*, sizeof(LibC::SockAddrUn)) != 0
+      LibC.close(sock)
       raise Errno.new("Error connecting to '#{path}'")
     end
 
