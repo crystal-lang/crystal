@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Markdown::HTMLRenderer</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../Markdown/HTMLRenderer.html">Markdown::HTMLRenderer</a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28io%29-class-method" class="signature"><strong>.new</strong>(io)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#begin_bold-instance-method" class="signature"><strong>#begin_bold</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_code%28language%20%3D%20nil%29-instance-method" class="signature"><strong>#begin_code</strong>(language = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_header%28level%29-instance-method" class="signature"><strong>#begin_header</strong>(level)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_inline_code-instance-method" class="signature"><strong>#begin_inline_code</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_italic-instance-method" class="signature"><strong>#begin_italic</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_link%28url%29-instance-method" class="signature"><strong>#begin_link</strong>(url)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_list_item-instance-method" class="signature"><strong>#begin_list_item</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_paragraph-instance-method" class="signature"><strong>#begin_paragraph</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#begin_unordered_list-instance-method" class="signature"><strong>#begin_unordered_list</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_bold-instance-method" class="signature"><strong>#end_bold</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_code-instance-method" class="signature"><strong>#end_code</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_header%28level%29-instance-method" class="signature"><strong>#end_header</strong>(level)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_inline_code-instance-method" class="signature"><strong>#end_inline_code</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_italic-instance-method" class="signature"><strong>#end_italic</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_link-instance-method" class="signature"><strong>#end_link</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_list_item-instance-method" class="signature"><strong>#end_list_item</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_paragraph-instance-method" class="signature"><strong>#end_paragraph</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#end_unordered_list-instance-method" class="signature"><strong>#end_unordered_list</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#horizontal_rule-instance-method" class="signature"><strong>#horizontal_rule</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#image%28url%2C%20alt%29-instance-method" class="signature"><strong>#image</strong>(url, alt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#text%28text%29-instance-method" class="signature"><strong>#text</strong>(text)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28io%29-class-method">
+        
+        def self.<strong>new</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_bold-instance-method">
+        
+        def <strong>begin_bold</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L21" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_code%28language%20%3D%20nil%29-instance-method">
+        
+        def <strong>begin_code</strong>(language = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_header%28level%29-instance-method">
+        
+        def <strong>begin_header</strong>(level)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L29" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_inline_code-instance-method">
+        
+        def <strong>begin_inline_code</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L41" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_italic-instance-method">
+        
+        def <strong>begin_italic</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_link%28url%29-instance-method">
+        
+        def <strong>begin_link</strong>(url)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_list_item-instance-method">
+        
+        def <strong>begin_list_item</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L65" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_paragraph-instance-method">
+        
+        def <strong>begin_paragraph</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="begin_unordered_list-instance-method">
+        
+        def <strong>begin_unordered_list</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_bold-instance-method">
+        
+        def <strong>end_bold</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L25" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_code-instance-method">
+        
+        def <strong>end_code</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_header%28level%29-instance-method">
+        
+        def <strong>end_header</strong>(level)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_inline_code-instance-method">
+        
+        def <strong>end_inline_code</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L45" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_italic-instance-method">
+        
+        def <strong>end_italic</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L17" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_link-instance-method">
+        
+        def <strong>end_link</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L79" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_list_item-instance-method">
+        
+        def <strong>end_list_item</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L69" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_paragraph-instance-method">
+        
+        def <strong>end_paragraph</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="end_unordered_list-instance-method">
+        
+        def <strong>end_unordered_list</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="horizontal_rule-instance-method">
+        
+        def <strong>horizontal_rule</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="image%28url%2C%20alt%29-instance-method">
+        
+        def <strong>image</strong>(url, alt)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L83" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="text%28text%29-instance-method">
+        
+        def <strong>text</strong>(text)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/html_renderer.cr#L91" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

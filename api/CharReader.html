@@ -13,25 +13,25 @@
 
   <h2>Overview</h2>
 
-  <p>A <a href="CharReader.html">CharReader</a> allows iterating a <a href="String.html">String</a> by Chars.</p>
+  <p>A CharReader allows iterating a String by Chars.</p>
 
-<p>As soon as you instantiate a <a href="CharReader.html">CharReader</a> it will decode the first
-char in the <a href="String.html">String</a>, which can be accesed by invoking <code></code><a href="CharReader.html#current_char-instance-method">#current_char</a>.
-At this point <code></code><a href="CharReader.html#pos-instance-method">#pos</a>, the current position in the string, will equal zero.
-Successive calls to <code></code><a href="CharReader.html#next_char-instance-method">#next_char</a> return the next chars in the string,
-advancing <code></code><a href="CharReader.html#pos-instance-method">#pos</a>.</p>
+<p>As soon as you instantiate a CharReader it will decode the first
+char in the String, which can be accesed by invoking <code><a href="CharReader.html#current_char-instance-method">#current_char</a></code>.
+At this point <code><a href="CharReader.html#pos-instance-method">#pos</a></code>, the current position in the string, will equal zero.
+Successive calls to <code><a href="CharReader.html#next_char-instance-method">#next_char</a></code> return the next chars in the string,
+advancing <code><a href="CharReader.html#pos-instance-method">#pos</a></code>.</p>
 
-<p>Note that the null character '\0' will be returned in <code></code><a href="CharReader.html#current_char-instance-method">#current_char</a> when
-the end is reached (as well as when the string is empty). Thus, <code></code><a href="CharReader.html#has_next%3F-instance-method">#has_next?</a>
-will return <code></code><code>false</code> only when <code></code><a href="CharReader.html#pos-instance-method">#pos</a> is equal to the string's length, in which
-case <code></code><a href="CharReader.html#current_char-instance-method">#current_char</a> will always be '\0'.</p>
-
-
+<p>Note that the null character '\0' will be returned in <code><a href="CharReader.html#current_char-instance-method">#current_char</a></code> when
+the end is reached (as well as when the string is empty). Thus, <code><a href="CharReader.html#has_next%3F-instance-method">#has_next?</a></code>
+will return <code>false</code> only when <code><a href="CharReader.html#pos-instance-method">#pos</a></code> is equal to the string's length, in which
+case <code><a href="CharReader.html#current_char-instance-method">#current_char</a></code> will always be '\0'.</p>
 
 
 
-  <h2>Superclass</h2>
-  <a href="Struct.html">Struct</a>
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Struct.html">Struct</a></div><div style="padding-left: 60px"><a href="CharReader.html">CharReader</a></div>
 
 
 
@@ -126,7 +126,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -144,7 +144,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -157,7 +157,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -170,7 +170,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L64" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L64" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -183,7 +183,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L29" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -196,7 +196,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L33" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L33" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,7 +209,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L42" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L42" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -222,7 +222,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L19" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -235,7 +235,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L54" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -248,7 +248,7 @@ case <code></code><a href="CharReader.html#current_char-instance-method">#curren
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char_reader.cr#L16" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char_reader.cr#L16" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

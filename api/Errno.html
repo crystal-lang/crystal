@@ -15,8 +15,8 @@
 
 
 
-  <h2>Superclass</h2>
-  <a href="Exception.html">Exception</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Exception.html">Exception</a></div><div style="padding-left: 60px"><a href="Errno.html">Errno</a></div>
 
 
 
@@ -26,6 +26,620 @@
 
 
 
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>EACCES</strong> = <code><span class="n">13</span></code>
+        
+          <div class="doc"><p>Cannot allocate memory</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EADDRINUSE</strong> = <code><span class="n">48</span></code>
+        
+          <div class="doc"><p>Address family not supported by protocol family</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EADDRNOTAVAIL</strong> = <code><span class="n">49</span></code>
+        
+          <div class="doc"><p>Address already in use</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EAFNOSUPPORT</strong> = <code><span class="n">47</span></code>
+        
+          <div class="doc"><p>Protocol family not supported</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EAGAIN</strong> = <code><span class="n">35</span></code>
+        
+          <div class="doc"><p>Result too large</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EALREADY</strong> = <code><span class="n">37</span></code>
+        
+          <div class="doc"><p>Operation now in progress</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EBADF</strong> = <code><span class="n">9</span></code>
+        
+          <div class="doc"><p>Exec format error</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EBADMSG</strong> = <code><span class="n">94</span></code>
+        
+          <div class="doc"><p>Illegal byte sequence</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EBUSY</strong> = <code><span class="n">16</span></code>
+        
+          <div class="doc"><p>Block device required</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ECANCELED</strong> = <code><span class="n">89</span></code>
+        
+          <div class="doc"><p>Value too large to be stored in data type</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ECHILD</strong> = <code><span class="n">10</span></code>
+        
+          <div class="doc"><p>Bad file descriptor</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ECONNABORTED</strong> = <code><span class="n">53</span></code>
+        
+          <div class="doc"><p>Network dropped connection on reset</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ECONNREFUSED</strong> = <code><span class="n">61</span></code>
+        
+          <div class="doc"><p>Operation timed out</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ECONNRESET</strong> = <code><span class="n">54</span></code>
+        
+          <div class="doc"><p>Software caused connection abort</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EDEADLK</strong> = <code><span class="n">11</span></code>
+        
+          <div class="doc"><p>No child processes</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EDESTADDRREQ</strong> = <code><span class="n">39</span></code>
+        
+          <div class="doc"><p>Socket operation on non-socket</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EDOM</strong> = <code><span class="n">33</span></code>
+        
+          <div class="doc"><p>Broken pipe</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EDQUOT</strong> = <code><span class="n">69</span></code>
+        
+          <div class="doc"><p>Too many users</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EEXIST</strong> = <code><span class="n">17</span></code>
+        
+          <div class="doc"><p>Device / Resource busy</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EFAULT</strong> = <code><span class="n">14</span></code>
+        
+          <div class="doc"><p>Permission denied</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EFBIG</strong> = <code><span class="n">27</span></code>
+        
+          <div class="doc"><p>Text file busy</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EHOSTDOWN</strong> = <code><span class="n">64</span></code>
+        
+          <div class="doc"><p>File name too long</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EHOSTUNREACH</strong> = <code><span class="n">65</span></code>
+        
+          <div class="doc"><p>Host is down</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EIDRM</strong> = <code><span class="n">90</span></code>
+        
+          <div class="doc"><p>Operation canceled</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EILSEQ</strong> = <code><span class="n">92</span></code>
+        
+          <div class="doc"><p>No message of desired type</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EINPROGRESS</strong> = <code><span class="n">36</span></code>
+        
+          <div class="doc"><p>Operation would block</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EINTR</strong> = <code><span class="n">4</span></code>
+        
+          <div class="doc"><p>No such process</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EINVAL</strong> = <code><span class="n">22</span></code>
+        
+          <div class="doc"><p>Is a directory</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EIO</strong> = <code><span class="n">5</span></code>
+        
+          <div class="doc"><p>Interrupted system call</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EISCONN</strong> = <code><span class="n">56</span></code>
+        
+          <div class="doc"><p>No buffer space available</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EISDIR</strong> = <code><span class="n">21</span></code>
+        
+          <div class="doc"><p>Not a directory</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ELOOP</strong> = <code><span class="n">62</span></code>
+        
+          <div class="doc"><p>Connection refused</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EMFILE</strong> = <code><span class="n">24</span></code>
+        
+          <div class="doc"><p>Too many open files in system</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EMLINK</strong> = <code><span class="n">31</span></code>
+        
+          <div class="doc"><p>Read-only file system</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EMSGSIZE</strong> = <code><span class="n">40</span></code>
+        
+          <div class="doc"><p>Destination address required</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EMULTIHOP</strong> = <code><span class="n">95</span></code>
+        
+          <div class="doc"><p>Bad message</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENAMETOOLONG</strong> = <code><span class="n">63</span></code>
+        
+          <div class="doc"><p>Too many levels of symbolic links</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENETDOWN</strong> = <code><span class="n">50</span></code>
+        
+          <div class="doc"><p>Can't assign requested address</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENETRESET</strong> = <code><span class="n">52</span></code>
+        
+          <div class="doc"><p>Network is unreachable</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENETUNREACH</strong> = <code><span class="n">51</span></code>
+        
+          <div class="doc"><p>Network is down</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENFILE</strong> = <code><span class="n">23</span></code>
+        
+          <div class="doc"><p>Invalid argument</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOBUFS</strong> = <code><span class="n">55</span></code>
+        
+          <div class="doc"><p>Connection reset by peer</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENODATA</strong> = <code><span class="n">96</span></code>
+        
+          <div class="doc"><p>Reserved</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENODEV</strong> = <code><span class="n">19</span></code>
+        
+          <div class="doc"><p>Cross-device link</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOENT</strong> = <code><span class="n">2</span></code>
+        
+          <div class="doc"><p>Operation not permitted</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOEXEC</strong> = <code><span class="n">8</span></code>
+        
+          <div class="doc"><p>Device not configured</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOLCK</strong> = <code><span class="n">77</span></code>
+        
+          <div class="doc"><p>Too many levels of remote in path</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOLINK</strong> = <code><span class="n">97</span></code>
+        
+          <div class="doc"><p>No message available on STREAM</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOMEM</strong> = <code><span class="n">12</span></code>
+        
+          <div class="doc"><p>Resource deadlock avoided</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOMSG</strong> = <code><span class="n">91</span></code>
+        
+          <div class="doc"><p>Identifier removed</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOPROTOOPT</strong> = <code><span class="n">42</span></code>
+        
+          <div class="doc"><p>Protocol wrong type for socket</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOSPC</strong> = <code><span class="n">28</span></code>
+        
+          <div class="doc"><p>File too large</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOSR</strong> = <code><span class="n">98</span></code>
+        
+          <div class="doc"><p>Reserved</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOSTR</strong> = <code><span class="n">99</span></code>
+        
+          <div class="doc"><p>No STREAM resources</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOSYS</strong> = <code><span class="n">78</span></code>
+        
+          <div class="doc"><p>No locks available</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTBLK</strong> = <code><span class="n">15</span></code>
+        
+          <div class="doc"><p>Bad address</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTCONN</strong> = <code><span class="n">57</span></code>
+        
+          <div class="doc"><p>Socket is already connected</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTDIR</strong> = <code><span class="n">20</span></code>
+        
+          <div class="doc"><p>Operation not supported by device</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTEMPTY</strong> = <code><span class="n">66</span></code>
+        
+          <div class="doc"><p>No route to host</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTRECOVERABLE</strong> = <code><span class="n">104</span></code>
+        
+          <div class="doc"><p>Operation not supported on socket</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTSOCK</strong> = <code><span class="n">38</span></code>
+        
+          <div class="doc"><p>Operation already in progress</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENOTTY</strong> = <code><span class="n">25</span></code>
+        
+          <div class="doc"><p>Too many open files</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ENXIO</strong> = <code><span class="n">6</span></code>
+        
+          <div class="doc"><p>Input/output error</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EOPNOTSUPP</strong> = <code><span class="n">102</span></code>
+        
+          <div class="doc"><p>STREAM ioctl timeout</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EOVERFLOW</strong> = <code><span class="n">84</span></code>
+        
+          <div class="doc"><p>Function not implemented</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EOWNERDEAD</strong> = <code><span class="n">105</span></code>
+        
+          <div class="doc"><p>State not recoverable</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EPERM</strong> = <code><span class="n">1</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EPFNOSUPPORT</strong> = <code><span class="n">46</span></code>
+        
+          <div class="doc"><p>Socket type not supported</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EPIPE</strong> = <code><span class="n">32</span></code>
+        
+          <div class="doc"><p>Too many links</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EPROTO</strong> = <code><span class="n">100</span></code>
+        
+          <div class="doc"><p>Not a STREAM</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EPROTONOSUPPORT</strong> = <code><span class="n">43</span></code>
+        
+          <div class="doc"><p>Protocol not available</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EPROTOTYPE</strong> = <code><span class="n">41</span></code>
+        
+          <div class="doc"><p>Message too long</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ERANGE</strong> = <code><span class="n">34</span></code>
+        
+          <div class="doc"><p>Numerical argument out of domain</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EREMOTE</strong> = <code><span class="n">71</span></code>
+        
+          <div class="doc"><p>Stale NFS file handle</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EROFS</strong> = <code><span class="n">30</span></code>
+        
+          <div class="doc"><p>Illegal seek</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ESHUTDOWN</strong> = <code><span class="n">58</span></code>
+        
+          <div class="doc"><p>Socket is not connected</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ESOCKTNOSUPPORT</strong> = <code><span class="n">44</span></code>
+        
+          <div class="doc"><p>Protocol not supported</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ESPIPE</strong> = <code><span class="n">29</span></code>
+        
+          <div class="doc"><p>No space left on device</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ESRCH</strong> = <code><span class="n">3</span></code>
+        
+          <div class="doc"><p>No such file or directory</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ESTALE</strong> = <code><span class="n">70</span></code>
+        
+          <div class="doc"><p>Disc quota exceeded</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ETIME</strong> = <code><span class="n">101</span></code>
+        
+          <div class="doc"><p>Protocol error</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ETIMEDOUT</strong> = <code><span class="n">60</span></code>
+        
+          <div class="doc"><p>Too many references: can't splice</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ETOOMANYREFS</strong> = <code><span class="n">59</span></code>
+        
+          <div class="doc"><p>Can't send after socket shutdown</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ETXTBSY</strong> = <code><span class="n">26</span></code>
+        
+          <div class="doc"><p>Inappropriate ioctl for device</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EUSERS</strong> = <code><span class="n">68</span></code>
+        
+          <div class="doc"><p>Directory not empty</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EWOULDBLOCK</strong> = <code><span class="t">EAGAIN</span></code>
+        
+          <div class="doc"><p>Resource temporarily unavailable</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EXDEV</strong> = <code><span class="n">18</span></code>
+        
+          <div class="doc"><p>File exists</p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
@@ -40,6 +654,16 @@
   </ul>
 
 
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#errno-instance-method" class="signature"><strong>#errno</strong></a>
+        
+      </li>
+    
+  </ul>
 
 
 
@@ -56,13 +680,29 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/errno.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/errno.cr#L193" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
 
 
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="errno-instance-method">
+        
+        def <strong>errno</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/errno.cr#L191" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
 
 
 

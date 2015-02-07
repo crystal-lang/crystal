@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class UNIXSocket</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="FileDescriptorIO.html">FileDescriptorIO</a></div><div style="padding-left: 60px"><a href="Socket.html">Socket</a></div><div style="padding-left: 80px"><a href="UNIXSocket.html">UNIXSocket</a></div>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="UNIXServer.html">UNIXServer</a>
+  
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#open%28path%2C%20socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%2C%20%26block%29-class-method" class="signature"><strong>.open</strong>(path, socktype = Socket::Type::STREAM : Socket::Type, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pair%28socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%2C%20protocol%20%3D%20Socket%3A%3AProtocol%3A%3AIP%20%3A%20Socket%3A%3AProtocol%2C%20%26block%29-class-method" class="signature"><strong>.pair</strong>(socktype = Socket::Type::STREAM : Socket::Type, protocol = Socket::Protocol::IP : Socket::Protocol, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pair%28socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%2C%20protocol%20%3D%20Socket%3A%3AProtocol%3A%3AIP%20%3A%20Socket%3A%3AProtocol%29-class-method" class="signature"><strong>.pair</strong>(socktype = Socket::Type::STREAM : Socket::Type, protocol = Socket::Protocol::IP : Socket::Protocol)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28path%20%3A%20String%2C%20socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%29-class-method" class="signature"><strong>.new</strong>(path : String, socktype = Socket::Type::STREAM : Socket::Type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28fd%20%3A%20Int32%29-class-method" class="signature"><strong>.new</strong>(fd : Int32)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#addr-instance-method" class="signature"><strong>#addr</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#peeraddr-instance-method" class="signature"><strong>#peeraddr</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="open%28path%2C%20socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%2C%20%26block%29-class-method">
+        
+        def self.<strong>open</strong>(path, socktype = <span class="t">Socket</span><span class="t">::</span><span class="t">Type</span><span class="t">::</span><span class="t">STREAM</span> : <a href="Socket/Type.html">Socket::Type</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pair%28socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%2C%20protocol%20%3D%20Socket%3A%3AProtocol%3A%3AIP%20%3A%20Socket%3A%3AProtocol%2C%20%26block%29-class-method">
+        
+        def self.<strong>pair</strong>(socktype = <span class="t">Socket</span><span class="t">::</span><span class="t">Type</span><span class="t">::</span><span class="t">STREAM</span> : <a href="Socket/Type.html">Socket::Type</a>, protocol = <span class="t">Socket</span><span class="t">::</span><span class="t">Protocol</span><span class="t">::</span><span class="t">IP</span> : <a href="Socket/Protocol.html">Socket::Protocol</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L40" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pair%28socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%2C%20protocol%20%3D%20Socket%3A%3AProtocol%3A%3AIP%20%3A%20Socket%3A%3AProtocol%29-class-method">
+        
+        def self.<strong>pair</strong>(socktype = <span class="t">Socket</span><span class="t">::</span><span class="t">Type</span><span class="t">::</span><span class="t">STREAM</span> : <a href="Socket/Type.html">Socket::Type</a>, protocol = <span class="t">Socket</span><span class="t">::</span><span class="t">Protocol</span><span class="t">::</span><span class="t">IP</span> : <a href="Socket/Protocol.html">Socket::Protocol</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L32" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28path%20%3A%20String%2C%20socktype%20%3D%20Socket%3A%3AType%3A%3ASTREAM%20%3A%20Socket%3A%3AType%29-class-method">
+        
+        def self.<strong>new</strong>(path : <a href="String.html">String</a>, socktype = <span class="t">Socket</span><span class="t">::</span><span class="t">Type</span><span class="t">::</span><span class="t">STREAM</span> : <a href="Socket/Type.html">Socket::Type</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28fd%20%3A%20Int32%29-class-method">
+        
+        def self.<strong>new</strong>(fd : <a href="Int32.html">Int32</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="addr-instance-method">
+        
+        def <strong>addr</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path-instance-method">
+        
+        def <strong>path</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="peeraddr-instance-method">
+        
+        def <strong>peeraddr</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/unix_socket.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

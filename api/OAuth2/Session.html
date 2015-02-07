@@ -13,15 +13,15 @@
 
   <h2>Overview</h2>
 
-  <p>An <a href="../OAuth2.html">OAuth2</a> session makes it easy to implement APIs that need to refresh
-an access token once its expired before executing an <a href="../HTTP.html">HTTP</a> request.</p>
+  <p>An OAuth2 session makes it easy to implement APIs that need to refresh
+an access token once its expired before executing an HTTP request.</p>
 
 
 
 
 
-  <h2>Superclass</h2>
-  <a href="../Reference.html">Reference</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../OAuth2/Session.html">OAuth2::Session</a></div>
 
 
 
@@ -40,7 +40,7 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
       <li class="entry-summary">
         <a href="#new%28oauth2_client%2C%20access_token%2C%20expires_at%20%3D%20Time.utc_now%2C%20%26callback%20%3A%20OAuth2%3A%3ASession%20-%3E%20%29-class-method" class="signature"><strong>.new</strong>(oauth2_client, access_token, expires_at = Time.utc_now, &callback : OAuth2::Session -> )</a>
         
-          <div class="summary"><p>Creates an <a href="../OAuth2/Session.html">OAuth2::Session</a>.</p></div>
+          <div class="summary"><p>Creates an OAuth2::Session.</p></div>
         
       </li>
     
@@ -59,7 +59,7 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
       <li class="entry-summary">
         <a href="#authenticate%28http_client%29-instance-method" class="signature"><strong>#authenticate</strong>(http_client)</a>
         
-          <div class="summary"><p>Authenticates an <a href="../HTTP/Client.html">HTTP::Client</a>, refreshing the access token if it is expired.</p></div>
+          <div class="summary"><p>Authenticates an HTTP::Client, refreshing the access token if it is expired.</p></div>
         
       </li>
     
@@ -88,15 +88,15 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
         def self.<strong>new</strong>(oauth2_client, access_token, expires_at = <span class="t">Time</span>.utc_now, &callback : <a href="../OAuth2/Session.html">OAuth2::Session</a> -> )
       </div>
       
-        <div class="doc"><p>Creates an <a href="../OAuth2/Session.html">OAuth2::Session</a>.</p>
+        <div class="doc"><p>Creates an OAuth2::Session.</p>
 
 <p>Params:</p>
 
-<ul><li><code>oauth2_client</code>: the <a href="../OAuth2/Client.html">OAuth2::Client</a> used to refresh an access token.</li><li><code>access_token</code>: the <a href="../OAuth2/AccessToken.html">OAuth2::AccessToken</a> to make requests.</li><li><code>expires_at</code>: the <a href="../Time.html">Time</a> when the access token expires.</li><li>callback: invoked when an access token is refreshed, giving you a chance to persist it.</li></ul></div>
+<ul><li>oauth2_client: the OAuth2::Client used to refresh an access token.</li><li>access_token: the OAuth2::AccessToken to make requests.</li><li>expires_at: the Time when the access token expires.</li><li>callback: invoked when an access token is refreshed, giving you a chance to persist it.</li></ul></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/session.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/oauth2/session.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -114,7 +114,7 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/session.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/oauth2/session.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -125,13 +125,13 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
         def <strong>authenticate</strong>(http_client)
       </div>
       
-        <div class="doc"><p>Authenticates an <a href="../HTTP/Client.html">HTTP::Client</a>, refreshing the access token if it is expired.</p>
+        <div class="doc"><p>Authenticates an HTTP::Client, refreshing the access token if it is expired.</p>
 
-<p>Invoke this method on an <a href="../HTTP/Client.html">HTTP::Client</a> before executing an <a href="../HTTP.html">HTTP</a> request.</p></div>
+<p>Invoke this method on an HTTP::Client before executing an HTTP request.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/session.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/oauth2/session.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -144,7 +144,7 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/session.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/oauth2/session.cr#L6" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -157,7 +157,7 @@ an access token once its expired before executing an <a href="../HTTP.html">HTTP
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/oauth2/session.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/oauth2/session.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

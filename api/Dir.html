@@ -15,8 +15,8 @@
 
 
 
-  <h2>Superclass</h2>
-  <a href="Reference.html">Reference</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Dir.html">Dir</a></div>
 
 
 
@@ -33,12 +33,27 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#%5B%5D%28%2Apatterns%29-class-method" class="signature"><strong>.[]</strong>(*patterns)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%5B%5D%28patterns%20%3A%20Enumerable%28String%29%29-class-method" class="signature"><strong>.[]</strong>(patterns : Enumerable(String))</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28%2Apatterns%29-class-method" class="signature"><strong>.[]</strong>(*patterns)</a>
+        <a href="#cd%28path%29-class-method" class="signature"><strong>.cd</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chdir%28path%29-class-method" class="signature"><strong>.chdir</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chdir%28path%2C%20%26block%29-class-method" class="signature"><strong>.chdir</strong>(path, &block)</a>
         
       </li>
     
@@ -53,12 +68,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#glob%28%2Apatterns%29-class-method" class="signature"><strong>.glob</strong>(*patterns)</a>
+        <a href="#glob%28patterns%20%3A%20Enumerable%28String%29%2C%20%26block%29-class-method" class="signature"><strong>.glob</strong>(patterns : Enumerable(String), &block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#glob%28patterns%20%3A%20Enumerable%28String%29%2C%20%26block%29-class-method" class="signature"><strong>.glob</strong>(patterns : Enumerable(String), &block)</a>
+        <a href="#glob%28%2Apatterns%2C%20%26block%29-class-method" class="signature"><strong>.glob</strong>(*patterns, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#glob%28%2Apatterns%29-class-method" class="signature"><strong>.glob</strong>(*patterns)</a>
         
       </li>
     
@@ -104,19 +124,6 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="%5B%5D%28patterns%20%3A%20Enumerable%28String%29%29-class-method">
-        
-        def self.<strong>[]</strong>(patterns : <a href="Enumerable.html">Enumerable</a>(<a href="String.html">String</a>))
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L123" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
       <div class="signature" id="%5B%5D%28%2Apatterns%29-class-method">
         
         def self.<strong>[]</strong>(*patterns)
@@ -124,7 +131,59 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L119" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L140" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28patterns%20%3A%20Enumerable%28String%29%29-class-method">
+        
+        def self.<strong>[]</strong>(patterns : <a href="Enumerable.html">Enumerable</a>(<a href="String.html">String</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L144" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cd%28path%29-class-method">
+        
+        def self.<strong>cd</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L113" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chdir%28path%29-class-method">
+        
+        def self.<strong>chdir</strong>(path)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chdir%28path%2C%20%26block%29-class-method">
+        
+        def self.<strong>chdir</strong>(path, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L105" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -137,7 +196,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L111" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L132" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -150,20 +209,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L165" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="glob%28%2Apatterns%29-class-method">
-        
-        def self.<strong>glob</strong>(*patterns)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L127" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L192" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -176,7 +222,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L139" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L166" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="glob%28%2Apatterns%2C%20%26block%29-class-method">
+        
+        def self.<strong>glob</strong>(*patterns, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L152" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="glob%28%2Apatterns%29-class-method">
+        
+        def self.<strong>glob</strong>(*patterns)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L148" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -189,7 +261,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L131" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L158" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -202,7 +274,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L96" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L117" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -215,7 +287,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L172" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L199" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -228,7 +300,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L179" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L206" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -241,7 +313,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L198" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L225" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -254,7 +326,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/dir.cr#L91" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L94" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -15,8 +15,8 @@
 
 
 
-  <h2>Superclass</h2>
-  <a href="Reference.html">Reference</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="FileDescriptorIO.html">FileDescriptorIO</a></div>
 
 
 
@@ -33,7 +33,7 @@
   
     <a href="File.html">File</a>,
   
-    <a href="TCPSocket.html">TCPSocket</a>,
+    <a href="Socket.html">Socket</a>,
   
     <a href="Tempfile.html">Tempfile</a>
   
@@ -47,17 +47,17 @@
   <ul>
     
       <li class="entry-const">
-        <strong>SEEK_CUR</strong> = <code><span class="t">C</span><span class="t">::</span><span class="t">SEEK_CUR</span></code>
+        <strong>SEEK_CUR</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">SEEK_CUR</span></code>
         
       </li>
     
       <li class="entry-const">
-        <strong>SEEK_END</strong> = <code><span class="t">C</span><span class="t">::</span><span class="t">SEEK_END</span></code>
+        <strong>SEEK_END</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">SEEK_END</span></code>
         
       </li>
     
       <li class="entry-const">
-        <strong>SEEK_SET</strong> = <code><span class="t">C</span><span class="t">::</span><span class="t">SEEK_SET</span></code>
+        <strong>SEEK_SET</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">SEEK_SET</span></code>
         
       </li>
     
@@ -111,6 +111,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#to_fd_io-instance-method" class="signature"><strong>#to_fd_io</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#tty%3F-instance-method" class="signature"><strong>#tty?</strong></a>
         
       </li>
@@ -137,7 +142,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L8" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L8" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -155,7 +160,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -168,7 +173,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L42" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L42" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -181,7 +186,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L11" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L11" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -194,7 +199,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L27" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L27" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -207,7 +212,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L35" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -220,7 +225,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_fd_io-instance-method">
+        
+        def <strong>to_fd_io</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -233,7 +251,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L52" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L52" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -246,7 +264,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/io/file_descriptor_io.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/io/file_descriptor_io.cr#L19" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

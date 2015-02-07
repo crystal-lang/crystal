@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Logger(T)</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>The Logger class provides a simple but sophisticated logging utility that you can use to output messages.</p>
+
+<p>The messages have associated levels, such as INFO or ERROR that indicate their importance.
+You can then give the Logger a level, and only messages at that level of higher will be printed.</p>
+
+<p>For instance, in a production system, you may have your Logger set to INFO or even WARN.
+When you are developing the system, however, you probably want to know about the program’s internal state,
+and would set the Logger to DEBUG.</p>
+
+<h3>Example</h3>
+
+<pre><code><span class="k">require</span> <span class="s">"logger"</span>
+
+log <span class="o">=</span> <span class="t">Logger</span>.<span class="k">new</span>(<span class="t">STDOUT</span>)
+log.level <span class="o">=</span> <span class="t">Logger</span><span class="t">::</span><span class="t">WARN</span>
+
+log.debug(<span class="s">"Created logger"</span>)
+log.info(<span class="s">"Program started"</span>)
+log.warn(<span class="s">"Nothing to do!"</span>)
+
+<span class="k">begin</span>
+  <span class="t">File</span>.each_line(path) <span class="k">do</span> <span class="o">|</span>line<span class="o">|</span>
+    <span class="k">unless</span> line <span class="o">=~</span> <span class="s">/^(\w+) = (.*)$/</span>
+      log.error(<span class="s">"Line in wrong format: </span><span class="i">#{</span></span>line<span class="s"><span class="i">}</span>"</span>)
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">rescue</span> err
+  log.fatal(<span class="s">"Caught exception; exiting"</span>)
+  log.fatal(err)
+<span class="k">end</span></code></pre>
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Logger.html">Logger(T)</a></div>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>DEBUG</strong> = <code><span class="t">Severity</span><span class="t">::</span><span class="t">DEBUG</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ERROR</strong> = <code><span class="t">Severity</span><span class="t">::</span><span class="t">ERROR</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>FATAL</strong> = <code><span class="t">Severity</span><span class="t">::</span><span class="t">FATAL</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>INFO</strong> = <code><span class="t">Severity</span><span class="t">::</span><span class="t">INFO</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>UNKNOWN</strong> = <code><span class="t">Severity</span><span class="t">::</span><span class="t">UNKNOWN</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>WARN</strong> = <code><span class="t">Severity</span><span class="t">::</span><span class="t">WARN</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28io%20%3A%20T%29-class-method" class="signature"><strong>.new</strong>(io : T)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28message%29-instance-method" class="signature"><strong>#<<</strong>(message)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#debug%28progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#debug</strong>(progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#debug%28message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#debug</strong>(message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#debug%3F-instance-method" class="signature"><strong>#debug?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#error%28progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#error</strong>(progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#error%28message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#error</strong>(message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#error%3F-instance-method" class="signature"><strong>#error?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fatal%28message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#fatal</strong>(message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fatal%28progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#fatal</strong>(progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fatal%3F-instance-method" class="signature"><strong>#fatal?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#format%28severity%2C%20datetime%2C%20progname%2C%20message%2C%20io%29-instance-method" class="signature"><strong>#format</strong>(severity, datetime, progname, message, io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#formatter-instance-method" class="signature"><strong>#formatter</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#formatter%3D%28formatter%29-instance-method" class="signature"><strong>#formatter=</strong>(formatter)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#info%28message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#info</strong>(message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#info%28progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#info</strong>(progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#info%3F-instance-method" class="signature"><strong>#info?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#level-instance-method" class="signature"><strong>#level</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#level%3D%28level%29-instance-method" class="signature"><strong>#level=</strong>(level)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log%28severity%2C%20message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#log</strong>(severity, message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#log%28severity%2C%20progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#log</strong>(severity, progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#progname-instance-method" class="signature"><strong>#progname</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#progname%3D%28progname%29-instance-method" class="signature"><strong>#progname=</strong>(progname)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unknown%28progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#unknown</strong>(progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unknown%28message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#unknown</strong>(message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unknown%3F-instance-method" class="signature"><strong>#unknown?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#warn%28message%2C%20progname%20%3D%20nil%29-instance-method" class="signature"><strong>#warn</strong>(message, progname = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#warn%28progname%20%3D%20nil%2C%20%26block%29-instance-method" class="signature"><strong>#warn</strong>(progname = nil, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#warn%3F-instance-method" class="signature"><strong>#warn?</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#log_level%28name%29-macro" class="signature"><strong>log_level</strong>(name)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28io%20%3A%20T%29-class-method">
+        
+        def self.<strong>new</strong>(io : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28message%29-instance-method">
+        
+        def <strong><<</strong>(message)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L70" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="close-instance-method">
+        
+        def <strong>close</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L74" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="debug%28progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>debug</strong>(progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="debug%28message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>debug</strong>(message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="debug%3F-instance-method">
+        
+        def <strong>debug?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L99" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="error%28progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>error</strong>(progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L96" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="error%28message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>error</strong>(message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L96" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="error%3F-instance-method">
+        
+        def <strong>error?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L96" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fatal%28message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>fatal</strong>(message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fatal%28progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>fatal</strong>(progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fatal%3F-instance-method">
+        
+        def <strong>fatal?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="format%28severity%2C%20datetime%2C%20progname%2C%20message%2C%20io%29-instance-method">
+        
+        def <strong>format</strong>(severity, datetime, progname, message, io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L113" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="formatter-instance-method">
+        
+        def <strong>formatter</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="formatter%3D%28formatter%29-instance-method">
+        
+        def <strong>formatter=</strong>(formatter)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="info%28message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>info</strong>(message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="info%28progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>info</strong>(progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="info%3F-instance-method">
+        
+        def <strong>info?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="level-instance-method">
+        
+        def <strong>level</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="level%3D%28level%29-instance-method">
+        
+        def <strong>level=</strong>(level)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log%28severity%2C%20message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>log</strong>(severity, message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L101" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log%28severity%2C%20progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>log</strong>(severity, progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L107" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="progname-instance-method">
+        
+        def <strong>progname</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="progname%3D%28progname%29-instance-method">
+        
+        def <strong>progname=</strong>(progname)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unknown%28progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>unknown</strong>(progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unknown%28message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>unknown</strong>(message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unknown%3F-instance-method">
+        
+        def <strong>unknown?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="warn%28message%2C%20progname%20%3D%20nil%29-instance-method">
+        
+        def <strong>warn</strong>(message, progname = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L97" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="warn%28progname%20%3D%20nil%2C%20%26block%29-instance-method">
+        
+        def <strong>warn</strong>(progname = <span class="n">nil</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L97" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="warn%3F-instance-method">
+        
+        def <strong>warn?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L97" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="log_level%28name%29-macro">
+        
+        macro <strong>log_level</strong>(name)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/logger.cr#L78" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

@@ -13,23 +13,23 @@
 
   <h2>Overview</h2>
 
-  <p><a href="Value.html">Value</a> is the base type of the primitive types (<a href="Nil.html">Nil</a>, <a href="Bool.html">Bool</a>, <a href="Char.html">Char</a>, <a href="Int.html">Int</a>, <a href="Float.html">Float</a>),
-<a href="Symbol.html">Symbol</a>, <a href="Pointer.html">Pointer</a>, <a href="Tuple.html">Tuple</a>, <a href="StaticArray.html">StaticArray</a> and all structs.</p>
+  <p>Value is the base type of the primitive types (<code><a href="Nil.html">Nil</a></code>, <code><a href="Bool.html">Bool</a></code>, <code><a href="Char.html">Char</a></code>, <code><a href="Int.html">Int</a></code>, <code><a href="Float.html">Float</a></code>),
+<code><a href="Symbol.html">Symbol</a></code>, <code><a href="Pointer.html">Pointer</a></code>, <code><a href="Tuple.html">Tuple</a></code>, <code><a href="StaticArray.html">StaticArray</a></code> and all structs.</p>
 
-<p>A <a href="Value.html">Value</a> is passed by value: when you pass it to methods,
+<p>A Value is passed by value: when you pass it to methods,
 return it from methods or assign it to variables, a copy
 of the value is actually passed.
-This is not important for <code>nil</code>, bools, integers, floats, symbols,
+This is not important for nil, bools, integers, floats, symbols,
 pointers and tuples, because they are immutable, but with a mutable
-<a href="Struct.html">Struct</a> or with a <a href="StaticArray.html">StaticArray</a> you have to be careful. Read their
+<code><a href="Struct.html">Struct</a></code> or with a <code><a href="StaticArray.html">StaticArray</a></code> you have to be careful. Read their
 documentation to learn more about this.</p>
 
 
 
 
 
-  <h2>Superclass</h2>
-  <a href="Object.html">Object</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div>
 
 
 
@@ -75,28 +75,28 @@ documentation to learn more about this.</p>
       <li class="entry-summary">
         <a href="#%21-instance-method" class="signature"><strong>#!</strong></a>
         
-          <div class="summary"><p>Returns <code>false</code>.</p></div>
+          <div class="summary"><p>Returns false.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%29-instance-method" class="signature"><strong>#==</strong>(other)</a>
         
-          <div class="summary"><p>Returns <code>false</code>.</p></div>
+          <div class="summary"><p>Returns false.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
         
-          <div class="summary"><p>Returns <code>self</code>.</p></div>
+          <div class="summary"><p>Returns self.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
         
-          <div class="summary"><p>Returns <code>false</code>.</p></div>
+          <div class="summary"><p>Returns false.</p></div>
         
       </li>
     
@@ -117,11 +117,11 @@ documentation to learn more about this.</p>
         def <strong>!</strong>
       </div>
       
-        <div class="doc"><p>Returns <code>false</code>.</p></div>
+        <div class="doc"><p>Returns false.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/value.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/value.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -132,11 +132,11 @@ documentation to learn more about this.</p>
         def <strong>==</strong>(other)
       </div>
       
-        <div class="doc"><p>Returns <code>false</code>.</p></div>
+        <div class="doc"><p>Returns false.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/value.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/value.cr#L13" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -147,11 +147,11 @@ documentation to learn more about this.</p>
         def <strong>clone</strong>
       </div>
       
-        <div class="doc"><p>Returns <code>self</code>.</p></div>
+        <div class="doc"><p>Returns self.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/value.cr#L28" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/value.cr#L28" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -162,11 +162,11 @@ documentation to learn more about this.</p>
         def <strong>nil?</strong>
       </div>
       
-        <div class="doc"><p>Returns <code>false</code>.</p></div>
+        <div class="doc"><p>Returns false.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/value.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/value.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

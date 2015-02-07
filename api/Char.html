@@ -11,12 +11,51 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>A Char represents a <a href="http://en.wikipedia.org/wiki/Unicode" target="_blank">Unicode</a> <a href="http://en.wikipedia.org/wiki/Code_point" target="_blank">code point</a>.
+It occupies 32 bits.</p>
+
+<p>It is created by enclosing an UTF-8 character in single quotes.</p>
+
+<pre><code>'a'
+'z'
+'0'
+'_'
+'あ'</code></pre>
+
+<p>You can use a backslash to denote some characters:</p>
+
+<pre><code>'\'' # single quote
+'\\' # backslash
+'\e' # escape
+'\f' # form feed
+'\n' # newline
+'\r' # carriage return
+'\t' # tab
+'\v' # vertical tab</code></pre>
+
+<p>You can use a backslash followed by at most three digits to denote a code point written in octal:</p>
+
+<pre><code>'\101' # == 'A'
+'\123' # == 'S'
+'\12'  # == '\n'
+'\1'   # code point 1</code></pre>
+
+<p>You can use a backslash followed by an u and four hexadecimal characters to denote a unicode codepoint written:</p>
+
+<pre><code>'\u0041' # == 'A'</code></pre>
+
+<p>Or you can use curly braces and specify up to four hexadecimal numbers:</p>
+
+<pre><code>'\u{41}' # == 'A'</code></pre>
 
 
 
 
-  <h2>Superclass</h2>
-  <a href="Value.html">Value</a>
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Char.html">Char</a></div>
 
 
 
@@ -33,7 +72,9 @@
   <ul>
     
       <li class="entry-const">
-        <strong>ZERO</strong> = <code></code>
+        <strong>ZERO</strong> = <code><span class="s">'\u{0}'</span></code>
+        
+          <div class="doc"><p>The character representing the end of a C string.</p></div>
         
       </li>
     
@@ -49,162 +90,217 @@
       <li class="entry-summary">
         <a href="#%21%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#!=</strong>(other : Char)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Char is not equal to <code>other</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#-%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#-</strong>(other : Char)</a>
         
+          <div class="summary"><p>Returns the difference of the codepoint values of this char and <code>other</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#<</strong>(other : Char)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is less than <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Char's codepoint is less than <code>other</code>'s.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#<=</strong>(other : Char)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is less than or equal to <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Char's codepoint is less than or equal to <code>other</code>'s.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%3D%3E%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#<=></strong>(other : Char)</a>
         
+          <div class="summary"><p>Implements the comparison operator for Char.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#==</strong>(other : Char)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is equal to <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Char is equal to <code>other</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3E%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#></strong>(other : Char)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is greater than <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Char's codepoint is greater than <code>other</code>'s.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3E%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#>=</strong>(other : Char)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is greater than or equal to <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Char's codepoint is greater than or equal to <code>other</code>'s.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#alpha%3F-instance-method" class="signature"><strong>#alpha?</strong></a>
         
+          <div class="summary"><p>Returns true if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#alphanumeric%3F-instance-method" class="signature"><strong>#alphanumeric?</strong></a>
+        
+          <div class="summary"><p>Returns true if this char is an ASCII letter or digit ('0' to '9', 'a' to 'z', 'A' to 'Z').</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#bytes-instance-method" class="signature"><strong>#bytes</strong></a>
         
+          <div class="summary"><p>Returns this Char bytes as encoded by UTF-8, as an <code><a href="Array.html">Array</a>(<a href="UInt8.html">UInt8</a>)</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#control%3F-instance-method" class="signature"><strong>#control?</strong></a>
+        
+          <div class="summary"><p>Returns true if this char is an ASCII control character.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#digit%3F-instance-method" class="signature"><strong>#digit?</strong></a>
         
+          <div class="summary"><p>Returns true if this char is an ASCII digit ('0' to '9').</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#downcase-instance-method" class="signature"><strong>#downcase</strong></a>
+        
+          <div class="summary"><p>Returns the ASCII downcase equivalent of this char.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#dump%28io%29-instance-method" class="signature"><strong>#dump</strong>(io)</a>
         
+          <div class="summary"><p>Appens this Char as a String that contains a char literal as written in Crystal to the given IO.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#dump-instance-method" class="signature"><strong>#dump</strong></a>
+        
+          <div class="summary"><p>Returns this Char as a String that contains a char literal as written in Crystal, with characters with a codepoint greater than 0x79 written as <code>\u{...}</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each_byte%28%26block%29-instance-method" class="signature"><strong>#each_byte</strong>(&block)</a>
         
+          <div class="summary"><p>Yields each of the bytes of this Char as encoded by UTF-8.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+          <div class="summary"><p>Returns this char's codepoint.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#in_set%3F%28%2Asets%29-instance-method" class="signature"><strong>#in_set?</strong>(*sets)</a>
+        
+          <div class="summary"><p>Returns true if this char is matched by the given sets.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#inspect-instance-method" class="signature"><strong>#inspect</strong></a>
         
+          <div class="summary"><p>Returns this Char as a String that contains a char literal as written in Crystal.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+          <div class="summary"><p>Appens this Char as a String that contains a char literal as written in Crystal to the given IO.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#ord-instance-method" class="signature"><strong>#ord</strong></a>
         
+          <div class="summary"><p>Returns this Char's Unicode codepoint.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#succ-instance-method" class="signature"><strong>#succ</strong></a>
+        
+          <div class="summary"><p>Returns a Char that is one codepoint bigger than this char's codepoint.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
         
+          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit, 0 otherwise.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_i%28%26block%29-instance-method" class="signature"><strong>#to_i</strong>(&block)</a>
+        
+          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit, otherwise the value returned by the block.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i%28base%2C%20or_else%20%3D%200%29-instance-method" class="signature"><strong>#to_i</strong>(base, or_else = 0)</a>
         
+          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base, otherwise the value of <code>or_else</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_i%28base%2C%20%26block%29-instance-method" class="signature"><strong>#to_i</strong>(base, &block)</a>
+        
+          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base, otherwise the value return by the block.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
         
+          <div class="summary"><p>Appens this Char to the given IO.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+          <div class="summary"><p>Returns this Char as a String containing this Char as a single character.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#upcase-instance-method" class="signature"><strong>#upcase</strong></a>
         
+          <div class="summary"><p>Returns the ASCII upcase equivalent of this char.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#whitespace%3F-instance-method" class="signature"><strong>#whitespace?</strong></a>
+        
+          <div class="summary"><p>Returns true if this char is an ASCII whitespace.</p></div>
         
       </li>
     
@@ -225,7 +321,7 @@
         def <strong>!=</strong>(other : <a href="Char.html">Char</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Char is not equal to <code>other</code>.</p></div>
       
       
     </div>
@@ -237,9 +333,15 @@
         def <strong>-</strong>(other : <a href="Char.html">Char</a>)
       </div>
       
+        <div class="doc"><p>Returns the difference of the codepoint values of this char and <code>other</code>.</p>
+
+<pre><code><span class="s">'a'</span> <span class="o">-</span> <span class="s">'a'</span> <span class="c">#=> 0</span>
+<span class="s">'b'</span> <span class="o">-</span> <span class="s">'a'</span> <span class="c">#=> 1</span>
+<span class="s">'c'</span> <span class="o">-</span> <span class="s">'a'</span> <span class="c">#=> 2</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L58" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -250,7 +352,7 @@
         def <strong><</strong>(other : <a href="Char.html">Char</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is less than <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Char's codepoint is less than <code>other</code>'s.</p></div>
       
       
     </div>
@@ -262,7 +364,7 @@
         def <strong><=</strong>(other : <a href="Char.html">Char</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is less than or equal to <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Char's codepoint is less than or equal to <code>other</code>'s.</p></div>
       
       
     </div>
@@ -274,9 +376,13 @@
         def <strong><=></strong>(other : <a href="Char.html">Char</a>)
       </div>
       
+        <div class="doc"><p>Implements the comparison operator for Char.</p>
+
+<pre><code><span class="s">'a'</span> <span class="o"><=></span> <span class="s">'c'</span> <span class="c">#=> -2</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L8" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L67" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -287,7 +393,7 @@
         def <strong>==</strong>(other : <a href="Char.html">Char</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is equal to <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Char is equal to <code>other</code>.</p></div>
       
       
     </div>
@@ -299,7 +405,7 @@
         def <strong>></strong>(other : <a href="Char.html">Char</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is greater than <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Char's codepoint is greater than <code>other</code>'s.</p></div>
       
       
     </div>
@@ -311,7 +417,7 @@
         def <strong>>=</strong>(other : <a href="Char.html">Char</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is greater than or equal to <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Char's codepoint is greater than or equal to <code>other</code>'s.</p></div>
       
       
     </div>
@@ -323,9 +429,14 @@
         def <strong>alpha?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').</p>
+
+<pre><code><span class="s">'c'</span>.alpha? <span class="c">#=> true</span>
+<span class="s">'8'</span>.alpha? <span class="c">#=> false</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L16" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L87" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -336,9 +447,15 @@
         def <strong>alphanumeric?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this char is an ASCII letter or digit ('0' to '9', 'a' to 'z', 'A' to 'Z').</p>
+
+<pre><code><span class="s">'c'</span>.alphanumeric? <span class="c">#=> true</span>
+<span class="s">'8'</span>.alphanumeric? <span class="c">#=> true</span>
+<span class="s">'.'</span>.alphanumeric? <span class="c">#=> false</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -349,9 +466,14 @@
         def <strong>bytes</strong>
       </div>
       
+        <div class="doc"><p>Returns this Char bytes as encoded by UTF-8, as an <code><a href="Array.html">Array</a>(<a href="UInt8.html">UInt8</a>)</code>.</p>
+
+<pre><code><span class="s">'a'</span>.bytes <span class="c">#=> [97]</span>
+<span class="s">'あ'</span>.bytes <span class="c">#=> [227, 129, 130]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L172" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L469" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -362,9 +484,21 @@
         def <strong>control?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this char is an ASCII control character.</p>
+
+<pre><code>(<span class="s">'\u{0}'</span>..<span class="s">'\u{19}'</span>).each <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
+  char.control? <span class="c">#=> true</span>
+<span class="k">end</span>
+
+(<span class="s">'\u{7F}'</span>..<span class="s">'\u{9F}'</span>).each <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
+  char.control? <span class="c">#=> true</span>
+<span class="k">end</span>
+
+<span class="c"># false in every other case</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L53" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L256" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -375,9 +509,14 @@
         def <strong>digit?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this char is an ASCII digit ('0' to '9').</p>
+
+<pre><code><span class="s">'4'</span>.digit? <span class="c">#=> true</span>
+<span class="s">'z'</span>.digit? <span class="c">#=> false</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L12" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L77" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -388,9 +527,15 @@
         def <strong>downcase</strong>
       </div>
       
+        <div class="doc"><p>Returns the ASCII downcase equivalent of this char.</p>
+
+<pre><code><span class="s">'Z'</span>.downcase <span class="c">#=> 'z'</span>
+<span class="s">'x'</span>.downcase <span class="c">#=> 'x'</span>
+<span class="s">'.'</span>.downcase <span class="c">#=> '.'</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L203" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -401,9 +546,13 @@
         def <strong>dump</strong>(io)
       </div>
       
+        <div class="doc"><p>Appens this Char as a String that contains a char literal as written in Crystal to the given IO.</p>
+
+<p>See <code><a href="Char.html#dump-instance-method">#dump</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L85" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L311" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -414,9 +563,17 @@
         def <strong>dump</strong>
       </div>
       
+        <div class="doc"><p>Returns this Char as a String that contains a char literal as written in Crystal,
+with characters with a codepoint greater than 0x79 written as <code>\u{...}</code>.</p>
+
+<pre><code><span class="s">'a'</span>.dump      <span class="c">#=> "'a'"</span>
+<span class="s">'\t'</span>.dump     <span class="c">#=> "'\t'"</span>
+<span class="s">'あ'</span>.dump     <span class="c">#=> "'\u{3042}'"</span>
+<span class="s">'\u{12}'</span>.dump <span class="c">#=> "'\u{12}'"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L73" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L296" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -427,9 +584,32 @@
         def <strong>each_byte</strong>(&block)
       </div>
       
+        <div class="doc"><p>Yields each of the bytes of this Char as encoded by UTF-8.</p>
+
+<pre><code>puts <span class="s">"'a'"</span>
+<span class="s">'a'</span>.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="o">|</span>
+  puts byte
+<span class="k">end</span>
+puts
+
+puts <span class="s">"'あ'"</span>
+<span class="s">'あ'</span>.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="o">|</span>
+  puts byte
+<span class="k">end</span></code></pre>
+
+<p>Output:</p>
+
+<pre><code>'a'
+97
+
+'あ'
+227
+129
+130</code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L145" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L436" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -440,9 +620,50 @@
         def <strong>hash</strong>
       </div>
       
+        <div class="doc"><p>Returns this char's codepoint.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L45" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L227" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="in_set%3F%28%2Asets%29-instance-method">
+        
+        def <strong>in_set?</strong>(*sets)
+      </div>
+      
+        <div class="doc"><p>Returns true if this char is matched by the given sets.</p>
+
+<p>Each parameter defines a set, the character is matched against
+the intersection of those, in other words it needs to
+match all sets.</p>
+
+<p>If a set starts with a ^, it is negated. The sequence c1-c2
+means all characters between and including c1 and c2
+and is known as a range.</p>
+
+<p>The backslash character \ can be used to escape ^ or - and
+is otherwise ignored unless it appears at the end of a range
+or the end of a a set.</p>
+
+<pre><code><span class="s">'l'</span>.in_set? <span class="s">"lo"</span>          <span class="c">#=> true</span>
+<span class="s">'l'</span>.in_set? <span class="s">"lo"</span>, <span class="s">"o"</span>     <span class="c">#=>  false</span>
+<span class="s">'l'</span>.in_set? <span class="s">"hello"</span>, <span class="s">"^l"</span> <span class="c">#=> false</span>
+<span class="s">'l'</span>.in_set? <span class="s">"j-m"</span>         <span class="c">#=> true</span>
+
+<span class="s">'^'</span>.in_set? <span class="s">"\^aeiou"</span>    <span class="c">#=> true</span>
+<span class="s">'-'</span>.in_set? <span class="s">"a\-eo"</span>      <span class="c">#=> true</span>
+
+<span class="s">'\\'</span>.in_set? <span class="s">"\"</span>         <span class="c">#=> true</span>
+<span class="s">'\\'</span>.in_set? <span class="s">"\A"</span>        <span class="c">#=> false</span>
+<span class="s">'\\'</span>.in_set? <span class="s">"X-\w"</span>      <span class="c">#=> true</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L141" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -453,9 +674,16 @@
         def <strong>inspect</strong>
       </div>
       
+        <div class="doc"><p>Returns this Char as a String that contains a char literal as written in Crystal.</p>
+
+<pre><code><span class="s">'a'</span>.inspect      <span class="c">#=> "'a'"</span>
+<span class="s">'\t'</span>.inspect     <span class="c">#=> "'\t'"</span>
+<span class="s">'あ'</span>.inspect     <span class="c">#=> "'あ'"</span>
+<span class="s">'\u{12}'</span>.inspect <span class="c">#=> "'\u{12}'"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L57" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -466,9 +694,13 @@
         def <strong>inspect</strong>(io)
       </div>
       
+        <div class="doc"><p>Appens this Char as a String that contains a char literal as written in Crystal to the given IO.</p>
+
+<p>See <code><a href="Char.html#inspect-instance-method">#inspect</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L69" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L283" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -479,7 +711,10 @@
         def <strong>ord</strong>
       </div>
       
-        <div class="doc"></div>
+        <div class="doc"><p>Returns this Char's Unicode codepoint.</p>
+
+<pre><code><span class="s">'a'</span>.ord  <span class="c">#=> 97</span>
+<span class="s">'あ'</span>.ord <span class="c">#=> 12354</span></code></pre></div>
       
       
     </div>
@@ -491,9 +726,16 @@
         def <strong>succ</strong>
       </div>
       
+        <div class="doc"><p>Returns a Char that is one codepoint bigger than this char's codepoint.</p>
+
+<pre><code><span class="s">'a'</span>.succ <span class="c">#=> 'b'</span>
+<span class="s">'あ'</span>.succ <span class="c">#=> 'ぃ'</span></code></pre>
+
+<p>This method allows creating a <code><a href="Range.html">Range</a></code> of chars.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L49" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L239" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -504,9 +746,16 @@
         def <strong>to_i</strong>
       </div>
       
+        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit,
+0 otherwise.</p>
+
+<pre><code><span class="s">'1'</span>.to_i <span class="c">#=> 1</span>
+<span class="s">'8'</span>.to_i <span class="c">#=> 8</span>
+<span class="s">'c'</span>.to_i <span class="c">#=> 0</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L110" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L344" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -517,9 +766,16 @@
         def <strong>to_i</strong>(&block)
       </div>
       
+        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit,
+otherwise the value returned by the block.</p>
+
+<pre><code><span class="s">'1'</span>.to_i { <span class="n">10</span> } <span class="c">#=> 1</span>
+<span class="s">'8'</span>.to_i { <span class="n">10</span> } <span class="c">#=> 8</span>
+<span class="s">'c'</span>.to_i { <span class="n">10</span> } <span class="c">#=> 10</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L114" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L356" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -530,9 +786,20 @@
         def <strong>to_i</strong>(base, or_else = <span class="n">0</span>)
       </div>
       
+        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
+otherwise the value of <code>or_else</code>.</p>
+
+<pre><code><span class="s">'1'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 1</span>
+<span class="s">'a'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 10</span>
+<span class="s">'f'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 15</span>
+<span class="s">'z'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 0</span>
+<span class="s">'z'</span>.to_i(<span class="n">16</span>, <span class="n">20</span>) <span class="c">#=> 20</span></code></pre>
+
+<p><strong>Note</strong>: the only bases supported right now are 10 and 16.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L122" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L376" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -543,9 +810,19 @@
         def <strong>to_i</strong>(base, &block)
       </div>
       
+        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
+otherwise the value return by the block.</p>
+
+<pre><code><span class="s">'1'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 1</span>
+<span class="s">'a'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 10</span>
+<span class="s">'f'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 15</span>
+<span class="s">'z'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 20</span></code></pre>
+
+<p><strong>Note</strong>: the only bases supported right now are 10 and 16.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L126" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L391" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -556,9 +833,12 @@
         def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
       </div>
       
+        <div class="doc"><p>Appens this Char to the given IO. This appens this Char's bytes as encoded
+by UTF-8 to the given IO.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L189" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L494" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -569,9 +849,14 @@
         def <strong>to_s</strong>
       </div>
       
+        <div class="doc"><p>Returns this Char as a String containing this Char as a single character.</p>
+
+<pre><code><span class="s">'a'</span>.to_s <span class="c">#=> "'a'"</span>
+<span class="s">'あ'</span>.to_s <span class="c">#=> "'あ'"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L180" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L483" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -582,9 +867,15 @@
         def <strong>upcase</strong>
       </div>
       
+        <div class="doc"><p>Returns the ASCII upcase equivalent of this char.</p>
+
+<pre><code><span class="s">'z'</span>.upcase <span class="c">#=> 'Z'</span>
+<span class="s">'X'</span>.upcase <span class="c">#=> 'X'</span>
+<span class="s">'.'</span>.upcase <span class="c">#=> '.'</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L218" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -595,9 +886,15 @@
         def <strong>whitespace?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this char is an ASCII whitespace.</p>
+
+<pre><code><span class="s">' '</span>.whitespace?  <span class="c">#=> true</span>
+<span class="s">'\t'</span>.whitespace? <span class="c">#=> true</span>
+<span class="s">'b'</span>.whitespace?  <span class="c">#=> false</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/char.cr#L25" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/char.cr#L110" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -46,38 +46,38 @@
     
       <li class="entry-const">
         <strong>DECODE_TABLE</strong> = <code><span class="t">Array</span>(<span class="t">Int8</span>).<span class="k">new</span>(<span class="n">256</span>) <span class="k">do</span> <span class="o">|</span>i<span class="o">|</span>
-  __temp_209 <span class="o">=</span> i.chr
-  <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'A'</span>, <span class="s">'Z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_209
+  __temp_217 <span class="o">=</span> i.chr
+  <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'A'</span>, <span class="s">'Z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_217
     (i <span class="o">-</span> <span class="n">65</span>).to_i8
   <span class="k">else</span>
-    <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'a'</span>, <span class="s">'z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_209
+    <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'a'</span>, <span class="s">'z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_217
       (i <span class="o">-</span> <span class="n">71</span>).to_i8
     <span class="k">else</span>
-      <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'0'</span>, <span class="s">'9'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_209
+      <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'0'</span>, <span class="s">'9'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_217
         (i <span class="o">+</span> <span class="n">4</span>).to_i8
       <span class="k">else</span>
-        <span class="k">if</span> <span class="k">if</span> __temp_210 <span class="o">=</span> <span class="s">'+'</span> <span class="o">===</span> __temp_209
-          __temp_210
+        <span class="k">if</span> <span class="k">if</span> __temp_218 <span class="o">=</span> <span class="s">'+'</span> <span class="o">===</span> __temp_217
+          __temp_218
         <span class="k">else</span>
-          <span class="s">'-'</span> <span class="o">===</span> __temp_209
+          <span class="s">'-'</span> <span class="o">===</span> __temp_217
         <span class="k">end</span>
           <span class="n">62</span>
         <span class="k">else</span>
-          <span class="k">if</span> <span class="k">if</span> __temp_211 <span class="o">=</span> <span class="s">'/'</span> <span class="o">===</span> __temp_209
-            __temp_211
+          <span class="k">if</span> <span class="k">if</span> __temp_219 <span class="o">=</span> <span class="s">'/'</span> <span class="o">===</span> __temp_217
+            __temp_219
           <span class="k">else</span>
-            <span class="s">'_'</span> <span class="o">===</span> __temp_209
+            <span class="s">'_'</span> <span class="o">===</span> __temp_217
           <span class="k">end</span>
             <span class="n">63</span>
           <span class="k">else</span>
-            <span class="k">if</span> <span class="k">if</span> __temp_212 <span class="o">=</span> <span class="s">'\n'</span> <span class="o">===</span> __temp_209
-              __temp_212
+            <span class="k">if</span> <span class="k">if</span> __temp_220 <span class="o">=</span> <span class="s">'\n'</span> <span class="o">===</span> __temp_217
+              __temp_220
             <span class="k">else</span>
-              <span class="s">'\r'</span> <span class="o">===</span> __temp_209
+              <span class="s">'\r'</span> <span class="o">===</span> __temp_217
             <span class="k">end</span>
               <span class="n">-2</span>
             <span class="k">else</span>
-              <span class="k">if</span> <span class="s">'='</span> <span class="o">===</span> __temp_209
+              <span class="k">if</span> <span class="s">'='</span> <span class="o">===</span> __temp_217
                 <span class="n">-3</span>
               <span class="k">else</span>
                 <span class="n">-1</span>
@@ -165,7 +165,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L53" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/base64.cr#L53" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -178,7 +178,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L12" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/base64.cr#L12" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -191,7 +191,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L62" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/base64.cr#L62" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -204,7 +204,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L33" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/base64.cr#L33" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -217,7 +217,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L66" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/base64.cr#L66" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -230,7 +230,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/base64.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/base64.cr#L43" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Markdown::Parser</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../Markdown/Parser.html">Markdown::Parser</a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28text%2C%20renderer%29-class-method" class="signature"><strong>.new</strong>(text, renderer)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#append_double_newline_if_has_more-instance-method" class="signature"><strong>#append_double_newline_if_has_more</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#check_link%28str%2C%20pos%2C%20bytesize%29-instance-method" class="signature"><strong>#check_link</strong>(str, pos, bytesize)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#count_pounds%28line%29-instance-method" class="signature"><strong>#count_pounds</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F%28line%29-instance-method" class="signature"><strong>#empty?</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_closing%3F%28char%2C%20count%2C%20str%2C%20pos%2C%20bytesize%29-instance-method" class="signature"><strong>#has_closing?</strong>(char, count, str, pos, bytesize)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_code_spaces%3F%28line%29-instance-method" class="signature"><strong>#has_code_spaces?</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#is_horizontal_rule%3F%28line%29-instance-method" class="signature"><strong>#is_horizontal_rule?</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#line_is_all%3F%28line%2C%20char%29-instance-method" class="signature"><strong>#line_is_all?</strong>(line, char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#newline-instance-method" class="signature"><strong>#newline</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next_line_is_all%3F%28char%29-instance-method" class="signature"><strong>#next_line_is_all?</strong>(char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next_line_starts_with_backticks%3F-instance-method" class="signature"><strong>#next_line_starts_with_backticks?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next_lines_empty_of_code%3F-instance-method" class="signature"><strong>#next_lines_empty_of_code?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parse-instance-method" class="signature"><strong>#parse</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#process_line%28line%29-instance-method" class="signature"><strong>#process_line</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#process_paragraph-instance-method" class="signature"><strong>#process_paragraph</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_code-instance-method" class="signature"><strong>#render_code</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_fenced_code-instance-method" class="signature"><strong>#render_fenced_code</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_header%28level%2C%20line%2C%20increment%29-instance-method" class="signature"><strong>#render_header</strong>(level, line, increment)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_horizontal_rule-instance-method" class="signature"><strong>#render_horizontal_rule</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_paragraph-instance-method" class="signature"><strong>#render_paragraph</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_prefix_header%28level%2C%20line%29-instance-method" class="signature"><strong>#render_prefix_header</strong>(level, line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#render_unordered_list-instance-method" class="signature"><strong>#render_unordered_list</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#starts_with_backticks%3F%28line%29-instance-method" class="signature"><strong>#starts_with_backticks?</strong>(line)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#starts_with_star%3F%28line%29-instance-method" class="signature"><strong>#starts_with_star?</strong>(line)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28text%2C%20renderer%29-class-method">
+        
+        def self.<strong>new</strong>(text, renderer)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="append_double_newline_if_has_more-instance-method">
+        
+        def <strong>append_double_newline_if_has_more</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L200" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="check_link%28str%2C%20pos%2C%20bytesize%29-instance-method">
+        
+        def <strong>check_link</strong>(str, pos, bytesize)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L345" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="count_pounds%28line%29-instance-method">
+        
+        def <strong>count_pounds</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L393" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="empty%3F%28line%29-instance-method">
+        
+        def <strong>empty?</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L328" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="has_closing%3F%28char%2C%20count%2C%20str%2C%20pos%2C%20bytesize%29-instance-method">
+        
+        def <strong>has_closing?</strong>(char, count, str, pos, bytesize)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L332" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="has_code_spaces%3F%28line%29-instance-method">
+        
+        def <strong>has_code_spaces?</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L403" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="is_horizontal_rule%3F%28line%29-instance-method">
+        
+        def <strong>is_horizontal_rule?</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L459" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="line_is_all%3F%28line%2C%20char%29-instance-method">
+        
+        def <strong>line_is_all?</strong>(line, char)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L381" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="newline-instance-method">
+        
+        def <strong>newline</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L490" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_line_is_all%3F%28char%29-instance-method">
+        
+        def <strong>next_line_is_all?</strong>(char)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L372" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_line_starts_with_backticks%3F-instance-method">
+        
+        def <strong>next_line_starts_with_backticks?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L388" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_lines_empty_of_code%3F-instance-method">
+        
+        def <strong>next_lines_empty_of_code?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L439" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parse-instance-method">
+        
+        def <strong>parse</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="process_line%28line%29-instance-method">
+        
+        def <strong>process_line</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L207" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="process_paragraph-instance-method">
+        
+        def <strong>process_paragraph</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_code-instance-method">
+        
+        def <strong>render_code</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L103" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_fenced_code-instance-method">
+        
+        def <strong>render_fenced_code</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L130" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_header%28level%2C%20line%2C%20increment%29-instance-method">
+        
+        def <strong>render_header</strong>(level, line, increment)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_horizontal_rule-instance-method">
+        
+        def <strong>render_horizontal_rule</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L485" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_paragraph-instance-method">
+        
+        def <strong>render_paragraph</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L73" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_prefix_header%28level%2C%20line%29-instance-method">
+        
+        def <strong>render_prefix_header</strong>(level, line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L53" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="render_unordered_list-instance-method">
+        
+        def <strong>render_unordered_list</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L167" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="starts_with_backticks%3F%28line%29-instance-method">
+        
+        def <strong>starts_with_backticks?</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L435" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="starts_with_star%3F%28line%29-instance-method">
+        
+        def <strong>starts_with_star?</strong>(line)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/markdown/parser.cr#L418" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

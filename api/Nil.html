@@ -11,12 +11,50 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The Nil type has only one possible value: <code>nil</code>.</p>
+
+<p><code>nil</code> is commonly used to represent the absence of a value.
+For example, <code><a href="String.html#index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method">String#index</a></code> returns the position of the character or <code>nil</code> if it's not
+in the string:</p>
+
+<pre><code>str <span class="o">=</span> <span class="s">"Hello world"</span>
+str.index <span class="s">'e'</span> <span class="c">#=> 1</span>
+str.index <span class="s">'a'</span> <span class="c">#=> nil</span></code></pre>
+
+<p>In the above example, trying to invoke a method on the returned value will
+give a compile time error unless both <code><a href="Int32.html">Int32</a></code> and <code><a href="Nil.html">Nil</a></code> define that method:</p>
+
+<pre><code>str <span class="o">=</span> <span class="s">"Hello world"</span>
+idx <span class="o">=</span> str.index <span class="s">'e'</span>
+idx <span class="o">+</span> <span class="n">1</span> <span class="c"># Error: undefined method '+' for Nil</span></code></pre>
+
+<p>The language and the standard library provide short, readable, easy ways to deal with nil,
+such as <code><a href="Object.html#try%28%26block%29-instance-method">Object#try</a></code> and <code><a href="Object.html#not_nil%21-instance-method">Object#not_nil!</a></code>:</p>
+
+<pre><code>str <span class="o">=</span> <span class="s">"Hello world"</span>
+
+<span class="c"># The index of 'e' in str or 0 if not found</span>
+idx1 <span class="o">=</span> str.index(<span class="s">'e'</span>) || <span class="n">0</span>
+
+idx2 <span class="o">=</span> str.index(<span class="s">'a'</span>)
+<span class="k">if</span> idx2
+  <span class="c"># Compiles: idx2 can't be nil here</span>
+  idx2 <span class="o">+</span> <span class="n">1</span>
+<span class="k">end</span>
+
+<span class="c"># Tell the compiler that we are sure the returned</span>
+<span class="c"># value is not nil: raises a runtime exception</span>
+<span class="c"># if our assumption doesn't hold.</span>
+idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</code></pre>
 
 
 
 
-  <h2>Superclass</h2>
-  <a href="Value.html">Value</a>
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Nil.html">Nil</a></div>
 
 
 
@@ -47,60 +85,77 @@
       <li class="entry-summary">
         <a href="#%21-instance-method" class="signature"><strong>#!</strong></a>
         
+          <div class="summary"><p>Returns true.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%20%3A%20Nil%29-instance-method" class="signature"><strong>#==</strong>(other : Nil)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#crystal_type_id-instance-method" class="signature"><strong>#crystal_type_id</strong></a>
+          <div class="summary"><p>Returns true: Nil has only one singleton value: <code>nil</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+          <div class="summary"><p>Returns zero.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#inspect-instance-method" class="signature"><strong>#inspect</strong></a>
         
+          <div class="summary"><p>Returns <code>"nil"</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+          <div class="summary"><p>Writes <code>"nil"</code> to the given IO.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
+        
+          <div class="summary"><p>Returns true.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#not_nil%21-instance-method" class="signature"><strong>#not_nil!</strong></a>
         
+          <div class="summary"><p>Raises an exception.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#object_id-instance-method" class="signature"><strong>#object_id</strong></a>
+        
+          <div class="summary"><p>Returns <code>0_u64</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#same%3F%28other%20%3A%20Nil%29-instance-method" class="signature"><strong>#same?</strong>(other : Nil)</a>
         
+          <div class="summary"><p>Returns true: Nil has only one singleton value: <code>nil</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#same%3F%28other%20%3A%20Reference%29-instance-method" class="signature"><strong>#same?</strong>(other : Reference)</a>
         
+          <div class="summary"><p>Returns false.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
+        
+          <div class="summary"><p>Returns zero.</p></div>
         
       </li>
     
@@ -112,15 +167,21 @@
       <li class="entry-summary">
         <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
         
+          <div class="summary"><p>Returns an empty string.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
         
+          <div class="summary"><p>Doesn't write anything to the given IO.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#try%28%26block%29-instance-method" class="signature"><strong>#try</strong>(&block)</a>
+        
+          <div class="summary"><p>Doesn't yields to the block.</p></div>
         
       </li>
     
@@ -141,7 +202,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/from_json.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/json/from_json.cr#L13" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -157,9 +218,11 @@
         def <strong>!</strong>
       </div>
       
+        <div class="doc"><p>Returns true.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -170,22 +233,11 @@
         def <strong>==</strong>(other : <a href="Nil.html">Nil</a>)
       </div>
       
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L10" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="crystal_type_id-instance-method">
-        
-        def <strong>crystal_type_id</strong>
-      </div>
+        <div class="doc"><p>Returns true: Nil has only one singleton value: <code>nil</code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -196,22 +248,11 @@
         def <strong>hash</strong>
       </div>
       
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L30" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="inspect%28io%29-instance-method">
-        
-        def <strong>inspect</strong>(io)
-      </div>
+        <div class="doc"><p>Returns zero.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L81" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -222,9 +263,26 @@
         def <strong>inspect</strong>
       </div>
       
+        <div class="doc"><p>Returns <code>"nil"</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L101" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-instance-method">
+        
+        def <strong>inspect</strong>(io)
+      </div>
+      
+        <div class="doc"><p>Writes <code>"nil"</code> to the given IO.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L106" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -235,9 +293,11 @@
         def <strong>nil?</strong>
       </div>
       
+        <div class="doc"><p>Returns true.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L22" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L71" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -248,9 +308,11 @@
         def <strong>not_nil!</strong>
       </div>
       
+        <div class="doc"><p>Raises an exception. See <code><a href="Object.html#not_nil%21-instance-method">Object#not_nil!</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L58" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L116" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -261,9 +323,13 @@
         def <strong>object_id</strong>
       </div>
       
+        <div class="doc"><p>Returns <code>0_u64</code>. Even though Nil is not a Reference type, it is usually
+mixed with them to form nilable types so it's useful to have an
+object id for nil.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -274,9 +340,11 @@
         def <strong>same?</strong>(other : <a href="Nil.html">Nil</a>)
       </div>
       
+        <div class="doc"><p>Returns true: Nil has only one singleton value: <code>nil</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L61" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -287,9 +355,11 @@
         def <strong>same?</strong>(other : <a href="Reference.html">Reference</a>)
       </div>
       
+        <div class="doc"><p>Returns false.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L66" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -300,9 +370,11 @@
         def <strong>to_i</strong>
       </div>
       
+        <div class="doc"><p>Returns zero.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L34" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L86" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -315,7 +387,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L109" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/json/to_json.cr#L109" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -326,9 +398,11 @@
         def <strong>to_s</strong>
       </div>
       
+        <div class="doc"><p>Returns an empty string.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L38" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L91" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -339,9 +413,11 @@
         def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
       </div>
       
+        <div class="doc"><p>Doesn't write anything to the given IO.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L42" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L96" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -352,9 +428,11 @@
         def <strong>try</strong>(&block)
       </div>
       
+        <div class="doc"><p>Doesn't yields to the block. See <code><a href="Object.html#try%28%26block%29-instance-method">Object#try</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/nil.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/nil.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

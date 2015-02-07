@@ -15,8 +15,8 @@
 
 
 
-  <h2>Superclass</h2>
-  <a href="Reference.html">Reference</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="FileDescriptorIO.html">FileDescriptorIO</a></div><div style="padding-left: 60px"><a href="Socket.html">Socket</a></div><div style="padding-left: 80px"><a href="IPSocket.html">IPSocket</a></div><div style="padding-left: 100px"><a href="TCPSocket.html">TCPSocket</a></div><div style="padding-left: 120px"><a href="TCPServer.html">TCPServer</a></div>
 
 
 
@@ -33,7 +33,17 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#new%28port%2C%20backlog%20%3D%20128%29-class-method" class="signature"><strong>.new</strong>(port, backlog = 128)</a>
+        <a href="#new%28port%20%3A%20Int%2C%20backlog%20%3D%20128%29-class-method" class="signature"><strong>.new</strong>(port : Int, backlog = 128)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28host%2C%20port%2C%20backlog%20%3D%20128%2C%20%26block%29-class-method" class="signature"><strong>.open</strong>(host, port, backlog = 128, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28host%2C%20port%2C%20backlog%20%3D%20128%29-class-method" class="signature"><strong>.new</strong>(host, port, backlog = 128)</a>
         
       </li>
     
@@ -64,14 +74,40 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28port%2C%20backlog%20%3D%20128%29-class-method">
+      <div class="signature" id="new%28port%20%3A%20Int%2C%20backlog%20%3D%20128%29-class-method">
         
-        def self.<strong>new</strong>(port, backlog = <span class="n">128</span>)
+        def self.<strong>new</strong>(port : <a href="Int.html">Int</a>, backlog = <span class="n">128</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/socket/tcp_server.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/tcp_server.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="open%28host%2C%20port%2C%20backlog%20%3D%20128%2C%20%26block%29-class-method">
+        
+        def self.<strong>open</strong>(host, port, backlog = <span class="n">128</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/tcp_server.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28host%2C%20port%2C%20backlog%20%3D%20128%29-class-method">
+        
+        def self.<strong>new</strong>(host, port, backlog = <span class="n">128</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/tcp_server.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -89,7 +125,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/socket/tcp_server.cr#L28" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/tcp_server.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -102,7 +138,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/socket/tcp_server.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/socket/tcp_server.cr#L43" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

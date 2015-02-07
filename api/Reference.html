@@ -13,7 +13,7 @@
 
   <h2>Overview</h2>
 
-  <p><a href="Reference.html">Reference</a> is the base class of classes you define in your program.
+  <p>Reference is the base class of classes you define in your program.
 It is set as a class' superclass when you don't specify one:</p>
 
 <pre><code><span class="k">class</span> <span class="t">MyClass</span> <span class="c"># < Reference</span>
@@ -22,7 +22,7 @@ It is set as a class' superclass when you don't specify one:</p>
 <p>A reference type is passed by reference: when you pass it to methods,
 return it from methods or assign it to variables, a pointer is actually passed.</p>
 
-<p>Invoking <code></code><code>new</code> on a <a href="Reference.html">Reference</a> allocates a new instance on the heap.
+<p>Invoking <code>new</code> on a Reference allocates a new instance on the heap.
 The instance's memory is automatically freed (garbage-collected) when
 the instance is no longer referred by any other entity in the program.</p>
 
@@ -30,8 +30,8 @@ the instance is no longer referred by any other entity in the program.</p>
 
 
 
-  <h2>Superclass</h2>
-  <a href="Object.html">Object</a>
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div>
 
 
 
@@ -123,6 +123,14 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="LLVM/Context.html">LLVM::Context</a>,
   
+    <a href="Logger.html">Logger(T)</a>,
+  
+    <a href="Markdown.html">Markdown</a>,
+  
+    <a href="Markdown/HTMLRenderer.html">Markdown::HTMLRenderer</a>,
+  
+    <a href="Markdown/Parser.html">Markdown::Parser</a>,
+  
     <a href="MatchData.html">MatchData</a>,
   
     <a href="Mutex.html">Mutex</a>,
@@ -151,6 +159,8 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="OptionParser.html">OptionParser</a>,
   
+    <a href="Random/MT19937.html">Random::MT19937</a>,
+  
     <a href="Regex.html">Regex</a>,
   
     <a href="Set.html">Set(T)</a>,
@@ -173,6 +183,8 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Spec/Formatter.html">Spec::Formatter</a>,
   
+    <a href="Spec/MatchExpectation.html">Spec::MatchExpectation(T)</a>,
+  
     <a href="String.html">String</a>,
   
     <a href="String/Formatter.html">String::Formatter</a>,
@@ -182,8 +194,6 @@ the instance is no longer referred by any other entity in the program.</p>
     <a href="StringPool.html">StringPool</a>,
   
     <a href="StringScanner.html">StringScanner</a>,
-  
-    <a href="TCPServer.html">TCPServer</a>,
   
     <a href="Thread.html">Thread(T, R)</a>,
   
@@ -209,35 +219,35 @@ the instance is no longer referred by any other entity in the program.</p>
       <li class="entry-summary">
         <a href="#%21-instance-method" class="signature"><strong>#!</strong></a>
         
-          <div class="summary"><p>Returns <code>false</code>: a reference is always truthy.</p></div>
+          <div class="summary"><p>Returns false: a reference is always truthy.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%29-instance-method" class="signature"><strong>#==</strong>(other)</a>
         
-          <div class="summary"><p>Returns <code>false</code> (<code>other</code> can only be a <a href="Value.html">Value</a> here).</p></div>
+          <div class="summary"><p>Returns false (other can only be a <code><a href="Value.html">Value</a></code> here).</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%20%3A%20self%29-instance-method" class="signature"><strong>#==</strong>(other : self)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this reference is the same as <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this reference is the same as other.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
         
-          <div class="summary"><p>Returns <code>self</code>.</p></div>
+          <div class="summary"><p>Returns self.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
-          <div class="summary"><p>Returns this reference's <a href="Reference.html#object_id-instance-method">#object_id</a> as the hash value.</p></div>
+          <div class="summary"><p>Returns this reference's <code><a href="Reference.html#object_id-instance-method">#object_id</a></code> as the hash value.</p></div>
         
       </li>
     
@@ -249,28 +259,28 @@ the instance is no longer referred by any other entity in the program.</p>
       <li class="entry-summary">
         <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
         
-          <div class="summary"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+          <div class="summary"><p>Returns false: a reference is never nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#object_id-instance-method" class="signature"><strong>#object_id</strong></a>
         
-          <div class="summary"><p>Returns a <a href="UInt64.html">UInt64</a> that uniquely identifies this object.</p></div>
+          <div class="summary"><p>Returns a UInt64 that uniquely identifies this object.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#same%3F%28other%20%3A%20Reference%29-instance-method" class="signature"><strong>#same?</strong>(other : Reference)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this reference is the same as <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this reference is the same as other.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#same%3F%28other%20%3A%20Nil%29-instance-method" class="signature"><strong>#same?</strong>(other : Nil)</a>
         
-          <div class="summary"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+          <div class="summary"><p>Returns false: a reference is never nil.</p></div>
         
       </li>
     
@@ -296,11 +306,11 @@ the instance is no longer referred by any other entity in the program.</p>
         def <strong>!</strong>
       </div>
       
-        <div class="doc"><p>Returns <code>false</code>: a reference is always truthy.</p></div>
+        <div class="doc"><p>Returns false: a reference is always truthy.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L41" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L41" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -311,11 +321,11 @@ the instance is no longer referred by any other entity in the program.</p>
         def <strong>==</strong>(other)
       </div>
       
-        <div class="doc"><p>Returns <code>false</code> (<code>other</code> can only be a <a href="Value.html">Value</a> here).</p></div>
+        <div class="doc"><p>Returns false (other can only be a <code><a href="Value.html">Value</a></code> here).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -326,11 +336,11 @@ the instance is no longer referred by any other entity in the program.</p>
         def <strong>==</strong>(other : self)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this reference is the same as <code>other</code>. Invokes <a href="Reference.html#same%3F%28other%20%3A%20Reference%29-instance-method">#same?</a></p></div>
+        <div class="doc"><p>Returns true if this reference is the same as other. Invokes <code><a href="Reference.html#same%3F%28other%20%3A%20Reference%29-instance-method">#same?</a></code></p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -341,12 +351,12 @@ the instance is no longer referred by any other entity in the program.</p>
         def <strong>clone</strong>
       </div>
       
-        <div class="doc"><p>Returns <code>self</code>. Subclasses must override this method to provide
+        <div class="doc"><p>Returns self. Subclasses must override this method to provide
 custom clone behaviour.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L52" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L52" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -357,11 +367,11 @@ custom clone behaviour.</p></div>
         def <strong>hash</strong>
       </div>
       
-        <div class="doc"><p>Returns this reference's <a href="Reference.html#object_id-instance-method">#object_id</a> as the hash value.</p></div>
+        <div class="doc"><p>Returns this reference's <code><a href="Reference.html#object_id-instance-method">#object_id</a></code> as the hash value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -374,7 +384,7 @@ custom clone behaviour.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -385,11 +395,11 @@ custom clone behaviour.</p></div>
         def <strong>nil?</strong>
       </div>
       
-        <div class="doc"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+        <div class="doc"><p>Returns false: a reference is never nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L36" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -400,15 +410,14 @@ custom clone behaviour.</p></div>
         def <strong>object_id</strong>
       </div>
       
-        <div class="doc"><p>Returns a <a href="UInt64.html">UInt64</a> that uniquely identifies this object.</p>
+        <div class="doc"><p>Returns a UInt64 that uniquely identifies this object.</p>
 
 <p>The returned value is the memory address of this object.</p>
 
 <pre><code>ref <span class="o">=</span> <span class="t">Reference</span>.<span class="k">new</span>
 pointer <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Reference</span>).<span class="k">new</span>(ref.object_id)
 ref2 <span class="o">=</span> pointer <span class="k">as</span> <span class="t">Reference</span>
-ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true</span>
-</code></pre></div>
+ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true</span></code></pre></div>
       
       
     </div>
@@ -420,12 +429,12 @@ ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true<
         def <strong>same?</strong>(other : <a href="Reference.html">Reference</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this reference is the same as <code>other</code>. This is only
-<code>true</code> if this reference's #obejct_id is the same as <code>other</code>'s.</p></div>
+        <div class="doc"><p>Returns true if this reference is the same as other. This is only
+true if this reference's <code><a href="Reference.html#object_id-instance-method">#object_id</a></code> is the same as other's.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -436,11 +445,11 @@ ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true<
         def <strong>same?</strong>(other : <a href="Nil.html">Nil</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>false</code>: a reference is never <code>nil</code>.</p></div>
+        <div class="doc"><p>Returns false: a reference is never nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -453,7 +462,7 @@ ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true<
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/reference.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/reference.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -37,42 +37,42 @@
       <li class="entry-summary">
         <a href="#escape%28string%20%3A%20String%29-class-method" class="signature"><strong>.escape</strong>(string : String)</a>
         
-          <div class="summary"><p>URL-encode a <code>string</code>.</p></div>
+          <div class="summary"><p>URL-encode a string.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#escape%28string%20%3A%20String%2C%20io%20%3A%20IO%29-class-method" class="signature"><strong>.escape</strong>(string : String, io : IO)</a>
         
-          <div class="summary"><p>URL-encode a <code>string</code> and write the result to an <a href="IO.html">IO</a>.</p></div>
+          <div class="summary"><p>URL-encode a string and write the result to an <code><a href="IO.html">IO</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#parse%28query%20%3A%20String%2C%20%26block%29-class-method" class="signature"><strong>.parse</strong>(query : String, &block)</a>
         
-          <div class="summary"><p>Parses an <a href="HTTP.html">HTTP</a> <code>query</code> and yields each key-value pair</p></div>
+          <div class="summary"><p>Parses an HTTP query and yields each key-value pair</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#parse%28query%20%3A%20String%29-class-method" class="signature"><strong>.parse</strong>(query : String)</a>
         
-          <div class="summary"><p>Parses an <a href="HTTP.html">HTTP</a> <code>query</code> string into a <a href="Hash.html">Hash</a>(<a href="String.html">String</a>, <a href="Array.html">Array</a>(<a href="String.html">String</a>))</p></div>
+          <div class="summary"><p>Parses an HTTP query string into a <code><a href="Hash.html">Hash</a>(<a href="String.html">String</a>, <a href="Array.html">Array</a>(<a href="String.html">String</a>))</code></p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#unescape%28string%20%3A%20String%2C%20io%20%3A%20IO%29-class-method" class="signature"><strong>.unescape</strong>(string : String, io : IO)</a>
         
-          <div class="summary"><p>URL-decode a <code>string</code> and write the result to an <a href="IO.html">IO</a>.</p></div>
+          <div class="summary"><p>URL-decode a string and write the result to an <code><a href="IO.html">IO</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#unescape%28string%20%3A%20String%29-class-method" class="signature"><strong>.unescape</strong>(string : String)</a>
         
-          <div class="summary"><p>URL-decode a <code>string</code>.</p></div>
+          <div class="summary"><p>URL-decode a string.</p></div>
         
       </li>
     
@@ -95,7 +95,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L93" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -106,13 +106,13 @@
         def self.<strong>escape</strong>(string : <a href="String.html">String</a>)
       </div>
       
-        <div class="doc"><p>URL-encode a <code>string</code>.</p>
+        <div class="doc"><p>URL-encode a string.</p>
 
 <pre><code><span class="t">CGI</span>.escape(<span class="s">"'Stop!' said Fred"</span>) <span class="c">#=> "%27Stop%21%27+said+Fred"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L24" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -123,11 +123,11 @@
         def self.<strong>escape</strong>(string : <a href="String.html">String</a>, io : <a href="IO.html">IO</a>)
       </div>
       
-        <div class="doc"><p>URL-encode a <code>string</code> and write the result to an <a href="IO.html">IO</a>.</p></div>
+        <div class="doc"><p>URL-encode a string and write the result to an <code><a href="IO.html">IO</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L29" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -138,7 +138,7 @@
         def self.<strong>parse</strong>(query : <a href="String.html">String</a>, &block)
       </div>
       
-        <div class="doc"><p>Parses an <a href="HTTP.html">HTTP</a> <code>query</code> and yields each key-value pair</p>
+        <div class="doc"><p>Parses an HTTP query and yields each key-value pair</p>
 
 <pre><code><span class="t">CGI</span>.parse(query) <span class="k">do</span> <span class="o">|</span>key, value<span class="o">|</span>
   <span class="c"># ...</span>
@@ -146,7 +146,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L61" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L61" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -157,13 +157,13 @@
         def self.<strong>parse</strong>(query : <a href="String.html">String</a>)
       </div>
       
-        <div class="doc"><p>Parses an <a href="HTTP.html">HTTP</a> <code>query</code> string into a <a href="Hash.html">Hash</a>(<a href="String.html">String</a>, <a href="Array.html">Array</a>(<a href="String.html">String</a>))</p>
+        <div class="doc"><p>Parses an HTTP query string into a <code><a href="Hash.html">Hash</a>(<a href="String.html">String</a>, <a href="Array.html">Array</a>(<a href="String.html">String</a>))</code></p>
 
 <pre><code><span class="t">CGI</span>.parse(<span class="s">"foo=bar&foo=baz&qux=zoo"</span>) <span class="c">#=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L47" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L47" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -174,11 +174,11 @@
         def self.<strong>unescape</strong>(string : <a href="String.html">String</a>, io : <a href="IO.html">IO</a>)
       </div>
       
-        <div class="doc"><p>URL-decode a <code>string</code> and write the result to an <a href="IO.html">IO</a>.</p></div>
+        <div class="doc"><p>URL-decode a string and write the result to an <code><a href="IO.html">IO</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L10" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -189,13 +189,13 @@
         def self.<strong>unescape</strong>(string : <a href="String.html">String</a>)
       </div>
       
-        <div class="doc"><p>URL-decode a <code>string</code>.</p>
+        <div class="doc"><p>URL-decode a string.</p>
 
 <pre><code><span class="t">CGI</span>.unescape(<span class="s">"%27Stop%21%27+said+Fred"</span>) <span class="c">#=> "'Stop!' said Fred"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/cgi.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/cgi.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

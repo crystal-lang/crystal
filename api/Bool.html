@@ -11,12 +11,19 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>Bool has only two possible values: <code>true</code> and <code>false</code>. They are constructed using these literals:</p>
+
+<pre><code><span class="n">true</span>  <span class="c"># A Bool that is true</span>
+<span class="n">false</span> <span class="c"># A Bool that is false</span></code></pre>
 
 
 
 
-  <h2>Superclass</h2>
-  <a href="Value.html">Value</a>
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Bool.html">Bool</a></div>
 
 
 
@@ -47,29 +54,35 @@
       <li class="entry-summary">
         <a href="#%21-instance-method" class="signature"><strong>#!</strong></a>
         
+          <div class="summary"><p>Negates this boolean.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%21%3D%28other%20%3A%20Bool%29-instance-method" class="signature"><strong>#!=</strong>(other : Bool)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Bool is not equal to <code>other</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%26%28other%20%3A%20Bool%29-instance-method" class="signature"><strong>#&</strong>(other : Bool)</a>
         
+          <div class="summary"><p>Bitwise AND.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%20%3A%20Bool%29-instance-method" class="signature"><strong>#==</strong>(other : Bool)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if this object is equal to <code>other</code>.</p></div>
+          <div class="summary"><p>Returns true if this Bool is equal to <code>other</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+          <div class="summary"><p>Returns a hash value for this boolean: 0 for false, 1 for true.</p></div>
         
       </li>
     
@@ -81,15 +94,21 @@
       <li class="entry-summary">
         <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
         
+          <div class="summary"><p>Returns <code>"true"</code> for <code>true</code> and <code>"false"</code> for <code>false</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
         
+          <div class="summary"><p>Appends <code>"true"</code> for <code>true</code> and <code>"false"</code> for <code>false</code> to the given IO.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%7C%28other%20%3A%20Bool%29-instance-method" class="signature"><strong>#|</strong>(other : Bool)</a>
+        
+          <div class="summary"><p>Bitwise OR.</p></div>
         
       </li>
     
@@ -110,7 +129,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/from_json.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/json/from_json.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -126,9 +145,14 @@
         def <strong>!</strong>
       </div>
       
+        <div class="doc"><p>Negates this boolean.</p>
+
+<pre><code><span class="o">!</span><span class="n">true</span>  <span class="c">#=> false</span>
+<span class="o">!</span><span class="n">false</span> <span class="c">#=> true</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/bool.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/bool.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -139,7 +163,7 @@
         def <strong>!=</strong>(other : <a href="Bool.html">Bool</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is not equal to <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Bool is not equal to <code>other</code>.</p></div>
       
       
     </div>
@@ -151,9 +175,16 @@
         def <strong>&</strong>(other : <a href="Bool.html">Bool</a>)
       </div>
       
+        <div class="doc"><p>Bitwise AND. Returns <code>true</code> if this bool and <code>other</code> and <code>true</code>, otherwise returns <code>false</code>.</p>
+
+<pre><code><span class="n">false</span> <span class="o">&</span> <span class="n">false</span> <span class="c">#=> false</span>
+<span class="n">false</span> <span class="o">&</span> <span class="n">true</span>  <span class="c">#=> false</span>
+<span class="n">true</span>  <span class="o">&</span> <span class="n">false</span> <span class="c">#=> false</span>
+<span class="n">true</span>  <span class="o">&</span> <span class="n">true</span>  <span class="c">#=> true</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/bool.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/bool.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -164,7 +195,7 @@
         def <strong>==</strong>(other : <a href="Bool.html">Bool</a>)
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this object is equal to <code>other</code>.</p></div>
+        <div class="doc"><p>Returns true if this Bool is equal to <code>other</code>.</p></div>
       
       
     </div>
@@ -176,9 +207,11 @@
         def <strong>hash</strong>
       </div>
       
+        <div class="doc"><p>Returns a hash value for this boolean: 0 for false, 1 for true.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/bool.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/bool.cr#L43" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -191,7 +224,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/json/to_json.cr#L115" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/json/to_json.cr#L115" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -202,9 +235,11 @@
         def <strong>to_s</strong>
       </div>
       
+        <div class="doc"><p>Returns <code>"true"</code> for <code>true</code> and <code>"false"</code> for <code>false</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/bool.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/bool.cr#L48" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -215,9 +250,11 @@
         def <strong>to_s</strong>(io)
       </div>
       
+        <div class="doc"><p>Appends <code>"true"</code> for <code>true</code> and <code>"false"</code> for <code>false</code> to the given IO.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/bool.cr#L22" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/bool.cr#L53" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -228,9 +265,16 @@
         def <strong>|</strong>(other : <a href="Bool.html">Bool</a>)
       </div>
       
+        <div class="doc"><p>Bitwise OR. Returns <code>true</code> if this bool or <code>other</code> is <code>true</code>, otherwise returns <code>false</code>.</p>
+
+<pre><code><span class="n">false</span> <span class="o">|</span> <span class="n">false</span> <span class="c">#=> false</span>
+<span class="n">false</span> <span class="o">|</span> <span class="n">true</span>  <span class="c">#=> true</span>
+<span class="n">true</span>  <span class="o">|</span> <span class="n">false</span> <span class="c">#=> true</span>
+<span class="n">true</span>  <span class="o">|</span> <span class="n">true</span>  <span class="c">#=> true</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/a77a239769823527dbba3206759f9fea422c577f/src/bool.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/bool.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
