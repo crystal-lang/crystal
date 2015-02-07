@@ -36,10 +36,18 @@ class Logger
     def {{name.id.downcase}}(message, progname = nil)
       log({{name.id}}, message, progname)
     end
+
+    def {{name.id.downcase}}(progname = nil)
+      log({{name.id}}, nil, progname) { yield }
+    end
   end
 
   def unknown(message, progname = nil)
     log(UNKNOWN, message, progname)
+  end
+
+  def unknown(progname = nil)
+    log(UNKNOWN, nil, progname) { yield }
   end
 
   log_level FATAL
@@ -50,6 +58,15 @@ class Logger
 
   def log(severity, message, progname = nil)
     return if severity < level
-    @io << formatter.call(SEV_LABEL[severity], Time.now, progname || @progname || "", message) + "\n"
+    @io << format(severity, Time.now, progname || @progname, message)
+  end
+
+  def log(severity, message = nil, progname = nil)
+    return if severity < level
+    @io << format(severity, Time.now, progname || @progname, yield)
+  end
+
+  def format(severity, datetime, progname, message)
+    @io << formatter.call(SEV_LABEL[severity], Time.now, progname.to_s, message) + "\n"
   end
 end

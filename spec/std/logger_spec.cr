@@ -40,7 +40,29 @@ describe "Logger" do
       }
       logger.warn "message", "prog"
 
-      r.gets.should match(/W prog: message\n/)
+      r.gets.should eq("W prog: message\n")
+    end
+  end
+
+  it "yields message" do
+    IO.pipe do |r, w|
+      logger = Logger.new(w)
+      logger.error { "message" }
+      logger.unknown { "another message" }
+
+      r.gets.should match(/ERROR -- : message\n/)
+      r.gets.should match(/  ANY -- : another message\n/)
+    end
+  end
+
+  it "yields message with progname" do
+    IO.pipe do |r, w|
+      logger = Logger.new(w)
+      logger.error("crystal") { "message" }
+      logger.unknown("shard") { "another message" }
+
+      r.gets.should match(/ERROR -- crystal: message\n/)
+      r.gets.should match(/  ANY -- shard: another message\n/)
     end
   end
 end
