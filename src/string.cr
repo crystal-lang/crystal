@@ -906,19 +906,53 @@ class String
     end
   end
 
-  def ljust(len, chr = ' ')
-    if length >= len
-      self
-    else
-      self + chr.to_s * (len - length)
-    end
+  def ljust(len, char = ' ' : Char)
+    just len, char, true
   end
 
-  def rjust(len, chr = ' ')
-    if length >= len
-      self
+  def rjust(len, char = ' ' : Char)
+    just len, char, false
+  end
+
+  private def just(len, char, left)
+    return self if length >= len
+
+    bytes :: UInt8[4]
+
+    if char.ord < 0x80
+      count = 1
     else
-      chr.to_s * (len - length) + self
+      count = 0
+      char.each_byte do |byte|
+        bytes[count] = byte
+        count += 1
+      end
+    end
+
+    difference = len - length
+    new_bytesize = bytesize + difference * count
+
+    String.new(new_bytesize) do |buffer|
+      if left
+        buffer.copy_from(cstr, bytesize)
+        buffer += bytesize
+      end
+
+      if count == 1
+        Intrinsics.memset(buffer as Void*, char.ord.to_u8, difference.to_u32, 0_u32, false)
+        buffer += difference
+      else
+        difference.times do
+          buffer.copy_from(bytes.buffer, count)
+          buffer += count
+        end
+      end
+
+      unless left
+        buffer.copy_from(cstr, bytesize)
+      end
+
+      {new_bytesize, len}
     end
   end
 

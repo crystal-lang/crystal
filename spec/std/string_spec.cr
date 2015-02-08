@@ -724,12 +724,16 @@ describe "String" do
   end
 
   describe "ljust" do
+    assert { "123".ljust(2).should eq("123") }
     assert { "123".ljust(5).should eq("123  ") }
     assert { "12".ljust(7, '-').should eq("12-----") }
+    assert { "12".ljust(7, 'あ').should eq("12あああああ") }
   end
 
   describe "rjust" do
+    assert { "123".rjust(2).should eq("123") }
     assert { "123".rjust(5).should eq("  123") }
     assert { "12".rjust(7, '-').should eq("-----12") }
+    assert { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 end
