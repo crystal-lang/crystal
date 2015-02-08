@@ -262,6 +262,10 @@ class File < FileDescriptorIO
   def size
     stat.size
   end
+
+  def to_s(io)
+    io << "#<File:" << @path << ">"
+  end
 end
 
 require "file/stat"

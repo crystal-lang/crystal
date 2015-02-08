@@ -11,9 +11,9 @@ module FS
 
     def entry?(path)
       if Dir.exists?(scoped_file_name(path))
-        return create_entry(path, Dir::Type::DIR)
+        return create_entry(path)
       elsif File.exists?(scoped_file_name(path))
-        return create_entry(path, Dir::Type::REG)
+        return create_entry(path)
       else
         nil
       end
@@ -24,23 +24,20 @@ module FS
     end
 
     def find_entries(path, &block : Entry -> U)
-      return unless Dir.exists?(scoped_file_name(path))
+      scoped = scoped_file_name(path)
+      return unless Dir.exists?(scoped)
 
-      Dir.list(scoped_file_name(path)) do |entry, type|
+      Dir.foreach(scoped) do |entry|
         next if entry == "." || entry == ".."
-        block.call(create_entry(combine(path, entry), type))
+        block.call(create_entry(combine(path, entry)))
       end
     end
 
-    private def create_entry(entry, type)
-      case type
-      when Dir::Type::DIR
+    private def create_entry(entry)
+      if File.directory?(scoped_file_name(entry))
         DirectoryEntry.new(self, entry)
-      # else
-      when Dir::Type::REG
-        FileEntry.new(self, entry)
       else
-        raise "not implemented"
+        FileEntry.new(self, entry)
       end
     end
 
