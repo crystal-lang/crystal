@@ -138,6 +138,11 @@ describe "Dir" do
     filenames.includes?("dir_spec.cr").should be_true
   end
 
+  it "lists entries" do
+    filenames = Dir.entries(__DIR__)
+    filenames.includes?("dir_spec.cr").should be_true
+  end
+
   it "does to_s" do
     Dir.new(__DIR__).to_s.should eq("#<Dir:#{__DIR__}>")
   end
