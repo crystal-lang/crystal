@@ -160,12 +160,8 @@ class String
     end
   end
 
-  def [](regex : Regex)
-    self[regex]?.not_nil!
-  end
-
-  def [](regex : Regex, group)
-    self[regex, group]?.not_nil!
+  def []?(str : String)
+    includes?(str) ? str : nil
   end
 
   def []?(regex : Regex)
@@ -175,6 +171,18 @@ class String
   def []?(regex : Regex, group)
     match = match(regex)
     match[group]? if match
+  end
+
+  def [](str : String)
+    self[str]?.not_nil!
+  end
+
+  def [](regex : Regex)
+    self[regex]?.not_nil!
+  end
+
+  def [](regex : Regex, group)
+    self[regex, group]?.not_nil!
   end
 
   def byte_slice(start : Int, count : Int)
