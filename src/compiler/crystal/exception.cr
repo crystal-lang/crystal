@@ -12,6 +12,24 @@ module Crystal
         to_s_with_source source, io
       end
     end
+
+    def relative_filename(filename : String)
+      dir = @current_dir ||= Dir.working_directory
+      if filename.starts_with?(dir)
+        filename = filename[dir.length .. -1]
+        if filename.starts_with? "/"
+          ".#{filename}"
+        else
+          "./#{filename}"
+        end
+      else
+        filename
+      end
+    end
+
+    def relative_filename(filename)
+      filename
+    end
   end
 
   class SyntaxException < Exception
@@ -30,7 +48,7 @@ module Crystal
 
     def append_to_s(source, io)
       if @filename
-        io << "Syntax error in #{@filename}:#{@line_number}: #{@message.colorize.bold}"
+        io << "Syntax error in #{relative_filename(@filename)}:#{@line_number}: #{@message.colorize.bold}"
       else
         io << "Syntax error in line #{@line_number}: #{@message.colorize.bold}"
       end
@@ -125,7 +143,7 @@ module Crystal
       when String
         if File.file?(filename)
           lines = File.read_lines(filename)
-          io << "in " << filename << ":" << @line << ": "
+          io << "in " << relative_filename(filename) << ":" << @line << ": "
           append_error_message io, msg
         else
           lines = source ? source.lines.to_a : nil
@@ -258,7 +276,7 @@ module Crystal
 
       io << "\n\n"
       io << "  "
-      io << filename << ":" << line_number
+      io << relative_filename(filename) << ":" << line_number
       io << "\n\n"
 
       return unless lines
