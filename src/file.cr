@@ -54,7 +54,7 @@ class File < FileDescriptorIO
     if LibC.stat(path, out stat) != 0
       raise Errno.new("Unable to get stat for '#{path}'")
     end
-    Stat.new(path)
+    Stat.new(stat)
   end
 
   def self.lstat(path)

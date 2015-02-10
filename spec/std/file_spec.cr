@@ -1,4 +1,5 @@
 require "spec"
+require "tempfile"
 
 private def base
   Dir.working_directory
@@ -146,6 +147,17 @@ describe "File" do
   it "gets stat for non-existent file and raises" do
     expect_raises Errno do
       File.stat("non-existent")
+    end
+  end
+
+  it "gets stat mtime for new file" do
+    tmp = Tempfile.new "tmp"
+    begin
+      (tmp.stat.atime - Time.utc_now).total_seconds.should be < 5
+      (tmp.stat.ctime - Time.utc_now).total_seconds.should be < 5
+      (tmp.stat.mtime - Time.utc_now).total_seconds.should be < 5
+    ensure
+      tmp.delete
     end
   end
 
