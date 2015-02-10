@@ -13,6 +13,8 @@ begin
     project.install_deps
   when "update"
     project.update_deps ARGV
+  when "remove"
+    project.remove_deps ARGV
   else
     puts "Invalid command: #{command}"
   end

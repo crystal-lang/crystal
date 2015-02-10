@@ -30,6 +30,11 @@ module Crystal
       install
     end
 
+    def remove
+      exec "rm -rf libs/#{@path}"
+      exec "rm libs/#{name}"
+    end
+
     def current_version
       exec("([ -d \"#{@path}/.git\" ] && git -C #{@path} rev-parse HEAD) || echo -n 'local'")
     end
