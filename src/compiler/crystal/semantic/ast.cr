@@ -293,7 +293,7 @@ module Crystal
             if scope && !scope.allocated
               return
             else
-              self.raise "can't deduce generic type in recursive method"
+              self.raise "can't deduce generic type, try specifying type vars"
             end
           end
           type_var = node_type.virtual_type
@@ -381,7 +381,10 @@ module Crystal
   end
 
   alias MetaVars = SimpleHash(String, MetaVar)
-  # alias MetaVars = Hash(String, MetaVar)
+
+  class MetaInstanceVar < Var
+    property :nil_reason
+  end
 
   class ClassVar
     property! owner
@@ -485,5 +488,14 @@ module Crystal
 
   class Yield
     property :expanded
+  end
+
+  class NilReason
+    getter name
+    getter reason
+    getter nodes
+
+    def initialize(@name, @reason, @nodes = nil)
+    end
   end
 end

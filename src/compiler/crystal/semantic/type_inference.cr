@@ -66,7 +66,7 @@ module Crystal
       @block_nest = 0
       @typeof_nest = 0
       @is_initialize = !!(typed_def && typed_def.name == "initialize")
-      @found_self_in_initialize_call = false
+      @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
       @attributes  = nil
@@ -255,7 +255,8 @@ module Crystal
 
       if @is_initialize && !@vars.has_key? node.name
         ivar = scope.lookup_instance_var(node.name)
-        ivar.bind_to @mod.nil_var
+        ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
+        ivar.bind_to mod.nil_var
       end
     end
 
@@ -295,6 +296,7 @@ module Crystal
         var = scope.lookup_instance_var node.name
         unless scope.has_instance_var_in_initialize?(node.name)
           begin
+            var.nil_reason = NilReason.new(node.name, :not_in_initialize)
             var.bind_to mod.nil_var
           rescue ex : Crystal::Exception
             node.raise "#{node} not in initialize so it's nilable", ex
@@ -328,6 +330,13 @@ module Crystal
 
     def visit(node : Assign)
       type_assign node.target, node.value, node
+
+      if @is_initialize && !@found_self_in_initialize_call
+        value = node.value
+        if value.is_a?(Var) && value.name == "self"
+          @found_self_in_initialize_call = [value] of ASTNode
+        end
+      end
       false
     end
 
@@ -403,9 +412,14 @@ module Crystal
         simple_var.bind_to(target)
 
         used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
-        if @found_self_in_initialize_call || used_ivars_in_calls_in_initialize.try(&.includes?(var_name)) || (@block_nest > 0 && !@vars.has_key?(var_name))
+        if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
           ivar = scope.lookup_instance_var(var_name)
-          ivar.bind_to @mod.nil_var
+          if found_self
+            ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
+          else
+            ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+          end
+          ivar.bind_to mod.nil_var
         end
 
         @vars[var_name] = simple_var
@@ -841,13 +855,23 @@ module Crystal
 
         ivars, found_self = gather_instance_vars_read node
         if found_self
-          @found_self_in_initialize_call = true
+          @found_self_in_initialize_call ||= found_self
         elsif ivars
           used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
           if used_ivars_in_calls_in_initialize
-            @used_ivars_in_calls_in_initialize = used_ivars_in_calls_in_initialize | ivars
+            @used_ivars_in_calls_in_initialize = used_ivars_in_calls_in_initialize.merge(ivars)
           else
             @used_ivars_in_calls_in_initialize = ivars
+          end
+        end
+      else
+        # Check if any argument is "self"
+        unless @found_self_in_initialize_call
+          node.args.each do |arg|
+            if arg.is_a?(Var) && arg.name == "self"
+              @found_self_in_initialize_call = [node] of ASTNode
+              return
+            end
           end
         end
       end
@@ -995,21 +1019,31 @@ module Crystal
       getter ivars
       getter found_self
 
-      def initialize(@scope, @vars)
-        @found_self = false
+      def initialize(a_def, @scope, @vars)
+        @found_self = nil
         @in_super = 0
+        @callstack = [a_def] of ASTNode
+      end
+
+      def node_in_callstack(node)
+        nodes = [] of ASTNode
+        nodes.concat @callstack
+        nodes.push node
+        nodes
       end
 
       def visit(node : InstanceVar)
         unless @vars.has_key?(node.name)
-          ivars = @ivars ||= Set(String).new
-          ivars << node.name
+          ivars = @ivars ||= Hash(String, Array(ASTNode)).new
+          unless ivars.has_key?(node.name)
+            ivars[node.name] = node_in_callstack(node)
+          end
         end
       end
 
       def visit(node : Var)
         if @in_super == 0 && node.name == "self"
-          @found_self = true
+          @found_self = node_in_callstack(node)
         end
         false
       end
@@ -1036,7 +1070,9 @@ module Crystal
             visited = @visited ||= Set(typeof(object_id)).new
             visited << target_def.object_id
 
+            @callstack.push(node)
             target_def.body.accept self
+            @callstack.pop
           end
         end
 
@@ -1059,7 +1095,7 @@ module Crystal
     end
 
     def gather_instance_vars_read(node)
-      collector = InstanceVarsCollector.new(scope, @vars)
+      collector = InstanceVarsCollector.new(typed_def, scope, @vars)
       node.accept collector
       {collector.ivars, collector.found_self}
     end
@@ -1150,7 +1186,7 @@ module Crystal
       if exp = node.exp
         typed_def.bind_to exp
       else
-        typed_def.bind_to @mod.nil_var
+        typed_def.bind_to mod.nil_var
       end
       @unreachable = true
     end
@@ -2054,7 +2090,7 @@ module Crystal
           if cond_var
             if_var.bind_to cond_var
           elsif !else_unreachable
-            if_var.bind_to @mod.nil_var
+            if_var.bind_to mod.nil_var
             if_var.nil_if_read = true
           else
             if_var.bind_to conditional_no_return(node.else, @mod.nil_var)
@@ -2069,7 +2105,7 @@ module Crystal
           if cond_var
             if_var.bind_to cond_var
           elsif !then_unreachable
-            if_var.bind_to @mod.nil_var
+            if_var.bind_to mod.nil_var
             if_var.nil_if_read = true
           else
             if_var.bind_to conditional_no_return(node.then, @mod.nil_var)
@@ -2712,7 +2748,7 @@ module Crystal
         if @struct_or_union.has_var?(field.name)
           field.raise "#{@struct_or_union.type_desc} #{@struct_or_union} already defines a field named '#{field.name}'"
         end
-        @struct_or_union.add_var Var.new(field.name, field_type)
+        @struct_or_union.add_var MetaInstanceVar.new(field.name, field_type)
       end
 
       def visit(node : Include)
@@ -3107,7 +3143,7 @@ module Crystal
         if name.starts_with? '@'
           if var.nil_if_read
             ivar = owner.lookup_instance_var(name)
-            ivar.bind_to @mod.nil_var
+            ivar.bind_to mod.nil_var
           end
 
           names_to_remove << name

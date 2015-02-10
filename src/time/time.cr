@@ -88,6 +88,10 @@ struct Time
     @encoded |= kind.value << KindShift
   end
 
+  def self.new(time : LibC::TimeSpec, kind = Kind::Unspecified)
+    new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
+  end
+
   def +(other : TimeSpan)
     add_ticks other.ticks
   end

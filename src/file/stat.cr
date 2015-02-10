@@ -95,7 +95,7 @@ class File
     end
 
     def atime
-      Time.new(@stat.st_atimespec)
+      time @stat.st_atimespec
     end
 
     def blksize
@@ -107,7 +107,7 @@ class File
     end
 
     def ctime
-      Time.new(@stat.st_ctimespec)
+      time @stat.st_ctimespec
     end
 
     def dev
@@ -137,7 +137,7 @@ class File
     end
 
     def mtime
-      Time.new(@stat.st_mtimespec)
+      time @stat.st_mtimespec
     end
 
     def nlink
@@ -190,6 +190,11 @@ class File
 
     def sticky?
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISVTX
+    end
+
+    # TODO: is @stat's time always UTC?
+    private def time(value)
+      Time.new value, Time::Kind::Utc
     end
   end
 end

@@ -57,8 +57,10 @@ describe "String" do
 
     it "gets with a string" do
       "FooBar"["Bar"].should eq "Bar"
+      expect_raises { "FooBar"["Baz"] }
+      "FooBar"["Bar"]?.should eq "Bar"
+      "FooBar"["Baz"]?.should be_nil
     end
-
   end
 
   describe "byte_slice" do
