@@ -21,78 +21,89 @@ module Crystal
     def initialize
       super(self, self, "main")
 
+      @symbols = Set(String).new
+      @global_vars = {} of String => Var
+      @requires = Set(String).new
+      @temp_var_counter = 0
+      @type_id_counter = 1
+      @crystal_path = CrystalPath.new
+      @vars = MetaVars.new
+      @def_macros = [] of Def
+      @splat_expansions = {} of Def => Type
+      @initialized_global_vars = Set(String).new
+      @file_modules = {} of String => FileModule
       @unions = {} of Array(Int32) => Type
 
-      @types["Object"] = @object = NonGenericClassType.new self, self, "Object", nil
-      @object.abstract = true
+      @types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
+      object.abstract = true
 
-      @types["Reference"] = @reference = NonGenericClassType.new self, self, "Reference", @object
-      @types["Value"] = @value = AbstractValueType.new self, self, "Value", @object
-      @value.abstract = true
+      @types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
+      @types["Value"] = value = @value = AbstractValueType.new self, self, "Value", object
+      value.abstract = true
 
-      @types["Number"] = @number = AbstractValueType.new self, self, "Number", @value
+      @types["Number"] = number = @number = AbstractValueType.new self, self, "Number", value
 
       @types["NoReturn"] = @no_return = NoReturnType.new self
       @types["Void"] = @void = VoidType.new self
-      @types["Nil"] = @nil = NilType.new self, self, "Nil", @value, 1
-      @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, 1
-      @types["Char"] = @char = CharType.new self, self, "Char", @value, 4
+      @types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
+      @types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
+      @types["Char"] = @char = CharType.new self, self, "Char", value, 4
 
-      @types["Int"] = @int = AbstractValueType.new self, self, "Int", @number
+      @types["Int"] = @int = AbstractValueType.new self, self, "Int", number
 
-      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, 1, 1, :i8
-      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, 1, 2, :u8
-      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", @int, 2, 3, :i16
-      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", @int, 2, 4, :u16
-      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", @int, 4, 5, :i32
-      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", @int, 4, 6, :u32
-      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, 8, 7, :i64
-      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, 8, 8, :u64
+      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int, 1, 1, :i8
+      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int, 1, 2, :u8
+      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", int, 2, 3, :i16
+      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", int, 2, 4, :u16
+      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", int, 4, 5, :i32
+      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int, 4, 6, :u32
+      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
+      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
 
-      @types["Float"] = @float = AbstractValueType.new self, self, "Float", @number
+      @types["Float"] = float = @float = AbstractValueType.new self, self, "Float", number
 
-      @types["Float32"] = @float32 = FloatType.new self, self, "Float32", @float, 4, 9
-      @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, 8, 10
+      @types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, 4, 9
+      @types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
 
-      @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, 4
-      @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", @value, ["T"]
-      @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", @value, ["T"]
+      @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
+      @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
+      @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
 
-      @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", @value, ["T", "N"]
-      @static_array.struct = true
-      @static_array.declare_instance_var("@buffer", Path.new("T"))
-      @static_array.instance_vars_in_initialize = Set.new(["@buffer"])
-      @static_array.allocated = true
+      @types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
+      static_array.struct = true
+      static_array.declare_instance_var("@buffer", Path.new("T"))
+      static_array.instance_vars_in_initialize = Set.new(["@buffer"])
+      static_array.allocated = true
 
-      @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
-      @string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
-      @string.allocated = true
-      @string.type_id = String::TYPE_ID
+      @types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
+      string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
+      string.allocated = true
+      string.type_id = String::TYPE_ID
 
-      @string.lookup_instance_var("@bytesize").set_type(@int32)
-      @string.lookup_instance_var("@length").set_type(@int32)
-      @string.lookup_instance_var("@c").set_type(@uint8)
+      string.lookup_instance_var("@bytesize").set_type(@int32)
+      string.lookup_instance_var("@length").set_type(@int32)
+      string.lookup_instance_var("@c").set_type(@uint8)
 
-      @types["Class"] = @class = MetaclassType.new(self, @object, @reference, "Class")
-      @object.force_metaclass @class
-      @class.force_metaclass @class
-      @class.instance_vars_in_initialize = Set.new(["@name"])
-      @class.lookup_instance_var("@name").set_type(@string)
-      @class.allocated = true
+      @types["Class"] = klass = @class = MetaclassType.new(self, object, reference, "Class")
+      object.force_metaclass klass
+      klass.force_metaclass klass
+      klass.instance_vars_in_initialize = Set.new(["@name"])
+      klass.lookup_instance_var("@name").set_type(string)
+      klass.allocated = true
 
-      @types["Array"] = @array = GenericClassType.new self, self, "Array", @reference, ["T"]
-      @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", @reference
+      @types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
+      @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
-      @types["Struct"] = @struct = NonGenericClassType.new self, self, "Struct", @value
-      @struct.abstract = true
-      @struct.struct = true
+      @types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
+      struct_t.abstract = true
+      struct_t.struct = true
 
-      @types["Enum"] = @enum = NonGenericClassType.new self, self, "Enum", @value
-      @enum.abstract = true
-      @enum.struct = true
+      @types["Enum"] = enum_t = @enum = NonGenericClassType.new self, self, "Enum", value
+      enum_t.abstract = true
+      enum_t.struct = true
 
-      @types["Function"] = @function = FunType.new self, self, "Function", @value, ["T"]
-      @function.variadic = true
+      @types["Function"] = function = @function = FunType.new self, self, "Function", value, ["T"]
+      function.variadic = true
 
       @types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
@@ -103,20 +114,9 @@ module Crystal
       @types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
-      @symbols = Set(String).new
-      @global_vars = {} of String => Var
-      @requires = Set(String).new
-      @temp_var_counter = 0
-      @type_id_counter = 1
-      @nil_var = Var.new("<nil_var>", @nil)
-      @crystal_path = CrystalPath.new
-      @vars = MetaVars.new
       @literal_expander = LiteralExpander.new self
       @macro_expander = MacroExpander.new self
-      @def_macros = [] of Def
-      @splat_expansions = {} of Def => Type
-      @initialized_global_vars = Set(String).new
-      @file_modules = {} of String => FileModule
+      @nil_var = Var.new("<nil_var>", nil_t)
 
       define_primitives
     end
@@ -161,11 +161,11 @@ module Crystal
     end
 
     def array_of(type)
-      @array.instantiate [type] of TypeVar
+      array.instantiate [type] of TypeVar
     end
 
     def tuple_of(types)
-      @tuple.instantiate types
+      tuple.instantiate types
     end
 
     def union_of(types : Array)
@@ -215,7 +215,7 @@ module Crystal
     end
 
     def fun_of(types : Array)
-      @function.instantiate(types)
+      function.instantiate(types)
     end
 
     def add_to_requires(filename)
@@ -244,53 +244,37 @@ module Crystal
       end
     end
 
-    getter :object
-    getter :no_return
-    getter :value
-    getter :struct
-    getter :number
-    getter :reference
-    getter :void
-    getter :nil
-    getter :bool
-    getter :char
-    getter :int
-    getter :int8
-    getter :int16
-    getter :int32
-    getter :int64
-    getter :uint8
-    getter :uint16
-    getter :uint32
-    getter :uint64
-    getter :float
-    getter :float32
-    getter :float64
-    getter :string
-    getter :symbol
-    getter :pointer
-    getter :static_array
-    getter :exception
-    getter :tuple
-    getter :function
-    getter :enum
+    {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
+                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
+                      exception tuple function enum) %}
+      def {{name.id}}
+        @{{name.id}}.not_nil!
+      end
+    {% end %}
 
-    def class_type
-      @class
+    getter! literal_expander
+    getter! macro_expander
+
+    def struct
+      @struct_t.not_nil!
     end
 
-    getter :nil_var
+    def class_type
+      @class.not_nil!
+    end
+
+    getter! :nil_var
 
     def uint8_pointer
       pointer_of uint8
     end
 
     def pointer_of(type)
-      @pointer.instantiate([type] of TypeVar)
+      pointer.instantiate([type] of TypeVar)
     end
 
     def static_array_of(type, num)
-      @static_array.instantiate([type, NumberLiteral.new(num)] of TypeVar)
+      static_array.instantiate([type, NumberLiteral.new(num)] of TypeVar)
     end
 
     def new_temp_var

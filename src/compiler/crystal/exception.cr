@@ -98,7 +98,7 @@ module Crystal
       end
     end
 
-    def initialize(message, @line, @column : Int32, @filename, @length = nil, @inner = nil)
+    def initialize(message, @line, @column : Int32, @filename, @length, @inner = nil)
       super(message)
     end
 
@@ -150,7 +150,7 @@ module Crystal
         io << (" " * (@column - 1))
         with_color.green.bold.surround(io) do
           io << "^"
-          if @length && @length > 0
+          if @length > 0
             io << ("~" * (@length - 1))
           end
         end
@@ -194,7 +194,7 @@ module Crystal
   end
 
   class MethodTraceException < Exception
-    def initialize(@owner, @trace)
+    def initialize(@owner, @trace, @nil_reason)
       super(nil)
     end
 
@@ -207,57 +207,79 @@ module Crystal
     end
 
     def append_to_s(source, io)
-      return unless @trace.length > 0
+      unless @trace.empty?
+        io.puts ("=" * 80)
+        io << "\n#{@owner} trace:"
+        @trace.each do |node|
+          print_with_location node, io
+        end
+      end
 
-      io << ("=" * 80)
-      io << "\n\n#{@owner} trace:"
-      @trace.each do |node|
-        location = node.location
-        if location
-          filename = location.filename
-          next_trace = false
-          case filename
-          when VirtualFile
-            lines = filename.source.lines.to_a
-            filename = "macro #{filename.macro.name} (in #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number})"
-          when String
-            if File.file?(filename)
-              lines = File.read_lines filename
-            else
-              lines = source ? source.lines.to_a : nil
-            end
-          else
-            next_trace = true
+      if nil_reason = @nil_reason
+        io.puts
+        io.puts
+        io.puts ("=" * 80)
+        io.puts
+
+        io << "Error: ".colorize.bold
+        case nil_reason.reason
+        when :not_in_initialize
+          io << "instance variable '#{nil_reason.name}' was not initialized in all of the 'initialize' methods, rendering it nilable".colorize.bold
+        when :used_before_initialized
+          io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable".colorize.bold
+        when :used_self_before_initialized
+          io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable".colorize.bold
+        end
+
+        if nil_reason_nodes = nil_reason.nodes
+          nil_reason_nodes.each do |node|
+            print_with_location node, io
           end
+        end
+      end
+    end
 
-          unless next_trace
-            line_number = location.line_number
-            column_number = location.column_number
+    def print_with_location(node, io)
+      location = node.location
+      return unless location
 
-            io << "\n\n"
-            io << "  "
-            io << filename << ":" << line_number
-            io << "\n\n"
+      filename = location.filename
+      line_number = location.line_number
 
-            if lines
-              line = lines[line_number - 1]
+      case filename
+      when VirtualFile
+        lines = filename.source.lines.to_a
+        filename = "macro #{filename.macro.name} (in #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number})"
+      when String
+        lines = File.read_lines(filename) if File.file?(filename)
+      else
+        return
+      end
 
-              name_column = node.name_column_number
-              name_length = node.name_length
+      io << "\n\n"
+      io << "  "
+      io << filename << ":" << line_number
+      io << "\n\n"
 
-              io << "    "
-              io << line.chomp
-              io << "\n"
-              if name_column > 0
-                io << "    "
-                io << (" " * (name_column - 1))
-                io << "^"
-                if name_length > 0
-                  io << ("~" * (name_length - 1)) if name_length
-                end
-              end
-            end
-          end
+      return unless lines
+
+      line = lines[line_number - 1]
+
+      name_column = node.name_column_number
+      name_length = node.name_length
+
+      io << "    "
+      io << line.chomp
+      io.puts
+
+      return unless name_column > 0
+
+      io << "    "
+      io << (" " * (name_column - 1))
+      with_color.green.bold.surround(io) do
+        io << "^"
+        if name_length > 0
+          io << ("~" * (name_length - 1)) if name_length
         end
       end
     end

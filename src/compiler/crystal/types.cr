@@ -877,7 +877,7 @@ module Crystal
 
   module InstanceVarContainer
     def instance_vars
-      @instance_vars ||= {} of String => Var
+      @instance_vars ||= {} of String => MetaInstanceVar
     end
 
     def owns_instance_var?(name)
@@ -899,7 +899,7 @@ module Crystal
       end
 
       if create || owned_instance_vars.includes?(name)
-        instance_vars[name] ||= Var.new(name)
+        instance_vars[name] ||= MetaInstanceVar.new(name)
       else
         instance_vars[name]?
       end
@@ -1298,7 +1298,7 @@ module Crystal
         visitor = TypeLookup.new(instance)
         node.accept visitor
 
-        ivar = Var.new(name, visitor.type)
+        ivar = MetaInstanceVar.new(name, visitor.type)
         ivar.bind_to ivar
         ivar.freeze_type = visitor.type
         instance.instance_vars[name] = ivar
@@ -1311,7 +1311,7 @@ module Crystal
         decl_ivars.each do |name, node|
           node.accept visitor
 
-          ivar = Var.new(name, visitor.type)
+          ivar = MetaInstanceVar.new(name, visitor.type)
           ivar.bind_to ivar
           ivar.freeze_type = visitor.type
           instance.instance_vars[name] = ivar
@@ -1590,10 +1590,10 @@ module Crystal
     getter tuple_types
 
     def initialize(program, @tuple_types)
+      @tuple_indexers = {} of Int32 => Def
       var = Var.new("T", self)
       var.bind_to var
       super(program, program.tuple, {"T" => var} of String => ASTNode)
-      @tuple_indexers = {} of Int32 => Def
     end
 
     def tuple_indexer(index)
@@ -1923,7 +1923,7 @@ module Crystal
 
     def initialize(program, container, name)
       super(program, container, name, program.struct)
-      @vars = {} of String => Var
+      @vars = {} of String => MetaInstanceVar
       @struct = true
       @allocated = true
     end
@@ -2048,7 +2048,7 @@ module Crystal
     getter program
     getter instance_type
 
-    def initialize(@program, instance_type, super_class = nil, name = nil)
+    def initialize(@program, instance_type : Type, super_class = nil, name = nil)
       @instance_type = instance_type
       super_class ||= if instance_type.is_a?(ClassType) && instance_type.superclass
                         instance_type.superclass.not_nil!.metaclass as ClassType

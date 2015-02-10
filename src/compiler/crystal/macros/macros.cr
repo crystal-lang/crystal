@@ -7,11 +7,11 @@ module Crystal
     end
 
     def expand_macro(scope : Type, a_macro : Macro, call)
-      @macro_expander.expand scope, a_macro, call
+      macro_expander.expand scope, a_macro, call
     end
 
     def expand_macro(scope : Type, node)
-      @macro_expander.expand scope, node
+      macro_expander.expand scope, node
     end
 
     def expand_def_macros

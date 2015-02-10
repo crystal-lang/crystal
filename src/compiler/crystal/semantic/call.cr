@@ -410,6 +410,7 @@ class Crystal::Call
       dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
       if dependencies.length > 0
         node = dependencies.first
+        nil_reason = node.nil_reason if node.is_a?(MetaInstanceVar)
         owner_trace << node if node
         visited.add node.object_id
       else
@@ -417,7 +418,7 @@ class Crystal::Call
       end
     end
 
-    MethodTraceException.new(owner, owner_trace)
+    MethodTraceException.new(owner, owner_trace, nil_reason)
   end
 
   def lookup_matches_in_super(arg_types)
