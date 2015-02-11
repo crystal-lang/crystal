@@ -42,6 +42,17 @@ class Crystal::Project
     save_lockfile
   end
 
+  def remove_deps(deps)
+    prepare_required_directories
+
+    deps = dependencies.map &.name if deps.empty?
+    deps.each do |dep_name|
+      find_dependency(dep_name).remove
+    end
+
+    save_lockfile
+  end
+
   def prepare_required_directories
     Dir.mkdir_p ".deps"
     Dir.mkdir_p "libs"
@@ -50,7 +61,7 @@ class Crystal::Project
   def save_lockfile
     lock = {} of String => String
     @dependencies.each do |dep|
-      lock[dep.name] = dep.locked_version.not_nil!
+      lock[dep.name] = dep.locked_version.not_nil! unless dep.locked_version.nil?
     end
     File.open(".deps.lock", "w") do |lock_file|
       lock.to_pretty_json(lock_file)
