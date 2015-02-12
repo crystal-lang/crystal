@@ -26,7 +26,6 @@ class Regex
     end
 
     $~ = match
-    MatchData.last = match
   end
 
   def ===(other : String)

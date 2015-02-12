@@ -67,15 +67,4 @@ class MatchData
   private def valid_group?(index)
     index <= @length
   end
-
-  def self.last=(@@last : MatchData?)
-  end
-
-  def self.last?
-    @@last
-  end
-
-  def self.last
-    last?.not_nil!
-  end
 end

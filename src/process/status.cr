@@ -10,16 +10,5 @@ class Process::Status
   def success?
     @exit == 0
   end
-
-  def self.last=(@@last : Status?)
-  end
-
-  def self.last?
-    @@last
-  end
-
-  def self.last
-    last?.not_nil!
-  end
 end
 
