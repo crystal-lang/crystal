@@ -33,7 +33,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
           h2 { text "Directory listing for #{request_path}" }
           hr
           ul do
-            Dir.list(path) do |entry|
+            Dir.foreach(path) do |entry|
               next if entry == "." || entry == ".."
               li do
                 a({href: "#{request_path == "/" ? "" : request_path}/#{entry}"}) { text entry }
