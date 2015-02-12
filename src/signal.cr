@@ -50,7 +50,13 @@ module Signal
   def trap(signal, &block : Int32 ->)
     handlers = @@handlers ||= {} of Int32 => Int32 ->
     handlers[signal] = block
-    LibC.signal signal, ->handler(Int32)
+
+    case block
+    when DEFAULT, IGNORE
+      LibC.signal signal, block
+    else
+      LibC.signal signal, ->handler(Int32)
+    end
   end
 
   protected def handler(num)

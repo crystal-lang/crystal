@@ -53,4 +53,11 @@ describe "Proc" do
     f2 = Proc(Int32, Int32).new(f.pointer, f.closure_data)
     f2.call(3).should eq(4)
   end
+
+  it "does ==" do
+    func = ->{ 1 }
+    func.should eq(func)
+    func2 = ->{ 1 }
+    func2.should_not eq(func)
+  end
 end
