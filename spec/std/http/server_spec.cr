@@ -6,5 +6,12 @@ module HTTP
     server.listen
     server.listen_fork(workers: 2)
     server.close
+
+    Server.new(8080, [
+        ErrorHandler.new,
+        LogHandler.new,
+        StaticFileHandler.new("."),
+      ]
+      ).listen
   end)
 end
