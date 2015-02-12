@@ -465,7 +465,7 @@ module Crystal
 
     parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", ":\"**\""
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]="]
+    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"!"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -504,14 +504,22 @@ module Crystal
           end
         when :"."
           @wants_regex = false
-          next_token_skip_space_or_newline
 
-          if @token.type == :INSTANCE_VAR
-            ivar_name = @token.value.to_s
-            next_token_skip_space
+          if current_char == '%'
+            next_char
+            @token.type = :"%"
+            @token.column_number += 1
+            skip_space_or_newline
+          else
+            next_token_skip_space_or_newline
 
-            atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
-            next
+            if @token.type == :INSTANCE_VAR
+              ivar_name = @token.value.to_s
+              next_token_skip_space
+
+              atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
+              next
+            end
           end
 
           check AtomicWithMethodCheck

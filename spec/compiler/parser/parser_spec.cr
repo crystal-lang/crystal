@@ -378,9 +378,10 @@ describe "Parser" do
     it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
   end
 
-  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "==="].each do |name|
+  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "!"].each do |name|
     it_parses "foo.#{name}", Call.new("foo".call, name)
     it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
+    it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
   end
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
