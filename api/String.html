@@ -107,12 +107,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%20%3A%20self%29-instance-method" class="signature"><strong>#+</strong>(other : self)</a>
+        <a href="#%2B%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#+</strong>(char : Char)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#+</strong>(char : Char)</a>
+        <a href="#%2B%28other%20%3A%20self%29-instance-method" class="signature"><strong>#+</strong>(other : self)</a>
         
       </li>
     
@@ -137,17 +137,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(start : Int, count : Int)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%5B%5D%28regex%20%3A%20Regex%2C%20group%29-instance-method" class="signature"><strong>#[]</strong>(regex : Regex, group)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%5B%5D%28regex%20%3A%20Regex%29-instance-method" class="signature"><strong>#[]</strong>(regex : Regex)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28str%20%3A%20String%29-instance-method" class="signature"><strong>#[]</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(start : Int, count : Int)</a>
         
       </li>
     
@@ -162,12 +162,22 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%3F%28regex%20%3A%20Regex%2C%20group%29-instance-method" class="signature"><strong>#[]?</strong>(regex : Regex, group)</a>
+        <a href="#%5B%5D%28regex%20%3A%20Regex%2C%20group%29-instance-method" class="signature"><strong>#[]</strong>(regex : Regex, group)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%5B%5D%3F%28regex%20%3A%20Regex%29-instance-method" class="signature"><strong>#[]?</strong>(regex : Regex)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#[]?</strong>(str : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28regex%20%3A%20Regex%2C%20group%29-instance-method" class="signature"><strong>#[]?</strong>(regex : Regex, group)</a>
         
       </li>
     
@@ -329,16 +339,6 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, &block)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#gsub%28pattern%20%3A%20Regex%2C%20replacement%20%3A%20String%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, replacement : String)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#gsub%28char%20%3A%20Char%2C%20replacement%20%3A%20Char%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement : Char)</a>
         
       </li>
@@ -354,12 +354,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        <a href="#gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, &block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#includes%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#includes?</strong>(str : String)</a>
+        <a href="#gsub%28pattern%20%3A%20Regex%2C%20replacement%20%3A%20String%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, replacement : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
       </li>
     
@@ -369,12 +374,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : Char, offset = 0)</a>
+        <a href="#includes%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#includes?</strong>(str : String)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#index%28c%20%3A%20String%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : String, offset = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : Char, offset = 0)</a>
         
       </li>
     
@@ -394,7 +404,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#ljust%28len%2C%20chr%20%3D%20%27%20%27%29-instance-method" class="signature"><strong>#ljust</strong>(len, chr = ' ')</a>
+        <a href="#ljust%28len%2C%20char%20%3D%20%27%20%27%20%3A%20Char%29-instance-method" class="signature"><strong>#ljust</strong>(len, char = ' ' : Char)</a>
         
       </li>
     
@@ -424,7 +434,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#rjust%28len%2C%20chr%20%3D%20%27%20%27%29-instance-method" class="signature"><strong>#rjust</strong>(len, chr = ' ')</a>
+        <a href="#rjust%28len%2C%20char%20%3D%20%27%20%27%20%3A%20Char%29-instance-method" class="signature"><strong>#rjust</strong>(len, char = ' ' : Char)</a>
         
       </li>
     
@@ -449,17 +459,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Char, limit = nil)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Regex, limit = nil)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#split%28separator%20%3A%20String%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : String, limit = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Char, limit = nil)</a>
         
       </li>
     
@@ -469,9 +474,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#squeeze%28%2Asets%29-instance-method" class="signature"><strong>#squeeze</strong>(*sets)</a>
-        
-          <div class="summary"><p>Sets should be a list of strings following the rules described at Char#in_set?.</p></div>
+        <a href="#split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Regex, limit = nil)</a>
         
       </li>
     
@@ -483,6 +486,13 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#squeeze%28%2Asets%29-instance-method" class="signature"><strong>#squeeze</strong>(*sets)</a>
+        
+          <div class="summary"><p>Sets should be a list of strings following the rules described at Char#in_set?.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#squeeze%28%26block%29-instance-method" class="signature"><strong>#squeeze</strong>(&block)</a>
         
           <div class="summary"><p>Yields each char in this string to the block.</p></div>
@@ -490,12 +500,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#starts_with%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#starts_with?</strong>(str : String)</a>
+        <a href="#starts_with%3F%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#starts_with?</strong>(char : Char)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#starts_with%3F%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#starts_with?</strong>(char : Char)</a>
+        <a href="#starts_with%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#starts_with?</strong>(str : String)</a>
         
       </li>
     
@@ -520,12 +530,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
+        <a href="#to_i%28base%29-instance-method" class="signature"><strong>#to_i</strong>(base)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i%28base%29-instance-method" class="signature"><strong>#to_i</strong>(base)</a>
+        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
         
       </li>
     
@@ -555,12 +565,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
         
       </li>
     
@@ -631,7 +641,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L43" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -644,7 +654,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L33" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L33" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -657,7 +667,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/json/from_json.cr#L51" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/json/from_json.cr#L51" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -670,7 +680,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -683,7 +693,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -696,7 +706,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L22" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L22" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -714,7 +724,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1091" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1137" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -727,7 +737,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1097" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1143" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -740,20 +750,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L579" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%2B%28other%20%3A%20self%29-instance-method">
-        
-        def <strong>+</strong>(other : self)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L543" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L589" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -766,7 +763,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L557" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L567" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20self%29-instance-method">
+        
+        def <strong>+</strong>(other : self)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L553" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -779,7 +789,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L527" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L535" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -792,7 +802,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L521" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L529" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -805,7 +815,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L539" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L549" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -818,33 +828,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L535" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%5B%5D%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method">
-        
-        def <strong>[]</strong>(start : <a href="Int.html">Int</a>, count : <a href="Int.html">Int</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L131" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%5B%5D%28regex%20%3A%20Regex%2C%20group%29-instance-method">
-        
-        def <strong>[]</strong>(regex : <a href="Regex.html">Regex</a>, group)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L167" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L543" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -857,7 +841,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L163" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L180" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28str%20%3A%20String%29-instance-method">
+        
+        def <strong>[]</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L176" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28start%20%3A%20Int%2C%20count%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]</strong>(start : <a href="Int.html">Int</a>, count : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L131" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -870,7 +880,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L121" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L121" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -883,20 +893,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L105" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%5B%5D%3F%28regex%20%3A%20Regex%2C%20group%29-instance-method">
+      <div class="signature" id="%5B%5D%28regex%20%3A%20Regex%2C%20group%29-instance-method">
         
-        def <strong>[]?</strong>(regex : <a href="Regex.html">Regex</a>, group)
+        def <strong>[]</strong>(regex : <a href="Regex.html">Regex</a>, group)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L175" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L184" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -909,7 +919,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L171" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L167" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3F%28str%20%3A%20String%29-instance-method">
+        
+        def <strong>[]?</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L163" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3F%28regex%20%3A%20Regex%2C%20group%29-instance-method">
+        
+        def <strong>[]?</strong>(regex : <a href="Regex.html">Regex</a>, group)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L171" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -922,7 +958,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1145" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1191" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -935,7 +971,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L210" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L218" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -948,7 +984,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L670" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L680" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -961,7 +997,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L180" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L188" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -974,7 +1010,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L198" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L206" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -987,7 +1023,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1109" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1155" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1000,7 +1036,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L49" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L49" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1013,7 +1049,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L872" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L882" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1026,7 +1062,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L239" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L247" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1039,7 +1075,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L206" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L214" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1052,7 +1088,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L971" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1017" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1065,7 +1101,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L253" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L261" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1078,7 +1114,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L202" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L210" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1095,7 +1131,7 @@ in this string that match the given set.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L431" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L439" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1113,7 +1149,7 @@ returns the number of times the block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L411" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L419" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1130,7 +1166,7 @@ returns the number of times the block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L424" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L432" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1143,7 +1179,7 @@ returns the number of times the block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1169" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1215" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1162,7 +1198,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L466" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L474" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1181,7 +1217,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L442" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L450" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1198,7 +1234,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L455" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L463" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1211,7 +1247,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L223" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L231" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1224,7 +1260,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1004" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1050" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1237,7 +1273,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L998" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1044" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1250,7 +1286,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L979" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1025" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1263,7 +1299,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L949" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L995" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1276,7 +1312,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L962" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1008" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1289,7 +1325,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L517" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L525" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1302,7 +1338,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1067" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1113" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1315,33 +1351,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1062" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method">
-        
-        def <strong>gsub</strong>(pattern : <a href="Regex.html">Regex</a>, &block)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L382" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="gsub%28pattern%20%3A%20Regex%2C%20replacement%20%3A%20String%29-instance-method">
-        
-        def <strong>gsub</strong>(pattern : <a href="Regex.html">Regex</a>, replacement : <a href="String.html">String</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L401" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1108" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1354,7 +1364,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L374" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L382" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1367,7 +1377,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L366" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L374" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1380,7 +1390,33 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L353" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L361" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method">
+        
+        def <strong>gsub</strong>(pattern : <a href="Regex.html">Regex</a>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L390" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28pattern%20%3A%20Regex%2C%20replacement%20%3A%20String%29-instance-method">
+        
+        def <strong>gsub</strong>(pattern : <a href="Regex.html">Regex</a>, replacement : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L409" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1393,20 +1429,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1101" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="includes%3F%28str%20%3A%20String%29-instance-method">
-        
-        def <strong>includes?</strong>(str : <a href="String.html">String</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L683" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1147" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1419,20 +1442,20 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L679" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L689" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method">
+      <div class="signature" id="includes%3F%28str%20%3A%20String%29-instance-method">
         
-        def <strong>index</strong>(c : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
+        def <strong>includes?</strong>(str : <a href="String.html">String</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L604" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L693" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1445,7 +1468,20 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L617" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L627" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method">
+        
+        def <strong>index</strong>(c : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L614" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1458,7 +1494,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L986" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1032" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1471,7 +1507,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1113" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1159" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1484,20 +1520,20 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L844" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L854" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="ljust%28len%2C%20chr%20%3D%20%27%20%27%29-instance-method">
+      <div class="signature" id="ljust%28len%2C%20char%20%3D%20%27%20%27%20%3A%20Char%29-instance-method">
         
-        def <strong>ljust</strong>(len, chr = <span class="s">' '</span>)
+        def <strong>ljust</strong>(len, char = <span class="s">' '</span> : <a href="Char.html">Char</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L909" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L919" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1510,7 +1546,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L301" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L309" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1523,7 +1559,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L925" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L969" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1536,7 +1572,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L893" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L903" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1549,7 +1585,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L637" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L647" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1562,20 +1598,20 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L652" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L662" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="rjust%28len%2C%20chr%20%3D%20%27%20%27%29-instance-method">
+      <div class="signature" id="rjust%28len%2C%20char%20%3D%20%27%20%27%20%3A%20Char%29-instance-method">
         
-        def <strong>rjust</strong>(len, chr = <span class="s">' '</span>)
+        def <strong>rjust</strong>(len, char = <span class="s">' '</span> : <a href="Char.html">Char</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L917" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L923" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1588,7 +1624,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L288" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L296" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1601,7 +1637,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L941" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L987" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1614,7 +1650,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L929" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L975" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1627,33 +1663,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1141" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method">
-        
-        def <strong>split</strong>(separator : <a href="Char.html">Char</a>, limit = <span class="n">nil</span>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L738" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method">
-        
-        def <strong>split</strong>(separator : <a href="Regex.html">Regex</a>, limit = <span class="n">nil</span>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L822" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1187" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1666,7 +1676,20 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L772" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L782" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method">
+        
+        def <strong>split</strong>(separator : <a href="Char.html">Char</a>, limit = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L748" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1679,7 +1702,37 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L687" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L697" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method">
+        
+        def <strong>split</strong>(separator : <a href="Regex.html">Regex</a>, limit = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L832" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="squeeze%28char%20%3A%20Char%29-instance-method">
+        
+        def <strong>squeeze</strong>(char : <a href="Char.html">Char</a>)
+      </div>
+      
+        <div class="doc"><p>Returns a new string, with all runs of char replaced by one instance.</p>
+
+<pre><code><span class="s">"a    bbb"</span>.squeeze(<span class="s">' '</span>) <span class="c">#=> "a bbb"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L502" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1702,24 +1755,7 @@ they match the given set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L509" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="squeeze%28char%20%3A%20Char%29-instance-method">
-        
-        def <strong>squeeze</strong>(char : <a href="Char.html">Char</a>)
-      </div>
-      
-        <div class="doc"><p>Returns a new string, with all runs of char replaced by one instance.</p>
-
-<pre><code><span class="s">"a    bbb"</span>.squeeze(<span class="s">' '</span>) <span class="c">#=> "a bbb"</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L494" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L517" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1740,20 +1776,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L479" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="starts_with%3F%28str%20%3A%20String%29-instance-method">
-        
-        def <strong>starts_with?</strong>(str : <a href="String.html">String</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1049" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L487" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1766,7 +1789,20 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1054" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1100" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="starts_with%3F%28str%20%3A%20String%29-instance-method">
+        
+        def <strong>starts_with?</strong>(str : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1095" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1779,7 +1815,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L270" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L278" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1792,7 +1828,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L93" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1805,7 +1841,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L97" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L97" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1818,20 +1854,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L101" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_i-instance-method">
-        
-        def <strong>to_i</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L53" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L101" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1844,7 +1867,20 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L57" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L57" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i-instance-method">
+        
+        def <strong>to_i</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L53" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1857,7 +1893,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1870,7 +1906,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L69" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L69" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1883,7 +1919,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L73" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L73" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1896,7 +1932,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L61" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L61" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1909,20 +1945,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/json/to_json.cr#L133" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_s%28io%29-instance-method">
-        
-        def <strong>to_s</strong>(io)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1165" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/json/to_json.cr#L133" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1935,7 +1958,20 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1161" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1207" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%29-instance-method">
+        
+        def <strong>to_s</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1211" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1948,7 +1984,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1157" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1203" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1961,7 +1997,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L81" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L81" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1974,7 +2010,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L85" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L85" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1987,7 +2023,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L89" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L89" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2000,7 +2036,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L77" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L77" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2013,7 +2049,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L1173" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L1219" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2026,7 +2062,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L314" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L322" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2039,7 +2075,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L848" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L858" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2052,7 +2088,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L219" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L227" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2065,7 +2101,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/string.cr#L231" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/string.cr#L239" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

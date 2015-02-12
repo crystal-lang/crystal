@@ -11,6 +11,14 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>Objects of class Dir are directory streams representing directories in the underlying file system.
+They provide a variety of ways to list directories and their contents. See also <code><a href="File.html">File</a></code>.</p>
+
+<p>The directory used in these examples contains the two regular files (config.h and main.rb),
+the parent directory (..), and the directory itself (.).</p>
+
 
 
 
@@ -19,6 +27,11 @@
   <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Dir.html">Dir</a></div>
 
 
+
+  <h2>Included Modules</h2>
+  
+    <a href="Enumerable.html">Enumerable(String)</a>
+  
 
 
 
@@ -33,37 +46,57 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28%2Apatterns%29-class-method" class="signature"><strong>.[]</strong>(*patterns)</a>
+        <a href="#%5B%5D%28patterns%20%3A%20Enumerable%28String%29%29-class-method" class="signature"><strong>.[]</strong>(patterns : Enumerable(String))</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28patterns%20%3A%20Enumerable%28String%29%29-class-method" class="signature"><strong>.[]</strong>(patterns : Enumerable(String))</a>
+        <a href="#%5B%5D%28%2Apatterns%29-class-method" class="signature"><strong>.[]</strong>(*patterns)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#cd%28path%29-class-method" class="signature"><strong>.cd</strong>(path)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#chdir%28path%29-class-method" class="signature"><strong>.chdir</strong>(path)</a>
+          <div class="summary"><p>Alias for <code><a href="Dir.html#chdir%28path%2C%20%26block%29-class-method">.chdir</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#chdir%28path%2C%20%26block%29-class-method" class="signature"><strong>.chdir</strong>(path, &block)</a>
         
+          <div class="summary"><p>Changes the current working directory of the process to the given string and invokes the block, restoring the original working directory when the block exists.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chdir%28path%29-class-method" class="signature"><strong>.chdir</strong>(path)</a>
+        
+          <div class="summary"><p>Changes the current working directory of the process to the given string.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#entries%28dirname%29-class-method" class="signature"><strong>.entries</strong>(dirname)</a>
         
+          <div class="summary"><p>Returns an array containing all of the filenames in the given directory.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#exists%3F%28path%29-class-method" class="signature"><strong>.exists?</strong>(path)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#foreach%28dirname%2C%20%26block%29-class-method" class="signature"><strong>.foreach</strong>(dirname, &block)</a>
+        
+          <div class="summary"><p>Calls the block once for each entry in the named directory, passing the filename of each entry as a parameter to the block.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#glob%28%2Apatterns%29-class-method" class="signature"><strong>.glob</strong>(*patterns)</a>
         
       </li>
     
@@ -78,17 +111,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#glob%28%2Apatterns%29-class-method" class="signature"><strong>.glob</strong>(*patterns)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#glob%28patterns%20%3A%20Enumerable%28String%29%29-class-method" class="signature"><strong>.glob</strong>(patterns : Enumerable(String))</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#list%28dirname%2C%20%26block%29-class-method" class="signature"><strong>.list</strong>(dirname, &block)</a>
         
       </li>
     
@@ -103,12 +126,71 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#open%28path%29-class-method" class="signature"><strong>.open</strong>(path)</a>
+        
+          <div class="summary"><p>Alias for <code><a href="Dir.html#new%28path%29-class-method">.new(path)</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28path%2C%20%26block%29-class-method" class="signature"><strong>.open</strong>(path, &block)</a>
+        
+          <div class="summary"><p>Opens a directory and yields it, closing it at the end of the block.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#rmdir%28path%29-class-method" class="signature"><strong>.rmdir</strong>(path)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#working_directory-class-method" class="signature"><strong>.working_directory</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28path%29-class-method" class="signature"><strong>.new</strong>(path)</a>
+        
+          <div class="summary"><p>Returns a new directory object for the named directory.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+          <div class="summary"><p>Closes the directory stream.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        
+          <div class="summary"><p>Calls the block once for each entry in this directory, passing the filename of each entry as a parameter to the block.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read-instance-method" class="signature"><strong>#read</strong></a>
+        
+          <div class="summary"><p>Reads the next entry from dir and returns it as a string.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
         
       </li>
     
@@ -119,22 +201,7 @@
 
 
 
-
-
   <h2>Class Method Detail</h2>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%5B%5D%28%2Apatterns%29-class-method">
-        
-        def self.<strong>[]</strong>(*patterns)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L140" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
   
     <div class="entry-detail">
       <div class="signature" id="%5B%5D%28patterns%20%3A%20Enumerable%28String%29%29-class-method">
@@ -144,7 +211,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L144" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L210" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28%2Apatterns%29-class-method">
+        
+        def self.<strong>[]</strong>(*patterns)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L206" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -155,22 +235,11 @@
         def self.<strong>cd</strong>(path)
       </div>
       
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L113" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="chdir%28path%29-class-method">
-        
-        def self.<strong>chdir</strong>(path)
-      </div>
+        <div class="doc"><p>Alias for <code><a href="Dir.html#chdir%28path%2C%20%26block%29-class-method">.chdir</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L183" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -181,9 +250,28 @@
         def self.<strong>chdir</strong>(path, &block)
       </div>
       
+        <div class="doc"><p>Changes the current working directory of the process to the given string
+and invokes the block, restoring the original working directory
+when the block exists.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L172" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chdir%28path%29-class-method">
+        
+        def self.<strong>chdir</strong>(path)
+      </div>
+      
+        <div class="doc"><p>Changes the current working directory of the process to the given string.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L163" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -194,9 +282,11 @@
         def self.<strong>entries</strong>(dirname)
       </div>
       
+        <div class="doc"><p>Returns an array containing all of the filenames in the given directory.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L132" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L198" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,33 +299,23 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L192" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L258" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="glob%28patterns%20%3A%20Enumerable%28String%29%2C%20%26block%29-class-method">
+      <div class="signature" id="foreach%28dirname%2C%20%26block%29-class-method">
         
-        def self.<strong>glob</strong>(patterns : <a href="Enumerable.html">Enumerable</a>(<a href="String.html">String</a>), &block)
+        def self.<strong>foreach</strong>(dirname, &block)
       </div>
+      
+        <div class="doc"><p>Calls the block once for each entry in the named directory,
+passing the filename of each entry as a parameter to the block.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L166" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="glob%28%2Apatterns%2C%20%26block%29-class-method">
-        
-        def self.<strong>glob</strong>(*patterns, &block)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L152" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L189" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -248,7 +328,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L148" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L214" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="glob%28patterns%20%3A%20Enumerable%28String%29%2C%20%26block%29-class-method">
+        
+        def self.<strong>glob</strong>(patterns : <a href="Enumerable.html">Enumerable</a>(<a href="String.html">String</a>), &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L232" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="glob%28%2Apatterns%2C%20%26block%29-class-method">
+        
+        def self.<strong>glob</strong>(*patterns, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L218" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -261,20 +367,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L158" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="list%28dirname%2C%20%26block%29-class-method">
-        
-        def self.<strong>list</strong>(dirname, &block)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L117" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L224" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -287,7 +380,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L199" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L265" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -300,7 +393,38 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L206" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L272" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="open%28path%29-class-method">
+        
+        def self.<strong>open</strong>(path)
+      </div>
+      
+        <div class="doc"><p>Alias for <code><a href="Dir.html#new%28path%29-class-method">.new(path)</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="open%28path%2C%20%26block%29-class-method">
+        
+        def self.<strong>open</strong>(path, &block)
+      </div>
+      
+        <div class="doc"><p>Opens a directory and yields it, closing it at the end of the block.
+Returns the value of the block.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -313,7 +437,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L225" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L291" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -326,13 +450,118 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/ae8212cc68b2517e1b5d310c42bef131bed7009f/src/dir.cr#L94" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L157" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28path%29-class-method">
+        
+        def self.<strong>new</strong>(path)
+      </div>
+      
+        <div class="doc"><p>Returns a new directory object for the named directory.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L90" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
 
 
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="close-instance-method">
+        
+        def <strong>close</strong>
+      </div>
+      
+        <div class="doc"><p>Closes the directory stream.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L153" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each%28%26block%29-instance-method">
+        
+        def <strong>each</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Calls the block once for each entry in this directory,
+passing the filename of each entry as a parameter to the block.</p>
+
+<pre><code>d <span class="o">=</span> <span class="t">Dir</span>.<span class="k">new</span>(<span class="s">"testdir"</span>)
+d.each  {<span class="o">|</span>x<span class="o">|</span> puts <span class="s">"Got </span><span class="i">#{</span></span>x<span class="s"><span class="i">}</span>"</span> }</code></pre>
+
+<p>produces:</p>
+
+<pre><code>Got .
+Got ..
+Got config.h
+Got main.rb</code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L129" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="path-instance-method">
+        
+        def <strong>path</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L87" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read-instance-method">
+        
+        def <strong>read</strong>
+      </div>
+      
+        <div class="doc"><p>Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.</p>
+
+<pre><code>d <span class="o">=</span> <span class="t">Dir</span>.<span class="k">new</span>(<span class="s">"testdir"</span>)
+d.read   <span class="c">#=> "."</span>
+d.read   <span class="c">#=> ".."</span>
+d.read   <span class="c">#=> "config.h"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L143" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%29-instance-method">
+        
+        def <strong>to_s</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/dir.cr#L298" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
 
 
 
