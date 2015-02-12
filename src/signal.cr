@@ -48,14 +48,12 @@ module Signal
   end
 
   def trap(signal, &block : Int32 ->)
-    handlers = @@handlers ||= {} of Int32 => Int32 ->
-    handlers[signal] = block
-
-    case block
-    when DEFAULT, IGNORE
-      LibC.signal signal, block
-    else
+    if block.closure?
+      handlers = @@handlers ||= {} of Int32 => Int32 ->
+      handlers[signal] = block
       LibC.signal signal, ->handler(Int32)
+    else
+      LibC.signal signal, block
     end
   end
 
