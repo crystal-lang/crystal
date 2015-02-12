@@ -665,4 +665,32 @@ describe "Type inference: module" do
       Bar || Moo
       )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
   end
+
+  it "works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)" do
+    assert_type(%(
+      lib LibC
+        type X = Void*
+        fun x : X
+      end
+
+      module Mod(T)
+        def bar(other : T)
+          1
+        end
+      end
+
+      struct Pointer
+        include Mod(self)
+
+        def foo
+          address
+        end
+      end
+
+      LibC.x.foo
+
+      p = Pointer(Void).malloc(1_u64)
+      p.bar(p)
+      )) { int32 }
+  end
 end

@@ -1847,22 +1847,24 @@ module Crystal
     delegate reference_like?, typedef
 
     def parents
-      typedef_parents = typedef.parents
-
       # We need to repoint "self" in included generic modules to this typedef,
       # so "self" restrictions match and don't point to the typdefed type.
-      if typedef_parents
-        typedef_parents.each_with_index do |t, i|
-          case t
-          when IncludedGenericModule
-            typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
-          when InheritedGenericClass
-            typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
+      @parents ||= begin
+        typedef_parents = typedef.parents.try(&.dup) || [] of Type
+
+        if typedef_parents
+          typedef_parents.each_with_index do |t, i|
+            case t
+            when IncludedGenericModule
+              typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
+            when InheritedGenericClass
+              typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
+            end
           end
         end
-      end
 
-      typedef_parents
+        typedef_parents
+      end
     end
 
     def primitive_like?
