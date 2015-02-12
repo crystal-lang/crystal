@@ -40,8 +40,8 @@ module Signal
   USR1   = 30
   USR2   = 31
 
-  DEFAULT = Function(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
-  IGNORE  = Function(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
+  DEFAULT = Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
+  IGNORE  = Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
   def trap(signal, block : Int32 ->)
     trap signal, &block

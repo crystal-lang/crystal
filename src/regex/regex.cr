@@ -25,13 +25,13 @@ class Regex
       match = nil
     end
 
-    # $~ = match
+    $~ = match
     MatchData.last = match
   end
 
   def ===(other : String)
     match = match(other)
-    # $~ = match
+    $~ = match
     !match.nil?
   end
 

@@ -118,12 +118,12 @@ end
 
 def system(command : String)
   status = Process.run("/bin/sh", input: command, output: STDOUT)
-  # $? = status
+  $? = status
   status.success?
 end
 
 def `(command)
   status = Process.run("/bin/sh", input: command, output: true)
-  # $? = status
+  $? = status
   status.output.not_nil!
 end

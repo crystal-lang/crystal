@@ -1,3 +1,7 @@
+## 0.6.0 (2015-02-12)
+
+* Same as 0.5.10
+
 ## 0.5.10 (transitional) (2015-02-12)
 
 * **Note**: This release makes core, breaking changes to the language, and doesn't work out of the box with its accompanying standard library. Use 0.6.0 instead.

@@ -1,4 +1,4 @@
-class Pointer(T)
+struct Pointer(T)
   include Comparable(self)
 
   def nil?

@@ -542,7 +542,7 @@ class String
 
   def =~(regex : Regex)
     match = regex.match(self)
-    # $~ = match
+    $~ = match
     match.try &.begin(0)
   end
 
@@ -968,7 +968,7 @@ class String
 
   def match(regex : Regex)
     match = regex.match self
-    # $~ = match
+    $~ = match
     match
   end
 
