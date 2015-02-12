@@ -117,9 +117,13 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
 end
 
 def system(command : String)
-  Process.run("/bin/sh", input: command, output: STDOUT).success?
+  status = Process.run("/bin/sh", input: command, output: STDOUT)
+  # $? = status
+  status.success?
 end
 
 def `(command)
-  Process.run("/bin/sh", input: command, output: true).output.not_nil!
+  status = Process.run("/bin/sh", input: command, output: true)
+  # $? = status
+  status.output.not_nil!
 end

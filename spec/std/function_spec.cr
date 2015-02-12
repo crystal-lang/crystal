@@ -1,6 +1,6 @@
 require "spec"
 
-describe "Function" do
+describe "Proc" do
   it "does to_s(io)" do
     str = StringIO.new
     f = ->(x : Int32) { x.to_f }
@@ -47,11 +47,10 @@ describe "Function" do
     f.closure?.should be_true
   end
 
-  # TOOD: uncomment in 0.5.9
-  # it "does new" do
-  #   a = 1
-  #   f = ->(x : Int32){ x + a }
-  #   f2 = Function(Int32, Int32).new(f.pointer, f.closure_data)
-  #   f2.call(3).should eq(4)
-  # end
+  it "does new" do
+    a = 1
+    f = ->(x : Int32){ x + a }
+    f2 = Proc(Int32, Int32).new(f.pointer, f.closure_data)
+    f2.call(3).should eq(4)
+  end
 end

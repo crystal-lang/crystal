@@ -741,7 +741,9 @@ module Crystal
     def visit(node : Var)
       var = context.vars[node.name]?
       if var
-        @last = downcast var.pointer, node.type, var.type, var.already_loaded
+        # Special variables always have an extra pointer
+        already_loaded = (node.special_var? ? false : var.already_loaded)
+        @last = downcast var.pointer, node.type, var.type, already_loaded
       elsif node.name == "self"
         if node.type.metaclass?
           @last = type_id(node.type)

@@ -541,7 +541,9 @@ class String
   end
 
   def =~(regex : Regex)
-    regex.match(self).try &.begin(0)
+    match = regex.match(self)
+    # $~ = match
+    match.try &.begin(0)
   end
 
   def =~(other)
@@ -965,7 +967,9 @@ class String
   end
 
   def match(regex : Regex)
-    regex.match self
+    match = regex.match self
+    # $~ = match
+    match
   end
 
   def scan(pattern)

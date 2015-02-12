@@ -1,4 +1,4 @@
-struct Process::Status
+class Process::Status
   property pid
   property exit
   property input

@@ -20,18 +20,19 @@ class Regex
     ovector = Pointer(Int32).malloc(ovector_size * 4)
     ret = LibPCRE.exec(@re, nil, str, str.bytesize, pos, options, ovector, ovector_size)
     if ret > 0
-      MatchData.last = MatchData.new(self, @re, str, pos, ovector, @captures)
+      match = MatchData.new(self, @re, str, pos, ovector, @captures)
     else
-      MatchData.last = nil
+      match = nil
     end
+
+    # $~ = match
+    MatchData.last = match
   end
 
   def ===(other : String)
-    !match(other).nil?
-  end
-
-  def =~(other : String)
-    match(other).try &.begin(0)
+    match = match(other)
+    # $~ = match
+    !match.nil?
   end
 
   def to_s(io : IO)

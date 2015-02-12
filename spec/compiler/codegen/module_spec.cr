@@ -143,7 +143,7 @@ describe "Code gen: module" do
         end
       end
 
-      class Pointer
+      struct Pointer
         def each
           yield value
         end

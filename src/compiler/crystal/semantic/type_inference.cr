@@ -68,6 +68,7 @@ module Crystal
       @is_initialize = !!(typed_def && typed_def.name == "initialize")
       @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
+      @has_special_vars_defined = false
       @in_type_args = 0
       @attributes  = nil
       @lib_def_pass = 0
@@ -129,6 +130,10 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
+        if !@has_special_vars_defined && node.special_var?
+          node.raise "'#{node.name}' was not defined by any previous call"
+        end
+
         meta_var = @meta_vars[node.name]
         check_closured meta_var
 
@@ -153,6 +158,8 @@ module Crystal
         else
           node.type = current_type.metaclass
         end
+      elsif node.special_var?
+        node.raise "'#{node.name}' was not defined by any previous call"
       else
         node.raise "read before definition of '#{node.name}'"
       end
@@ -341,15 +348,15 @@ module Crystal
     end
 
     def type_assign(target : Var, value, node)
-      var_name = target.name
-
       value.accept self
-
-      value_type_filters = @type_filters
-      @type_filters = nil
 
       target.bind_to value
       node.bind_to value
+
+      var_name = target.name
+
+      value_type_filters = @type_filters
+      @type_filters = nil
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
       meta_var.bind_to value
@@ -375,6 +382,17 @@ module Crystal
       if needs_type_filters?
         @type_filters = TypeFilters.and(TypeFilters.truthy(target), value_type_filters)
       end
+
+      if target.special_var?
+        if typed_def = @typed_def
+          typed_def.add_special_var(target.name)
+        else
+          node.raise "'#{var_name}' can't be assigned at the top level"
+        end
+      end
+    end
+
+    def type_assign_helper(var_name, target, value)
     end
 
     def type_assign(target : InstanceVar, value, node)
@@ -3185,6 +3203,21 @@ module Crystal
           similar_name.test(var_name)
         end
       end
+    end
+
+    def define_special_var(name, value)
+      meta_var = (@meta_vars[name] ||= new_meta_var(name))
+      meta_var.bind_to value
+      meta_var.bind_to mod.nil_var unless meta_var.dependencies.any? &.same?(mod.nil_var)
+      meta_var.assigned_to = true
+      check_closured meta_var
+
+      unless meta_var.type.is_a?(NilableType)
+        value.raise "'#{name}' only allows reference nilable types, not #{meta_var.type}"
+      end
+
+      @vars[name] = meta_var
+      @has_special_vars_defined = true
     end
 
     def new_meta_var(name, context = current_context)

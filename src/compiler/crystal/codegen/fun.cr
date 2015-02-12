@@ -133,6 +133,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       return args
     end
 
+    target_def.special_vars.try &.each do |special_var_name|
+      args.push Arg.new(special_var_name, type: target_def.vars.not_nil![special_var_name].type)
+    end
+
     if is_external
       llvm_args_types = args.map { |arg| llvm_c_type(arg.type) }
       llvm_return_type = llvm_c_return_type(target_def.type)
@@ -143,7 +147,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         target_def.sret = true
       end
     else
-      llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
+      llvm_args_types = args.map do |arg|
+        arg_type = llvm_arg_type(arg.type)
+        arg_type = arg_type.pointer if arg.special_var?
+        arg_type
+      end
       llvm_return_type = llvm_type(target_def.type)
     end
 
@@ -266,7 +274,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       # We don't need to create a copy of the argument if it's never
       # assigned a value inside the function.
       needs_copy = target_def_var.try &.assigned_to
-      if needs_copy
+      if needs_copy && !arg.special_var?
         pointer = alloca(llvm_type(var_type), arg.name)
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
       else

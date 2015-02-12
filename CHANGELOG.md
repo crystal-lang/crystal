@@ -1,6 +1,11 @@
-## Next
+## 0.5.10 (transitional) (2015-02-12)
 
+* **Note**: This release makes core, breaking changes to the language, and doesn't work out of the box with its accompanying standard library. Use 0.6.0 instead.
 * Improved error messages related to nilable instance variables.
+* The magic variables `$~` and `$?` are now method-local and concurrent-safe.
+* `Tuple` is now correctly considered a struct
+* `Pointer` is now correctly considered a struct
+* Renamed `Function` to `Proc`
 
 ## 0.5.9 (2015-02-07)
 

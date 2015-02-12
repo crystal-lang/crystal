@@ -205,6 +205,10 @@ module Crystal
       llvm_type type
     end
 
+    def create_llvm_struct_type(type : TupleInstanceType)
+      llvm_type type
+    end
+
     def create_llvm_struct_type(type : CStructType)
       LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
         @struct_cache[type] = a_struct
@@ -284,6 +288,10 @@ module Crystal
     end
 
     def llvm_embedded_type(type : FunInstanceType)
+      llvm_type type
+    end
+
+    def llvm_embedded_type(type : PointerInstanceType)
       llvm_type type
     end
 

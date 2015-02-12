@@ -25,7 +25,7 @@ describe "Code gen: tuple" do
 
   it "accesses a tuple type and creates instance from it" do
     run("
-      class Tuple
+      struct Tuple
         def types
           T
         end
@@ -48,7 +48,7 @@ describe "Code gen: tuple" do
 
   it "allows malloc pointer of tuple" do
     run("
-      class Pointer
+      struct Pointer
         def self.malloc(size : Int)
           malloc(size.to_u64)
         end
@@ -101,7 +101,7 @@ describe "Code gen: tuple" do
 
   it "gets length at compile time" do
     run(%(
-      class Tuple
+      struct Tuple
         def my_length
           {{ @length }}
         end

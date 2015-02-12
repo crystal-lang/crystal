@@ -79,8 +79,17 @@ class Crystal::Call
     bind_to matches if matches
     bind_to block.break if block
 
-    if (parent_visitor = @parent_visitor) && parent_visitor.typed_def? && matches && matches.any?(&.raises)
-      parent_visitor.typed_def.raises = true
+    if (parent_visitor = @parent_visitor) && matches
+      if parent_visitor.typed_def? && matches.any?(&.raises)
+        parent_visitor.typed_def.raises = true
+      end
+
+      matches.each do |match|
+        match.special_vars.try &.each do |special_var_name|
+          special_var = match.vars.not_nil![special_var_name]
+          parent_visitor.define_special_var(special_var_name, special_var)
+        end
+      end
     end
   end
 

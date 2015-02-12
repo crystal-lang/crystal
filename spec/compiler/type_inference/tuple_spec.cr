@@ -32,7 +32,7 @@ describe "Type inference: tuples" do
 
   it "types T as a tuple of metalcasses" do
     assert_type("
-      class Tuple
+      struct Tuple
         def types
           T
         end

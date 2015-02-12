@@ -109,6 +109,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       call_args << call_arg
     end
 
+    # Then special variables ($~, $?)
+    target_def.special_vars.try &.each do |special_var_name|
+      call_args << context.vars[special_var_name].pointer
+    end
+
     # Then magic constants (__LINE__, __FILE__, __DIR__)
     node.args.length.upto(target_def.args.length - 1) do |index|
       arg = target_def.args[index]

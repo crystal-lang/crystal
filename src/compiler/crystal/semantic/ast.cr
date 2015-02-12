@@ -167,14 +167,19 @@ module Crystal
 
     property :previous
     property :next
-
     property :visibility
+    getter :special_vars
 
     def macro_owner=(@macro_owner)
     end
 
     def macro_owner
       @macro_owner || @owner
+    end
+
+    def add_special_var(name)
+      special_vars = @special_vars ||= Set(String).new
+      special_vars << name
     end
   end
 
@@ -496,6 +501,18 @@ module Crystal
     getter nodes
 
     def initialize(@name, @reason, @nodes = nil)
+    end
+  end
+
+  class Arg
+    def special_var?
+      @name.starts_with? '$'
+    end
+  end
+
+  class Var
+    def special_var?
+      @name.starts_with? '$'
     end
   end
 end

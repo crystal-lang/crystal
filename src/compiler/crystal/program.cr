@@ -66,7 +66,9 @@ module Crystal
       @types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
 
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
-      @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
+      @types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
+      pointer.struct = true
+
       @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
 
       @types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
@@ -102,8 +104,8 @@ module Crystal
       enum_t.abstract = true
       enum_t.struct = true
 
-      @types["Function"] = function = @function = FunType.new self, self, "Function", value, ["T"]
-      function.variadic = true
+      @types["Proc"] = proc = @proc = FunType.new self, self, "Proc", value, ["T"]
+      proc.variadic = true
 
       @types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
@@ -215,7 +217,7 @@ module Crystal
     end
 
     def fun_of(types : Array)
-      function.instantiate(types)
+      proc.instantiate(types)
     end
 
     def add_to_requires(filename)
@@ -246,7 +248,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
                       uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
-                      exception tuple function enum) %}
+                      exception tuple proc enum) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

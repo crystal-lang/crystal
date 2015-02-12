@@ -251,4 +251,17 @@ describe "Code gen: pointer" do
       pointerof(FOO).value
     ").to_i.should eq(1)
   end
+
+  it "passes pointer of pointer to method" do
+    run("
+      def foo(x)
+        x.value.value
+      end
+
+      p = Pointer(Pointer(Int32)).malloc(1_u64)
+      p.value = Pointer(Int32).malloc(1_u64)
+      p.value.value = 1
+      foo p
+      ").to_i.should eq(1)
+  end
 end

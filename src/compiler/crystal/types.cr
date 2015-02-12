@@ -1511,6 +1511,10 @@ module Crystal
       var.type.primitive_like?
     end
 
+    def passed_by_value?
+      false
+    end
+
     def type_desc
       "struct"
     end
@@ -1562,6 +1566,7 @@ module Crystal
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
       @variadic = true
+      @struct = true
     end
 
     def instantiate(type_vars)
@@ -2575,7 +2580,7 @@ module Crystal
     def initialize(@program, @fun_types)
       var = Var.new("T", self)
       var.bind_to var
-      super(program, program.function, {"T" => var} of String => ASTNode)
+      super(program, program.proc, {"T" => var} of String => ASTNode)
 
       args = arg_types.map_with_index { |type, i| Arg.new("arg#{i}", type: type) }
 
@@ -2603,7 +2608,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= [@program.function] of Type
+      @parents ||= [@program.proc] of Type
     end
 
     def primitive_like?

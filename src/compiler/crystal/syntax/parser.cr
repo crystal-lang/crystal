@@ -736,16 +736,34 @@ module Crystal
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
-      when :"$~"
-        node_and_next_token Call.new(Path.global("MatchData"), "last")
-      when :"$?"
-        node_and_next_token Call.new(Path.global(["Process", "Status"]), "last")
+      when :"$~", :"$?"
+        location = @token.location
+        var = Var.new(@token.to_s).at(location)
+
+        old_pos, old_line, old_column = current_pos, @line_number, @column_number
+        @temp_token.copy_from(@token)
+
+        next_token_skip_space
+
+        if @token.type == :"="
+          @token.copy_from(@temp_token)
+          self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+
+          push_var var
+          node_and_next_token var
+        else
+          @token.copy_from(@temp_token)
+          self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+
+          node_and_next_token Call.new(var, "not_nil!").at(location)
+        end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value
         if value == 0
           node_and_next_token Path.global("PROGRAM_NAME")
         else
-          node_and_next_token Call.new(Call.new(Path.global("MatchData"), "last"), "[]", NumberLiteral.new(value as Int32))
+          location = @token.location
+          node_and_next_token Call.new(Call.new(Var.new("$~").at(location), "not_nil!").at(location), "[]", NumberLiteral.new(value as Int32))
         end
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
