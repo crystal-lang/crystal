@@ -130,10 +130,6 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        if !@has_special_vars_defined && node.special_var?
-          node.raise "'#{node.name}' was not defined by any previous call"
-        end
-
         meta_var = @meta_vars[node.name]
         check_closured meta_var
 
@@ -159,7 +155,7 @@ module Crystal
           node.type = current_type.metaclass
         end
       elsif node.special_var?
-        node.raise "'#{node.name}' was not defined by any previous call"
+        define_special_var(node.name, mod.nil_var)
       else
         node.raise "read before definition of '#{node.name}'"
       end
@@ -3212,7 +3208,10 @@ module Crystal
       meta_var.assigned_to = true
       check_closured meta_var
 
-      unless meta_var.type.is_a?(NilableType)
+      case meta_var.type
+      when NilType, NilableType
+        # OK
+      else
         value.raise "'#{name}' only allows reference nilable types, not #{meta_var.type}"
       end
 

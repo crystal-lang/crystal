@@ -15,15 +15,16 @@ describe "Type inference: special vars" do
         )) { nilable string }
     end
 
-    it "errors if #{name} is not defined" do
-      assert_error  %(
+    it "types #{name} when not defined as no return" do
+      assert_type(%(
+        require "prelude"
+
         #{name}
-        ),
-        "'#{name}' was not defined by any previous call"
+        )) { no_return }
     end
 
-    it "errors if #{name} is not defined (2)" do
-      assert_error  %(
+    it "types #{name} when not defined as no return (2)" do
+      assert_type(%(
         class Object; def not_nil!; self; end; end
 
         def foo
@@ -32,8 +33,7 @@ describe "Type inference: special vars" do
         end
 
         foo
-        ),
-        "'#{name}' was not defined by any previous call"
+        )) { string }
     end
 
     it "errors if #{name} is not a reference nilable type" do
