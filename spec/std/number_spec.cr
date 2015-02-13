@@ -44,4 +44,17 @@ describe "Number" do
       15.159.round(0, base = 8).should eq(15.0)
     end
   end
+
+  it "creates an array with [] and some elements" do
+    ary = Int64[1, 2, 3]
+    ary.should eq([1, 2, 3])
+    ary[0].should be_a(Int64)
+  end
+
+  it "creates an array with [] and no elements" do
+    ary = Int64[]
+    ary.should eq([] of Int64)
+    ary << 1_i64
+    ary.should eq([1])
+  end
 end

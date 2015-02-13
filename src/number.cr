@@ -2,15 +2,14 @@ struct Number
   def +
     self
   end
-  
-  def self.[](num, *nums)
-    array = Array(self).new(1 + nums.length) << cast(num)
-    nums.each { |n| array << cast(n) }
-    array
-  end
 
-  def self.[]
-    [] of self
+  def self.[](*nums)
+    ary = Array(self).new(nums.length)
+    ary.length = nums.length
+    nums.each_with_index do |num, i|
+      ary.buffer[i] = cast(num)
+    end
+    ary
   end
 
   def step(limit = nil, by = 1)
