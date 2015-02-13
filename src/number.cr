@@ -2,6 +2,16 @@ struct Number
   def +
     self
   end
+  
+  def self.[](num, *nums)
+    array = Array(self).new(1 + nums.length) << cast(num)
+    nums.each { |n| array << cast(n) }
+    array
+  end
+
+  def self.[]
+    [] of self
+  end
 
   def step(limit = nil, by = 1)
     x = self
