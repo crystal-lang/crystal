@@ -46,6 +46,7 @@ require "regex"
 require "raise"
 require "errno"
 require "main"
+require "concurrent"
 
 def loop
   while true

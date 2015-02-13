@@ -1,7 +1,28 @@
-class File < FileDescriptorIO
-  SEPARATOR = '/'
+ifdef evented
+  require "uv"
+  class File < UV::File
+  end
+else
+  class File < FileDescriptorIO
+    def initialize(filename, mode = "r")
+      oflag = open_flag(mode)
 
-  def initialize(filename, mode = "r")
+      fd = LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+      if fd < 0
+        raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+      end
+
+      @path = filename
+      super(fd)
+    end
+  end
+end
+
+class File
+  SEPARATOR = '/'
+  DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
+
+  protected def open_flag(mode)
     if mode.length == 0
       raise "invalid access mode #{mode}"
     end
@@ -38,14 +59,6 @@ class File < FileDescriptorIO
     end
 
     oflag = m | o
-
-    fd = LibC.open(filename, oflag, LibC::S_IRWXU)
-    if fd < 0
-      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
-    end
-
-    @path = filename
-    super(fd)
   end
 
   getter path

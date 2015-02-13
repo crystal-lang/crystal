@@ -1,3 +1,5 @@
+require "./libc"
+
 lib LibC
   ifdef darwin
     struct Addrinfo
