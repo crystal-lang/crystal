@@ -1,4 +1,5 @@
 require "./macros/virtual_file"
+require "./types"
 require "colorize"
 
 module Crystal
@@ -225,7 +226,8 @@ module Crystal
     end
 
     def append_to_s(source, io)
-      unless @trace.empty?
+      has_trace = @trace.any?(&.location)
+      if has_trace
         io.puts ("=" * 80)
         io << "\n#{@owner} trace:"
         @trace.each do |node|
@@ -233,40 +235,54 @@ module Crystal
         end
       end
 
-      if nil_reason = @nil_reason
-        io.puts
-        io.puts
-        io.puts ("=" * 80)
-        io.puts
+      nil_reason = @nil_reason
+      return unless nil_reason
 
-        io << "Error: ".colorize.bold
-        case nil_reason.reason
-        when :not_in_initialize
-          io << "instance variable '#{nil_reason.name}' was not initialized in all of the 'initialize' methods, rendering it nilable".colorize.bold
-          if scope = nil_reason.scope
-            defs = defs_without_instance_var_initialized scope, nil_reason.name
-            unless defs.empty?
-              io << "."
-              io.puts
-              io.puts
-              io << "Specifically in "
-              io << (defs.length == 1 ? "this one" : "these ones")
-              io << ":"
-              defs.each do |a_def|
-                print_with_location a_def, io
-              end
+      if has_trace
+        io.puts
+        io.puts
+      end
+      io.puts ("=" * 80)
+      io.puts
+
+      io << "Error: ".colorize.bold
+      case nil_reason.reason
+      when :not_in_initialize
+        scope = nil_reason.scope.not_nil!
+        if scope.is_a?(VirtualType)
+          scope.each_concrete_type do |subtype|
+            unless subtype.has_instance_var_in_initialize?(nil_reason.name)
+              instance_var_not_initialized subtype, nil_reason.name, io
             end
           end
-        when :used_before_initialized
-          io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable".colorize.bold
-        when :used_self_before_initialized
-          io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable".colorize.bold
+        else
+          instance_var_not_initialized scope, nil_reason.name, io
         end
+      when :used_before_initialized
+        io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable".colorize.bold
+      when :used_self_before_initialized
+        io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable".colorize.bold
+      end
 
-        if nil_reason_nodes = nil_reason.nodes
-          nil_reason_nodes.each do |node|
-            print_with_location node, io
-          end
+      if nil_reason_nodes = nil_reason.nodes
+        nil_reason_nodes.each do |node|
+          print_with_location node, io
+        end
+      end
+    end
+
+    def instance_var_not_initialized(scope, var_name, io)
+      io << "instance variable '#{var_name}' of #{scope} was not initialized in all of the 'initialize' methods, rendering it nilable".colorize.bold
+      defs = defs_without_instance_var_initialized scope, var_name
+      unless defs.empty?
+        io << "."
+        io.puts
+        io.puts
+        io << "Specifically in "
+        io << (defs.length == 1 ? "this one" : "these ones")
+        io << ":"
+        defs.each do |a_def|
+          print_with_location a_def, io
         end
       end
     end

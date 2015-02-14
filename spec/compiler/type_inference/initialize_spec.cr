@@ -724,4 +724,31 @@ describe "Type inference: initialize" do
       Foo.new.foo
       ") { int32 }
   end
+
+  it "doesn't type instance var as nil if all subclasses initialize it and base class is abstract" do
+    assert_type(%(
+      abstract class Foo
+        def foo
+          @foo + 1
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          @foo = 1
+        end
+      end
+
+      class Baz < Foo
+        def initialize
+          @foo = 1
+        end
+      end
+
+      p = Pointer(Foo).malloc(1_u64)
+      p.value = Bar.new
+      p.value = Baz.new
+      p.value.foo
+      )) { int32 }
+  end
 end

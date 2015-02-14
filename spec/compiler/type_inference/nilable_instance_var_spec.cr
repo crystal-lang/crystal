@@ -18,7 +18,32 @@ describe "Type inference: nilable instance var" do
 
       Foo.new.foo + 1
       ),
-      "instance variable '@foo' was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@foo' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+  end
+
+  it "says instance var was not initialized in all of the initialize methods (2)" do
+    assert_error %(
+      abstract class Foo
+        def foo
+          @foo
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          @foo = 1
+        end
+      end
+
+      class Baz < Foo
+      end
+
+      p = Pointer(Foo).malloc(1_u64)
+      p.value = Bar.new
+      p.value = Baz.new
+      p.value.foo + 1
+      ),
+      "instance variable '@foo' of Baz was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
   it "says instance var was used before initialized" do

@@ -1,4 +1,5 @@
 require "./similar_name"
+require "./syntax/ast"
 
 module Crystal
   abstract class Type
@@ -2399,6 +2400,19 @@ module Crystal
     delegate allocated, base_type
     delegate is_subclass_of?, base_type
     delegate implements?, base_type
+
+    def has_instance_var_in_initialize?(name)
+      if base_type.abstract
+        each_concrete_type do |subtype|
+          unless subtype.has_instance_var_in_initialize?(name)
+            return false
+          end
+        end
+        true
+      else
+        base_type.has_instance_var_in_initialize?(name)
+      end
+    end
 
     def allocated=(allocated)
       base_type.allocated = allocated
