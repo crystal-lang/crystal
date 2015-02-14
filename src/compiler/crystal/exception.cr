@@ -243,6 +243,20 @@ module Crystal
         case nil_reason.reason
         when :not_in_initialize
           io << "instance variable '#{nil_reason.name}' was not initialized in all of the 'initialize' methods, rendering it nilable".colorize.bold
+          if scope = nil_reason.scope
+            defs = defs_without_instance_var_initialized scope, nil_reason.name
+            unless defs.empty?
+              io << "."
+              io.puts
+              io.puts
+              io << "Specifically in "
+              io << (defs.length == 1 ? "this one" : "these ones")
+              io << ":"
+              defs.each do |a_def|
+                print_with_location a_def, io
+              end
+            end
+          end
         when :used_before_initialized
           io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable".colorize.bold
         when :used_self_before_initialized
@@ -253,6 +267,18 @@ module Crystal
           nil_reason_nodes.each do |node|
             print_with_location node, io
           end
+        end
+      end
+    end
+
+    def defs_without_instance_var_initialized(scope, var_name)
+      defs = scope.lookup_defs("initialize")
+      defs = defs.select do |a_def|
+        instance_vars = a_def.instance_vars
+        if instance_vars
+          !instance_vars.includes?(var_name)
+        else
+          true
         end
       end
     end

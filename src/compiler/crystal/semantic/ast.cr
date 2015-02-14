@@ -499,8 +499,9 @@ module Crystal
     getter name
     getter reason
     getter nodes
+    getter scope
 
-    def initialize(@name, @reason, @nodes = nil)
+    def initialize(@name, @reason, @nodes = nil, @scope = nil)
     end
   end
 
