@@ -30,7 +30,7 @@ struct LLVM::Target
 
   def create_target_machine(triple, cpu = "", features = "",
       opt_level = LLVM::CodeGenOptLevel::Default,
-      reloc = LLVM::RelocMode::Default,
+      reloc = LLVM::RelocMode::PIC,
       code_model = LLVM::CodeModel::Default)
     target_machine = LibLLVM.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model)
     target_machine ? TargetMachine.new(target_machine) : nil
