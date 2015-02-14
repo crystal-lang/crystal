@@ -576,6 +576,7 @@ module Crystal
     end
 
     def visit(node : Def)
+      @str << "abstract " if node.abstract
       @str << keyword("def")
       @str << " "
       if node_receiver = node.receiver
@@ -602,9 +603,12 @@ module Crystal
         return_type.accept self
       end
       @str << newline
-      accept_with_indent(node.body)
-      append_indent
-      @str << keyword("end")
+
+      unless node.abstract
+        accept_with_indent(node.body)
+        append_indent
+        @str << keyword("end")
+      end
       false
     end
 

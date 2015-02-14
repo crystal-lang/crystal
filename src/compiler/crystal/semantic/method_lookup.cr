@@ -19,6 +19,8 @@ module Crystal
         context = MatchContext.new(owner, type_lookup)
 
         defs.each do |item|
+          next if item.def.abstract
+
           if (item.min_length <= args_length <= item.max_length) && item.yields == yields
             match = MatchesLookup.match_def(signature, item, context)
 
@@ -260,23 +262,6 @@ module Crystal
             end
           end
 
-          # Also, check if a base type match is abstract: if so,
-          # add it to this subtype
-          if subtype_matches.empty?
-            new_subtype_matches = nil
-
-            base_type_matches.each do |base_type_match|
-              if base_type_match.def.abstract
-                new_subtype_matches ||= [] of Match
-                new_subtype_matches.push Match.new(base_type_match.def, base_type_match.arg_types, MatchContext.new(subtype_lookup, base_type_match.context.type_lookup, base_type_match.context.free_vars))
-              end
-            end
-
-            if new_subtype_matches
-              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature.arg_types, new_subtype_matches))
-            end
-          end
-
           if !subtype.leaf? && subtype_matches.length > 0
             type_to_matches ||= {} of Type => Matches
             type_to_matches[subtype] = subtype_matches
@@ -285,18 +270,7 @@ module Crystal
           # If the subtype is non-abstract but doesn't cover all,
           # we need to check if a parent covers it
           if !subtype.abstract && !base_type_covers_all && !subtype_matches.cover_all?
-            covered_by_superclass = false
-            superclass = subtype.superclass
-            while superclass && superclass != base_type
-              superclass_matches = type_to_matches.try &.[superclass]?
-              if superclass_matches && superclass_matches.cover_all?
-                covered_by_superclass = true
-                break
-              end
-              superclass = superclass.superclass
-            end
-
-            unless covered_by_superclass
+            unless covered_by_superclass?(subtype, type_to_matches)
               return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
             end
           end
@@ -321,6 +295,18 @@ module Crystal
       end
 
       Matches.new(matches, (matches && matches.length > 0), self)
+    end
+
+    def covered_by_superclass?(subtype, type_to_matches)
+      superclass = subtype.superclass
+      while superclass && superclass != base_type
+        superclass_matches = type_to_matches.try &.[superclass]?
+        if superclass_matches && superclass_matches.cover_all?
+          return true
+        end
+        superclass = superclass.superclass
+      end
+      false
     end
   end
 end

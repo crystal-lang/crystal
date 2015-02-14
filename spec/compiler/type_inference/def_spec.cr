@@ -218,58 +218,6 @@ describe "Type inference: def" do
       ") { int32 }
   end
 
-  it "errors if using abstract def" do
-    assert_error %(
-      class Foo
-        abstract def foo
-      end
-
-      Foo.new.foo
-      ), "abstract def Foo#foo must be implemented by Foo"
-  end
-
-  it "errors if using abstract def on subclass" do
-    assert_error %(
-      class Foo
-        abstract def foo
-      end
-
-      class Bar < Foo
-        def foo
-          1
-        end
-      end
-
-      class Baz < Foo
-      end
-
-      (Bar.new || Baz.new).foo
-      ), "abstract def Foo#foo must be implemented by Baz"
-  end
-
-  it "works on abstract method on abstract class" do
-    assert_type %(
-      abstract class Foo
-        abstract def foo
-      end
-
-      class Bar < Foo
-        def foo
-          1
-        end
-      end
-
-      class Baz < Foo
-        def foo
-          2
-        end
-      end
-
-      b = Bar.new || Baz.new
-      b.foo
-      ) { int32 }
-  end
-
   it "fixes bug #165" do
     assert_error %(
       abstract class Node

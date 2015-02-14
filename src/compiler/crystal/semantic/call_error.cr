@@ -41,6 +41,26 @@ class Crystal::Call
       end
     end
 
+    # Check if it's the case of an abstract def
+    if !matches || (matches.try &.empty?)
+      defs.each do |a_def|
+        if a_def.abstract
+          if a_def.owner == owner
+            signature = CallSignature.new(def_name, args.map(&.type), block, named_args)
+            owner.all_subclasses.each do |subclass|
+              submatches = subclass.lookup_matches(signature)
+              if submatches.empty?
+                a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{subclass}"
+              end
+            end
+            a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
+          else
+            a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
+          end
+        end
+      end
+    end
+
     obj = @obj
     if defs.empty?
       check_macro_wrong_number_of_arguments(def_name)
