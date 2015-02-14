@@ -298,12 +298,8 @@ module Crystal
       when InstanceVarContainer
         var = scope.lookup_instance_var node.name
         unless scope.has_instance_var_in_initialize?(node.name)
-          begin
-            var.nil_reason = NilReason.new(node.name, :not_in_initialize, scope: scope)
-            var.bind_to mod.nil_var
-          rescue ex : Crystal::Exception
-            node.raise "#{node} not in initialize so it's nilable", ex
-          end
+          var.nil_reason = NilReason.new(node.name, :not_in_initialize, scope: scope)
+          var.bind_to mod.nil_var
         end
         check_self_closured
         var

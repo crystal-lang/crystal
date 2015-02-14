@@ -15,7 +15,14 @@ module Crystal
       type = type.remove_alias_if_simple
       # TODO: this should really be "type.implements?(my_type)"
       if (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
-        raise "type must be #{freeze_type}, not #{type}", nil, Crystal::FrozenTypeException
+        if !freeze_type.includes_type?(type.program.nil) && type.includes_type?(type.program.nil)
+          # This means that an instance variable become nil
+          if self.is_a?(MetaInstanceVar) && (nil_reason = self.nil_reason)
+            inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
+          end
+        end
+
+        raise "type must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
       end
       @type = type
     end

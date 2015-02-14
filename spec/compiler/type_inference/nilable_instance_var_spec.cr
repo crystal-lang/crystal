@@ -46,6 +46,21 @@ describe "Type inference: nilable instance var" do
       "instance variable '@foo' of Baz was not initialized in all of the 'initialize' methods, rendering it nilable"
   end
 
+  it "says instance var was not initialized in all of the initialize methods, with var declaration" do
+    assert_error %(
+      class Foo
+        @foo :: Int32
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "instance variable '@foo' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+  end
+
   it "says instance var was used before initialized" do
     assert_error %(
       class Foo
