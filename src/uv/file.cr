@@ -65,4 +65,17 @@ class UV::File
     req.result
   end
 
+  def stat
+    req :: LibUV::FsReq
+    req.data = Fiber.current as Void*
+
+    LibUV.fs_fstat(Loop::DEFAULT, pointerof(req), @handle, ->(fs) {
+      LibUV.fs_req_cleanup(fs)
+      (fs.value.data as Fiber).resume
+    })
+    Fiber.yield
+
+    File::Stat.new(req.statbuf)
+  end
+
 end

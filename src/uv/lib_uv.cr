@@ -183,9 +183,9 @@ lib LibUV
     st_blocks : UInt64
     st_flags : UInt64
     st_gen : UInt64
-    st_atim : Timespec
-    st_mtim : Timespec
-    st_ctim : Timespec
+    st_atimespec : Timespec
+    st_mtimespec : Timespec
+    st_ctimespec : Timespec
     st_birthtim : Timespec
   end
 
@@ -219,6 +219,7 @@ lib LibUV
   fun fs_write = uv_fs_write(loop : Loop, req : FsReq*, file : LibC::SSizeT, bufs : Buf*, nbufs : UInt32, offset : Int64, cb : FsCallback) : Int32
   fun fs_close = uv_fs_close(loop : Loop, req : FsReq*, file : LibC::SSizeT, cb : FsCallback) : Int32
   fun fs_req_cleanup = uv_fs_req_cleanup(FsReq*)
+  fun fs_fstat = uv_fs_fstat(loop : Loop, req : FsReq*, file : LibC::SSizeT, cb : FsCallback) : Int32
 
   fun prepare_init = uv_prepare_init(Loop, Prepare*) : Int32
   fun prepare_start = uv_prepare_start(Prepare*, PrepareCallback) : Int32
