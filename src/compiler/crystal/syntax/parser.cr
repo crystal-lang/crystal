@@ -614,6 +614,7 @@ module Crystal
           args = [] of ASTNode
           while true
             args << parse_expression
+            skip_space_or_newline
             case @token.type
             when :","
               next_token_skip_space_or_newline

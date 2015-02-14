@@ -939,6 +939,8 @@ describe "Parser" do
 
   it_parses "a @b-1\nc", [Call.new(nil, "a", Call.new("@b".instance_var, "-", 1.int32)), "c".call] of ASTNode
   it_parses "4./(2)", Call.new(4.int32, "/", 2.int32)
+  it_parses "foo[\n1\n]", Call.new("foo".call, "[]", 1.int32)
+  it_parses "foo[\nfoo[\n1\n]\n]", Call.new("foo".call, "[]", Call.new("foo".call, "[]", 1.int32))
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
