@@ -234,7 +234,7 @@ class Crystal::Doc::Generator
     return unless  $?.success?
 
     remotes.lines.each do |line|
-      next unless line =~ /github\.com(?:\:|\/)(\w+)\/(\w+)/
+      next unless line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_)+)/
 
       user, repo = $1, $2
       rev = `git rev-parse HEAD`.chomp
