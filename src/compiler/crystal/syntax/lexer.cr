@@ -1031,6 +1031,10 @@ module Crystal
     end
 
     def consume_newlines
+      if @count_whitespace
+        return
+      end
+
       while true
         case current_char
         when '\n'

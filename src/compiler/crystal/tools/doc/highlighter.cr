@@ -21,7 +21,7 @@ module Crystal::Doc::Highlighter
       token = lexer.next_token
       case token.type
       when :NEWLINE
-        io << '\n'
+        io.puts
       when :SPACE
         io << token.value
       when :COMMENT

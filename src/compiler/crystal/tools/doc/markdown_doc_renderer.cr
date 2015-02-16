@@ -7,7 +7,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     super(io)
 
     @inside_inline_code = false
-    @inline_code_buffer = StringIO.new
+    @code_buffer = StringIO.new
     @inside_code = false
     @inside_link = false
   end
@@ -20,13 +20,13 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
   def begin_inline_code
     super
     @inside_inline_code = true
-    @inline_code_buffer.clear
+    @code_buffer.clear
   end
 
   def end_inline_code
     @inside_inline_code = false
 
-    text = @inline_code_buffer.to_s
+    text = @code_buffer.to_s
 
     # Check method reference (without #, but must be the whole text)
     if text =~ /\A(\w+(?:\?|\!)?)(\(.+?\))?\Z/
@@ -111,12 +111,22 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
   def begin_code(language = nil)
     super
-    @inside_code = true if !language || language == "crystal"
+
+    if !language || language == "crystal"
+      @inside_code = true
+      @code_buffer.clear
+    end
   end
 
   def end_code
-    super
+    if @inside_code
+      text = Highlighter.highlight @code_buffer.to_s
+      @io << text
+    end
+
     @inside_code = false
+
+    super
   end
 
   def begin_link(url)
@@ -133,8 +143,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
   def text(text)
     if @inside_code
-      text = Highlighter.highlight text
-      super text
+      @code_buffer << text
       return
     end
 
@@ -144,7 +153,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     end
 
     if @inside_inline_code
-      @inline_code_buffer << text
+      @code_buffer << text
       return
     end
 
