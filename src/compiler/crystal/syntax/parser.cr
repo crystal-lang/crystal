@@ -102,7 +102,7 @@ module Crystal
         i += 1
 
         next_token_skip_space_or_newline
-        exps << (last = parse_expression)
+        exps << (last = parse_op_assign(allow_ops: false))
         skip_space
       end
 
@@ -229,7 +229,7 @@ module Crystal
       (yield exp).at(location)
     end
 
-    def parse_op_assign
+    def parse_op_assign(allow_ops = true)
       doc = @token.doc
       location = @token.location
 
@@ -239,6 +239,7 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
+          next
         when :"="
           slash_is_regex!
 
@@ -284,6 +285,8 @@ module Crystal
             atomic
           end
         when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
+          unexpected_token unless allow_ops
+
           break unless can_be_assigned?(atomic)
 
           if atomic.is_a?(Path)
@@ -355,6 +358,7 @@ module Crystal
         else
           break
         end
+        allow_ops = true
       end
 
       atomic

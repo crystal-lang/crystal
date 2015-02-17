@@ -206,6 +206,7 @@ describe "Parser" do
   it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
   it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32), Call.new("a".call, "[]", 1.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
+  it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [Assign.new("x".var, Call.new("x".var, "+", 1.int32))] of ASTNode)] of ASTNode
 
   it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
@@ -942,6 +943,8 @@ describe "Parser" do
   it_parses "foo[\n1\n]", Call.new("foo".call, "[]", 1.int32)
   it_parses "foo[\nfoo[\n1\n]\n]", Call.new("foo".call, "[]", Call.new("foo".call, "[]", 1.int32))
 
+  it_parses "if (\ntrue\n)\n1\nend", If.new(Expressions.new([true.bool] of ASTNode), 1.int32)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
   end
@@ -1035,5 +1038,5 @@ describe "Parser" do
   assert_syntax_error "def foo(x, *args : Int32); end"
   assert_syntax_error "def foo(*args : Int32); end"
 
-  it_parses "if (\ntrue\n)\n1\nend", If.new(Expressions.new([true.bool] of ASTNode), 1.int32)
+  assert_syntax_error "a = 1; b = 2; a, b += 1, 2"
 end
