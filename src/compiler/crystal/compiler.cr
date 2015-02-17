@@ -4,6 +4,7 @@ require "socket"
 require "http/common"
 require "colorize"
 require "tempfile"
+require "crypto/md5"
 
 module Crystal
   class Compiler
@@ -289,11 +290,14 @@ module Crystal
       def initialize(@compiler, type_name, @llvm_mod, @output_dir, @bc_flags_changed)
         type_name = "main" if type_name == ""
         @name = type_name.gsub do |char|
-          if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
-            nil
-          else
+          unless 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
             char.ord
           end
+        end
+
+        if @name.length > 50
+          # 17 chars from name + 1 (dash) + 32 (md5) = 50
+          @name = "#{@name[0..16]}-#{Crypto::MD5.hex_digest(@name)}"
         end
       end
 
@@ -302,7 +306,7 @@ module Crystal
       end
 
       def write_bitcode(output_name)
-        @llvm_mod.write_bitcode output_name unless has_long_name?
+        @llvm_mod.write_bitcode output_name
       end
 
       def compile
@@ -312,7 +316,7 @@ module Crystal
 
         must_compile = true
 
-        if !has_long_name? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
+        if !@bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           if FileUtils.cmp(bc_name, bc_name_new)
             # If the user cancelled a previous compilation it might be that the .o file is empty
             if File.size(o_name) > 0
@@ -323,7 +327,7 @@ module Crystal
         end
 
         if must_compile
-          File.rename(bc_name_new, bc_name) unless has_long_name?
+          File.rename(bc_name_new, bc_name)
           if compiler.release?
             compiler.optimize @llvm_mod
           end
@@ -336,11 +340,7 @@ module Crystal
       end
 
       def object_name
-        if has_long_name?
-          "#{@output_dir}/#{object_id}.o"
-        else
-          "#{@output_dir}/#{@name}.o"
-        end
+        "#{@output_dir}/#{@name}.o"
       end
 
       def bc_name
@@ -353,10 +353,6 @@ module Crystal
 
       def ll_name
         "#{@output_dir}/#{@name}.ll"
-      end
-
-      def has_long_name?
-        @name.length >= 240
       end
     end
   end
