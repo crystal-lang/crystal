@@ -141,7 +141,8 @@ module Crystal
         raise "Multiple assignment count mismatch", location
       end
 
-      MultiAssign.new(targets, values).at(location)
+      multi = MultiAssign.new(targets, values).at(location)
+      parse_expression_suffix multi, @token.location
     end
 
     def is_multi_assign_middle?(exp)
