@@ -20,7 +20,7 @@ lib LibC
     struct SockAddrUn
       len : UInt8
       family : UInt8
-      path : UInt8*
+      path : UInt8[104]
     end
 
     struct SockAddr
@@ -61,7 +61,7 @@ lib LibC
 
     struct SockAddrUn
       family : UInt16
-      path : UInt8*
+      path : UInt8[108]
     end
 
     struct SockAddr

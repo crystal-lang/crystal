@@ -40,6 +40,14 @@ describe "UNIXSocket" do
       left.read(4).should eq("pong")
     end
   end
+
+  it "creates the socket file" do
+    path = "/tmp/crystal-test-unix-sock"
+
+    UNIXServer.open(path) do
+      File.exists?(path).should be_true
+    end
+  end
 end
 
 describe "TCPSocket" do
