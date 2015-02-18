@@ -101,7 +101,16 @@ module Spec
                      else                                            :success
                      end
 
-      puts "Finished in #{elapsed_time}"
+      total_seconds = elapsed_time.total_seconds
+      if total_seconds < 1
+        puts "Finished in #{elapsed_time.total_milliseconds.round(2)} milliseconds"
+      elsif total_seconds < 60
+        puts "Finished in #{total_seconds.round(2)} seconds"
+      else
+        minutes = elapsed_time.minutes
+        seconds = elapsed_time.seconds
+        puts "Finished in #{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
+      end
       puts Spec.color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", final_status)
 
       unless failures_and_errors.empty?
