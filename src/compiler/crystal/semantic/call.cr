@@ -603,10 +603,10 @@ class Crystal::Call
 
       fun_literal_type = fun_literal.type?
       if fun_literal_type
-        if (output = block_arg_fun_output) && !void_return_type?(match.context, output)
+        if output = block_arg_fun_output
           block_type = (fun_literal_type as FunInstanceType).return_type
           matched = MatchesLookup.match_arg(block_type, output, match.context)
-          unless matched
+          if !matched && !void_return_type?(match.context, output)
             raise "expected block to return #{output}, not #{block_type}"
           end
         end
@@ -620,14 +620,14 @@ class Crystal::Call
     else
       block.accept parent_visitor
 
-      if (output = block_arg_fun_output) && !void_return_type?(match.context, output)
+      if output = block_arg_fun_output
         unless block.body.type?
           cant_infer_block_return_type
         end
 
         block_type = block.body.type
         matched = MatchesLookup.match_arg(block_type, output, match.context)
-        unless matched
+        if !matched &  !void_return_type?(match.context, output)
           if output.is_a?(Self)
             raise "expected block to return #{match.context.owner}, not #{block_type}"
           else
