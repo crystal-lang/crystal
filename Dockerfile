@@ -1,7 +1,8 @@
 FROM manastech/crystal
 
 RUN apt-get update && \
-    apt-get install -y build-essential curl
+    apt-get install -y build-essential curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN curl http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-x86_64.tar.gz | tar xz -C /opt
 
