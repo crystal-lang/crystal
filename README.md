@@ -1,4 +1,4 @@
-Crystal [![Build Status](https://travis-ci.org/manastech/crystal.png)](https://travis-ci.org/manastech/crystal) [![Build Status](https://drone.io/github.com/manastech/crystal/status.png)](https://drone.io/github.com/manastech/crystal/latest)
+Crystal [![Build Status](https://travis-ci.org/manastech/crystal.png)](https://travis-ci.org/manastech/crystal)
 =======
 
 Crystal is a programming language with the following goals:
