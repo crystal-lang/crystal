@@ -603,7 +603,7 @@ class Crystal::Call
 
       fun_literal_type = fun_literal.type?
       if fun_literal_type
-        if output = block_arg_fun_output
+        if (output = block_arg_fun_output) && !void_return_type?(match.context, output)
           block_type = (fun_literal_type as FunInstanceType).return_type
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           unless matched
@@ -620,7 +620,7 @@ class Crystal::Call
     else
       block.accept parent_visitor
 
-      if output = block_arg_fun_output
+      if (output = block_arg_fun_output) && !void_return_type?(match.context, output)
         unless block.body.type?
           cant_infer_block_return_type
         end
@@ -639,6 +639,13 @@ class Crystal::Call
     end
 
     yield_vars
+  end
+
+  private def void_return_type?(match_context, output)
+    return false unless output.is_a?(Path)
+
+    type = match_context.type_lookup.lookup_type(output)
+    type.is_a?(Type) && type.void?
   end
 
   private def cant_infer_block_return_type

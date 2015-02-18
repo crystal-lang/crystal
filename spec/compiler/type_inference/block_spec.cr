@@ -690,4 +690,32 @@ describe "Block inference" do
       extra
       )) { nilable(int32) }
   end
+
+  it "ignores void return type (#427)" do
+    assert_type(%(
+      lib Fake
+        fun foo(func : -> Void)
+      end
+
+      def foo &block : -> Void
+        Fake.foo block
+      end
+
+      foo do
+        1
+      end
+      )) { void }
+  end
+
+  it "ignores void return type (2) (#427)" do
+    assert_type(%(
+      def foo &block : Int32 -> Void
+        yield 1
+      end
+
+      foo do
+        1
+      end
+      )) { int32 }
+  end
 end
