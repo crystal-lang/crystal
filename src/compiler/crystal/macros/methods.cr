@@ -535,6 +535,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.subclasses(type) }
       when "all_subclasses"
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
+      when "constants"
+        interpret_argless_method(method, args) { TypeNode.constants(type) }
       else
         super
       end
@@ -575,6 +577,11 @@ module Crystal
 
     def self.all_subclasses(type)
       ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
+    end
+
+    def self.constants(type)
+      names = type.types.map { |name, member_type| MacroId.new(name) as ASTNode }
+      ArrayLiteral.new names
     end
   end
 

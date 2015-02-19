@@ -670,4 +670,64 @@ describe "Code gen: macro" do
       names.join("-")
       )).to_string.should eq("Bar-Baz")
   end
+
+  it "gets enum members with @enum_members (will be deprecated)" do
+    run(%(
+      enum Color
+        Red
+        Green
+        Blue
+
+        def self.red
+          {{@enum_members[0]}}
+        end
+
+        def self.green
+          {{@enum_members[1]}}
+        end
+
+        def self.blue
+          {{@enum_members[2]}}
+        end
+      end
+
+      Color.red.value + Color.green.value + Color.blue.value
+      )).to_i.should eq(0 + 1 + 2)
+  end
+
+  it "gets enum members with @constants" do
+    run(%(
+      enum Color
+        Red
+        Green
+        Blue
+
+        def self.red
+          {{@constants[0]}}
+        end
+
+        def self.green
+          {{@constants[1]}}
+        end
+
+        def self.blue
+          {{@constants[2]}}
+        end
+      end
+
+      Color.red.value + Color.green.value + Color.blue.value
+      )).to_i.should eq(0 + 1 + 2)
+  end
+
+  it "gets enum members as constants" do
+    run(%(
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      {{Color.constants[1].stringify}}
+      )).to_string.should eq("Green")
+  end
 end
