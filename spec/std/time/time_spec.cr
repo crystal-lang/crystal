@@ -200,10 +200,10 @@ describe Time do
 
   it "gets day of week" do
     t = Time.new 2014, 10, 30, 21, 18, 13
-    t.day_of_week.should eq(4)
+    t.day_of_week.should eq(DayOfWeek::Thursday)
   end
 
-  it "gets day of week" do
+  it "gets day of year" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.day_of_year.should eq(303)
   end
@@ -473,6 +473,19 @@ describe Time do
     time.kind.should eq(Time::Kind::Utc)
 
     (time + 5.minutes).kind.should eq(Time::Kind::Utc)
+  end
+
+  it "asks for day name" do
+    7.times do |i|
+      time = Time.new(2015, 2, 15 + i)
+      time.sunday?.should eq(i == 0)
+      time.monday?.should eq(i == 1)
+      time.tuesday?.should eq(i == 2)
+      time.wednesday?.should eq(i == 3)
+      time.thursday?.should eq(i == 4)
+      time.friday?.should eq(i == 5)
+      time.saturday?.should eq(i == 6)
+    end
   end
 
   typeof(Time.now.year)

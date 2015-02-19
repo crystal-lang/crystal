@@ -202,7 +202,8 @@ end
   end
 
   def day_of_week
-    (((encoded & TicksMask) / TimeSpan::TicksPerDay) + 1) % 7
+    value = (((encoded & TicksMask) / TimeSpan::TicksPerDay) + 1) % 7
+    DayOfWeek.new value.to_i
   end
 
   def day_of_year
@@ -293,7 +294,7 @@ end
   def_at(beginning_of_minute)   { Time.new(year, month, day, hour, minute) }
 
   def at_beginning_of_week
-    dow = day_of_week
+    dow = day_of_week.value
     if dow == 0
       (self - 6.days).at_beginning_of_day
     else
@@ -330,11 +331,11 @@ end
   def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, 999) }
 
   def at_end_of_week
-    dow = day_of_week
+    dow = day_of_week.value
     if dow == 0
       at_end_of_day
     else
-      (self + (7 - day_of_week).days).at_end_of_day
+      (self + (7 - dow).days).at_end_of_day
     end
   end
 
@@ -342,6 +343,12 @@ end
   def_at(end_of_hour)   { Time.new(year, month, day, hour, 59, 59, 999) }
   def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, 999) }
   def_at(midday)        { Time.new(year, month, day, 12, 0, 0, 0) }
+
+  {% for name, index in %w(sunday monday tuesday wednesday thursday friday saturday) %}
+    def {{name.id}}?
+      day_of_week.value == {{index}}
+    end
+  {% end %}
 
   protected def self.absolute_days(year, month, day)
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH

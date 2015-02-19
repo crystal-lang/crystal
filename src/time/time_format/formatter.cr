@@ -119,13 +119,13 @@ struct TimeFormat
     end
 
     def day_of_week_monday_1_7
-      v = time.day_of_week
+      v = time.day_of_week.value
       v = 7 if v == 0
       io << v
     end
 
     def day_of_week_sunday_0_6
-      io << time.day_of_week
+      io << time.day_of_week.value
     end
 
     def char(char)
@@ -141,7 +141,7 @@ struct TimeFormat
     end
 
     def get_day_name
-      DAY_NAMES[time.day_of_week]
+      DAY_NAMES[time.day_of_week.value]
     end
 
     def get_short_day_name
