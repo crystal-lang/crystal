@@ -34,7 +34,7 @@ module Random
     end
   end
 
-  def rand(x : Range(Int32, Int32))
+  def rand(x : Range(Int))
     span = x.end - x.begin
     span += 1 unless x.excludes_end?
     if span > 0

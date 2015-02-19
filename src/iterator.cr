@@ -72,7 +72,7 @@ end
 class RangeIterator(T)
   include Iterator(T)
 
-  def initialize(@range : Range(T, T))
+  def initialize(@range : Range(T))
     @current = range.begin
     @reached_end = false
   end
