@@ -174,6 +174,21 @@ describe "Enumerable" do
     [1, 2, 3, 4].reject(&.even?).should eq([1, 3])
   end
 
+  it "joins with separator and block" do
+    str = [1, 2, 3].join(", ") { |x| x + 1 }
+    str.should eq("2, 3, 4")
+  end
+
+  it "joins without separator and block" do
+    str = [1, 2, 3].join { |x| x + 1 }
+    str.should eq("234")
+  end
+
+  it "joins with separator and block" do
+    str = [1, 2, 3].join(", ") { |x| x + 1 }
+    str.should eq("2, 3, 4")
+  end
+
   it "joins with io and block" do
     str = StringIO.new
     [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }

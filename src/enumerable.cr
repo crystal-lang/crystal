@@ -149,6 +149,14 @@ module Enumerable(T)
     end
   end
 
+  def join(separator = "")
+    String.build do |io|
+      join(separator, io) do |elem|
+        io << yield elem
+      end
+    end
+  end
+
   def join(separator, io)
     join(separator, io) do |elem|
       elem.to_s(io)
