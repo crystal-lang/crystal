@@ -1824,6 +1824,7 @@ module Crystal
       attach_doc enum_type, node
 
       enum_type.doc ||= attributes_doc()
+      @attributes = nil
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0

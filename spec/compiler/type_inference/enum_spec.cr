@@ -182,4 +182,20 @@ describe "Type inference: enum" do
       Foo::All.value
       )) { int32 }
   end
+
+  it "doesn't error when defining a method for an enum with flags" do
+    assert_type(%(
+      @[Flags]
+      enum Foo
+        A
+        B
+
+        def foo
+          self
+        end
+      end
+
+      Foo::A.foo
+      )) { types["Foo"] }
+  end
 end
