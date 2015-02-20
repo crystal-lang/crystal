@@ -537,6 +537,18 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
+      when "has_attribute?"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral
+            value = arg.value
+          when SymbolLiteral
+            value = arg.value
+          else
+            raise "argument to has_attribtue? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
+          end
+          BoolLiteral.new(type.has_attribute?(value))
+        end
       else
         super
       end

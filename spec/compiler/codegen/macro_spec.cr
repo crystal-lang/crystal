@@ -730,4 +730,29 @@ describe "Code gen: macro" do
       {{Color.constants[1].stringify}}
       )).to_string.should eq("Green")
   end
+
+  it "says that enum has Flags attribute" do
+    run(%(
+      @[Flags]
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      {{Color.has_attribute?("Flags")}}
+      )).to_b.should be_true
+  end
+
+  it "says that enum doesn't have Flags attribute" do
+    run(%(
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      {{Color.has_attribute?("Flags")}}
+      )).to_b.should be_false
+  end
 end

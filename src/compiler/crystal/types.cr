@@ -7,6 +7,20 @@ module Crystal
 
     property doc
     getter locations
+    getter attributes
+
+    def add_attributes(attributes)
+      return unless attributes
+      return if attributes.empty?
+
+      my_attributes = @attributes ||= [] of Attribute
+      my_attributes.concat(attributes)
+    end
+
+    def has_attribute?(name)
+      attributes = @attributes
+      attributes.try &.any? &.name.==(name)
+    end
 
     def locations
       @locations ||= [] of Location
