@@ -20,7 +20,7 @@ module Crystal
     ValidClassVarAttributes = ThreadLocalAttributes
     ValidStructDefAttributes = %w(Packed)
     ValidDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
-    ValidFunDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
+    ValidFunDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice CallConvention)
     ValidEnumDefAttributes = %w(Flags)
 
     getter mod
@@ -1673,7 +1673,8 @@ module Crystal
         node.raise "can only declare fun at lib or global scope"
       end
 
-      check_valid_attributes node, ValidDefAttributes, "fun"
+      call_convention = check_call_convention_attributes node
+      check_valid_attributes node, ValidFunDefAttributes, "fun"
 
       args = node.args.map do |arg|
         restriction = arg.restriction.not_nil!
@@ -1694,6 +1695,7 @@ module Crystal
 
       external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
       external.doc = node.doc
+      external.call_convention = call_convention
 
       if node_body = node.body
         vars = MetaVars.new
@@ -2806,6 +2808,40 @@ module Crystal
           node.body.accept StructOrUnionVisitor.new(self, type)
         end
       end
+    end
+
+    def check_call_convention_attributes(node)
+      attributes = @attributes
+      return unless attributes
+
+      call_convention = nil
+
+      attributes.delete_if do |attr|
+        next false unless attr.name == "CallConvention"
+
+        if call_convention
+          attr.raise "call convention already specified"
+        end
+
+        if attr.args.length != 1
+          attr.raise "wrong number of arguments for attribute CallConvention (#{attr.args.length} for 1)"
+        end
+
+        call_convention_node = attr.args.first
+        unless call_convention_node.is_a?(StringLiteral)
+          call_convention_node.raise "argument to CallConvention must be a string"
+        end
+
+        value = call_convention_node.value
+        call_convention = LLVM::CallConvention.parse?(value)
+        unless call_convention
+          call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
+        end
+
+        true
+      end
+
+      call_convention
     end
 
     def check_valid_attributes(node, valid_attributes, desc)

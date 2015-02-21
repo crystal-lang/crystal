@@ -172,6 +172,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     )
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
 
+    if target_def.is_a?(External) && (call_convention = target_def.call_convention)
+      context.fun.call_convention = call_convention
+    end
+
     no_inline = false
     target_def.attributes.try &.each do |attribute|
       case attribute.name

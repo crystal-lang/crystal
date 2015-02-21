@@ -294,6 +294,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       @last = call func, call_args
     end
 
+    if target_def.is_a?(External) && (call_convention = target_def.call_convention)
+      @last.call_convention = call_convention
+    end
+
     if @builder.end
       return @last
     end

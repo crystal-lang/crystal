@@ -139,12 +139,12 @@ module LLVM
   end
 
   enum CallConvention
-    C           = 0
-    Fast        = 8
-    Cold        = 9
-    WebKitJS    = 12
-    AnyReg      = 13
-    X86Std  = 64
-    X86Fastcall = 65
+    C            = 0
+    Fast         = 8
+    Cold         = 9
+    WebKit_JS    = 12
+    AnyReg       = 13
+    X86_StdCall  = 64
+    X86_FastCall = 65
   end
 end

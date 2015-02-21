@@ -44,6 +44,14 @@ module LLVM::ValueMethods
     LibLLVM.get_linkage(self)
   end
 
+  def call_convention=(call_convention)
+    LibLLVM.set_instruction_call_convention(self, call_convention)
+  end
+
+  def call_convention
+    LibLLVM.get_instruction_call_convention(self)
+  end
+
   def global_constant=(global_constant)
     LibLLVM.set_global_constant(self, global_constant ? 1 : 0)
   end

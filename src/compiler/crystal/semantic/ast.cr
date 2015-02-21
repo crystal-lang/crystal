@@ -492,6 +492,8 @@ module Crystal
 
     property :used
     @used = false
+
+    property :call_convention
   end
 
   class EnumDef
