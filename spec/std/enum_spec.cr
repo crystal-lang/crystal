@@ -68,4 +68,14 @@ describe Enum do
   it "has hash" do
     SpecEnum::Two.hash.should eq(1.hash)
   end
+
+  it "parses" do
+    SpecEnum.parse("Two").should eq(SpecEnum::Two)
+    expect_raises(Exception, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
+  end
+
+  it "parses?" do
+    SpecEnum.parse?("Two").should eq(SpecEnum::Two)
+    SpecEnum.parse?("Four").should be_nil
+  end
 end

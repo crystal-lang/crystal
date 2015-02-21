@@ -103,25 +103,25 @@ struct Enum
   #   }
   # end
 
-  # def self.parse(string)
-  #   value = parse?(string)
-  #   if value
-  #     value
-  #   else
-  #     raise "Uknonwn enum #{self} value: #{string}"
-  #   end
-  # end
+  def self.parse(string)
+    value = parse?(string)
+    if value
+      value
+    else
+      raise "Unknown enum #{self} value: #{string}"
+    end
+  end
 
-  # macro def self.parse?(string) : self ?
-  #   case string.downcase
-  #   {% for member in @enum_members %}
-  #     when {{member.stringify.downcase}}
-  #       {{member}}
-  #   {% end %}
-  #   else
-  #     nil
-  #   end
-  # end
+  macro def self.parse?(string) : self ?
+    case string.downcase
+    {% for member in @enum_members %}
+      when {{member.stringify.downcase}}
+        {{member}}
+    {% end %}
+    else
+      nil
+    end
+  end
 
   # def self.each
   #   to_h.each do |key, value|
