@@ -101,8 +101,8 @@ struct Pointer(T)
     ptr
   end
 
-  def self.malloc(size : Int, &block : Int32 -> T)
-    ptr = Pointer(T).malloc(size)
+  def self.malloc(size : Int)
+    ptr = Pointer(typeof(yield 1)).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr
   end

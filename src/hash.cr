@@ -199,8 +199,8 @@ class Hash(K, V)
     nil
   end
 
-  def map(&block : K, V -> U)
-    array = Array(U).new(@length)
+  def map
+    array = Array(typeof(yield first_key, first_value)).new(@length)
     each do |k, v|
       array.push yield k, v
     end

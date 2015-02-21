@@ -21,8 +21,8 @@ class Array(T)
     @buffer = Pointer(T).malloc(size, value)
   end
 
-  def self.new(size, &block : Int32 -> T)
-    ary = Array(T).new(size)
+  def self.new(size)
+    ary = Array(typeof(yield 1)).new(size)
     ary.length = size
     size.times do |i|
       ary.buffer[i] = yield i
@@ -596,11 +596,11 @@ class Array(T)
     self
   end
 
-  def sort_by(&block: T -> U)
+  def sort_by(&block: T -> _)
     dup.sort_by! &block
   end
 
-  def sort_by!(&block: T -> U)
+  def sort_by!(&block: T -> _)
     sort! { |x, y| block.call(x) <=> block.call(y) }
   end
 
@@ -638,7 +638,7 @@ class Array(T)
     uniq &.itself
   end
 
-  def uniq(&block : T -> U)
+  def uniq
     if length <= 1
       dup
     else
@@ -651,7 +651,7 @@ class Array(T)
     uniq! &.itself
   end
 
-  def uniq!(&block : T -> U)
+  def uniq!
     if length <= 1
       return self
     end
@@ -758,8 +758,8 @@ class Array(T)
     to_lookup_hash { |elem| elem }
   end
 
-  protected def to_lookup_hash(&block : T -> U)
-    each_with_object(Hash(U, T).new) do |o, h|
+  protected def to_lookup_hash
+    each_with_object(Hash(typeof(yield first), T).new) do |o, h|
       key = yield o
       unless h.has_key?(key)
         h[key] = o

@@ -300,14 +300,8 @@ module Crystal
           type_var = node
         else
           node_type = node.type?
-          unless node_type
-            scope = @scope
-            if scope && !scope.allocated
-              return
-            else
-              self.raise "can't deduce generic type, try specifying type vars"
-            end
-          end
+          return unless node_type
+
           type_var = node_type.virtual_type
         end
 

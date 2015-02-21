@@ -88,8 +88,8 @@ module Enumerable(T)
     select { |elem| pattern === elem }
   end
 
-  def group_by(&block : T -> U)
-    h = Hash(U, Array(T)).new
+  def group_by
+    h = Hash(typeof(yield first), Array(T)).new
     each do |e|
       v = yield e
       if h.has_key?(v)
@@ -116,8 +116,8 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
-  def index_by(&block : T -> U)
-    hash = {} of U => T
+  def index_by
+    hash = {} of typeof(yield first) => T
     each do |elem|
       hash[yield elem] = elem
     end
@@ -170,14 +170,14 @@ module Enumerable(T)
     end
   end
 
-  def map(&block : T -> U)
-    ary = [] of U
+  def map
+    ary = [] of typeof(yield first)
     each { |e| ary << yield e }
     ary
   end
 
-  def map_with_index(&block : T, Int32 -> U)
-    ary = [] of U
+  def map_with_index
+    ary = [] of typeof(yield first, 1)
     each_with_index { |e, i| ary << yield e, i }
     ary
   end
@@ -186,8 +186,8 @@ module Enumerable(T)
     max_by &.itself
   end
 
-  def max_by(&block : T -> U)
-    max :: U
+  def max_by
+    max :: typeof(yield first)
     obj :: T
     found = false
 
@@ -203,8 +203,8 @@ module Enumerable(T)
     found ? obj : raise EmptyEnumerable.new
   end
 
-  def max_of(&block : T -> U)
-    max :: U
+  def max_of
+    max :: typeof(yield first)
     found = false
 
     each_with_index do |elem, i|
@@ -226,9 +226,9 @@ module Enumerable(T)
     minmax_by &.itself
   end
 
-  def minmax_by(&block : T -> U)
-    min :: U
-    max :: U
+  def minmax_by
+    min :: typeof(yield first)
+    max :: typeof(yield first)
     objmin :: T
     objmax :: T
     found = false
@@ -249,9 +249,9 @@ module Enumerable(T)
     found ? {objmin, objmax} : raise EmptyEnumerable.new
   end
 
-  def minmax_of(&block : T -> U)
-    min :: U
-    max :: U
+  def minmax_of
+    min :: typeof(yield first)
+    max :: typeof(yield first)
     found = false
 
     each_with_index do |elem, i|
@@ -268,8 +268,8 @@ module Enumerable(T)
     found ? {min, max} : raise EmptyEnumerable.new
   end
 
-  def min_by(&block : T -> U)
-    min :: U
+  def min_by
+    min :: typeof(yield first)
     obj :: T
     found = false
 
@@ -285,8 +285,8 @@ module Enumerable(T)
     found ? obj : raise EmptyEnumerable.new
   end
 
-  def min_of(&block : T -> U)
-    min :: U
+  def min_of
+    min :: typeof(yield first)
     found = false
 
     each_with_index do |elem, i|
@@ -300,12 +300,12 @@ module Enumerable(T)
     found ? min : raise EmptyEnumerable.new
   end
 
-  def none?(&block : T -> U)
+  def none?
     each { |e| return false if yield(e) }
     true
   end
 
-  def one?(&block : T -> U)
+  def one?
     c = 0
     each do |e|
       c += 1 if yield(e)
@@ -314,7 +314,7 @@ module Enumerable(T)
     c == 1
   end
 
-  def partition(&block : T -> U)
+  def partition
     a, b = [] of T, [] of T
     each do |e|
       value = yield(e)
