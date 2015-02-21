@@ -6,7 +6,7 @@ describe "Subtle" do
     data = [
       {"a" => Slice.new(1, 0x11), "b" => Slice.new(1, 0x11), "result" => 1},
       {"a" => Slice.new(1, 0x12), "b" => Slice.new(1, 0x11), "result" => 0},
-      {"a" => Slice.new(21, 0x11), "b" => Slice.new(2) { |i| 0x11 + i }, "result" => 0},
+      {"a" => Slice.new(1, 0x11), "b" => Slice.new(2) { |i| 0x11 + i }, "result" => 0},
       {"a" => Slice.new(2) { |i| 0x11 + i }, "b" => Slice.new(1, 0x11), "result" => 0},
     ]
 
