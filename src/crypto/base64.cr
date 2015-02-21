@@ -1,10 +1,10 @@
 # Bcrypt needs his own base64
 # Note that this is *not* compatible with the standard MIME-base64 encoding.
-module Base64
+module Bcrypt::Base64
   extend self
 
   ALPHABET = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  DECODE_TABLE_64 = [
+  DECODE_TABLE = [
     0, 1,
     54, 55, 56, 57, 58, 59, 60, 61, 62, 63, -1, -1, -1, -1, -1, -1, -1,
     2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -75,21 +75,21 @@ module Base64
   private def from_base64(data)
     i = 0
     while true
-      c1 = DECODE_TABLE_64[data[i]-46]
+      c1 = DECODE_TABLE[data[i]-46]
       i += 1
-      c2 = DECODE_TABLE_64[data[i]-46]
+      c2 = DECODE_TABLE[data[i]-46]
       i += 1
       yield ((c1 << 2 | c2 >> 4) & 0xff).to_u8
 
       break if (i == 22)
 
       c1 = c2 << 4
-      c2 = DECODE_TABLE_64[data[i]-46]
+      c2 = DECODE_TABLE[data[i]-46]
       i += 1
       yield ((c1 | c2 >> 2) & 0xff).to_u8
 
       c1 = c2 << 6
-      c2 = DECODE_TABLE_64[data[i]-46]
+      c2 = DECODE_TABLE[data[i]-46]
       i += 1
       yield ((c1 | c2) & 0xff).to_u8
     end

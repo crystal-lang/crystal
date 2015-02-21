@@ -10,10 +10,10 @@ describe "Bcrypt::Base64" do
 
   eqs.each do |a, b|
     it "encode #{a.inspect} to #{b.inspect}" do
-      Base64.encode64(a).should eq(b)
+      Bcrypt::Base64.encode64(a).should eq(b)
     end
     it "decode from #{b.inspect} to #{a.inspect}" do
-      Base64.decode64(b).should eq(a)
+      Bcrypt::Base64.decode64(b).should eq(a)
     end
   end
 end

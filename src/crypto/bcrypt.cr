@@ -44,7 +44,7 @@ module Crypto::Bcrypt
     p["cost"] = cost.to_s
 
     unencodedSalt = SecureRandom.hex(8)
-    p["salt"] = Base64.encode64(unencodedSalt)
+    p["salt"] = Bcrypt::Base64.encode64(unencodedSalt)
     p["hash"] = bcrypt(pass, p["cost"], p["salt"])
     p
   end
@@ -83,11 +83,11 @@ module Crypto::Bcrypt
       end
     end
 
-    Base64.encode64(slice)
+    Bcrypt::Base64.encode64(slice)
   end
 
   private def setup(key, cost, salt)
-    sl = Base64.decode64(salt)
+    sl = Bcrypt::Base64.decode64(salt)
     bf = Blowfish.new
     bf.salted_expand_key(sl, key)
 
