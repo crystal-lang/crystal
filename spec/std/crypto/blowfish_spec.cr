@@ -26,4 +26,17 @@ describe "Blowfish" do
       Crypto::Blowfish.new("a" * 57)
     end
   end
+
+  it "folds the salt during the key schedule" do
+    length = 32
+    salt = String.build {|io| length.times {|i| io << (i + length).chr} }
+    orig_l, orig_r = 0x00, 0x00
+    
+    bf = Crypto::Blowfish.new
+    bf.salted_expand_key("a" * length, salt)
+
+    l, r = bf.encrypt_pair(orig_l, orig_r)
+    l.should eq(0xc8f07bef)
+    r.should eq(0x57deba64)
+  end
 end
