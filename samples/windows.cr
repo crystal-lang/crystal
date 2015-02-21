@@ -2,11 +2,12 @@
 #
 # Compile (in linux or mac) with:
 #
-#     --prelude=empty --single-module --cross-compile="windows x86"
+#     32 bits: crystal build samples/windows.cr --prelude=empty --single-module --cross-compile "windows x86" --target "i686-pc-win32" --mcpu "i686"
+#     64 bits: crystal build samples/windows.cr --prelude=empty --single-module --cross-compile "windows x86_64" --target "x86_64-pc-win32" --mcpu "x86-64"
 #
 # and then compile with clang on Windows from a VisualC++ command prompt:
 #
-#     clang-cl windows.bc msvcrt.lib
+#     clang-cl windows.o msvcrt.lib
 #
 # This generates windows.exe
 
