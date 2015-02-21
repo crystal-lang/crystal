@@ -162,7 +162,7 @@ module Crystal
           macro_arg = a_macro.args[index]
           call_arg = call.args[index]? || macro_arg.default_value.not_nil!
           call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
-          vars[macro_arg.name] = call_arg.to_macro_var
+          vars[macro_arg.name] = call_arg
         end
 
         # The splat argument
@@ -182,7 +182,7 @@ module Crystal
           macro_arg = a_macro.args[index]
           call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
           call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
-          vars[macro_arg.name] = call_arg.to_macro_var
+          vars[macro_arg.name] = call_arg
         end
 
         # The named arguments
@@ -401,8 +401,12 @@ module Crystal
       def visit(node : Call)
         obj = node.obj
         if obj
-          obj.accept self
-          receiver = @last
+          if obj.is_a?(Var) && (existing_var = @vars[obj.name]?)
+            receiver = existing_var
+          else
+            obj.accept self
+            receiver = @last
+          end
 
           args = node.args.map do |arg|
             arg.accept self

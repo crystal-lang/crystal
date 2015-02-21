@@ -604,6 +604,36 @@ describe "MacroExpander" do
     end
   end
 
+  describe "call methods" do
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [Call.new(nil, "some_call")] of ASTNode, "some_call"
+    end
+
+    it "executes args length" do
+      assert_macro "x", %({{x.args}}), [Call.new(nil, "some_call", [NumberLiteral.new(1), NumberLiteral.new(3)] of ASTNode)] of ASTNode, "[1, 3]"
+    end
+
+    it "executes receiver" do
+      assert_macro "x", %({{x.receiver}}), [Call.new(NumberLiteral.new(1), "some_call")] of ASTNode, "1"
+    end
+
+    it "executes block" do
+      assert_macro "x", %({{x.block}}), [Call.new(NumberLiteral.new(1), "some_call", block: Block.new)] of ASTNode, "do\nend"
+    end
+
+    it "executes named args" do
+      assert_macro "x", %({{x.named_args}}), [Call.new(NumberLiteral.new(1), "some_call", named_args: [NamedArgument.new("a", NumberLiteral.new(1)), NamedArgument.new("b", NumberLiteral.new(2))])] of ASTNode, "[a: 1, b: 2]"
+    end
+
+    it "executes named args name" do
+      assert_macro "x", %({{x.named_args[0].name}}), [Call.new(NumberLiteral.new(1), "some_call", named_args: [NamedArgument.new("a", NumberLiteral.new(1)), NamedArgument.new("b", NumberLiteral.new(2))])] of ASTNode, "a"
+    end
+
+    it "executes named args value" do
+      assert_macro "x", %({{x.named_args[0].value}}), [Call.new(NumberLiteral.new(1), "some_call", named_args: [NamedArgument.new("a", NumberLiteral.new(1)), NamedArgument.new("b", NumberLiteral.new(2))])] of ASTNode, "1"
+    end
+  end
+
   describe "arg methods" do
     it "executes name" do
       assert_macro "x", %({{x.name}}), [Arg.new("some_arg")] of ASTNode, "some_arg"

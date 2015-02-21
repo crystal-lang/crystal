@@ -610,6 +610,27 @@ module Crystal
   end
 
   class Call
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        MacroId.new(name)
+      when "args"
+        ArrayLiteral.map(self.args) { |arg| arg }
+      when "receiver"
+        obj || Nop.new
+      when "block"
+        self.block || Nop.new
+      when "named_args"
+        if named_args = self.named_args
+          ArrayLiteral.map(named_args) { |arg| arg }
+        else
+          Nop.new
+        end
+      else
+        super
+      end
+    end
+
     def to_macro_id
       if !obj && !block && args.empty?
         @name
@@ -620,6 +641,19 @@ module Crystal
 
     def to_macro_var
       MacroId.new(to_macro_id)
+    end
+  end
+
+  class NamedArgument
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        MacroId.new(name)
+      when "value"
+        value
+      else
+        super
+      end
     end
   end
 
