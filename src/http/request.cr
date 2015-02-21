@@ -1,4 +1,5 @@
 require "./common"
+require "uri"
 
 class HTTP::Request
   getter method
