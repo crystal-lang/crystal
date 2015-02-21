@@ -12,7 +12,7 @@ class UV::File
       LibUV.fs_req_cleanup(fs)
       (fs.value.data as Fiber).resume
     })
-    Fiber.yield
+    Scheduler.reschedule
 
     if req.result == -1
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
@@ -28,7 +28,7 @@ class UV::File
       LibUV.fs_req_cleanup(fs)
       (fs.value.data as Fiber).resume
     })
-    Fiber.yield
+    Scheduler.reschedule
   end
 
   def read(slice : Slice(UInt8), count)
@@ -42,7 +42,7 @@ class UV::File
       LibUV.fs_req_cleanup(fs)
       (fs.value.data as Fiber).resume
     })
-    Fiber.yield
+    Scheduler.reschedule
 
     # TODO: check errors
     req.result
@@ -59,7 +59,7 @@ class UV::File
       LibUV.fs_req_cleanup(fs)
       (fs.value.data as Fiber).resume
     })
-    Fiber.yield
+    Scheduler.reschedule
 
     # TODO: check errors
     req.result
@@ -73,7 +73,7 @@ class UV::File
       LibUV.fs_req_cleanup(fs)
       (fs.value.data as Fiber).resume
     })
-    Fiber.yield
+    Scheduler.reschedule
 
     File::Stat.new(req.statbuf)
   end

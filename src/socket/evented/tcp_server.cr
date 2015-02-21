@@ -34,8 +34,8 @@ class TCPServer < TCPSocket
 
   def accept
     while @client_queue.empty?
-      @acceptors << Fiber.current.not_nil!
-      Fiber.yield
+      @acceptors << Fiber.current
+      Scheduler.reschedule
     end
     @client_queue.shift
   end

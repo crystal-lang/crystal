@@ -5,7 +5,7 @@ abstract class UV::Handle
       fiber = handle.value.data as Fiber
       fiber.resume
     })
-    Fiber.yield
+    Scheduler.reschedule
   end
 
   abstract def handle

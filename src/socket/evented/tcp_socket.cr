@@ -19,7 +19,7 @@ class TCPSocket < UV::Stream
         fiber.resume
       })
 
-      Fiber.yield
+      Scheduler.reschedule
 
       break if connect.data.nil?
       unless ai.next
@@ -55,7 +55,7 @@ class TCPSocket < UV::Stream
       end
       fiber.resume
     }, host, port.to_s, pointerof(hints))
-    Fiber.yield
+    Scheduler.reschedule
 
     addrinfo = request.data as LibC::Addrinfo*
     raise SocketError.new("getaddrinfo: ??") if addrinfo.nil?

@@ -3,11 +3,8 @@ ifdef evented
   require "fiber"
   require "./*"
 
-  redefine_main do |main|
-    {{ main }}
-    Fiber.new do
-      UV::Loop::DEFAULT.run
-    end.resume
+  Fiber.rescheduler = -> do
+    Scheduler.reschedule
   end
 
   def sleep(t : Int | Float)
@@ -16,17 +13,19 @@ ifdef evented
     timer.start(t * 1000) do
       f.resume
     end
-    Fiber.yield
+    Scheduler.reschedule
   end
 
   macro spawn
-    Fiber.new do
+    fiber = Fiber.new do
       begin
         {{ yield }}
       rescue ex
         puts "Unhandled exception: #{ex}"
       end
-    end.resume
+    end
+
+    Scheduler.enqueue fiber
   end
 
 else

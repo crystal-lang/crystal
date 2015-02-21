@@ -14,7 +14,7 @@ abstract class UV::Stream < UV::Handle
       fiber.resume
     })
 
-    Fiber.yield
+    Scheduler.reschedule
   end
 
   def read(slice : Slice(UInt8), count)
@@ -40,7 +40,7 @@ abstract class UV::Stream < UV::Handle
         end
       })
 
-    Fiber.yield
+    Scheduler.reschedule
     @reading = false
     @nread.not_nil!
   end

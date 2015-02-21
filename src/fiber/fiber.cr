@@ -58,6 +58,12 @@ class Fiber
     else
       @@last_fiber = @prev_fiber
     end
+
+    @@rescheduler.try &.call
+  end
+
+  def self.rescheduler=(rescheduler)
+    @@rescheduler = rescheduler
   end
 
   @[NoInline]
