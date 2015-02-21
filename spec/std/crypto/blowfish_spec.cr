@@ -32,7 +32,7 @@ describe "Blowfish" do
     salt = String.build {|io| length.times {|i| io << (i + length).chr} }
     orig_l, orig_r = 0x00, 0x00
     
-    bf = Blowfish.new
+    bf = Crypto::Blowfish.new
     bf.salted_expand_key("a" * length, salt)
 
     l, r = bf.encrypt_pair(orig_l, orig_r)
