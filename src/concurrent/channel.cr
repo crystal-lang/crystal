@@ -13,6 +13,25 @@ abstract class Channel(T)
   def self.new(capacity)
     BufferedChannel(T).new(capacity)
   end
+
+  def self.select(*channels)
+    loop do
+      ready_channel = channels.find &.ready?
+      return ready_channel if ready_channel
+
+      channels.each &.wait
+      Scheduler.reschedule
+      channels.each &.unwait
+    end
+  end
+
+  protected def wait
+    @receivers << Fiber.current
+  end
+
+  protected def unwait
+    @receivers.delete Fiber.current
+  end
 end
 
 class BufferedChannel(T) < Channel(T)
@@ -51,6 +70,10 @@ class BufferedChannel(T) < Channel(T)
   def empty?
     @queue.empty?
   end
+
+  def ready?
+    @queue.any?
+  end
 end
 
 class UnbufferedChannel(T) < Channel(T)
@@ -80,5 +103,9 @@ class UnbufferedChannel(T) < Channel(T)
     @value.not_nil!.tap do
       @value = nil
     end
+  end
+
+  def ready?
+    !@value.nil?
   end
 end
