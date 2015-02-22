@@ -80,6 +80,39 @@ describe "BigInt" do
     (10.to_big_i % -3).should eq(1.to_big_i)
     (10 % 3.to_big_i).should eq(1.to_big_i)
   end
+  
+  it "does bitwise and" do
+    (123.to_big_i & 321).should eq(65)
+    (BigInt.new("96238761238973286532") & 86325735648).should eq(69124358272)
+  end
+
+  it "does bitwise or" do
+    (123.to_big_i | 4).should eq(127)
+    (BigInt.new("96238761238986532") | 8632573).should eq(96238761247506429)
+  end
+
+  it "does bitwise xor" do
+    (123.to_big_i ^ 50).should eq(73)
+    (BigInt.new("96238761238986532") ^ 8632573).should eq(96238761247393753)
+  end
+
+  it "does bitwise not" do
+    (~123).should eq(-124)
+
+    a = BigInt.new("192623876123689865327")
+    b = BigInt.new("-192623876123689865328")
+    (~a).should eq(b)
+  end
+
+  it "does bitwise right shift" do
+    (123.to_big_i >> 4).should eq(7)
+    (123456.to_big_i >> 8).should eq(482)
+  end
+
+  it "does bitwise left shift" do
+    (123.to_big_i << 4).should eq(1968)
+    (123456.to_big_i << 8).should eq(31604736)
+  end
 
   it "raises if divides by zero" do
     expect_raises DivisionByZero do

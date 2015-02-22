@@ -113,6 +113,30 @@ struct BigInt < Int
 
     BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs.to_u64) }
   end
+  
+  def ~
+    BigInt.new { |mpz| LibGMP.com(mpz, self) }
+  end
+
+  def &(other : Int)
+    BigInt.new { |mpz| LibGMP.and(mpz, self, other.to_big_i) }
+  end
+
+  def |(other : Int)
+    BigInt.new { |mpz| LibGMP.ior(mpz, self, other.to_big_i) }
+  end
+
+  def ^(other : Int)
+    BigInt.new { |mpz| LibGMP.xor(mpz, self, other.to_big_i) }
+  end
+
+  def >>(other : Int)
+    BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other.to_i32) }
+  end
+
+  def <<(other : Int)
+    BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other.to_i32) }
+  end
 
   def inspect
     to_s
