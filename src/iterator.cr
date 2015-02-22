@@ -7,15 +7,15 @@ end
 module Iterator(T)
   include Enumerable(T)
 
-  def map(&func : T -> U)
-    MapIterator(typeof(self), T, U).new(self, func)
+  def map(&func : T -> _)
+    MapIterator(typeof(self), T, typeof(func.call(first))).new(self, func)
   end
 
-  def select(&func : T -> B)
+  def select(&func : T -> _)
     SelectIterator(typeof(self), T).new(self, func)
   end
 
-  def reject(&func : T -> B)
+  def reject(&func : T -> _)
     RejectIterator(typeof(self), T).new(self, func)
   end
 

@@ -19,11 +19,11 @@ module FS
       end
     end
 
-    def entries(&block : Entry -> U)
+    def entries(&block : Entry -> _)
       find_entries("", &block)
     end
 
-    def find_entries(path, &block : Entry -> U)
+    def find_entries(path, &block : Entry -> _)
       scoped = scoped_file_name(path)
       return unless Dir.exists?(scoped)
 

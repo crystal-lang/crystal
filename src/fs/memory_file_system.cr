@@ -28,7 +28,7 @@ module FS
 
     include MemoryFileContainer
 
-    def entries(&block : Entry -> U)
+    def entries(&block : Entry -> _)
       # find_entries("", &block)
       @data.each_value do |entry|
         block.call entry
@@ -39,7 +39,7 @@ module FS
       memory_entry_for_path(path)
     end
 
-    def find_entries(path, &block : Entry -> U)
+    def find_entries(path, &block : Entry -> _)
       entry = memory_entry_for_path(path)
       if entry.is_a? MemoryDirectoryEntry
         entry.data.each do |key, value|

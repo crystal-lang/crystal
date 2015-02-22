@@ -29,12 +29,12 @@ module FS
     end
 
     # enumerate top level entries of file system
-    abstract def entries(&block : Entry -> U)
+    abstract def entries(&block : Entry -> _)
 
     collect_alias_method entries, Entry
 
     # enumerate entries below specified relative path to the file system
-    abstract def find_entries(path, &block : Entry -> U)
+    abstract def find_entries(path, &block : Entry -> _)
 
     collect_alias_method "find_entries(path)", Entry
 
