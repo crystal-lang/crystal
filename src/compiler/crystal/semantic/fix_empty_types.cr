@@ -29,7 +29,23 @@ module Crystal
 
     def visit(node : FunLiteral)
       node.def.body.accept self
+      unless node.def.body.type?
+        node.def.body.type = @mod.no_return
+      end
       false
+    end
+
+    def visit(node : FunPointer)
+      node.call.try &.accept self
+      false
+    end
+
+    def end_visit(node : FunPointer)
+      unless node.type?
+        arg_types = node.call.args.map &.type
+        arg_types.push @mod.no_return
+        node.type = node.call.type = @mod.fun_of(arg_types)
+      end
     end
 
     def visit(node : ExpandableNode)

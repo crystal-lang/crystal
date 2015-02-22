@@ -339,7 +339,11 @@ module Crystal
 
     def transform(node : FunPointer)
       super
-      node.call?.try &.transform(self)
+
+      if call = node.call?
+        node.call = call.transform(self) as Call
+      end
+
       node
     end
 

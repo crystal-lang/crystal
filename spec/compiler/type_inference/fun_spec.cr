@@ -541,4 +541,42 @@ describe "Type inference: fun" do
       ),
       "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
   end
+
+  it "types fun literal with a type that was never instantiated" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      ->(s : Foo) { s.x }
+      )) { fun_of(types["Foo"], no_return) }
+  end
+
+  it "types fun pointer with a type that was never instantiated" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      def foo(f : Foo)
+        Foo.new(f.x)
+      end
+
+      ->foo(Foo)
+      )) { fun_of(types["Foo"], no_return) }
+  end
 end
