@@ -310,4 +310,19 @@ describe "Type inference: generic class" do
       Foo(Int32).new
       )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
   end
+
+  it "inherits class methods from generic class" do
+    assert_type(%(
+      class Foo(T)
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      Bar.foo
+      )) { int32 }
+  end
 end

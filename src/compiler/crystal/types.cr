@@ -380,6 +380,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement depth"
     end
 
+    def name
+      raise "Bug: #{self} doesn't implement name"
+    end
+
     def type_desc
       to_s
     end
@@ -1725,6 +1729,14 @@ module Crystal
     def initialize(@program, @extended_class, @mapping, @extending_class = nil)
     end
 
+    def metaclass
+      @metaclass ||= InheritedGenericClass.new(@program, @extended_class.metaclass, @mapping, @extending_class)
+    end
+
+    def type_vars
+      mapping.keys
+    end
+
     delegate depth, @extended_class
     delegate superclass, @extended_class
     delegate add_subclass, @extended_class
@@ -1765,7 +1777,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= @extended_class.parents.map do |t|
+      @parents ||= @extended_class.parents.try &.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)

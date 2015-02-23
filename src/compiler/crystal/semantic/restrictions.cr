@@ -410,9 +410,9 @@ module Crystal
       return nil unless generic_class == @extended_class
 
       generic_class = generic_class as GenericClassType
-      return nil unless generic_class.type_vars.length == @extended_class.type_vars.length
+      return nil unless generic_class.type_vars.length == type_vars.length
 
-      @extended_class.type_vars.zip(other.type_vars) do |class_type_var, other_type_var|
+      type_vars.zip(other.type_vars) do |class_type_var, other_type_var|
         if m = @mapping[class_type_var]?
           t = TypeLookup.lookup(extending_class, m)
           restricted = t.restrict other_type_var, context
