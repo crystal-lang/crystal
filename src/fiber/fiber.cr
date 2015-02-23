@@ -42,7 +42,7 @@ class Fiber
   end
 
   def run
-    @arg = @proc.call
+    @proc.call
     LibC.free(@stack)
 
     # Remove the current fiber from the linked list
@@ -67,7 +67,7 @@ class Fiber
   end
 
   @[NoInline]
-  def resume(@arg = nil)
+  def resume
     if fiber = Fiber.current
       fiber.stack_top = get_stack_top
     else
@@ -78,17 +78,15 @@ class Fiber
     LibGC.stackbottom = @stack_bottom
     LibPcl.co_call(@cr)
     LibGC.stackbottom = prev_stackbottom
-    @arg
   end
 
-  def yield(@arg = nil)
+  def yield
     @stack_top = get_stack_top
     LibPcl.co_resume
-    @arg
   end
 
-  def self.yield(arg = nil)
-    current.not_nil!.yield(arg)
+  def self.yield
+    current.not_nil!.yield
   end
 
   def self.current
