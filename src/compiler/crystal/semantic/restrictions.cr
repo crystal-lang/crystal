@@ -328,12 +328,12 @@ module Crystal
     end
 
     def restrict(other : GenericClassInstanceType, context)
-      return nil unless generic_class == other.generic_class
+      return super unless generic_class == other.generic_class
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
         restricted = type_var.type.restrict(other_type_var.type, context)
-        return nil unless restricted == type_var.type
+        return super unless restricted == type_var.type
       end
 
       self

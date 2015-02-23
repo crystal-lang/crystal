@@ -135,7 +135,13 @@ class Crystal::Call
   end
 
   def lookup_matches_in(owner : UnionType, arg_types)
-    owner.union_types.flat_map { |type| lookup_matches_in(type, arg_types) }
+    matches = [] of Def
+    owner.union_types.each do |type|
+      next if type.abstract && !type.virtual?
+
+      matches.concat lookup_matches_in(type, arg_types)
+    end
+    matches
   end
 
   def lookup_matches_in(owner : Program, arg_types, self_type = nil, def_name = self.name)

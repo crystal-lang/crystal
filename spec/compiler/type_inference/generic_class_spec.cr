@@ -325,4 +325,38 @@ describe "Type inference: generic class" do
       Bar.foo
       )) { int32 }
   end
+
+  it "creates pointer of generic type and uses it" do
+    assert_type(%(
+      abstract class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+        def foo
+          1
+        end
+      end
+
+      ptr = Pointer(Foo(Int32)).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value.foo
+      )) { int32 }
+  end
+
+  it "creates pointer of generic type and uses it (2)" do
+    assert_type(%(
+      abstract class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+          1
+        end
+      end
+
+      ptr = Pointer(Foo(Int32)).malloc(1_u64)
+      ptr.value = Bar(Int32).new
+      ptr.value.foo
+      )) { int32 }
+  end
 end
