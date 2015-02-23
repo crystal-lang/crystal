@@ -380,8 +380,11 @@ class Crystal::Call
           arg.raise "splat expects a tuple, not #{arg_type}"
         end
         arg_type.tuple_types.each_index do |index|
-          tuple_indexer = Call.new(arg.exp, "[]", NumberLiteral.new(index))
-          tuple_indexer.accept parent_visitor
+          num = NumberLiteral.new(index)
+          num.type = mod.int32
+          tuple_indexer = Call.new(arg.exp, "[]", num)
+          parent_visitor.prepare_call(tuple_indexer)
+          tuple_indexer.recalculate
           new_args << tuple_indexer
           arg.remove_input_observer(self)
         end

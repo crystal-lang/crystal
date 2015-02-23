@@ -61,4 +61,19 @@ describe "Type inference: splat" do
       x
       )) { tuple_of [int32] of TypeVar }
   end
+
+  it "can splat after type filter left it as a tuple (#442)" do
+    assert_type(%(
+      def output(x, y)
+        x + y
+      end
+
+      b = {1, 2} || nil
+      if b
+        output(*b)
+      else
+        4
+      end
+      )) { int32 }
+  end
 end
