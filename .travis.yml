@@ -32,6 +32,7 @@ install: |
   export CRYSTAL_CONFIG_VERSION=ci
 script:
   - make crystal spec
+  - bin/crystal evented_spec/*_spec.cr -Devented
 notifications:
   irc:
     channels:

@@ -19,6 +19,11 @@ class Scheduler
     end
   end
 
+  def self.yield
+    @@runnables.unshift Fiber.current
+    reschedule
+  end
+
   def self.enqueue(fiber : Fiber)
     @@runnables << fiber
   end
