@@ -1401,11 +1401,11 @@ module Crystal
       attach_doc type, node
 
       pushing_type(type) do
+        node.body.accept self
+
         if created_new_type
           run_hooks(superclass.metaclass, type, :inherited, node)
         end
-
-        node.body.accept self
       end
 
       if created_new_type

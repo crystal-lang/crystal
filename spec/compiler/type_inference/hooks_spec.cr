@@ -80,4 +80,25 @@ describe "Type inference: hooks" do
       end
       ), "macro 'extended' must not have arguments"
   end
+
+  it "types initializer in inherited" do
+    assert_type(%(
+      abstract class Foo
+        macro inherited
+          $bar = new
+        end
+      end
+
+      class Bar < Foo
+        def initialize(@name = "foo")
+        end
+
+        def name
+          @name
+        end
+      end
+
+      $bar.name
+      )) { string }
+  end
 end
