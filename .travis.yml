@@ -17,10 +17,11 @@ before_install: |
 install: |
   case $TRAVIS_OS_NAME in
     linux)
-      sudo apt-get install libgmp3-dev libpcl1-dev crystal
+      sudo apt-get install libgmp3-dev crystal
       curl "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-x86_64.tar.gz" | tar xz -C /tmp
       curl "http://crystal-lang.s3.amazonaws.com/libuv/libuv-1.2.1-1-linux-x86_64.tar.gz" | tar xz -C /tmp
-      export LIBRARY_PATH=/opt/crystal/embedded/lib:/tmp/libuv-1.2.1-1/lib
+      curl "http://crystal-lang.s3.amazonaws.com/pcl/libpcl-1.12-1-linux-x86_64.tar.gz" | tar xz -C /tmp
+      export LIBRARY_PATH=/opt/crystal/embedded/lib:/tmp/libuv-1.2.1-1/lib:/tmp/libpcl-1.12-1/lib
       ;;
 
     osx)
