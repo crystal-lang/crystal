@@ -1879,6 +1879,7 @@ module Crystal
 
       if @token.keyword?(:self)
         name = Self.new
+        name.location = @token.location
         next_token_skip_space
       else
         name = parse_ident

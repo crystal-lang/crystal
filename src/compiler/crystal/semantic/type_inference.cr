@@ -1456,7 +1456,7 @@ module Crystal
       type = scope.types[name]?
       if type
         unless type.module?
-          node.raise "#{name} is not a module, it's a #{type.type_desc}"
+          node.raise "#{type} is not a module, it's a #{type.type_desc}"
         end
       else
         if type_vars = node.type_vars
@@ -2712,7 +2712,7 @@ module Crystal
       type = lookup_path_type(node_name)
 
       unless type.module?
-        node_name.raise "#{node_name} is not a module, it's a #{type.type_desc}"
+        node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
       end
 
       if node_name.is_a?(Generic)
