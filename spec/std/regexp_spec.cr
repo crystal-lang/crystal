@@ -8,6 +8,11 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
+  it "matches with =~ and gets utf-8 codepoint index" do
+    index = "こんに" =~ /ん/
+    index.should eq(1)
+  end
+
   it "matches with === and captures" do
     "foo" =~ /foo/
     (/f(o+)(bar?)/ === "fooba").should be_true

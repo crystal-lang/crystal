@@ -392,7 +392,7 @@ class String
 
     String.build(bytesize) do |buffer|
       while match = pattern.match(self, byte_offset)
-        index = match.begin(0)
+        index = match.byte_begin(0)
 
         buffer << byte_slice(byte_offset, index - byte_offset)
         str = match[0]
@@ -838,7 +838,7 @@ class String
     byte_offset = 0
 
     while match = separator.match(self, byte_offset)
-      index = match.begin(0)
+      index = match.byte_begin(0)
       ary.push byte_slice(byte_offset, index - byte_offset)
       byte_offset = index + match[0].bytesize
       break if limit && ary.length + 1 == limit
@@ -976,7 +976,7 @@ class String
     byte_offset = 0
 
     while match = pattern.match(self, byte_offset)
-      index = match.begin(0)
+      index = match.byte_begin(0)
       yield match
       byte_offset = index + match[0].bytesize
     end

@@ -7,14 +7,20 @@ class MatchData
   end
 
   def begin(n)
-    check_index_out_of_bounds n
-
-    @ovector[n * 2]
+    byte_index_to_char_index byte_begin(n)
   end
 
   def end(n)
-    check_index_out_of_bounds n
+    byte_index_to_char_index byte_end(n)
+  end
 
+  def byte_begin(n)
+    check_index_out_of_bounds n
+    @ovector[n * 2]
+  end
+
+  def byte_end(n)
+    check_index_out_of_bounds n
     @ovector[n * 2 + 1]
   end
 
@@ -58,6 +64,16 @@ class MatchData
       io << "]"
     end
     io << ")"
+  end
+
+  private def byte_index_to_char_index(index)
+    reader = CharReader.new(@string)
+    i = 0
+    reader.each do |char|
+      break if reader.pos == index
+      i += 1
+    end
+    i
   end
 
   private def check_index_out_of_bounds(index)

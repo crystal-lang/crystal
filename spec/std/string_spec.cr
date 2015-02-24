@@ -333,6 +333,7 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
       assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
+      assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
     end
   end
 
@@ -697,6 +698,11 @@ describe "String" do
         end
         i += 1
       end
+    end
+
+    it "does with utf-8" do
+      a = "こん こん"
+      a.scan(/こ/).map(&.[0]).should eq(["こ", "こ"])
     end
   end
 

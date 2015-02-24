@@ -83,4 +83,9 @@ module GC
       nil
     end
   end
+
+  def self.add_root(object : Reference)
+    roots = $roots ||= [] of Pointer(Void)
+    roots << Pointer(Void).new(object.object_id)
+  end
 end
