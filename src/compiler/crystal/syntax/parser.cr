@@ -2084,7 +2084,7 @@ module Crystal
     end
 
     def parse_macro_expression
-      next_token_skip_space
+      next_token_skip_space_or_newline
       parse_expression_inside_macro
     end
 
@@ -2218,6 +2218,8 @@ module Crystal
       else
         exp = parse_expression
       end
+
+      skip_space_or_newline
 
       @in_macro_expression = false
       exp
