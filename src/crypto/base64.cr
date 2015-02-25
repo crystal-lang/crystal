@@ -15,7 +15,7 @@ module Bcrypt::Base64
 
   def encode64(data)
     slice = data.to_slice
-    String.new(slice.length) do |buf|
+    String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
       to_base64(slice, ALPHABET) { |byte| appender << byte }
       count = appender.count
@@ -28,13 +28,17 @@ module Bcrypt::Base64
 
     slice = data.to_slice
 
-    String.new(slice.length) do |buf|
+    String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
       from_base64(slice) { |byte| appender << byte }
       {appender.count, 0}
     end
   end
 
+  private def encode_size(str_size)
+    (str_size * 4 / 3.0).to_i + 1
+  end 
+  
   private def to_base64(data, chars)
     bytes = chars.cstr
     len = data.length
