@@ -593,6 +593,14 @@ module Crystal
       ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
     end
 
+    def self.methods(type)
+      if methods = type.try(&.defs)
+        ArrayLiteral.map(methods) { |name| StringLiteral.new(name) }
+      else
+        ArrayLiteral.new
+      end
+    end
+
     def self.constants(type)
       names = type.types.map { |name, member_type| MacroId.new(name) as ASTNode }
       ArrayLiteral.new names
