@@ -42,6 +42,7 @@ module Bcrypt::Base64
   private def to_base64(data, chars)
     bytes = chars.cstr
     len = data.length
+    len -= 1 if len > 16
     cstr = data.pointer(len)
     i = 0
 
