@@ -14,7 +14,7 @@ module Crypto::Bcrypt
   MAJOR_VERSION = '2'
   MINOR_VERSION = 'a'
 
-  def digest(pass, cost = 10)
+  def digest(pass, cost = DEFAULT_COST)
     p = generate(pass, cost)
 
     build_hash(p)
