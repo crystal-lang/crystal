@@ -31,6 +31,14 @@ module Iterator(T)
     ZipIterator(typeof(self), typeof(other), T, U).new(self, other)
   end
 
+  def cycle
+    CycleIterator(typeof(self), T).new(self)
+  end
+
+  def with_index
+    WithIndexIterator(typeof(self), T).new(self)
+  end
+
   def each
     while value = self.next
       yield value
@@ -48,8 +56,7 @@ end
 class ArrayIterator(T)
   include Iterator(T)
 
-  def initialize(@array : Array(T))
-    @index = 0
+  def initialize(@array : Array(T), @index = 0)
   end
 
   def next
@@ -60,6 +67,10 @@ class ArrayIterator(T)
     value = @array.buffer[@index]
     @index += 1
     value
+  end
+
+  def clone
+    ArrayIterator(T).new(@array, @index)
   end
 end
 
@@ -72,9 +83,7 @@ end
 class RangeIterator(T)
   include Iterator(T)
 
-  def initialize(@range : Range(T))
-    @current = range.begin
-    @reached_end = false
+  def initialize(@range : Range(T), @current = range.begin, @reached_end = false)
   end
 
   def next
@@ -96,6 +105,10 @@ class RangeIterator(T)
       value
     end
   end
+
+  def clone
+    RangeIterator(T).new(@range, @current, @reached_end)
+  end
 end
 
 struct MapIterator(I, T, U)
@@ -106,6 +119,10 @@ struct MapIterator(I, T, U)
 
   def next
     @func.call(@iter.next)
+  end
+
+  def clone
+    MapIterator.new(@iter.clone, @func)
   end
 end
 
@@ -123,6 +140,10 @@ struct SelectIterator(I, T)
       end
     end
   end
+
+  def clone
+    SelectIterator(I, T).new(@iter.clone, @func)
+  end
 end
 
 struct RejectIterator(I, T)
@@ -138,6 +159,10 @@ struct RejectIterator(I, T)
         return value
       end
     end
+  end
+
+  def clone
+    RejectIterator(I, T).new(@iter.clone, @func)
   end
 end
 
@@ -156,6 +181,10 @@ struct TakeIterator(I, T)
       raise StopIteration.new
     end
   end
+
+  def clone
+    TakeIterator(I, T).new(@iter.clone, @n)
+  end
 end
 
 struct SkipIterator(I, T)
@@ -171,10 +200,14 @@ struct SkipIterator(I, T)
     end
     @iter.next
   end
+
+  def clone
+    SkipIterator(I, T).new(@iter.clone, @n)
+  end
 end
 
-struct ZipIterator(I1, I2, T, U)
-  include Iterator({T, U})
+struct ZipIterator(I1, I2, T1, T2)
+  include Iterator({T1, T2})
 
   def initialize(@iter1, @iter2)
   end
@@ -182,4 +215,41 @@ struct ZipIterator(I1, I2, T, U)
   def next
     {@iter1.next, @iter2.next}
   end
+
+  def clone
+    ZipIterator(I1, I2, T1, T2).new(@iter1.clone, @iter2.clone)
+  end
 end
+
+class CycleIterator(I, T)
+  include Iterator(T)
+
+  def initialize(@iterator : Iterator(T))
+    @original = @iterator.clone
+  end
+
+  def next
+    @iterator.next
+  rescue StopIteration
+    @iterator = @original.clone
+    @iterator.next
+  end
+end
+
+class WithIndexIterator(I, T)
+  include Iterator({T, Int32})
+
+  def initialize(@iterator : Iterator(T), @index = 0)
+  end
+
+  def next
+    value = {@iterator.next, @index}
+    @index += 1
+    value
+  end
+
+  def clone
+    WithIndexIterator(I, T).new(@iterator.clone, @index)
+  end
+end
+

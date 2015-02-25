@@ -80,6 +80,24 @@ describe Iterator do
     end
   end
 
+  describe "cycle" do
+    it "does cycle from range" do
+      (1..3).iterator.cycle.take(10).to_a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
+    end
+
+    it "cycles an empty array" do
+      ary = [] of Int32
+      values = ary.iterator.cycle.to_a
+      values.empty?.should be_true
+    end
+  end
+
+  describe "with_index" do
+    it "does with_index from range" do
+      (1..3).iterator.with_index.to_a.should eq([{1, 0}, {2, 1}, {3, 2}])
+    end
+  end
+
   it "combines many iterators" do
     (1..100).iterator
             .select { |x| 50 <= x < 60 }
