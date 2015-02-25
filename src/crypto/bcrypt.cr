@@ -14,17 +14,17 @@ module Crypto::Bcrypt
   MAJOR_VERSION = '2'
   MINOR_VERSION = 'a'
 
-  def digest(pass, cost = DEFAULT_COST)
-    p = generate(pass, cost)
+  def digest(password, cost = DEFAULT_COST)
+    p = generate(password, cost)
 
     build_hash(p)
   end
 
-  def verify(pass, hashedPassword)
+  def verify(password, hashedPassword)
     p = generate_from_hash(hashedPassword)
 
     otherP = {"major" => p["major"], "minor" => p["minor"], "cost" => p["cost"], "salt" => p["salt"]}
-    otherP["hash"] = bcrypt(pass, p["cost"], p["salt"])
+    otherP["hash"] = bcrypt(password, p["cost"], p["salt"])
 
     if Subtle.constant_time_compare(build_hash(p).to_slice, build_hash(otherP).to_slice) == 1
       return true
@@ -33,7 +33,7 @@ module Crypto::Bcrypt
     false
   end
 
-  private def generate(pass, cost)
+  private def generate(password, cost)
     if cost < MIN_COST || cost > MAX_COST
       raise ArgumentError.new "Invalid cost size: cost #{cost} is outside allowed range (#{MIN_COST}, #{MAX_COST})"
     end
@@ -45,25 +45,25 @@ module Crypto::Bcrypt
 
     unencodedSalt = SecureRandom.hex(8)
     p["salt"] = Bcrypt::Base64.encode64(unencodedSalt)
-    p["hash"] = bcrypt(pass, p["cost"], p["salt"])
+    p["hash"] = bcrypt(password, p["cost"], p["salt"])
     p
   end
 
-  private def generate_from_hash(pass)
-    if pass.length < MIN_HASH_SIZE
+  private def generate_from_hash(password)
+    if password.length < MIN_HASH_SIZE
       raise ArgumentError.new "Invalid hashedSecret size: hashedSecret too short to be a bcrypted password"
     end
 
     p = {} of String => String
-    p["major"], p["minor"] = decode_version(pass)
-    p["cost"] = decode_cost(pass).to_s
-    p["salt"] = pass[7..(ENCODED_SALT_SIZE+6)]
-    p["hash"] = pass[(ENCODED_SALT_SIZE+7)..-1]
+    p["major"], p["minor"] = decode_version(password)
+    p["cost"] = decode_cost(password).to_s
+    p["salt"] = password[7..(ENCODED_SALT_SIZE+6)]
+    p["hash"] = password[(ENCODED_SALT_SIZE+7)..-1]
     p
   end
 
-  private def bcrypt(pass, cost, salt)
-    bf = setup(pass, cost, salt)
+  private def bcrypt(password, cost, salt)
+    bf = setup(password, cost, salt)
     # OrpheanBeholderScryDoubt
     cipherData = [
       0x4f_i64, 0x72_i64, 0x70_i64, 0x68_i64,
@@ -112,23 +112,23 @@ module Crypto::Bcrypt
     end
   end
 
-  private def decode_version(pass)
-    if pass[0] != '$'
+  private def decode_version(password)
+    if password[0] != '$'
       raise ArgumentError.new "Invalid hash prefix"
     end
 
-    if pass[1] != MAJOR_VERSION
+    if password[1] != MAJOR_VERSION
       raise ArgumentError.new "Invalid hash version"
     end
 
     minor = ""
-    minor = pass[2] if pass[2] != '$'
+    minor = password[2] if password[2] != '$'
 
-    {pass[1].to_s, minor.to_s}
+    {password[1].to_s, minor.to_s}
   end
 
-  private def decode_cost(pass)
-    cost = pass[4..5].to_i
+  private def decode_cost(password)
+    cost = password[4..5].to_i
 
     if cost < MIN_COST || cost > MAX_COST
       raise ArgumentError.new "Invalid cost size: cost #{cost} is outside allowed range (#{MIN_COST}, #{MAX_COST})"
