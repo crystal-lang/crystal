@@ -24,8 +24,6 @@ module Bcrypt::Base64
   end
 
   def decode64(data)
-    data += "=" * (4 - data.length % 4) if data.length % 4
-
     slice = data.to_slice
 
     String.new(encode_size(slice.length)) do |buf|
@@ -86,7 +84,7 @@ module Bcrypt::Base64
       i += 1
       yield ((c1 << 2 | c2 >> 4) & 0xff).to_u8
 
-      break if (i == 22)
+      break if (i == data.length)
 
       c1 = c2 << 4
       c2 = DECODE_TABLE[data[i]-46]
