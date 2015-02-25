@@ -640,6 +640,8 @@ module Crystal
           if scope.is_a?(EnumType)
             return @last = TypeNode.constants(scope)
           end
+        when "@methods"
+          return @last = TypeNode.methods(@scope)
         when "@constants"
           scope = @scope.try &.instance_type
           return @last = TypeNode.constants(scope)
