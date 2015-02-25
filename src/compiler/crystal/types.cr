@@ -249,7 +249,7 @@ module Crystal
     end
 
     def defs
-      raise "Bug: #{self} doesn't implement defs"
+      nil
     end
 
     def add_def(a_def)

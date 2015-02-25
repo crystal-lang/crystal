@@ -236,7 +236,7 @@ module Crystal
           block_arg = block.args.first?
 
           BoolLiteral.new(elements.any? do |elem|
-            block_value = interpreter.accept elem.to_macro_var
+            block_value = interpreter.accept elem
             interpreter.define_var(block_arg.name, block_value) if block_arg
             interpreter.accept(block.body).truthy?
           end)
@@ -537,6 +537,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
+      when "methods"
+        interpret_argless_method(method, args) { TypeNode.methods(type) }
       when "has_attribute?"
         interpret_one_arg_method(method, args) do |arg|
           case arg
@@ -594,6 +596,16 @@ module Crystal
     def self.constants(type)
       names = type.types.map { |name, member_type| MacroId.new(name) as ASTNode }
       ArrayLiteral.new names
+    end
+
+    def self.methods(type)
+      defs = [] of ASTNode
+      type.defs.try &.each do |name, metadatas|
+        metadatas.each do |metadata|
+          defs << metadata.def
+        end
+      end
+      ArrayLiteral.new(defs)
     end
   end
 

@@ -755,4 +755,20 @@ describe "Code gen: macro" do
       {{Color.has_attribute?("Flags")}}
       )).to_b.should be_false
   end
+
+  it "gets methods" do
+    run(%(
+      class Foo
+        def bar
+          1
+        end
+
+        macro def first_method_name : String
+          {{ @type.methods.map(&.name.stringify).first }}
+        end
+      end
+
+      Foo.new.first_method_name
+      )).to_string.should eq("bar")
+  end
 end
