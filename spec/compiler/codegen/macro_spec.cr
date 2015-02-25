@@ -771,4 +771,34 @@ describe "Code gen: macro" do
       Foo.new.first_method_name
       )).to_string.should eq("bar")
   end
+
+  it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
+    run(%(
+      class Object
+        macro def class_name : String
+          {{@class_name}}
+        end
+      end
+
+      class A
+        @@children = Pointer(A).malloc(1_u64)
+
+        def self.children
+          @@children
+        end
+      end
+
+      A.children.value = A.new
+      A.children.value.class_name
+
+      class B < A; end
+
+      A.children.value = B.new
+      A.children.value.class_name
+
+      class C < B; end
+      A.children.value = C.new
+      A.children.value.class_name
+      )).to_string.should eq("C")
+  end
 end

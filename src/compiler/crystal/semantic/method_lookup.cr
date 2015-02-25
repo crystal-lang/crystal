@@ -239,11 +239,13 @@ module Crystal
 
             base_type_matches.each do |base_type_match|
               if base_type_match.def.return_type
-                # We need to check if the definition for the method is different than the one in the base type
+                # We need to copy each submatch if it's a macro (has a return_type)
                 full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
-                if full_subtype_matches.any? &.def.same?(base_type_match.def)
-                  cloned_def = base_type_match.def.clone
-                  cloned_def.macro_owner = base_type_match.def.macro_owner
+                full_subtype_matches.each do |full_subtype_match|
+                  next unless full_subtype_match.def.return_type
+
+                  cloned_def = full_subtype_match.def.clone
+                  cloned_def.macro_owner = full_subtype_match.def.macro_owner
                   cloned_def.owner = subtype_lookup
 
                   # We want to add this cloned def at the end, because if we search subtype matches
@@ -252,7 +254,7 @@ module Crystal
                   changes << Change.new(subtype, cloned_def)
 
                   new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(cloned_def, base_type_match.arg_types, MatchContext.new(subtype_lookup, base_type_match.context.type_lookup, base_type_match.context.free_vars))
+                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.type_lookup, full_subtype_match.context.free_vars))
                 end
               end
             end
