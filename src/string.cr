@@ -15,14 +15,47 @@ class String
 
   include Comparable(self)
 
+  # Creates a String form the given slice.
+  #
+  # This method is always safe to call, and the resulting string will have
+  # the contents and length of the slice.
+  #
+  # ```
+  # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
+  # String.new(slice) #=> "abcd"
+  # ```
   def self.new(slice : Slice(UInt8))
     new(slice.pointer(slice.length), slice.length)
   end
 
+  # Creates a String from a pointer.
+  #
+  # This method is **unsafe**: the pointer must point to data that eventually
+  # contains a zero byte that indicates the ends of the string. Otherwise,
+  # the result of this method is undefined and might cause a segmentation fault.
+  #
+  # This method is typically used in C bindings, where you get a `char*` from a
+  # library and the library guarantees that this pointer eventually has an
+  # ending zero byte.
+  #
+  # ```
+  # ptr = Pointer.malloc(5) { |i| i == 4 ? 0_u8 : ('a'.ord + i).to_u8 }
+  # String.new(ptr) #=> "abcd"
+  # ```
   def self.new(chars : UInt8*)
     new(chars, LibC.strlen(chars))
   end
 
+  # Creates a new String from a pointer, indicating its bytesize count
+  # and, optionally, the UTF-8 codepoints count (length).
+  #
+  # If the given length is zero, the amount of UTF-8 codepoints will be
+  # lazily computed when needed.
+  #
+  # ```
+  # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
+  # String.new(ptr, 2) => "ab"
+  # ```
   def self.new(chars : UInt8*, bytesize, length = 0)
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
@@ -30,6 +63,25 @@ class String
     end
   end
 
+  # Creates a new String by allocating a buffer (`Pointer(UInt8)`) with the given capacity, then
+  # yielding that buffer. The block must return a tuple with the bytesize and length
+  # (UTF-8 codepoints count) of the String. If the returned length is zero, the UTF-8 codepoints
+  # count will be lazily computed.
+  #
+  # This method is **unsafe**: the bytesize returned by the block must be less than the
+  # capacity given to this String. In the future this method might check that the returned
+  # bytesize is less or equal than the capacity, making it a safe method.
+  #
+  # If you need to build a String where the maximum capacity is unknown, use `String#build`.
+  #
+  # ```
+  # str = String.new(4) do |buffer|
+  #   buffer[0] = 'a'.ord.to_u8
+  #   buffer[1] = 'b'.ord.to_u8
+  #   {2, 2}
+  # end
+  # str #=> "ab"
+  # ```
   def self.new(capacity)
     str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
     buffer = (str as String).cstr
@@ -40,6 +92,17 @@ class String
     str as String
   end
 
+  # Builds a String by creating a `StringIO` with the given initial capacity, yielding
+  # it to the block and finally getting a String out of it. The `StringIO` automatically
+  # resizes as needed.
+  #
+  # ```
+  # str = String.build do |str|
+  #   str << "hello "
+  #   str << 1
+  # end
+  # str #=> "hello 1"
+  # ```
   def self.build(capacity = 64)
     builder = StringIO.new(capacity)
     yield builder
