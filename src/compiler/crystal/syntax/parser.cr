@@ -563,13 +563,13 @@ module Crystal
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.length - 1)
               next_token_skip_space
-              value = parse_expression
+              value = parse_op_assign
               atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
               next
             when :"||="
               # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
               next_token_skip_space
-              value = parse_expression
+              value = parse_op_assign
 
               atomic = Or.new(
                   Call.new(atomic, name).at(location),
@@ -579,7 +579,7 @@ module Crystal
             when :"&&="
               # Rewrite 'f.x &&= value' as 'f.x && f.x=(value)'
               next_token_skip_space
-              value = parse_expression
+              value = parse_op_assign
 
               atomic = And.new(
                   Call.new(atomic, name).at(location),

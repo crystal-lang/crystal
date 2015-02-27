@@ -472,6 +472,7 @@ describe "Parser" do
   it_parses "1 unless 3", Unless.new(3.int32, 1.int32)
   it_parses "1 while 3", While.new(3.int32, 1.int32, run_once: true)
   it_parses "1 until 3", Until.new(3.int32, 1.int32, run_once: true)
+  it_parses "r = 1; r.x += 2 while 3", [Assign.new("r".var, 1.int32), While.new(3.int32, Call.new("r".var, "x=", Call.new(Call.new("r".var, "x"), "+", 2.int32)), true)] of ASTNode
 
   it_parses "foo if 3", If.new(3.int32, "foo".call)
   it_parses "foo unless 3", Unless.new(3.int32, "foo".call)
