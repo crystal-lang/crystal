@@ -801,4 +801,44 @@ describe "Code gen: macro" do
       A.children.value.class_name
       )).to_string.should eq("C")
   end
+
+  it "recalculates method when virtual metaclass type is added" do
+    run(%(
+      require "prelude"
+
+      $x = [] of String
+
+      def run
+        $runnables.each &.run
+      end
+
+      class Runnable
+      end
+
+      $runnables = [] of Runnable.class
+
+      class Runnable
+        macro inherited
+          $runnables << self
+        end
+
+        macro def self.run : Nil
+          $x << {{@class_name}}
+          nil
+        end
+      end
+
+      class Test < Runnable
+      end
+
+      run
+      $x.clear
+
+      class RunnableTest < Test
+      end
+
+      run
+      $x.join(", ")
+      )).to_string.should eq("Test:Class, RunnableTest:Class")
+  end
 end

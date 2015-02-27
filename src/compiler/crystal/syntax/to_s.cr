@@ -577,6 +577,7 @@ module Crystal
 
     def visit(node : Def)
       @str << "abstract " if node.abstract
+      @str << "macro " if node.return_type
       @str << keyword("def")
       @str << " "
       if node_receiver = node.receiver

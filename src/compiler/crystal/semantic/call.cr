@@ -256,8 +256,9 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    if owner.is_a?(VirtualType)
-      attach_subclass_observer owner.base_type
+    instance_type = owner.instance_type
+    if instance_type.is_a?(VirtualType)
+      attach_subclass_observer instance_type.base_type
     end
 
     instantiate matches, owner, self_type
