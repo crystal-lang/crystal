@@ -363,4 +363,21 @@ module Enumerable(T)
       hash[item[0]] = item[1]
     end
   end
+
+  def each_slice(count)
+    count = count.to_i
+    result = [] of Array(T)
+    ary :: Array(T)
+
+    each_with_index do |e, i|
+      if i % count == 0
+        ary = [] of T
+        result << ary
+      end
+
+      ary << e
+    end
+
+    result
+  end
 end

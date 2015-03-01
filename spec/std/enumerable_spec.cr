@@ -189,4 +189,12 @@ describe "Enumerable" do
     [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
     str.to_s.should eq("2, 3, 4")
   end
+
+  describe "each_slice" do
+    assert { [[1]] == [1].each_slice(4) }
+    assert { [[1, 2]] == [1, 2].each_slice(2) }
+    assert { [[1, 2], [3]] == [1, 2, 3].each_slice(2) }
+    assert { [[1, 2], [3, 4], [5, 6]] == [1, 2, 3, 4, 5, 6].each_slice(2) }
+    assert { [[1, 2, 3], [4, 5, 6]] == [1, 2, 3, 4, 5, 6].each_slice(3) }
+  end
 end
