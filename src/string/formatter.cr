@@ -21,6 +21,18 @@ class String::Formatter
           append_integer do |arg, arg_s|
             @buffer << arg_s
           end
+        when 'b'
+          append_integer(2) do |arg, arg_s|
+            @buffer << arg_s
+          end
+        when 'o'
+          append_integer(8) do |arg, arg_s|
+            @buffer << arg_s
+          end
+        when 'x'
+          append_integer(16) do |arg, arg_s|
+            @buffer << arg_s
+          end
         when '0'
           append_with_left_padding('0')
         when '1' .. '9'
@@ -142,17 +154,17 @@ class String::Formatter
     append_arg(@args[@arg_index]) { |arg, arg_s| yield arg, arg_s }
   end
 
-  private def append_integer
+  private def append_integer(base=10)
     arg = @args[@arg_index]
     unless arg.responds_to?(:to_i)
       raise "expected a number for %d, not #{arg.inspect}"
     end
 
-    append_arg(arg.to_i) { |arg_i, arg_s| yield arg_i, arg_s }
+    append_arg(arg.to_i, arg.to_i.to_s(base)) { |arg_i, arg_s| yield arg_i, arg_s }
   end
 
-  private def append_arg(arg)
-    arg_s = arg.to_s
+  private def append_arg(arg, arg_s=nil)
+    arg_s ||= arg.to_s
     yield arg, arg_s
     @arg_index += 1
     @i += 1
