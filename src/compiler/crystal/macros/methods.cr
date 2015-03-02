@@ -45,6 +45,10 @@ module Crystal
       end
     end
 
+    def interpret_compare(other)
+      raise "can't compare #{self} to #{other}"
+    end
+
     def stringify
       StringLiteral.new(to_s)
     end
@@ -108,6 +112,10 @@ module Crystal
       end
 
       BoolLiteral.new(yield to_number, other.to_number)
+    end
+
+    def interpret_compare(other : NumberLiteral)
+      to_number <=> other.to_number
     end
 
     def to_number
@@ -221,6 +229,10 @@ module Crystal
       end
     end
 
+    def interpret_compare(other : StringLiteral | MacroId)
+      value <=> other.value
+    end
+
     def to_macro_id
       @value
     end
@@ -306,6 +318,8 @@ module Crystal
             interpreter.accept(block.body).truthy?
           end)
         end
+      when "sort"
+        ArrayLiteral.new(elements.sort { |x, y| x.interpret_compare(y) })
       when "[]"
         case args.length
         when 1
@@ -506,6 +520,10 @@ module Crystal
       value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
       value = MacroId.new(value.value) if value.is_a?(StringLiteral)
       value
+    end
+
+    def interpret_compare(other : MacroId | StringLiteral)
+      value <=> other.value
     end
   end
 

@@ -457,6 +457,22 @@ describe "MacroExpander" do
     it "creates an array literal with a var" do
       assert_macro "x", %({% a = [x] %}{{a[0]}}), [NumberLiteral.new(1)] of ASTNode, "1"
     end
+
+    it "executes sort with numbers" do
+      assert_macro "", %({{[3, 2, 1].sort}}), [] of ASTNode, "[1, 2, 3]"
+    end
+
+    it "executes sort with strings" do
+      assert_macro "", %({{["c", "b", "a"].sort}}), [] of ASTNode, %(["a", "b", "c"])
+    end
+
+    it "executes sort with ids" do
+      assert_macro "", %({{["c".id, "b".id, "a".id].sort}}), [] of ASTNode, %([a, b, c])
+    end
+
+    it "executes sort with ids and strings" do
+      assert_macro "", %({{["c".id, "b", "a".id].sort}}), [] of ASTNode, %([a, "b", c])
+    end
   end
 
   describe "hash methods" do
