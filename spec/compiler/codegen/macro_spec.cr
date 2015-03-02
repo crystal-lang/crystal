@@ -841,4 +841,39 @@ describe "Code gen: macro" do
       $x.join(", ")
       )).to_string.should eq("Test:Class, RunnableTest:Class")
   end
+
+  it "correctly recomputes call (bug)" do
+    run(%(
+      class Object
+        def in_object
+          in_class(1)
+        end
+      end
+
+      class Class
+        def in_class(x)
+          bar
+        end
+
+        macro def bar : String
+          {{@class_name}}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      f = Bar.new || Foo.new
+      f.class.in_object
+
+      class Baz < Foo
+      end
+
+      f2 = Baz.new || Foo.new
+      f2.class.in_object
+      )).to_string.should eq("Baz:Class")
+  end
 end

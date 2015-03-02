@@ -59,7 +59,6 @@ class Crystal::Call
 
     unbind_from @target_defs if @target_defs
     unbind_from block.break if block
-    detach_subclass_observer
 
     @target_defs = nil
 

@@ -667,7 +667,7 @@ module Crystal
     end
 
     def notify_subclass_added
-      @subclass_observers.try &.each &.on_new_subclass
+      @subclass_observers.try &.dup.each &.on_new_subclass
     end
   end
 
