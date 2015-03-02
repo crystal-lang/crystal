@@ -550,6 +550,24 @@ describe "String" do
 
     ("%%%d" % 1).should eq("%1")
     ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
+
+    ("%b" % 123).should eq("1111011")
+    ("%+b" % 123).should eq("+1111011")
+    ("% b" % 123).should eq(" 1111011")
+    ("%-b" % 123).should eq("1111011")
+    # ("%-10b" % 123).should eq("   1111011")
+
+    ("%o" % 123).should eq("173")
+    ("%+o" % 123).should eq("+173")
+    ("% o" % 123).should eq(" 173")
+    ("%-o" % 123).should eq("173")
+    # ("%-6o" % 123).should eq("   173")
+
+    ("%x" % 123).should eq("7B")
+    ("%+x" % 123).should eq("+7B")
+    ("% x" % 123).should eq(" 7B")
+    ("%-x" % 123).should eq("7B")
+    # ("%-6x" % 123).should eq("    7B")
   end
 
   it "escapes chars" do

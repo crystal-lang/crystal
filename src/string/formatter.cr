@@ -21,6 +21,18 @@ class String::Formatter
           append_integer do |arg, arg_s|
             @buffer << arg_s
           end
+        when 'b'
+          append_integer(char, 2) do |arg, arg_s|
+            @buffer << arg_s
+          end
+        when 'o'
+          append_integer(char, 8) do |arg, arg_s|
+            @buffer << arg_s
+          end
+        when 'x'
+          append_integer(char, 16) do |arg, arg_s|
+            @buffer << arg_s
+          end
         when '0'
           append_with_left_padding('0')
         when '1' .. '9'
@@ -30,6 +42,21 @@ class String::Formatter
           case char = current_char
           when 'd'
             append_integer do |arg, arg_s|
+              @buffer << '+' if arg >= 0
+              @buffer << arg_s
+            end
+          when 'b'
+            append_integer(char, 2) do |arg, arg_s|
+              @buffer << '+' if arg >= 0
+              @buffer << arg_s
+            end
+          when 'o'
+            append_integer(char, 8) do |arg, arg_s|
+              @buffer << '+' if arg >= 0
+              @buffer << arg_s
+            end
+          when 'x'
+            append_integer(char, 16) do |arg, arg_s|
               @buffer << '+' if arg >= 0
               @buffer << arg_s
             end
@@ -60,6 +87,21 @@ class String::Formatter
               @buffer << ' ' if arg >= 0
               @buffer << arg_s
             end
+          when 'b'
+            append_integer(char, 2) do |arg, arg_s|
+              @buffer << ' ' if arg >= 0
+              @buffer << arg_s
+            end
+          when 'o'
+            append_integer(char, 8) do |arg, arg_s|
+              @buffer << ' ' if arg >= 0
+              @buffer << arg_s
+            end
+          when 'x'
+            append_integer(char, 16) do |arg, arg_s|
+              @buffer << ' ' if arg >= 0
+              @buffer << arg_s
+            end
           when '0'
             append_with_padding do |arg, arg_s, num|
               num -= arg_s.bytesize
@@ -78,6 +120,18 @@ class String::Formatter
           case char = current_char
           when 'd'
             append_integer do |arg, arg_s|
+              @buffer << arg_s
+            end
+          when 'b'
+            append_integer(char, 2) do |arg, arg_s|
+              @buffer << arg_s
+            end
+          when 'o'
+            append_integer(char, 8) do |arg, arg_s|
+              @buffer << arg_s
+            end
+          when 'x'
+            append_integer(char, 16) do |arg, arg_s|
               @buffer << arg_s
             end
           when 's'
@@ -142,17 +196,17 @@ class String::Formatter
     append_arg(@args[@arg_index]) { |arg, arg_s| yield arg, arg_s }
   end
 
-  private def append_integer
+  private def append_integer(char = 'd', base = 10)
     arg = @args[@arg_index]
     unless arg.responds_to?(:to_i)
-      raise "expected a number for %d, not #{arg.inspect}"
+      raise "expected a number for %#{char}, not #{arg.inspect}"
     end
 
-    append_arg(arg.to_i) { |arg_i, arg_s| yield arg_i, arg_s }
+    arg_to_i = arg.is_a?(Int) ? arg : arg.to_i
+    append_arg(arg_to_i, arg_to_i.to_s(base)) { |arg_i, arg_s| yield arg_i, arg_s }
   end
 
-  private def append_arg(arg)
-    arg_s = arg.to_s
+  private def append_arg(arg, arg_s = arg.to_s)
     yield arg, arg_s
     @arg_index += 1
     @i += 1
