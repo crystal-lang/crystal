@@ -78,7 +78,7 @@ class BufferedIO(T)
       return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr
     end
 
-    raise "Invalid byte sequence in UTF-8 string"
+    raise InvalidByteSequenceError.new
   end
 
   def read(slice : Slice(UInt8), count)

@@ -228,7 +228,7 @@ module IO
     fourth = read_utf8_masked_byte
     return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr if first < 0xf8
 
-    raise "Invalid byte sequence in UTF-8 string"
+    raise InvalidByteSequenceError.new
   end
 
   private def read_utf8_masked_byte

@@ -125,7 +125,7 @@ struct CharReader
   end
 
   private def invalid_byte_sequence
-    raise "Invalid byte sequence in UTF-8 string"
+    raise InvalidByteSequenceError.new
   end
 
   private def decode_current_char

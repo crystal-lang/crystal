@@ -129,6 +129,12 @@ class DomainError < Exception
   end
 end
 
+class InvalidByteSequenceError < Exception
+  def initialize(message = "Invalid byte sequence in UTF-8 string")
+    super(message)
+  end
+end
+
 class MissingKey < Exception
 end
 
