@@ -1,3 +1,17 @@
+## Next
+
+* The `class` method now works in all cases. You can now compare classes with `==` and ask their `hash` value.
+* `Range(B, E)` is now `Range(T)`.
+* Added `Number::[]`. Now you can do `Int64[1, 2, 3]` instead of `[1_i64, 2_i64, 3_u64]`.
+* Better detection of nilable instance variables, and better error messages too.
+* Added `Crypto::Blowfish` (thanks @akaufmann)
+* Added `Matrix` (thanks @Exilor)
+* Added `CallConvention` attribute for `fun`s.
+* Macros: added `constants` so you can inspect a type's constants at compile time.
+* Macros: added `methods`, which lists a type's methods (without including supertypes).
+* Macros: added `has_attribute?` for enum types, so you can check if an enum has the Flags attribute on it.
+* Many more small additions and bug fixes.
+
 ## 0.6.0 (2015-02-12)
 
 * Same as 0.5.10
