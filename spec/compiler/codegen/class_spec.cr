@@ -560,4 +560,23 @@ describe "Code gen: class" do
       Bar.new.inspect
       ))
   end
+
+  it "gets class of virtual type" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      f = Bar.new || Foo.new
+      f.class.foo
+      )).to_i.should eq(2)
+  end
 end

@@ -2,10 +2,14 @@ require "../types"
 
 module Crystal
   class LLVMId
+    getter id_to_metaclass
+
     def initialize(program)
       @ids = {} of Type => {Int32, Int32}
+      @id_to_metaclass = {} of Int32 => Int32
       @next_id = 0
       assign_id(program.object)
+      assign_id_to_metaclass(program.object)
     end
 
     def type_id(type : TypeDefType)
@@ -74,6 +78,36 @@ module Crystal
         put_id type, min_id, id
         min_id
       end
+    end
+
+    private def assign_id_to_metaclass(type : NonGenericClassType)
+      assign_id_to_metaclass(type, type.metaclass)
+      type.subclasses.each do |subclass|
+        assign_id_to_metaclass(subclass)
+      end
+    end
+
+    private def assign_id_to_metaclass(type : GenericClassInstanceType | PrimitiveType)
+      assign_id_to_metaclass(type, type.metaclass)
+    end
+
+    private def assign_id_to_metaclass(type : GenericClassType)
+      assign_id_to_metaclass(type, type.metaclass)
+      type.generic_types.values.each do |generic_type|
+        assign_id_to_metaclass(generic_type)
+      end
+    end
+
+    private def assign_id_to_metaclass(type : MetaclassType)
+      # Nothing
+    end
+
+    private def assign_id_to_metaclass(type)
+      raise "Bug: unhandled type in assign id to metaclass: #{type}"
+    end
+
+    private def assign_id_to_metaclass(type, metaclass)
+      @id_to_metaclass[type_id(type)] = type_id(metaclass)
     end
 
     private def put_id(type, min, max)

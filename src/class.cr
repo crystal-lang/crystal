@@ -3,13 +3,19 @@ class Class
     to_s(io)
   end
 
-  macro def to_s(io) : Nil
-    class_name = {{@class_name}}
-    if class_name.ends_with?(":Class")
-      class_name = class_name[0, class_name.length - 6]
-      # class_name = class_name[0 .. -7]
-    end
-    io << class_name
-    nil
+  def hash
+    crystal_type_id
+  end
+
+  def ==(other : Class)
+    crystal_type_id == other.crystal_type_id
+  end
+
+  macro def name : String
+    {{ @class_name.ends_with?(":Class") ? @class_name[0..-7] : @class_name }}
+  end
+
+  def to_s(io)
+    io << name
   end
 end

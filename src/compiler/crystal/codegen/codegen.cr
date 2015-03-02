@@ -1211,7 +1211,7 @@ module Crystal
       position_at_end old_block
     end
 
-    def new_block(name)
+    def new_block(name = "")
       context.fun.basic_blocks.append name
     end
 

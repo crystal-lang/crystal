@@ -111,4 +111,8 @@ describe "Code gen: primitives" do
       (p.value + (p + 1_i64).value).to_f32
       )).to_f32.should eq(2.5)
   end
+
+  it "codegens crystal_type_id for class" do
+    build(%(String.crystal_type_id))
+  end
 end

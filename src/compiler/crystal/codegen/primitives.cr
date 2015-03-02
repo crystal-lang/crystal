@@ -378,7 +378,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
-    type_id(call_args[0], type)
+    if context.type.is_a?(MetaclassType)
+      type_id(type)
+    else
+      type_id(call_args[0], type)
+    end
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
@@ -391,24 +395,55 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_primitive_class(node, target_def, call_args)
     value = call_args.first? || llvm_self(node.type)
-    codegen_primitive_class_with_type(node.type, value)
+    codegen_primitive_class_with_type(type, value)
   end
 
-  def codegen_primitive_class_with_type(node_type : VirtualMetaclassType, value)
-    load value
+  def codegen_primitive_class_with_type(type : VirtualType, value)
+    type_id = load value
+    metaclass_fun_name = "~metaclass"
+    func = @main_mod.functions[metaclass_fun_name]? || create_metaclass_fun(metaclass_fun_name)
+    func = check_main_fun metaclass_fun_name, func
+    call func, [type_id] of LLVM::Value
   end
 
-  def codegen_primitive_class_with_type(node_type : TupleInstanceType, value)
-    allocate_tuple(node_type) do |tuple_type, i|
-      elem_type = node_type.tuple_types[i]
+  def create_metaclass_fun(name)
+    id_to_metaclass = @llvm_id.id_to_metaclass.to_a.sort_by! &.[0]
+
+    define_main_function(name, ([LLVM::Int32]), LLVM::Int32) do |func|
+      arg = func.params.first
+
+      current_block = insert_block
+
+      cases = {} of LLVM::Value => LLVM::BasicBlock
+      id_to_metaclass.each do |tuple|
+        type_id, metaclass_id = tuple
+        block = new_block "type_#{type_id}"
+        cases[int32(type_id)] = block
+        position_at_end block
+        ret int32(metaclass_id)
+      end
+
+      otherwise = new_block "otherwise"
+      position_at_end otherwise
+      unreachable
+
+      position_at_end current_block
+      @builder.switch arg, otherwise, cases
+    end
+  end
+
+  def codegen_primitive_class_with_type(type : TupleInstanceType, value)
+    metaclass_type = type.metaclass as TupleInstanceType
+    allocate_tuple(metaclass_type) do |tuple_type, i|
+      elem_type = metaclass_type.tuple_types[i]
       ptr = aggregate_index value, i
       ptr = to_lhs ptr, elem_type
       {tuple_type, codegen_primitive_class_with_type(elem_type, ptr)}
     end
   end
 
-  def codegen_primitive_class_with_type(node_type : Type, value)
-    type_id(node_type)
+  def codegen_primitive_class_with_type(type : Type, value)
+    type_id(type)
   end
 
   def codegen_primitive_fun_call(node, target_def, call_args)

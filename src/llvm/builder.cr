@@ -137,6 +137,14 @@ struct LLVM::Builder
     Value.new LibLLVM.build_invoke self, fn, (args.buffer as LibLLVM::ValueRef*), args.length.to_u32, a_then, a_catch, name
   end
 
+  def switch(value, otherwise, cases)
+    switch = LibLLVM.build_switch self, value, otherwise, cases.length.to_u32
+    cases.each do |case_value, block|
+      LibLLVM.add_case switch, case_value, block
+    end
+    switch
+  end
+
   def to_unsafe
     @unwrap
   end

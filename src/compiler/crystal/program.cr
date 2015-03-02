@@ -86,11 +86,9 @@ module Crystal
       string.lookup_instance_var("@length").set_type(@int32)
       string.lookup_instance_var("@c").set_type(@uint8)
 
-      @types["Class"] = klass = @class = MetaclassType.new(self, object, reference, "Class")
+      @types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
       object.force_metaclass klass
       klass.force_metaclass klass
-      klass.instance_vars_in_initialize = Set.new(["@name"])
-      klass.lookup_instance_var("@name").set_type(string)
       klass.allocated = true
 
       @types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
