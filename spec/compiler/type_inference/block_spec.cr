@@ -718,4 +718,29 @@ describe "Block inference" do
       end
       )) { int32 }
   end
+
+  it "uses block return type as return type, even if can't infer block type" do
+    assert_type(%(
+      class Foo
+        def initialize(@foo)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      def bar(&block : -> Int32)
+        block
+      end
+
+      f = ->(x : Foo) {
+        bar { x.foo }
+      }
+
+      foo = Foo.new(100)
+      block = f.call(foo)
+      block.call
+      )) { int32 }
+  end
 end

@@ -621,7 +621,13 @@ class Crystal::Call
         end
       else
         if block_arg_fun_output
-          cant_infer_block_return_type
+          if block_arg_fun_output.is_a?(ASTNode)
+            output_type = ident_lookup.lookup_node_type(block_arg_fun_output)
+            block.body.type = output_type
+            block.body.freeze_type = output_type
+          else
+            cant_infer_block_return_type
+          end
         else
           block.body.type = mod.void
         end
