@@ -324,6 +324,8 @@ module Crystal
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
         end
+      when "shuffle"
+        ArrayLiteral.new(elements.shuffle)
       else
         super
       end
