@@ -1108,9 +1108,9 @@ module Crystal
 
       case current_char
       when '.'
-        is_integer = false
-
         if peek_next_char.digit?
+          is_integer = false
+
           while true
             char = next_char
             if char.digit?
@@ -1148,6 +1148,7 @@ module Crystal
           end
         else
           @token.number_kind = :i32
+          has_suffix = false
         end
       when 'e', 'E'
         is_integer = false
