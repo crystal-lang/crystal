@@ -473,6 +473,10 @@ describe "MacroExpander" do
     it "executes sort with ids and strings" do
       assert_macro "", %({{["c".id, "b", "a".id].sort}}), [] of ASTNode, %([a, "b", c])
     end
+
+    it "executes uniq" do
+      assert_macro "", %({{[1, 1, 1, 2, 3, 1, 2, 3, 4].uniq}}), [] of ASTNode, %([1, 2, 3, 4])
+    end
   end
 
   describe "hash methods" do

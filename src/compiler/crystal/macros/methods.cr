@@ -320,6 +320,8 @@ module Crystal
         end
       when "sort"
         ArrayLiteral.new(elements.sort { |x, y| x.interpret_compare(y) })
+      when "uniq"
+        ArrayLiteral.new(elements.uniq)
       when "[]"
         case args.length
         when 1
