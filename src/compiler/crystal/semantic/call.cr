@@ -621,7 +621,7 @@ class Crystal::Call
         end
       else
         if block_arg_fun_output
-          if block_arg_fun_output.is_a?(ASTNode)
+          if block_arg_fun_output.is_a?(ASTNode) && !block_arg_fun_output.is_a?(Underscore)
             output_type = ident_lookup.lookup_node_type(block_arg_fun_output)
             block.body.type = output_type
             block.body.freeze_type = output_type
@@ -642,7 +642,7 @@ class Crystal::Call
 
         block_type = block.body.type
         matched = MatchesLookup.match_arg(block_type, output, match.context)
-        if !matched &  !void_return_type?(match.context, output)
+        if !matched && !void_return_type?(match.context, output)
           if output.is_a?(Self)
             raise "expected block to return #{match.context.owner}, not #{block_type}"
           else
