@@ -76,11 +76,7 @@ module Crystal
       timing("Parse") do
         nodes = sources.map do |source|
           program.add_to_requires source.filename
-
-          parser = Parser.new(source.code)
-          parser.filename = source.filename
-          parser.wants_doc = wants_doc?
-          parser.parse
+          parse source
         end
         node = Expressions.from(nodes)
 
@@ -97,6 +93,18 @@ module Crystal
       node = Expressions.new([require_node, node] of ASTNode)
 
       {node, original_node}
+    end
+
+    private def parse(source)
+      parser = Parser.new(source.code)
+      parser.filename = source.filename
+      parser.wants_doc = wants_doc?
+      parser.parse
+    rescue ex : InvalidByteSequenceError
+      print "Error: ".colorize.red.bold
+      print "file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ".colorize.bold
+      puts "#{ex.message}"
+      exit 1
     end
 
     private def infer_type(program, node)
@@ -355,5 +363,23 @@ module Crystal
         "#{@output_dir}/#{@name}.ll"
       end
     end
+  end
+
+  def self.relative_filename(filename : String)
+    dir = Dir.working_directory
+    if filename.starts_with?(dir)
+      filename = filename[dir.length .. -1]
+      if filename.starts_with? "/"
+        ".#{filename}"
+      else
+        "./#{filename}"
+      end
+    else
+      filename
+    end
+  end
+
+  def self.relative_filename(filename)
+    filename
   end
 end

@@ -14,22 +14,8 @@ module Crystal
       end
     end
 
-    def relative_filename(filename : String)
-      dir = @current_dir ||= Dir.working_directory
-      if filename.starts_with?(dir)
-        filename = filename[dir.length .. -1]
-        if filename.starts_with? "/"
-          ".#{filename}"
-        else
-          "./#{filename}"
-        end
-      else
-        filename
-      end
-    end
-
     def relative_filename(filename)
-      filename
+      Crystal.relative_filename(filename)
     end
   end
 
