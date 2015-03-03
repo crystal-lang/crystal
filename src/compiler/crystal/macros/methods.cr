@@ -39,6 +39,11 @@ module Crystal
       yield args.first
     end
 
+    def interpret_two_args_method(method, args)
+      interpret_check_args_length method, args, 2
+      yield args[0], args[1]
+    end
+
     def interpret_check_args_length(method, args, length)
       unless args.length == length
         raise "wrong number of arguments for #{method} (#{args.length} for #{length})"
@@ -222,6 +227,12 @@ module Crystal
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
+      when "tr"
+        interpret_two_args_method(method, args) do |first, second|
+          raise "first arguent to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
+          raise "second arguent to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+          StringLiteral.new(value.tr(first.value, second.value))
+        end
       when "upcase"
         interpret_argless_method(method, args) { StringLiteral.new(@value.upcase) }
       else

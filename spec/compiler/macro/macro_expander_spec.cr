@@ -337,6 +337,10 @@ describe "MacroExpander" do
     it "executes string =~ (true)" do
       assert_macro "", %({{"hello" =~ /ell/}}), [] of ASTNode, %(true)
     end
+
+    it "executes tr" do
+      assert_macro "", %({{"hello".tr("e", "o")}}), [] of ASTNode, %("hollo")
+    end
   end
 
   describe "macro id methods" do
