@@ -40,12 +40,17 @@ struct LLVM::Builder
     Value.new phi_node
   end
 
-  def call(func)
-    Value.new LibLLVM.build_call(self, func, nil, 0, "")
+  def call(func, name = "" : String)
+    Value.new LibLLVM.build_call(self, func, nil, 0, name)
   end
 
-  def call(func, args : Array(LLVM::Value))
-    Value.new LibLLVM.build_call(self, func, (args.buffer as LibLLVM::ValueRef*), args.length, "")
+  def call(func, arg : LLVM::Value, name = "" : String)
+    value = arg.to_unsafe
+    Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
+  end
+
+  def call(func, args : Array(LLVM::Value), name = "" : String)
+    Value.new LibLLVM.build_call(self, func, (args.buffer as LibLLVM::ValueRef*), args.length, name)
   end
 
   def alloca(type, name = "")
