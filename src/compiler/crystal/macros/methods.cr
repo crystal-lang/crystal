@@ -188,6 +188,20 @@ module Crystal
           end
           BoolLiteral.new(@value.ends_with?(piece))
         end
+      when "gsub"
+        interpret_two_args_method(method, args) do |first, second|
+          raise "first arguent to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
+          raise "second arguent to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+
+          regex_value = first.value
+          if regex_value.is_a?(StringLiteral)
+            regex = Regex.new(regex_value.value, first.modifiers)
+          else
+            raise "regex interpolations not yet allowed in macros"
+          end
+
+          StringLiteral.new(value.gsub(regex, second.value))
+        end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
       when "length"
