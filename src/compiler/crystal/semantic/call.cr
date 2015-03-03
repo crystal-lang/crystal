@@ -298,7 +298,6 @@ class Crystal::Call
       next if match.def.abstract && match.context.owner.abstract
 
       check_visibility match
-      check_not_abstract match
 
       yield_vars = match_block_arg(match)
       use_cache = !block || match.def.block_arg

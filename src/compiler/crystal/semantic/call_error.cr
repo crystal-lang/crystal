@@ -50,12 +50,12 @@ class Crystal::Call
             owner.all_subclasses.each do |subclass|
               submatches = subclass.lookup_matches(signature)
               if submatches.empty?
-                a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{subclass}"
+                raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{subclass}"
               end
             end
-            a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
+            raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
           else
-            a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
+            raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
           end
         end
       end
@@ -300,16 +300,6 @@ class Crystal::Call
           append_matches owner, defs, str, matched_def: a_def, argument_name: named_arg.name
         end
         named_arg.raise msg
-      end
-    end
-  end
-
-  def check_not_abstract(match)
-    if match.def.abstract
-      bubbling_exception do
-        owner = match.context.owner
-        owner = owner.base_type if owner.is_a?(VirtualType)
-        match.def.raise "abstract def #{match.def.owner}##{match.def.name} must be implemented by #{owner}"
       end
     end
   end
