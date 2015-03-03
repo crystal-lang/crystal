@@ -1159,4 +1159,18 @@ describe "Code gen: block" do
       extra.to_i
       )).to_i.should eq(1)
   end
+
+  it "uses block var with same name as local var" do
+    run(%(
+      def foo
+        yield "hello"
+      end
+
+      a = 1
+      foo do |a|
+        a
+      end
+      a
+      )).to_i.should eq(1)
+  end
 end

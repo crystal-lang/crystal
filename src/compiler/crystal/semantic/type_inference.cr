@@ -647,7 +647,7 @@ module Crystal
 
       # Check re-assigned variables and bind them.
       bind_vars block_visitor.vars, node.vars
-      bind_vars block_visitor.vars, node.after_vars
+      bind_vars block_visitor.vars, node.after_vars, node.args
 
       node.vars = meta_vars
 
@@ -656,10 +656,12 @@ module Crystal
       false
     end
 
-    def bind_vars(from_vars, to_vars)
+    def bind_vars(from_vars, to_vars, ignored = nil)
       if to_vars
         from_vars.each do |name, block_var|
-          to_vars[name]?.try &.bind_to(block_var)
+          unless ignored.try &.find { |arg| arg.name == name }
+            to_vars[name]?.try &.bind_to(block_var)
+          end
         end
       end
     end
@@ -2529,7 +2531,7 @@ module Crystal
 
       if node_name = node.name
         var = @vars[node_name] = new_meta_var(node_name)
-        meta_var = @meta_vars[node_name] = new_meta_var(node_name)
+        meta_var = (@meta_vars[node_name] ||= new_meta_var(node_name))
         meta_var.bind_to(var)
 
         if types
@@ -2538,7 +2540,7 @@ module Crystal
         else
           unified_type = @mod.exception.virtual_type
         end
-        var.set_type(unified_type)
+        var.type = unified_type
         var.freeze_type = unified_type
 
         node.set_type(var.type)

@@ -1067,7 +1067,8 @@ module Crystal
                 unless a_rescue.type.virtual?
                   exception = cast_to exception, a_rescue.type
                 end
-                context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
+                var = context.vars[a_rescue_name]
+                assign var.pointer, var.type, a_rescue.type, exception
               end
 
               # Make sure the rescue knows about the current ensure

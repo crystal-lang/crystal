@@ -284,9 +284,6 @@ describe "Block inference" do
       "expected block to return Foo, not Int32"
   end
 
-  assert_syntax_error "a = 1; foo { |a| }",
-                      "block argument 'a' shadows local variable 'a'"
-
   it "errors when using local varaible with block argument name" do
     assert_error "def foo; yield; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
@@ -741,6 +738,20 @@ describe "Block inference" do
       foo = Foo.new(100)
       block = f.call(foo)
       block.call
+      )) { int32 }
+  end
+
+  it "uses block var with same name as local var" do
+    assert_type(%(
+      def foo
+        yield true
+      end
+
+      a = 1
+      foo do |a|
+        a
+      end
+      a
       )) { int32 }
   end
 end

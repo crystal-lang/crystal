@@ -66,9 +66,6 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  assert_syntax_error "a = 1; ->(a : Foo) { }",
-                      "function argument 'a' shadows local variable 'a'"
-
   it "errors when using local varaible with fun argument name" do
     assert_error "->(a : Int32) { }; a",
       "undefined local variable or method 'a'"
@@ -578,5 +575,13 @@ describe "Type inference: fun" do
 
       ->foo(Foo)
       )) { fun_of(types["Foo"], no_return) }
+  end
+
+  it "allows using fun arg name shadowing local variable" do
+    assert_type(%(
+      a = 1
+      f = ->(a : String) { }
+      a
+      )) { int32 }
   end
 end

@@ -663,4 +663,16 @@ describe "Code gen: exception" do
       a
       )).to_i.should eq(2)
   end
+
+  it "uses exception after rescue" do
+    run(%(
+      require "prelude"
+
+      begin
+        raise "OH NO"
+      rescue ex
+      end
+      ex.not_nil!.message
+      )).to_string.should eq("OH NO")
+  end
 end

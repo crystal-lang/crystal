@@ -1066,11 +1066,6 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-
-        if @def_vars.last.includes?(name)
-          raise "exception variable '#{name}' shadows local variable '#{name}'"
-        end
-
         push_var_name name
         next_token_skip_space
 
@@ -1093,8 +1088,6 @@ module Crystal
         body = parse_expressions
         skip_statement_end
       end
-
-      @def_vars.last.delete name if name
 
       Rescue.new(body, types, name)
     end
@@ -1384,11 +1377,6 @@ module Crystal
 
     def parse_fun_literal_arg
       name = check_ident
-
-      if @def_vars.last.includes?(name)
-        raise "function argument '#{name}' shadows local variable '#{name}'"
-      end
-
       next_token_skip_space_or_newline
 
       if @token.type == :":"
@@ -2834,10 +2822,6 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :"|"
           var = Var.new(check_ident).at(@token.location)
-          if @def_vars.last.includes?(var.name)
-            raise "block argument '#{var.name}' shadows local variable '#{var.name}'"
-          end
-
           block_args << var
 
           next_token_skip_space_or_newline

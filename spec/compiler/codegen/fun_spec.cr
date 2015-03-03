@@ -528,4 +528,12 @@ describe "Code gen: fun" do
       block.call
       ))
   end
+
+  it "allows using fun arg name shadowing local variable" do
+    run(%(
+      a = 1
+      f = ->(a : String) { }
+      a
+      )).to_i.should eq(1)
+  end
 end

@@ -125,19 +125,12 @@ describe "Type inference: exception" do
       ") { |mod| union_of(mod.int32, mod.nil) }
   end
 
-  assert_syntax_error "ex = 1; begin; rescue ex; end",
-                      "exception variable 'ex' shadows local variable 'ex'"
-
   it "errors if catched exception is not a subclass of Exception" do
     assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
   end
 
   it "errors if catched exception is not a subclass of Exception without var" do
     assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
-  end
-
-  it "errors if exception varaible is used after rescue" do
-    assert_error "begin; rescue ex; end; ex", "undefined local variable or method 'ex'"
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
@@ -257,5 +250,32 @@ describe "Type inference: exception" do
     result = assert_type("->{ 1 }.call") { int32 }
     call = result.node as Call
     call.target_def.raises.should be_true
+  end
+
+  it "shadows local variable (1)" do
+    assert_type(%(
+      require "prelude"
+
+      a = 1
+      begin
+        raise "OH NO"
+      rescue a
+        a
+      end
+      a
+      )) { union_of(int32, types["Exception"].virtual_type) }
+  end
+
+  it "remains nilable after rescue" do
+    assert_type(%(
+      require "prelude"
+
+      begin
+        raise "OH NO"
+      rescue a
+        a
+      end
+      a
+      )) { nilable types["Exception"].virtual_type }
   end
 end
