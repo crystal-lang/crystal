@@ -1,6 +1,7 @@
-## Next
+## 0.6.1 (2015-03-04)
 
 * The `class` method now works in all cases. You can now compare classes with `==` and ask their `hash` value.
+* Block variables can now shadow local variables.
 * `Range(B, E)` is now `Range(T)`.
 * Added `Number::[]`. Now you can do `Int64[1, 2, 3]` instead of `[1_i64, 2_i64, 3_u64]`.
 * Better detection of nilable instance variables, and better error messages too.
