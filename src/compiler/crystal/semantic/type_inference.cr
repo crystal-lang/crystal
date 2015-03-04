@@ -1374,8 +1374,12 @@ module Crystal
         when NonGenericClassType
           # OK
         when GenericClassType
-          mapping = Hash.zip(superclass.type_vars, (node_superclass as Generic).type_vars)
-          superclass = InheritedGenericClass.new(@mod, superclass, mapping)
+          if node_superclass.is_a?(Generic)
+            mapping = Hash.zip(superclass.type_vars, node_superclass.type_vars)
+            superclass = InheritedGenericClass.new(@mod, superclass, mapping)
+          else
+            node_superclass.not_nil!.raise "wrong number of type vars for #{superclass} (0 for #{superclass.type_vars.length})"
+          end
         else
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
         end

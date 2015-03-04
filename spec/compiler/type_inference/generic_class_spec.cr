@@ -359,4 +359,15 @@ describe "Type inference: generic class" do
       ptr.value.foo
       )) { int32 }
   end
+
+  it "errors if inheriting generic type and not specifying type vars (#460)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar < Foo
+      end
+      ),
+      "wrong number of type vars for Foo(T) (0 for 1)"
+  end
 end
