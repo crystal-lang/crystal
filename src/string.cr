@@ -903,7 +903,9 @@ class String
     while match = separator.match(self, byte_offset)
       index = match.byte_begin(0)
       ary.push byte_slice(byte_offset, index - byte_offset)
-      byte_offset = index + match[0].bytesize
+      match_bytesize = match[0].bytesize
+      break if match_bytesize == 0
+      byte_offset = index + match_bytesize
       break if limit && ary.length + 1 == limit
     end
 
@@ -1041,7 +1043,9 @@ class String
     while match = pattern.match(self, byte_offset)
       index = match.byte_begin(0)
       yield match
-      byte_offset = index + match[0].bytesize
+      match_bytesize = match[0].bytesize
+      break if match_bytesize == 0
+      byte_offset = index + match_bytesize
     end
 
     self

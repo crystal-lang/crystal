@@ -334,6 +334,11 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
       assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
+
+      it "works when match is empty" do
+        r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
+        "hello".split(r).should eq(["", ""])
+      end
     end
   end
 
@@ -721,6 +726,11 @@ describe "String" do
     it "does with utf-8" do
       a = "こん こん"
       a.scan(/こ/).map(&.[0]).should eq(["こ", "こ"])
+    end
+
+    it "works when match is empty" do
+      r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
+      "hello".scan(r).map(&.[0]).should eq(["hello", ""])
     end
   end
 
