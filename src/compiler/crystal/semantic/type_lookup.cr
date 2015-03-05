@@ -70,7 +70,7 @@ module Crystal
 
       type_vars = node.type_vars.map do |type_var|
         type_var.accept self
-        @type.not_nil! as TypeVar
+        @type.not_nil!.virtual_type as TypeVar
       end
       @type = instance_type.instantiate(type_vars)
       false

@@ -536,4 +536,31 @@ describe "Code gen: fun" do
       a
       )).to_i.should eq(1)
   end
+
+  it "codegens fun that accepts array of type" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      def foo(&block : Array(Foo) -> Foo)
+        block
+      end
+
+      block = foo { |elems| Bar.new }
+      elems = [Bar.new, Foo.new]
+      bar = block.call elems
+      bar.foo
+      )).to_i.should eq(2)
+  end
 end
