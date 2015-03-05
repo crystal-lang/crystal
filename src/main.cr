@@ -43,7 +43,7 @@ macro redefine_main(name = main)
     {{yield LibCrystalMain.__crystal_main(argc, argv)}}
     0
   rescue ex
-    puts ex
+    puts "#{ex} (#{ex.class})"
     ex.backtrace.each do |frame|
       puts frame
     end
