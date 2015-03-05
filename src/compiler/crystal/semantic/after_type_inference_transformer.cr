@@ -168,7 +168,9 @@ module Crystal
 
       node = super
 
-      if (block = node.block) && (fun_literal = block.fun_literal)
+      block = node.block
+
+      if block && (fun_literal = block.fun_literal)
         block.fun_literal = fun_literal.transform(self)
       end
 
@@ -195,8 +197,16 @@ module Crystal
       end
 
       # If the block doesn't have a type, it's a no-return.
-      if (block = node.block) && !block.type?
+      if block && !block.type?
         block.type = @program.no_return
+      end
+
+      # Check if the block has its type freezed and it doesn't match the current type
+      if block && (freeze_type = block.body.freeze_type) && (block_body_type = block.body.type?)
+        unless freeze_type.is_restriction_of_all?(block_body_type)
+          freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
+          node.raise "expected block to return #{freeze_type}, not #{block_body_type}"
+        end
       end
 
       # If any expression is no-return, replace the call with its expressions up to

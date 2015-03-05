@@ -584,4 +584,129 @@ describe "Type inference: fun" do
       a
       )) { int32 }
   end
+
+  it "uses array argument of fun arg (1)" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(&block : Array(Foo) -> Foo)
+      end
+
+      block = foo { |elems| elems[0] }
+      elems = [Foo.new, Bar.new]
+      block
+      )) { |mod| mod.nil }
+  end
+
+  it "uses array argument of fun arg (2)" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(&block : Array(Foo) -> Foo)
+        block
+      end
+
+      block = foo { |elems| elems[0] }
+      elems = [Foo.new, Bar.new]
+      block
+      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+  end
+
+  it "uses array argument of fun arg(3)" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+        getter value
+
+        def initialize(@value)
+        end
+      end
+
+      def foo(&block : Array(Foo) -> Foo)
+        block
+      end
+
+      block = foo { |elems| Bar.new((elems[0] as Bar).value) }
+      elems = [Foo.new, Bar.new(1)]
+      block
+      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+  end
+
+  it "uses array argument of fun arg (4)" do
+    assert_error %(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(&block : Array(Foo) -> Foo)
+        block
+      end
+
+      block = foo { |elems| 1 }
+      block.call [Foo.new, Bar.new]
+      ),
+      "expected block to return Foo, not Int32"
+  end
+
+  it "doesn't let passing an non-covariant generic argument" do
+    assert_error %(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(&block : Array(Foo) -> Foo)
+        block
+      end
+
+      f = ->(x : Array(Foo)) {}
+      f.call [Bar.new]
+      ),
+      "type must be Array(Foo+), not Array(Bar)"
+  end
+
+  it "allows invoking a function with a generic subtype" do
+    assert_type(%(
+      module Moo
+        def foo
+          1
+        end
+      end
+
+      class Foo(T)
+        include Moo
+      end
+
+      def func(&block : Moo -> _)
+        block
+      end
+
+      foo = Foo(Int32).new
+      f = func { |moo| moo.foo }
+      f.call foo
+      )) { int32 }
+  end
 end

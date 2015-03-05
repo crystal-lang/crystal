@@ -218,6 +218,15 @@ module Crystal
       proc.instantiate(types)
     end
 
+    def fun_of(nodes : Array(ASTNode), return_type : Type)
+      types = Array(Type).new(nodes.length + 1)
+      nodes.each do |node|
+        types << node.type
+      end
+      types << return_type
+      proc.instantiate(types)
+    end
+
     def add_to_requires(filename)
       if @requires.includes? filename
         false

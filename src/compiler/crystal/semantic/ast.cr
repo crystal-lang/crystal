@@ -13,7 +13,6 @@ module Crystal
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
-      # TODO: this should really be "type.implements?(my_type)"
       if (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
         if !freeze_type.includes_type?(type.program.nil) && type.includes_type?(type.program.nil)
           # This means that an instance variable become nil

@@ -208,6 +208,19 @@ module Crystal
       end
     end
 
+    def covariant?(other_type : Type)
+      return true if self == other_type
+
+      case other_type
+      when UnionType
+        other_type.union_types.any? do |union_type|
+          covariant?(union_type)
+        end
+      else
+        false
+      end
+    end
+
     def is_subclass_of?(type)
       self == type
     end
@@ -637,6 +650,10 @@ module Crystal
       super || parents.any? &.implements?(other_type)
     end
 
+    def covariant?(other_type)
+      super || parents.any? &.covariant?(other_type)
+    end
+
     def type_desc
       "module"
     end
@@ -1015,6 +1032,11 @@ module Crystal
       ivar.type = type
       ivar.bind_to ivar
       ivar.freeze_type = type
+    end
+
+    def covariant?(other_type)
+      other_type = other_type.base_type if other_type.is_a?(VirtualType)
+      is_subclass_of?(other_type) || super
     end
   end
 
@@ -1460,6 +1482,14 @@ module Crystal
 
     def implements?(other_type)
       super || generic_class.implements?(other_type)
+    end
+
+    def covariant?(other_type)
+      if other_type.is_a?(GenericClassInstanceType)
+        super
+      else
+        implements?(other_type)
+      end
     end
 
     def has_in_type_vars?(type)

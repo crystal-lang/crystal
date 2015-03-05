@@ -241,7 +241,7 @@ module Crystal
     end
 
     def is_restriction_of_all?(type)
-      is_restriction_of? type, type
+      is_restriction_of?(type, type) || type.implements?(self)
     end
 
     def compatible_with?(type)

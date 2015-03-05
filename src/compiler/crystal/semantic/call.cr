@@ -299,11 +299,13 @@ class Crystal::Call
 
       check_visibility match
 
-      yield_vars = match_block_arg(match)
+      yield_vars, block_arg_type = match_block_arg(match)
       use_cache = !block || match.def.block_arg
 
       if block && match.def.block_arg
-        block_type = block.fun_literal.try(&.type) || block.body.type?
+        if block_arg_type.is_a?(FunInstanceType)
+          block_type = block_arg_type.return_type
+        end
         use_cache = false unless block_type
       end
 
@@ -327,7 +329,7 @@ class Crystal::Call
       def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_key)
       typed_def = def_instance_owner.lookup_def_instance def_instance_key if use_cache
       unless typed_def
-        typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
+        typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, block_arg_type)
         def_instance_owner.add_def_instance(def_instance_key, typed_def) if use_cache
         if return_type = typed_def.return_type
           typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner.instance_type)
@@ -519,49 +521,52 @@ class Crystal::Call
     macros
   end
 
+  # Match the given block with the given block argument specification (&block : A, B, C -> D)
   def match_block_arg(match)
     block_arg = match.def.block_arg
-    return unless block_arg
-    return unless ((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg
+    return nil, nil unless block_arg
+    return nil, nil  unless ((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg
 
     yield_vars = nil
+    block_arg_type = nil
 
     block = @block.not_nil!
     ident_lookup = MatchTypeLookup.new(match.context)
 
     block_arg_fun = block_arg.fun
+
+    # If the block spec is &block : A, B, C -> D, we solve the argument types
     if block_arg_fun.is_a?(Fun)
+      # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_fun.inputs
         yield_vars = inputs.map_with_index do |input, i|
-          type = ident_lookup.lookup_node_type(input)
-          type = type.virtual_type
-          Var.new("var#{i}", type)
+          Var.new("var#{i}", ident_lookup.lookup_node_type(input).virtual_type)
         end
-        block.args.each_with_index do |arg, i|
-          arg.bind_to(yield_vars[i]? || mod.nil_var)
-        end
-      else
-        block.args.each &.bind_to(mod.nil_var)
       end
       block_arg_fun_output = block_arg_fun.output
     else
+      # Otherwise, the block spec could be something like &block : Foo, and that
+      # is valid too only if Foo is an alias/typedef that referes to a FunctionType
       block_arg_type = ident_lookup.lookup_node_type(block_arg_fun).remove_typedef
       unless block_arg_type.is_a?(FunInstanceType)
         block_arg_fun.raise "expected block type to be a function type, not #{block_arg_type}"
-        return
+        return nil, nil
       end
 
       yield_vars = block_arg_type.arg_types.map_with_index do |input, i|
         Var.new("var#{i}", input)
       end
-      block.args.each_with_index do |arg, i|
-        arg.bind_to(yield_vars[i]? || mod.nil_var)
-      end
       block_arg_fun_output = block_arg_type.return_type
     end
 
+    # Bind block arguments to the yield vars, if any, or to nil otherwise
+    block.args.each_with_index do |arg, i|
+      arg.bind_to(yield_vars.try(&.[i]?) || mod.nil_var)
+    end
+
+    # If the block is used, we convert it to a function pointer
     if match.def.uses_block_arg
-      # Automatically convert block to function pointer
+      # Create the arguments of the function literal
       if yield_vars
         fun_args = yield_vars.map_with_index do |var, i|
           arg_name = block.args[i]?.try(&.name) || mod.new_temp_var_name
@@ -571,88 +576,111 @@ class Crystal::Call
         fun_args = [] of Arg
       end
 
-      # But first check if the call has a block_arg
+      # Check if the call has a block arg (foo &bar). If so, we need to see if the
+      # passed block has the same signature as the def's block arg. We use that
+      # same FunLiteral (bar) for this call.
       if call_block_arg = self.block_arg
-        # Check input types
-        call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
-        if yield_vars
-          if yield_vars.length != call_block_arg_types.length
-            raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
-          end
-
-          i = 1
-          yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
-            if yield_var.type != call_block_arg_type
-              raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
-            end
-            i += 1
-          end
-        elsif call_block_arg_types.length != 0
-          raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
-        end
-
+        check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
         fun_literal = call_block_arg
       else
+        # Otherwise, we create a FunLiteral and type it
         if block.args.length > fun_args.length
           raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
         end
 
-        fun_def = Def.new("->", fun_args, block.body)
-        fun_literal = FunLiteral.new(fun_def)
-
-        unless block_arg_fun_output
-          fun_literal.force_void = true
-        end
-
+        fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
+        fun_literal.force_void = true unless block_arg_fun_output
         fun_literal.accept parent_visitor
       end
 
       block.fun_literal = fun_literal
 
+      # Now check if the FunLiteral's type (the block's type) matches the block arg specification.
+      # If not, we delay it for later and compute the type based on the block arg return type, if any.
+      # TODO: if we delay it if possible, maybe we shouldn't match it here.
       fun_literal_type = fun_literal.type?
       if fun_literal_type
+        block_arg_type = fun_literal_type
+        block_type = (fun_literal_type as FunInstanceType).return_type
         if output = block_arg_fun_output
-          block_type = (fun_literal_type as FunInstanceType).return_type
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
-            raise "expected block to return #{output}, not #{block_type}"
+            if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
+              block_type = ident_lookup.lookup_node_type(output).virtual_type
+              block.body.type = block_type
+              block.body.freeze_type = block_type
+              block_arg_type = mod.fun_of(fun_args, block_type)
+            else
+              raise "expected block to return #{output}, not #{block_type}"
+            end
           end
         end
       else
         if block_arg_fun_output
           if block_arg_fun_output.is_a?(ASTNode) && !block_arg_fun_output.is_a?(Underscore)
-            output_type = ident_lookup.lookup_node_type(block_arg_fun_output)
-            block.body.type = output_type
+            output_type = ident_lookup.lookup_node_type(block_arg_fun_output).virtual_type
             block.body.freeze_type = output_type
+            block_arg_type = mod.fun_of(fun_args, output_type)
           else
             cant_infer_block_return_type
           end
         else
           block.body.type = mod.void
+          block_arg_type = mod.fun_of(fun_args, mod.void)
         end
       end
     else
       block.accept parent_visitor
 
+      # Similar to above: we check that the block's type matches the block arg specification,
+      # and we delay it if possible.
+      # TODO: if we delay it if possible, maybe we shouldn't match it here.
       if output = block_arg_fun_output
-        unless block.body.type?
-          cant_infer_block_return_type
-        end
-
-        block_type = block.body.type
-        matched = MatchesLookup.match_arg(block_type, output, match.context)
-        if !matched && !void_return_type?(match.context, output)
-          if output.is_a?(Self)
-            raise "expected block to return #{match.context.owner}, not #{block_type}"
+        if !block.body.type?
+          if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+            block_type = ident_lookup.lookup_node_type(output).virtual_type
           else
-            raise "expected block to return #{output}, not #{block_type}"
+            cant_infer_block_return_type
+          end
+        else
+          block_type = block.body.type
+          matched = MatchesLookup.match_arg(block_type, output, match.context)
+          if !matched && !void_return_type?(match.context, output)
+            if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+              block_type = ident_lookup.lookup_node_type(output).virtual_type
+            else
+              if output.is_a?(Self)
+                raise "expected block to return #{match.context.owner}, not #{block_type}"
+              else
+                raise "expected block to return #{output}, not #{block_type}"
+              end
+            end
           end
         end
         block.body.freeze_type = block_type
       end
     end
 
-    yield_vars
+    {yield_vars, block_arg_type}
+  end
+
+  private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
+    call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
+    if yield_vars
+      if yield_vars.length != call_block_arg_types.length
+        raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
+      end
+
+      i = 1
+      yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
+        if yield_var.type != call_block_arg_type
+          raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
+        end
+        i += 1
+      end
+    elsif call_block_arg_types.length != 0
+      raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
+    end
   end
 
   private def void_return_type?(match_context, output)
@@ -733,7 +761,7 @@ class Crystal::Call
     owner.is_a?(Program) ? name : "#{owner}##{def_name}"
   end
 
-  def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
+  def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types, block_arg_type)
     named_args = @named_args
 
     # If there's an argument count mismatch, or we have a splat, or there are
@@ -759,12 +787,21 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
+    strict_check = body.is_a?(Primitive) && body.name == :fun_call
+
     arg_types.each_index do |index|
       arg = typed_def.args[index]
       type = arg_types[args_start_index + index]
       var = MetaVar.new(arg.name, type).at(arg.location)
       var.bind_to(var)
       args[arg.name] = var
+
+      if strict_check
+        unless type.covariant?(arg.type)
+          self.args[index].raise "type must be #{arg.type}, not #{type}"
+        end
+      end
+
       arg.type = type
     end
 
@@ -797,12 +834,12 @@ class Crystal::Call
     end
 
     fun_literal = @block.try &.fun_literal
-    if fun_literal
+    if fun_literal && block_arg_type
       block_arg = untyped_def.block_arg.not_nil!
-      var = MetaVar.new(block_arg.name, fun_literal.type)
+      var = MetaVar.new(block_arg.name, block_arg_type)
       args[block_arg.name] = var
 
-      typed_def.block_arg.not_nil!.type = fun_literal.type
+      typed_def.block_arg.not_nil!.type = block_arg_type
     end
 
     {typed_def, args}
