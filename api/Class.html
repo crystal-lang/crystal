@@ -16,7 +16,7 @@
 
 
   <h2>Superclass hierarchy</h2>
-  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Class.html">Class</a></div>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Class.html">Class</a></div>
 
 
 
@@ -33,12 +33,27 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20Class%29-class-method" class="signature"><strong>.==</strong>(other : Class)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#from_json%28string_or_io%29-class-method" class="signature"><strong>.from_json</strong>(string_or_io)</a>
         
       </li>
     
       <li class="entry-summary">
+        <a href="#hash-class-method" class="signature"><strong>.hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#inspect%28io%29-class-method" class="signature"><strong>.inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name-class-method" class="signature"><strong>.name</strong></a>
         
       </li>
     
@@ -55,12 +70,27 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20Class%29-instance-method" class="signature"><strong>#==</strong>(other : Class)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#from_json%28string_or_io%29-instance-method" class="signature"><strong>#from_json</strong>(string_or_io)</a>
         
       </li>
     
       <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name-instance-method" class="signature"><strong>#name</strong></a>
         
       </li>
     
@@ -93,14 +123,14 @@
       <li class="entry-summary">
         <a href="#def_equals_and_hash%28%2Afields%29-macro" class="signature"><strong>def_equals_and_hash</strong>(*fields)</a>
         
-          <div class="summary"><p>Defines <code>hash</code> and <code>==</code> method from the given fields.</p></div>
+          <div class="summary"><p>Defines <code><a href="Class.html#hash-instance-method">#hash</a></code> and <code>==</code> method from the given fields.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#def_hash%28%2Afields%29-macro" class="signature"><strong>def_hash</strong>(*fields)</a>
         
-          <div class="summary"><p>Defines a <code>hash</code> method computed from the given fields.</p></div>
+          <div class="summary"><p>Defines a <code><a href="Class.html#hash-instance-method">#hash</a></code> method computed from the given fields.</p></div>
         
       </li>
     
@@ -180,6 +210,19 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Class%29-class-method">
+        
+        def self.<strong>==</strong>(other : <a href="Class.html">Class</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="from_json%28string_or_io%29-class-method">
         
         def self.<strong>from_json</strong>(string_or_io)
@@ -187,7 +230,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/json/from_json.cr#L1" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/from_json.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-class-method">
+        
+        def self.<strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L6" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -200,7 +256,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/class.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="name-class-method">
+        
+        def self.<strong>name</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -213,7 +282,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/class.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -224,6 +293,19 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Class%29-instance-method">
+        
+        def <strong>==</strong>(other : <a href="Class.html">Class</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="from_json%28string_or_io%29-instance-method">
         
         def <strong>from_json</strong>(string_or_io)
@@ -231,7 +313,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/json/from_json.cr#L1" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/from_json.cr#L1" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L6" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -244,7 +339,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/class.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L2" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="name-instance-method">
+        
+        def <strong>name</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -257,7 +365,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/class.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/class.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -295,7 +403,7 @@ person.full_name <span class="c">#=> "John"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L560" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L560" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -320,7 +428,7 @@ person.full_name <span class="c">#=> "John"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L492" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L492" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -331,7 +439,7 @@ person.full_name <span class="c">#=> "John"</span></code></pre></div>
         macro <strong>def_equals_and_hash</strong>(*fields)
       </div>
       
-        <div class="doc"><p>Defines <code>hash</code> and <code>==</code> method from the given fields.</p>
+        <div class="doc"><p>Defines <code><a href="Class.html#hash-instance-method">#hash</a></code> and <code>==</code> method from the given fields.</p>
 
 <p>The generated <code>==</code> method has a self restriction.</p>
 
@@ -346,7 +454,7 @@ person.full_name <span class="c">#=> "John"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L515" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L515" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -357,7 +465,7 @@ person.full_name <span class="c">#=> "John"</span></code></pre></div>
         macro <strong>def_hash</strong>(*fields)
       </div>
       
-        <div class="doc"><p>Defines a <code>hash</code> method computed from the given fields.</p>
+        <div class="doc"><p>Defines a <code><a href="Class.html#hash-instance-method">#hash</a></code> method computed from the given fields.</p>
 
 <pre><code><span class="k">class</span> <span class="t">Person</span>
   <span class="k">def</span> <span class="m">initialize</span>(@name, @age)
@@ -369,7 +477,7 @@ person.full_name <span class="c">#=> "John"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L465" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L465" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -399,7 +507,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L448" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L448" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -425,7 +533,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L533" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L533" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -460,7 +568,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L191" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L191" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -499,7 +607,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L232" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L232" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -534,7 +642,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L273" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L273" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -547,7 +655,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/json/mapping.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/mapping.cr#L2" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -585,7 +693,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L351" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L351" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -627,7 +735,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L390" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L390" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -665,7 +773,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L425" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L425" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -699,7 +807,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">"A"</span>) <span class
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/object.cr#L309" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/object.cr#L309" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

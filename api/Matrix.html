@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Matrix(T)</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Matrix.html">Matrix(T)</a></div>
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Enumerable.html">Enumerable(T)</a>
+  
+
+
+
+
+
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28%2Arows%29-class-method" class="signature"><strong>.[]</strong>(*rows)</a>
+        
+          <div class="summary"><p>Alias for Matrix.rows.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#column%28%2Avalues%29-class-method" class="signature"><strong>.column</strong>(*values)</a>
+        
+          <div class="summary"><p>Creates a single column matrix with the given values.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#columns%28columns%20%3A%20Array%28Array%29%20%7C%20Tuple%29-class-method" class="signature"><strong>.columns</strong>(columns : Array(Array) | Tuple)</a>
+        
+          <div class="summary"><p>Creates a matrix interpreting each argument as a column.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#diagonal%28%2Avalues%29-class-method" class="signature"><strong>.diagonal</strong>(*values)</a>
+        
+          <div class="summary"><p>Creates a diagonal matrix with the supplied arguments.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#identity%28row_or_col_size%20%3A%20Int%29-class-method" class="signature"><strong>.identity</strong>(row_or_col_size : Int)</a>
+        
+          <div class="summary"><p>Creates a Matrix(Int32), whose diagonal values are 1 and the rest are 0.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20%26block%20%3A%20Int32%2C%20Int32%2C%20Int32%20-%3E%20_%29-class-method" class="signature"><strong>.new</strong>(rows : Int, columns : Int, &block : Int32, Int32, Int32 -> _)</a>
+        
+          <div class="summary"><p>Creates a matrix with the given number of rows and columns.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#row%28%2Avalues%29-class-method" class="signature"><strong>.row</strong>(*values)</a>
+        
+          <div class="summary"><p>Creates a single row matrix with the given values.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rows%28rows%20%3A%20Array%28Array%29%20%7C%20Tuple%29-class-method" class="signature"><strong>.rows</strong>(rows : Array(Array) | Tuple)</a>
+        
+          <div class="summary"><p>Creates a matrix interpreting each argument as a row.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20value%20%3A%20T%29-class-method" class="signature"><strong>.new</strong>(rows : Int, columns : Int, value : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%29-class-method" class="signature"><strong>.new</strong>(rows : Int, columns : Int)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#&</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#*</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20Matrix%29-instance-method" class="signature"><strong>#*</strong>(other : Matrix)</a>
+        
+          <div class="summary"><p>Performs multiplication with another matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%2A%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#**</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#+</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20Matrix%29-instance-method" class="signature"><strong>#+</strong>(other : Matrix)</a>
+        
+          <div class="summary"><p>Performs addition with another matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20Matrix%29-instance-method" class="signature"><strong>#-</strong>(other : Matrix)</a>
+        
+          <div class="summary"><p>Performs substraction with another matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#-</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#--instance-method" class="signature"><strong>#-</strong></a>
+        
+          <div class="summary"><p>Returns a new matrix of the same size after calling the unary #- method on every element.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20Matrix%29-instance-method" class="signature"><strong>#/</strong>(other : Matrix)</a>
+        
+          <div class="summary"><p>Performs division with another matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#/</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#<<</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20Matrix%29-instance-method" class="signature"><strong>#==</strong>(other : Matrix)</a>
+        
+          <div class="summary"><p>Checks equality between self and another matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#>></strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(index : Int)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given linear index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28row%20%3A%20Int%2C%20column%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(row : Int, column : Int)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given row and column indexes.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3D%28row%20%3A%20Int%2C%20column%20%3A%20Int%2C%20value%20%3A%20T%29-instance-method" class="signature"><strong>#[]=</strong>(row : Int, column : Int, value : T)</a>
+        
+          <div class="summary"><p>Replaces the element at the given row and column with the given value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3D%28index%20%3A%20Int%2C%20value%20%3A%20T%29-instance-method" class="signature"><strong>#[]=</strong>(index : Int, value : T)</a>
+        
+          <div class="summary"><p>Replaces the element at the given linear index with the given value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28row%20%3A%20Int%2C%20column%20%3A%20Int%29-instance-method" class="signature"><strong>#[]?</strong>(row : Int, column : Int)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given row and column indexes.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#[]?</strong>(index : Int)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given linear index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#^</strong>(other : T | Number)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#at</strong>(index : Int, &block)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given linear index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#at</strong>(index : Int)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given linear index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at%28row%20%3A%20Int%2C%20column%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#at</strong>(row : Int, column : Int, &block)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given row and column indexes.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#at%28row%20%3A%20Int%2C%20column%20%3A%20Int%29-instance-method" class="signature"><strong>#at</strong>(row : Int, column : Int)</a>
+        
+          <div class="summary"><p>Retrieves the element at the given row and column indexes.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
+        
+          <div class="summary"><p>Creates an identical matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#column%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#column</strong>(index : Int, &block)</a>
+        
+          <div class="summary"><p>Yields elements of the column at the given index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#column%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#column</strong>(index : Int)</a>
+        
+          <div class="summary"><p>Returns an array with the elements of the column at the given index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#column_count-instance-method" class="signature"><strong>#column_count</strong></a>
+        
+          <div class="summary"><p>The number of columns.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#column_vectors-instance-method" class="signature"><strong>#column_vectors</strong></a>
+        
+          <div class="summary"><p>Returns an array of smaller matrices, each representing a column from self.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#columns-instance-method" class="signature"><strong>#columns</strong></a>
+        
+          <div class="summary"><p>Returns an array of arrays that correspond to the columns of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#determinant-instance-method" class="signature"><strong>#determinant</strong></a>
+        
+          <div class="summary"><p>Returns the determinant of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#diagonal%3F-instance-method" class="signature"><strong>#diagonal?</strong></a>
+        
+          <div class="summary"><p>Returns true if all non-diagonal elements are 0.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dimensions-instance-method" class="signature"><strong>#dimensions</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        
+          <div class="summary"><p>Yields every element of the matrix linearly: First the elements of the first row, then the elements of the second row, etc.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each%28which%20%3A%20Symbol%2C%20%26block%29-instance-method" class="signature"><strong>#each</strong>(which : Symbol, &block)</a>
+        
+          <div class="summary"><p>Like #each but with a Symbol directive that causes the method to skip certain indices:   :all            -> equivalent to a simple #each (yields every element)   :diagonal       -> yields elements in the diagonal   :off_diagonal   -> yields elements not in the diagonal   :lower          -> yields elements at or below the diagonal   :strict_lower   -> yields elements below the diagonal   :upper          -> yields elements at or above the diagonal   :strict_upper   -> yields elements above the diagonal</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_index%28which%20%3D%20%3Aall%20%3A%20Symbol%2C%20%26block%29-instance-method" class="signature"><strong>#each_index</strong>(which = :all : Symbol, &block)</a>
+        
+          <div class="summary"><p>Yields every row and column index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_with_index%28which%20%3D%20%3Aall%20%3A%20Symbol%2C%20%26block%29-instance-method" class="signature"><strong>#each_with_index</strong>(which = :all : Symbol, &block)</a>
+        
+          <div class="summary"><p>Yields every element along with its row and column index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix has either 0 rows or 0 columns.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28%26block%20%3A%20T%2C%20Int32%2C%20Int32%2C%20Int32%20-%3E%20Bool%29-instance-method" class="signature"><strong>#index</strong>(&block : T, Int32, Int32, Int32 -> Bool)</a>
+        
+          <div class="summary"><p>Returns the row and column index of the first ocurrence of the block returning true, nil otherwise</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28value%20%3A%20T%2C%20which%20%3D%20%3Aall%20%3A%20Symbol%29-instance-method" class="signature"><strong>#index</strong>(value : T, which = :all : Symbol)</a>
+        
+          <div class="summary"><p>Returns the row and column index of the first occurrence of "value" in the matrix, nil otherwise.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inverse-instance-method" class="signature"><strong>#inverse</strong></a>
+        
+          <div class="summary"><p>Returns the inverse of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lower_triangular%3F-instance-method" class="signature"><strong>#lower_triangular?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix is a lower triangular matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%28%26block%29-instance-method" class="signature"><strong>#map</strong>(&block)</a>
+        
+          <div class="summary"><p>Returns a new matrix with the return values of the block.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%21%28%26block%20%3A%20T%2C%20Int32%2C%20Int32%2C%20Int32%20-%3E%20_%29-instance-method" class="signature"><strong>#map!</strong>(&block : T, Int32, Int32, Int32 -> _)</a>
+        
+          <div class="summary"><p>Changes the values of the matrix according to the return values of the block.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minor%28start_row%20%3A%20Int%2C%20rows%20%3A%20Int%2C%20start_col%20%3A%20Int%2C%20columns%20%3A%20Int%29-instance-method" class="signature"><strong>#minor</strong>(start_row : Int, rows : Int, start_col : Int, columns : Int)</a>
+        
+          <div class="summary"><p>Returns a subsection of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minor%28row_range%20%3A%20Range%28Int%29%2C%20col_range%20%3A%20Range%28Int%29%29-instance-method" class="signature"><strong>#minor</strong>(row_range : Range(Int), col_range : Range(Int))</a>
+        
+          <div class="summary"><p>Returns a subsection of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#permutation%3F-instance-method" class="signature"><strong>#permutation?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix is a permutation matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rank-instance-method" class="signature"><strong>#rank</strong></a>
+        
+          <div class="summary"><p>Returns the rank of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#regular%3F-instance-method" class="signature"><strong>#regular?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix is regular.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reverse-instance-method" class="signature"><strong>#reverse</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reverse%21-instance-method" class="signature"><strong>#reverse!</strong></a>
+        
+          <div class="summary"><p>Reverses the order of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#row%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#row</strong>(index : Int, &block)</a>
+        
+          <div class="summary"><p>Yields elements of the row at the given index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#row%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#row</strong>(index : Int)</a>
+        
+          <div class="summary"><p>Returns an array with the elements of the row at the given index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#row_count-instance-method" class="signature"><strong>#row_count</strong></a>
+        
+          <div class="summary"><p>The number of rows.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#row_vectors-instance-method" class="signature"><strong>#row_vectors</strong></a>
+        
+          <div class="summary"><p>Returns an array of smaller matrices, each representing a row from self.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rows-instance-method" class="signature"><strong>#rows</strong></a>
+        
+          <div class="summary"><p>Returns an array of arrays that correspond to the rows of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle-instance-method" class="signature"><strong>#shuffle</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle%21-instance-method" class="signature"><strong>#shuffle!</strong></a>
+        
+          <div class="summary"><p>Shuffles the elements of the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle_columns-instance-method" class="signature"><strong>#shuffle_columns</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle_columns%21-instance-method" class="signature"><strong>#shuffle_columns!</strong></a>
+        
+          <div class="summary"><p>Shuffles the elements of each column.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle_rows-instance-method" class="signature"><strong>#shuffle_rows</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle_rows%21-instance-method" class="signature"><strong>#shuffle_rows!</strong></a>
+        
+          <div class="summary"><p>Shuffles the elements of each row.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#singular%3F-instance-method" class="signature"><strong>#singular?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix is singular.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        
+          <div class="summary"><p>The total number of elements.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#square%3F-instance-method" class="signature"><strong>#square?</strong></a>
+        
+          <div class="summary"><p>Returns true if the number of rows equals the number of columns.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#swap_columns%28col_1%20%3A%20Int%2C%20col_2%20%3A%20Int%29-instance-method" class="signature"><strong>#swap_columns</strong>(col_1 : Int, col_2 : Int)</a>
+        
+          <div class="summary"><p>Swaps two columns.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#swap_rows%28row_1%20%3A%20Int%2C%20row_2%20%3A%20Int%29-instance-method" class="signature"><strong>#swap_rows</strong>(row_1 : Int, row_2 : Int)</a>
+        
+          <div class="summary"><p>Swaps two rows.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#symmetric%3F-instance-method" class="signature"><strong>#symmetric?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix is symmetric.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_a-instance-method" class="signature"><strong>#to_a</strong></a>
+        
+          <div class="summary"><p>Returns an array of every element in the matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_h-instance-method" class="signature"><strong>#to_h</strong></a>
+        
+          <div class="summary"><p>Returns a hash: {row_index, column_index} => element</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Displays the matrix in a more readable form.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#trace-instance-method" class="signature"><strong>#trace</strong></a>
+        
+          <div class="summary"><p>Returns the sum of the diagonal elements.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#transpose-instance-method" class="signature"><strong>#transpose</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#transpose%21-instance-method" class="signature"><strong>#transpose!</strong></a>
+        
+          <div class="summary"><p>Changes the rows into columns and vice versa.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upper_triangular%3F-instance-method" class="signature"><strong>#upper_triangular?</strong></a>
+        
+          <div class="summary"><p>Returns true if the matrix is an upper triangular matrix.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#|</strong>(other : T | Number)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#def_exception%28name%2C%20message%29-macro" class="signature"><strong>def_exception</strong>(name, message)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#def_operators%28%2Aoperators%29-macro" class="signature"><strong>def_operators</strong>(*operators)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28%2Arows%29-class-method">
+        
+        def self.<strong>[]</strong>(*rows)
+      </div>
+      
+        <div class="doc"><p>Alias for Matrix.rows.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L105" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="column%28%2Avalues%29-class-method">
+        
+        def self.<strong>column</strong>(*values)
+      </div>
+      
+        <div class="doc"><p>Creates a single column matrix with the given values.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L98" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="columns%28columns%20%3A%20Array%28Array%29%20%7C%20Tuple%29-class-method">
+        
+        def self.<strong>columns</strong>(columns : <a href="Array.html">Array</a>(<a href="Array.html">Array</a>) | <a href="Tuple.html">Tuple</a>)
+      </div>
+      
+        <div class="doc"><p>Creates a matrix interpreting each argument as a column.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="diagonal%28%2Avalues%29-class-method">
+        
+        def self.<strong>diagonal</strong>(*values)
+      </div>
+      
+        <div class="doc"><p>Creates a diagonal matrix with the supplied arguments. Best suited to
+numeric matrices.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L75" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="identity%28row_or_col_size%20%3A%20Int%29-class-method">
+        
+        def self.<strong>identity</strong>(row_or_col_size : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Creates a Matrix(Int32), whose diagonal values are 1 and the rest are 0.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L84" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20%26block%20%3A%20Int32%2C%20Int32%2C%20Int32%20-%3E%20_%29-class-method">
+        
+        def self.<strong>new</strong>(rows : <a href="Int.html">Int</a>, columns : <a href="Int.html">Int</a>, &block : <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a> -> _)
+      </div>
+      
+        <div class="doc"><p>Creates a matrix with the given number of rows and columns. It yields the
+linear, row and column indexes in that order.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="row%28%2Avalues%29-class-method">
+        
+        def self.<strong>row</strong>(*values)
+      </div>
+      
+        <div class="doc"><p>Creates a single row matrix with the given values.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L91" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rows%28rows%20%3A%20Array%28Array%29%20%7C%20Tuple%29-class-method">
+        
+        def self.<strong>rows</strong>(rows : <a href="Array.html">Array</a>(<a href="Array.html">Array</a>) | <a href="Tuple.html">Tuple</a>)
+      </div>
+      
+        <div class="doc"><p>Creates a matrix interpreting each argument as a row.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20value%20%3A%20T%29-class-method">
+        
+        def self.<strong>new</strong>(rows : <a href="Int.html">Int</a>, columns : <a href="Int.html">Int</a>, value : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L29" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%29-class-method">
+        
+        def self.<strong>new</strong>(rows : <a href="Int.html">Int</a>, columns : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L25" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>&</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>*</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20Matrix%29-instance-method">
+        
+        def <strong>*</strong>(other : <a href="Matrix.html">Matrix</a>)
+      </div>
+      
+        <div class="doc"><p>Performs multiplication with another matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L216" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%2A%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>**</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>+</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20Matrix%29-instance-method">
+        
+        def <strong>+</strong>(other : <a href="Matrix.html">Matrix</a>)
+      </div>
+      
+        <div class="doc"><p>Performs addition with another matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L200" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20Matrix%29-instance-method">
+        
+        def <strong>-</strong>(other : <a href="Matrix.html">Matrix</a>)
+      </div>
+      
+        <div class="doc"><p>Performs substraction with another matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L208" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>-</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="--instance-method">
+        
+        def <strong>-</strong>
+      </div>
+      
+        <div class="doc"><p>Returns a new matrix of the same size after calling the unary #- method
+on every element. Best suited to numeric matrices.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L195" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28other%20%3A%20Matrix%29-instance-method">
+        
+        def <strong>/</strong>(other : <a href="Matrix.html">Matrix</a>)
+      </div>
+      
+        <div class="doc"><p>Performs division with another matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L232" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>/</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong><<</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Matrix%29-instance-method">
+        
+        def <strong>==</strong>(other : <a href="Matrix.html">Matrix</a>)
+      </div>
+      
+        <div class="doc"><p>Checks equality between self and another matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L185" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>>></strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given linear index. Raises IndexOutOfBounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L131" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28row%20%3A%20Int%2C%20column%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]</strong>(row : <a href="Int.html">Int</a>, column : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given row and column indexes.
+Raises IndexOutOfBounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L111" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3D%28row%20%3A%20Int%2C%20column%20%3A%20Int%2C%20value%20%3A%20T%29-instance-method">
+        
+        def <strong>[]=</strong>(row : <a href="Int.html">Int</a>, column : <a href="Int.html">Int</a>, value : T)
+      </div>
+      
+        <div class="doc"><p>Replaces the element at the given row and column with the given value.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L122" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3D%28index%20%3A%20Int%2C%20value%20%3A%20T%29-instance-method">
+        
+        def <strong>[]=</strong>(index : <a href="Int.html">Int</a>, value : T)
+      </div>
+      
+        <div class="doc"><p>Replaces the element at the given linear index with the given value.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L142" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3F%28row%20%3A%20Int%2C%20column%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]?</strong>(row : <a href="Int.html">Int</a>, column : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given row and column indexes.
+Returns nil if out of bounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L117" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3F%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>[]?</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given linear index. Returns nil if out of
+bounds</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L137" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>^</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at%28index%20%3A%20Int%2C%20%26block%29-instance-method">
+        
+        def <strong>at</strong>(index : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given linear index.
+Yields if out of bounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L169" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>at</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given linear index.
+Raises if out of bounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L180" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at%28row%20%3A%20Int%2C%20column%20%3A%20Int%2C%20%26block%29-instance-method">
+        
+        def <strong>at</strong>(row : <a href="Int.html">Int</a>, column : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given row and column indexes.
+Yields if out of bounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L151" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at%28row%20%3A%20Int%2C%20column%20%3A%20Int%29-instance-method">
+        
+        def <strong>at</strong>(row : <a href="Int.html">Int</a>, column : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given row and column indexes.
+Raises IndexOutOfBounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L163" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="clone-instance-method">
+        
+        def <strong>clone</strong>
+      </div>
+      
+        <div class="doc"><p>Creates an identical matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L771" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="column%28index%20%3A%20Int%2C%20%26block%29-instance-method">
+        
+        def <strong>column</strong>(index : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Yields elements of the column at the given index.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L388" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="column%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>column</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Returns an array with the elements of the column at the given index.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L380" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="column_count-instance-method">
+        
+        def <strong>column_count</strong>
+      </div>
+      
+        <div class="doc"><p>The number of columns.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L402" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="column_vectors-instance-method">
+        
+        def <strong>column_vectors</strong>
+      </div>
+      
+        <div class="doc"><p>Returns an array of smaller matrices, each representing a column from self.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L506" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="columns-instance-method">
+        
+        def <strong>columns</strong>
+      </div>
+      
+        <div class="doc"><p>Returns an array of arrays that correspond to the columns of the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L397" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="determinant-instance-method">
+        
+        def <strong>determinant</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the determinant of the matrix. Only useful for numeric matrices.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L544" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="diagonal%3F-instance-method">
+        
+        def <strong>diagonal?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if all non-diagonal elements are 0.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L417" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="dimensions-instance-method">
+        
+        def <strong>dimensions</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L425" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each%28%26block%29-instance-method">
+        
+        def <strong>each</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Yields every element of the matrix linearly: First the elements of the first
+row, then the elements of the second row, etc.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L238" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each%28which%20%3A%20Symbol%2C%20%26block%29-instance-method">
+        
+        def <strong>each</strong>(which : <a href="Symbol.html">Symbol</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Like #each but with a Symbol directive that causes the method to skip
+certain indices:
+:all            -> equivalent to a simple #each (yields every element)
+:diagonal       -> yields elements in the diagonal
+:off_diagonal   -> yields elements not in the diagonal
+:lower          -> yields elements at or below the diagonal
+:strict_lower   -> yields elements below the diagonal
+:upper          -> yields elements at or above the diagonal
+:strict_upper   -> yields elements above the diagonal</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L252" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_index%28which%20%3D%20%3Aall%20%3A%20Symbol%2C%20%26block%29-instance-method">
+        
+        def <strong>each_index</strong>(which = <span class="n">:all</span> : <a href="Symbol.html">Symbol</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Yields every row and column index.
+See #each for the optional directives.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L314" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_with_index%28which%20%3D%20%3Aall%20%3A%20Symbol%2C%20%26block%29-instance-method">
+        
+        def <strong>each_with_index</strong>(which = <span class="n">:all</span> : <a href="Symbol.html">Symbol</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Yields every element along with its row and column index.
+See #each for the optional directives.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L287" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="empty%3F-instance-method">
+        
+        def <strong>empty?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix has either 0 rows or 0 columns.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L430" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L777" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28%26block%20%3A%20T%2C%20Int32%2C%20Int32%2C%20Int32%20-%3E%20Bool%29-instance-method">
+        
+        def <strong>index</strong>(&block : T, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a> -> <a href="Bool.html">Bool</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the row and column index of the first ocurrence of the block
+returning true, nil otherwise</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L348" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28value%20%3A%20T%2C%20which%20%3D%20%3Aall%20%3A%20Symbol%29-instance-method">
+        
+        def <strong>index</strong>(value : T, which = <span class="n">:all</span> : <a href="Symbol.html">Symbol</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the row and column index of the first occurrence of "value" in
+the matrix, nil otherwise.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L339" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L830" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inverse-instance-method">
+        
+        def <strong>inverse</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the inverse of the matrix. Only useful for numeric matrices.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L596" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lower_triangular%3F-instance-method">
+        
+        def <strong>lower_triangular?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix is a lower triangular matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L435" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%28%26block%29-instance-method">
+        
+        def <strong>map</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Returns a new matrix with the return values of the block.
+Yields the element and its linear, row and column indices in that order.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L320" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%21%28%26block%20%3A%20T%2C%20Int32%2C%20Int32%2C%20Int32%20-%3E%20_%29-instance-method">
+        
+        def <strong>map!</strong>(&block : T, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a> -> _)
+      </div>
+      
+        <div class="doc"><p>Changes the values of the matrix according to the return values of the
+block.
+Yields the element and its linear, row and column indices in that order.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L329" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minor%28start_row%20%3A%20Int%2C%20rows%20%3A%20Int%2C%20start_col%20%3A%20Int%2C%20columns%20%3A%20Int%29-instance-method">
+        
+        def <strong>minor</strong>(start_row : <a href="Int.html">Int</a>, rows : <a href="Int.html">Int</a>, start_col : <a href="Int.html">Int</a>, columns : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Returns a subsection of the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L511" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minor%28row_range%20%3A%20Range%28Int%29%2C%20col_range%20%3A%20Range%28Int%29%29-instance-method">
+        
+        def <strong>minor</strong>(row_range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>), col_range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>))
+      </div>
+      
+        <div class="doc"><p>Returns a subsection of the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L535" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="permutation%3F-instance-method">
+        
+        def <strong>permutation?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix is a permutation matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L453" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rank-instance-method">
+        
+        def <strong>rank</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the rank of the matrix. Only useful for numeric matrices.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L634" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="regular%3F-instance-method">
+        
+        def <strong>regular?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix is regular.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L477" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reverse-instance-method">
+        
+        def <strong>reverse</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L709" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reverse%21-instance-method">
+        
+        def <strong>reverse!</strong>
+      </div>
+      
+        <div class="doc"><p>Reverses the order of the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L698" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="row%28index%20%3A%20Int%2C%20%26block%29-instance-method">
+        
+        def <strong>row</strong>(index : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Yields elements of the row at the given index.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L366" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="row%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>row</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Returns an array with the elements of the row at the given index.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L358" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="row_count-instance-method">
+        
+        def <strong>row_count</strong>
+      </div>
+      
+        <div class="doc"><p>The number of rows.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L407" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="row_vectors-instance-method">
+        
+        def <strong>row_vectors</strong>
+      </div>
+      
+        <div class="doc"><p>Returns an array of smaller matrices, each representing a row from self.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L501" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rows-instance-method">
+        
+        def <strong>rows</strong>
+      </div>
+      
+        <div class="doc"><p>Returns an array of arrays that correspond to the rows of the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L375" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle-instance-method">
+        
+        def <strong>shuffle</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L719" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle%21-instance-method">
+        
+        def <strong>shuffle!</strong>
+      </div>
+      
+        <div class="doc"><p>Shuffles the elements of the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L714" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle_columns-instance-method">
+        
+        def <strong>shuffle_columns</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L742" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle_columns%21-instance-method">
+        
+        def <strong>shuffle_columns!</strong>
+      </div>
+      
+        <div class="doc"><p>Shuffles the elements of each column.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L736" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle_rows-instance-method">
+        
+        def <strong>shuffle_rows</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L731" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle_rows%21-instance-method">
+        
+        def <strong>shuffle_rows!</strong>
+      </div>
+      
+        <div class="doc"><p>Shuffles the elements of each row.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L724" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="singular%3F-instance-method">
+        
+        def <strong>singular?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix is singular.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L482" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size-instance-method">
+        
+        def <strong>size</strong>
+      </div>
+      
+        <div class="doc"><p>The total number of elements.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L412" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="square%3F-instance-method">
+        
+        def <strong>square?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the number of rows equals the number of columns.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L487" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="swap_columns%28col_1%20%3A%20Int%2C%20col_2%20%3A%20Int%29-instance-method">
+        
+        def <strong>swap_columns</strong>(col_1 : <a href="Int.html">Int</a>, col_2 : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Swaps two columns.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L759" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="swap_rows%28row_1%20%3A%20Int%2C%20row_2%20%3A%20Int%29-instance-method">
+        
+        def <strong>swap_rows</strong>(row_1 : <a href="Int.html">Int</a>, row_2 : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Swaps two rows.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L747" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="symmetric%3F-instance-method">
+        
+        def <strong>symmetric?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix is symmetric.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L492" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_a-instance-method">
+        
+        def <strong>to_a</strong>
+      </div>
+      
+        <div class="doc"><p>Returns an array of every element in the matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L784" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_h-instance-method">
+        
+        def <strong>to_h</strong>
+      </div>
+      
+        <div class="doc"><p>Returns a hash: {row_index, column_index} => element</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L789" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+        <div class="doc"><p>Displays the matrix in a more readable form.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L798" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="trace-instance-method">
+        
+        def <strong>trace</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the sum of the diagonal elements. Only useful for numeric matrices.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L660" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="transpose-instance-method">
+        
+        def <strong>transpose</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L693" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="transpose%21-instance-method">
+        
+        def <strong>transpose!</strong>
+      </div>
+      
+        <div class="doc"><p>Changes the rows into columns and vice versa.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L668" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upper_triangular%3F-instance-method">
+        
+        def <strong>upper_triangular?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns true if the matrix is an upper triangular matrix.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L444" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+        
+        def <strong>|</strong>(other : T | <a href="Number.html">Number</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="def_exception%28name%2C%20message%29-macro">
+        
+        macro <strong>def_exception</strong>(name, message)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="def_operators%28%2Aoperators%29-macro">
+        
+        macro <strong>def_operators</strong>(*operators)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

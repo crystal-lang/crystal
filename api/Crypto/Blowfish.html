@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Crypto::Blowfish</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../Crypto/Blowfish.html">Crypto::Blowfish</a></div>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>P</strong> = <code><span class="t">Int64</span>[<span class="n">608135816</span>, <span class="n">2242054355</span>, <span class="n">320440878</span>, <span class="n">57701188</span>, <span class="n">2752067618</span>, <span class="n">698298832</span>, <span class="n">137296536</span>, <span class="n">3964562569</span>, <span class="n">1160258022</span>, <span class="n">953160567</span>, <span class="n">3193202383</span>, <span class="n">887688300</span>, <span class="n">3232508343</span>, <span class="n">3380367581</span>, <span class="n">1065670069</span>, <span class="n">3041331479</span>, <span class="n">2450970073</span>, <span class="n">2306472731</span>]</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S</strong> = <code>[<span class="t">Int64</span>[<span class="n">3509652390</span>, <span class="n">2564797868</span>, <span class="n">805139163</span>, <span class="n">3491422135</span>, <span class="n">3101798381</span>, <span class="n">1780907670</span>, <span class="n">3128725573</span>, <span class="n">4046225305</span>, <span class="n">614570311</span>, <span class="n">3012652279</span>, <span class="n">134345442</span>, <span class="n">2240740374</span>, <span class="n">1667834072</span>, <span class="n">1901547113</span>, <span class="n">2757295779</span>, <span class="n">4103290238</span>, <span class="n">227898511</span>, <span class="n">1921955416</span>, <span class="n">1904987480</span>, <span class="n">2182433518</span>, <span class="n">2069144605</span>, <span class="n">3260701109</span>, <span class="n">2620446009</span>, <span class="n">720527379</span>, <span class="n">3318853667</span>, <span class="n">677414384</span>, <span class="n">3393288472</span>, <span class="n">3101374703</span>, <span class="n">2390351024</span>, <span class="n">1614419982</span>, <span class="n">1822297739</span>, <span class="n">2954791486</span>, <span class="n">3608508353</span>, <span class="n">3174124327</span>, <span class="n">2024746970</span>, <span class="n">1432378464</span>, <span class="n">3864339955</span>, <span class="n">2857741204</span>, <span class="n">1464375394</span>, <span class="n">1676153920</span>, <span class="n">1439316330</span>, <span class="n">715854006</span>, <span class="n">3033291828</span>, <span class="n">289532110</span>, <span class="n">2706671279</span>, <span class="n">2087905683</span>, <span class="n">3018724369</span>, <span class="n">1668267050</span>, <span class="n">732546397</span>, <span class="n">1947742710</span>, <span class="n">3462151702</span>, <span class="n">2609353502</span>, <span class="n">2950085171</span>, <span class="n">1814351708</span>, <span class="n">2050118529</span>, <span class="n">680887927</span>, <span class="n">999245976</span>, <span class="n">1800124847</span>, <span class="n">3300911131</span>, <span class="n">1713906067</span>, <span class="n">1641548236</span>, <span class="n">4213287313</span>, <span class="n">1216130144</span>, <span class="n">1575780402</span>, <span class="n">4018429277</span>, <span class="n">3917837745</span>, <span class="n">3693486850</span>, <span class="n">3949271944</span>, <span class="n">596196993</span>, <span class="n">3549867205</span>, <span class="n">258830323</span>, <span class="n">2213823033</span>, <span class="n">772490370</span>, <span class="n">2760122372</span>, <span class="n">1774776394</span>, <span class="n">2652871518</span>, <span class="n">566650946</span>, <span class="n">4142492826</span>, <span class="n">1728879713</span>, <span class="n">2882767088</span>, <span class="n">1783734482</span>, <span class="n">3629395816</span>, <span class="n">2517608232</span>, <span class="n">2874225571</span>, <span class="n">1861159788</span>, <span class="n">326777828</span>, <span class="n">3124490320</span>, <span class="n">2130389656</span>, <span class="n">2716951837</span>, <span class="n">967770486</span>, <span class="n">1724537150</span>, <span class="n">2185432712</span>, <span class="n">2364442137</span>, <span class="n">1164943284</span>, <span class="n">2105845187</span>, <span class="n">998989502</span>, <span class="n">3765401048</span>, <span class="n">2244026483</span>, <span class="n">1075463327</span>, <span class="n">1455516326</span>, <span class="n">1322494562</span>, <span class="n">910128902</span>, <span class="n">469688178</span>, <span class="n">1117454909</span>, <span class="n">936433444</span>, <span class="n">3490320968</span>, <span class="n">3675253459</span>, <span class="n">1240580251</span>, <span class="n">122909385</span>, <span class="n">2157517691</span>, <span class="n">634681816</span>, <span class="n">4142456567</span>, <span class="n">3825094682</span>, <span class="n">3061402683</span>, <span class="n">2540495037</span>, <span class="n">79693498</span>, <span class="n">3249098678</span>, <span class="n">1084186820</span>, <span class="n">1583128258</span>, <span class="n">426386531</span>, <span class="n">1761308591</span>, <span class="n">1047286709</span>, <span class="n">322548459</span>, <span class="n">995290223</span>, <span class="n">1845252383</span>, <span class="n">2603652396</span>, <span class="n">3431023940</span>, <span class="n">2942221577</span>, <span class="n">3202600964</span>, <span class="n">3727903485</span>, <span class="n">1712269319</span>, <span class="n">422464435</span>, <span class="n">3234572375</span>, <span class="n">1170764815</span>, <span class="n">3523960633</span>, <span class="n">3117677531</span>, <span class="n">1434042557</span>, <span class="n">442511882</span>, <span class="n">3600875718</span>, <span class="n">1076654713</span>, <span class="n">1738483198</span>, <span class="n">4213154764</span>, <span class="n">2393238008</span>, <span class="n">3677496056</span>, <span class="n">1014306527</span>, <span class="n">4251020053</span>, <span class="n">793779912</span>, <span class="n">2902807211</span>, <span class="n">842905082</span>, <span class="n">4246964064</span>, <span class="n">1395751752</span>, <span class="n">1040244610</span>, <span class="n">2656851899</span>, <span class="n">3396308128</span>, <span class="n">445077038</span>, <span class="n">3742853595</span>, <span class="n">3577915638</span>, <span class="n">679411651</span>, <span class="n">2892444358</span>, <span class="n">2354009459</span>, <span class="n">1767581616</span>, <span class="n">3150600392</span>, <span class="n">3791627101</span>, <span class="n">3102740896</span>, <span class="n">284835224</span>, <span class="n">4246832056</span>, <span class="n">1258075500</span>, <span class="n">768725851</span>, <span class="n">2589189241</span>, <span class="n">3069724005</span>, <span class="n">3532540348</span>, <span class="n">1274779536</span>, <span class="n">3789419226</span>, <span class="n">2764799539</span>, <span class="n">1660621633</span>, <span class="n">3471099624</span>, <span class="n">4011903706</span>, <span class="n">913787905</span>, <span class="n">3497959166</span>, <span class="n">737222580</span>, <span class="n">2514213453</span>, <span class="n">2928710040</span>, <span class="n">3937242737</span>, <span class="n">1804850592</span>, <span class="n">3499020752</span>, <span class="n">2949064160</span>, <span class="n">2386320175</span>, <span class="n">2390070455</span>, <span class="n">2415321851</span>, <span class="n">4061277028</span>, <span class="n">2290661394</span>, <span class="n">2416832540</span>, <span class="n">1336762016</span>, <span class="n">1754252060</span>, <span class="n">3520065937</span>, <span class="n">3014181293</span>, <span class="n">791618072</span>, <span class="n">3188594551</span>, <span class="n">3933548030</span>, <span class="n">2332172193</span>, <span class="n">3852520463</span>, <span class="n">3043980520</span>, <span class="n">413987798</span>, <span class="n">3465142937</span>, <span class="n">3030929376</span>, <span class="n">4245938359</span>, <span class="n">2093235073</span>, <span class="n">3534596313</span>, <span class="n">375366246</span>, <span class="n">2157278981</span>, <span class="n">2479649556</span>, <span class="n">555357303</span>, <span class="n">3870105701</span>, <span class="n">2008414854</span>, <span class="n">3344188149</span>, <span class="n">4221384143</span>, <span class="n">3956125452</span>, <span class="n">2067696032</span>, <span class="n">3594591187</span>, <span class="n">2921233993</span>, <span class="n">2428461</span>, <span class="n">544322398</span>, <span class="n">577241275</span>, <span class="n">1471733935</span>, <span class="n">610547355</span>, <span class="n">4027169054</span>, <span class="n">1432588573</span>, <span class="n">1507829418</span>, <span class="n">2025931657</span>, <span class="n">3646575487</span>, <span class="n">545086370</span>, <span class="n">48609733</span>, <span class="n">2200306550</span>, <span class="n">1653985193</span>, <span class="n">298326376</span>, <span class="n">1316178497</span>, <span class="n">3007786442</span>, <span class="n">2064951626</span>, <span class="n">458293330</span>, <span class="n">2589141269</span>, <span class="n">3591329599</span>, <span class="n">3164325604</span>, <span class="n">727753846</span>, <span class="n">2179363840</span>, <span class="n">146436021</span>, <span class="n">1461446943</span>, <span class="n">4069977195</span>, <span class="n">705550613</span>, <span class="n">3059967265</span>, <span class="n">3887724982</span>, <span class="n">4281599278</span>, <span class="n">3313849956</span>, <span class="n">1404054877</span>, <span class="n">2845806497</span>, <span class="n">146425753</span>, <span class="n">1854211946</span>], <span class="t">Int64</span>[<span class="n">1266315497</span>, <span class="n">3048417604</span>, <span class="n">3681880366</span>, <span class="n">3289982499</span>, <span class="n">2909710000</span>, <span class="n">1235738493</span>, <span class="n">2632868024</span>, <span class="n">2414719590</span>, <span class="n">3970600049</span>, <span class="n">1771706367</span>, <span class="n">1449415276</span>, <span class="n">3266420449</span>, <span class="n">422970021</span>, <span class="n">1963543593</span>, <span class="n">2690192192</span>, <span class="n">3826793022</span>, <span class="n">1062508698</span>, <span class="n">1531092325</span>, <span class="n">1804592342</span>, <span class="n">2583117782</span>, <span class="n">2714934279</span>, <span class="n">4024971509</span>, <span class="n">1294809318</span>, <span class="n">4028980673</span>, <span class="n">1289560198</span>, <span class="n">2221992742</span>, <span class="n">1669523910</span>, <span class="n">35572830</span>, <span class="n">157838143</span>, <span class="n">1052438473</span>, <span class="n">1016535060</span>, <span class="n">1802137761</span>, <span class="n">1753167236</span>, <span class="n">1386275462</span>, <span class="n">3080475397</span>, <span class="n">2857371447</span>, <span class="n">1040679964</span>, <span class="n">2145300060</span>, <span class="n">2390574316</span>, <span class="n">1461121720</span>, <span class="n">2956646967</span>, <span class="n">4031777805</span>, <span class="n">4028374788</span>, <span class="n">33600511</span>, <span class="n">2920084762</span>, <span class="n">1018524850</span>, <span class="n">629373528</span>, <span class="n">3691585981</span>, <span class="n">3515945977</span>, <span class="n">2091462646</span>, <span class="n">2486323059</span>, <span class="n">586499841</span>, <span class="n">988145025</span>, <span class="n">935516892</span>, <span class="n">3367335476</span>, <span class="n">2599673255</span>, <span class="n">2839830854</span>, <span class="n">265290510</span>, <span class="n">3972581182</span>, <span class="n">2759138881</span>, <span class="n">3795373465</span>, <span class="n">1005194799</span>, <span class="n">847297441</span>, <span class="n">406762289</span>, <span class="n">1314163512</span>, <span class="n">1332590856</span>, <span class="n">1866599683</span>, <span class="n">4127851711</span>, <span class="n">750260880</span>, <span class="n">613907577</span>, <span class="n">1450815602</span>, <span class="n">3165620655</span>, <span class="n">3734664991</span>, <span class="n">3650291728</span>, <span class="n">3012275730</span>, <span class="n">3704569646</span>, <span class="n">1427272223</span>, <span class="n">778793252</span>, <span class="n">1343938022</span>, <span class="n">2676280711</span>, <span class="n">2052605720</span>, <span class="n">1946737175</span>, <span class="n">3164576444</span>, <span class="n">3914038668</span>, <span class="n">3967478842</span>, <span class="n">3682934266</span>, <span class="n">1661551462</span>, <span class="n">3294938066</span>, <span class="n">4011595847</span>, <span class="n">840292616</span>, <span class="n">3712170807</span>, <span class="n">616741398</span>, <span class="n">312560963</span>, <span class="n">711312465</span>, <span class="n">1351876610</span>, <span class="n">322626781</span>, <span class="n">1910503582</span>, <span class="n">271666773</span>, <span class="n">2175563734</span>, <span class="n">1594956187</span>, <span class="n">70604529</span>, <span class="n">3617834859</span>, <span class="n">1007753275</span>, <span class="n">1495573769</span>, <span class="n">4069517037</span>, <span class="n">2549218298</span>, <span class="n">2663038764</span>, <span class="n">504708206</span>, <span class="n">2263041392</span>, <span class="n">3941167025</span>, <span class="n">2249088522</span>, <span class="n">1514023603</span>, <span class="n">1998579484</span>, <span class="n">1312622330</span>, <span class="n">694541497</span>, <span class="n">2582060303</span>, <span class="n">2151582166</span>, <span class="n">1382467621</span>, <span class="n">776784248</span>, <span class="n">2618340202</span>, <span class="n">3323268794</span>, <span class="n">2497899128</span>, <span class="n">2784771155</span>, <span class="n">503983604</span>, <span class="n">4076293799</span>, <span class="n">907881277</span>, <span class="n">423175695</span>, <span class="n">432175456</span>, <span class="n">1378068232</span>, <span class="n">4145222326</span>, <span class="n">3954048622</span>, <span class="n">3938656102</span>, <span class="n">3820766613</span>, <span class="n">2793130115</span>, <span class="n">2977904593</span>, <span class="n">26017576</span>, <span class="n">3274890735</span>, <span class="n">3194772133</span>, <span class="n">1700274565</span>, <span class="n">1756076034</span>, <span class="n">4006520079</span>, <span class="n">3677328699</span>, <span class="n">720338349</span>, <span class="n">1533947780</span>, <span class="n">354530856</span>, <span class="n">688349552</span>, <span class="n">3973924725</span>, <span class="n">1637815568</span>, <span class="n">332179504</span>, <span class="n">3949051286</span>, <span class="n">53804574</span>, <span class="n">2852348879</span>, <span class="n">3044236432</span>, <span class="n">1282449977</span>, <span class="n">3583942155</span>, <span class="n">3416972820</span>, <span class="n">4006381244</span>, <span class="n">1617046695</span>, <span class="n">2628476075</span>, <span class="n">3002303598</span>, <span class="n">1686838959</span>, <span class="n">431878346</span>, <span class="n">2686675385</span>, <span class="n">1700445008</span>, <span class="n">1080580658</span>, <span class="n">1009431731</span>, <span class="n">832498133</span>, <span class="n">3223435511</span>, <span class="n">2605976345</span>, <span class="n">2271191193</span>, <span class="n">2516031870</span>, <span class="n">1648197032</span>, <span class="n">4164389018</span>, <span class="n">2548247927</span>, <span class="n">300782431</span>, <span class="n">375919233</span>, <span class="n">238389289</span>, <span class="n">3353747414</span>, <span class="n">2531188641</span>, <span class="n">2019080857</span>, <span class="n">1475708069</span>, <span class="n">455242339</span>, <span class="n">2609103871</span>, <span class="n">448939670</span>, <span class="n">3451063019</span>, <span class="n">1395535956</span>, <span class="n">2413381860</span>, <span class="n">1841049896</span>, <span class="n">1491858159</span>, <span class="n">885456874</span>, <span class="n">4264095073</span>, <span class="n">4001119347</span>, <span class="n">1565136089</span>, <span class="n">3898914787</span>, <span class="n">1108368660</span>, <span class="n">540939232</span>, <span class="n">1173283510</span>, <span class="n">2745871338</span>, <span class="n">3681308437</span>, <span class="n">4207628240</span>, <span class="n">3343053890</span>, <span class="n">4016749493</span>, <span class="n">1699691293</span>, <span class="n">1103962373</span>, <span class="n">3625875870</span>, <span class="n">2256883143</span>, <span class="n">3830138730</span>, <span class="n">1031889488</span>, <span class="n">3479347698</span>, <span class="n">1535977030</span>, <span class="n">4236805024</span>, <span class="n">3251091107</span>, <span class="n">2132092099</span>, <span class="n">1774941330</span>, <span class="n">1199868427</span>, <span class="n">1452454533</span>, <span class="n">157007616</span>, <span class="n">2904115357</span>, <span class="n">342012276</span>, <span class="n">595725824</span>, <span class="n">1480756522</span>, <span class="n">206960106</span>, <span class="n">497939518</span>, <span class="n">591360097</span>, <span class="n">863170706</span>, <span class="n">2375253569</span>, <span class="n">3596610801</span>, <span class="n">1814182875</span>, <span class="n">2094937945</span>, <span class="n">3421402208</span>, <span class="n">1082520231</span>, <span class="n">3463918190</span>, <span class="n">2785509508</span>, <span class="n">435703966</span>, <span class="n">3908032597</span>, <span class="n">1641649973</span>, <span class="n">2842273706</span>, <span class="n">3305899714</span>, <span class="n">1510255612</span>, <span class="n">2148256476</span>, <span class="n">2655287854</span>, <span class="n">3276092548</span>, <span class="n">4258621189</span>, <span class="n">236887753</span>, <span class="n">3681803219</span>, <span class="n">274041037</span>, <span class="n">1734335097</span>, <span class="n">3815195456</span>, <span class="n">3317970021</span>, <span class="n">1899903192</span>, <span class="n">1026095262</span>, <span class="n">4050517792</span>, <span class="n">356393447</span>, <span class="n">2410691914</span>, <span class="n">3873677099</span>, <span class="n">3682840055</span>], <span class="t">Int64</span>[<span class="n">3913112168</span>, <span class="n">2491498743</span>, <span class="n">4132185628</span>, <span class="n">2489919796</span>, <span class="n">1091903735</span>, <span class="n">1979897079</span>, <span class="n">3170134830</span>, <span class="n">3567386728</span>, <span class="n">3557303409</span>, <span class="n">857797738</span>, <span class="n">1136121015</span>, <span class="n">1342202287</span>, <span class="n">507115054</span>, <span class="n">2535736646</span>, <span class="n">337727348</span>, <span class="n">3213592640</span>, <span class="n">1301675037</span>, <span class="n">2528481711</span>, <span class="n">1895095763</span>, <span class="n">1721773893</span>, <span class="n">3216771564</span>, <span class="n">62756741</span>, <span class="n">2142006736</span>, <span class="n">835421444</span>, <span class="n">2531993523</span>, <span class="n">1442658625</span>, <span class="n">3659876326</span>, <span class="n">2882144922</span>, <span class="n">676362277</span>, <span class="n">1392781812</span>, <span class="n">170690266</span>, <span class="n">3921047035</span>, <span class="n">1759253602</span>, <span class="n">3611846912</span>, <span class="n">1745797284</span>, <span class="n">664899054</span>, <span class="n">1329594018</span>, <span class="n">3901205900</span>, <span class="n">3045908486</span>, <span class="n">2062866102</span>, <span class="n">2865634940</span>, <span class="n">3543621612</span>, <span class="n">3464012697</span>, <span class="n">1080764994</span>, <span class="n">553557557</span>, <span class="n">3656615353</span>, <span class="n">3996768171</span>, <span class="n">991055499</span>, <span class="n">499776247</span>, <span class="n">1265440854</span>, <span class="n">648242737</span>, <span class="n">3940784050</span>, <span class="n">980351604</span>, <span class="n">3713745714</span>, <span class="n">1749149687</span>, <span class="n">3396870395</span>, <span class="n">4211799374</span>, <span class="n">3640570775</span>, <span class="n">1161844396</span>, <span class="n">3125318951</span>, <span class="n">1431517754</span>, <span class="n">545492359</span>, <span class="n">4268468663</span>, <span class="n">3499529547</span>, <span class="n">1437099964</span>, <span class="n">2702547544</span>, <span class="n">3433638243</span>, <span class="n">2581715763</span>, <span class="n">2787789398</span>, <span class="n">1060185593</span>, <span class="n">1593081372</span>, <span class="n">2418618748</span>, <span class="n">4260947970</span>, <span class="n">69676912</span>, <span class="n">2159744348</span>, <span class="n">86519011</span>, <span class="n">2512459080</span>, <span class="n">3838209314</span>, <span class="n">1220612927</span>, <span class="n">3339683548</span>, <span class="n">133810670</span>, <span class="n">1090789135</span>, <span class="n">1078426020</span>, <span class="n">1569222167</span>, <span class="n">845107691</span>, <span class="n">3583754449</span>, <span class="n">4072456591</span>, <span class="n">1091646820</span>, <span class="n">628848692</span>, <span class="n">1613405280</span>, <span class="n">3757631651</span>, <span class="n">526609435</span>, <span class="n">236106946</span>, <span class="n">48312990</span>, <span class="n">2942717905</span>, <span class="n">3402727701</span>, <span class="n">1797494240</span>, <span class="n">859738849</span>, <span class="n">992217954</span>, <span class="n">4005476642</span>, <span class="n">2243076622</span>, <span class="n">3870952857</span>, <span class="n">3732016268</span>, <span class="n">765654824</span>, <span class="n">3490871365</span>, <span class="n">2511836413</span>, <span class="n">1685915746</span>, <span class="n">3888969200</span>, <span class="n">1414112111</span>, <span class="n">2273134842</span>, <span class="n">3281911079</span>, <span class="n">4080962846</span>, <span class="n">172450625</span>, <span class="n">2569994100</span>, <span class="n">980381355</span>, <span class="n">4109958455</span>, <span class="n">2819808352</span>, <span class="n">2716589560</span>, <span class="n">2568741196</span>, <span class="n">3681446669</span>, <span class="n">3329971472</span>, <span class="n">1835478071</span>, <span class="n">660984891</span>, <span class="n">3704678404</span>, <span class="n">4045999559</span>, <span class="n">3422617507</span>, <span class="n">3040415634</span>, <span class="n">1762651403</span>, <span class="n">1719377915</span>, <span class="n">3470491036</span>, <span class="n">2693910283</span>, <span class="n">3642056355</span>, <span class="n">3138596744</span>, <span class="n">1364962596</span>, <span class="n">2073328063</span>, <span class="n">1983633131</span>, <span class="n">926494387</span>, <span class="n">3423689081</span>, <span class="n">2150032023</span>, <span class="n">4096667949</span>, <span class="n">1749200295</span>, <span class="n">3328846651</span>, <span class="n">309677260</span>, <span class="n">2016342300</span>, <span class="n">1779581495</span>, <span class="n">3079819751</span>, <span class="n">111262694</span>, <span class="n">1274766160</span>, <span class="n">443224088</span>, <span class="n">298511866</span>, <span class="n">1025883608</span>, <span class="n">3806446537</span>, <span class="n">1145181785</span>, <span class="n">168956806</span>, <span class="n">3641502830</span>, <span class="n">3584813610</span>, <span class="n">1689216846</span>, <span class="n">3666258015</span>, <span class="n">3200248200</span>, <span class="n">1692713982</span>, <span class="n">2646376535</span>, <span class="n">4042768518</span>, <span class="n">1618508792</span>, <span class="n">1610833997</span>, <span class="n">3523052358</span>, <span class="n">4130873264</span>, <span class="n">2001055236</span>, <span class="n">3610705100</span>, <span class="n">2202168115</span>, <span class="n">4028541809</span>, <span class="n">2961195399</span>, <span class="n">1006657119</span>, <span class="n">2006996926</span>, <span class="n">3186142756</span>, <span class="n">1430667929</span>, <span class="n">3210227297</span>, <span class="n">1314452623</span>, <span class="n">4074634658</span>, <span class="n">4101304120</span>, <span class="n">2273951170</span>, <span class="n">1399257539</span>, <span class="n">3367210612</span>, <span class="n">3027628629</span>, <span class="n">1190975929</span>, <span class="n">2062231137</span>, <span class="n">2333990788</span>, <span class="n">2221543033</span>, <span class="n">2438960610</span>, <span class="n">1181637006</span>, <span class="n">548689776</span>, <span class="n">2362791313</span>, <span class="n">3372408396</span>, <span class="n">3104550113</span>, <span class="n">3145860560</span>, <span class="n">296247880</span>, <span class="n">1970579870</span>, <span class="n">3078560182</span>, <span class="n">3769228297</span>, <span class="n">1714227617</span>, <span class="n">3291629107</span>, <span class="n">3898220290</span>, <span class="n">166772364</span>, <span class="n">1251581989</span>, <span class="n">493813264</span>, <span class="n">448347421</span>, <span class="n">195405023</span>, <span class="n">2709975567</span>, <span class="n">677966185</span>, <span class="n">3703036547</span>, <span class="n">1463355134</span>, <span class="n">2715995803</span>, <span class="n">1338867538</span>, <span class="n">1343315457</span>, <span class="n">2802222074</span>, <span class="n">2684532164</span>, <span class="n">233230375</span>, <span class="n">2599980071</span>, <span class="n">2000651841</span>, <span class="n">3277868038</span>, <span class="n">1638401717</span>, <span class="n">4028070440</span>, <span class="n">3237316320</span>, <span class="n">6314154</span>, <span class="n">819756386</span>, <span class="n">300326615</span>, <span class="n">590932579</span>, <span class="n">1405279636</span>, <span class="n">3267499572</span>, <span class="n">3150704214</span>, <span class="n">2428286686</span>, <span class="n">3959192993</span>, <span class="n">3461946742</span>, <span class="n">1862657033</span>, <span class="n">1266418056</span>, <span class="n">963775037</span>, <span class="n">2089974820</span>, <span class="n">2263052895</span>, <span class="n">1917689273</span>, <span class="n">448879540</span>, <span class="n">3550394620</span>, <span class="n">3981727096</span>, <span class="n">150775221</span>, <span class="n">3627908307</span>, <span class="n">1303187396</span>, <span class="n">508620638</span>, <span class="n">2975983352</span>, <span class="n">2726630617</span>, <span class="n">1817252668</span>, <span class="n">1876281319</span>, <span class="n">1457606340</span>, <span class="n">908771278</span>, <span class="n">3720792119</span>, <span class="n">3617206836</span>, <span class="n">2455994898</span>, <span class="n">1729034894</span>, <span class="n">1080033504</span>], <span class="t">Int64</span>[<span class="n">976866871</span>, <span class="n">3556439503</span>, <span class="n">2881648439</span>, <span class="n">1522871579</span>, <span class="n">1555064734</span>, <span class="n">1336096578</span>, <span class="n">3548522304</span>, <span class="n">2579274686</span>, <span class="n">3574697629</span>, <span class="n">3205460757</span>, <span class="n">3593280638</span>, <span class="n">3338716283</span>, <span class="n">3079412587</span>, <span class="n">564236357</span>, <span class="n">2993598910</span>, <span class="n">1781952180</span>, <span class="n">1464380207</span>, <span class="n">3163844217</span>, <span class="n">3332601554</span>, <span class="n">1699332808</span>, <span class="n">1393555694</span>, <span class="n">1183702653</span>, <span class="n">3581086237</span>, <span class="n">1288719814</span>, <span class="n">691649499</span>, <span class="n">2847557200</span>, <span class="n">2895455976</span>, <span class="n">3193889540</span>, <span class="n">2717570544</span>, <span class="n">1781354906</span>, <span class="n">1676643554</span>, <span class="n">2592534050</span>, <span class="n">3230253752</span>, <span class="n">1126444790</span>, <span class="n">2770207658</span>, <span class="n">2633158820</span>, <span class="n">2210423226</span>, <span class="n">2615765581</span>, <span class="n">2414155088</span>, <span class="n">3127139286</span>, <span class="n">673620729</span>, <span class="n">2805611233</span>, <span class="n">1269405062</span>, <span class="n">4015350505</span>, <span class="n">3341807571</span>, <span class="n">4149409754</span>, <span class="n">1057255273</span>, <span class="n">2012875353</span>, <span class="n">2162469141</span>, <span class="n">2276492801</span>, <span class="n">2601117357</span>, <span class="n">993977747</span>, <span class="n">3918593370</span>, <span class="n">2654263191</span>, <span class="n">753973209</span>, <span class="n">36408145</span>, <span class="n">2530585658</span>, <span class="n">25011837</span>, <span class="n">3520020182</span>, <span class="n">2088578344</span>, <span class="n">530523599</span>, <span class="n">2918365339</span>, <span class="n">1524020338</span>, <span class="n">1518925132</span>, <span class="n">3760827505</span>, <span class="n">3759777254</span>, <span class="n">1202760957</span>, <span class="n">3985898139</span>, <span class="n">3906192525</span>, <span class="n">674977740</span>, <span class="n">4174734889</span>, <span class="n">2031300136</span>, <span class="n">2019492241</span>, <span class="n">3983892565</span>, <span class="n">4153806404</span>, <span class="n">3822280332</span>, <span class="n">352677332</span>, <span class="n">2297720250</span>, <span class="n">60907813</span>, <span class="n">90501309</span>, <span class="n">3286998549</span>, <span class="n">1016092578</span>, <span class="n">2535922412</span>, <span class="n">2839152426</span>, <span class="n">457141659</span>, <span class="n">509813237</span>, <span class="n">4120667899</span>, <span class="n">652014361</span>, <span class="n">1966332200</span>, <span class="n">2975202805</span>, <span class="n">55981186</span>, <span class="n">2327461051</span>, <span class="n">676427537</span>, <span class="n">3255491064</span>, <span class="n">2882294119</span>, <span class="n">3433927263</span>, <span class="n">1307055953</span>, <span class="n">942726286</span>, <span class="n">933058658</span>, <span class="n">2468411793</span>, <span class="n">3933900994</span>, <span class="n">4215176142</span>, <span class="n">1361170020</span>, <span class="n">2001714738</span>, <span class="n">2830558078</span>, <span class="n">3274259782</span>, <span class="n">1222529897</span>, <span class="n">1679025792</span>, <span class="n">2729314320</span>, <span class="n">3714953764</span>, <span class="n">1770335741</span>, <span class="n">151462246</span>, <span class="n">3013232138</span>, <span class="n">1682292957</span>, <span class="n">1483529935</span>, <span class="n">471910574</span>, <span class="n">1539241949</span>, <span class="n">458788160</span>, <span class="n">3436315007</span>, <span class="n">1807016891</span>, <span class="n">3718408830</span>, <span class="n">978976581</span>, <span class="n">1043663428</span>, <span class="n">3165965781</span>, <span class="n">1927990952</span>, <span class="n">4200891579</span>, <span class="n">2372276910</span>, <span class="n">3208408903</span>, <span class="n">3533431907</span>, <span class="n">1412390302</span>, <span class="n">2931980059</span>, <span class="n">4132332400</span>, <span class="n">1947078029</span>, <span class="n">3881505623</span>, <span class="n">4168226417</span>, <span class="n">2941484381</span>, <span class="n">1077988104</span>, <span class="n">1320477388</span>, <span class="n">886195818</span>, <span class="n">18198404</span>, <span class="n">3786409000</span>, <span class="n">2509781533</span>, <span class="n">112762804</span>, <span class="n">3463356488</span>, <span class="n">1866414978</span>, <span class="n">891333506</span>, <span class="n">18488651</span>, <span class="n">661792760</span>, <span class="n">1628790961</span>, <span class="n">3885187036</span>, <span class="n">3141171499</span>, <span class="n">876946877</span>, <span class="n">2693282273</span>, <span class="n">1372485963</span>, <span class="n">791857591</span>, <span class="n">2686433993</span>, <span class="n">3759982718</span>, <span class="n">3167212022</span>, <span class="n">3472953795</span>, <span class="n">2716379847</span>, <span class="n">445679433</span>, <span class="n">3561995674</span>, <span class="n">3504004811</span>, <span class="n">3574258232</span>, <span class="n">54117162</span>, <span class="n">3331405415</span>, <span class="n">2381918588</span>, <span class="n">3769707343</span>, <span class="n">4154350007</span>, <span class="n">1140177722</span>, <span class="n">4074052095</span>, <span class="n">668550556</span>, <span class="n">3214352940</span>, <span class="n">367459370</span>, <span class="n">261225585</span>, <span class="n">2610173221</span>, <span class="n">4209349473</span>, <span class="n">3468074219</span>, <span class="n">3265815641</span>, <span class="n">314222801</span>, <span class="n">3066103646</span>, <span class="n">3808782860</span>, <span class="n">282218597</span>, <span class="n">3406013506</span>, <span class="n">3773591054</span>, <span class="n">379116347</span>, <span class="n">1285071038</span>, <span class="n">846784868</span>, <span class="n">2669647154</span>, <span class="n">3771962079</span>, <span class="n">3550491691</span>, <span class="n">2305946142</span>, <span class="n">453669953</span>, <span class="n">1268987020</span>, <span class="n">3317592352</span>, <span class="n">3279303384</span>, <span class="n">3744833421</span>, <span class="n">2610507566</span>, <span class="n">3859509063</span>, <span class="n">266596637</span>, <span class="n">3847019092</span>, <span class="n">517658769</span>, <span class="n">3462560207</span>, <span class="n">3443424879</span>, <span class="n">370717030</span>, <span class="n">4247526661</span>, <span class="n">2224018117</span>, <span class="n">4143653529</span>, <span class="n">4112773975</span>, <span class="n">2788324899</span>, <span class="n">2477274417</span>, <span class="n">1456262402</span>, <span class="n">2901442914</span>, <span class="n">1517677493</span>, <span class="n">1846949527</span>, <span class="n">2295493580</span>, <span class="n">3734397586</span>, <span class="n">2176403920</span>, <span class="n">1280348187</span>, <span class="n">1908823572</span>, <span class="n">3871786941</span>, <span class="n">846861322</span>, <span class="n">1172426758</span>, <span class="n">3287448474</span>, <span class="n">3383383037</span>, <span class="n">1655181056</span>, <span class="n">3139813346</span>, <span class="n">901632758</span>, <span class="n">1897031941</span>, <span class="n">2986607138</span>, <span class="n">3066810236</span>, <span class="n">3447102507</span>, <span class="n">1393639104</span>, <span class="n">373351379</span>, <span class="n">950779232</span>, <span class="n">625454576</span>, <span class="n">3124240540</span>, <span class="n">4148612726</span>, <span class="n">2007998917</span>, <span class="n">544563296</span>, <span class="n">2244738638</span>, <span class="n">2330496472</span>, <span class="n">2058025392</span>, <span class="n">1291430526</span>, <span class="n">424198748</span>, <span class="n">50039436</span>, <span class="n">29584100</span>, <span class="n">3605783033</span>, <span class="n">2429876329</span>, <span class="n">2791104160</span>, <span class="n">1057563949</span>, <span class="n">3255363231</span>, <span class="n">3075367218</span>, <span class="n">3463963227</span>, <span class="n">1469046755</span>, <span class="n">985887462</span>]]</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ULONG</strong> = <code><span class="n">4294967296</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28key%29-class-method" class="signature"><strong>.new</strong>(key)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#decrypt_pair%28l%2C%20r%29-instance-method" class="signature"><strong>#decrypt_pair</strong>(l, r)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encrypt_pair%28l%2C%20r%29-instance-method" class="signature"><strong>#encrypt_pair</strong>(l, r)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expand_key%28key%20%3D%20%40key%29-instance-method" class="signature"><strong>#expand_key</strong>(key = @key)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#f%28x%29-instance-method" class="signature"><strong>#f</strong>(x)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next_word%28key%2C%20pos%29-instance-method" class="signature"><strong>#next_word</strong>(key, pos)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#salted_expand_key%28salt%2C%20key%29-instance-method" class="signature"><strong>#salted_expand_key</strong>(salt, key)</a>
+        
+          <div class="summary"><p>It folds the salt during the key schedule</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28key%29-class-method">
+        
+        def self.<strong>new</strong>(key)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="decrypt_pair%28l%2C%20r%29-instance-method">
+        
+        def <strong>decrypt_pair</strong>(l, r)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L125" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="encrypt_pair%28l%2C%20r%29-instance-method">
+        
+        def <strong>encrypt_pair</strong>(l, r)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L109" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expand_key%28key%20%3D%20%40key%29-instance-method">
+        
+        def <strong>expand_key</strong>(key = @key)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="f%28x%29-instance-method">
+        
+        def <strong>f</strong>(x)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_word%28key%2C%20pos%29-instance-method">
+        
+        def <strong>next_word</strong>(key, pos)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L83" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="salted_expand_key%28salt%2C%20key%29-instance-method">
+        
+        def <strong>salted_expand_key</strong>(salt, key)
+      </div>
+      
+        <div class="doc"><p>It folds the salt during the key schedule</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/blowfish.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

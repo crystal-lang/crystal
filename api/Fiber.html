@@ -50,12 +50,27 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#yield%28arg%20%3D%20nil%29-class-method" class="signature"><strong>.yield</strong>(arg = nil)</a>
+        <a href="#rescheduler%3D%28rescheduler%29-class-method" class="signature"><strong>.rescheduler=</strong>(rescheduler)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#root-class-method" class="signature"><strong>.root</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#yield-class-method" class="signature"><strong>.yield</strong></a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#new%28%26proc%20%3A%20-%3E%20%29-class-method" class="signature"><strong>.new</strong>(&proc : -> )</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
         
       </li>
     
@@ -67,7 +82,7 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#resume%28arg%20%3D%20nil%29-instance-method" class="signature"><strong>#resume</strong>(arg = nil)</a>
+        <a href="#resume-instance-method" class="signature"><strong>#resume</strong></a>
         
       </li>
     
@@ -77,7 +92,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#yield%28arg%20%3D%20nil%29-instance-method" class="signature"><strong>#yield</strong>(arg = nil)</a>
+        <a href="#yield-instance-method" class="signature"><strong>#yield</strong></a>
         
       </li>
     
@@ -98,20 +113,46 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/fiber/fiber.cr#L81" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L92" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="yield%28arg%20%3D%20nil%29-class-method">
+      <div class="signature" id="rescheduler%3D%28rescheduler%29-class-method">
         
-        def self.<strong>yield</strong>(arg = <span class="n">nil</span>)
+        def self.<strong>rescheduler=</strong>(rescheduler)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/fiber/fiber.cr#L77" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L65" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="root-class-method">
+        
+        def self.<strong>root</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L118" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="yield-class-method">
+        
+        def self.<strong>yield</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L88" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -124,7 +165,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/fiber/fiber.cr#L22" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L37" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -135,14 +189,14 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="resume%28arg%20%3D%20nil%29-instance-method">
+      <div class="signature" id="resume-instance-method">
         
-        def <strong>resume</strong>(arg = <span class="n">nil</span>)
+        def <strong>resume</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/fiber/fiber.cr#L57" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L70" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -155,20 +209,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/fiber/fiber.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L44" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="yield%28arg%20%3D%20nil%29-instance-method">
+      <div class="signature" id="yield-instance-method">
         
-        def <strong>yield</strong>(arg = <span class="n">nil</span>)
+        def <strong>yield</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/fiber/fiber.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L83" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

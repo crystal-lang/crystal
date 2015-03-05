@@ -80,12 +80,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#call%28func%29-instance-method" class="signature"><strong>#call</strong>(func)</a>
+        <a href="#call%28func%2C%20arg%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%20%3A%20String%29-instance-method" class="signature"><strong>#call</strong>(func, arg : LLVM::Value, name = "" : String)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#call%28func%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%29-instance-method" class="signature"><strong>#call</strong>(func, args : Array(LLVM::Value))</a>
+        <a href="#call%28func%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20name%20%3D%20%22%22%20%3A%20String%29-instance-method" class="signature"><strong>#call</strong>(func, args : Array(LLVM::Value), name = "" : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#call%28func%2C%20name%20%3D%20%22%22%20%3A%20String%29-instance-method" class="signature"><strong>#call</strong>(func, name = "" : String)</a>
         
       </li>
     
@@ -150,12 +155,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, index : LLVM::Value, name = "")</a>
+        <a href="#gep%28value%2C%20indices%20%3A%20Array%28LLVM%3A%3AValueRef%29%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, indices : Array(LLVM::ValueRef), name = "")</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#gep%28value%2C%20indices%20%3A%20Array%28LLVM%3A%3AValueRef%29%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, indices : Array(LLVM::ValueRef), name = "")</a>
+        <a href="#gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method" class="signature"><strong>#gep</strong>(value, index : LLVM::Value, name = "")</a>
         
       </li>
     
@@ -310,6 +315,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#switch%28value%2C%20otherwise%2C%20cases%29-instance-method" class="signature"><strong>#switch</strong>(value, otherwise, cases)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
         
       </li>
@@ -366,7 +376,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L2" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -384,7 +394,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -397,7 +407,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L51" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -410,7 +420,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -423,7 +433,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L67" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L72" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -436,7 +446,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -449,7 +459,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -462,33 +472,46 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L22" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L22" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="call%28func%29-instance-method">
+      <div class="signature" id="call%28func%2C%20arg%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%20%3A%20String%29-instance-method">
         
-        def <strong>call</strong>(func)
+        def <strong>call</strong>(func, arg : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span> : <a href="../String.html">String</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L47" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="call%28func%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%29-instance-method">
+      <div class="signature" id="call%28func%2C%20args%20%3A%20Array%28LLVM%3A%3AValue%29%2C%20name%20%3D%20%22%22%20%3A%20String%29-instance-method">
         
-        def <strong>call</strong>(func, args : <a href="../Array.html">Array</a>(<a href="../LLVM/Value.html">LLVM::Value</a>))
+        def <strong>call</strong>(func, args : <a href="../Array.html">Array</a>(<a href="../LLVM/Value.html">LLVM::Value</a>), name = <span class="s">""</span> : <a href="../String.html">String</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L47" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="call%28func%2C%20name%20%3D%20%22%22%20%3A%20String%29-instance-method">
+        
+        def <strong>call</strong>(func, name = <span class="s">""</span> : <a href="../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L43" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -501,7 +524,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -514,7 +537,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -527,7 +550,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L89" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L94" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -540,7 +563,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -553,7 +576,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L110" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -566,7 +589,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -579,7 +602,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -592,7 +615,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -605,7 +628,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -618,7 +641,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -631,7 +654,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -644,20 +667,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method">
-        
-        def <strong>gep</strong>(value, index : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -670,7 +680,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L76" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gep%28value%2C%20index%20%3A%20LLVM%3A%3AValue%2C%20name%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>gep</strong>(value, index : <a href="../LLVM/Value.html">LLVM::Value</a>, name = <span class="s">""</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -683,7 +706,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -696,7 +719,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L123" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L128" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -709,7 +732,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L110" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -722,7 +745,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -735,7 +758,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -748,7 +771,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -761,7 +784,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L10" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -774,7 +797,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -787,7 +810,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L136" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L141" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -800,7 +823,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L127" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L132" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -813,7 +836,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L59" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L64" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -826,7 +849,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -839,7 +862,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L63" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L68" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -852,7 +875,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -865,7 +888,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L111" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L116" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -878,7 +901,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -891,7 +914,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L34" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L34" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -904,7 +927,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L30" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L30" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -917,7 +940,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L6" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -930,7 +953,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -943,7 +966,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -956,7 +979,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -969,7 +992,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -982,7 +1005,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L119" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L124" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -995,7 +1018,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1008,7 +1031,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1021,7 +1044,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1034,7 +1057,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1047,7 +1070,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L55" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L60" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1060,7 +1083,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="switch%28value%2C%20otherwise%2C%20cases%29-instance-method">
+        
+        def <strong>switch</strong>(value, otherwise, cases)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L145" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1073,7 +1109,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L140" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L153" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1086,7 +1122,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1099,7 +1135,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1112,7 +1148,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1125,7 +1161,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L115" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L120" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1138,7 +1174,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1151,7 +1187,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1164,7 +1200,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/builder.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/builder.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

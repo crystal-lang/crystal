@@ -60,7 +60,7 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#create_target_machine%28triple%2C%20cpu%20%3D%20%22%22%2C%20features%20%3D%20%22%22%2C%20opt_level%20%3D%20LLVM%3A%3ACodeGenOptLevel%3A%3ADefault%2C%20reloc%20%3D%20LLVM%3A%3ARelocMode%3A%3ADefault%2C%20code_model%20%3D%20LLVM%3A%3ACodeModel%3A%3ADefault%29-instance-method" class="signature"><strong>#create_target_machine</strong>(triple, cpu = "", features = "", opt_level = LLVM::CodeGenOptLevel::Default, reloc = LLVM::RelocMode::Default, code_model = LLVM::CodeModel::Default)</a>
+        <a href="#create_target_machine%28triple%2C%20cpu%20%3D%20%22%22%2C%20features%20%3D%20%22%22%2C%20opt_level%20%3D%20LLVM%3A%3ACodeGenOptLevel%3A%3ADefault%2C%20reloc%20%3D%20LLVM%3A%3ARelocMode%3A%3APIC%2C%20code_model%20%3D%20LLVM%3A%3ACodeModel%3A%3ADefault%29-instance-method" class="signature"><strong>#create_target_machine</strong>(triple, cpu = "", features = "", opt_level = LLVM::CodeGenOptLevel::Default, reloc = LLVM::RelocMode::PIC, code_model = LLVM::CodeModel::Default)</a>
         
       </li>
     
@@ -101,7 +101,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L2" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -114,7 +114,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L10" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -127,7 +127,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -140,7 +140,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -151,14 +151,14 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="create_target_machine%28triple%2C%20cpu%20%3D%20%22%22%2C%20features%20%3D%20%22%22%2C%20opt_level%20%3D%20LLVM%3A%3ACodeGenOptLevel%3A%3ADefault%2C%20reloc%20%3D%20LLVM%3A%3ARelocMode%3A%3ADefault%2C%20code_model%20%3D%20LLVM%3A%3ACodeModel%3A%3ADefault%29-instance-method">
+      <div class="signature" id="create_target_machine%28triple%2C%20cpu%20%3D%20%22%22%2C%20features%20%3D%20%22%22%2C%20opt_level%20%3D%20LLVM%3A%3ACodeGenOptLevel%3A%3ADefault%2C%20reloc%20%3D%20LLVM%3A%3ARelocMode%3A%3APIC%2C%20code_model%20%3D%20LLVM%3A%3ACodeModel%3A%3ADefault%29-instance-method">
         
-        def <strong>create_target_machine</strong>(triple, cpu = <span class="s">""</span>, features = <span class="s">""</span>, opt_level = <span class="t">LLVM</span><span class="t">::</span><span class="t">CodeGenOptLevel</span><span class="t">::</span><span class="t">Default</span>, reloc = <span class="t">LLVM</span><span class="t">::</span><span class="t">RelocMode</span><span class="t">::</span><span class="t">Default</span>, code_model = <span class="t">LLVM</span><span class="t">::</span><span class="t">CodeModel</span><span class="t">::</span><span class="t">Default</span>)
+        def <strong>create_target_machine</strong>(triple, cpu = <span class="s">""</span>, features = <span class="s">""</span>, opt_level = <span class="t">LLVM</span><span class="t">::</span><span class="t">CodeGenOptLevel</span><span class="t">::</span><span class="t">Default</span>, reloc = <span class="t">LLVM</span><span class="t">::</span><span class="t">RelocMode</span><span class="t">::</span><span class="t">PIC</span>, code_model = <span class="t">LLVM</span><span class="t">::</span><span class="t">CodeModel</span><span class="t">::</span><span class="t">Default</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -171,7 +171,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L27" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L27" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -184,7 +184,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -197,7 +197,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L39" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L39" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -210,7 +210,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/b740fc99e47480553136558c8a17c512b0014b8c/src/llvm/target.cr#L45" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/target.cr#L45" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

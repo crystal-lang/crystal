@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct Crypto::MD5::Context</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../../Value.html">Value</a></div><div style="padding-left: 40px"><a href="../../Struct.html">Struct</a></div><div style="padding-left: 60px"><a href="../../Crypto/MD5/Context.html">Crypto::MD5::Context</a></div>
+
+
+
+
+
+
+
+
+
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>PADDING</strong> = <code>padding <span class="o">=</span> <span class="t">StaticArray</span>(<span class="t">UInt8</span>, <span class="n">64</span>).<span class="k">new</span>(<span class="n">0</span>)
+padding[<span class="n">0</span>] <span class="o">=</span> <span class="n">128</span>
+padding
+</code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S11</strong> = <code><span class="n">7</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S12</strong> = <code><span class="n">12</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S13</strong> = <code><span class="n">17</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S14</strong> = <code><span class="n">22</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S21</strong> = <code><span class="n">5</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S22</strong> = <code><span class="n">9</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S23</strong> = <code><span class="n">14</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S24</strong> = <code><span class="n">20</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S31</strong> = <code><span class="n">4</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S32</strong> = <code><span class="n">11</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S33</strong> = <code><span class="n">16</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S34</strong> = <code><span class="n">23</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S41</strong> = <code><span class="n">6</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S42</strong> = <code><span class="n">10</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S43</strong> = <code><span class="n">15</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>S44</strong> = <code><span class="n">21</span></code>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#f%28x%2C%20y%2C%20z%29-instance-method" class="signature"><strong>#f</strong>(x, y, z)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ff%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method" class="signature"><strong>#ff</strong>(a, b, c, d, x, s, ac)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#final-instance-method" class="signature"><strong>#final</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#g%28x%2C%20y%2C%20z%29-instance-method" class="signature"><strong>#g</strong>(x, y, z)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gg%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method" class="signature"><strong>#gg</strong>(a, b, c, d, x, s, ac)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#h%28x%2C%20y%2C%20z%29-instance-method" class="signature"><strong>#h</strong>(x, y, z)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hex-instance-method" class="signature"><strong>#hex</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hh%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method" class="signature"><strong>#hh</strong>(a, b, c, d, x, s, ac)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#i%28x%2C%20y%2C%20z%29-instance-method" class="signature"><strong>#i</strong>(x, y, z)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ii%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method" class="signature"><strong>#ii</strong>(a, b, c, d, x, s, ac)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rotate_left%28x%2C%20n%29-instance-method" class="signature"><strong>#rotate_left</strong>(x, n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_hex%28c%29-instance-method" class="signature"><strong>#to_hex</strong>(c)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#transform%28in%29-instance-method" class="signature"><strong>#transform</strong>(in)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#update%28inBuf%2C%20inLen%29-instance-method" class="signature"><strong>#update</strong>(inBuf, inLen)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="f%28x%2C%20y%2C%20z%29-instance-method">
+        
+        def <strong>f</strong>(x, y, z)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L80" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ff%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method">
+        
+        def <strong>ff</strong>(a, b, c, d, x, s, ac)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L100" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="final-instance-method">
+        
+        def <strong>final</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L205" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="g%28x%2C%20y%2C%20z%29-instance-method">
+        
+        def <strong>g</strong>(x, y, z)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L84" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gg%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method">
+        
+        def <strong>gg</strong>(a, b, c, d, x, s, ac)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L106" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="h%28x%2C%20y%2C%20z%29-instance-method">
+        
+        def <strong>h</strong>(x, y, z)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L88" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hex-instance-method">
+        
+        def <strong>hex</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L241" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hh%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method">
+        
+        def <strong>hh</strong>(a, b, c, d, x, s, ac)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L112" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="i%28x%2C%20y%2C%20z%29-instance-method">
+        
+        def <strong>i</strong>(x, y, z)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L92" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ii%28a%2C%20b%2C%20c%2C%20d%2C%20x%2C%20s%2C%20ac%29-instance-method">
+        
+        def <strong>ii</strong>(a, b, c, d, x, s, ac)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L118" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rotate_left%28x%2C%20n%29-instance-method">
+        
+        def <strong>rotate_left</strong>(x, n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L96" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_hex%28c%29-instance-method">
+        
+        def <strong>to_hex</strong>(c)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L251" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="transform%28in%29-instance-method">
+        
+        def <strong>transform</strong>(in)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L124" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="update%28inBuf%2C%20inLen%29-instance-method">
+        
+        def <strong>update</strong>(inBuf, inLen)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/crypto/md5.cr#L21" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>
