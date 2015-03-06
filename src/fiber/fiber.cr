@@ -37,8 +37,12 @@ class Fiber
   def initialize
     @cr = LibPcl.co_current
     @proc = ->{}
-    @stack_top = @stack = Pointer(Void).null
+    @stack = Pointer(Void).null
+    @stack_top = get_stack_top
+    @stack_bottom = @@main_stackbottom
     LibPcl.co_set_data(@cr, self as Void*)
+
+    @@first_fiber = @@last_fiber = self
   end
 
   def run
