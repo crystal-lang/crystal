@@ -29,6 +29,8 @@ module Crystal
     property  target_triple
     property? verbose
     property? wants_doc
+    property emit
+    property original_output_filename
 
     def initialize
       @debug = false
@@ -131,7 +133,7 @@ module Crystal
       lib_flags = program.lib_flags
 
       llvm_modules = timing("Codegen (crystal)") do
-        program.build node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags
+        program.build node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags || @emit, expose_crystal_main: false
       end
 
       if @cross_compile_flags
@@ -192,38 +194,54 @@ module Crystal
       msg = multithreaded ? "Codegen (bc+obj)" : "Codegen (obj)"
       target_triple = target_machine.triple
 
-      jobs_count = 0
-
       timing(msg) do
-        while unit = units.pop?
-          fork do
-            unit.llvm_mod.target = target_triple
-            ifdef x86_64
-              unit.llvm_mod.data_layout = DataLayout64
-            else
-              unit.llvm_mod.data_layout = DataLayout32
-            end
-            unit.write_bitcode if multithreaded
-            unit.compile
+        if units.length == 1
+          first_unit = units.first
+
+          codegen_single_unit(first_unit, target_triple, multithreaded)
+
+          if emit = @emit
+            first_unit.emit(emit, original_output_filename || output_filename)
           end
-
-          jobs_count += 1
-
-          if jobs_count >= @n_threads
-            LibC.waitpid(-1, out stat_loc, 0)
-            jobs_count -= 1
-          end
-        end
-
-        while jobs_count > 0
-          LibC.waitpid(-1, out stat_loc, 0)
-          jobs_count -= 1
+        else
+          codegen_many_units(units, target_triple, multithreaded)
         end
       end
 
       timing("Codegen (clang)") do
         system "cc -o #{output_filename} #{object_names.join " "} #{@link_flags} #{lib_flags}"
       end
+    end
+
+    private def codegen_many_units(units, target_triple, multithreaded)
+      jobs_count = 0
+
+      while unit = units.pop?
+        fork { codegen_single_unit(unit, target_triple, multithreaded) }
+
+        jobs_count += 1
+
+        if jobs_count >= @n_threads
+          LibC.waitpid(-1, out stat_loc, 0)
+          jobs_count -= 1
+        end
+      end
+
+      while jobs_count > 0
+        LibC.waitpid(-1, out stat_loc, 0)
+        jobs_count -= 1
+      end
+    end
+
+    private def codegen_single_unit(unit, target_triple, multithreaded)
+      unit.llvm_mod.target = target_triple
+      ifdef x86_64
+        unit.llvm_mod.data_layout = DataLayout64
+      else
+        unit.llvm_mod.data_layout = DataLayout32
+      end
+      unit.write_bitcode if multithreaded
+      unit.compile
     end
 
     def target_machine
@@ -314,7 +332,7 @@ module Crystal
       end
 
       def write_bitcode(output_name)
-        @llvm_mod.write_bitcode output_name
+        llvm_mod.write_bitcode output_name
       end
 
       def compile
@@ -324,7 +342,7 @@ module Crystal
 
         must_compile = true
 
-        if !@bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
+        if !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           if FileUtils.cmp(bc_name, bc_name_new)
             # If the user cancelled a previous compilation it might be that the .o file is empty
             if File.size(o_name) > 0
@@ -337,13 +355,32 @@ module Crystal
         if must_compile
           File.rename(bc_name_new, bc_name)
           if compiler.release?
-            compiler.optimize @llvm_mod
+            compiler.optimize llvm_mod
           end
-          compiler.target_machine.emit_obj_to_file @llvm_mod, o_name
+          compiler.target_machine.emit_obj_to_file llvm_mod, o_name
         end
 
         if compiler.dump_ll?
           llvm_mod.print_to_file ll_name
+        end
+      end
+
+      def emit(values : Array, output_filename)
+        values.each do |value|
+          emit value, output_filename
+        end
+      end
+
+      def emit(value : String, output_filename)
+        case value
+        when "asm"
+          compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
+        when "llvm-bc"
+          `cp #{bc_name} #{output_filename}.bc`
+        when "llvm-ir"
+          llvm_mod.print_to_file "#{output_filename}.ll"
+        when "obj"
+          `cp #{object_name} #{output_filename}.o`
         end
       end
 

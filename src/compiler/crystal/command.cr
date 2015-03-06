@@ -1,18 +1,22 @@
 module Crystal::Command
-  USAGE = %(Usage: crystal [command] [switches] [program file] [--] [arguments]\n\
-            \n\
-            Command:\n    \
-            build                    compile program file\n    \
-            browser                  open an http server to browse program file\n    \
-            deps                     install project dependencies\n    \
-            docs                     generate documentation\n    \
-            eval                     eval code\n    \
-            hierarchy                show type hierarchy\n    \
-            run (default)            compile and run program file\n    \
-            spec                     compile and run specs (in spec directory)\n    \
-            types                    show type of main variables\n    \
-            --help                   show this help\n    \
-            --version                show version)
+  USAGE = <<-USAGE
+Usage: crystal [command] [switches] [program file] [--] [arguments]
+
+Command:
+    build                    compile program file
+    browser                  open an http server to browse program file
+    deps                     install project dependencies
+    docs                     generate documentation
+    eval                     eval code
+    hierarchy                show type hierarchy
+    run (default)            compile and run program file
+    spec                     compile and run specs (in spec directory)
+    types                    show type of main variables
+    --help                   show this help
+    --version                show version
+USAGE
+
+  VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
 
   def self.run(options = ARGV)
     command = options.first?
@@ -220,8 +224,9 @@ module Crystal::Command
     output_filename
   end
 
-  record CompilerConfig, compiler, sources, output_filename, arguments, specified_output do
+  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output do
     def compile(output_filename = self.output_filename)
+      compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
     end
   end
@@ -250,6 +255,12 @@ module Crystal::Command
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
         compiler.add_flag flag
+      end
+
+      unless no_build
+        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+        end
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -321,9 +332,10 @@ module Crystal::Command
     end
 
     sources = gather_sources(filenames)
-    output_filename ||= output_filename_from_sources(sources)
+    original_output_filename = output_filename_from_sources(sources)
+    output_filename ||= original_output_filename
 
-    CompilerConfig.new compiler, sources, output_filename, arguments, specified_output
+    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output
   rescue ex : OptionParser::Exception
     error ex.message
   end
@@ -342,6 +354,15 @@ module Crystal::Command
   private def self.output_filename_from_sources(sources)
     first_filename = sources.first.filename
     File.basename(first_filename, File.extname(first_filename))
+  end
+
+  private def self.validate_emit_values(values)
+    values.each do |value|
+      unless VALID_EMIT_VALUES.includes?(value)
+        error "invalid emit value '#{value}'"
+      end
+    end
+    values
   end
 
   private def self.error(msg)

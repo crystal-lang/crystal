@@ -42,8 +42,8 @@ module Crystal
       engine.run_function wrapper, [] of LLVM::GenericValue
     end
 
-    def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"))
-      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod
+    def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
       begin
         node.accept visitor
         visitor.finish
@@ -97,13 +97,14 @@ module Crystal
     record Handler, node, catch_block, vars
     record StringKey, mod, string
 
-    def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"))
+    def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
+      @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
