@@ -93,6 +93,14 @@ describe "String" do
     "12ab".to_i(16).should eq(4779)
   end
 
+  it "raises on to_i(1)" do
+    expect_raises { "12ab".to_i(1) }
+  end
+
+  it "raises on to_i(37)" do
+    expect_raises { "12ab".to_i(37) }
+  end
+
   it "does to_i32" do
     "1234".to_i32.should eq(1234)
   end

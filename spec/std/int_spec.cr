@@ -59,6 +59,14 @@ describe "Int" do
     assert { 1234.to_s(36).should eq("YA") }
     assert { -1234.to_s(36).should eq("-YA") }
     assert { 0.to_s(16).should eq("0") }
+
+    it "raises on base 1" do
+      expect_raises { 123.to_s(1) }
+    end
+
+    it "raises on base 37" do
+      expect_raises { 123.to_s(37) }
+    end
   end
 
   describe "bit" do

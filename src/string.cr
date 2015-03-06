@@ -118,6 +118,8 @@ class String
   end
 
   def to_i(base)
+    raise "Invalid base #{base}" unless 2 <= base <= 36
+
     LibC.strtol(cstr, nil, base)
   end
 

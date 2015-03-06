@@ -136,9 +136,7 @@ struct Int
   end
 
   def to_s(base : Int, io : IO)
-    if base < 1 || base > 36
-      raise "Invalid base #{base}"
-    end
+    raise "Invalid base #{base}" unless 2 <= base <= 36
 
     if self == 0
       io << "0"
