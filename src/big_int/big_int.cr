@@ -154,6 +154,12 @@ struct BigInt < Int
     str = to_cstr
     io.write Slice.new(str, LibC.strlen(str))
   end
+  
+  def to_s(base : Int)
+    raise "Invalid base #{base}" unless 2 <= base <= 36
+    cstr = LibGMP.get_str(nil, base, self)
+    String.new(cstr)
+  end
 
   def digits
     ary = [] of Int32
