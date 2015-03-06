@@ -141,5 +141,15 @@ describe "BigInt" do
       10 % 0.to_big_i
     end
   end
+  
+  it "does to_s in the given base" do
+    a = BigInt.new("1234567890123456789")
+    b = "1000100100010000100001111010001111101111010011000000100010101"
+    c = "112210f47de98115"
+    d = "128gguhuuj08l"
+    a.to_s(2).should eq(b)
+    a.to_s(16).should eq(c)
+    a.to_s(32).should eq(d)
+  end
 end
 
