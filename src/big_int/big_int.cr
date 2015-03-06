@@ -30,6 +30,10 @@ struct BigInt < Int
     new(mpz)
   end
 
+  def self.cast(value)
+    value.to_big_i
+  end
+
   def <=>(other : BigInt)
     LibGMP.cmp(mpz, other)
   end
@@ -113,7 +117,7 @@ struct BigInt < Int
 
     BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs.to_u64) }
   end
-  
+
   def ~
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
@@ -154,7 +158,7 @@ struct BigInt < Int
     str = to_cstr
     io.write Slice.new(str, LibC.strlen(str))
   end
-  
+
   def to_s(base : Int)
     raise "Invalid base #{base}" unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
@@ -165,6 +169,58 @@ struct BigInt < Int
     ary = [] of Int32
     self.to_s.each_char { |c| ary << c - '0' }
     ary
+  end
+
+  def to_i
+    to_i32
+  end
+
+  def to_i8
+    to_i64.to_i8
+  end
+
+  def to_i16
+    to_i64.to_i16
+  end
+
+  def to_i32
+    to_i64.to_i32
+  end
+
+  def to_i64
+    LibGMP.get_si(self)
+  end
+
+  def to_u
+    to_u32
+  end
+
+  def to_u8
+    to_i64.to_u8
+  end
+
+  def to_u16
+    to_i64.to_u16
+  end
+
+  def to_u32
+    to_i64.to_u32
+  end
+
+  def to_u64
+    to_i64.to_u64
+  end
+
+  def to_f
+    to_f64
+  end
+
+  def to_f32
+    to_f64.to_f32
+  end
+
+  def to_f64
+    LibGMP.get_d(self)
   end
 
   def to_big_i
@@ -226,6 +282,12 @@ struct Int
     to_big_i % other
   end
 
+  def to_big_i
+    BigInt.new(self)
+  end
+end
+
+class String
   def to_big_i
     BigInt.new(self)
   end
