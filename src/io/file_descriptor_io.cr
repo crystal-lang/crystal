@@ -10,6 +10,10 @@ class FileDescriptorIO
       before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
       LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
     end
+
+    @readers = [] of Fiber
+    @writers = [] of Fiber
+    @event = Scheduler.create_fd_events(self)
   end
 
   def read(slice : Slice(UInt8), count)
@@ -17,7 +21,8 @@ class FileDescriptorIO
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_read == -1
         if LibC.errno == Errno::EAGAIN
-          Scheduler.wait_fd_read(@fd)
+          @readers << Fiber.current
+          Scheduler.reschedule
         else
           raise Errno.new "Error reading file"
         end
@@ -27,12 +32,25 @@ class FileDescriptorIO
     end
   end
 
+  def resume_read
+    if reader = @readers.pop?
+      reader.resume
+    end
+  end
+
+  def resume_write
+    if writer = @writers.pop?
+      writer.resume
+    end
+  end
+
   def write(slice : Slice(UInt8), count)
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_written == -1
         if LibC.errno == Errno::EAGAIN
-          Scheduler.wait_fd_write(@fd)
+          @writers << Fiber.current
+          Scheduler.reschedule
           next
         else
           raise Errno.new "Error writing file"
@@ -67,6 +85,7 @@ class FileDescriptorIO
     if LibC.close(@fd) != 0
       raise Errno.new("Error closing file")
     end
+    Scheduler.destroy_fd_events(@event)
   end
 
   def tty?

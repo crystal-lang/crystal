@@ -53,11 +53,11 @@ class TCPServer < TCPSocket
     loop do
       client_addr :: LibC::SockAddrIn6
       client_addr_len = sizeof(LibC::SockAddrIn6)
-      client_addr.len = client_addr_len.to_u8
       client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
       if client_fd == -1
         if LibC.errno == Errno::EAGAIN
-          Scheduler.wait_fd_read(fd)
+          @readers << Fiber.current
+          Scheduler.reschedule
         else
           raise Errno.new "Error accepting socket"
         end
