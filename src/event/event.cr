@@ -18,7 +18,7 @@ module Event
     end
 
     def add_timer_event(time, callback, data = nil)
-      event = LibEvent2.event_new(@base, -1, 0_u16, callback, data)
+      event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::None, callback, data)
       t :: LibC::TimeVal
       t.tv_sec = time.to_i64
       t.tv_usec = 0
@@ -42,8 +42,16 @@ module Event
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
     end
 
+    def run_once
+      LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
+    end
+
     def loop_break
       LibEvent2.event_base_loopbreak(@base)
+    end
+
+    def to_unsafe
+      @base
     end
   end
 end

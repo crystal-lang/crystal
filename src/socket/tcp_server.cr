@@ -27,10 +27,43 @@ class TCPServer < TCPSocket
     end
   end
 
+  def self.new(port : Int, backlog = 128)
+    new("::", port, backlog)
+  end
+
+  def self.open(host, port, backlog = 128)
+    server = new(host, port, backlog)
+    begin
+      yield server
+    ensure
+      server.close
+    end
+  end
+
   def accept
-    client_addr :: LibC::SockAddrIn6
-    client_addr_len = sizeof(LibC::SockAddrIn6)
-    client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
-    TCPSocket.new(client_fd)
+    sock = accept
+    begin
+      yield sock
+    ensure
+      sock.close
+    end
+  end
+
+  def accept
+    loop do
+      client_addr :: LibC::SockAddrIn6
+      client_addr_len = sizeof(LibC::SockAddrIn6)
+      client_addr.len = client_addr_len.to_u8
+      client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
+      if client_fd == -1
+        if LibC.errno == Errno::EAGAIN
+          Scheduler.wait_fd_read(fd)
+        else
+          raise Errno.new "Error accepting socket"
+        end
+      else
+        return TCPSocket.new(client_fd)
+      end
+    end
   end
 end

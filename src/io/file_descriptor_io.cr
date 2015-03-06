@@ -5,23 +5,43 @@ class FileDescriptorIO
   SEEK_CUR = LibC::SEEK_CUR
   SEEK_END = LibC::SEEK_END
 
-  def initialize(@fd)
+  def initialize(@fd, blocking = false)
+    unless blocking
+      before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
+      LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
+    end
   end
 
   def read(slice : Slice(UInt8), count)
-    bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-    if bytes_read == -1
-      raise Errno.new "Error reading file"
+    loop do
+      bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
+      if bytes_read == -1
+        if LibC.errno == Errno::EAGAIN
+          Scheduler.wait_fd_read(@fd)
+        else
+          raise Errno.new "Error reading file"
+        end
+      else
+        return bytes_read
+      end
     end
-    bytes_read
   end
 
   def write(slice : Slice(UInt8), count)
-    bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-    if bytes_written == -1
-      raise Errno.new "Error writing file"
+    loop do
+      bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
+      if bytes_written == -1
+        if LibC.errno == Errno::EAGAIN
+          Scheduler.wait_fd_write(@fd)
+          next
+        else
+          raise Errno.new "Error writing file"
+        end
+      end
+      count -= bytes_written
+      return if count == 0
+      slice += bytes_written
     end
-    bytes_written
   end
 
   def seek(amount, whence = SEEK_SET)
