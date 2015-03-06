@@ -890,6 +890,8 @@ describe "Parser" do
   it_parses "foo.bar=(*baz)", Call.new("foo".call, "bar=", "baz".call.splat)
   it_parses "foo.bar= *baz", Call.new("foo".call, "bar=", "baz".call.splat)
   it_parses "foo.bar = (1).abs", Call.new("foo".call, "bar=", Call.new(Expressions.new([1.int32] of ASTNode), "abs"))
+  it_parses "foo[*baz]", Call.new("foo".call, "[]", "baz".call.splat)
+  it_parses "foo[*baz] = 1", Call.new("foo".call, "[]=", ["baz".call.splat, 1.int32] of ASTNode)
 
   it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))

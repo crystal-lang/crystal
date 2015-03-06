@@ -618,7 +618,7 @@ module Crystal
           next_token_skip_space_or_newline
           args = [] of ASTNode
           while true
-            args << parse_expression
+            args << parse_single_arg
             skip_space_or_newline
             case @token.type
             when :","
