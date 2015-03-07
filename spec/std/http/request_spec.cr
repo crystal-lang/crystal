@@ -21,21 +21,21 @@ module HTTP
     end
 
     it "parses GET" do
-      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n"))
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")).not_nil!
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.domain.com"})
     end
 
     it "parses GET without \\r" do
-      request = Request.from_io(StringIO.new("GET / HTTP/1.1\nHost: host.domain.com\n\n"))
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\nHost: host.domain.com\n\n")).not_nil!
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.domain.com"})
     end
 
     it "headers are case insensitive" do
-      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n"))
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")).not_nil!
       headers = request.headers.not_nil!
       headers["HOST"].should eq("host.domain.com")
       headers["host"].should eq("host.domain.com")
@@ -43,7 +43,7 @@ module HTTP
     end
 
     it "parses POST (with body)" do
-      request = Request.from_io(StringIO.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody"))
+      request = Request.from_io(StringIO.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).not_nil!
       request.method.should eq("POST")
       request.path.should eq("/foo")
       request.headers.should eq({"Content-Length" => "13"})

@@ -70,6 +70,7 @@ class HTTP::Server
 
           return
         end
+        break unless request
         response = @handler.call(request)
         response.to_io io
         io.flush

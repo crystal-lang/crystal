@@ -42,7 +42,8 @@ class HTTP::Request
   end
 
   def self.from_io(io)
-    request_line = io.gets.not_nil!
+    request_line = io.gets
+    return unless request_line
     request_line =~ /\A(\w+)\s([^\s]+)\s(HTTP\/\d\.\d)\r?\n\Z/
     method, path, http_version = $1, $2, $3
 
@@ -50,6 +51,7 @@ class HTTP::Request
       return new method, path, headers, body, http_version
     end
 
-    raise "unexpected end of http request"
+    # Unexpected end of http request
+    nil
   end
 end
