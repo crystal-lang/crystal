@@ -11,7 +11,7 @@ class File < FileDescriptorIO
     end
 
     @path = filename
-    super(fd)
+    super(fd, blocking: true)
   end
 
   protected def open_flag(mode)

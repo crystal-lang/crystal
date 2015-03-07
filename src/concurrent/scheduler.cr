@@ -36,7 +36,7 @@ class Scheduler
   end
 
   def self.destroy_fd_events(event)
-    LibEvent2.event_free(event.not_nil!)
+    LibEvent2.event_free(event)
   end
 
   def self.yield

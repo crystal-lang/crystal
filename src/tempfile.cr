@@ -10,7 +10,7 @@ class Tempfile < FileDescriptorIO
       tmpdir = "/tmp/"
     end
     @path = "#{tmpdir}#{name}.XXXXXX"
-    super(LibC.mkstemp(@path))
+    super(LibC.mkstemp(@path), blocking: true)
   end
 
   getter path
