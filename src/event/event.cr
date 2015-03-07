@@ -21,7 +21,7 @@ module Event
       event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::None, callback, data)
       t :: LibC::TimeVal
       t.tv_sec = time.to_i64
-      t.tv_usec = 0
+      t.tv_usec = typeof(t.tv_usec).cast(0)
       LibEvent2.event_add(event, pointerof(t))
     end
 
