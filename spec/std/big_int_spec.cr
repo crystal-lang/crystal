@@ -80,7 +80,7 @@ describe "BigInt" do
     (10.to_big_i % -3).should eq(1.to_big_i)
     (10 % 3.to_big_i).should eq(1.to_big_i)
   end
-  
+
   it "does bitwise and" do
     (123.to_big_i & 321).should eq(65)
     (BigInt.new("96238761238973286532") & 86325735648).should eq(69124358272)
@@ -141,7 +141,7 @@ describe "BigInt" do
       10 % 0.to_big_i
     end
   end
-  
+
   it "does to_s in the given base" do
     a = BigInt.new("1234567890123456789")
     b = "1000100100010000100001111010001111101111010011000000100010101"
@@ -150,6 +150,36 @@ describe "BigInt" do
     a.to_s(2).should eq(b)
     a.to_s(16).should eq(c)
     a.to_s(32).should eq(d)
+  end
+
+  it "casts other ints and strings" do
+    a = BigInt.new(123456)
+    b = BigInt.cast(123456)
+    a.should eq(b)
+
+    a = BigInt.new("123456789012345678901234567890")
+    b = BigInt.cast("123456789012345678901234567890")
+    a.should eq(b)
+  end
+
+  it "can use Number::[]" do
+    a = BigInt[146, "3464", 97, "545"]
+    b = [BigInt.new(146), BigInt.new(3464), BigInt.new(97), BigInt.new(545)]
+    a.should eq(b)
+  end
+
+  it "can be casted into other Number types" do
+    big = BigInt.new(1234567890)
+    big.to_i.should eq(1234567890)
+    big.to_i8.should eq(-46)
+    big.to_i16.should eq(722)
+    big.to_i32.should eq(1234567890)
+    big.to_i64.should eq(1234567890)
+    big.to_u.should eq(1234567890)
+    big.to_u8.should eq(210)
+    big.to_u16.should eq(722)
+    big.to_u32.should eq(1234567890)
+    big.to_u64.should eq(1234567890)
   end
 end
 

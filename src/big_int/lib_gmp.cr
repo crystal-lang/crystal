@@ -20,6 +20,8 @@ lib LibGMP
   fun set_si = __gmpz_set_si(rop : MPZ*, op : Int64)
   fun set_str = __gmpz_set_str(rop : MPZ*, str : UInt8*, base : Int32) : Int32
   fun get_str = __gmpz_get_str(str : UInt8*, base : Int32, op : MPZ*) : UInt8*
+  fun get_si = __gmpz_get_si(op : MPZ*) : Int64
+  fun get_d = __gmpz_get_d(op : MPZ*) : Float64
 
   ## Arithmetic
 
@@ -42,14 +44,14 @@ lib LibGMP
 
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
-  
+
   ## Bitwise operations
-  
+
   fun and = __gmpz_and(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun ior = __gmpz_ior(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun xor = __gmpz_xor(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun com = __gmpz_com(rop : MPZ*, op : MPZ*)
-  
+
   fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : Int32)
   fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : Int32)
 
