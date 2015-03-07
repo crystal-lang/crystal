@@ -72,6 +72,7 @@ class HTTP::Server
         end
         break unless request
         response = @handler.call(request)
+        response.headers["Connection"] = "keep-alive" if request.keep_alive?
         response.to_io io
         io.flush
 
