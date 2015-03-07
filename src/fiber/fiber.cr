@@ -13,6 +13,7 @@ class Fiber
   @@main_stacktop = get_stack_top
   @@first_fiber = nil
   @@last_fiber = nil
+  @@stack_pool = [] of Void*
 
   protected property :stack_top
   protected property :stack_bottom
@@ -20,7 +21,7 @@ class Fiber
   protected property :prev_fiber
 
   def initialize(&@proc)
-    @stack = LibC.malloc(STACK_SIZE.to_u32)
+    @stack = @@stack_pool.pop? || LibC.malloc(STACK_SIZE.to_u32)
     @stack_top = @stack_bottom = @stack + STACK_SIZE
     @cr = LibPcl.co_create(->(fiber) { (fiber as Fiber).run }, self as Void*, @stack, STACK_SIZE)
     LibPcl.co_set_data(@cr, self as Void*)
@@ -47,7 +48,7 @@ class Fiber
 
   def run
     @proc.call
-    LibC.free(@stack)
+    @@stack_pool << @stack
 
     # Remove the current fiber from the linked list
 
