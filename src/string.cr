@@ -15,7 +15,7 @@ class String
 
   include Comparable(self)
 
-  # Creates a String form the given slice.
+  # Creates a String form the given slice. Bytes will be copied from the slice.
   #
   # This method is always safe to call, and the resulting string will have
   # the contents and length of the slice.
@@ -28,7 +28,7 @@ class String
     new(slice.pointer(slice.length), slice.length)
   end
 
-  # Creates a String from a pointer.
+  # Creates a String from a pointer. Bytes will be copied from the pointer.
   #
   # This method is **unsafe**: the pointer must point to data that eventually
   # contains a zero byte that indicates the ends of the string. Otherwise,
@@ -47,7 +47,8 @@ class String
   end
 
   # Creates a new String from a pointer, indicating its bytesize count
-  # and, optionally, the UTF-8 codepoints count (length).
+  # and, optionally, the UTF-8 codepoints count (length). Bytes will be
+  # copied from the pointer.
   #
   # If the given length is zero, the amount of UTF-8 codepoints will be
   # lazily computed when needed.
