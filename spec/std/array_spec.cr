@@ -827,4 +827,14 @@ describe "Array" do
     b.length.should eq(2)
     b.should eq([1, false])
   end
+
+  it "builds from buffer" do
+    ary = Array(Int32).build(4) do |buffer|
+      buffer[0] = 1
+      buffer[1] = 2
+      2
+    end
+    ary.length.should eq(2)
+    ary.should eq([1, 2])
+  end
 end

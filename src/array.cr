@@ -42,26 +42,6 @@ class Array(T)
     @buffer = Pointer(T).malloc(size, value)
   end
 
-  # Creates a new Array with the given length, allocating an internal buffer
-  # with the given capacity, and yielding that buffer.
-  #
-  # This method is **unsafe**, but is usually used to initialize the buffer
-  # by passing it to a C function.
-  #
-  # ```
-  # Array.new(3, 3) do |buffer|
-  #   SomeLib.fill_buffer(buffer, 3)
-  # end
-  # ```
-  def initialize(length : Int, capacity : Int)
-    capacity = Math.max(capacity.to_i, 3)
-
-    @length = length.to_i
-    @capacity = capacity
-    @buffer = Pointer(T).malloc(capacity)
-    yield @buffer
-  end
-
   # Creates a new Array of the given size and invokes the
   # block once for each index of the array, assigning the
   # block's value in that index.
@@ -75,11 +55,29 @@ class Array(T)
   # puts ary #=> [[2], [1], [1]]
   # ```
   def self.new(size)
-    Array(typeof(yield 1)).new(size, size) do |buffer|
+    Array(typeof(yield 1)).build(size) do |buffer|
       size.times do |i|
         buffer[i] = yield i
       end
+      size
     end
+  end
+
+  # Creates a new Array, allocating an internal buffer with the given capacity,
+  # and yielding that buffer. The block must return the desired length of the array.
+  #
+  # This method is **unsafe**, but is usually used to initialize the buffer
+  # by passing it to a C function.
+  #
+  # ```
+  # Array.new(3) do |buffer|
+  #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
+  # end
+  # ```
+  def self.build(capacity : Int)
+    ary = Array(T).new(capacity)
+    ary.length = (yield ary.buffer).to_i
+    ary
   end
 
   def ==(other : Array)
@@ -101,42 +99,43 @@ class Array(T)
 
   def &(other : Array(U))
     hash = other.to_lookup_hash
-    ary = Array(T).new(Math.min(length, other.length))
-    i = 0
-    each do |obj|
-      if hash.has_key?(obj)
-        ary.buffer[i] = obj
-        i += 1
+    Array(T).build(Math.min(length, other.length)) do |buffer|
+      i = 0
+      each do |obj|
+        if hash.has_key?(obj)
+          buffer[i] = obj
+          i += 1
+        end
       end
+      i
     end
-    ary.length = i
-    ary
   end
 
   def |(other : Array(U))
-    ary = Array(T | U).new(length + other.length)
-    hash = Hash(T, Bool).new
-    i = 0
-    each do |obj|
-      ary.buffer[i] = obj
-      i += 1
-      hash[obj] = true
-    end
-    other.each do |obj|
-      unless hash.has_key?(obj)
-        ary.buffer[i] = obj
+    Array(T | U).build(length + other.length) do |buffer|
+      hash = Hash(T, Bool).new
+      i = 0
+      each do |obj|
+        buffer[i] = obj
         i += 1
+        hash[obj] = true
       end
+      other.each do |obj|
+        unless hash.has_key?(obj)
+          buffer[i] = obj
+          i += 1
+        end
+      end
+      i
     end
-    ary.length = i
-    ary
   end
 
   def +(other : Array(U))
     new_length = length + other.length
-    Array(T | U).new(new_length, new_length) do |buffer|
+    Array(T | U).build(new_length) do |buffer|
       buffer.copy_from(self.buffer, length)
       (buffer + length).copy_from(other.buffer, other.length)
+      new_length
     end
   end
 
@@ -295,8 +294,9 @@ class Array(T)
   end
 
   def dup
-    Array(T).new(length, length) do |buffer|
+    Array(T).build(length) do |buffer|
       buffer.copy_from(self.buffer, length)
+      length
     end
   end
 

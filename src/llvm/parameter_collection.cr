@@ -16,8 +16,9 @@ struct LLVM::ParameterCollection
 
   def to_a
     param_count = count()
-    Array(LLVM::Value).new(param_count, param_count) do |buffer|
+    Array(LLVM::Value).build(param_count) do |buffer|
       LibLLVM.get_params(@function, buffer as LibLLVM::ValueRef*)
+      param_count
     end
   end
 
@@ -40,8 +41,9 @@ struct LLVM::ParameterCollection
 
   def types
     param_count = count()
-    Array(LLVM::Type).new(param_count, param_count) do |buffer|
+    Array(LLVM::Type).build(param_count) do |buffer|
       LibLLVM.get_param_types(@function.function_type, buffer as LibLLVM::TypeRef*)
+      param_count
     end
   end
 end

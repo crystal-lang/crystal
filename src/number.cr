@@ -4,10 +4,11 @@ struct Number
   end
 
   def self.[](*nums)
-    Array(self).new(nums.length, nums.length) do |buffer|
+    Array(self).build(nums.length) do |buffer|
       nums.each_with_index do |num, i|
         buffer[i] = cast(num)
       end
+      nums.length
     end
   end
 
