@@ -4,6 +4,16 @@ class Array(T)
 
   getter length
 
+  # Creates a new empty Array backed by a buffer that is initially
+  # `initial_capacity` big.
+  #
+  # The `initial_capacity` is useful to avoid unnecesary reallocations
+  # of the internal buffer in case of growth.
+  #
+  # ```
+  # ary = Array(Int32).new(5)
+  # ary.length #=> 0
+  # ```
   def initialize(initial_capacity = 3 : Int)
     initial_capacity = Math.max(initial_capacity, 3)
     @length = 0
@@ -11,6 +21,17 @@ class Array(T)
     @buffer = Pointer(T).malloc(initial_capacity)
   end
 
+  # Creates a new Array of the given size filled with the
+  # same value in each position.
+  #
+  # ```
+  # Array.new(3, 'a') #=> ['a', 'a', 'a']
+  #
+  # ary = Array.new(3, [1])
+  # puts ary #=> [[1], [1], [1]]
+  # ary[0][0] = 2
+  # puts ary #=> [[2], [2], [2]]
+  # ```
   def initialize(size, value : T)
     if size < 0
       raise ArgumentError.new("negative array size: #{size}")
@@ -21,13 +42,44 @@ class Array(T)
     @buffer = Pointer(T).malloc(size, value)
   end
 
+  # Creates a new Array with the given length, allocating an internal buffer
+  # with the given capacity, and yielding that buffer.
+  #
+  # This method is **unsafe**, but is usually used to initialize the buffer
+  # by passing it to a C function.
+  #
+  # ```
+  # Array.new(3, 3) do |buffer|
+  #   SomeLib.fill_buffer(buffer, 3)
+  # end
+  # ```
+  def initialize(length : Int, capacity : Int)
+    capacity = Math.max(capacity.to_i, 3)
+
+    @length = length.to_i
+    @capacity = capacity
+    @buffer = Pointer(T).malloc(capacity)
+    yield @buffer
+  end
+
+  # Creates a new Array of the given size and invokes the
+  # block once for each index of the array, assigning the
+  # block's value in that index.
+  #
+  # ```
+  # Array.new(3) { |i| (i + 1) ** 2 } #=> [1, 4, 9]
+  #
+  # ary = Array.new(3) { [1] }
+  # puts ary #=> [[1], [1], [1]]
+  # ary[0][0] = 2
+  # puts ary #=> [[2], [1], [1]]
+  # ```
   def self.new(size)
-    ary = Array(typeof(yield 1)).new(size)
-    ary.length = size
-    size.times do |i|
-      ary.buffer[i] = yield i
+    Array(typeof(yield 1)).new(size, size) do |buffer|
+      size.times do |i|
+        buffer[i] = yield i
+      end
     end
-    ary
   end
 
   def ==(other : Array)
@@ -82,11 +134,10 @@ class Array(T)
 
   def +(other : Array(U))
     new_length = length + other.length
-    ary = Array(T | U).new(new_length)
-    ary.length = new_length
-    ary.buffer.copy_from(buffer, length)
-    (ary.buffer + length).copy_from(other.buffer, other.length)
-    ary
+    Array(T | U).new(new_length, new_length) do |buffer|
+      buffer.copy_from(self.buffer, length)
+      (buffer + length).copy_from(other.buffer, other.length)
+    end
   end
 
   def -(other : Array(U))
@@ -244,10 +295,9 @@ class Array(T)
   end
 
   def dup
-    ary = Array(T).new(length)
-    ary.length = length
-    ary.buffer.copy_from(buffer, length)
-    ary
+    Array(T).new(length, length) do |buffer|
+      buffer.copy_from(self.buffer, length)
+    end
   end
 
   def each
@@ -391,8 +441,8 @@ class Array(T)
     last { nil }
   end
 
-  def length=(length)
-    @length = length
+  def length=(length : Int)
+    @length = length.to_i
   end
 
   def map

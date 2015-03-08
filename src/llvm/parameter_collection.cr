@@ -16,10 +16,9 @@ struct LLVM::ParameterCollection
 
   def to_a
     param_count = count()
-    null_value = LLVM::Value.new(Pointer(Void).null as LibLLVM::ValueRef)
-    ary = Array(LLVM::Value).new(param_count, null_value)
-    LibLLVM.get_params(@function, ary.buffer as LibLLVM::ValueRef*)
-    ary
+    Array(LLVM::Value).new(param_count, param_count) do |buffer|
+      LibLLVM.get_params(@function, buffer as LibLLVM::ValueRef*)
+    end
   end
 
   def [](index)
@@ -41,9 +40,8 @@ struct LLVM::ParameterCollection
 
   def types
     param_count = count()
-    null_type = LLVM::Type.new(Pointer(Void).null as LibLLVM::TypeRef)
-    ary = Array(LLVM::Type).new(param_count, null_type)
-    LibLLVM.get_param_types(@function.function_type, ary.buffer as LibLLVM::TypeRef*)
-    ary
+    Array(LLVM::Type).new(param_count, param_count) do |buffer|
+      LibLLVM.get_param_types(@function.function_type, buffer as LibLLVM::TypeRef*)
+    end
   end
 end
