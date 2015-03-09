@@ -44,3 +44,23 @@ macro spawn(exp)
     end
   {% end %}
 end
+
+macro parallel(*jobs)
+  __channel = Channel(Bool).new
+
+  {% for job, i in jobs %}
+    __ret_{{i}} = nil
+    spawn do
+      __ret_{{i}} = {{job}}
+      __channel.send true
+    end
+  {% end %}
+
+  {{ jobs.length }}.times { __channel.receive }
+
+  {
+    {% for job, i in jobs %}
+      __ret_{{i}}.not_nil!,
+    {% end %}
+  }
+end
