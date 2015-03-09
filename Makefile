@@ -1,4 +1,4 @@
-.PHONY: all spec crystal clean
+.PHONY: all spec crystal doc clean
 
 -include Makefile.local # for optional local options e.g. threads
 
@@ -14,6 +14,8 @@ endif
 all: crystal
 spec: all_spec
 	$(O)/all_spec
+doc:
+	$(BUILD_PATH) ./bin/crystal doc docs/main.cr
 
 crystal: $(O)/crystal
 all_spec: $(O)/all_spec
@@ -28,3 +30,4 @@ $(O)/crystal: $(SOURCES)
 
 clean:
 	rm -rf $(O)
+	rm -rf ./doc

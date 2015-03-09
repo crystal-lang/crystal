@@ -1,3 +1,5 @@
+ifdef evented
+
 require "uv"
 require "fiber"
 
@@ -78,4 +80,6 @@ class TCPSocket < UV::Stream
   private def stream
     pointerof(@tcp) as LibUV::Stream*
   end
+end
+
 end

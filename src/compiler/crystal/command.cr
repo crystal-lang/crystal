@@ -181,12 +181,14 @@ USAGE
   private def self.docs(options)
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
-      included_dirs = [File.expand_path("./src")]
+      included_dirs = [] of String
     else
       filenames = options
       sources = gather_sources(filenames)
       included_dirs = sources.map { |source| File.dirname(source.filename) }
     end
+
+    included_dirs << File.expand_path("./src")
 
     output_filename = tempfile "docs"
 
