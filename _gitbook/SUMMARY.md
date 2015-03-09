@@ -42,7 +42,7 @@
            * [Default and named arguments](syntax_and_semantics/default_and_named_arguments.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Visibility](syntax_and_semantics/visibility.md)
-           * [Instace variables type inference](syntax_and_semantics/instace_variables_type_inference.md)
+           * [Instance variables type inference](syntax_and_semantics/instance_variables_type_inference.md)
            * [Inheritance](syntax_and_semantics/inheritance.md)
                * [Virtual and abstract types](syntax_and_semantics/virtual_and_abstract_types.md)
            * [finalize](syntax_and_semantics/finalize.md)
