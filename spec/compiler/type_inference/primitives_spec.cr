@@ -123,7 +123,7 @@ describe "Type inference: primitives" do
       "undefined method"
   end
 
-  it "types pointer of int" do
+  pending "types pointer of int" do
     assert_type("
       p = Pointer(Int).malloc(1_u64)
       p.value = 1

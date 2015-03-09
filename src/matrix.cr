@@ -216,13 +216,13 @@ class Matrix(T)
   def *(other : Matrix)
     raise DimensionMismatch.new unless @columns == other.row_count
     new_row_count, new_column_count = @rows, other.column_count
-    matrix = Matrix(Number).new(new_row_count, new_column_count)
+    matrix = Matrix(typeof(self[0] * other[0])).new(new_row_count, new_column_count)
     pos = -1
     @rows.times do |i|
       other.column_count.times do |j|
-        matrix[pos += 1] = (0...@columns).inject(0) do |memo, k|
+        matrix[pos += 1] = typeof(self[0] * other[0]).cast((0...@columns).inject(0) do |memo, k|
           memo + at(i, k) * other[k, j]
-        end
+        end)
       end
     end
     matrix

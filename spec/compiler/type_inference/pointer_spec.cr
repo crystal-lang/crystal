@@ -37,7 +37,7 @@ describe "Type inference: pointer" do
     assert_type("p = Pointer(Int32).malloc(1_u64); p.value = 1; p2 = Pointer(Float64).malloc(1_u64); p2.value = 1.5; p2.value") { float64 }
   end
 
-  it "allows using pointer with subclass" do
+  pending "allows using pointer with subclass" do
     assert_type("
       a = Pointer(Object).malloc(1_u64)
       a.value = 1

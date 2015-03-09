@@ -457,14 +457,20 @@ describe "Codegen: is_a?" do
 
   it "works with inherited generic class against an instantiation (2)" do
     run(%(
+      class A
+      end
+
+      class B < A
+      end
+
       class Foo(T)
       end
 
-      class Bar < Foo(Int32)
+      class Bar < Foo(B)
       end
 
       bar = Bar.new
-      bar.is_a?(Foo(Object))
+      bar.is_a?(Foo(A))
       )).to_b.should be_true
   end
 

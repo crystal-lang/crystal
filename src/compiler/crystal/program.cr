@@ -34,10 +34,10 @@ module Crystal
       @file_modules = {} of String => FileModule
       @unions = {} of Array(Int32) => Type
 
-      @types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
+      @types["Object"] = object = @object = ObjectType.new self, self, "Object", nil
       object.abstract = true
 
-      @types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
+      @types["Reference"] = reference = @reference = ReferenceType.new self, self, "Reference", object
       @types["Value"] = value = @value = AbstractValueType.new self, self, "Value", object
       value.abstract = true
 

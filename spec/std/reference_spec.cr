@@ -15,9 +15,9 @@ describe "Reference" do
   it "compares reference to other reference" do
     o1 = Reference.new
     o2 = Reference.new
-    o1.should eq(o1)
-    o1.should_not eq(o2)
-    o1.should_not eq(1)
+    (o1 == o1).should be_true
+    (o1 == o2).should be_false
+    (o1 == 1).should be_false
   end
 
   it "should not be nil" do

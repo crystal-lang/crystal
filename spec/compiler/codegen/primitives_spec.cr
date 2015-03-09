@@ -91,7 +91,7 @@ describe "Code gen: primitives" do
     run("((1 == 1) != (2 == 2))").to_b.should be_false
   end
 
-  it "codegens pointer of int" do
+  pending "codegens pointer of int" do
     run(%(
       ptr = Pointer(Int).malloc(1_u64)
       ptr.value = 1
@@ -102,7 +102,7 @@ describe "Code gen: primitives" do
       )).to_i.should eq(5)
   end
 
-  it "sums two numbers out of an [] of Number" do
+  pending "sums two numbers out of an [] of Number" do
     run(%(
       p = Pointer(Number).malloc(2_u64)
       p.value = 1

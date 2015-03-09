@@ -299,7 +299,7 @@ describe "Type inference: def overload" do
         1
       end
 
-      foo(Foo(Int).new)
+      foo(Foo(Int32).new)
     ") { int32 }
   end
 
@@ -439,7 +439,7 @@ describe "Type inference: def overload" do
         'a'
       end
 
-      x = 1 || Foo(Int).new
+      x = 1 || Foo(Int32).new
       foo(x)
     ") { union_of(int32, char) }
   end

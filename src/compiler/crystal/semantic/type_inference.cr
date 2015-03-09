@@ -1982,7 +1982,13 @@ module Crystal
     end
 
     def end_visit(node : Union)
-      node.type = @mod.type_merge(node.types.map &.type.instance_type)
+      node.type = @mod.type_merge(node.types.map do |subtype|
+        instance_type = subtype.type.instance_type
+        unless instance_type.allowed_in_generics?
+          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
+        end
+        instance_type
+      end)
     end
 
     def end_visit(node : Virtual)

@@ -370,4 +370,34 @@ describe "Type inference: generic class" do
       ),
       "wrong number of type vars for Foo(T) (0 for 1)"
   end
+
+  %w(Object  Value  Reference  Number  Int  Float).each do |type|
+    it "errors if using #{type} in a generic type" do
+      assert_error %(
+        Pointer(#{type})
+        ),
+        "can't use #{type} as generic type argument yet, use a more specific type"
+    end
+  end
+
+  it "errors if using Number | String in a generic type" do
+    assert_error %(
+      Pointer(Number | String)
+      ),
+      "can't use Number in unions yet, use a more specific type"
+  end
+
+  it "errors if using Number in alias" do
+    assert_error %(
+      alias T = Number | String
+      ),
+      "can't use Number in unions yet, use a more specific type"
+  end
+
+  it "errors if using Number in recursive alias" do
+    assert_error %(
+      alias T = Number | Pointer(T)
+      ),
+      "can't use Number in unions yet, use a more specific type"
+  end
 end

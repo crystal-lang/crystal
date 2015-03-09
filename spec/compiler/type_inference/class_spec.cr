@@ -346,7 +346,7 @@ describe "Type inference: class" do
         end
       end
 
-      Foo(Int).new.foo
+      Foo(Int32).new.foo
       ") { int32 }
   end
 

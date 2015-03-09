@@ -125,7 +125,7 @@ describe "Type inference: module" do
         include Foo
       end
 
-      Bar(Int).new.foo(1)
+      Bar(Int32).new.foo(1)
       ") { int32 }
   end
 
@@ -141,7 +141,7 @@ describe "Type inference: module" do
         include Foo
       end
 
-      Bar(Int).new.foo(1)
+      Bar(Int32).new.foo(1)
       ") { int32 }
   end
 
@@ -157,7 +157,7 @@ describe "Type inference: module" do
         include Foo
       end
 
-      Bar(Int).new.foo(1.5)
+      Bar(Int32).new.foo(1.5)
       ",
       "no overload matches"
   end
@@ -174,7 +174,7 @@ describe "Type inference: module" do
         include Foo(U)
       end
 
-      Bar(Int).new.foo(1)
+      Bar(Int32).new.foo(1)
       ") { int32 }
   end
 
@@ -190,7 +190,7 @@ describe "Type inference: module" do
         include Foo(U)
       end
 
-      Bar(Int).new.foo(1.5)
+      Bar(Int32).new.foo(1.5)
       ",
       "no overload matches"
   end

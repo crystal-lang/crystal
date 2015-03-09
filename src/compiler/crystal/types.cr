@@ -66,6 +66,10 @@ module Crystal
       false
     end
 
+    def allowed_in_generics?
+      true
+    end
+
     def subclasses
       [] of Type
     end
@@ -1142,6 +1146,18 @@ module Crystal
     end
   end
 
+  class ObjectType < NonGenericClassType
+    def allowed_in_generics?
+      false
+    end
+  end
+
+  class ReferenceType < NonGenericClassType
+    def allowed_in_generics?
+      false
+    end
+  end
+
   abstract class EmptyType < Type
     getter :program
 
@@ -1207,6 +1223,10 @@ module Crystal
 
     def passed_by_value?
       true
+    end
+
+    def allowed_in_generics?
+      false
     end
 
     def including_types
@@ -1971,6 +1991,14 @@ module Crystal
         remove_alias
       else
         self
+      end
+    end
+
+    def allowed_in_generics?
+      if aliased_type = @aliased_type
+        aliased_type.remove_alias.allowed_in_generics?
+      else
+        true
       end
     end
 

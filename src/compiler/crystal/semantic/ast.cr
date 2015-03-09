@@ -301,6 +301,13 @@ module Crystal
           node_type = node.type?
           return unless node_type
 
+          unless node_type.allowed_in_generics?
+            if node_type.is_a?(UnionType)
+              node_type = node_type.union_types.find { |t| !t.allowed_in_generics? }
+            end
+            node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
+          end
+
           type_var = node_type.virtual_type
         end
 
