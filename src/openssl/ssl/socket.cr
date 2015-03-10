@@ -13,6 +13,10 @@ class OpenSSL::SSL::Socket
     end
   end
 
+  def finalize
+    LibSSL.ssl_free(@ssl)
+  end
+
   def read(slice : Slice(UInt8), count)
     LibSSL.ssl_read(@ssl, slice.pointer(count), count)
   end
@@ -27,8 +31,6 @@ class OpenSSL::SSL::Socket
     # TODO: only rescue IOError
     rescue
     end
-
-    LibSSL.ssl_free(@ssl)
   end
 
   def self.open_client(io, context = Context.default)
