@@ -294,7 +294,7 @@ class Array(T)
   end
 
   def dup
-    Array(T).build(length) do |buffer|
+    Array(T).build(@capacity) do |buffer|
       buffer.copy_from(self.buffer, length)
       length
     end
