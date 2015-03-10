@@ -35,6 +35,7 @@ end
 lib LibPThread
   fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : Int32
   fun join = GC_pthread_join(thread : Thread, value : Void**) : Int32
+  fun detach = GC_pthread_detach(thread : Thread) : Int32
 end
 
 fun __crystal_malloc(size : UInt32) : Void*

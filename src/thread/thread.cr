@@ -8,6 +8,7 @@ class Thread(T, R)
   def initialize(arg : T, &func : T -> R)
     @func = func
     @arg = arg
+    @detached = false
     ret = LibPThread.create(out @th, nil, ->(data) {
         (data as Thread(T, R)).start
       }, self as Void*)
@@ -17,10 +18,15 @@ class Thread(T, R)
     end
   end
 
+  def finalize
+    LibPThread.detach(@th) unless @detached
+  end
+
   def join
     if LibPThread.join(@th, out _ret) != 0
       raise Errno.new("pthread_join")
     end
+    @detached = true
 
     if exception = @exception
       raise exception
