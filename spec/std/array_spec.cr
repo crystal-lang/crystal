@@ -837,4 +837,18 @@ describe "Array" do
     ary.length.should eq(2)
     ary.should eq([1, 2])
   end
+
+  it "does select!" do
+    ary = [1, 2, 3, 4]
+    ary2 = ary.select! { |x| x % 2 == 0 }
+    ary2.should be(ary)
+    ary2.should eq([2, 4])
+  end
+
+  it "does reject!" do
+    ary = [1, 2, 3, 4]
+    ary2 = ary.reject! { |x| x % 2 == 0 }
+    ary2.should be(ary)
+    ary2.should eq([1, 3])
+  end
 end

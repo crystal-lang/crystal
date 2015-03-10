@@ -454,6 +454,16 @@ class Array(T)
     self
   end
 
+  def select!
+    delete_if { |elem| !(yield elem) }
+    self
+  end
+
+  def reject!
+    delete_if { |elem| yield elem }
+    self
+  end
+
   def map_with_index
     Array.new(length) { |i| yield buffer[i], i }
   end
