@@ -100,6 +100,12 @@ class FileDescriptorIO
     end
   end
 
+  def finalize
+    return if closed?
+
+    close rescue nil
+  end
+
   def closed?
     @closed
   end
