@@ -376,4 +376,10 @@ describe "Hash" do
     x = {} of Int32 => NeverInstantiated
     x.to_s.should eq("{}")
   end
+
+  it "deletes if" do
+    x = {a: 1, b: 2, c: 3, d: 4}
+    x.delete_if { |k, v| v % 2 == 0 }
+    x.should eq({a: 1, c: 3})
+  end
 end
