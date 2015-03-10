@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "spec"
 
 describe Channel do
   it "creates unbuffered with no arguments" do

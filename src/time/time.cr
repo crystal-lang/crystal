@@ -88,15 +88,9 @@ struct Time
     @encoded |= kind.value << KindShift
   end
 
-ifdef evented
-  def self.new(time : LibUV::Timespec, kind = Kind::Unspecified)
-    new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
-  end
-else
   def self.new(time : LibC::TimeSpec, kind = Kind::Unspecified)
     new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
-end
 
   def +(other : TimeSpan)
     add_ticks other.ticks

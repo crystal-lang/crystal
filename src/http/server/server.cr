@@ -34,7 +34,7 @@ class HTTP::Server
   def listen
     server = TCPServer.new(@port)
     until @wants_close
-      handle_client(server.accept)
+      spawn handle_client(server.accept)
     end
   end
 
@@ -42,7 +42,7 @@ class HTTP::Server
     server = TCPServer.new(@port)
     workers.times do
       fork do
-        loop { handle_client(server.accept) }
+        loop { spawn handle_client(server.accept) }
       end
     end
 
@@ -70,7 +70,9 @@ class HTTP::Server
 
           return
         end
+        break unless request
         response = @handler.call(request)
+        response.headers["Connection"] = "keep-alive" if request.keep_alive?
         response.to_io io
         io.flush
 
@@ -78,21 +80,11 @@ class HTTP::Server
           return upgrade_handler.call(io)
         end
 
-        ifdef evented
-          break unless request.keep_alive?
-        else
-          break
-        end
+        break unless request.keep_alive?
       end
     ensure
       ssl_sock.try &.close if @ssl
       sock.close
-    end
-  end
-
-  ifdef evented
-    private def handle_client(sock)
-      spawn { previous_def }
     end
   end
 

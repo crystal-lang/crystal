@@ -5,23 +5,64 @@ class FileDescriptorIO
   SEEK_CUR = LibC::SEEK_CUR
   SEEK_END = LibC::SEEK_END
 
-  def initialize(@fd)
+  private getter! readers
+  private getter! writers
+
+  def initialize(@fd, blocking = false)
+    unless blocking
+      before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
+      LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
+      @event = Scheduler.create_fd_events(self)
+      @readers = [] of Fiber
+      @writers = [] of Fiber
+    end
+    @closed = false
   end
 
   def read(slice : Slice(UInt8), count)
-    bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-    if bytes_read == -1
-      raise Errno.new "Error reading file"
+    loop do
+      bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
+      if bytes_read == -1
+        if LibC.errno == Errno::EAGAIN
+          readers << Fiber.current
+          Scheduler.reschedule
+        else
+          raise Errno.new "Error reading file"
+        end
+      else
+        return bytes_read
+      end
     end
-    bytes_read
+  end
+
+  def resume_read
+    if reader = readers.pop?
+      reader.resume
+    end
+  end
+
+  def resume_write
+    if writer = writers.pop?
+      writer.resume
+    end
   end
 
   def write(slice : Slice(UInt8), count)
-    bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-    if bytes_written == -1
-      raise Errno.new "Error writing file"
+    loop do
+      bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
+      if bytes_written == -1
+        if LibC.errno == Errno::EAGAIN
+          writers << Fiber.current
+          Scheduler.reschedule
+          next
+        else
+          raise Errno.new "Error writing file"
+        end
+      end
+      count -= bytes_written
+      return if count == 0
+      slice += bytes_written
     end
-    bytes_written
   end
 
   def seek(amount, whence = SEEK_SET)
@@ -44,9 +85,29 @@ class FileDescriptorIO
   end
 
   def close
+    if closed?
+      raise IO::Error.new "closed stream"
+    end
+
     if LibC.close(@fd) != 0
       raise Errno.new("Error closing file")
     end
+
+    @closed = true
+
+    if event = @event
+      Scheduler.destroy_fd_events(event)
+    end
+  end
+
+  def finalize
+    return if closed?
+
+    close rescue nil
+  end
+
+  def closed?
+    @closed
   end
 
   def tty?
