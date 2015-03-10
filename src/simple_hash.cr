@@ -98,4 +98,17 @@ struct SimpleHash(K, V)
   def object_id
     @values.object_id
   end
+  
+  def inspect(io : IO)
+    to_s(io)
+  end
+
+  def to_s(io : IO)
+    io << '{'
+    @values.each_with_index do |pair, index|
+      pair.join(" => ", io) { |value, io| value.inspect(io) }
+      io << ", " if index < @values.length - 1
+    end
+    io << '}'
+  end
 end
