@@ -16,6 +16,7 @@ class FileDescriptorIO
       @readers = [] of Fiber
       @writers = [] of Fiber
     end
+    @closed = false
   end
 
   def read(slice : Slice(UInt8), count)
@@ -84,13 +85,23 @@ class FileDescriptorIO
   end
 
   def close
+    if closed?
+      raise IO::Error.new "closed stream"
+    end
+
     if LibC.close(@fd) != 0
       raise Errno.new("Error closing file")
     end
 
+    @closed = true
+
     if event = @event
       Scheduler.destroy_fd_events(event)
     end
+  end
+
+  def closed?
+    @closed
   end
 
   def tty?

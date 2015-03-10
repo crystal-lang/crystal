@@ -267,7 +267,10 @@ class File < FileDescriptorIO
   end
 
   def to_s(io)
-    io << "#<File:" << @path << ">"
+    io << "#<File:" << @path
+    io << " (closed)" if closed?
+    io << ">"
+    io
   end
 end
 

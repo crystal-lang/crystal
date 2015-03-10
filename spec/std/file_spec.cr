@@ -283,4 +283,32 @@ describe "File" do
   it "does to_s" do
     File.new(__FILE__).to_s.should eq("#<File:#{__FILE__}>")
   end
+
+  describe "close" do
+    it "is not closed when opening" do
+      file = File.new(__FILE__)
+      file.closed?.should be_false
+    end
+
+    it "is closed when closed" do
+      file = File.new(__FILE__)
+      file.close
+      file.closed?.should be_true
+    end
+
+    it "raises when closing twice" do
+      file = File.new(__FILE__)
+      file.close
+
+      expect_raises IO::Error, /closed stream/ do
+        file.close
+      end
+    end
+
+    it "does to_s when closed" do
+      file = File.new(__FILE__)
+      file.close
+      file.to_s.should eq("#<File:#{__FILE__} (closed)>")
+    end
+  end
 end
