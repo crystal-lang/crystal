@@ -1184,7 +1184,18 @@ module Crystal
         generated_nodes.accept PropagateDocVisitor.new(node_doc)
       end
 
+      old_var_names = @vars.keys
+
       generated_nodes.accept self
+
+      # Make sure to delete variables declared by the macro, so that they
+      # are not visible afterwards
+      if old_var_names.length != @vars.length
+        @vars.delete_if do |name, var|
+          !old_var_names.includes?(name)
+        end
+      end
+
       generated_nodes
     end
 
@@ -3241,7 +3252,7 @@ module Crystal
 
     def lookup_similar_var_name(name)
       SimilarName.find(name) do |similar_name|
-        @meta_vars.each_key do |var_name|
+        @vars.each_key do |var_name|
           similar_name.test(var_name)
         end
       end

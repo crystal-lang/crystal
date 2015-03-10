@@ -331,4 +331,20 @@ describe "Type inference: macro" do
       foo
       )) { types["Foo"].metaclass.virtual_type }
   end
+
+  it "can't define new variables (#466)" do
+    nodes = parse(%(
+      macro foo
+        hello = 1
+      end
+
+      foo
+      hello
+      ))
+    begin
+      infer_type nodes
+    rescue ex : TypeException
+      ex.to_s.should_not match(/did you mean/)
+    end
+  end
 end

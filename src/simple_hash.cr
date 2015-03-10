@@ -50,6 +50,17 @@ struct SimpleHash(K, V)
     nil
   end
 
+  def delete_if
+    keys_to_delete = [] of K
+    each do |key, value|
+      keys_to_delete << key if yield(key, value)
+    end
+    keys_to_delete.each do |key|
+      delete(key)
+    end
+    self
+  end
+
   def dup
     SimpleHash(K, V).new(@values.dup)
   end
