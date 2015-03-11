@@ -1133,7 +1133,11 @@ module Crystal
       klass.new cond, body
     end
 
-    def parse_call_block_arg(args, check_paren)
+    def call_block_arg_follows?
+      @token.type == :"&" && !current_char.whitespace?
+    end
+
+    def parse_call_block_arg(args, check_paren, named_args = nil)
       location = @token.location
 
       next_token_skip_space
@@ -1215,7 +1219,7 @@ module Crystal
         skip_space
       end
 
-      CallArgs.new args, block, block_arg, nil, false
+      CallArgs.new args, block, block_arg, named_args, false
     end
 
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
@@ -2864,14 +2868,17 @@ module Crystal
         open(:call) do
           next_token_skip_space_or_newline
           while @token.type != :")"
-            if @token.type == :"&"
-              unless current_char.whitespace?
-                return parse_call_block_arg(args, true)
-              end
+            if call_block_arg_follows?
+              return parse_call_block_arg(args, true)
             end
 
             if @token.type == :IDENT && current_char == ':'
               named_args = parse_named_args(allow_newline: true)
+
+              if call_block_arg_follows?
+                return parse_call_block_arg(args, true, named_args)
+              end
+
               check :")"
               next_token_skip_space
               return CallArgs.new args, nil, nil, named_args, false
@@ -2946,14 +2953,17 @@ module Crystal
 
       args = [] of ASTNode
       while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
-        if @token.type == :"&"
-          unless current_char.whitespace?
-            return parse_call_block_arg(args, false)
-          end
+        if call_block_arg_follows?
+          return parse_call_block_arg(args, false)
         end
 
         if @token.type == :IDENT && current_char == ':'
           named_args = parse_named_args
+
+          if call_block_arg_follows?
+            return parse_call_block_arg(args, false, named_args: named_args)
+          end
+
           skip_space
           return CallArgs.new args, nil, nil, named_args, false
         else
@@ -2990,7 +3000,7 @@ module Crystal
         skip_space_or_newline if allow_newline
         if @token.type == :","
           next_token_skip_space_or_newline
-          if @token.type == :")"
+          if @token.type == :")" || @token.type == :"&"
             break
           end
         else
