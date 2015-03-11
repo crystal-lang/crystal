@@ -775,4 +775,28 @@ describe "Block inference" do
       z
       )) { array_of int32 }
   end
+
+  it "passed bug included generic module and typeof" do
+    assert_type(%(
+      module Moo(U)
+        def moo
+          U
+        end
+      end
+
+      class Foo(T)
+        include Moo(typeof(self.foo))
+
+        def initialize(@foo : T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).moo
+      Foo.new('a').moo
+      )) { char.metaclass }
+  end
 end

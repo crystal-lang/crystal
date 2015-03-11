@@ -29,15 +29,11 @@ module Crystal
     end
 
     def transform(node : Include)
-      super
-
       node.runtime_initializers.try &.map! &.transform self
       node
     end
 
     def transform(node : Extend)
-      super
-
       node.runtime_initializers.try &.map! &.transform self
       node
     end

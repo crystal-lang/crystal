@@ -6,7 +6,7 @@ module Crystal
 
     def self.lookup(root_type, node, self_type = root_type)
       lookup = new root_type, self_type
-      node.accept lookup
+      node.clone.accept lookup
       lookup.type.not_nil!
     end
 
