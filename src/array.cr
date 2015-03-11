@@ -202,6 +202,22 @@ class Array(T)
     self
   end
 
+  # Returns a new Array that has this array's elements cloned.
+  # That is, it returns a deep copy of this array.
+  #
+  # Use `#dup` if you want a shallow copy.
+  #
+  # ```
+  # ary = [[1, 2], [3, 4]]
+  # ary2 = ary.clone
+  # ary[0][0] = 5
+  # puts ary  #=> [[5, 2], [3, 4]]
+  # puts ary2 #=> [[1, 2], [3, 4]]
+  #
+  # ary2 << [7, 8]
+  # puts ary  #=> [[5, 2], [3, 4]]
+  # puts ary2 #=> [[1, 2], [3, 4], [7, 8]]
+  # ```
   def clone
     Array.new(length) { |i| @buffer[i].clone as T }
   end
@@ -293,6 +309,22 @@ class Array(T)
     end
   end
 
+  # Returns a new Array that has exactly this array's elements.
+  # That is, it returns a shallow copy of this array.
+  #
+  # Use `#clone` if you want a deep copy.
+  #
+  # ```
+  # ary = [[1, 2], [3, 4]]
+  # ary2 = ary.dup
+  # ary[0][0] = 5
+  # puts ary  #=> [[5, 2], [3, 4]]
+  # puts ary2 #=> [[5, 2], [3, 4]]
+  #
+  # ary2 << [7, 8]
+  # puts ary  #=> [[5, 2], [3, 4]]
+  # puts ary2 #=> [[5, 2], [3, 4], [7, 8]]
+  # ```
   def dup
     Array(T).build(@capacity) do |buffer|
       buffer.copy_from(self.buffer, length)

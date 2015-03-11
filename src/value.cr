@@ -23,10 +23,5 @@ struct Value
   def nil?
     false
   end
-
-  # Returns self.
-  def clone
-    self
-  end
 end
 

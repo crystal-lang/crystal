@@ -161,6 +161,18 @@ class Object
     self
   end
 
+  # Returns a shallow copy of this object.
+  # Not all objects implement this method.
+  abstract def dup
+
+  # Returns a deep copy of this object.
+  #
+  # Object returns self, but subclasses override this method to provide
+  # specific clone behaviour.
+  def clone
+    self
+  end
+
   # Defines getter methods for each of the given arguments.
   #
   # Writing:

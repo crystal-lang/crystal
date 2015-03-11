@@ -47,12 +47,6 @@ class Reference
     object_id
   end
 
-  # Returns self. Subclasses must override this method to provide
-  # custom clone behaviour.
-  def clone
-    self
-  end
-
   macro def inspect(io : IO) : Nil
     io << "#<{{@class_name.id}}:0x"
     object_id.to_s(16, io)
