@@ -42,6 +42,26 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
+  def each_slice(count : Int, &block : Array(T) ->)
+    slice = Array(T).new(count)
+    ary = [] of Array(T)
+
+    each do |elem|
+      slice << elem
+      if slice.size == count
+        yield slice
+        ary << slice.clone
+        slice.clear
+      end
+    end
+
+    unless slice.empty?
+      yield slice
+      ary << slice
+    end
+    ary
+  end
+
   def each_with_index
     i = 0
     each do |elem|
