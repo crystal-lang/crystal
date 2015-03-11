@@ -1,3 +1,12 @@
+## Next
+
+* Exception class is now shown on unhandled exceptions
+* Added `--emit` flag to the compiler. Now you can easily see the generated LLVM IR, LLVM bitcode, assembly and object files.
+* Added `BigInt#to_s(base)`, `BigInt::cast` and bit operators (thanks @Exilor)
+* The following types are now disallowed in generics (for now): Object, Value, Reference, Number, Int and Float.
+* Added macro vars: `%var` and `%var{x, y}` create uniqely named variables inside macros.
+* Many bug fixes.
+
 ## 0.6.1 (2015-03-04)
 
 * The `class` method now works in all cases. You can now compare classes with `==` and ask their `hash` value.
