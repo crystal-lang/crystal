@@ -596,7 +596,6 @@ class Crystal::Call
 
       # Now check if the FunLiteral's type (the block's type) matches the block arg specification.
       # If not, we delay it for later and compute the type based on the block arg return type, if any.
-      # TODO: if we delay it if possible, maybe we shouldn't match it here.
       fun_literal_type = fun_literal.type?
       if fun_literal_type
         block_arg_type = fun_literal_type
@@ -633,11 +632,14 @@ class Crystal::Call
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.
-      # TODO: if we delay it if possible, maybe we shouldn't match it here.
       if output = block_arg_fun_output
         if !block.body.type?
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
-            block_type = ident_lookup.lookup_node_type(output).virtual_type
+            begin
+              block_type = ident_lookup.lookup_node_type(output).virtual_type
+            rescue ex : Crystal::Exception
+              cant_infer_block_return_type
+            end
           else
             cant_infer_block_return_type
           end
@@ -646,7 +648,15 @@ class Crystal::Call
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)
-              block_type = ident_lookup.lookup_node_type(output).virtual_type
+              begin
+                block_type = ident_lookup.lookup_node_type(output).virtual_type
+              rescue ex : Crystal::Exception
+                if block_type
+                  raise "couldn't match #{block_type} to #{output}", ex
+                else
+                  cant_infer_block_return_type
+                end
+              end
             else
               if output.is_a?(Self)
                 raise "expected block to return #{match.context.owner}, not #{block_type}"

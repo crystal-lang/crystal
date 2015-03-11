@@ -54,8 +54,8 @@ class Array(T)
   # ary[0][0] = 2
   # puts ary #=> [[2], [1], [1]]
   # ```
-  def self.new(size)
-    Array(typeof(yield 1)).build(size) do |buffer|
+  def self.new(size, &block : Int32 -> T)
+    Array(T).build(size) do |buffer|
       size.times do |i|
         buffer[i] = yield i
       end
@@ -219,7 +219,7 @@ class Array(T)
   # puts ary2 #=> [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
-    Array.new(length) { |i| @buffer[i].clone as T }
+    Array(T).new(length) { |i| @buffer[i].clone as T }
   end
 
   def compact
@@ -477,8 +477,8 @@ class Array(T)
     @length = length.to_i
   end
 
-  def map
-    Array.new(length) { |i| yield buffer[i] }
+  def map(&block : T -> U)
+    Array(U).new(length) { |i| yield buffer[i] }
   end
 
   def map!
@@ -496,8 +496,8 @@ class Array(T)
     self
   end
 
-  def map_with_index
-    Array.new(length) { |i| yield buffer[i], i }
+  def map_with_index(&block : T, Int32 -> U)
+    Array(U).new(length) { |i| yield buffer[i], i }
   end
 
   def pop
@@ -519,7 +519,7 @@ class Array(T)
     end
 
     n = Math.min(n, @length)
-    ary = Array.new(n) { |i| @buffer[@length - n + i] }
+    ary = Array(T).new(n) { |i| @buffer[@length - n + i] }
 
     @length -= n
 
@@ -555,7 +555,7 @@ class Array(T)
   end
 
   def reverse
-    Array.new(length) { |i| @buffer[length - i - 1] }
+    Array(T).new(length) { |i| @buffer[length - i - 1] }
   end
 
   def reverse!
@@ -609,7 +609,7 @@ class Array(T)
         return dup.shuffle!
       end
 
-      ary = Array.new(n) { |i| @buffer[i] }
+      ary = Array(T).new(n) { |i| @buffer[i] }
       buffer = ary.buffer
 
       n.upto(@length - 1) do |i|
@@ -645,7 +645,7 @@ class Array(T)
     end
 
     n = Math.min(n, @length)
-    ary = Array.new(n) { |i| @buffer[i] }
+    ary = Array(T).new(n) { |i| @buffer[i] }
 
     @buffer.move_from(@buffer + n, @length - n)
     @length -= n
@@ -850,8 +850,8 @@ class Array(T)
     to_lookup_hash { |elem| elem }
   end
 
-  protected def to_lookup_hash
-    each_with_object(Hash(typeof(yield first), T).new) do |o, h|
+  protected def to_lookup_hash(&block : T -> U)
+    each_with_object(Hash(U, T).new) do |o, h|
       key = yield o
       unless h.has_key?(key)
         h[key] = o

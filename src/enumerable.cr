@@ -88,8 +88,8 @@ module Enumerable(T)
     select { |elem| pattern === elem }
   end
 
-  def group_by
-    h = Hash(typeof(yield first), Array(T)).new
+  def group_by(&block : T -> U)
+    h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
       if h.has_key?(v)
@@ -116,8 +116,8 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
-  def index_by
-    hash = {} of typeof(yield first) => T
+  def index_by(&block : T -> U)
+    hash = {} of U => T
     each do |elem|
       hash[yield elem] = elem
     end
@@ -170,14 +170,14 @@ module Enumerable(T)
     end
   end
 
-  def map
-    ary = [] of typeof(yield first)
+  def map(&block : T -> U)
+    ary = [] of U
     each { |e| ary << yield e }
     ary
   end
 
-  def map_with_index
-    ary = [] of typeof(yield first, 1)
+  def map_with_index(&block : T, Int32 -> U)
+    ary = [] of U
     each_with_index { |e, i| ary << yield e, i }
     ary
   end
@@ -186,8 +186,8 @@ module Enumerable(T)
     max_by &.itself
   end
 
-  def max_by
-    max :: typeof(yield first)
+  def max_by(&block : T -> U)
+    max :: U
     obj :: T
     found = false
 
@@ -203,8 +203,8 @@ module Enumerable(T)
     found ? obj : raise EmptyEnumerable.new
   end
 
-  def max_of
-    max :: typeof(yield first)
+  def max_of(&block : T -> U)
+    max :: U
     found = false
 
     each_with_index do |elem, i|
@@ -226,9 +226,9 @@ module Enumerable(T)
     minmax_by &.itself
   end
 
-  def minmax_by
-    min :: typeof(yield first)
-    max :: typeof(yield first)
+  def minmax_by(&block : T -> U)
+    min :: U
+    max :: U
     objmin :: T
     objmax :: T
     found = false
@@ -249,9 +249,9 @@ module Enumerable(T)
     found ? {objmin, objmax} : raise EmptyEnumerable.new
   end
 
-  def minmax_of
-    min :: typeof(yield first)
-    max :: typeof(yield first)
+  def minmax_of(&block : T -> U)
+    min :: U
+    max :: U
     found = false
 
     each_with_index do |elem, i|
@@ -268,8 +268,8 @@ module Enumerable(T)
     found ? {min, max} : raise EmptyEnumerable.new
   end
 
-  def min_by
-    min :: typeof(yield first)
+  def min_by(&block : T -> U)
+    min :: U
     obj :: T
     found = false
 
@@ -285,8 +285,8 @@ module Enumerable(T)
     found ? obj : raise EmptyEnumerable.new
   end
 
-  def min_of
-    min :: typeof(yield first)
+  def min_of(&block : T -> U)
+    min :: U
     found = false
 
     each_with_index do |elem, i|

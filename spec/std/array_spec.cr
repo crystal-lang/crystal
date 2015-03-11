@@ -851,4 +851,10 @@ describe "Array" do
     ary2.should be(ary)
     ary2.should eq([1, 3])
   end
+
+  it "does map_with_index" do
+    ary = [1, 1, 2, 2]
+    ary2 = ary.map_with_index { |e, i| e + i }
+    ary2.should eq([1, 2, 4, 5])
+  end
 end
