@@ -655,6 +655,8 @@ describe "Parser" do
   it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
   it_parses "{{ foo }}", MacroExpression.new("foo".var)
 
+  it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
+
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]

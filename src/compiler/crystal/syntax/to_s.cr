@@ -677,6 +677,12 @@ module Crystal
       false
     end
 
+    def visit(node : MacroVar)
+      @str << '%'
+      @str << node.name
+      false
+    end
+
     def visit(node : MacroLiteral)
       @str << node.value
       false

@@ -397,4 +397,32 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
   end
+
+  it "lexes macro var" do
+    lexer = Lexer.new("x = if %var; 2; else; 3; end; end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("x = if ")
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_VAR)
+    token.value.should eq("var")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("; 2; ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("else; 3; ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("end; ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
 end

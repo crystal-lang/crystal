@@ -1933,6 +1933,20 @@ module Crystal
     def_equals_and_hash @vars, @exp, @body
   end
 
+  # A uniquely named variable inside a macro (like %var)
+  class MacroVar < ASTNode
+    property name
+
+    def initialize(@name : String)
+    end
+
+    def clone_without_location
+      MacroVar.new(@name)
+    end
+
+    def_equals_and_hash @name
+  end
+
   # An underscore matches against any type
   class Underscore < ASTNode
     def ==(other : self)

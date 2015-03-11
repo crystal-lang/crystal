@@ -203,6 +203,7 @@ module Crystal
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
         @str = StringIO.new(512)
         @last = Nop.new
+        @macro_vars = Hash(String, String).new
       end
 
       def define_var(name, value)
@@ -356,6 +357,12 @@ module Crystal
 
         @vars.delete element_var.name
         @vars.delete index_var.name if index_var
+      end
+
+      def visit(node : MacroVar)
+        macro_var = @macro_vars[node.name] ||= @mod.new_temp_var_name
+        @str << macro_var
+        false
       end
 
       def visit(node : Assign)

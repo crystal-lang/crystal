@@ -876,4 +876,32 @@ describe "Code gen: macro" do
       f2.class.in_object
       )).to_string.should eq("Baz:Class")
   end
+
+  it "doesn't override local variable when using macro variable" do
+    run(%(
+      macro foo(x)
+        %a = {{x}}
+        %a
+      end
+
+      a = 1
+      foo(2)
+      foo(3)
+      a
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't override local variable when using macro variable (2)" do
+    run(%(
+      macro foo(x)
+        %a = {{x}} + 10
+        %a
+      end
+
+      a = 1
+      z = foo(2)
+      w = foo(3)
+      a + z + w
+      )).to_i.should eq(26)
+  end
 end

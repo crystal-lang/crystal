@@ -2052,6 +2052,8 @@ module Crystal
           else
             return Expressions.from pieces
           end
+        when :MACRO_VAR
+          pieces << MacroVar.new(@token.value.to_s)
         when :MACRO_END
           break
         when :EOF

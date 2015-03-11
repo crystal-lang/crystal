@@ -1682,7 +1682,13 @@ module Crystal
       end
 
       if !delimiter_state && current_char == '#'
-        while next_char != '\n'
+        while true
+          case next_char
+          when '\n'
+            break
+          when '\0'
+            raise "unterminated macro"
+          end
         end
         start = current_pos
         @token.line_number += 1
@@ -1715,6 +1721,18 @@ module Crystal
           @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
           return @token
         end
+      end
+
+      if current_char == '%' && ident_start?(peek_next_char)
+        char = next_char
+        start = current_pos
+        while ident_part?(char)
+          char = next_char
+        end
+        @token.type = :MACRO_VAR
+        @token.value = string_range(start)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
+        return @token
       end
 
       if !delimiter_state && current_char == 'e' && next_char == 'n'
@@ -1820,11 +1838,16 @@ module Crystal
             if delimiter_state
               whitespace = false
             else
-              case char = next_char
+              case char = peek_next_char
               when '(', '[', '<', '{'
+                next_char
                 delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
               else
-                whitespace = false
+                if ident_start?(char)
+                  break
+                else
+                  whitespace = false
+                end
               end
             end
           when '#'
