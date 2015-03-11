@@ -158,22 +158,16 @@ describe "Enumerable" do
   end
 
   describe "each_slice" do
-    it "returns empty for empty enumerable" do
-      array = [] of Int32
-      array.each_slice(1, &.itself).should eq(array)
-      array.each_slice(3, &.itself).should eq(array)
-    end
-
     it "returns partial slices" do
-      array = [1, 2, 3]
-      array.each_slice(2, &.itself).should eq([[1, 2], [3]])
-      array.each_slice(4, &.itself).should eq([[1, 2, 3]])
+      array = [] of Array(Int32)
+      [1, 2, 3].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3]])
     end
 
     it "returns full slices" do
-      array = [1, 2, 2, 3]
-      array.each_slice(1, &.itself).should eq([[1], [2], [2], [3]])
-      array.each_slice(2, &.itself).should eq([[1, 2], [2, 3]])
+      array = [] of Array(Int32)
+      [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3, 4]])
     end
   end
 
