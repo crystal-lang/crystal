@@ -49,7 +49,6 @@ class Crystal::Call
     check_not_lib_out_args
 
     if args.any? &.type?.try &.no_return?
-      set_type mod.no_return
       return
     end
 

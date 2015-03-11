@@ -683,7 +683,7 @@ module Crystal
     end
 
     def visit(node : External)
-      node.fun_def.try &.accept self
+      node.fun_def?.try &.accept self
       false
     end
 

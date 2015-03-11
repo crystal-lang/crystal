@@ -754,4 +754,25 @@ describe "Block inference" do
       a
       )) { int32 }
   end
+
+  it "types recursive hash assignment" do
+    assert_type(%(
+      require "prelude"
+
+      class Hash
+        def map
+          ary = Array(typeof(yield first_key, first_value)).new(@length)
+          each do |k, v|
+            ary.push yield k, v
+          end
+          ary
+        end
+      end
+
+      hash = {} of Int32 => Int32
+      z = hash.map {|key| key + 1 }
+      hash[1] = z.length
+      z
+      )) { array_of int32 }
+  end
 end

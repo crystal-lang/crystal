@@ -660,7 +660,10 @@ module Crystal
       if to_vars
         from_vars.each do |name, block_var|
           unless ignored.try &.find { |arg| arg.name == name }
-            to_vars[name]?.try &.bind_to(block_var)
+            to_var = to_vars[name]?
+            if to_var && !to_var.same?(block_var)
+              to_var.try &.bind_to(block_var)
+            end
           end
         end
       end
