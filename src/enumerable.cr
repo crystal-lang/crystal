@@ -50,8 +50,8 @@ module Enumerable(T)
       slice << elem
       if slice.size == count
         yield slice
-        ary << slice.clone
-        slice.clear
+        ary << slice
+        slice = Array(T).new(count)
       end
     end
 
