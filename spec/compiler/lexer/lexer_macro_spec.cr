@@ -425,4 +425,25 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
   end
+
+  it "lexes macro var inside string" do
+    lexer = Lexer.new(%(" %var " end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%(" ))
+    token.macro_state.nest.should eq(0)
+    token.macro_state.delimiter_state.not_nil!.nest.should eq('"')
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_VAR)
+    token.value.should eq("var")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%( " ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
 end

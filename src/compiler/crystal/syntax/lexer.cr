@@ -1837,17 +1837,15 @@ module Crystal
           when '%'
             if delimiter_state
               whitespace = false
+              break if ident_start?(peek_next_char)
             else
               case char = peek_next_char
               when '(', '[', '<', '{'
                 next_char
                 delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
               else
-                if ident_start?(char)
-                  break
-                else
-                  whitespace = false
-                end
+                whitespace = false
+                break if ident_start?(char)
               end
             end
           when '#'
