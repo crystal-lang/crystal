@@ -904,4 +904,44 @@ describe "Code gen: macro" do
       a + z + w
       )).to_i.should eq(26)
   end
+
+  it "uses indexed macro variable" do
+    run(%(
+      macro foo(*elems)
+        {% for elem, i in elems %}
+          %var{i} = {{elem}}
+        {% end %}
+
+        %total = 0
+        {% for elem, i in elems %}
+          %total += %var{i}
+        {% end %}
+        %total
+      end
+
+      z = 0
+      z += foo 4, 5, 6
+      z += foo 40, 50, 60
+      z
+      )).to_i.should eq(4 + 5 + 6 + 40 + 50 + 60)
+  end
+
+  it "uses indexed macro variable with many keys" do
+    run(%(
+      macro foo(*elems)
+        {% for elem, i in elems %}
+          %var{elem, i} = {{elem}}
+        {% end %}
+
+        %total = 0
+        {% for elem, i in elems %}
+          %total += %var{elem, i}
+        {% end %}
+        %total
+      end
+
+      z = foo 4, 5, 6
+      z
+      )).to_i.should eq(4 + 5 + 6)
+  end
 end

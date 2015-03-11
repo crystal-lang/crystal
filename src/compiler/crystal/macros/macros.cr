@@ -200,10 +200,11 @@ module Crystal
         new(expander, mod, scope, a_macro.location, vars, call.block)
       end
 
+      record MacroVarKey, name, exps
+
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
         @str = StringIO.new(512)
         @last = Nop.new
-        @macro_vars = Hash(String, String).new
       end
 
       def define_var(name, value)
@@ -360,7 +361,16 @@ module Crystal
       end
 
       def visit(node : MacroVar)
-        macro_var = @macro_vars[node.name] ||= @mod.new_temp_var_name
+        if exps = node.exps
+          exps = exps.map { |exp| accept exp }
+        else
+          exps = nil
+        end
+
+        key = MacroVarKey.new(node.name, exps)
+
+        macro_vars = @macro_vars ||= Hash(MacroVarKey, String).new
+        macro_var = macro_vars[key] ||= @mod.new_temp_var_name
         @str << macro_var
         false
       end
@@ -415,10 +425,7 @@ module Crystal
             receiver = @last
           end
 
-          args = node.args.map do |arg|
-            arg.accept self
-            @last
-          end
+          args = node.args.map { |arg| accept arg }
 
           begin
             @last = receiver.interpret(node.name, args, node.block, self)

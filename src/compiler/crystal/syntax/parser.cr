@@ -2053,7 +2053,13 @@ module Crystal
             return Expressions.from pieces
           end
         when :MACRO_VAR
-          pieces << MacroVar.new(@token.value.to_s)
+          macro_var_name = @token.value.to_s
+          if current_char == '{'
+            macro_var_exps = parse_macro_var_exps
+          else
+            macro_var_exps = nil
+          end
+          pieces << MacroVar.new(macro_var_name, macro_var_exps)
         when :MACRO_END
           break
         when :EOF
@@ -2066,6 +2072,29 @@ module Crystal
       next_token
 
       Expressions.from pieces
+    end
+
+    def parse_macro_var_exps
+      next_token # '{'
+      next_token
+
+      exps = [] of ASTNode
+      while true
+        exps << parse_expression_inside_macro
+        skip_space
+        case @token.type
+        when :","
+          next_token_skip_space
+          if @token.type == :"}"
+            break
+          end
+        when :"}"
+          break
+        else
+          unexpected_token @token, "expecting ',' or '}'"
+        end
+      end
+      exps
     end
 
     def check_macro_skip_whitespace

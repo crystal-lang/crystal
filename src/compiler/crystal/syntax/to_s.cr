@@ -680,6 +680,14 @@ module Crystal
     def visit(node : MacroVar)
       @str << '%'
       @str << node.name
+      if exps = node.exps
+        @str << '{'
+        exps.each_with_index do |exp, i|
+          @str << ", " if i > 0
+          exp.accept self
+        end
+        @str << '}'
+      end
       false
     end
 

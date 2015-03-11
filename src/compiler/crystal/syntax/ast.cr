@@ -1936,15 +1936,20 @@ module Crystal
   # A uniquely named variable inside a macro (like %var)
   class MacroVar < ASTNode
     property name
+    property exps
 
-    def initialize(@name : String)
+    def initialize(@name : String, @exps = nil)
+    end
+
+    def accept_children(visitor)
+      @exps.try &.each &.accept visitor
     end
 
     def clone_without_location
-      MacroVar.new(@name)
+      MacroVar.new(@name, @exps.clone)
     end
 
-    def_equals_and_hash @name
+    def_equals_and_hash @name, @exps
   end
 
   # An underscore matches against any type
