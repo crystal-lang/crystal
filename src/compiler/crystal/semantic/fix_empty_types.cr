@@ -54,6 +54,12 @@ module Crystal
     end
 
     def end_visit(node : Call)
+      # If the block doesn't have a type, it's a no-return.
+      block = node.block
+      if block && !block.type?
+        block.type = @mod.no_return
+      end
+
       node.target_defs.try &.each do |target_def|
         unless @fixed.includes?(target_def.object_id)
           @fixed.add(target_def.object_id)

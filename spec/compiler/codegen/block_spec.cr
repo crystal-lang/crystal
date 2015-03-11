@@ -1173,4 +1173,21 @@ describe "Code gen: block" do
       a
       )).to_i.should eq(1)
   end
+
+  it "doesn't crash on untyped array to_s" do
+    run(%(
+      require "prelude"
+
+      class Bar(T)
+      end
+
+      class Foo(K)
+        def foo
+          Array(typeof(yield @foo.not_nil!)).new
+        end
+      end
+
+      Foo(Int32).new.foo { |k| k + 1 }.to_s
+      )).to_string.should eq("[]")
+  end
 end

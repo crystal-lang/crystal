@@ -196,11 +196,6 @@ module Crystal
         end
       end
 
-      # If the block doesn't have a type, it's a no-return.
-      if block && !block.type?
-        block.type = @program.no_return
-      end
-
       # Check if the block has its type freezed and it doesn't match the current type
       if block && (freeze_type = block.body.freeze_type) && (block_body_type = block.body.type?)
         unless freeze_type.is_restriction_of_all?(block_body_type)

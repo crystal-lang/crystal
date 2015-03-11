@@ -348,7 +348,7 @@ module Crystal
       if block = node.block
         # Check if this is foo &.bar
         first_block_arg = block.args.first?
-        if first_block_arg
+        if first_block_arg && block.args.length == 1
           block_body = block.body
           if block_body.is_a?(Call)
             block_obj = block_body.obj

@@ -25,4 +25,5 @@ describe "ASTNode#to_s" do
   expect_to_s %(/\#{1 / 2}/)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
+  expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
 end
