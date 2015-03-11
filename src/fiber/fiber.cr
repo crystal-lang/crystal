@@ -9,8 +9,6 @@ end
 class Fiber
   STACK_SIZE = 8 * 1024 * 1024
 
-  @@main_stackbottom = LibGC.stackbottom
-  @@main_stacktop = get_stack_top
   @@first_fiber = nil
   @@last_fiber = nil
   @@stack_pool = [] of Void*
@@ -40,7 +38,7 @@ class Fiber
     @proc = ->{}
     @stack = Pointer(Void).null
     @stack_top = get_stack_top
-    @stack_bottom = @@main_stackbottom
+    @stack_bottom = LibGC.stackbottom
     LibPcl.co_set_data(@cr, self as Void*)
 
     @@first_fiber = @@last_fiber = self
@@ -73,25 +71,10 @@ class Fiber
 
   @[NoInline]
   def resume
-    if fiber = Fiber.current
-      fiber.stack_top = get_stack_top
-    else
-      @@main_stacktop = get_stack_top
-    end
+    Fiber.current.stack_top = get_stack_top
 
-    prev_stackbottom = LibGC.stackbottom
     LibGC.stackbottom = @stack_bottom
     LibPcl.co_call(@cr)
-    LibGC.stackbottom = prev_stackbottom
-  end
-
-  def yield
-    @stack_top = get_stack_top
-    LibPcl.co_resume
-  end
-
-  def self.yield
-    current.not_nil!.yield
   end
 
   def self.current
@@ -113,8 +96,6 @@ class Fiber
       LibGC.push_all fiber.stack_top, fiber.stack_bottom
       fiber = fiber.next_fiber
     end
-
-    LibGC.push_all @@main_stacktop, @@main_stackbottom
   end
 
   LibPcl.co_thread_init
