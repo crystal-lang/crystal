@@ -157,6 +157,20 @@ describe "Enumerable" do
     end
   end
 
+  describe "each_slice" do
+    it "returns partial slices" do
+      array = [] of Array(Int32)
+      [1, 2, 3].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3]])
+    end
+
+    it "returns full slices" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3, 4]])
+    end
+  end
+
   it "indexes by" do
     ["foo", "hello", "goodbye", "something"].index_by(&.length).should eq({
         3 => "foo",
