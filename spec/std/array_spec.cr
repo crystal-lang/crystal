@@ -79,6 +79,36 @@ describe "Array" do
       [1, 2, 3, 4, 5, 6][1, 3].should eq([2, 3, 4])
     end
 
+    it "gets with start and count exceeding length" do
+      [1, 2, 3][1, 3].should eq([2, 3])
+    end
+
+    it "gets with negative start " do
+      [1, 2, 3, 4, 5, 6][-4, 2].should eq([3, 4])
+    end
+
+    it "raises on index out of bounds" do
+      expect_raises IndexOutOfBounds do
+        [1, 2, 3][-4, 2]
+      end
+    end
+
+    it "raises on negative count" do
+      expect_raises ArgumentError, /negative count: -1/ do
+        [1, 2, 3][1, -1]
+      end
+    end
+
+    it "gets 0, 0 on empty array" do
+      a = [] of Int32
+      a[0, 0].should eq(a)
+    end
+
+    it "gets 0 ... 0 on empty array" do
+      a = [] of Int32
+      a[0 .. 0].should eq(a)
+    end
+
     it "gets nilable" do
       [1, 2, 3][2]?.should eq(3)
       [1, 2, 3][3]?.should be_nil

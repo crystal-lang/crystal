@@ -176,8 +176,23 @@ class Array(T)
   end
 
   def [](start : Int, count : Int)
-    count = Math.min(count, length)
-    Array(T).new(count) { |i| @buffer[start + i] }
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
+    if start == 0 && length == 0
+      return Array(T).new
+    end
+
+    start = check_index_out_of_bounds start
+    count = Math.min(count, length - start)
+
+    if count == 0
+      return Array(T).new
+    end
+
+    Array(T).build(count) do |buffer|
+      buffer.copy_from(@buffer + start, count)
+      count
+    end
   end
 
   def at(index : Int)
