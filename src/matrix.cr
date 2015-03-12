@@ -32,8 +32,8 @@ class Matrix(T)
 
   # Creates a matrix with the given number of rows and columns. It yields the
   # linear, row and column indexes in that order.
-  def self.new(rows : Int, columns : Int, &block : Int32, Int32, Int32 -> _)
-    matrix = Matrix(typeof(yield 0, 0, 0)).new(rows, columns)
+  def self.new(rows : Int, columns : Int, &block : Int32, Int32, Int32 -> T)
+    matrix = Matrix(T).new(rows, columns)
     r, c = 0, 0
     matrix.size.times do |i|
       matrix[i] = yield i, r, c
