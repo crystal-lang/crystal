@@ -145,6 +145,10 @@ module Crystal
         next_type = type.types[name]?
         if !next_type && i != 0
           next_type = type.lookup_type_in_parents(names[i .. -1])
+          if next_type
+            type = next_type
+            break
+          end
         end
         type = next_type
         break unless type

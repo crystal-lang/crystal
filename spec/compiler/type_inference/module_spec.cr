@@ -693,4 +693,20 @@ describe "Type inference: module" do
       p.bar(p)
       )) { int32 }
   end
+
+  it "finds inner class from inherited one (#476)" do
+    assert_type(%(
+      class A
+        class B
+          class C
+          end
+        end
+      end
+
+      class D < A
+      end
+
+      D::B::C
+      )) { types["A"].types["B"].types["C"].metaclass }
+  end
 end
