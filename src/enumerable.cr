@@ -42,8 +42,8 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
-  def each_with_index
-    i = 0
+  def each_with_index(offset = 0)
+    i = offset
     each do |elem|
       yield elem, i
       i += 1
