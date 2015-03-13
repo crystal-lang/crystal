@@ -81,6 +81,18 @@ describe "TCPSocket" do
       end
     end
   end
+
+  it "fails when connection is refused" do
+    expect_raises(Errno, "Error connecting to 'localhost:12345': Connection refused") do
+      TCPSocket.new("localhost", 12345)
+    end
+  end
+
+  it "fails when host doesn't exist" do
+    expect_raises(SocketError, /^getaddrinfo: .+ not known$/) do
+      TCPSocket.new("localhostttttt", 12345)
+    end
+  end
 end
 
 describe "UDPSocket" do
