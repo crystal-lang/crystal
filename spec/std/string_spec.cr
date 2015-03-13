@@ -283,6 +283,10 @@ describe "String" do
     assert { "foo".byte_index('o'.ord).should eq(1) }
     assert { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
     assert { "foo".byte_index('a'.ord).should be_nil }
+
+    it "gets byte index of string" do
+      "hello world".byte_index("lo").should eq(3)
+    end
   end
 
   describe "includes?" do

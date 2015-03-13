@@ -505,14 +505,14 @@ class String
       while match = pattern.match(self, byte_offset)
         index = match.byte_begin(0)
 
-        buffer << byte_slice(byte_offset, index - byte_offset)
+        buffer.write unsafe_byte_slice(byte_offset, index - byte_offset)
         str = match[0]
         buffer << yield str, match
         byte_offset = index + str.bytesize
       end
 
       if byte_offset < bytesize
-        buffer << byte_slice(byte_offset)
+        buffer.write unsafe_byte_slice(byte_offset)
       end
     end
   end
@@ -526,16 +526,15 @@ class String
   end
 
   def gsub(string : String, &block)
-    offset = 0
-    string_length = string.length
+    byte_offset = 0
     String.build(bytesize) do |buffer|
-      while index = self.index(string, offset)
-        buffer << self[offset, index - offset]
+      while index = self.byte_index(string, byte_offset)
+        buffer.write unsafe_byte_slice(byte_offset, index - byte_offset)
         buffer << yield string
-        offset = index + string_length
+        byte_offset = index + string.bytesize
       end
-      if offset < length
-        buffer << self[offset .. -1]
+      if byte_offset < bytesize
+        buffer.write unsafe_byte_slice(byte_offset)
       end
     end
   end
@@ -813,6 +812,21 @@ class String
         return i
       end
     end
+    nil
+  end
+
+  def byte_index(string : String, offset = 0)
+    offset += bytesize if offset < 0
+    return nil if offset < 0
+
+    end_pos = bytesize - string.bytesize
+
+    offset.upto(end_pos) do |pos|
+      if (cstr + pos).memcmp(string.cstr, string.bytesize) == 0
+        return pos
+      end
+    end
+
     nil
   end
 
@@ -1368,6 +1382,15 @@ class String
   def to_unsafe
     cstr
   end
+
+  private def unsafe_byte_slice(byte_offset, count)
+    Slice.new(cstr + byte_offset, count)
+  end
+
+  private def unsafe_byte_slice(byte_offset)
+    Slice.new(cstr + byte_offset, bytesize - byte_offset)
+  end
+
 end
 
 require "string/formatter"
