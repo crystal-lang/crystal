@@ -467,6 +467,24 @@ describe "String" do
     "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
   end
 
+  it "gsubs with string and string" do
+    "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
+  end
+
+  it "gsubs with string and string (utf-8)" do
+    "fここ bここr bここここz".gsub("ここ", "そこ").should eq("fそこ bそこr bそこそこz")
+  end
+
+  it "gsubs with string and block" do
+    i = 0
+    result = "foo boo".gsub("oo") do |value|
+      value.should eq("oo")
+      i += 1
+      i == 1 ? "a" : "e"
+    end
+    result.should eq("fa be")
+  end
+
   it "dumps" do
     "a".dump.should eq("\"a\"")
     "\\".dump.should eq("\"\\\\\"")

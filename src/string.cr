@@ -441,7 +441,7 @@ class String
     if includes?(char)
       gsub { |my_char| char == my_char ? replacement : nil }
     else
-      self
+        self
     end
   end
 
@@ -474,6 +474,25 @@ class String
 
   def gsub(pattern : Regex, replacement : String)
     gsub(pattern) { replacement }
+  end
+
+  def gsub(string : String, replacement : String)
+    gsub(string) { replacement }
+  end
+
+  def gsub(string : String, &block)
+    offset = 0
+    string_length = string.length
+    String.build(bytesize) do |buffer|
+      while index = self.index(string, offset)
+        buffer << self[offset, index - offset]
+        buffer << yield string
+        offset = index + string_length
+      end
+      if offset < length
+        buffer << self[offset .. -1]
+      end
+    end
   end
 
   # Yields each char in this string to the block,
