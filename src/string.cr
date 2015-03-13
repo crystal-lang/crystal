@@ -10,7 +10,10 @@ lib LibC
 end
 
 class String
+  # :nodoc:
   TYPE_ID = 1
+
+  # :nodoc:
   HEADER_SIZE = sizeof({Int32, Int32, Int32})
 
   include Comparable(self)
@@ -110,14 +113,43 @@ class String
     builder.to_s
   end
 
+  # Returns the number of bytes in this string.
+  #
+  # ```
+  # "hello".bytesize         #=> 5
+  # "你好".bytesize          #=> 6
+  # ```
   def bytesize
     @bytesize
   end
 
+  # Returns the result of interpreting leading characters of this string
+  # as a decimal number. Extraneous characters past the end of a valid number are ignored.
+  # If there is not a valid number at the start of this string, 0 is returned.
+  # This method never raises an exception.
+  #
+  # ```
+  # "12345".to_i             #=> 12345
+  # "99 red balloons".to_i   #=> 99
+  # "0a".to_i                #=> 0
+  # "hello".to_i             #=> 0
+  # ```
   def to_i
     LibC.atoi cstr
   end
 
+  # Returns the result of interpreting leading characters in this string as an integer base *base*
+  # (between 2 and 36). Extraneous characters past the end of a valid number are ignored.
+  # If there is not a valid number at the start of str, 0 is returned.
+  # This method never raises an exception when base is valid.
+  #
+  # ```
+  # "0a".to_i(16)            #=> 10
+  # "1100101".to_i(2)        #=> 101
+  # "1100101".to_i(8)        #=> 294977
+  # "1100101".to_i(10)       #=> 1100101
+  # "1100101".to_i(16)       #=> 17826049
+  # ```
   def to_i(base)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
@@ -156,22 +188,35 @@ class String
     LibC.strtoull(cstr, nil, 10)
   end
 
+  # Returns the result of interpreting leading characters in this string as a floating point number (`Float64`).
+  # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
+  # 0.0 is returned. This method never raises an exception.
+  #
+  # ```
+  # "123.45e1".to_f        #=> 1234.5
+  # "45.67 degrees".to_f   #=> 45.67
+  # "thx1138".to_f         #=> 0.0
+  # ```
   def to_f
     to_f64
   end
 
+  # Returns the result of interpreting leading characters in this string as a floating point number (`Float32`).
+  # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
+  # 0.0 is returned. This method never raises an exception.
+  #
+  # See `#to_f`.
   def to_f32
     LibC.strtof cstr, nil
   end
 
+  # Same as `#to_f`.
   def to_f64
     LibC.atof cstr
   end
 
   def [](index : Int)
-    if single_byte_optimizable?
-      return byte_at(index).chr
-    end
+    return byte_at(index).chr if single_byte_optimizable?
 
     index += length if index < 0
 
@@ -1233,6 +1278,9 @@ class String
     self % [other]
   end
 
+  # Return a hash based on this string’s length and content.
+  #
+  # See also `Object#hash`.
   def hash
     h = 0
     each_byte do |c|
@@ -1241,10 +1289,22 @@ class String
     h
   end
 
+  # Returns this string's bytes as an `Array(UInt8)`.
+  #
+  # ```
+  # "hello".bytes          #=> [104, 101, 108, 108, 111]
+  # "你好".bytes           #=> [228, 189, 160, 229, 165, 189]
+  # ```
   def bytes
     Array.new(bytesize) { |i| cstr[i] }
   end
 
+  # Returns the number of unicode codepoints in this string.
+  #
+  # ```
+  # "hello".length         #=> 5
+  # "你好".length          #=> 2
+  # ```
   def length
     if @length > 0 || @bytesize == 0
       return @length
