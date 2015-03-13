@@ -93,4 +93,15 @@ describe "Type inference: abstract def" do
       p.value.foo
       ), "abstract def Bar#foo must be implemented by Baz"
   end
+
+  it "says wrong number of arguments even if method is abstract" do
+    assert_error %(
+      class Foo
+        abstract def foo
+      end
+
+      Foo.new.foo(1)
+      ),
+      "wrong number of arguments"
+  end
 end

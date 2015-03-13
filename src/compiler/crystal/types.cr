@@ -518,7 +518,12 @@ module Crystal
     end
   end
 
-  record DefWithMetadata, min_length, max_length, yields, :def
+  record DefWithMetadata, min_length, max_length, yields, :def do
+    def self.new(a_def : Def)
+      min_length, max_length = a_def.min_max_args_lengths
+      new min_length, max_length, !!a_def.yields, a_def
+    end
+  end
 
   module DefContainer
     include MatchesLookup
@@ -536,8 +541,7 @@ module Crystal
         a_def.visibility = :protected
       end
 
-      min_length, max_length = a_def.min_max_args_lengths
-      item = DefWithMetadata.new(min_length, max_length, !!a_def.yields, a_def)
+      item = DefWithMetadata.new(a_def)
 
       defs = (@defs ||= {} of String => Array(DefWithMetadata))
       list = defs[a_def.name] ||= [] of DefWithMetadata

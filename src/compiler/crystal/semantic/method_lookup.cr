@@ -14,27 +14,23 @@ module Crystal
   module MatchesLookup
     def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
       if defs = self.defs.try &.[signature.name]?
-        args_length = signature.arg_types.length
-        yields = !!signature.block
         context = MatchContext.new(owner, type_lookup)
 
         defs.each do |item|
           next if item.def.abstract
 
-          if (item.min_length <= args_length <= item.max_length) && item.yields == yields
-            match = MatchesLookup.match_def(signature, item, context)
+          match = MatchesLookup.match_def(signature, item, context)
 
-            if match
-              matches_array ||= [] of Match
-              matches_array << match
+          if match
+            matches_array ||= [] of Match
+            matches_array << match
 
-              # If the argument types are compatible with the match's argument types,
-              # we are done. We don't just compare types with ==, there is a special case:
-              # a function type with return T can be transpass a restriction of a function
-              # with with the same arguments but which returns Void.
-              if signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
-                return Matches.new(matches_array, true, owner)
-              end
+            # If the argument types are compatible with the match's argument types,
+            # we are done. We don't just compare types with ==, there is a special case:
+            # a function type with return T can be transpass a restriction of a function
+            # with with the same arguments but which returns Void.
+            if signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+              return Matches.new(matches_array, true, owner)
             end
           end
         end
@@ -82,6 +78,11 @@ module Crystal
     end
 
     def self.match_def(signature, def_metadata, context)
+      unless (def_metadata.min_length <= signature.arg_types.length <= def_metadata.max_length) &&
+        (def_metadata.yields == !!signature.block)
+        return nil
+      end
+
       a_def = def_metadata.def
       arg_types = signature.arg_types
       named_args = signature.named_args
