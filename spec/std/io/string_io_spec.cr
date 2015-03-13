@@ -137,4 +137,12 @@ describe "StringIO" do
     end
     counter.should eq(3)
   end
+
+  it "writes an array of btyes" do
+    str = String.build do |io|
+      bytes = ['a'.ord.to_u8, 'b'.ord.to_u8]
+      io.write bytes
+    end
+    str.should eq("ab")
+  end
 end

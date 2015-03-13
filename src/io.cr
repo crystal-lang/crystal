@@ -289,7 +289,7 @@ module IO
   end
 
   def write(array : Array(UInt8))
-    write array.buffer, array.length
+    write Slice.new(array.buffer, array.length)
   end
 
   def write_byte(byte : UInt8)
