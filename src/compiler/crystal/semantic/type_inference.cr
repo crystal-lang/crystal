@@ -56,6 +56,7 @@ module Crystal
 
     @unreachable = false
     @is_initialize = false
+    @has_special_vars_defined = false
 
     def initialize(@mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
@@ -68,7 +69,6 @@ module Crystal
       @is_initialize = !!(typed_def && typed_def.name == "initialize")
       @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
-      @has_special_vars_defined = false
       @in_type_args = 0
       @attributes  = nil
       @lib_def_pass = 0

@@ -10,7 +10,7 @@ module Crystal
 
       if instance_type.is_a?(VirtualType)
         matches = define_new_recursive(instance_type.base_type, arg_types)
-        return Matches.new(matches, scope)
+        return Matches.new(matches, true, scope)
       end
 
       # First check if this type has any initialize
