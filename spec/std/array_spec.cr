@@ -121,6 +121,11 @@ describe "Array" do
     it "doesn't exceed limits" do
       [1][0..3].should eq([1])
     end
+
+    it "returns empty if at end" do
+      [1][1, 0].should eq([] of Int32)
+      [1][1, 10].should eq([] of Int32)
+    end
   end
 
   describe "[]=" do

@@ -178,7 +178,7 @@ class Array(T)
   def [](start : Int, count : Int)
     raise ArgumentError.new "negative count: #{count}" if count < 0
 
-    if start == 0 && length == 0
+    if (start == 0 && length == 0) || (start == length)
       return Array(T).new
     end
 
