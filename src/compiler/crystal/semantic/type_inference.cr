@@ -1906,17 +1906,17 @@ module Crystal
       when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
         node.value.to_i
       else
-        node.raise "enum constant value must be an integer, not #{node.kind}"
+        node.raise "constant value must be an integer, not #{node.kind}"
       end
     end
 
     def interpret_enum_value(node : Call)
       obj = node.obj
       unless obj
-        node.raise "invalid enum constant value"
+        node.raise "invalid constant value"
       end
       if node.args.length != 1
-        node.raise "invalid enum constant value"
+        node.raise "invalid constant value"
       end
 
       left = interpret_enum_value(obj)
@@ -1933,7 +1933,7 @@ module Crystal
       when ">>" then left >> right
       when "%"  then left % right
       else
-        node.raise "invalid enum constant value"
+        node.raise "invalid constant value"
       end
     end
 
@@ -1943,12 +1943,12 @@ module Crystal
       when Const
         interpret_enum_value(type.value)
       else
-        node.raise "invalid enum constant value"
+        node.raise "invalid constant value"
       end
     end
 
     def interpret_enum_value(node : ASTNode)
-      node.raise "invalid enum constant value"
+      node.raise "invalid constant value"
     end
 
     def visit(node : ExternalVar)
@@ -1979,6 +1979,7 @@ module Crystal
 
           type.value.accept type_visitor
           type.vars = const_def.vars
+          type.visitor = self
         end
         node.target_const = type
         node.bind_to type.value

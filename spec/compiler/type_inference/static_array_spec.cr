@@ -51,4 +51,36 @@ describe "Type inference: static array" do
       ),
       "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
   end
+
+  it "types static array new with size being a constant" do
+    assert_type(%(
+      SIZE = 3
+      x = StaticArray(Char, SIZE).new
+      x
+      )) { static_array_of(char, 3) }
+  end
+
+  it "types static array new with size being a computed constant" do
+    assert_type(%(
+      OTHER = 10
+      SIZE = OTHER * 20
+      x = StaticArray(Char, SIZE).new
+      x
+      )) { static_array_of(char, 200) }
+  end
+
+  it "types staic array new with size being a computed constant, and use N (bug)" do
+    assert_type(%(
+      struct StaticArray(T, N)
+        def length
+          N
+        end
+      end
+
+      SIZE = 1 * 2
+      x :: UInt8[SIZE]
+      x.length
+      a = 1
+      )) { int32 }
+  end
 end

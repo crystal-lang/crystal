@@ -301,14 +301,32 @@ module Crystal
           node_type = node.type?
           return unless node_type
 
-          unless node_type.allowed_in_generics?
-            if node_type.is_a?(UnionType)
-              node_type = node_type.union_types.find { |t| !t.allowed_in_generics? }
+          # If the Path points to a constant, we solve it and use it if it's a number literal
+          if node.is_a?(Path) && (target_const = node.target_const)
+            value = target_const.value
+            if value.is_a?(NumberLiteral)
+              type_var = value
+            else
+              # Try to interpret the value
+              visitor = target_const.visitor
+              if visitor
+                numeric_value = visitor.interpret_enum_value(value)
+                type_var = NumberLiteral.new(numeric_value, :i32)
+                type_var.set_type(node_type.program.int32)
+              else
+                node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
+              end
             end
-            node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
-          end
+          else
+            unless node_type.allowed_in_generics?
+              if node_type.is_a?(UnionType)
+                node_type = node_type.union_types.find { |t| !t.allowed_in_generics? }
+              end
+              node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
+            end
 
-          type_var = node_type.virtual_type
+            type_var = node_type.virtual_type
+          end
         end
 
         type_var as TypeVar

@@ -2438,6 +2438,7 @@ module Crystal
     property used
     property? visited
     property? initialized
+    property visitor
 
     def initialize(program, container, name, @value, @scope_types = [] of Type, @scope = nil)
       super(program, container, name)
