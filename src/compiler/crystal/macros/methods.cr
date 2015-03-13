@@ -4,10 +4,6 @@ module Crystal
       to_s
     end
 
-    def to_macro_var
-      self
-    end
-
     def truthy?
       true
     end
@@ -273,8 +269,7 @@ module Crystal
           block_arg = block.args.first?
 
           BoolLiteral.new(elements.any? do |elem|
-            block_value = interpreter.accept elem
-            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.define_var(block_arg.name, elem) if block_arg
             interpreter.accept(block.body).truthy?
           end)
         end
@@ -285,8 +280,7 @@ module Crystal
           block_arg = block.args.first?
 
           BoolLiteral.new(elements.all? do |elem|
-            block_value = interpreter.accept elem.to_macro_var
-            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.define_var(block_arg.name, elem) if block_arg
             interpreter.accept(block.body).truthy?
           end)
         end
@@ -303,8 +297,7 @@ module Crystal
           block_arg = block.args.first?
 
           found = elements.find do |elem|
-            block_value = interpreter.accept elem.to_macro_var
-            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.define_var(block_arg.name, elem) if block_arg
             interpreter.accept(block.body).truthy?
           end
           found ? found : NilLiteral.new
@@ -326,8 +319,7 @@ module Crystal
           block_arg = block.args.first?
 
           ArrayLiteral.map(elements) do |elem|
-            block_value = interpreter.accept elem.to_macro_var
-            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.define_var(block_arg.name, elem) if block_arg
             interpreter.accept block.body
           end
         end
@@ -338,8 +330,7 @@ module Crystal
           block_arg = block.args.first?
 
           ArrayLiteral.new(elements.select do |elem|
-            block_arg_value = interpreter.accept elem.to_macro_var
-            interpreter.define_var(block_arg.name, block_arg_value) if block_arg
+            interpreter.define_var(block_arg.name, elem) if block_arg
             interpreter.accept(block.body).truthy?
           end)
         end
@@ -696,10 +687,6 @@ module Crystal
       else
         to_s
       end
-    end
-
-    def to_macro_var
-      MacroId.new(to_macro_id)
     end
   end
 

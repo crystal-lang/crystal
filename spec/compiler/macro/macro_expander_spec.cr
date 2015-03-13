@@ -405,8 +405,12 @@ describe "MacroExpander" do
       assert_macro "", %({{[1, 2, 3].map { |e| e == 2 }}}), [] of ASTNode, "[false, true, false]"
     end
 
+    it "executes map with constants" do
+      assert_macro "x", %({{x.map { |e| e.id }}}), [ArrayLiteral.new([Path.new("Foo"), Path.new("Bar")] of ASTNode)] of ASTNode, "[Foo, Bar]"
+    end
+
     it "executes map with arg" do
-      assert_macro "x", %({{x.map { |e| e }}}), [ArrayLiteral.new([Call.new(nil, "hello")] of ASTNode)] of ASTNode, "[hello]"
+      assert_macro "x", %({{x.map { |e| e.id }}}), [ArrayLiteral.new([Call.new(nil, "hello")] of ASTNode)] of ASTNode, "[hello]"
     end
 
     it "executes select" do
