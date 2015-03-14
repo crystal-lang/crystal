@@ -424,11 +424,19 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Path, io)
-    match = lookup_type(node)
-    if match
-      type_to_html match, io, node.to_s
-    else
-      io << node
+    # We don't want "::" prefixed in from of paths in the docs
+    old_global = node.global
+    node.global = false
+
+    begin
+      match = lookup_type(node)
+      if match
+        type_to_html match, io, node.to_s
+      else
+        io << node
+      end
+    ensure
+      node.global = old_global
     end
   end
 

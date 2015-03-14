@@ -5,6 +5,7 @@
 * Added `BigInt#to_s(base)`, `BigInt::cast` and bit operators (thanks @Exilor)
 * The following types are now disallowed in generics (for now): Object, Value, Reference, Number, Int and Float.
 * Added macro vars: `%var` and `%var{x, y}` create uniqely named variables inside macros.
+* Allow specifying a def's return type. The compiler checks the return type only for that def for now (not for subclasses overrding the method). The return type appears in the documentation.
 * Many bug fixes.
 
 ## 0.6.1 (2015-03-04)

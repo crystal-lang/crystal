@@ -767,10 +767,6 @@ class Crystal::Call
     true
   end
 
-  def full_name(owner, def_name = name)
-    owner.is_a?(Program) ? name : "#{owner}##{def_name}"
-  end
-
   def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types, block_arg_type)
     named_args = @named_args
 

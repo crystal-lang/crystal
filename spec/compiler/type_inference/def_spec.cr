@@ -243,4 +243,54 @@ describe "Type inference: def" do
       ),
       "def receiver can only be a Type or self"
   end
+
+  it "errors if return type doesn't match" do
+    assert_error %(
+      def foo : Int32
+        'a'
+      end
+
+      foo
+      ),
+      "expected 'foo' to return Int32, not Char"
+  end
+
+  it "errors if return type doesn't match on instance method" do
+    assert_error %(
+      class Foo
+        def foo : Int32
+          'a'
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "expected 'Foo#foo' to return Int32, not Char"
+  end
+
+  it "errors if return type doesn't match on class method" do
+    assert_error %(
+      class Foo
+        def self.foo : Int32
+          'a'
+        end
+      end
+
+      Foo.foo
+      ),
+      "expected 'Foo::foo' to return Int32, not Char"
+  end
+
+  it "is ok if returns Int32? with explicit return" do
+    assert_type(%(
+      def foo : Int32?
+        if 1 == 2
+          return nil
+        end
+        1
+      end
+
+      foo
+      )) { nilable int32 }
+  end
 end

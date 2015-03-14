@@ -63,23 +63,32 @@ class Crystal::Doc::Method
   end
 
   def args_to_s(io)
-    return if @def.args.empty? && !@def.block_arg && !@def.yields
+    return if @def.args.empty? && !@def.block_arg && !@def.yields && !@def.return_type
 
-    io << '('
-    @def.args.each_with_index do |arg, i|
-      io << ", " if i > 0
-      io << '*' if @def.splat_index == i
-      io << arg
+    unless @def.args.empty?
+      io << '('
+      @def.args.each_with_index do |arg, i|
+        io << ", " if i > 0
+        io << '*' if @def.splat_index == i
+        io << arg
+      end
+      if @def.block_arg
+        io << ", " unless @def.args.empty?
+        io << '&'
+        io << @def.block_arg
+      elsif yields = @def.yields
+        io << ", " unless @def.args.empty?
+        io << "&block"
+      end
+      io << ')'
     end
-    if @def.block_arg
-      io << ", " unless @def.args.empty?
-      io << '&'
-      io << @def.block_arg
-    elsif yields = @def.yields
-      io << ", " unless @def.args.empty?
-      io << "&block"
+
+    if return_type = @def.return_type
+      io << " : "
+      return_type.to_s(io)
     end
-    io << ')'
+
+    io
   end
 
   def args_to_html
@@ -87,23 +96,32 @@ class Crystal::Doc::Method
   end
 
   def args_to_html(io)
-    return if @def.args.empty? && !@def.block_arg && !@def.yields
+    return if @def.args.empty? && !@def.block_arg && !@def.yields && !@def.return_type
 
-    io << '('
-    @def.args.each_with_index do |arg, i|
-      io << ", " if i > 0
-      io << '*' if @def.splat_index == i
-      arg_to_html arg, io
+    unless @def.args.empty?
+      io << '('
+      @def.args.each_with_index do |arg, i|
+        io << ", " if i > 0
+        io << '*' if @def.splat_index == i
+        arg_to_html arg, io
+      end
+      if block_arg = @def.block_arg
+        io << ", " unless @def.args.empty?
+        io << '&'
+        arg_to_html block_arg, io
+      elsif @def.yields
+        io << ", " unless @def.args.empty?
+        io << "&block"
+      end
+      io << ')'
     end
-    if block_arg = @def.block_arg
-      io << ", " unless @def.args.empty?
-      io << '&'
-      arg_to_html block_arg, io
-    elsif @def.yields
-      io << ", " unless @def.args.empty?
-      io << "&block"
+
+    if return_type = @def.return_type
+      io << " : "
+      node_to_html return_type, io
     end
-    io << ')'
+
+    io
   end
 
   def arg_to_html(arg : Arg, io)

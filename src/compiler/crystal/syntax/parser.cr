@@ -1897,11 +1897,11 @@ module Crystal
       result
     end
 
-    def parse_def(is_abstract = false, check_return_type = false, doc = nil)
+    def parse_def(is_abstract = false, is_macro_def = false, doc = nil)
       doc ||= @token.doc
 
       instance_vars = prepare_parse_def
-      a_def = parse_def_helper is_abstract: is_abstract, check_return_type: check_return_type
+      a_def = parse_def_helper is_abstract: is_abstract, is_macro_def: is_macro_def
 
       # Small memory optimization: don't keep the Set in the Def if it's empty
       instance_vars = nil if instance_vars.empty?
@@ -1933,7 +1933,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.keyword?(:def)
-        a_def = parse_def_helper check_return_type: true
+        a_def = parse_def_helper is_macro_def: true
         a_def.doc = doc
         return a_def
       end
@@ -2251,7 +2251,7 @@ module Crystal
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>"]
 
-    def parse_def_helper(is_abstract = false, check_return_type = false)
+    def parse_def_helper(is_abstract = false, is_macro_def = false)
       push_def
       @doc_enabled = false
       @def_nest += 1
@@ -2395,7 +2395,6 @@ module Crystal
       when :";", :"NEWLINE"
          # Skip
       when :":"
-        unexpected_token unless check_return_type
         # Skip
       when :"&"
         next_token_skip_space_or_newline
@@ -2409,7 +2408,7 @@ module Crystal
         end
       end
 
-      if check_return_type
+      if is_macro_def
         check :":"
         next_token_skip_space
         return_type = parse_single_type
@@ -2425,6 +2424,11 @@ module Crystal
           end
         end
       else
+        if @token.type == :":"
+          next_token_skip_space
+          return_type = parse_single_type
+        end
+
         if is_abstract
           body = Nop.new
         else
@@ -2455,7 +2459,7 @@ module Crystal
       @doc_enabled = @wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, !!return_type, @yields, is_abstract, splat_index
+      node = Def.new name, args, body, receiver, block_arg, return_type, is_macro_def, @yields, is_abstract, splat_index
       node.name_column_number = name_column_number
       node.visibility = @visibility
       node

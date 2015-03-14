@@ -265,6 +265,17 @@ module Crystal
       raise "Bug: #{self} doesn't implement superclass"
     end
 
+    def to_s_with_method_name(name)
+      case self
+      when Program
+        name
+      when .metaclass?
+        "#{self.instance_type}::#{name}"
+      else
+        "#{self}##{name}"
+      end
+    end
+
     def defs
       nil
     end

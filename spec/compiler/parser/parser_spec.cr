@@ -660,6 +660,12 @@ describe "Parser" do
   it_parses "macro def foo : String; 1; end", Def.new("foo", body: [MacroLiteral.new(" 1; ")] of ASTNode, return_type: "String".path, macro_def: true)
   it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], [MacroLiteral.new(" 1; ")] of ASTNode, return_type: "String".path, macro_def: true)
 
+  it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
+  it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
+
+  it_parses "abstract def foo : Int32", Def.new("foo", return_type: "Int32".path, abstract: true)
+  it_parses "abstract def foo(x) : Int32", Def.new("foo", args: ["x".arg], return_type: "Int32".path, abstract: true)
+
   it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
   it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
   it_parses "{{ foo }}", MacroExpression.new("foo".var)
@@ -1018,9 +1024,6 @@ describe "Parser" do
   assert_syntax_error "pointerof(self)", "can't take pointerof(self)"
   assert_syntax_error "def foo 1; end"
 
-  # We don't support specifying the return type just yet
-  assert_syntax_error "def foo : String; 1; end"
-  assert_syntax_error "def foo(x) : String; 1; end"
   assert_syntax_error "macro def foo(x); 1; end"
 
   assert_syntax_error "{x: [] of Int32,\n}\n1.foo(", "unterminated call", 3, 6

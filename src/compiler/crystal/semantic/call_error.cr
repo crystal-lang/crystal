@@ -340,4 +340,9 @@ class Crystal::Call
       yield
     end
   end
+
+  def full_name(owner, def_name = name)
+    owner.to_s_with_method_name(def_name)
+  end
+
 end
