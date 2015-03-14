@@ -189,4 +189,18 @@ describe "Enumerable" do
     [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
     str.to_s.should eq("2, 3, 4")
   end
+
+  describe "each_slice" do
+    it "returns partial slices" do
+      array = [] of Array(Int32)
+      [1, 2, 3].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3]])
+    end
+
+    it "returns full slices" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
+      array.should eq([[1, 2], [3, 4]])
+    end
+  end
 end
