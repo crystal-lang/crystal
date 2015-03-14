@@ -2455,7 +2455,7 @@ module Crystal
       @doc_enabled = @wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, @yields, is_abstract, splat_index
+      node = Def.new name, args, body, receiver, block_arg, return_type, !!return_type, @yields, is_abstract, splat_index
       node.name_column_number = name_column_number
       node.visibility = @visibility
       node

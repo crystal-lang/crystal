@@ -239,7 +239,7 @@ module Crystal
             new_subtype_matches = nil
 
             base_type_matches.each do |base_type_match|
-              if base_type_match.def.return_type
+              if base_type_match.def.macro_def?
                 # We need to copy each submatch if it's a macro (has a return_type)
                 full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
                 full_subtype_matches.each do |full_subtype_match|

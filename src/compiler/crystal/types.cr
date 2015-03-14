@@ -820,7 +820,7 @@ module Crystal
 
     def transfer_instance_vars(a_def)
       # Don't consider macro defs here (only later, when expanded)
-      return if a_def.return_type
+      return if a_def.macro_def?
 
       is_initialize = a_def.name == "initialize"
 

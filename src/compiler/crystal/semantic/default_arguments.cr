@@ -78,7 +78,7 @@ class Crystal::Def
       new_name = name
     end
 
-    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, yields)
+    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields)
     expansion.instance_vars = instance_vars
     expansion.args.each { |arg| arg.default_value = nil }
     expansion.calls_super = calls_super
