@@ -158,6 +158,8 @@ describe "Parser" do
   it_parses %("hello \\\n     world"), "hello world".string
 
   it_parses ":foo", "foo".symbol
+  it_parses ":[]=", "[]=".symbol
+  it_parses ":[]?", "[]?".symbol
 
   it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
   it_parses "[\n1, 2]", ([1.int32, 2.int32] of ASTNode).array

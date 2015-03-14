@@ -399,9 +399,9 @@ module Crystal
           if next_char == ']'
             case next_char
             when '='
-              symbol "[]="
+              next_char_and_symbol "[]="
             when '?'
-              symbol "[]?"
+              next_char_and_symbol "[]?"
             else
               symbol "[]"
             end
