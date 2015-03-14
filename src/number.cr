@@ -1,4 +1,6 @@
 struct Number
+  include Comparable(Number)
+  
   def +
     self
   end
