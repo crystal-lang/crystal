@@ -214,4 +214,19 @@ describe "Type inference: enum" do
       Foo.class_var
       )) { int32 }
   end
+
+  it "errors if invoking private enum method" do
+    assert_error %(
+      enum Foo
+        A
+
+        private def foo
+          1
+        end
+      end
+
+      Foo::A.foo
+      ),
+      "private method 'foo' called for Foo"
+  end
 end

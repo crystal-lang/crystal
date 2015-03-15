@@ -3885,8 +3885,21 @@ module Crystal
 
           members << arg
         when :IDENT
+          visibility = nil
+
+          case @token.value
+          when :private
+            visibility = :private
+            next_token_skip_space
+          when :protected
+            visibility = :protected
+            next_token_skip_space
+          end
+
           if @token.value == :def
-            members << parse_def
+            member = parse_def
+            member = VisibilityModifier.new(visibility, member) if visibility
+            members << member
           else
             unexpected_token
           end
