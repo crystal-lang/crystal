@@ -1,10 +1,10 @@
-struct Range(T)
-  include Enumerable
+struct Range(B, E)
+  include Enumerable(B)
 
   getter :begin
   getter :end
 
-  def initialize(@begin : T, @end : T, @exclusive : Bool)
+  def initialize(@begin : B, @end : E, @exclusive : Bool)
   end
 
   def each

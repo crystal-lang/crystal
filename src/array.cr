@@ -405,7 +405,7 @@ class Array(T)
     self
   end
 
-  def fill(range : Range(Int))
+  def fill(range : Range(Int, Int))
     from = range.begin
     to = range.end
 
@@ -433,7 +433,7 @@ class Array(T)
     fill(from, size) { value }
   end
 
-  def fill(value : T, range : Range(Int))
+  def fill(value : T, range : Range(Int, Int))
     fill(range) { value }
   end
 

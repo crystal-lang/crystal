@@ -229,7 +229,7 @@ class String
     raise IndexOutOfBounds.new
   end
 
-  def [](range : Range(Int))
+  def [](range : Range(Int, Int))
     from = range.begin
     from += length if from < 0
     to = range.end

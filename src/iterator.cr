@@ -80,10 +80,10 @@ struct Range
   end
 end
 
-class RangeIterator(T)
-  include Iterator(T)
+class RangeIterator(B)
+  include Iterator(B)
 
-  def initialize(@range : Range(T), @current = range.begin, @reached_end = false)
+  def initialize(@range : Range(B, E), @current = range.begin, @reached_end = false)
   end
 
   def next
@@ -107,7 +107,7 @@ class RangeIterator(T)
   end
 
   def clone
-    RangeIterator(T).new(@range, @current, @reached_end)
+    RangeIterator(B).new(@range, @current, @reached_end)
   end
 end
 

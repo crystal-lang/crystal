@@ -532,7 +532,7 @@ class Matrix(T)
   end
 
   # Returns a subsection of the matrix.
-  def minor(row_range : Range(Int), col_range : Range(Int))
+  def minor(row_range : Range(Int, Int), col_range : Range(Int, Int))
     start_row, rows = row_range.begin, row_range.end
     start_col, columns = col_range.begin, col_range.end
     rows += 1 unless row_range.excludes_end?
