@@ -1,7 +1,7 @@
 # Copied with little modifications from: https://github.com/rubinius/rubinius-benchmark/blob/master/real_world/bench_degree_days.rb
 
 class DegreeDays
-  def initialize(@daily_temperatures, @options = {} of Symbol => Float)
+  def initialize(@daily_temperatures, @options = {} of Symbol => Float64)
   end
 
   property :daily_temperatures
