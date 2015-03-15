@@ -42,6 +42,15 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
+  def each_cons(count : Int)
+    size = self.count
+    each_with_index do |elem, index|
+      break if index + count > size
+      yield self[index, count]
+    end
+    nil
+  end
+
   def each_slice(count : Int)
     slice = Array(T).new(count)
     each do |elem|

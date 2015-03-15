@@ -203,4 +203,42 @@ describe "Enumerable" do
       array.should eq([[1, 2], [3, 4]])
     end
   end
+
+  describe "each_cons" do
+    it "yields just one consecutive" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(1) { |cons| array << cons }
+      array.should eq([[1], [2], [3], [4], [5]])
+    end
+
+    it "yields two consecutive" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(2) { |cons| array << cons }
+      array.should eq([[1, 2], [2, 3], [3, 4], [4, 5]])
+    end
+
+    it "yields three consecutive" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(3) { |cons| array << cons }
+      array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+    end
+
+    it "yields four consecutive" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(4) { |cons| array << cons }
+      array.should eq([[1, 2, 3, 4], [2, 3, 4, 5]])
+    end
+
+    it "yields all consecutive" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(5) { |cons| array << cons }
+      array.should eq([[1, 2, 3, 4, 5]])
+    end
+
+    it "yields nothing when too few consecutive" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(6) { |cons| array << cons }
+      array.should eq([] of Array(Int32))
+    end
+  end
 end
