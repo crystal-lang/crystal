@@ -4,8 +4,11 @@ class XML::Reader
   def initialize(str : String)
     input = LibXML.xmlParserInputBufferCreateStatic(str, str.bytesize, 1)
     @reader = LibXML.xmlNewTextReader(input, "")
-    error_handler = ->(args : Void*) { raise Error.new("XML error") }
-    LibXML.xmlTextReaderSetErrorHandler(@reader, error_handler)
+    LibXML.xmlTextReaderSetErrorHandler @reader, ->(arg, msg, severity, locator) do
+      msg_str = String.new(msg).chomp
+      line_number = LibXML.xmlTextReaderLocatorLineNumber(locator)
+      raise Error.new(msg_str, line_number)
+    end
   end
 
   def initialize(io : IO)
@@ -52,5 +55,9 @@ class XML::Reader
 
   def value
     String.new(LibXML.xmlTextReaderConstValue(@reader))
+  end
+
+  def to_unsafe
+    @reader
   end
 end

@@ -70,8 +70,10 @@ describe XML::Document do
   end
 
   it "handles errors" do
-    expect_raises(XML::Error) do
-      XML.parse(%(</people>))
+    expect_raises(XML::Error, "StartTag: invalid element name at line 2") do
+      XML.parse(%(
+        </people>
+        ))
     end
   end
 end

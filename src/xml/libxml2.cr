@@ -4,6 +4,7 @@ require "./type"
 lib LibXML
   type InputBuffer = Void*
   type XMLTextReader = Void*
+  type XMLTextReaderLocator = Void*
 
   XML_READER_TYPE_NONE                   = 0
   XML_READER_TYPE_ELEMENT                = 1
@@ -24,6 +25,15 @@ lib LibXML
   XML_READER_TYPE_END_ENTITY             = 16
   XML_READER_TYPE_XML_DECLARATION        = 17
 
+  enum ParserSeverity
+    VALIDITY_WARNING = 1
+    VALIDITY_ERROR = 2
+    WARNING = 3
+    ERROR = 4
+  end
+
+  alias TextReaderErrorFunc = (Void*, UInt8*, ParserSeverity, XMLTextReaderLocator) ->
+
   fun xmlParserInputBufferCreateStatic(mem : UInt8*, size : Int32, encoding : Int32) : InputBuffer
   fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int32) -> Int32, ioclose : Void* -> Int32, ioctx : Void*, enc : Int32) : InputBuffer
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
@@ -38,5 +48,7 @@ lib LibXML
   fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int32
   fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int32
 
-  fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : Void* -> Void*) : Void
+  fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
+
+  fun xmlTextReaderLocatorLineNumber(XMLTextReaderLocator) : Int32
 end
