@@ -7,6 +7,10 @@ module Random
     Intrinsics.read_cycle_counter.to_u32
   end
 
+  def self.new(seed = new_seed)
+    MT19937.new(seed)
+  end
+
   abstract def next_u32
 
   def next_bool

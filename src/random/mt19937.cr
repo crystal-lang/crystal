@@ -59,6 +59,12 @@ class Random::MT19937
     init_by_array(seeds)
   end
 
+  def self.new(seed : Int)
+    seeds = UInt32[1]
+    seeds[0] = seed.to_u32
+    new(seeds)
+  end
+
   private def init_genrand(seed)
     @mt[0] = seed & 0xffffffffu32
     @mti = 1

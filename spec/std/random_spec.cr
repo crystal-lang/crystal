@@ -41,6 +41,22 @@ describe "Random" do
     end
   end
 
+  it "allows creating a new default random" do
+    rand = Random.new
+    value = rand.rand
+    (0 <= value < 1).should be_true
+  end
+
+  it "allows creating a new default random with a seed" do
+    rand = Random.new(1234)
+    value1 = rand.rand
+
+    rand = Random.new(1234)
+    value2 = rand.rand
+
+    value1.should eq(value2)
+  end
+
   it "gets a random bool" do
     Random::DEFAULT.next_bool.should be_a(Bool)
   end
