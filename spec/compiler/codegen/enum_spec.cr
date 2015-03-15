@@ -127,4 +127,20 @@ describe "Code gen: enum" do
       Foo::All
       )).to_i.should eq(10)
   end
+
+  it "allows class vars in enum" do
+    run(%(
+      enum Foo
+        A
+
+        @@class_var = 1
+
+        def self.class_var
+          @@class_var
+        end
+      end
+
+      Foo.class_var
+      )).to_i.should eq(1)
+  end
 end

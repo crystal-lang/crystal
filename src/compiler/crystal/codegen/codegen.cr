@@ -482,6 +482,13 @@ module Crystal
       node.enum_type.try &.types.each_value do |type|
         initialize_const(type as Const)
       end
+
+      node.members.each do |member|
+        if member.is_a?(Assign)
+          member.accept self
+        end
+      end
+
       @last = llvm_nil
       false
     end

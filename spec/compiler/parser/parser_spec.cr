@@ -963,6 +963,8 @@ describe "Parser" do
   it_parses "enum Foo; A = 1\ndef self.foo; 1; end\nend", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", receiver: "self".var, body: 1.int32)] of ASTNode)
   it_parses "enum Foo::Bar; A = 1; end", EnumDef.new(Path.new(["Foo", "Bar"]), [Arg.new("A", 1.int32)] of ASTNode)
 
+  it_parses "enum Foo; @@foo = 1\n A \n end", EnumDef.new("Foo".path, [Assign.new("@@foo".class_var, 1.int32), Arg.new("A")] of ASTNode)
+
   it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
   it_parses "1.[]=(2, 3)", Call.new(1.int32, "[]=", 2.int32, 3.int32)
 

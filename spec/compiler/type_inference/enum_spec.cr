@@ -198,4 +198,20 @@ describe "Type inference: enum" do
       Foo::A.foo
       )) { types["Foo"] }
   end
+
+  it "allows class vars in enum" do
+    assert_type(%(
+      enum Foo
+        A
+
+        @@class_var = 1
+
+        def self.class_var
+          @@class_var
+        end
+      end
+
+      Foo.class_var
+      )) { int32 }
+  end
 end

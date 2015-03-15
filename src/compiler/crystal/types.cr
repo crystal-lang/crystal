@@ -2118,6 +2118,7 @@ module Crystal
   class EnumType < NamedType
     include DefContainer
     include DefInstanceContainer
+    include ClassVarContainer
 
     getter base_type
     getter? flags

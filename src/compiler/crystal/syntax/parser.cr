@@ -3890,6 +3890,19 @@ module Crystal
           else
             unexpected_token
           end
+        when :CLASS_VAR
+          class_var = ClassVar.new(@token.value.to_s)
+          class_var.location = @token.location
+
+          next_token_skip_space
+          check :"="
+          next_token_skip_space_or_newline
+          value = parse_op_assign
+
+          assign = Assign.new(class_var, value)
+          assign.location = class_var.location
+
+          members << assign
         when :";", :NEWLINE
           skip_statement_end
         else
