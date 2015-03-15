@@ -34,6 +34,7 @@ install: |
   export CRYSTAL_CONFIG_VERSION=ci
 script:
   - make crystal spec
+  - find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-build
 notifications:
   irc:
     channels:
