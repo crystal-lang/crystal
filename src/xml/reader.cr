@@ -4,6 +4,8 @@ class XML::Reader
   def initialize(str : String)
     input = LibXML.xmlParserInputBufferCreateStatic(str, str.bytesize, 1)
     @reader = LibXML.xmlNewTextReader(input, "")
+    error_handler = ->(args : Void*) { raise Error.new("XML error") }
+    LibXML.xmlTextReaderSetErrorHandler(@reader, error_handler)
   end
 
   def initialize(io : IO)
