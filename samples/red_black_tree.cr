@@ -4,9 +4,9 @@ class RedBlackTree
   class Node
     property :color
     property :key
-    property :left
-    property :right
-    property :parent
+    property! :left
+    property! :right
+    property! :parent
 
     RED = :red
     BLACK = :black
@@ -330,10 +330,13 @@ class RedBlackTreeRunner
 
   def initialize(n = 10_000)
     @n = n
-    srand(1234) # repeatable random seq
-    @a1 = Array.new(@n) { rand(99_999) }
-    srand(4321) # repeatable random seq
-    @a2 = Array.new(@n) { rand(99_999) }
+
+    random = Random.new(1234) # repeatable random seq
+    @a1 = Array.new(n) { rand(99_999) }
+
+    random = Random.new(4321) # repeatable random seq
+    @a2 = Array.new(n) { rand(99_999) }
+
     @tree = RedBlackTree.new
   end
 
