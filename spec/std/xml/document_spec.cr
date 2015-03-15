@@ -68,4 +68,10 @@ describe XML::Document do
     doc = XML.parse(string)
     doc.to_s.should eq(string)
   end
+
+  it "handles errors" do
+    expect_raises(XML::Error) do
+      XML.parse(%(</people>))
+    end
+  end
 end

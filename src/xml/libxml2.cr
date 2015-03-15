@@ -37,4 +37,6 @@ lib LibXML
   fun xmlTextReaderAttributeCount(reader : XMLTextReader) : Int32
   fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int32
   fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int32
+
+  fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : Void* -> Void*) : Void
 end
