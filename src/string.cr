@@ -469,46 +469,56 @@ class String
     end
   end
 
+  # Returns a new string where each character yielded to the given block
+  # is replaced by the block's return value.
+  #
+  # ```
+  # "hello".gsub { |x| (x.ord + 1).chr } #=> "ifmmp"
+  # "hello".gsub { "hi" } #=> "hihihihihi"
+  # ```
   def gsub(&block : Char -> _)
     String.build(bytesize) do |buffer|
       each_char do |my_char|
-        replacement = yield my_char
-        if replacement
-          buffer << replacement
-        else
-          buffer << my_char
-        end
+        buffer << yield my_char
       end
     end
   end
 
-  def gsub(char : Char, replacement : String)
+  # Returns a string where all occurrences of the given char are
+  # replaced with the given *replacement*.
+  #
+  # ```
+  # "hello".gsub('l', "lo") #=> "heloloo"
+  # "hello world".gsub('o', 'a') #=> "hella warld"
+  # ```
+  def gsub(char : Char, replacement)
     if includes?(char)
-      gsub { |my_char| char == my_char ? replacement : nil }
-    else
-        self
-    end
-  end
-
-  def gsub(char : Char, replacement : Char)
-    if includes?(char)
-      gsub(char, replacement.to_s)
+      gsub { |my_char| char == my_char ? replacement : my_char }
     else
       self
     end
   end
 
-  def gsub(pattern : Regex)
+  # Returns a string where all occurrences of the given *pattern* are replaced
+  # by the block value's value.
+  #
+  # ```
+  # "hello".gsub(/./) {|s| s[0].ord.to_s + ' '} #=> #=> "104 101 108 108 111 "
+  # ```
+  def gsub(pattern : Regex, &block : String, MatchData -> _)
     byte_offset = 0
+    match = pattern.match(self, byte_offset)
+    return self unless match
 
     String.build(bytesize) do |buffer|
-      while match = pattern.match(self, byte_offset)
+      while match
         index = match.byte_begin(0)
 
         buffer.write unsafe_byte_slice(byte_offset, index - byte_offset)
         str = match[0]
         buffer << yield str, match
         byte_offset = index + str.bytesize
+        match = pattern.match(self, byte_offset)
       end
 
       if byte_offset < bytesize
@@ -517,21 +527,43 @@ class String
     end
   end
 
-  def gsub(pattern : Regex, replacement : String)
+  # Returns a string where all occurrences of the given *pattern* are replaced
+  # with the given *replacement*.
+  #
+  # ```
+  # "hello".gsub(/[aeiou]/, '*') #=> "h*ll*"
+  # ```
+  def gsub(pattern : Regex, replacement)
     gsub(pattern) { replacement }
   end
 
-  def gsub(string : String, replacement : String)
+  # Returns a string where all occurrences of the given *string* are replaced
+  # with the given *replacement*.
+  #
+  # ```
+  # "hello yellow".gsub("ll", "dd") #=> "heddo yeddow"
+  # ```
+  def gsub(string : String, replacement)
     gsub(string) { replacement }
   end
 
+  # Returns a string where all occurrences of the given *string* are replaced
+  # with the block's value.
+  #
+  # ```
+  # "hello yellow".gsub("ll") { "dd" } #=> "heddo yeddow"
+  # ```
   def gsub(string : String, &block)
     byte_offset = 0
+    index = self.byte_index(string, byte_offset)
+    return self unless index
+
     String.build(bytesize) do |buffer|
-      while index = self.byte_index(string, byte_offset)
+      while index
         buffer.write unsafe_byte_slice(byte_offset, index - byte_offset)
         buffer << yield string
         byte_offset = index + string.bytesize
+        index = self.byte_index(string, byte_offset)
       end
       if byte_offset < bytesize
         buffer.write unsafe_byte_slice(byte_offset)

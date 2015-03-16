@@ -226,7 +226,7 @@ module Crystal
           when '+'
             ".."
           else
-            nil
+            char
           end
         end
       end

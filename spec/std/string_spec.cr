@@ -442,7 +442,7 @@ describe "String" do
       when 'a'
         "ex"
       else
-        nil
+        char
       end
     end
     replaced.bytesize.should eq(18)
@@ -467,12 +467,22 @@ describe "String" do
     "foo boor booooz".gsub(/o+/, "a").should eq("fa bar baz")
   end
 
+  it "gsubs with regex and string, returns self if no match" do
+    str = "hello"
+    str.gsub(/a/, "b").should be(str)
+  end
+
   it "gsubs with regex and string (utf-8)" do
     "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
   end
 
   it "gsubs with string and string" do
     "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
+  end
+
+  it "gsubs with string and string return self if no match" do
+    str = "hello"
+    str.gsub("a", "b").should be(str)
   end
 
   it "gsubs with string and string (utf-8)" do

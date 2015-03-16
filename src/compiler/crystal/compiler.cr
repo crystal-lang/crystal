@@ -316,7 +316,10 @@ module Crystal
       def initialize(@compiler, type_name, @llvm_mod, @output_dir, @bc_flags_changed)
         type_name = "main" if type_name == ""
         @name = type_name.gsub do |char|
-          unless 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
+          case char
+          when 'a'..'z', 'A'..'Z', '0'..'9', '_'
+            char
+          else
             char.ord
           end
         end
