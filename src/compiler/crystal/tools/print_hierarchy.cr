@@ -107,7 +107,16 @@ module Crystal
     end
 
     def print_instance_vars(type, has_subtypes)
-      type.instance_vars.each_value do |ivar|
+      instance_vars = type.instance_vars
+      return if instance_vars.empty?
+
+      instance_vars = instance_vars.values
+
+      max_name_length = instance_vars.max_of &.name.length
+      max_type_length = instance_vars.max_of &.type.to_s.length
+      max_bytes_length = instance_vars.max_of { |var| @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(var.type)).to_s.length }
+
+      instance_vars.each do |ivar|
         print_indent
         print (@indents.last ? "|" : " ")
         if has_subtypes
@@ -116,12 +125,12 @@ module Crystal
           print "      "
         end
         with_color.light_gray.push(STDOUT) do
-          print ivar.name
+          print ivar.name.ljust(max_name_length)
           print " : "
-          print ivar.type
+          print ivar.type.to_s.ljust(max_type_length)
           size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
           print " ("
-          print size
+          print size.to_s.rjust(max_bytes_length)
           print " bytes)"
         end
         puts
