@@ -799,4 +799,14 @@ describe "Block inference" do
       Foo.new('a').moo
       )) { char.metaclass }
   end
+
+  it "errors if invoking new with block when no initialize is defined" do
+    assert_error %(
+      class Foo
+      end
+
+      Foo.new { }
+      ),
+      "'Foo#new' is not expected to be invoked with a block, but a block was given"
+  end
 end

@@ -71,6 +71,10 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
       end
 
+      if block
+        raise "'#{full_name(scope.instance_type)}' is not expected to be invoked with a block, but a block was given"
+      end
+
       new_def = Def.argless_new(scope.instance_type)
       match = Match.new(new_def, arg_types, MatchContext.new(scope, scope))
       scope.add_def new_def
