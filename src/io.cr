@@ -273,6 +273,10 @@ module IO
     buffer.to_s
   end
 
+  def readline(delimiter = '\n' : Char)
+    gets(delimiter) || raise EOFError.new
+  end
+
   def read(length)
     buffer_pointer = buffer = Slice(UInt8).new(length)
     remaining_length = length
@@ -312,6 +316,10 @@ require "./io/*"
 
 def gets
   STDIN.gets
+end
+
+def readline
+  STDIN.readline
 end
 
 def print(obj)

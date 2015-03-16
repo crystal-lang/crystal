@@ -145,4 +145,23 @@ describe "StringIO" do
     end
     str.should eq("ab")
   end
+
+  it "raises on EOF with readline" do
+    str = StringIO.new("hello")
+    str.readline.should eq("hello")
+
+    expect_raises IO::EOFError, "end of file reached" do
+      str.readline
+    end
+  end
+
+  it "raises on EOF with readline and delimiter" do
+    str = StringIO.new("hello")
+    str.readline('e').should eq("he")
+    str.readline('e').should eq("llo")
+
+    expect_raises IO::EOFError, "end of file reached" do
+      str.readline
+    end
+  end
 end
