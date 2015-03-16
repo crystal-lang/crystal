@@ -63,9 +63,9 @@ class Crystal::Doc::Method
   end
 
   def args_to_s(io)
-    return if @def.args.empty? && !@def.block_arg && !@def.yields && !@def.return_type
+    return unless has_args? || @def.return_type
 
-    unless @def.args.empty?
+    if has_args?
       io << '('
       @def.args.each_with_index do |arg, i|
         io << ", " if i > 0
@@ -96,9 +96,9 @@ class Crystal::Doc::Method
   end
 
   def args_to_html(io)
-    return if @def.args.empty? && !@def.block_arg && !@def.yields && !@def.return_type
+    return unless has_args? || @def.return_type
 
-    unless @def.args.empty?
+    if has_args?
       io << '('
       @def.args.each_with_index do |arg, i|
         io << ", " if i > 0
@@ -153,5 +153,9 @@ class Crystal::Doc::Method
 
   def must_be_included?
     @generator.must_include? @def
+  end
+
+  def has_args?
+    !@def.args.empty? || @def.block_arg || @def.yields
   end
 end
