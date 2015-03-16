@@ -50,9 +50,9 @@
        * [Generics](syntax_and_semantics/generics.md)
        * [Structs](syntax_and_semantics/structs.md)
        * [Constants](syntax_and_semantics/constants.md)
-       * Blocks, functions and closures
-           * Function literal
-           * Function pointer
+       * [Blocks and Procs](blocks_and_procs.md)
+           * Proc literal
+           * Proc pointer
        * [alias](syntax_and_semantics/alias.md)
    * Type reflection
        * [is_a?](syntax_and_semantics/is_a.md)

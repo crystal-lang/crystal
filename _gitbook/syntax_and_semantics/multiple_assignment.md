@@ -63,6 +63,6 @@ objects[1], objects[2] = 3, 4
 # Same as:
 temp1 = 3
 temp2 = 4
-objects[1] = 3
-objects[2] = 4
+objects[1] = temp1
+objects[2] = temp2
 ```

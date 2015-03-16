@@ -75,3 +75,23 @@ class Person
   end
 end
 ```
+
+## Private top-level methods
+
+A `private` top-level method is only visible in the current file.
+
+```ruby
+# In file one.cr
+private def greet
+  puts "Hello"
+end
+
+greet #=> "Hello"
+
+# In file two.cr
+require "./one"
+
+greet # undefined local variable or method 'greet'
+```
+
+This allows you to define helper methods in a file that will only be konwn in that file.

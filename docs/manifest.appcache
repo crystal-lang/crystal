@@ -1,11 +1,12 @@
 CACHE MANIFEST
-# Revision 1420219253042
+# Revision 1426515030691
 
 CACHE:
 index.html
+blocks_and_procs.html
 builtin_types/nil.html
-builtin_types/char.html
 builtin_types/README.html
+builtin_types/char.html
 builtin_types/floating_point_types.html
 builtin_types/integer_types.html
 builtin_types/bool.html
@@ -21,7 +22,7 @@ installation/on_debian_and_ubuntu.html
 installation/on_mac_osx_using_homebrew.html
 installation/on_redhat_and_centos.html
 overview/README.html
-syntax_and_semantics/instace_variables_type_inference.html
+syntax_and_semantics/instance_variables_type_inference.html
 syntax_and_semantics/README.html
 syntax_and_semantics/and.html
 syntax_and_semantics/as_a_suffix.html

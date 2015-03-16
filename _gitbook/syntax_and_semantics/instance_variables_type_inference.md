@@ -37,7 +37,7 @@ If you compile the previous programs with `--hierarchy`, the compiler will show 
      |
      +- class Person
             @name : String
-            @age : Int32
+            @age  : Int32
 ```
 
 In the second case:
@@ -49,7 +49,7 @@ In the second case:
      |
      +- class Person
             @name : Int32
-            @age : Int32
+            @age  : Int32
 ```
 
 What happens if we create two different people, one with a `String` and one with an `Int32`? Let's try it:
@@ -68,7 +68,7 @@ Inovking the compiler with `--hierarchy` we get:
      |
      +- class Person
             @name : (String | Int32)
-            @age : Int32
+            @age  : Int32
 ```
 
 We can see that now `@name` has a type `(String | Int32)`, which is read as a *union* of `String` and `Int32`. The compiler made `@name` have all types assigned to it.
