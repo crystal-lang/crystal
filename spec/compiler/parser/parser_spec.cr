@@ -507,6 +507,21 @@ describe "Parser" do
     it_parses "#{keyword} {1 => 2}", klass.new(HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32)]))
     it_parses "#{keyword} 1 if true", If.new(true.bool, klass.new(1.int32))
     it_parses "#{keyword} if true", If.new(true.bool, klass.new)
+
+    assert_syntax_error "a = #{keyword}", "void value expression"
+    assert_syntax_error "a = 1; a += #{keyword}", "void value expression"
+    assert_syntax_error "yield #{keyword}", "void value expression"
+    assert_syntax_error "foo(#{keyword})", "void value expression"
+    assert_syntax_error "foo[#{keyword}]", "void value expression"
+    assert_syntax_error "foo[1] = #{keyword}", "void value expression"
+    assert_syntax_error "if #{keyword}; end", "void value expression"
+    assert_syntax_error "unless #{keyword}; end", "void value expression"
+    assert_syntax_error "while #{keyword}; end", "void value expression"
+    assert_syntax_error "until #{keyword}; end", "void value expression"
+    assert_syntax_error "1 if #{keyword}", "void value expression"
+    assert_syntax_error "1 unless #{keyword}", "void value expression"
+    assert_syntax_error "1 while #{keyword}", "void value expression"
+    assert_syntax_error "1 until #{keyword}", "void value expression"
   end
 
   it_parses "yield", Yield.new

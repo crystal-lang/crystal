@@ -226,8 +226,20 @@ module Crystal
 
     def parse_expression_suffix(location)
       next_token_skip_statement_end
-      exp = parse_op_assign
+      exp = parse_op_assign_no_control
       (yield exp).at(location)
+    end
+
+    def parse_op_assign_no_control(allow_ops = true)
+      case @token.type
+      when :IDENT
+        case @token.value
+        when :break, :next, :return
+          raise "void value expression", @token, @token.value.to_s.length
+        end
+      end
+
+      parse_op_assign(allow_ops)
     end
 
     def parse_op_assign(allow_ops = true)
@@ -249,7 +261,7 @@ module Crystal
 
             atomic.name = "[]="
             atomic.name_length = 0
-            atomic.args << parse_op_assign
+            atomic.args << parse_op_assign_no_control
           else
             break unless can_be_assigned?(atomic)
 
@@ -276,7 +288,7 @@ module Crystal
             end
 
             push_def if needs_new_scope
-            value = parse_op_assign
+            value = parse_op_assign_no_control
             pop_def if needs_new_scope
 
             push_var atomic
@@ -311,7 +323,7 @@ module Crystal
 
           next_token_skip_space_or_newline
 
-          value = parse_op_assign
+          value = parse_op_assign_no_control
 
           if atomic.is_a?(Call) && atomic.name == "[]"
             obj = atomic.obj
@@ -655,10 +667,10 @@ module Crystal
     def parse_single_arg
       if @token.type == :"*"
         next_token_skip_space
-        arg = parse_op_assign
+        arg = parse_op_assign_no_control
         Splat.new(arg)
       else
-        parse_op_assign
+        parse_op_assign_no_control
       end
     end
 
@@ -1119,7 +1131,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      cond = parse_expression
+      cond = parse_op_assign_no_control
 
       slash_is_regex!
       skip_statement_end
@@ -2616,7 +2628,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign
+      cond = parse_op_assign_no_control
       parse_if_after_condition cond, check_end
     end
 
@@ -2649,7 +2661,7 @@ module Crystal
     def parse_unless
       next_token_skip_space_or_newline
 
-      cond = parse_expression
+      cond = parse_op_assign_no_control
       skip_statement_end
 
       a_then = parse_expressions
@@ -3056,7 +3068,7 @@ module Crystal
             next_token
           end
         end
-        arg = parse_op_assign
+        arg = parse_op_assign_no_control
         arg = Splat.new(arg).at(arg.location) if splat
         arg
       end
