@@ -24,8 +24,7 @@ struct Proc
   end
 
   def ==(other : self)
-    # TODO: compare pointers, but can't do this right now due to a bug in 0.6.0. Change afterwards.
-    pointer.address == other.pointer.address && closure_data.address == other.closure_data.address
+    pointer == other.pointer && closure_data == other.closure_data
   end
 
   def ===(other : self)
