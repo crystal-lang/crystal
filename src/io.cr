@@ -273,7 +273,7 @@ module IO
     buffer.to_s
   end
 
-  def readline(delimiter = '\n' : Char)
+  def read_line(delimiter = '\n' : Char)
     gets(delimiter) || raise EOFError.new
   end
 
@@ -318,7 +318,7 @@ def gets
   STDIN.gets
 end
 
-def readline
+def read_line
   STDIN.readline
 end
 
