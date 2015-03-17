@@ -392,4 +392,15 @@ it "errors if unknown named arg" do
       LibFoo::Bar.new.x
       )) { pointer_of(types["LibFoo"].types["Foo"]) }
   end
+
+  it "errors if defines def on lib" do
+    assert_error %(
+      lib LibC
+      end
+
+      def LibC.foo
+      end
+      ),
+      "can't define 'def' for lib"
+  end
 end

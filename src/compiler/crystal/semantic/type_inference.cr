@@ -510,7 +510,9 @@ module Crystal
                       end
                       current_type.metaclass
                     else
-                      lookup_path_type(receiver).metaclass
+                      type = lookup_path_type(receiver).metaclass
+                      node.raise "can't define 'def' for lib" if type.is_a?(LibType)
+                      type
                     end
 
       node.raises = true if node.has_attribute?("Raises")
