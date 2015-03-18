@@ -27,7 +27,11 @@ describe "Array" do
   end
 
   it "does &" do
+    ([1, 2, 3] & [] of Int32).should eq([] of Int32)
+    ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
     ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
+    ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
+    ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
   end
 
   it "does |" do

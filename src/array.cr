@@ -98,11 +98,17 @@ class Array(T)
   end
 
   def &(other : Array(U))
+    return Array(T).new if self.empty? || other.empty?
+
     hash = other.to_lookup_hash
+    hash_length = hash.length
     Array(T).build(Math.min(length, other.length)) do |buffer|
       i = 0
       each do |obj|
-        if hash.has_key?(obj)
+        hash.delete(obj)
+        new_hash_length = hash.length
+        if hash_length != new_hash_length
+          hash_length = new_hash_length
           buffer[i] = obj
           i += 1
         end
