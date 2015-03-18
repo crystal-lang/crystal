@@ -96,4 +96,20 @@ describe "type inference: alias" do
       ),
       "infinite recursive definition of alias A"
   end
+
+  it "allows using generic type of recursive alias as restriction (#488)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      alias Rec = String | Foo(Rec)
+
+      def command(request : Foo(Rec))
+        1
+      end
+
+      foo = Foo(Rec).new
+      command(foo)
+      )) { int32 }
+  end
 end

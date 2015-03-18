@@ -477,11 +477,14 @@ module Crystal
     end
 
     def restrict(other, context)
-      if self == other
-        self
-      else
-        remove_alias.restrict(other, context)
+      return self if self == other
+
+      if other.is_a?(Path)
+        other_type = context.type_lookup.lookup_type other
+        return self if self == other_type
       end
+
+      remove_alias.restrict(other, context)
     end
   end
 
