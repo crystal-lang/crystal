@@ -32,6 +32,7 @@ describe "Array" do
 
   it "does |" do
     ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
+    ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
   end
 
   it "does +" do
