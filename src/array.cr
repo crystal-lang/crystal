@@ -116,13 +116,16 @@ class Array(T)
       hash = Hash(T, Bool).new
       i = 0
       each do |obj|
-        buffer[i] = obj
-        i += 1
-        hash[obj] = true
+        unless hash.has_key?(obj)
+          buffer[i] = obj
+          hash[obj] = true
+          i += 1
+        end
       end
       other.each do |obj|
         unless hash.has_key?(obj)
           buffer[i] = obj
+          hash[obj] = true
           i += 1
         end
       end
