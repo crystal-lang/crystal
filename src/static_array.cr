@@ -1,7 +1,14 @@
 struct StaticArray(T, N)
   include Enumerable(T)
 
-  def self.new
+  # Creates a new static array and invokes the
+  # block once for each index of the array, assigning the
+  # block's value in that index.
+  #
+  # ```
+  # StaticArray(Int32, 3).new { |i| i * 2 } #=> [0, 2, 4]
+  # ```
+  def self.new(&block : Int32 -> T)
     array :: self
     N.times do |i|
       array.buffer[i] = yield i
@@ -9,6 +16,11 @@ struct StaticArray(T, N)
     array
   end
 
+  # Creates a new static array filled with the given value.
+  #
+  # ```
+  # StaticArray(Int32, 3).new(42) #=> [42, 42, 42]
+  # ```
   def self.new(value : T)
     new { value }
   end

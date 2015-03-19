@@ -97,6 +97,15 @@ class Array(T)
     length <=> other.length
   end
 
+  # Set intersection: returns a new array containing elements common to the two arrays, excluding any duplicates.
+  # The order is preserved from the original array.
+  #
+  # ```
+  # [ 1, 1, 3, 5 ] & [ 1, 2, 3 ]                 #=> [ 1, 3 ]
+  # [ 'a', 'b', 'b', 'z' ] & [ 'a', 'b', 'c' ]   #=> [ 'a', 'b' ]
+  # ```
+  #
+  # See also: `#uniq`.
   def &(other : Array(U))
     return Array(T).new if self.empty? || other.empty?
 
@@ -117,8 +126,16 @@ class Array(T)
     end
   end
 
-  def |(other : Array(U))
-    Array(T | U).build(length + other.length) do |buffer|
+  # Set union: returns a new array by joining ary with `other_ary`, excluding any duplicates
+  # and preserving the order from the original array.
+  #
+  # ```
+  # [ "a", "b", "c" ] | [ "c", "d", "a" ]    #=> [ "a", "b", "c", "d" ]
+  # ```
+  #
+  # See also: `#uniq`.
+  def |(other_ary : Array(U))
+    Array(T | U).build(length + other_ary.length) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
       each do |obj|
@@ -128,7 +145,7 @@ class Array(T)
           i += 1
         end
       end
-      other.each do |obj|
+      other_ary.each do |obj|
         unless hash.has_key?(obj)
           buffer[i] = obj
           hash[obj] = true
@@ -221,6 +238,12 @@ class Array(T)
     @buffer
   end
 
+  # Removes all elements from self.
+  #
+  # ```
+  # a = [ "a", "b", "c", "d", "e" ]
+  # a.clear    #=> []
+  # ```
   def clear
     @length = 0
     self
@@ -750,11 +773,26 @@ class Array(T)
     @buffer
   end
 
+  # Returns a new array by removing duplicate values in `self`.
+  #
+  # ```
+  # a = [ "a", "a", "b", "b", "c" ]
+  # a.uniq   # => ["a", "b", "c"]
+  # a        # => [ "a", "a", "b", "b", "c" ]
+  # ```
   def uniq
     uniq &.itself
   end
 
-  def uniq
+  # Returns a new array by removing duplicate values in `self`, using the block's
+  # value for comparison.
+  #
+  # ```
+  # a = [{"student","sam"}, {"student","george"}, {"teacher","matz"}]
+  # a.uniq { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
+  # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
+  # ```
+  def uniq(&block : T -> _)
     if length <= 1
       dup
     else
@@ -763,10 +801,24 @@ class Array(T)
     end
   end
 
+  # Removes duplicate elements from `self`. Returns `self`.
+  #
+  # ```
+  # a = [ "a", "a", "b", "b", "c" ]
+  # a.uniq!   # => ["a", "b", "c"]
+  # a         # => ["a", "b", "c"]
+  # ```
   def uniq!
     uniq! &.itself
   end
 
+  # Removes duplicate elements from `self`, using the block's value for comparison. Returns `self`.
+  #
+  # ```
+  # a = [{"student","sam"}, {"student","george"}, {"teacher","matz"}]
+  # a.uniq! { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
+  # a                    # => [{"student", "sam"}, {"teacher", "matz"}]
+  # ```
   def uniq!
     if length <= 1
       return self
