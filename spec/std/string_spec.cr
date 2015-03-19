@@ -708,6 +708,7 @@ describe "String" do
   it "does underscore" do
     "Foo".underscore.should eq("foo")
     "FooBar".underscore.should eq("foo_bar")
+    "ABCde".underscore.should eq("ab_cde")
   end
 
   it "does camelcase" do

@@ -1036,6 +1036,8 @@ class String
   def underscore
     first = true
     last_is_downcase = false
+    last_is_upcase = false
+    mem = nil
 
     String.build(bytesize + 10) do |str|
       each_char do |char|
@@ -1045,13 +1047,32 @@ class String
         if first
           str << char.downcase
         elsif last_is_downcase && upcase
+          # This is the case of AbcDe, we need to put an underscore before the 'D'
+          #                        ^
           str << '_'
           str << char.downcase
+        elsif last_is_upcase && upcase
+          # This is the case of ABCde or ABCDe: if the next char is upcase (case 1) we need
+          #                       ^        ^
+          # to append this char as downcase. Otherwise (case 2), we need to append an underscore
+          # and then the char as downcase. So we save this char in 'mem' and decide later.
+          if mem
+            # This is case 2
+            str << mem.downcase
+          end
+          mem = char
         else
+          if mem
+            # This is case 1
+            str << '_'
+            str << mem.downcase
+            mem = nil
+          end
           str << char
         end
 
         last_is_downcase = downcase
+        last_is_upcase = upcase
         first = false
       end
     end
