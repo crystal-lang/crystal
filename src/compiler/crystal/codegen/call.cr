@@ -170,9 +170,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
             accept target_def.body
           end
 
-          unless block.breaks?
-            phi.add_last @last, target_def.body.type?
-          end
+          phi.add_last @last, target_def.body.type?
         end
       end
     end

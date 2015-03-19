@@ -1190,4 +1190,19 @@ describe "Code gen: block" do
       Foo(Int32).new.foo { |k| k + 1 }.to_s
       )).to_string.should eq("[]")
   end
+
+  it "codegens block which always breaks but never enters (#494)" do
+    run(%(
+      def foo
+        while 1 == 2
+          yield
+        end
+        3
+      end
+
+      foo do
+        break 10
+      end
+      )).to_i.should eq(3)
+  end
 end

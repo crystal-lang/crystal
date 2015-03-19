@@ -584,7 +584,7 @@ module Crystal
 
         position_at_end exit_block
 
-        if node.no_returns? || (node.body.yields? && block_breaks?)
+        if node.no_returns?
           unreachable
         else
           @last = llvm_nil
