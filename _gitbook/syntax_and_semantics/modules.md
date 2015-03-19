@@ -78,7 +78,7 @@ end
 include SomeModule
 
 SomeType.new # OK, same as SomeModule::SomeType
-some_method  # OK, same as SomeModule.some_method
+some_method  # OK, 1
 ```
 
 A common pattern for modules is `extend self`:
