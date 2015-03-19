@@ -245,7 +245,8 @@ class Crystal::Doc::Generator
         @is_crystal_repository = true
       end
 
-      break
+      # TODO: this was 'break', but it breaks because of #494
+      return
     end
   end
 
