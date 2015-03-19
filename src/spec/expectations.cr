@@ -73,11 +73,11 @@ module Spec
     end
 
     def failure_message
-      "expected #{@target} to be within #{@delta} of #{@expected}"
+      "expected #{@target.inspect} to be within #{@delta} of #{@expected}"
     end
 
     def negative_failure_message
-      "expected #{@target} not to be within #{@delta} of #{@expected}"
+      "expected #{@target.inspect} not to be within #{@delta} of #{@expected}"
     end
   end
 
@@ -88,11 +88,11 @@ module Spec
     end
 
     def failure_message
-      "expected #{@target} to be a #{T}"
+      "expected #{@target.inspect} to be a #{T}"
     end
 
     def negative_failure_message
-      "expected #{@target} not to be a #{T}"
+      "expected #{@target.inspect} not to be a #{T}"
     end
   end
 
@@ -134,11 +134,11 @@ module Spec
     end
 
     def failure_message
-      "expected #{@target} to be #{@op} #{@expected}"
+      "expected #{@target.inspect} to be #{@op} #{@expected}"
     end
 
     def negative_failure_message
-      "expected #{@target} not to be #{@op} #{@expected}"
+      "expected #{@target.inspect} not to be #{@op} #{@expected}"
     end
   end
 
