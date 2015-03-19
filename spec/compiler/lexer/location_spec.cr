@@ -76,4 +76,10 @@ describe "Lexer: location" do
     location.column_number.should eq(3)
     location.filename.should eq("foo.txt")
   end
+
+  it "parses var/call right after loc (#491)" do
+    exps = Parser.parse(%[(#<loc:"foo.txt",2,3>msg)]) as Expressions
+    exp = exps.expressions.first as Call
+    exp.name.should eq("msg")
+  end
 end

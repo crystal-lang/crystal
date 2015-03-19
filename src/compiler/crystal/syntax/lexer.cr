@@ -42,6 +42,7 @@ module Crystal
           (char = next_char_no_column_increment) == '"'
           next_char_no_column_increment
           consume_loc_pragma
+          start = current_pos
         else
           if @doc_enabled
             consume_doc
