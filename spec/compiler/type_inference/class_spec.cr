@@ -789,4 +789,16 @@ describe "Type inference: class" do
       bar.x
       )) { int32 }
   end
+
+  it "says no overload matches for class new" do
+    assert_error %(
+      class Foo
+        def self.new(x : Int32)
+        end
+      end
+
+      Foo.new 'a'
+      ),
+      "no overload matches"
+  end
 end
