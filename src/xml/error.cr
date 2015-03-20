@@ -5,11 +5,5 @@ module XML
     def initialize(message, @line_number)
       super(message)
     end
-
-    def to_s(io)
-      io << @message
-      io << " at line "
-      io << @line_number
-    end
   end
 end

@@ -10,49 +10,63 @@ describe XML::Document do
           <name>John</name>
         </person>
       </people>
-      ))
-    doc.should be_a(XML::Document)
-    doc.has_child_nodes?.should be_true
-    doc.child_nodes.length.should eq(1)
-    doc.has_attributes?.should be_false
+      )) as XML::Document
+    doc.document.should be(doc)
+    doc.name.should eq("document")
 
-    people = doc.child_nodes.first
+    people = doc.root.not_nil! as XML::Element
     people.name.should eq("people")
-    people.has_child_nodes?.should be_true
-    people.child_nodes.length.should eq(1)
-    people.has_attributes?.should be_false
+    people.type.should eq(XML::Type::Element)
 
-    person = people.child_nodes.first
+    children = doc.children as XML::NodeSet
+    children.length.should eq(1)
+    children.empty?.should be_false
+
+    people = children[0] as XML::Element
+    people.name.should eq("people")
+
+    people.document.should eq(doc)
+    people.document.should be(doc)
+
+    children = people.children
+    children.length.should eq(3)
+
+    text = children[0] as XML::Text
+    text.name.should eq("text")
+    text.content.should eq("\n        ")
+
+    person = children[1] as XML::Element
     person.name.should eq("person")
-    person.has_child_nodes?.should be_true
-    person.child_nodes.length.should eq(1)
 
-    person.has_attributes?.should be_true
-    person.attributes.length.should eq(2)
-    person.attributes[0].name.should eq("id")
-    person.attributes[0].value.should eq("1")
-    person.attributes[1].name.should eq("id2")
-    person.attributes[1].value.should eq("2")
+    text = children[2] as XML::Text
+    text.content.should eq("\n      ")
 
-    person.attributes["id"].should eq("1")
-    person.attributes["id2"].should eq("2")
+    attrs = person.attributes
+    attrs.length.should eq(2)
 
-    expect_raises MissingKey, "missing attribute: id3" do
-      person.attributes["id3"]
-    end
+    attr = attrs[0] as XML::Attribute
+    attr.name.should eq("id")
+    attr.content.should eq("1")
 
-    person.attributes["id"]?.should eq("1")
-    person.attributes["id3"]?.should be_nil
+    attr = attrs[1] as XML::Attribute
+    attr.name.should eq("id2")
+    attr.content.should eq("2")
 
-    name = person.child_nodes.first
-    name.name.should eq("name")
-    name.inner_text.should eq("John")
-    name.has_child_nodes?.should be_true
-    name.has_attributes?.should be_false
+    attrs["id"].content.should eq("1")
+    attrs["id2"].content.should eq("2")
 
-    text = name.child_nodes[0]
-    text.name.should be_nil
-    text.value.should eq("John")
+    attrs["id3"]?.should be_nil
+    expect_raises(MissingKey) { attrs["id3"] }
+
+    person["id"].should eq("1")
+    person["id2"].should eq("2")
+    person["id3"]?.should be_nil
+    expect_raises(MissingKey) { person["id3"] }
+
+    name = person.children.find { |node| node.name == "name" }.not_nil!
+    name.content.should eq("John")
+
+    name.parent.should eq(person)
   end
 
   it "does to_s" do
@@ -66,13 +80,13 @@ describe XML::Document do
       )
 
     doc = XML.parse(string)
-    doc.to_s.should eq(string)
+    doc.to_s.should eq("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<people><person id=\"1\" id2=\"2\"><name>John</name></person></people>\n")
   end
 
   it "handles errors" do
-    expect_raises(XML::Error, "StartTag: invalid element name at line 2") do
+    expect_raises(XML::Error, "Premature end of data in tag people line 2") do
       XML.parse(%(
-        </people>
+        <people>
         ))
     end
   end
