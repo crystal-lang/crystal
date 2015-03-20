@@ -1,11 +1,135 @@
 #!/usr/bin/env bash
-SCRIPT_ROOT="$(dirname $(readlink $0 || echo $0))/.."
-CRYSTAL_DIR="$SCRIPT_ROOT/.build"
-export CRYSTAL_PATH=$SCRIPT_ROOT/src:libs
-if [ -x $CRYSTAL_DIR/crystal ]
+
+################## https://github.com/mkropat/sh-realpath #####################
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2014 Michael Kropat
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+realpath() {
+    canonicalize_path "$(resolve_symlinks "$1")"
+}
+
+resolve_symlinks() {
+    _resolve_symlinks "$1"
+}
+
+_resolve_symlinks() {
+    _assert_no_path_cycles "$@" || return
+
+    local dir_context path
+    path=$(readlink -- "$1")
+    if [ $? -eq 0 ]; then
+        dir_context=$(dirname -- "$1")
+        _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
+    else
+        printf '%s\n' "$1"
+    fi
+}
+
+_prepend_dir_context_if_necessary() {
+    if [ "$1" = . ]; then
+        printf '%s\n' "$2"
+    else
+        _prepend_path_if_relative "$1" "$2"
+    fi
+}
+
+_prepend_path_if_relative() {
+    case "$2" in
+        /* ) printf '%s\n' "$2" ;;
+         * ) printf '%s\n' "$1/$2" ;;
+    esac
+}
+
+_assert_no_path_cycles() {
+    local target path
+
+    target=$1
+    shift
+
+    for path in "$@"; do
+        if [ "$path" = "$target" ]; then
+            return 1
+        fi
+    done
+}
+
+canonicalize_path() {
+    if [ -d "$1" ]; then
+        _canonicalize_dir_path "$1"
+    else
+        _canonicalize_file_path "$1"
+    fi
+}
+
+_canonicalize_dir_path() {
+    (cd "$1" 2>/dev/null && pwd -P)
+}
+
+_canonicalize_file_path() {
+    local dir file
+    dir=$(dirname -- "$1")
+    file=$(basename -- "$1")
+    (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+}
+
+##############################################################################
+
+# Based on http://stackoverflow.com/a/2108540/2199687
+remove_path_item() {
+  local path item work
+
+  path="$1"
+  item="$2"
+
+  work=":$path:"
+  work="${work/:$item:/:}"
+  work="${work%:}"
+  work="${work#:}"
+
+  echo "$work"
+}
+
+##############################################################################
+
+SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
+CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
+CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
+
+export CRYSTAL_PATH=$CRYSTAL_ROOT/src:libs
+
+if [ -x "$CRYSTAL_DIR/crystal" ]
 then
   echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
-  $CRYSTAL_DIR/crystal "$@"
+  exec "$CRYSTAL_DIR/crystal" "$@"
+elif ! command -v crystal > /dev/null
+then
+  echo -e "\x1B[31mYou need to have a crystal executable in your path!\x1B[0m" 1>&2
+  exit 1
+elif [ "$(command -v crystal)" = "$SCRIPT_PATH" ] || [ "$(command -v crystal)" = "bin/crystal" ]
+then
+  export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
+  exec "$SCRIPT_PATH" "$@"
 else
-  crystal "$@"
+  exec crystal "$@"
 fi
