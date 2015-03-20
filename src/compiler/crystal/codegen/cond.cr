@@ -23,10 +23,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def codegen_cond(type : MixedUnionType)
     has_nil = type.union_types.any? &.nil_type?
     has_bool = type.union_types.any? &.bool_type?
+    has_pointer = type.union_types.any? &.is_a?(PointerInstanceType)
 
     cond = llvm_true
 
-    if has_nil || has_bool
+    if has_nil || has_bool || has_pointer
       type_id = load union_type_id(@last)
 
       if has_nil
@@ -38,6 +39,17 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         value = load(bit_cast union_value(@last), LLVM::Int1.pointer)
         is_bool = equal? type_id, type_id(@mod.bool)
         cond = and cond, not(and(is_bool, not(value)))
+      end
+
+      if has_pointer
+        type.union_types.each do |union_type|
+          next unless union_type.is_a?(PointerInstanceType)
+
+          is_pointer = equal? type_id, type_id(union_type)
+          pointer_value = load(bit_cast union_value(@last), llvm_type(union_type).pointer)
+          pointer_null = null_pointer?(pointer_value)
+          cond = and cond, not(and(is_pointer, pointer_null))
+        end
       end
     end
 

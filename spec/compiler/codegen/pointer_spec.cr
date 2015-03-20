@@ -264,4 +264,26 @@ describe "Code gen: pointer" do
       foo p
       ").to_i.should eq(1)
   end
+
+  it "codgens pointer as if condition inside union (1)" do
+    run(%(
+      ptr = Pointer(Int32).new(0_u64) || Pointer(Float64).new(0_u64)
+      if ptr
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "codgens pointer as if condition inside union (2)" do
+    run(%(
+      if 1 == 1
+        ptr = Pointer(Int32).new(0_u64)
+      else
+        ptr = 10
+      end
+      ptr ? 20 : 30
+      )).to_i.should eq(30)
+  end
 end
