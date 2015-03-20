@@ -131,10 +131,10 @@ module IO
     end
   end
 
-  # Reads count bytes from this IO into slice
+  # Reads count bytes from this IO into slice. Returns the number of bytes read.
   abstract def read(slice : Slice(UInt8), count)
 
-  # Writes count bytes from slice into this IO
+  # Writes count bytes from slice into this IO. Returns the number of bytes written.
   abstract def write(slice : Slice(UInt8), count)
 
   def read(slice : Slice(UInt8))

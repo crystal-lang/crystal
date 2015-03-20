@@ -48,6 +48,7 @@ class FileDescriptorIO
   end
 
   def write(slice : Slice(UInt8), count)
+    total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_written == -1
@@ -60,7 +61,7 @@ class FileDescriptorIO
         end
       end
       count -= bytes_written
-      return if count == 0
+      return total if count == 0
       slice += bytes_written
     end
   end

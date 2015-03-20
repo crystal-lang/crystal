@@ -69,6 +69,25 @@ describe XML::Document do
     name.parent.should eq(person)
   end
 
+  it "parses from io" do
+    io = StringIO.new(%(\
+      <?xml version='1.0' encoding='UTF-8'?>
+      <people>
+        <person id="1" id2="2">
+          <name>John</name>
+        </person>
+      </people>
+      ))
+
+    doc = XML.parse(io) as XML::Document
+    doc.document.should be(doc)
+    doc.name.should eq("document")
+
+    people = doc.children.find { |node| node.name == "people" }.not_nil!
+    person = people.children.find { |node| node.name == "person" }.not_nil!
+    person["id"].should eq("1")
+  end
+
   it "does to_s" do
     string = %(\
       <?xml version='1.0' encoding='UTF-8'?>\

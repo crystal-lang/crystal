@@ -33,7 +33,7 @@ class StringIO
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
 
-    self
+    count
   end
 
   def clear

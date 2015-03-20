@@ -13,5 +13,6 @@ struct PointerIO
   def write(slice : Slice(UInt8), count)
     slice.copy_to(@pointer.value, count)
     @pointer.value += count
+    count
   end
 end

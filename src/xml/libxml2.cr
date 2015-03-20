@@ -75,6 +75,12 @@ lib LibXML
   fun xmlTextReaderLocatorLineNumber(XMLTextReaderLocator) : Int32
 
   fun xmlReadMemory(buffer : UInt8*, size : Int32, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : DocPtr
+
+  alias InputReadCallback = (Void*, UInt8*, Int32) -> Int32
+  alias InputCloseCallback = (Void*) -> Int32
+
+  fun xmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : DocPtr
+
   fun xmlDocGetRootElement(doc : DocPtr) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
   fun xmlXPathNodeSetAddUnique(cur : NodeSet*, val : Node*) : Int32
