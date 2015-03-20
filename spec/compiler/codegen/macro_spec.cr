@@ -944,4 +944,28 @@ describe "Code gen: macro" do
       z
       )).to_i.should eq(4 + 5 + 6)
   end
+
+  it "codegens macro def with splat (#496)" do
+    run(%(
+      class Foo
+        macro def bar(*args) : Int32
+          args[0] + args[1] + args[2]
+        end
+      end
+
+      Foo.new.bar(1, 2, 3)
+      )).to_i.should eq(6)
+  end
+
+  it "codegens macro def with default arg (similar to #496)"  do
+    run(%(
+      class Foo
+        macro def bar(foo = 1) : Int32
+          foo + 2
+        end
+      end
+
+      Foo.new.bar
+      )).to_i.should eq(3)
+  end
 end

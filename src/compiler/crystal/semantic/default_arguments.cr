@@ -34,7 +34,7 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction } || splat_index
+    retain_body = yields || splat_index || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
     splat_index = splat_index() || -1
 
@@ -126,8 +126,20 @@ class Crystal::Def
         new_body << Assign.new(Var.new(args[splat_index].name), tuple)
       end
 
-      new_body.push body.clone
-      expansion.body = Expressions.new(new_body)
+      if macro_def?
+        # If this is a macro def, we need to convert the previous assignments to
+        # strings and then to a MacroLiteral, so they are intepreted as regular code
+        # and not special nodes like Var, Assign, etc.
+        literal_body = String.build do |str|
+          Expressions.from(new_body).to_s(str)
+          str << ";"
+        end
+        new_literal = MacroLiteral.new(literal_body)
+        expansion.body = Expressions.from([new_literal, body.clone])
+      else
+        new_body.push body.clone
+        expansion.body = Expressions.new(new_body)
+      end
     else
       new_args = [] of ASTNode
 
