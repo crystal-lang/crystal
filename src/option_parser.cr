@@ -68,6 +68,10 @@ class OptionParser
     @handlers << Handler.new(long_flag, block)
   end
 
+  def separator(message = "")
+    @flags << message.to_s
+  end
+
   def unknown_args(&@unknown_args : Array(String), Array(String) -> )
   end
 

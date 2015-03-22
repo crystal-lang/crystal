@@ -152,6 +152,29 @@ describe "OptionParser" do
     ].join "\n")
   end
 
+  it "does to_s with separators" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.separator
+      opts.separator "Type F flags:"
+      opts.on("-f", "--flag", "some flag") do
+      end
+      opts.separator
+      opts.separator "Type G flags:"
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq([
+      "Usage: foo",
+      "",
+      "Type F flags:",
+      "    -f, --flag                       some flag"
+      "",
+      "Type G flags:",
+      "    -g[FLAG]                         some other flag"
+    ].join "\n")
+  end
+
   it "raises on invalid option" do
     expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
       OptionParser.parse(["-f", "-j"]) do |opts|
