@@ -303,5 +303,23 @@ describe "OptionParser" do
       args.should eq(["baz"])
       unknown_args.should eq({["baz"], [] of String})
     end
+
+    it "initializes without block and does parse!" do
+      old_argv = ARGV.dup
+      begin
+        ARGV.clear
+        ARGV.concat %w(--f hi)
+        f = nil
+        OptionParser.new do |opts|
+          opts.on("--f FLAG", "some flag") do |v|
+            f = v
+          end
+        end.parse!
+        f.should eq("hi")
+      ensure
+        ARGV.clear
+        ARGV.concat old_argv
+      end
+    end
   end
 end
