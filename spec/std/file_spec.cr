@@ -103,11 +103,12 @@ describe "File" do
   end
 
   it "constructs a path from parts" do
-    File.join(["///foo", "bar"]).should eq("/foo/bar")
-    File.join(["///foo", "//bar"]).should eq("/foo/bar")
+    File.join(["///foo", "bar"]).should eq("///foo/bar")
+    File.join(["///foo", "//bar"]).should eq("///foo//bar")
+    File.join(["/foo/", "/bar"]).should eq("/foo/bar")
     File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
-    File.join(["foo", "//bar//", "baz///"]).should eq("foo/bar/baz/")
-    File.join(["/foo/", "/bar/", nil, "/baz/"]).should eq("/foo/bar/baz/")
+    File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+    File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
   end
 
   it "gets stat for this file" do

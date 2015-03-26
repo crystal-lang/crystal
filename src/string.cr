@@ -1436,11 +1436,11 @@ class String
     cstr
   end
 
-  private def unsafe_byte_slice(byte_offset, count)
+  def unsafe_byte_slice(byte_offset, count)
     Slice.new(cstr + byte_offset, count)
   end
 
-  private def unsafe_byte_slice(byte_offset)
+  def unsafe_byte_slice(byte_offset)
     Slice.new(cstr + byte_offset, bytesize - byte_offset)
   end
 

@@ -221,33 +221,44 @@ class File < FileDescriptorIO
     end
   end
 
+  # Returns a new string formed by joining the strings using File::SEPARATOR.
+  #
+  # ```
+  # File.join("foo", "bar", "baz") #=> "foo/bar/baz"
+  # File.join("foo/", "/bar/", "/baz") #=> "foo/bar/baz"
+  # File.join("/foo/", "/bar/", "/baz/") #=> "/foo/bar/baz/"
+  # ```
   def self.join(*parts)
     join parts
   end
 
+  # Returns a new string formed by joining the strings using File::SEPARATOR.
+  #
+  # ```
+  # File.join("foo", "bar", "baz") #=> "foo/bar/baz"
+  # File.join("foo/", "/bar/", "/baz") #=> "foo/bar/baz"
+  # File.join("/foo/", "/bar/", "/baz/") #=> "/foo/bar/baz/"
+  # ```
   def self.join(parts : Array | Tuple)
-    return "" if parts.empty?
+    String.build do |str|
+      parts.each_with_index do |part, index|
+        str << SEPARATOR if index > 0
 
-    parts.map_with_index do |part, index|
-      if part
-        lindex = 0
-        while lindex < part.length
-          break if part[lindex] != SEPARATOR
-          lindex += 1
+        byte_start = 0
+        byte_count = part.bytesize
+
+        if index > 0 && part.starts_with?(SEPARATOR)
+          byte_start += 1
+          byte_count -= 1
         end
 
-        rindex = part.length - 1
-        while rindex >= 0
-          break if part[rindex] != SEPARATOR
-          rindex -= 1
+        if index != parts.length - 1 && part.ends_with?(SEPARATOR)
+          byte_count -= 1
         end
 
-        lindex -= 1 if index == 0 && lindex != 0
-        rindex += 1 if index == parts.size - 1 && rindex + 1 != part.length
-
-        part[lindex..rindex]
+        str.write part.unsafe_byte_slice(byte_start, byte_count)
       end
-    end.compact.join('/')
+    end
   end
 
   def self.size(filename)
