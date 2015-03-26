@@ -5,7 +5,7 @@ end
 class Tempfile < FileDescriptorIO
   def initialize(name)
     if tmpdir = ENV["TMPDIR"]?
-      tmpdir = tmpdir + '/' unless tmpdir.ends_with? '/'
+      tmpdir = tmpdir + File::SEPARATOR unless tmpdir.ends_with? File::SEPARATOR
     else
       tmpdir = "/tmp/"
     end

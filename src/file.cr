@@ -1,5 +1,11 @@
 class File < FileDescriptorIO
-  SEPARATOR = '/'
+  # The file/directory separator character. '/' in unix, '\\' in windows.
+  SEPARATOR = ifdef windows; '\\'; else; '/'; end
+
+  # The file/directory separator string. "/" in unix, "\\" in windows.
+  SEPARATOR_STRING = ifdef windows; "\\"; else; "/"; end
+
+  # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
   def initialize(filename, mode = "r")
@@ -88,7 +94,7 @@ class File < FileDescriptorIO
     index = filename.rindex SEPARATOR
     if index
       if index == 0
-        "/"
+        SEPARATOR_STRING
       else
         filename[0, index]
       end
@@ -137,23 +143,19 @@ class File < FileDescriptorIO
   def self.expand_path(path, dir = nil)
     if path.starts_with?('~')
       home = ENV["HOME"]
-      if path.length >= 2 && path[1] == '/'
+      if path.length >= 2 && path[1] == SEPARATOR
         path = home + path[1..-1]
       elsif path.length < 2
         return home
       end
     end
 
-    unless path.starts_with?('/')
+    unless path.starts_with?(SEPARATOR)
       dir = dir ? expand_path(dir) : Dir.working_directory
-      path = "#{dir}/#{path}"
+      path = "#{dir}#{SEPARATOR}#{path}"
     end
 
-    ifdef windows
-      path = path.tr("\\", "/")
-    end
-
-    parts = path.split('/')
+    parts = path.split(SEPARATOR)
     was_letter = false
     first_slash = true
     items = [] of String
@@ -168,10 +170,11 @@ class File < FileDescriptorIO
       end
     end
 
-    ifdef windows
-      items.join("/")
-    else
-      "/" + items.join("/")
+    String.build do |str|
+      ifdef !windows
+        str << SEPARATOR_STRING
+      end
+      items.join SEPARATOR_STRING, str
     end
   end
 
