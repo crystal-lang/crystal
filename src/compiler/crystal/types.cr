@@ -2258,10 +2258,6 @@ module Crystal
       end
     end
 
-    def metaclass
-      self
-    end
-
     def parents
       nil
     end

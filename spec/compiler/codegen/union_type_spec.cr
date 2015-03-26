@@ -172,4 +172,17 @@ describe "Code gen: union type" do
       type_id t
       ").to_i.should eq(2)
   end
+
+  it "codegens union to_s" do
+    run(%(
+      require "prelude"
+
+      def foo(x : T)
+        T.to_s
+      end
+
+      a = 1 || 1.5
+      foo(a)
+      )).to_string.should eq("(Int32 | Float64)")
+  end
 end
