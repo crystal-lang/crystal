@@ -5,6 +5,13 @@ module XML
     def initialize(@node)
     end
 
+    def empty?
+      return true unless @node.is_a?(Element)
+
+      props = self.props()
+      props.nil?
+    end
+
     def length
       count = 0
       each_ptr do |ptr|
@@ -52,16 +59,29 @@ module XML
       end
     end
 
+    def to_s(io)
+      io << "["
+      join ", ", io, &.inspect(io)
+      io << "]"
+    end
+
+    def inspect(io)
+      to_s(io)
+    end
+
     private def each_ptr
       return unless @node.is_a?(Element)
 
-      ptr = @node.to_unsafe as LibXML::Node*
-      props = ptr.value.properties as LibXML::NodeCommon*
-
+      props = self.props()
       until props.nil?
         yield props
         props = props.value.next as LibXML::NodeCommon*
       end
+    end
+
+    protected def props
+      ptr = @node.to_unsafe as LibXML::Node*
+      ptr.value.properties as LibXML::NodeCommon*
     end
   end
 end

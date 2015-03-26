@@ -13,10 +13,13 @@ describe XML::Document do
       )) as XML::Document
     doc.document.should be(doc)
     doc.name.should eq("document")
+    doc.attributes.empty?.should be_true
 
     people = doc.root.not_nil! as XML::Element
     people.name.should eq("people")
     people.type.should eq(XML::Type::Element)
+
+    people.attributes.empty?.should be_true
 
     children = doc.children as XML::NodeSet
     children.length.should eq(1)
@@ -42,6 +45,7 @@ describe XML::Document do
     text.content.should eq("\n      ")
 
     attrs = person.attributes
+    attrs.empty?.should be_false
     attrs.length.should eq(2)
 
     attr = attrs[0] as XML::Attribute
@@ -100,6 +104,38 @@ describe XML::Document do
 
     doc = XML.parse(string)
     doc.to_s.should eq("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<people><person id=\"1\" id2=\"2\"><name>John</name></person></people>\n")
+  end
+
+  it "navigates in tree" do
+    doc = XML.parse(%(\
+      <?xml version='1.0' encoding='UTF-8'?>
+      <people>
+        <person id="1" />
+        <person id="2" />
+      </people>
+      )) as XML::Document
+
+    people = doc.first_element_child.not_nil!
+    people.name.should eq("people")
+
+    person = people.first_element_child.not_nil!
+    person.name.should eq("person")
+    person["id"].should eq("1")
+
+    text = person.next.not_nil!
+    text.content.should eq("\n        ")
+
+    text.previous.should eq(person)
+    text.previous_sibling.should eq(person)
+
+    person.next_sibling.should eq(text)
+
+    person2 = text.next.not_nil!
+    person2.name.should eq("person")
+    person2["id"].should eq("2")
+
+    person.next_element.should eq(person2)
+    person2.previous_element.should eq(person)
   end
 
   it "handles errors" do

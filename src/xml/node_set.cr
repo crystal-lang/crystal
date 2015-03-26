@@ -29,6 +29,16 @@ module XML
       end
     end
 
+    def to_s(io)
+      io << "["
+      join ", ", io, &.inspect(io)
+      io << "]"
+    end
+
+    def inspect(io)
+      to_s(io)
+    end
+
     def to_unsafe
       @set
     end

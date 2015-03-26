@@ -53,6 +53,62 @@ module XML
       (@node.value.doc as LibXML::NodeCommon*).value._private as Document
     end
 
+    def first_element_child
+      child = @node.value.children
+      while child
+        if child.value.type == XML::Type::Element
+          return Node.from_ptr(child)
+        end
+        child = child.value.next
+      end
+      nil
+    end
+
+    def inspect(io)
+      io << "#<" << self.class.name << ":0x"
+      object_id.to_s(16, io)
+
+      io << " name="
+      name.inspect(io)
+
+      unless self.is_a?(Attribute)
+        children = self.children
+        unless children.empty?
+          io << " children="
+          children.inspect(io)
+        end
+
+        attributes = self.attributes
+        unless attributes.empty?
+          io << " attributes="
+          attributes.inspect(io)
+        end
+      end
+
+      io << ">"
+      io
+    end
+
+    def next
+      next_node = @node.value.next
+      next_node ? Node.from_ptr(next_node) : nil
+    end
+
+    def next_sibling
+      self.next
+    end
+
+    def next_element
+      next_node = @node.value.next
+      while next_node
+        if next_node.value.type == XML::Type::Element
+          return Node.from_ptr(next_node)
+        end
+        next_node = next_node.value.next
+      end
+      nil
+    end
+
     def name
       String.new(@node.value.name)
     end
@@ -60,6 +116,26 @@ module XML
     def parent
       parent = @node.value.parent
       parent ? Node.from_ptr(parent) : nil
+    end
+
+    def previous
+      prev_node = @node.value.prev
+      prev_node ? Node.from_ptr(prev_node) : nil
+    end
+
+    def previous_element
+      prev_node = @node.value.prev
+      while prev_node
+        if prev_node.value.type == XML::Type::Element
+          return Node.from_ptr(prev_node)
+        end
+        prev_node = prev_node.value.prev
+      end
+      nil
+    end
+
+    def previous_sibling
+      previous
     end
 
     def to_s(io : IO)
@@ -80,6 +156,10 @@ module XML
       io
     end
 
+    def to_unsafe
+      @node as LibXML::Node*
+    end
+
     def type
       @node.value.type
     end
@@ -94,10 +174,6 @@ module XML
 
     def ==(other : Node)
       @node == other.@node
-    end
-
-    def to_unsafe
-      @node as LibXML::Node*
     end
   end
 end
