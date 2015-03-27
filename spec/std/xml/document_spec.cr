@@ -103,7 +103,15 @@ describe XML::Document do
       )
 
     doc = XML.parse(string)
-    doc.to_s.should eq("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<people><person id=\"1\" id2=\"2\"><name>John</name></person></people>\n")
+    doc.to_s.strip.should eq(<<-XML
+<?xml version="1.0" encoding="UTF-8"?>
+<people>
+  <person id="1" id2="2">
+    <name>John</name>
+  </person>
+</people>
+XML
+)
   end
 
   it "navigates in tree" do

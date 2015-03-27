@@ -1,8 +1,12 @@
 require "./type"
 require "./parser_options"
+require "./save_options"
 
 @[Link("xml2")]
 lib LibXML
+  $xmlIndentTreeOutput : Int32
+  $xmlTreeIndentString : UInt8*
+
   type DocPtr = Void*
   type NSPtr = Void*
   type AttrPtr = Void*
@@ -97,7 +101,7 @@ lib LibXML
 
   type SaveCtxPtr = Void*
 
-  fun xmlSaveToIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoding : UInt8*, options : Int32) : SaveCtxPtr
+  fun xmlSaveToIO(iowrite : OutputWriteCallback, ioclose : OutputCloseCallback, ioctx : Void*, encoding : UInt8*, options : XML::SaveOptions) : SaveCtxPtr
   fun xmlSaveTree(ctx : SaveCtxPtr, node : Node*) : Int64
   fun xmlSaveClose(ctx : SaveCtxPtr) : Int32
 

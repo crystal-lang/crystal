@@ -139,20 +139,46 @@ module XML
     end
 
     def to_s(io : IO)
-      save_ctx = LibXML.xmlSaveToIO(
-        ->(ctx, buffer, len) {
-          Box(IO).unbox(ctx).write Slice.new(buffer, len)
-          len
-        },
-        ->(ctx) {
-          Box(IO).unbox(ctx).flush
-          0
-        },
-        Box(IO).box(io),
-        nil,
-        0)
-      LibXML.xmlSaveTree(save_ctx, self)
-      LibXML.xmlSaveClose(save_ctx)
+      to_xml io
+    end
+
+    def to_xml(indent = 2 : Int, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)
+      String.build do |str|
+        to_xml str, indent, indent_text, options
+      end
+    end
+
+    # :nodoc:
+    SAVE_MUTEX = Mutex.new
+
+    def to_xml(io : IO, indent = 2, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)
+      # We need to use a mutex because we modify global libxml variables
+      SAVE_MUTEX.synchronize do
+        oldXmlIndentTreeOutput = LibXML.xmlIndentTreeOutput
+        LibXML.xmlIndentTreeOutput = 1
+
+        oldXmlTreeIndentString = LibXML.xmlTreeIndentString
+        LibXML.xmlTreeIndentString = (indent_text * indent).to_unsafe
+
+        save_ctx = LibXML.xmlSaveToIO(
+          ->(ctx, buffer, len) {
+            Box(IO).unbox(ctx).write Slice.new(buffer, len)
+            len
+          },
+          ->(ctx) {
+            Box(IO).unbox(ctx).flush
+            0
+          },
+          Box(IO).box(io),
+          nil,
+          options)
+        LibXML.xmlSaveTree(save_ctx, self)
+        LibXML.xmlSaveClose(save_ctx)
+
+        LibXML.xmlIndentTreeOutput = oldXmlIndentTreeOutput
+        LibXML.xmlTreeIndentString = oldXmlTreeIndentString
+      end
+
       io
     end
 
