@@ -590,7 +590,6 @@ describe "String" do
     ("%s" % 'a').should       eq("a")
     ("%-s" % 'a').should      eq("a")
     ("%20s" % 'a').should     eq("                   a")
-    ("%20s" % 'a').should     eq("                   a")
     ("%-20s" % 'a').should    eq("a                   ")
 
     ("%%%d" % 1).should eq("%1")
@@ -600,19 +599,22 @@ describe "String" do
     ("%+b" % 123).should eq("+1111011")
     ("% b" % 123).should eq(" 1111011")
     ("%-b" % 123).should eq("1111011")
-    # ("%-10b" % 123).should eq("   1111011")
+    ("%10b" % 123).should eq("   1111011")
+    ("%-10b" % 123).should eq("1111011   ")
 
     ("%o" % 123).should eq("173")
     ("%+o" % 123).should eq("+173")
     ("% o" % 123).should eq(" 173")
     ("%-o" % 123).should eq("173")
-    # ("%-6o" % 123).should eq("   173")
+    ("%6o" % 123).should eq("   173")
+    ("%-6o" % 123).should eq("173   ")
 
     ("%x" % 123).should eq("7B")
     ("%+x" % 123).should eq("+7B")
     ("% x" % 123).should eq(" 7B")
     ("%-x" % 123).should eq("7B")
-    # ("%-6x" % 123).should eq("    7B")
+    ("%6x" % 123).should eq("    7B")
+    ("%-6x" % 123).should eq("7B    ")
 
     ("こんに%xちは" % 123).should eq("こんに7Bちは")
   end

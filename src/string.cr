@@ -1446,4 +1446,4 @@ class String
 
 end
 
-require "string/formatter"
+require "./string/formatter"
