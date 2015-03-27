@@ -143,18 +143,21 @@ module Crystal
             end
 
             here = here.to_s
+            char = next_char
 
             while true
-              case char = next_char
+              case char
               when '\0'
                 raise "unterminated heredoc"
               when '\n'
                 @line_number += 1
                 @column_number = 0
+
                 here_end = current_pos
                 is_here  = false
                 here.each_char do |c|
-                  unless c == next_char
+                  char = next_char
+                  unless char == c
                     is_here = false
                     break
                   end
@@ -170,6 +173,8 @@ module Crystal
                     break
                   end
                 end
+              else
+                char = next_char
               end
             end
           else

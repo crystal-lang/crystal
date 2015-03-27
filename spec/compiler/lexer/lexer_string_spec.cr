@@ -155,6 +155,14 @@ describe "Lexer string" do
     tester.should_have_reached_eof
   end
 
+  it "lexes heredoc with empty line" do
+    lexer = Lexer.new("<<-XML\nfoo\n\nXML")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.next_token_should_be(:STRING, "foo\n")
+    tester.should_have_reached_eof
+  end
+
   it "assigns correct location after heredoc (#346)" do
     string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE"
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE\n1")
