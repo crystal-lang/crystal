@@ -203,6 +203,15 @@ module IO
     write_byte '\n'.ord.to_u8
   end
 
+  def printf(format_string, *args)
+    printf format_string, args
+  end
+
+  def printf(format_string, args : Array | Tuple)
+    String::Formatter.new(format_string, args, self).format
+    nil
+  end
+
   def read_byte
     byte :: UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
@@ -331,6 +340,14 @@ def print!(obj)
   print obj
   STDOUT.flush
   nil
+end
+
+def printf(format_string, *args)
+  printf format_string, args
+end
+
+def printf(format_string, args : Array | Tuple)
+  STDOUT.printf format_string, args
 end
 
 def puts(obj)

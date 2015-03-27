@@ -7,10 +7,22 @@ struct Tuple
   end
 
   def [](index : Int)
+    at(index)
+  end
+
+  def []?(index : Int)
+    at(index) { nil }
+  end
+
+  def at(index : Int)
+    at(index) { raise IndexOutOfBounds.new }
+  end
+
+  def at(index : Int)
     {% for i in 0 ... @length %}
       return self[{{i}}] if {{i}} == index
     {% end %}
-    raise IndexOutOfBounds.new
+    yield
   end
 
   def each

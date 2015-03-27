@@ -164,4 +164,16 @@ describe "StringIO" do
       str.read_line
     end
   end
+
+  it "writes with printf" do
+    str = StringIO.new
+    str.printf "Hello %d", 123
+    str.to_s.should eq("Hello 123")
+  end
+
+  it "writes with printf as an array" do
+    str = StringIO.new
+    str.printf "Hello %d", [123]
+    str.to_s.should eq("Hello 123")
+  end
 end

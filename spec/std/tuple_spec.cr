@@ -32,6 +32,21 @@ describe "Tuple" do
     expect_raises(IndexOutOfBounds) { a[i] }
   end
 
+  it "does []?" do
+    a = {1, 2}
+    a[1]?.should eq(2)
+    a[2]?.should be_nil
+  end
+
+  it "does at" do
+    a = {1, 2}
+    a.at(1).should eq(2)
+
+    expect_raises(IndexOutOfBounds) { a.at(2) }
+
+    a.at(2) { 3 }.should eq(3)
+  end
+
   it "does ==" do
     a = {1, 2}
     b = {3, 4}

@@ -1,5 +1,5 @@
 class String::Formatter
-  def initialize(string, @args, @buffer)
+  def initialize(string, @args, @out)
     @reader = CharReader.new(string)
     @arg_index = 0
   end
@@ -11,23 +11,23 @@ class String::Formatter
         case char = next_char
         when 's'
           append_string do |arg, arg_s|
-            @buffer << arg_s
+            @out << arg_s
           end
         when 'd'
           append_integer do |arg, arg_s|
-            @buffer << arg_s
+            @out << arg_s
           end
         when 'b'
           append_integer(char, 2) do |arg, arg_s|
-            @buffer << arg_s
+            @out << arg_s
           end
         when 'o'
           append_integer(char, 8) do |arg, arg_s|
-            @buffer << arg_s
+            @out << arg_s
           end
         when 'x'
           append_integer(char, 16) do |arg, arg_s|
-            @buffer << arg_s
+            @out << arg_s
           end
         when '0'
           append_with_left_padding('0')
@@ -37,39 +37,39 @@ class String::Formatter
           case char = next_char
           when 'd'
             append_integer do |arg, arg_s|
-              @buffer << '+' if arg >= 0
-              @buffer << arg_s
+              @out << '+' if arg >= 0
+              @out << arg_s
             end
           when 'b'
             append_integer(char, 2) do |arg, arg_s|
-              @buffer << '+' if arg >= 0
-              @buffer << arg_s
+              @out << '+' if arg >= 0
+              @out << arg_s
             end
           when 'o'
             append_integer(char, 8) do |arg, arg_s|
-              @buffer << '+' if arg >= 0
-              @buffer << arg_s
+              @out << '+' if arg >= 0
+              @out << arg_s
             end
           when 'x'
             append_integer(char, 16) do |arg, arg_s|
-              @buffer << '+' if arg >= 0
-              @buffer << arg_s
+              @out << '+' if arg >= 0
+              @out << arg_s
             end
           when '0'
             append_with_padding do |arg, arg_s, num|
               num -= arg_s.bytesize
               num -= 1 if arg >= 0
-              @buffer << '+' if arg >= 0
-              num.times { @buffer << '0' }
-              @buffer << arg_s
+              @out << '+' if arg >= 0
+              num.times { @out << '0' }
+              @out << arg_s
             end
           when '1' .. '9'
             append_with_padding do |arg, arg_s, num|
               num -= arg_s.bytesize
               num -= 1 if arg >= 0
-              num.times { @buffer << ' ' }
-              @buffer << '+' if arg >= 0
-              @buffer << arg_s
+              num.times { @out << ' ' }
+              @out << '+' if arg >= 0
+              @out << arg_s
             end
           else
             raise "malformed format string - %+#{char}"
@@ -78,31 +78,31 @@ class String::Formatter
           case char = next_char
           when 'd'
             append_integer do |arg, arg_s|
-              @buffer << ' ' if arg >= 0
-              @buffer << arg_s
+              @out << ' ' if arg >= 0
+              @out << arg_s
             end
           when 'b'
             append_integer(char, 2) do |arg, arg_s|
-              @buffer << ' ' if arg >= 0
-              @buffer << arg_s
+              @out << ' ' if arg >= 0
+              @out << arg_s
             end
           when 'o'
             append_integer(char, 8) do |arg, arg_s|
-              @buffer << ' ' if arg >= 0
-              @buffer << arg_s
+              @out << ' ' if arg >= 0
+              @out << arg_s
             end
           when 'x'
             append_integer(char, 16) do |arg, arg_s|
-              @buffer << ' ' if arg >= 0
-              @buffer << arg_s
+              @out << ' ' if arg >= 0
+              @out << arg_s
             end
           when '0'
             append_with_padding do |arg, arg_s, num|
               num -= arg_s.bytesize
               num -= 1 if arg >= 0
-              @buffer << ' ' if arg >= 0
-              num.times { @buffer << '0' }
-              @buffer << arg_s
+              @out << ' ' if arg >= 0
+              num.times { @out << '0' }
+              @out << arg_s
             end
           when '1' .. '9'
             append_with_left_padding(' ')
@@ -113,29 +113,29 @@ class String::Formatter
           case char = next_char
           when 'd'
             append_integer do |arg, arg_s|
-              @buffer << arg_s
+              @out << arg_s
             end
           when 'b'
             append_integer(char, 2) do |arg, arg_s|
-              @buffer << arg_s
+              @out << arg_s
             end
           when 'o'
             append_integer(char, 8) do |arg, arg_s|
-              @buffer << arg_s
+              @out << arg_s
             end
           when 'x'
             append_integer(char, 16) do |arg, arg_s|
-              @buffer << arg_s
+              @out << arg_s
             end
           when 's'
             append_string do |arg, arg_s|
-              @buffer << arg_s
+              @out << arg_s
             end
           when '1' .. '9'
             append_with_padding do |arg, arg_s, num|
               num -= arg_s.bytesize
-              @buffer << arg_s
-              num.times { @buffer << ' ' }
+              @out << arg_s
+              num.times { @out << ' ' }
             end
           when '+'
             case char = next_char
@@ -144,10 +144,10 @@ class String::Formatter
                 num -= arg_s.bytesize
                 if arg >= 0
                   num -= 1
-                  @buffer << '+'
+                  @out << '+'
                 end
-                @buffer << arg_s
-                num.times { @buffer << ' ' }
+                @out << arg_s
+                num.times { @out << ' ' }
               end
             else
               # TODO
@@ -159,10 +159,10 @@ class String::Formatter
                 num -= arg_s.bytesize
                 if arg >= 0
                   num -= 1
-                  @buffer << ' '
+                  @out << ' '
                 end
-                @buffer << arg_s
-                num.times { @buffer << ' ' }
+                @out << arg_s
+                num.times { @out << ' ' }
               end
             else
               # TODO
@@ -171,24 +171,24 @@ class String::Formatter
             # TODO
           end
         when '%'
-          @buffer << '%'
+          @out << '%'
           next_char
         else
           # TODO
         end
       else
-        @buffer << char
+        @out << char
         next_char
       end
     end
   end
 
   private def append_string
-    append_arg(@args[@arg_index]) { |arg, arg_s| yield arg, arg_s }
+    append_arg(current_arg) { |arg, arg_s| yield arg, arg_s }
   end
 
   private def append_integer(char = 'd', base = 10)
-    arg = @args[@arg_index]
+    arg = current_arg
     unless arg.responds_to?(:to_i)
       raise "expected a number for %#{char}, not #{arg.inspect}"
     end
@@ -206,8 +206,8 @@ class String::Formatter
   private def append_with_left_padding(fill_char)
     append_with_padding do |arg, arg_s, num|
       num -= arg_s.bytesize
-      num.times { @buffer << fill_char }
-      @buffer << arg_s
+      num.times { @out << fill_char }
+      @out << arg_s
     end
   end
 
@@ -219,7 +219,7 @@ class String::Formatter
         yield arg, arg_s, num
       end
     when 's'
-      append_arg(@args[@arg_index]) do |arg, arg_s|
+      append_arg(current_arg) do |arg, arg_s|
         yield -1, arg_s, num
       end
     else
@@ -241,6 +241,10 @@ class String::Formatter
       end
     end
     num
+  end
+
+  private def current_arg
+    @args.at(@arg_index) { raise ArgumentError.new("too few arguments") }
   end
 
   private def has_next?
