@@ -13,4 +13,5 @@ describe "levenshtein" do
   assert { levenshtein("hippo", "elephant").should eq(7) }
   assert { levenshtein("hippo", "zzzzzzzz").should eq(8) }
   assert { levenshtein("hello", "hallo").should eq(1) }
+  assert { levenshtein("こんにちは", "こんちは").should eq(1) }
 end

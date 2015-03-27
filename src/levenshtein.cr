@@ -1,9 +1,11 @@
-# TODO: this is not UTF-8 aware
-def levenshtein(s, t)
-  return 0 if s == t
+def levenshtein(string1, string2)
+  return 0 if string1 == string2
 
-  s_len = s.bytesize
-  t_len = t.bytesize
+  s = string1.chars
+  t = string2.chars
+
+  s_len = s.length
+  t_len = t.length
 
   return t_len if s_len == 0
   return s_len if t_len == 0
@@ -13,9 +15,6 @@ def levenshtein(s, t)
     t, s = s, t
     t_len, s_len = s_len, t_len
   end
-
-  s = s.cstr
-  t = t.cstr
 
   v0 = Pointer(Int32).malloc(t_len + 1) { |i| i }
   v1 = Pointer(Int32).malloc(t_len + 1)
@@ -33,4 +32,3 @@ def levenshtein(s, t)
 
   v1[t_len]
 end
-
