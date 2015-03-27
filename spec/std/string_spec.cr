@@ -613,6 +613,8 @@ describe "String" do
     ("% x" % 123).should eq(" 7B")
     ("%-x" % 123).should eq("7B")
     # ("%-6x" % 123).should eq("    7B")
+
+    ("こんに%xちは" % 123).should eq("こんに7Bちは")
   end
 
   it "escapes chars" do

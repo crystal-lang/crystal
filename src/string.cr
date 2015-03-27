@@ -1337,7 +1337,7 @@ class String
 
   def %(args : Array)
     String.build(bytesize) do |buffer|
-      String::Formatter.new(self, args, buffer).format
+      Formatter.new(self, args, buffer).format
     end
   end
 

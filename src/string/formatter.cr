@@ -1,18 +1,14 @@
-# TODO: this is not UTF-8 aware
 class String::Formatter
   def initialize(string, @args, @buffer)
-    @i = 0
+    @reader = CharReader.new(string)
     @arg_index = 0
-    @length = string.bytesize
-    @str = string.cstr
   end
 
   def format
-    while @i < @length
+    while has_next?
       case char = current_char
       when '%'
-        @i += 1
-        case char = current_char
+        case char = next_char
         when 's'
           append_string do |arg, arg_s|
             @buffer << arg_s
@@ -38,8 +34,7 @@ class String::Formatter
         when '1' .. '9'
           append_with_left_padding(' ')
         when '+'
-          @i += 1
-          case char = current_char
+          case char = next_char
           when 'd'
             append_integer do |arg, arg_s|
               @buffer << '+' if arg >= 0
@@ -80,8 +75,7 @@ class String::Formatter
             raise "malformed format string - %+#{char}"
           end
         when ' '
-          @i += 1
-          case char = current_char
+          case char = next_char
           when 'd'
             append_integer do |arg, arg_s|
               @buffer << ' ' if arg >= 0
@@ -116,8 +110,7 @@ class String::Formatter
             raise "malformed format string - % #{char}"
           end
         when '-'
-          @i += 1
-          case char = current_char
+          case char = next_char
           when 'd'
             append_integer do |arg, arg_s|
               @buffer << arg_s
@@ -145,8 +138,7 @@ class String::Formatter
               num.times { @buffer << ' ' }
             end
           when '+'
-            @i += 1
-            case char = current_char
+            case char = next_char
             when '1' .. '9'
               append_with_padding do |arg, arg_s, num|
                 num -= arg_s.bytesize
@@ -161,8 +153,7 @@ class String::Formatter
               # TODO
             end
           when ' '
-            @i += 1
-            case char = current_char
+            case char = next_char
             when '1' .. '9'
               append_with_padding do |arg, arg_s, num|
                 num -= arg_s.bytesize
@@ -180,14 +171,14 @@ class String::Formatter
             # TODO
           end
         when '%'
-          @i += 1
           @buffer << '%'
+          next_char
         else
           # TODO
         end
       else
-        @i += 1
         @buffer << char
+        next_char
       end
     end
   end
@@ -209,7 +200,7 @@ class String::Formatter
   private def append_arg(arg, arg_s = arg.to_s)
     yield arg, arg_s
     @arg_index += 1
-    @i += 1
+    next_char
   end
 
   private def append_with_left_padding(fill_char)
@@ -238,13 +229,13 @@ class String::Formatter
 
   private def consume_number
     num = current_char.ord - '0'.ord
-    @i += 1
-    while @i < @length
+    next_char
+    while has_next?
       case char = current_char
       when '0' .. '9'
-        @i += 1
         num *= 10
         num += char.ord - '0'.ord
+        next_char
       else
         break
       end
@@ -252,7 +243,15 @@ class String::Formatter
     num
   end
 
+  private def has_next?
+    @reader.has_next?
+  end
+
   private def current_char
-    @str[@i].chr
+    @reader.current_char
+  end
+
+  private def next_char
+    @reader.next_char
   end
 end
