@@ -1,50 +1,60 @@
-module XML
-  class NodeSet
-    include Enumerable(Node)
+struct XML::NodeSet
+  include Enumerable(Node)
 
-    def initialize(@doc : Document, @set : LibXML::NodeSet*)
+  def initialize(@doc : Node, @set : LibXML::NodeSet*)
+  end
+
+  def self.new(doc : Node)
+    new doc, LibXML.xmlXPathNodeSetCreate(nil)
+  end
+
+  def [](index : Int)
+    index += length if index < 0
+
+    unless 0 <= index < length
+      raise IndexOutOfBounds.new
     end
 
-    def length
-      @set.value.node_nr
+    internal_at(index)
+  end
+
+  def each
+    length.times do |i|
+      yield internal_at(i)
     end
+  end
 
-    def empty?
-      length == 0
-    end
+  def empty?
+    length == 0
+  end
 
-    def [](index : Int)
-      index += length if index < 0
+  def hash
+    object_id
+  end
 
-      unless 0 <= index < length
-        raise IndexOutOfBounds.new
-      end
+  def inspect(io)
+    io << "["
+    join ", ", io, &.inspect(io)
+    io << "]"
+  end
 
-      internal_at(index)
-    end
+  def length
+    @set.value.node_nr
+  end
 
-    def each
-      length.times do |i|
-        yield internal_at(i)
-      end
-    end
+  def object_id
+    @set.address
+  end
 
-    def to_s(io)
-      io << "["
-      join ", ", io, &.inspect(io)
-      io << "]"
-    end
+  def to_s(io)
+    join "\n", io
+  end
 
-    def inspect(io)
-      to_s(io)
-    end
+  def to_unsafe
+    @set
+  end
 
-    def to_unsafe
-      @set
-    end
-
-    private def internal_at(index)
-      Node.from_ptr(@set.value.node_tab[index]).not_nil!
-    end
+  private def internal_at(index)
+    Node.new(@set.value.node_tab[index])
   end
 end

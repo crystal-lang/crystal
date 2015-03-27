@@ -8,8 +8,15 @@ lib LibXML
   $xmlTreeIndentString : UInt8*
 
   type DocPtr = Void*
-  type NSPtr = Void*
-  type AttrPtr = Void*
+
+  struct NS
+    next : NS*
+    type : XML::Type
+    href : UInt8*
+    prefix : UInt8*
+    _private : Void*
+    context : DocPtr
+  end
 
   struct NodeCommon
     _private : Void*
@@ -25,17 +32,17 @@ lib LibXML
 
   struct Attr
     include NodeCommon
-    ns : NSPtr
+    ns : NS*
     atype : XML::AttributeType
     psvi : Void*
   end
 
   struct Node
     include NodeCommon
-    ns : NSPtr
+    ns : NS*
     content : UInt8*
     properties : Attr*
-    ns_def : NSPtr
+    ns_def : NS*
     psvi : Void*
     line : UInt16
     extra : UInt16
@@ -129,6 +136,90 @@ lib LibXML
   end
 
   fun xmlGetLastError() : Error*
+
+  struct XPathContext
+    doc : DocPtr
+    node : Node*
+    nb_variables_unused : Int32
+    max_variables_unused : Int32
+    varHash : Void*
+    nb_types : Int32
+    max_types : Int32
+    types : Void*
+    nb_funcs_unused : Int32
+    max_funcs_unused : Int32
+    funcHash : Void*
+    nb_axis : Int32
+    max_axis : Int32
+    axis : Void*
+    namespaces : Void*
+    nsNr : Int32
+    user : Void*
+    context_size : Int32
+    proximity_position : Int32
+    xptr : Int32
+    here : Node*
+    origin : Node*
+    nsHash : Void*
+    varLookupFunc : Void*
+    varLookupData : Void*
+    extra : Void*
+    function : UInt8*
+    functionURI : UInt8*
+    funcLookupFunc : Void*
+    funcLookupData : Void*
+    tmpNsList : Void*
+    tmpNsNr : Int32
+    userData : Void*
+    error : Void*
+    lastError : Error
+    debugNode : Node*
+    dictPtr : Void*
+    flags : Int32
+    cache : Void*
+  end
+
+  enum XPathObjectType
+    UNDEFINED = 0
+    NODESET = 1
+    BOOLEAN = 2
+    NUMBER = 3
+    STRING = 4
+    POINT = 5
+    RANGE = 6
+    LOCATIONSET = 7
+    USERS = 8
+    XSLT_TREE = 9
+  end
+
+  struct XPathObject
+    type : XPathObjectType
+    nodesetval : NodeSet*
+    boolval : Int32
+    floatval : Float64
+    stringval : UInt8*
+    user : Void*
+    index : Int32
+    user2 : Void*
+    index2 : Int32
+  end
+
+  fun xmlXPathInit
+  fun xmlXPathNewContext(doc : DocPtr) : XPathContext*
+  fun xmlXPathEvalExpression(str : UInt8*, ctx : XPathContext*) : XPathObject*
+  fun xmlXPathRegisterNs(ctx : XPathContext*, prefix : UInt8*, uri : UInt8*) : Int32
+  fun xmlXPathRegisterVariable(ctx : XPathContext*, name : UInt8*, value : XPathObject*) : Int32
+  fun xmlXPathNewCString(val : UInt8*) : XPathObject*
+  fun xmlXPathNewFloat(val : Float64) : XPathObject*
+  fun xmlXPathNewBoolean(val : Int32) : XPathObject*
+
+  alias StructuredErrorFunc = (Void*, Error*) ->
+  alias GenericErrorFunc = (Void*, UInt8*) ->
+
+  fun xmlSetStructuredErrorFunc(ctx : Void*, f : StructuredErrorFunc)
+  fun xmlSetGenericErrorFunc(ctx : Void*, f : GenericErrorFunc)
+
+  fun xmlGetNsList(doc : DocPtr, node : Node*) : NS**
 end
 
 LibXML.xmlGcMemSetup(
@@ -143,3 +234,5 @@ LibXML.xmlGcMemSetup(
     copy
   }
 )
+
+

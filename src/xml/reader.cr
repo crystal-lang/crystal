@@ -1,6 +1,6 @@
 require "./libxml2"
 
-class XML::Reader
+struct XML::Reader
   def initialize(str : String)
     input = LibXML.xmlParserInputBufferCreateStatic(str, str.bytesize, 1)
     @reader = LibXML.xmlNewTextReader(input, "")
