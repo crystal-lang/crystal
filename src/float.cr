@@ -120,7 +120,7 @@ struct Float64
 
   def to_s
     String.new(22) do |buffer|
-      LibC.sprintf(buffer, "%g", self)
+      LibC.snprintf(buffer, 22, "%g", self)
       len = LibC.strlen(buffer)
       {len, len}
     end
@@ -128,7 +128,7 @@ struct Float64
 
   def to_s(io : IO)
     chars = StaticArray(UInt8, 22).new(0_u8)
-    LibC.sprintf(chars, "%g", self)
+    LibC.snprintf(chars, 22, "%g", self)
     io.write(chars.to_slice, LibC.strlen(chars.buffer))
   end
 
