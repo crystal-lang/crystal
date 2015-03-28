@@ -5,6 +5,7 @@ lib LibC
   fun strtof(str : UInt8*, endp : UInt8**) : Float32
   fun strlen(s : UInt8*) : Int32
   fun sprintf(str : UInt8*, format : UInt8*, ...) : Int32
+  fun snprintf(str : UInt8*, n : Int32, format : UInt8*, ...) : Int32
   fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
   fun strtoull(str : UInt8*, endptr : UInt8**, base : Int32) : UInt64
 end

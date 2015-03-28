@@ -1,7 +1,9 @@
-class String::Formatter
+struct String::Formatter
   def initialize(string, @args, @io)
     @reader = CharReader.new(string)
     @arg_index = 0
+    @temp_buf_len = 0
+    @format_buf_len = 0
   end
 
   def format
@@ -22,6 +24,7 @@ class String::Formatter
     next_char
     flags = consume_flags
     flags = consume_width(flags)
+    flags = consume_precision(flags)
     consume_type(flags)
   end
 
@@ -49,25 +52,44 @@ class String::Formatter
 
   private def consume_width(flags)
     if '1' <= current_char <= '9'
-      flags.width = consume_number
+      num, length = consume_number
+      flags.width = num
+      flags.width_length = length
+    end
+    flags
+  end
+
+  private def consume_precision(flags)
+    if current_char == '.'
+      next_char
+      if '1' <= current_char <= '9'
+        num, length = consume_number
+        flags.precision = num
+        flags.precision_length = length + 1
+      else
+        flags.precision = 0
+        flags.precision_length = 1
+      end
     end
     flags
   end
 
   private def consume_number
     num = current_char.ord - '0'.ord
+    length = 1
     next_char
     while true
       case char = current_char
       when '0' .. '9'
         num *= 10
         num += char.ord - '0'.ord
+        length += 1
       else
         break
       end
       next_char
     end
-    num
+    {num, length}
   end
 
   private def consume_type(flags)
@@ -76,16 +98,19 @@ class String::Formatter
       string flags
     when 'b'
       flags.base = 2
-      number flags
+      int flags
     when 'o'
       flags.base = 8
-      number flags
+      int flags
     when 'd'
       flags.base = 10
-      number flags
+      int flags
     when 'x'
       flags.base = 16
-      number flags
+      int flags
+    when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
+      flags.float = char
+      float flags
     when '%'
       char '%'
     else
@@ -101,35 +126,82 @@ class String::Formatter
     pad arg.to_s.length, flags if flags.right_padding?
   end
 
-  def number(flags)
+  def int(flags)
     arg = next_arg
-    unless arg.responds_to?(:to_i)
-      raise ArgumentError.new("expected a number, not #{arg.inspect}")
-    end
+    if arg.responds_to?(:to_i)
+      int = arg.is_a?(Int) ? arg : arg.to_i
 
-    int = arg.is_a?(Int) ? arg : arg.to_i
+      if flags.left_padding?
+        if flags.padding_char == '0'
+          @io << '+' if flags.plus
+          @io << ' ' if flags.space
+        end
 
-    if flags.left_padding?
-      if flags.padding_char == '0'
-        @io << '+' if flags.plus
-        @io << ' ' if flags.space
+        pad_int int, flags
       end
 
-      pad_number int, flags
-    end
-
-    if int > 0
-      unless flags.padding_char == '0'
-        @io << '+' if flags.plus
-        @io << ' ' if flags.space
+      if int > 0
+        unless flags.padding_char == '0'
+          @io << '+' if flags.plus
+          @io << ' ' if flags.space
+        end
       end
-    end
 
-    int.to_s(flags.base, @io)
+      int.to_s(flags.base, @io)
 
-    if flags.right_padding?
-      pad_number int, flags
+      if flags.right_padding?
+        pad_int int, flags
+      end
+    else
+      raise ArgumentError.new("expected an integer, not #{arg.inspect}")
     end
+  end
+
+  # We don't actually format the float ourselves, we delegate to sprintf
+  def float(flags)
+    arg = next_arg
+    if arg.responds_to?(:to_f)
+      float = arg.is_a?(Float) ? arg : arg.to_f
+
+      format_buf = recreate_float_format_string(flags)
+
+      len = flags.width + (flags.precision || 0) + 23
+      temp_buf = temp_buf(len)
+      count = LibC.snprintf(temp_buf, len, format_buf, float)
+
+      @io.write Slice.new(temp_buf, count)
+    else
+      raise ArgumentError.new("expected a float, not #{arg.inspect}")
+    end
+  end
+
+  # Here we rebuild the original format string, like %f or %.2g and use snprintf
+  def recreate_float_format_string(flags)
+    capacity = 2 # percent + type
+    capacity += flags.width_length
+    capacity += flags.precision_length
+    capacity += 1 if flags.plus
+    capacity += 1 if flags.minus
+    capacity += 1 if flags.zero
+    capacity += 1 if flags.space
+
+    format_buf = format_buf(capacity)
+    original_format_buf = format_buf
+
+    io = PointerIO.new(pointerof(format_buf))
+    io << '%'
+    io << '+' if flags.plus
+    io << '-' if flags.minus
+    io << '0' if flags.zero
+    io << ' ' if flags.space
+    io << flags.width if flags.width > 0
+    if precision = flags.precision
+      io << '.'
+      io << precision if precision != 0
+    end
+    io << flags.float
+
+    original_format_buf
   end
 
   def pad(consumed, flags)
@@ -139,7 +211,7 @@ class String::Formatter
     end
   end
 
-  def pad_number(int, flags)
+  def pad_int(int, flags)
     size = int.to_s(flags.base).bytesize
     size += 1 if int > 0 && (flags.plus || flags.space)
     pad size, flags
@@ -165,13 +237,47 @@ class String::Formatter
     @reader.next_char
   end
 
+  # We reuse a temporary buffer for snprintf
+  private def temp_buf(len)
+    temp_buf = @temp_buf
+    if temp_buf
+      if len > @temp_buf_len
+        @temp_buf_len = len
+        @temp_buf = temp_buf = temp_buf.realloc(len)
+      end
+      temp_buf
+    else
+      @temp_buf = Pointer(UInt8).malloc(len)
+    end
+  end
+
+  # We reuse a temporary buffer for the float format string
+  private def format_buf(len)
+    format_buf = @format_buf
+    if format_buf
+      if len > @format_buf_len
+        @format_buf_len = len
+        @format_buf = format_buf = format_buf.realloc(len)
+      end
+      format_buf
+    else
+      @format_buf = Pointer(UInt8).malloc(len)
+    end
+  end
+
   struct Flags
-    property space, sharp, plus, minus, zero, width, base
+    property space, sharp, plus, minus, zero, base
+    property width, width_length
+    property float, precision, precision_length
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false
       @width = 0
+      @width_length = 0
       @base = 10
+      @float = 'f'
+      @precision = nil
+      @precision_length = 0
     end
 
     def wants_padding?
