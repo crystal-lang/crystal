@@ -350,6 +350,14 @@ def printf(format_string, args : Array | Tuple)
   STDOUT.printf format_string, args
 end
 
+def sprintf(format_string, *args)
+  format_string % args
+end
+
+def sprintf(format_string, args : Array | Tuple)
+  format_string % args
+end
+
 def puts(obj)
   STDOUT.puts obj
   nil

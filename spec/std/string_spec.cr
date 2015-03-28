@@ -840,4 +840,9 @@ describe "String" do
     assert { "12".rjust(7, '-').should eq("-----12") }
     assert { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
+
+  it "uses sprintf from top-level" do
+    sprintf("Hello %d world", 123).should eq("Hello 123 world")
+    sprintf("Hello %d world", [123]).should eq("Hello 123 world")
+  end
 end
