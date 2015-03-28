@@ -5,152 +5,144 @@ class String::Formatter
   end
 
   def format
-    while has_next?
+    while true
       case char = current_char
+      when '\0'
+        break
       when '%'
-        case char = next_char
-        when 's' then string
-        when 'd', 'b', 'o', 'x'
-          number base: base(char)
-        when '0'
-          consume_padding('0')
-        when '1' .. '9'
-          consume_padding(' ')
-        when '+'
-          case char = next_char
-          when 'd', 'b', 'o', 'x'
-            number base: base(char), plus: true
-          when '0'
-            consume_padding '0', plus: true
-          when '1' .. '9'
-            consume_padding ' ', plus: true
-          else
-            raise ArgumentError.new("malformed format string - %+#{char}")
-          end
-        when ' '
-          case char = next_char
-          when 'd', 'b', 'o', 'x'
-            number base: base(char), space: true
-          when '0'
-            consume_padding '0', space: true
-          when '1' .. '9'
-            consume_padding ' ', space: true
-          else
-            raise "malformed format string - % #{char}"
-          end
-        when '-'
-          case char = next_char
-          when 's'
-            string
-          when 'd', 'b', 'o', 'x'
-            number base: base(char)
-          when '1' .. '9'
-            consume_padding ' ', right: true
-          when '+'
-            case char = next_char
-            when '1' .. '9'
-              consume_padding ' ', plus: true, right: true
-            else
-              # TODO
-            end
-          when ' '
-            case char = next_char
-            when '1' .. '9'
-              consume_padding ' ', space: true, right: true
-            else
-              # TODO
-            end
-          else
-            # TODO
-          end
-        when '%'
-          char '%'
-        else
-          # TODO
-        end
+        consume_percent
       else
         char char
       end
-      char = next_char
+      next_char
     end
   end
 
-  private def consume_padding(fill_char, right = false, plus = false, space = false)
-    num = consume_number
-    case char = current_char
-    when 's'
-      string padding: fill_char, padding_count: num, right: right
-    when 'd', 'b', 'o', 'x'
-      number base: base(char), padding: fill_char, padding_count: num, right: right, plus: plus, space: space
-    else
-      # TODO
+  private def consume_percent
+    next_char
+    flags = consume_flags
+    flags = consume_width(flags)
+    consume_type(flags)
+  end
+
+  private def consume_flags
+    flags = Flags.new
+    while true
+      case current_char
+      when ' '
+        flags.space = true
+      when '#'
+        flags.sharp = true
+      when '+'
+        flags.plus = true
+      when '-'
+        flags.minus = true
+      when '0'
+        flags.zero = true
+      else
+        break
+      end
+      next_char
     end
+    flags
+  end
+
+  private def consume_width(flags)
+    if '1' <= current_char <= '9'
+      flags.width = consume_number
+    end
+    flags
   end
 
   private def consume_number
     num = current_char.ord - '0'.ord
     next_char
-    while has_next?
+    while true
       case char = current_char
       when '0' .. '9'
         num *= 10
         num += char.ord - '0'.ord
-        next_char
       else
         break
       end
+      next_char
     end
     num
   end
 
-  def string(padding = nil, padding_count = 0, right = false)
-    arg = next_arg
-    pad padding_count, arg.to_s.length, padding if padding && !right
-    @io << arg
-    pad padding_count, arg.to_s.length, padding if padding && right
+  private def consume_type(flags)
+    case char = current_char
+    when 's'
+      string flags
+    when 'b'
+      flags.base = 2
+      number flags
+    when 'o'
+      flags.base = 8
+      number flags
+    when 'd'
+      flags.base = 10
+      number flags
+    when 'x'
+      flags.base = 16
+      number flags
+    when '%'
+      char '%'
+    else
+      raise ArgumentError.new("malformed format string - %#{char}")
+    end
   end
 
-  def number(base = 10, padding = nil, padding_count = 0, right = false, plus = false, space = false)
+  def string(flags)
+    arg = next_arg
+
+    pad arg.to_s.length, flags if flags.left_padding?
+    @io << arg
+    pad arg.to_s.length, flags if flags.right_padding?
+  end
+
+  def number(flags)
     arg = next_arg
     unless arg.responds_to?(:to_i)
       raise ArgumentError.new("expected a number, not #{arg.inspect}")
     end
 
-    int = arg.to_i
+    int = arg.is_a?(Int) ? arg : arg.to_i
 
-    if padding && !right
-      if padding == '0'
-        @io << '+' if plus
-        @io << ' ' if space
+    if flags.left_padding?
+      if flags.padding_char == '0'
+        @io << '+' if flags.plus
+        @io << ' ' if flags.space
       end
 
-      pad_number int, base, plus, space, padding_count, padding
+      pad_number int, flags
     end
 
     if int > 0
-      unless padding == '0'
-        @io << '+' if plus
-        @io << ' ' if space
+      unless flags.padding_char == '0'
+        @io << '+' if flags.plus
+        @io << ' ' if flags.space
       end
     end
 
-    int.to_s(base, @io)
+    int.to_s(flags.base, @io)
 
-    if padding && right
-      pad_number int, base, plus, space, padding_count, padding
+    if flags.right_padding?
+      pad_number int, flags
     end
   end
 
-  def pad(total, consumed, padding)
-    (total - consumed).times do
-      @io << padding
+  def pad(consumed, flags)
+    padding_char = flags.padding_char
+    (flags.width - consumed).times do
+      @io << padding_char
     end
   end
 
-  def pad_number(int, base, plus, space, padding_count, padding)
-    size = int.to_s(base).bytesize
-    size += 1 if int > 0 && (plus || space)
-    pad padding_count, size, padding
+  def pad_number(int, flags)
+    size = int.to_s(flags.base).bytesize
+    size += 1 if int > 0 && (flags.plus || flags.space)
+    pad size, flags
   end
 
   def char(char)
@@ -165,10 +157,6 @@ class String::Formatter
     current_arg.tap { @arg_index += 1 }
   end
 
-  private def has_next?
-    @reader.has_next?
-  end
-
   private def current_char
     @reader.current_char
   end
@@ -177,12 +165,29 @@ class String::Formatter
     @reader.next_char
   end
 
-  private def base(char)
-    case char
-    when 'b' then 2
-    when 'o' then 8
-    when 'x' then 16
-    else          10
+  struct Flags
+    property space, sharp, plus, minus, zero, width, base
+
+    def initialize
+      @space = @sharp = @plus = @minus = @zero = false
+      @width = 0
+      @base = 10
+    end
+
+    def wants_padding?
+      @width > 0
+    end
+
+    def left_padding?
+      wants_padding? && !@minus
+    end
+
+    def right_padding?
+      wants_padding? && @minus
+    end
+
+    def padding_char
+      @zero ? '0' : ' '
     end
   end
 end
