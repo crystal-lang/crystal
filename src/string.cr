@@ -1336,14 +1336,8 @@ class String
     true
   end
 
-  def %(args : Array | Tuple)
-    String.build(bytesize) do |buffer|
-      Formatter.new(self, args, buffer).format
-    end
-  end
-
   def %(other)
-    self % {other}
+    sprintf self, other
   end
 
   # Return a hash based on this string’s length and content.

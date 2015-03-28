@@ -351,11 +351,13 @@ def printf(format_string, args : Array | Tuple)
 end
 
 def sprintf(format_string, *args)
-  format_string % args
+  sprintf format_string, args
 end
 
 def sprintf(format_string, args : Array | Tuple)
-  format_string % args
+  String.build(format_string.bytesize) do |str|
+    String::Formatter.new(format_string, args, str).format
+  end
 end
 
 def puts(obj)
