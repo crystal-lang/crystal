@@ -143,8 +143,8 @@ class Crystal::Doc::Generator
   end
 
   def nodoc?(obj)
-    doc = obj.doc
-    doc && doc.strip == ":nodoc:"
+    doc = obj.doc.try &.strip
+    doc == ":nodoc:" || doc == "nodoc"
   end
 
   def type(type)

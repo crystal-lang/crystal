@@ -500,6 +500,7 @@ module Crystal
 
       check_valid_attributes node, ValidDefAttributes, "def"
       node.doc ||= attributes_doc()
+      check_ditto node
 
       target_type = case receiver = node.receiver
                     when Nil
@@ -1713,6 +1714,8 @@ module Crystal
 
       external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
       external.doc = node.doc
+      check_ditto external
+
       external.call_convention = call_convention
 
       if node_body = node.body
@@ -1867,6 +1870,7 @@ module Crystal
             end
             const_member = enum_type.add_constant member
             const_member.doc = member.doc
+            check_ditto const_member
 
             if member_location = member.location
               const_member.locations << member_location
@@ -2886,6 +2890,15 @@ module Crystal
 
     def attributes_doc
       @attributes.try(&.first?).try &.doc
+    end
+
+    def check_ditto(node)
+      stripped_doc = node.doc.try &.strip
+      if stripped_doc == ":ditto:" || stripped_doc == "ditto"
+        node.doc = @last_doc
+      end
+
+      @last_doc = node.doc
     end
 
     def process_type_name(node_name)

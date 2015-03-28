@@ -62,6 +62,24 @@ describe "Type inference: doc" do
     bar.doc.should eq("Hello")
   end
 
+  it "stores doc for def when using ditto" do
+    result = infer_type %(
+      class Foo
+        # Hello
+        def bar
+        end
+
+        # ditto
+        def bar2
+        end
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+    bar = foo.lookup_defs("bar2").first
+    bar.doc.should eq("Hello")
+  end
+
   it "stores doc for def with visibility" do
     result = infer_type %(
       class Foo
