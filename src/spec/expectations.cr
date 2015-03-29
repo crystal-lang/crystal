@@ -205,42 +205,47 @@ macro be_a(type)
   Spec::BeAExpectation({{type}}).new
 end
 
-macro expect_raises
-  raised = false
-  begin
-    {{yield}}
-  rescue
-    raised = true
+ifdef darwin || linux
+  macro expect_raises
+    raised = false
+    begin
+      {{yield}}
+    rescue
+      raised = true
+    end
+
+    fail "expected to raise" unless raised
   end
 
-  fail "expected to raise" unless raised
-end
-
-macro expect_raises(klass)
-  begin
-    {{yield}}
-    fail "expected to raise {{klass.id}}"
-  rescue {{klass.id}}
+  macro expect_raises(klass)
+    begin
+      {{yield}}
+      fail "expected to raise {{klass.id}}"
+    rescue {{klass.id}}
+    end
   end
-end
 
-macro expect_raises(klass, message)
-  begin
-    {{yield}}
-    fail "expected to raise {{klass.id}}"
-  rescue _ex_ : {{klass.id}}
-    _msg_ = {{message}}
-    _ex_to_s_ = _ex_.to_s
-    case _msg_
-    when Regex
-      unless (_ex_to_s_ =~ _msg_)
-        fail "expected {{klass.id}}'s message to match #{_msg_}, but was #{_ex_to_s_.inspect}"
-      end
-    when String
-      unless _ex_to_s_.includes?(_msg_)
-        fail "expected {{klass.id}}'s message to include #{_msg_.inspect}, but was #{_ex_to_s_.inspect}"
+  macro expect_raises(klass, message)
+    begin
+      {{yield}}
+      fail "expected to raise {{klass.id}}"
+    rescue _ex_ : {{klass.id}}
+      _msg_ = {{message}}
+      _ex_to_s_ = _ex_.to_s
+      case _msg_
+      when Regex
+        unless (_ex_to_s_ =~ _msg_)
+          fail "expected {{klass.id}}'s message to match #{_msg_}, but was #{_ex_to_s_.inspect}"
+        end
+      when String
+        unless _ex_to_s_.includes?(_msg_)
+          fail "expected {{klass.id}}'s message to include #{_msg_.inspect}, but was #{_ex_to_s_.inspect}"
+        end
       end
     end
+  end
+elsif windows
+  macro expect_raises(*args)
   end
 end
 

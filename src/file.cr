@@ -7,7 +7,11 @@ else
     def initialize(filename, mode = "r")
       oflag = open_flag(mode)
 
-      fd = LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+      ifdef darwin || linux
+        fd = LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+      elsif windows
+        fd = LibC.wopen(filename.to_utf16, oflag, DEFAULT_CREATE_MODE)
+      end
       if fd < 0
         raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
       end
@@ -19,8 +23,13 @@ else
 end
 
 class File
-  SEPARATOR = '/'
-  DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
+  ifdef darwin || linux
+    SEPARATOR = '/'
+    DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
+  elsif windows
+    SEPARATOR = '\\'
+    DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR
+  end
 
   protected def open_flag(mode)
     if mode.length == 0
@@ -64,28 +73,47 @@ class File
   getter path
 
   def self.stat(path)
-    if LibC.stat(path, out stat) != 0
+    ifdef darwin || linux
+      status = LibC.stat(path, out stat)
+    elsif windows
+      status = LibC.wstat(path.to_utf16, out stat)
+    end
+    if status != 0
       raise Errno.new("Unable to get stat for '#{path}'")
     end
     Stat.new(stat)
   end
 
   def self.lstat(path)
-    if LibC.lstat(path, out stat) != 0
+    ifdef darwin || linux
+      status = LibC.lstat(path, out stat)
+    elsif windows
+      status = LibC.wstat(path.to_utf16, out stat)
+    end
+    if status != 0
       raise Errno.new("Unable to get lstat for '#{path}'")
     end
     Stat.new(stat)
   end
 
   def self.exists?(filename)
-    LibC.access(filename, LibC::F_OK) == 0
+    ifdef darwin || linux
+      LibC.access(filename, LibC::F_OK) == 0
+    elsif windows
+      LibC.waccess(filename.to_utf16, LibC::F_OK) == 0
+    end
   end
 
   def self.file?(path)
-    if LibC.stat(path, out stat) != 0
+    ifdef darwin || linux
+      status = LibC.stat(path, out stat)
+    elsif windows
+      status = LibC.wstat(path.to_utf16, out stat)
+    end
+    if status != 0
       return false
     end
-    File::Stat.new(stat).file?
+    Stat.new(stat).file?
   end
 
   def self.directory?(path)
@@ -93,29 +121,44 @@ class File
   end
 
   def self.dirname(filename)
-    index = filename.rindex SEPARATOR
-    if index
-      if index == 0
-        "/"
+    ifdef darwin || linux
+      index = filename.rindex(SEPARATOR)
+      if index
+        if index == 0
+          "/"
+        else
+          filename[0, index]
+        end
       else
-        filename[0, index]
+        "."
       end
-    else
-      "."
+    elsif windows
+      drive :: UInt16[3]
+      buf :: UInt16[256]
+      LibC.wsplitpath(filename.to_utf16, drive, buf, nil, nil)
+      dir = String.new(drive.buffer) + String.new(buf.buffer)
+      dir = dir[0...dir.length - 1] if dir.ends_with?('\\')
+      dir
     end
   end
 
   def self.basename(filename)
     return "" if filename.bytesize == 0
 
-    last = filename.length - 1
-    last -= 1 if filename[last] == SEPARATOR
+    ifdef darwin || linux
+      last = filename.length - 1
+      last -= 1 if filename[last] == SEPARATOR
 
-    index = filename.rindex SEPARATOR, last
-    if index
-      filename[index + 1, last - index]
-    else
-      filename
+      index = filename.rindex(SEPARATOR, last)
+      if index
+        filename[index + 1, last - index]
+      else
+        filename
+      end
+    elsif windows
+      buf :: UInt16[256]
+      LibC.wsplitpath(filename.to_utf16, nil, nil, buf, nil)
+      String.new buf.buffer
     end
   end
 
@@ -126,60 +169,76 @@ class File
   end
 
   def self.delete(filename)
-    err = LibC.unlink(filename)
+    ifdef darwin || linux
+      err = LibC.unlink(filename)
+    elsif windows
+      err = LibC.wunlink(filename.to_utf16)
+    end
     if err == -1
       raise Errno.new("Error deleting file '#{filename}'")
     end
   end
 
   def self.extname(filename)
-    dot_index = filename.rindex('.')
+    ifdef darwin || linux
+      dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.length - 1  && filename[dot_index - 1] != SEPARATOR
-      filename[dot_index, filename.length - dot_index]
-    else
-      ""
+      if dot_index && dot_index != filename.length - 1  && filename[dot_index - 1] != SEPARATOR
+        filename[dot_index, filename.length - dot_index]
+      else
+        ""
+      end
+    elsif windows
+      buf :: UInt16[256]
+      LibC.wsplitpath(filename.to_utf16, nil, nil, nil, buf)
+      String.new buf.buffer
     end
   end
 
   def self.expand_path(path, dir = nil)
-    if path.starts_with?('~')
-      home = ENV["HOME"]
-      if path.length >= 2 && path[1] == '/'
-        path = home + path[1..-1]
-      elsif path.length < 2
-        return home
+    ifdef darwin || linux
+      if path.starts_with?('~')
+        home = ENV["HOME"]
+        if path.length >= 2 && path[1] == '/'
+          path = home + path[1..-1]
+        elsif path.length < 2
+          return home
+        end
       end
-    end
 
-    unless path.starts_with?('/')
-      dir = dir ? expand_path(dir) : Dir.working_directory
-      path = "#{dir}/#{path}"
-    end
-
-    ifdef windows
-      path = path.tr("\\", "/")
-    end
-
-    parts = path.split('/')
-    was_letter = false
-    first_slash = true
-    items = [] of String
-    parts.each do |part|
-      if part.empty? && !was_letter
-        items << part if !first_slash
-      elsif part == ".."
-        items.pop if items.size > 0
-      elsif !part.empty? && part != "."
-        was_letter = true
-        items << part
+      unless path.starts_with?('/')
+        dir = dir ? expand_path(dir) : Dir.working_directory
+        path = "#{dir}/#{path}"
       end
-    end
 
-    ifdef windows
-      items.join("/")
-    else
-      "/" + items.join("/")
+      ifdef windows
+        path = path.tr("\\", "/")
+      end
+
+      parts = path.split('/')
+      was_letter = false
+      first_slash = true
+      items = [] of String
+      parts.each do |part|
+        if part.empty? && !was_letter
+          items << part if !first_slash
+        elsif part == ".."
+          items.pop if items.size > 0
+        elsif !part.empty? && part != "."
+          was_letter = true
+          items << part
+        end
+      end
+
+      ifdef windows
+        items.join("/")
+      else
+        "/" + items.join("/")
+      end
+    elsif windows
+      #-- what is `expand_path` actually expected to do?
+      fullpath = LibC.wfullpath(nil, path.to_utf16, 0_u32)
+      String.new(fullpath).tap { LibC.free(fullpath as Void*) }
     end
   end
 
@@ -255,7 +314,7 @@ class File
 
         part[lindex..rindex]
       end
-    end.compact.join('/')
+    end.compact.join(SEPARATOR)
   end
 
   def self.size(filename)
@@ -263,11 +322,15 @@ class File
   end
 
   def self.rename(old_filename, new_filename)
-    code = LibC.rename(old_filename, new_filename)
-    if code != 0
+    ifdef darwin || linux
+      status = LibC.rename(old_filename, new_filename)
+    elsif windows
+      status = LibC.wrename(old_filename.to_utf16, new_filename.to_utf16)
+    end
+    if status != 0
       raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
     end
-    code
+    status
   end
 
   def size

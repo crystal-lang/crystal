@@ -36,7 +36,7 @@ class IPSocket < Socket
     hints.flags = 0
 
     ret = LibC.getaddrinfo(host, port.to_s, pointerof(hints), out addrinfo)
-    raise SocketError.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}") if ret == -1
+    raise SocketError.new("getaddrinfo: #{gai_strerror(ret)}") if ret == -1
 
     begin
       current_addrinfo = addrinfo

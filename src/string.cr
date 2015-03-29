@@ -1,12 +1,28 @@
 lib LibC
-  fun atoi(str : UInt8*) : Int32
-  fun atoll(str : UInt8*) : Int64
-  fun atof(str : UInt8*) : Float64
-  fun strtof(str : UInt8*, endp : UInt8**) : Float32
-  fun strlen(s : UInt8*) : Int32
-  fun sprintf(str : UInt8*, format : UInt8*, ...) : Int32
-  fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
-  fun strtoull(str : UInt8*, endptr : UInt8**, base : Int32) : UInt64
+    fun atoi(str : UInt8*) : Int32
+    fun atoll(str : UInt8*) : Int64
+    fun atof(str : UInt8*) : Float64
+    fun strtof(str : UInt8*, endp : UInt8**) : Float32
+    fun strlen(str : UInt8*) : Int32
+    fun sprintf(str : UInt8*, format : UInt8*, ...) : Int32
+    fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
+    fun strtoull(str : UInt8*, endptr : UInt8**, base : Int32) : UInt64
+
+  ifdef windows
+    fun wtoi = _wtoi(str : UInt16*) : Int32
+    fun wtoll = _wtoi64(str : UInt16*) : Int64
+    fun wtof = _wtof(str : UInt16*) : Float64
+    fun wcstof(str : UInt16*, endp : UInt16**) : Float32
+    fun wcslen(str : UInt16*) : Int32
+    fun swprintf(str : UInt16*, format : UInt16*, ...) : Int32
+    fun wcstol(str : UInt16*, endptr : UInt16**, base : Int32) : Int32
+    fun wcstoull(str : UInt16*, endptr : UInt16**, base : Int32) : UInt64
+
+    @[CallConvention("X86_StdCall")]
+    fun mbs_to_wcs = MultiByteToWideChar(code_page : UInt32, flags : UInt32, str : UInt8*, len : Int32, buf : UInt16*, size : Int32) : Int32
+    @[CallConvention("X86_StdCall")]
+    fun wcs_to_mbs = WideCharToMultiByte(code_page : UInt32, flags : UInt32, str : UInt16*, len : Int32, buf : UInt8*, size : Int32, def_char : UInt8*, used_char : Bool*) : Int32
+  end
 end
 
 class String
@@ -114,11 +130,19 @@ class String
   end
 
   def to_i
-    LibC.atoi cstr
+    ifdef darwin || linux
+      LibC.atoi cstr
+    elsif windows
+      LibC.wtoi to_utf16
+    end
   end
 
   def to_i(base)
-    LibC.strtol(cstr, nil, base)
+    ifdef darwin || linux
+      LibC.strtol(cstr, nil, base)
+    elsif windows
+      LibC.wcstol(to_utf16, nil, base)
+    end
   end
 
   def to_i8
@@ -134,7 +158,11 @@ class String
   end
 
   def to_i64
-    LibC.atoll cstr
+    ifdef darwin || linux
+      LibC.atoll cstr
+    elsif windows
+      LibC.wtoll to_utf16
+    end
   end
 
   def to_u8
@@ -150,7 +178,11 @@ class String
   end
 
   def to_u64
-    LibC.strtoull(cstr, nil, 10)
+    ifdef darwin || linux
+      LibC.strtoull(cstr, nil, 10)
+    elsif windows
+      LibC.wcstoull(to_utf16, nil, 10)
+    end
   end
 
   def to_f
@@ -158,11 +190,19 @@ class String
   end
 
   def to_f32
-    LibC.strtof cstr, nil
+    ifdef darwin || linux
+      LibC.strtof(cstr, nil)
+    elsif windows
+      LibC.wcstof(to_utf16, nil)
+    end
   end
 
   def to_f64
-    LibC.atof cstr
+    ifdef darwin || linux
+      LibC.atof cstr
+    elsif windows
+      LibC.wtof to_utf16
+    end
   end
 
   def [](index : Int)
@@ -1281,6 +1321,20 @@ class String
 
   def to_unsafe
     cstr
+  end
+
+  def to_utf16
+    bufsize = LibC.mbs_to_wcs(65001u32, 0u32, cstr, -1, nil, 0)
+    wcs = LibC.malloc((bufsize * 2).to_u32) as UInt16*
+    LibC.mbs_to_wcs(65001u32, 0u32, cstr, -1, wcs, bufsize)
+    wcs
+  end
+
+  def self.new(chars : UInt16*)
+    bufsize = LibC.wcs_to_mbs(65001u32, 0u32, chars, -1, nil, 0, nil, nil)
+    str = LibC.malloc(bufsize.to_u32) as UInt8*
+    LibC.wcs_to_mbs(65001u32, 0u32, chars, -1, str, bufsize, nil, nil)
+    new(str).tap { LibC.free(str as Void*) }
   end
 end
 

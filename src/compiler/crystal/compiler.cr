@@ -210,13 +210,21 @@ module Crystal
           jobs_count += 1
 
           if jobs_count >= @n_threads
-            LibC.waitpid(-1, out stat_loc, 0)
+            ifdef darwin || linux
+              LibC.waitpid(-1, out stat_loc, 0)
+            elsif windows
+              puts "#-- LibC.waitpid 1"
+            end
             jobs_count -= 1
           end
         end
 
         while jobs_count > 0
-          LibC.waitpid(-1, out stat_loc, 0)
+          ifdef darwin || linux
+            LibC.waitpid(-1, out stat_loc, 0)
+          elsif windows
+            puts "#-- LibC.waitpid 2"
+          end
           jobs_count -= 1
         end
       end

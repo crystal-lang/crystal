@@ -6,6 +6,10 @@ end
 
 module DL
   def self.dlopen(path, mode = LibDL::LAZY | LibDL::GLOBAL)
-    LibDL.dlopen(path, mode)
+    ifdef darwin || linux
+      LibDL.dlopen(path, mode)
+    elsif windows
+      puts "#-- dlopen(#{path})"
+    end
   end
 end

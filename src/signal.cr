@@ -51,9 +51,9 @@ module Signal
     if block.closure?
       handlers = @@handlers ||= {} of Int32 => Int32 ->
       handlers[signal] = block
-      LibC.signal signal, ->handler(Int32)
+      LibC.signal(signal, ->handler(Int32))
     else
-      LibC.signal signal, block
+      LibC.signal(signal, block)
     end
   end
 

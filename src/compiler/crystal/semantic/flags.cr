@@ -1,6 +1,10 @@
 class Crystal::Program
   def flags
-    @flags ||= parse_flags(`uname -m -s`)
+    @flags ||= ifdef linux || darwin
+                 parse_flags(`uname -m -s`)
+               elsif windows
+                 parse_flags("windows x86")
+               end
   end
 
   def flags=(flags)

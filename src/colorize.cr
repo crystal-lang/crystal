@@ -172,13 +172,15 @@ struct ColorizedObject(T)
   end
 
   protected def append_start(io, reset = false)
-    fore_is_default = @fore == FORE_DEFAULT
-    back_is_default = @back == BACK_DEFAULT
-    mode_is_default = @mode == 0
+    ifdef linux || darwin
+      fore_is_default = @fore == FORE_DEFAULT
+      back_is_default = @back == BACK_DEFAULT
+      mode_is_default = @mode == 0
 
-    if fore_is_default && back_is_default && mode_is_default && !reset
-      false
-    else
+      if fore_is_default && back_is_default && mode_is_default && !reset
+        return false
+      end
+
       io << "\e["
 
       printed = false
@@ -218,6 +220,8 @@ struct ColorizedObject(T)
   end
 
   protected def append_end(io)
-    io << "\e[0m"
+    ifdef linux || darwin
+      io << "\e[0m"
+    end
   end
 end

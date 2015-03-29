@@ -1,16 +1,25 @@
 lib LibC
-  fun mkstemp(result : UInt8*) : Int32
+  fun tmpfile : File
+
+  ifdef darwin || linux
+    fun mkstemp(result : UInt8*) : Int32
+  end
 end
 
 class Tempfile < FileDescriptorIO
   def initialize(name)
-    if tmpdir = ENV["TMPDIR"]?
-      tmpdir = tmpdir + '/' unless tmpdir.ends_with? '/'
-    else
-      tmpdir = "/tmp/"
+    ifdef darwin || linux
+      if tmpdir = ENV["TMPDIR"]?
+        tmpdir = tmpdir + '/' unless tmpdir.ends_with? '/'
+      else
+        tmpdir = "/tmp/"
+      end
+      @path = "#{tmpdir}#{name}.XXXXXX"
+      super(LibC.mkstemp(@path))
+    elsif windows
+      @path = ""
+      super(LibC.fileno(LibC.tmpfile))
     end
-    @path = "#{tmpdir}#{name}.XXXXXX"
-    super(LibC.mkstemp(@path))
   end
 
   getter path
@@ -26,7 +35,11 @@ class Tempfile < FileDescriptorIO
   end
 
   def delete
-    File.delete(@path)
+    ifdef darwin || linux
+      File.delete(@path)
+    elsif windows
+      0
+    end
   end
 
   def unlink

@@ -1,12 +1,29 @@
 lib LibC
-  ifdef linux
+  ifdef darwin
+    $errno : Int32
+  elsif linux
     @[ThreadLocal]
     $errno : Int32
-  else
-    $errno : Int32
+  elsif windows
+    $errno = _errno : Int32
   end
 
   fun strerror(errnum : Int32) : UInt8*
+
+  ifdef windows
+    FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200
+    FORMAT_MESSAGE_FROM_STRING    = 0x00000400
+    FORMAT_MESSAGE_FROM_HMODULE   = 0x00000800
+    FORMAT_MESSAGE_FROM_SYSTEM    = 0x00001000
+    FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
+    FORMAT_MESSAGE_MAX_WIDTH_MASK = 0x000000ff
+
+    LANG_NEUTRAL    = 0x00
+    SUBLANG_DEFAULT = 0x01
+
+    @[CallConvention("X86_StdCall")]
+    fun wformatmessage = FormatMessageW(flags : UInt32, src : Void*, messageid : UInt32, languageid : UInt32, buffer : UInt16*, size : UInt32, args : Void*) : UInt32
+  end
 end
 
 class Errno < Exception
@@ -98,7 +115,7 @@ class Errno < Exception
     EOPNOTSUPP      = 102     # Operation not supported on socket
     ENOTRECOVERABLE = 104     # State not recoverable
     EOWNERDEAD      = 105     # Previous owner died
-  else
+  elsif linux
     EPERM           = 1       # Operation not permitted
     ENOENT          = 2       # No such file or directory
     ESRCH           = 3       # No such process
@@ -186,6 +203,78 @@ class Errno < Exception
     ECANCELED       = 125     # Operation Canceled
     EOWNERDEAD      = 130     # Owner died
     ENOTRECOVERABLE = 131     # State not recoverable
+  elsif windows
+    EPERM           = 1
+    ENOENT          = 2
+    ENOFILE         = ENOENT
+    ESRCH           = 3
+    EINTR           = 4
+    EIO             = 5
+    ENXIO           = 6
+    E2BIG           = 7
+    ENOEXEC         = 8
+    EBADF           = 9
+    ECHILD          = 10
+    EAGAIN          = 11
+    ENOMEM          = 12
+    EACCES          = 13
+    EFAULT          = 14
+    EBUSY           = 16
+    EEXIST          = 17
+    EXDEV           = 18
+    ENODEV          = 19
+    ENOTDIR         = 20
+    EISDIR          = 21
+    ENFILE          = 23
+    EMFILE          = 24
+    ENOTTY          = 25
+    EFBIG           = 27
+    ENOSPC          = 28
+    ESPIPE          = 29
+    EROFS           = 30
+    EMLINK          = 31
+    EPIPE           = 32
+    EDOM            = 33
+    EDEADLK         = 36
+    ENAMETOOLONG    = 38
+    ENOLCK          = 39
+    ENOSYS          = 40
+    ENOTEMPTY       = 41
+    EINVAL          = 22
+    ERANGE          = 34
+    EILSEQ          = 42
+    STRUNCATE       = 80
+    EDEADLOCK       = EDEADLK
+    ENOTSUP         = 129
+    EAFNOSUPPORT    = 102
+    EADDRINUSE      = 100
+    EADDRNOTAVAIL   = 101
+    EISCONN         = 113
+    ENOBUFS         = 119
+    ECONNABORTED    = 106
+    EALREADY        = 103
+    ECONNREFUSED    = 107
+    ECONNRESET      = 108
+    EDESTADDRREQ    = 109
+    EHOSTUNREACH    = 110
+    EMSGSIZE        = 115
+    ENETDOWN        = 116
+    ENETRESET       = 117
+    ENETUNREACH     = 118
+    ENOPROTOOPT     = 123
+    ENOTSOCK        = 128
+    ENOTCONN        = 126
+    ECANCELED       = 105
+    EINPROGRESS     = 112
+    EOPNOTSUPP      = 130
+    EWOULDBLOCK     = 140
+    EOWNERDEAD      = 133
+    EPROTO          = 134
+    EPROTONOSUPPORT = 135
+    ETIMEDOUT       = 138
+    ELOOP           = 114
+    EPROTOTYPE      = 136
+    EOVERFLOW       = 132
   end
 
   getter errno

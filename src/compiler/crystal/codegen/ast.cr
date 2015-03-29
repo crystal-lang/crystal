@@ -216,20 +216,21 @@ module Crystal
         end
       end
 
+      #-- check with MSVC, doesn't seem to apply to MinGW
       # Windows only allows alphanumeric, dot, dollar and underscore
       # for mangled names.
-      ifdef windows
-        name = name.gsub do |char|
-          case char
-          when '<', '>', '(', ')', '*', ':', ',', '#', ' '
-            "."
-          when '+'
-            ".."
-          else
-            nil
-          end
-        end
-      end
+      #ifdef windows
+      #  name = name.gsub do |char|
+      #    case char
+      #    when '<', '>', '(', ')', '*', ':', ',', '#', ' '
+      #      "."
+      #    when '+'
+      #      ".."
+      #    else
+      #      nil
+      #    end
+      #  end
+      #end
 
       name
     end

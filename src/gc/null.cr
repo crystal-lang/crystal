@@ -1,13 +1,18 @@
 fun __crystal_malloc(size : UInt32) : Void*
-  LibC.malloc(size)
+  ptr = LibC.malloc(size)
+  Intrinsics.memset(ptr, 0_u8, size, 0_u32, false)
+  ptr
 end
 
 fun __crystal_malloc_atomic(size : UInt32) : Void*
-  LibC.malloc(size)
+  ptr = LibC.malloc(size)
+  Intrinsics.memset(ptr, 0_u8, size, 0_u32, false)
+  ptr
 end
 
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  LibC.realloc(ptr, size)
+  ptr = LibC.realloc(ptr, size)
+  # needs zeroing
 end
 
 module GC

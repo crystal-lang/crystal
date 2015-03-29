@@ -37,22 +37,35 @@ def abort(message, status = 1)
   exit status
 end
 
-macro redefine_main(name = main)
-  fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
-    GC.init
-    {{yield LibCrystalMain.__crystal_main(argc, argv)}}
-    0
-  rescue ex
-    puts ex
-    ex.backtrace.each do |frame|
-      puts frame
+ifdef darwin || linux
+  macro redefine_main(name = main)
+    fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
+      GC.init
+      {{yield LibCrystalMain.__crystal_main(argc, argv)}}
+      0
+    rescue ex
+      puts ex
+      ex.backtrace.each do |frame|
+        puts frame
+      end
+      1
+    ensure
+      AtExitHandlers.run
     end
-    1
-  ensure
-    AtExitHandlers.run
   end
-end
 
-redefine_main do |main|
-  {{main}}
+  redefine_main do |main|
+    {{main}}
+  end
+elsif windows
+  macro redefine_main(name = main)
+    fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
+      {{yield LibCrystalMain.__crystal_main(argc, argv)}}
+      0
+    end
+  end
+
+  redefine_main do |main|
+    {{main}}
+  end
 end
