@@ -6,11 +6,7 @@ module Crystal
 
     def initialize(path = DEFAULT_PATH)
       path = Dir.working_directory + "#{File::SEPARATOR}src" if path.length == 0
-      ifdef darwin || linux
-        @crystal_path = path.split(':')
-      elsif windows
-        @crystal_path = path.split(';')
-      end
+      @crystal_path = path.split(File::PATH_SEPARATOR)
     end
 
     def find(filename, relative_to = nil)

@@ -25,9 +25,11 @@ end
 class File
   ifdef darwin || linux
     SEPARATOR = '/'
+    PATH_SEPARATOR = ':'
     DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
   elsif windows
     SEPARATOR = '\\'
+    PATH_SEPARATOR = ';'
     DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR
   end
 
