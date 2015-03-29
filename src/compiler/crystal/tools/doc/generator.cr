@@ -111,7 +111,10 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    return true if @is_crystal_repository && a_def.body.is_a?(Crystal::Primitive)
+    if @is_crystal_repository && (body = a_def.body).is_a?(Crystal::Primitive)
+      doc = Primitive.doc(a_def, body)
+      return !nodoc?(doc)
+    end
     return false if nodoc?(a_def)
 
     must_include? a_def.location
@@ -142,9 +145,12 @@ class Crystal::Doc::Generator
     false
   end
 
+  def nodoc?(str : String?)
+    str == ":nodoc:" || str == "nodoc"
+  end
+
   def nodoc?(obj)
-    doc = obj.doc.try &.strip
-    doc == ":nodoc:" || doc == "nodoc"
+    nodoc? obj.doc.try &.strip
   end
 
   def type(type)

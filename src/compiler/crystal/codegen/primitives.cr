@@ -33,6 +33,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_pointer_realloc node, target_def, call_args
             when :pointer_add
               codegen_primitive_pointer_add node, target_def, call_args
+            when :pointer_diff
+              codegen_primitive_pointer_diff node, target_def, call_args
             when :struct_new
               codegen_primitive_struct_new node, target_def, call_args
             when :struct_set
@@ -61,8 +63,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_class node, target_def, call_args
             when :fun_call
               codegen_primitive_fun_call node, target_def, call_args
-            when :pointer_diff
-              codegen_primitive_pointer_diff node, target_def, call_args
             when :tuple_indexer_known_index
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
             when :enum_value, :enum_new

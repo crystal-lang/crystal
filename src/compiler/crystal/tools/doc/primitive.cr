@@ -64,6 +64,48 @@ Returns this Char's Unicode codepoint.
         ""
         # raise "Bug: missing binary doc: #{a_def.name}"
       end
+    when :pointer_malloc, :pointer_realloc, :pointer_add
+      ":nodoc:" # documented in the Int overload
+    when :pointer_address
+%(
+Returns the address of this pointer.
+
+```
+ptr = Pointer(Int32).new(1234)
+ptr.address #=> 1234
+```
+)
+    when :pointer_get
+%(
+Gets the value pointed by this pointer.
+
+```
+ptr = Pointer(Int32).malloc(4)
+ptr.value = 42
+ptr.value #=> 42
+```
+)
+    when :pointer_set
+%(
+Sets the value pointed by this pointer.
+
+```
+ptr = Pointer(Int32).malloc(4)
+ptr.value = 42
+ptr.value #=> 42
+```
+)
+    when :pointer_diff
+%(
+Returns how many T elements are there between this pointer and *other*.
+That is, this is `(self.address - other.address) / sizeof(T)`.
+
+```
+ptr1 = Pointer(Int32).malloc(4)
+ptr2 = ptr1 + 2
+ptr2 - ptr1 #=> 2
+```
+)
     else
       ""
       # raise "Bug: missing doc: #{primitive.name}"

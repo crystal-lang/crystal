@@ -105,7 +105,11 @@ describe "Pointer" do
 
   it "does to_s" do
     Pointer(Int32).null.to_s.should eq("Pointer(Int32).null")
-    Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@4D2")
+    Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@0x4D2")
+  end
+
+  it "creates from int" do
+    Pointer(Int32).new(1234).address.should eq(1234)
   end
 
   it "shuffles!" do
@@ -129,5 +133,10 @@ describe "Pointer" do
 
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
+  end
+
+  it "mallocs one" do
+    a = Pointer.malloc_one(1234)
+    a.value.should eq(1234)
   end
 end
