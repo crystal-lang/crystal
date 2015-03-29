@@ -53,7 +53,12 @@ struct LLVM::Type
   end
 
   def size
-    Value.new LibLLVM.size_of(self)
+    # Asking the size of void crashes the program, we definitely don't want that
+    if void?
+      LLVM.int(LLVM::Int64, 1)
+    else
+      Value.new LibLLVM.size_of(self)
+    end
   end
 
   def kind

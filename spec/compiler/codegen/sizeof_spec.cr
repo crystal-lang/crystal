@@ -71,4 +71,14 @@ describe "Code gen: sizeof" do
   it "gives error if using instance_sizeof on something that's not a class" do
     assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
   end
+
+  it "gets sizeof Void" do
+    # Same as the size of a byte
+    run("sizeof(Void)").to_i.should eq(1)
+  end
+
+  it "gets sizeof NoReturn" do
+    # Same as the size of a byte
+    run("sizeof(NoReturn)").to_i.should eq(1)
+  end
 end
