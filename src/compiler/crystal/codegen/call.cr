@@ -83,20 +83,24 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         @needs_value = true
         accept arg
 
-        if i
-          def_arg = target_def.args[i]?
+        if arg.type.void?
+          call_arg = int8(0)
         else
-          def_arg = nil
-        end
+          if i
+            def_arg = target_def.args[i]?
+          else
+            def_arg = nil
+          end
 
-        call_arg = @last
+          call_arg = @last
 
-        if is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
-          # Nil to pointer
-          call_arg = llvm_c_type(def_arg.type).null
-        else
-          # Def argument might be missing if it's a variadic call
-          call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+          if is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
+            # Nil to pointer
+            call_arg = llvm_c_type(def_arg.type).null
+          else
+            # Def argument might be missing if it's a variadic call
+            call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+          end
         end
       end
 

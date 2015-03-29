@@ -74,4 +74,17 @@ describe "Code gen: void" do
       a
       ")
   end
+
+  it "allows passing void as argument to method" do
+    build(%(
+      lib LibC
+        fun foo
+      end
+
+      def bar(x)
+      end
+
+      bar LibC.foo
+    ))
+  end
 end

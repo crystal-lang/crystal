@@ -148,8 +148,13 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       end
     else
       llvm_args_types = args.map do |arg|
-        arg_type = llvm_arg_type(arg.type)
-        arg_type = arg_type.pointer if arg.special_var?
+        arg_type = arg.type
+        if arg_type.void?
+          arg_type = LLVM::Int8
+        else
+          arg_type = llvm_arg_type(arg_type)
+          arg_type = arg_type.pointer if arg.special_var?
+        end
         arg_type
       end
       llvm_return_type = llvm_type(target_def.type)
@@ -272,6 +277,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     target_def_var = target_def_vars.try &.[arg.name]
 
     var_type = (target_def_var || arg).type
+    return if var_type.void?
+
     if closure_var = context.vars[arg.name]?
       pointer = closure_var.pointer
     else
