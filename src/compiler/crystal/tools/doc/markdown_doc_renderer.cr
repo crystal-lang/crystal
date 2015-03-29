@@ -29,7 +29,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     text = @code_buffer.to_s
 
     # Check method reference (without #, but must be the whole text)
-    if text =~ /\A(\w+(?:\?|\!)?)(\(.+?\))?\Z/
+    if text =~ /\A((?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?)(\(.+?\))?\Z/
       name = $1
       args = $2
 
@@ -44,11 +44,11 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
     # Check Type#method(...) or Type or #method(...)
     text = text.gsub /\b
-      ([A-Z]\w+(?:\:\:[A-Z]\w+)?\#\w+(?:\?|\!)?(?:\(.+?\))?)
+      ([A-Z]\w+(?:\:\:[A-Z]\w+)?\#(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
         |
       ([A-Z]\w+(?:\:\:[A-Z]\w+)?)
         |
-      (\#\w+(?:\?|\!)?(?:\(.+?\))?)
+      (\#(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
       /x do |match_text, match|
 
       # Type#method(...)
