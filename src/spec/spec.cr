@@ -72,6 +72,24 @@ module Spec
   def self.fail_fast?
     @@fail_fast
   end
+
+  def self.before_each(&block)
+    before_each = @@before_each ||= [] of ->
+    before_each << block
+  end
+
+  def self.after_each(&block)
+    after_each = @@after_each ||= [] of ->
+    after_each << block
+  end
+
+  def self.run_before_each_hooks
+    @@before_each.try &.each &.call
+  end
+
+  def self.run_after_each_hooks
+    @@after_each.try &.each &.call
+  end
 end
 
 require "./*"
@@ -93,6 +111,7 @@ def it(description, file = __FILE__, line = __LINE__)
   Spec.formatter.before_example description
 
   begin
+    Spec.run_before_each_hooks
     yield
     Spec::RootContext.report(:success, description, file, line)
   rescue ex : Spec::AssertionFailed
@@ -101,6 +120,8 @@ def it(description, file = __FILE__, line = __LINE__)
   rescue ex
     Spec::RootContext.report(:error, description, file, line, ex)
     Spec.abort! if Spec.fail_fast?
+  ensure
+    Spec.run_after_each_hooks
   end
 end
 
