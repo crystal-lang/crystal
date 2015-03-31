@@ -231,14 +231,7 @@ module Crystal
     end
 
     def parse_op_assign_no_control(allow_ops = true)
-      case @token.type
-      when :IDENT
-        case @token.value
-        when :break, :next, :return
-          raise "void value expression", @token, @token.value.to_s.length
-        end
-      end
-
+      check_void_expression_keyword
       parse_op_assign(allow_ops)
     end
 
@@ -378,8 +371,11 @@ module Crystal
     end
 
     def parse_question_colon
+      location = @token.location
       cond = parse_range
       while @token.type == :"?"
+        check_void_value cond, location
+
         next_token_skip_space_or_newline
         true_val = parse_range
         check :":"
@@ -396,15 +392,20 @@ module Crystal
       while true
         case @token.type
         when :".."
-          next_token_skip_space_or_newline
-          exp = RangeLiteral.new(exp, parse_or, false).at(location)
+          exp = new_range(exp, location, false)
         when :"..."
-          next_token_skip_space_or_newline
-          exp = RangeLiteral.new(exp, parse_or, true).at(location)
+          exp = new_range(exp, location, true)
         else
           return exp
         end
       end
+    end
+
+    def new_range(exp, location, exclusive)
+      check_void_value exp, location
+      next_token_skip_space_or_newline
+      check_void_expression_keyword
+      RangeLiteral.new(exp, parse_or, exclusive).at(location)
     end
 
     macro parse_operator(name, next_operator, node, operators)
@@ -417,6 +418,8 @@ module Crystal
           when :SPACE
             next_token
           when {{operators.id}}
+            check_void_value left, location
+
             method = @token.type.to_s
             method_column_number = @token.column_number
 
@@ -448,6 +451,8 @@ module Crystal
         when :SPACE
           next_token
         when :"+", :"-"
+          check_void_value left, location
+
           method = @token.type.to_s
           method_column_number = @token.column_number
           next_token_skip_space_or_newline
@@ -474,6 +479,7 @@ module Crystal
       case token_type = @token.type
       when :"!", :"+", :"-", :"~"
         next_token_skip_space_or_newline
+        check_void_expression_keyword
         Call.new parse_prefix, token_type.to_s, name_column_number: column_number
       else
         parse_pow
@@ -497,6 +503,8 @@ module Crystal
           next_token
         when :IDENT
           if @token.keyword?(:as)
+            check_void_value atomic, location
+
             next_token_skip_space
             to = parse_single_type
             atomic = Cast.new(atomic, to).at(location)
@@ -520,6 +528,8 @@ module Crystal
             break
           end
         when :"."
+          check_void_value atomic, location
+
           @wants_regex = false
 
           if current_char == '%'
@@ -620,12 +630,16 @@ module Crystal
             atomic = check_special_call(atomic).at(location)
           end
         when :"[]"
+          check_void_value atomic, location
+
           column_number = @token.column_number
           next_token_skip_space
           atomic = Call.new(atomic, "[]", name_column_number: column_number).at(location)
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         when :"["
+          check_void_value atomic, location
+
           column_number = @token.column_number
           next_token_skip_space_or_newline
           args = [] of ASTNode
@@ -4034,6 +4048,22 @@ module Crystal
         @unclosed_stack.pop
       end
       value
+    end
+
+    def check_void_value(exp, location)
+      if exp.is_a?(ControlExpression)
+        raise "void value expression", location
+      end
+    end
+
+    def check_void_expression_keyword
+      case @token.type
+      when :IDENT
+        case @token.value
+        when :break, :next, :return
+          raise "void value expression", @token, @token.value.to_s.length
+        end
+      end
     end
 
     def check(token_types : Array)

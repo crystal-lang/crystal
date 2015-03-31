@@ -522,6 +522,21 @@ describe "Parser" do
     assert_syntax_error "1 unless #{keyword}", "void value expression"
     assert_syntax_error "1 while #{keyword}", "void value expression"
     assert_syntax_error "1 until #{keyword}", "void value expression"
+    assert_syntax_error "#{keyword}.foo", "void value expression"
+    assert_syntax_error "#{keyword} as Int32", "void value expression"
+    assert_syntax_error "#{keyword}[]", "void value expression"
+    assert_syntax_error "#{keyword}[0]", "void value expression"
+    assert_syntax_error "#{keyword}[0]= 1", "void value expression"
+    assert_syntax_error "#{keyword} .. 1", "void value expression"
+    assert_syntax_error "#{keyword} ... 1", "void value expression"
+    assert_syntax_error "1 .. #{keyword}", "void value expression"
+    assert_syntax_error "1 ... #{keyword}", "void value expression"
+    assert_syntax_error "#{keyword} ? 1 : 2", "void value expression"
+    assert_syntax_error "+#{keyword}", "void value expression"
+
+    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
+      assert_syntax_error "#{keyword} #{op} 1", "void value expression"
+    end
   end
 
   it_parses "yield", Yield.new
