@@ -716,16 +716,28 @@ module Crystal
     end
 
     def visit(node : FunPointer)
-      if obj = node.obj
+      obj = node.obj
+
+      if obj
         obj.accept self
       end
 
       call = Call.new(obj, node.name)
       prepare_call(call)
 
-      call.args = node.args.map_with_index do |arg, i|
-        arg.accept self
-        Var.new("arg#{i}", arg.type.instance_type) as ASTNode
+      # Check if it's ->LibFoo.foo, so we deduce the type from that method
+      if node.args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
+        matching_fun = obj_type.lookup_first_def(node.name, false)
+        node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
+
+        call.args = matching_fun.args.map_with_index do |arg, i|
+          Var.new("arg#{i}", arg.type.instance_type) as ASTNode
+        end
+      else
+        call.args = node.args.map_with_index do |arg, i|
+          arg.accept self
+          Var.new("arg#{i}", arg.type.instance_type) as ASTNode
+        end
       end
 
       begin

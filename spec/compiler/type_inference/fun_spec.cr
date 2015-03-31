@@ -709,4 +709,14 @@ describe "Type inference: fun" do
       f.call foo
       )) { int32 }
   end
+
+  it "gets pointer to lib fun without specifying types" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      ->LibFoo.foo
+      )) { fun_of(int32, float64) }
+  end
 end
