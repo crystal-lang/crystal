@@ -563,4 +563,14 @@ describe "Code gen: fun" do
       bar.foo
       )).to_i.should eq(2)
   end
+
+  it "gets proc to lib fun (#504)" do
+    build(%(
+      lib LibFoo
+        fun bar
+      end
+
+      ->LibFoo.bar
+      ))
+  end
 end
