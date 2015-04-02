@@ -32,6 +32,18 @@
 <%= OtherTypesTemplate.new("Extended Modules", type, type.extended_modules) %>
 <%= OtherTypesTemplate.new("Direct Known Subclasses", type, type.subclasses) %>
 
+<% if locations = type.locations %>
+  <h2>Defined in:</h2>
+  <% locations.each do |location| %>
+    <% if url = location.url %>
+      <a href="<%= url %>"><%= location.filename %></a>
+    <% else %>
+      <%= location.filename %>
+    <% end %>
+    <br/>
+  <% end %>
+<% end %>
+
 <% unless type.constants.empty? %>
   <% if type.enum? %>
     <h2>Enum Members</h2>

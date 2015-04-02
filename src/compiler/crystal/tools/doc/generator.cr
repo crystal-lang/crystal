@@ -257,24 +257,60 @@ class Crystal::Doc::Generator
   end
 
   def source_link(node)
+    location = relative_location node
+    return unless location
+
+    filename = relative_filename location
+    return unless filename
+
+    "#{@repository}#{filename}#L#{location.line_number}"
+  end
+
+  def relative_location(node : ASTNode)
+    relative_location node.location
+  end
+
+  def relative_location(location : Location?)
+    return unless location
+
     repository = @repository
     return unless repository
-
-    location = node.location
-    return unless location
 
     filename = location.filename
     if filename.is_a?(VirtualFile)
       location = filename.expanded_location
     end
 
-    return unless location
+    location
+  end
 
+  def relative_filename(location)
     filename = location.filename
     return unless filename.is_a?(String)
-
     return unless filename.starts_with? @base_dir
+    filename[@base_dir.length .. -1]
+  end
 
-    "#{repository}#{filename[@base_dir.length .. -1]}#L#{location.line_number}"
+  record RelativeLocation, filename, url
+  SRC_SEP = "src#{File::SEPARATOR}"
+
+  def relative_locations(type)
+    repository = @repository
+    locations = [] of RelativeLocation
+    type.locations.try &.each do |location|
+      location = relative_location location
+      next unless location
+
+      filename = relative_filename location
+      next unless filename
+
+      url = "#{repository}#{filename}" if repository
+
+      filename = filename[1 .. -1] if filename.starts_with? File::SEPARATOR
+      filename = filename[4 .. -1] if filename.starts_with? SRC_SEP
+
+      locations << RelativeLocation.new(filename, url)
+    end
+    locations
   end
 end

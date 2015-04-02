@@ -88,6 +88,10 @@ class Crystal::Doc::Type
     end
   end
 
+  def locations
+    @generator.relative_locations(@type)
+  end
+
   def program?
     @type.is_a?(Program)
   end
