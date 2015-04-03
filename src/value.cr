@@ -1,4 +1,4 @@
-# Value is the base type of the primitive types (`Nil`, `Bool`, `Char`, `Int`, `Float`),
+# Value is the base type of the primitive types (`Nil`, `Bool`, `Char`, `Number`),
 # `Symbol`, `Pointer`, `Tuple`, `StaticArray` and all structs.
 #
 # A Value is passed by value: when you pass it to methods,

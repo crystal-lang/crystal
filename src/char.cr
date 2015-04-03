@@ -64,6 +64,8 @@ struct Char
   # ```
   # 'a' <=> 'c' #=> -2
   # ```
+  #
+  # See `Object#<=>`
   def <=>(other : Char)
     self - other
   end

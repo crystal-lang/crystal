@@ -23,6 +23,11 @@ describe "Number" do
       753.155.significant(3, base = 8).should eq(752.0)
       15.159.significant(1, base = 8).should eq(16.0)
     end
+
+    it "preserves type" do
+      123.significant(2).should eq(120)
+      123.significant(2).should be_a(Int32)
+    end
   end
 
   describe "round" do
@@ -43,6 +48,11 @@ describe "Number" do
       753.155.round(1, base = 8).should eq(753.125)
       15.159.round(0, base = 8).should eq(15.0)
     end
+
+    it "preserves type" do
+      123.round(2).should eq(123)
+      123.round(2).should be_a(Int32)
+    end
   end
 
   it "creates an array with [] and some elements" do
@@ -57,7 +67,7 @@ describe "Number" do
     ary << 1_i64
     ary.should eq([1])
   end
-  
+
   it "can use methods from Comparable" do
     5.between?(0, 9).should be_true
     0.between?(5, 9).should be_false
