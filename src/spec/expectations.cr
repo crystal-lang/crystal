@@ -88,11 +88,11 @@ module Spec
     end
 
     def failure_message
-      "expected #{@target.inspect} to be a #{T}"
+      "expected #{@target.inspect} (#{@target.class}) to be a #{T}"
     end
 
     def negative_failure_message
-      "expected #{@target.inspect} not to be a #{T}"
+      "expected #{@target.inspect} (#{@target.class}) not to be a #{T}"
     end
   end
 
