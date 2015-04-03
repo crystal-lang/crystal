@@ -41,3 +41,14 @@ Community
 Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang) or join our IRC channel #crystal-lang at irc.freenode.net
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)
+
+Contributing
+---------
+
+Read the general [Contributing guide](https://github.com/manastech/crystal/blob/master/Contributing.md), and then:
+
+1. Fork it ( https://github.com/manastech/crystal/fork )
+2. Create your feature branch (git checkout -b my-new-feature)
+3. Commit your changes (git commit -am 'Add some feature')
+4. Push to the branch (git push origin my-new-feature)
+5. Create a new Pull Request
