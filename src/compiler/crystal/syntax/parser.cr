@@ -1805,7 +1805,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
       unless @token.keyword?(:when)
-        cond = parse_expression
+        cond = parse_op_assign_no_control
         skip_statement_end
       end
 
@@ -1827,7 +1827,7 @@ module Crystal
                 call.obj = ImplicitObj.new
                 when_conds << call
               else
-                when_conds << parse_expression
+                when_conds << parse_op_assign_no_control
               end
               skip_space
               if @token.keyword?(:then)

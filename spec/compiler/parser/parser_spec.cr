@@ -537,6 +537,9 @@ describe "Parser" do
     ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
       assert_syntax_error "#{keyword} #{op} 1", "void value expression"
     end
+
+    assert_syntax_error "case #{keyword}; when 1; end; end", "void value expression"
+    assert_syntax_error "case 1; when #{keyword}; end; end", "void value expression"
   end
 
   it_parses "yield", Yield.new
