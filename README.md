@@ -27,9 +27,8 @@ Oh, and we don't want to write C code to make the code run faster.
 Status
 ------
 
-* The project is in pre-alpha stage: we are still designing the language.
+* The project is in alpha stage: we are still tweaking the language and standard library.
 * The compiler is written in Crystal.
-* Includes the Boehm-Demers-Weiser conservative garbage collector, but this will change in the future.
 
 Installing
 ----------
