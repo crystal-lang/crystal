@@ -1,3 +1,48 @@
+# An Array is an ordered, integer-indexed collection of objects of type T.
+#
+# Array indexing starts at 0. A negative index is assumed to be
+# relative to the end of the array: -1 indicates the last element,
+# -2 is the next to last element, and so on.
+#
+# An Array can be created using the usual `new` method (several are provided), or with an array literal:
+#
+# ```
+# Array(Int32).new  #=> []
+# [1, 2, 3]         # Array(Int32)
+# [1, "hello", 'x'] # Array(Int32 | String | Char)
+# ```
+#
+# An Array can have mixed types, meaning T will be a union of types, but these are determined
+# when the array is created, either by specifying T or by using an array literal. In the later
+# case, T will be set to the union of the array literal elements.
+#
+# When creating an empty array you must always specify T:
+#
+# ```
+# [] of Int32 # same as Array(Int32)
+# []          # syntax error
+# ```
+#
+# An Array is implemented using an internal buffer of some capacity
+# that is reallocated when elements are pushed to it and more capacity
+# is needed. This is normally known as a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array).
+#
+# You can use a special array literal syntax with other types too, as long as they define an argless
+# `new` method and a `<<` method. `Set` is one such type:
+#
+# ```
+# set = Set{1, 2, 3} #=> [1, 2, 3]
+# set.class          #=> Set(Int32)
+# ```
+#
+# The above is the same as this:
+#
+# ```
+# set = Set(typeof(1, 2, 3)).new
+# set << 1
+# set << 2
+# set << 3
+# ```
 class Array(T)
   include Enumerable
   include Comparable(Array)
@@ -8,7 +53,10 @@ class Array(T)
   # `initial_capacity` big.
   #
   # The `initial_capacity` is useful to avoid unnecesary reallocations
-  # of the internal buffer in case of growth.
+  # of the internal buffer in case of growth. If you have an estimate
+  # of the maxinum number of elements an array will hold, you should
+  # initialize it with that capacity for improved execution performance.
+  #
   #
   # ```
   # ary = Array(Int32).new(5)
