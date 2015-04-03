@@ -69,4 +69,117 @@ describe "Type inference: yield with scope" do
       x
       )) { int32 }
   end
+
+  it "invokes nested calls" do
+    assert_type(%(
+      class Foo
+        def x
+          with self yield
+        end
+
+        def y
+          yield
+        end
+      end
+
+      def bar
+        yield
+      end
+
+      foo = Foo.new
+      foo.x do
+        bar do
+          y do
+            1
+          end
+        end
+      end
+      )) { int32 }
+  end
+
+  it "finds macro" do
+    assert_type(%(
+      class Foo
+        def x
+          with self yield
+        end
+
+        macro y
+          1
+        end
+      end
+
+      def bar
+        yield
+      end
+
+      foo = Foo.new
+      foo.x do
+        y
+      end
+      )) { int32 }
+  end
+
+  it "errors if using instance variable at top level" do
+    assert_error %(
+      class Foo
+        def foo
+          with self yield
+        end
+      end
+
+      Foo.new.foo do
+        @foo
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "uses instance variable of enclosing scope" do
+    assert_type(%(
+      class Foo
+        def foo
+          with self yield
+        end
+      end
+
+      class Bar
+        def initialize
+          @x = 1
+        end
+
+        def bar
+          Foo.new.foo do
+            @x
+          end
+        end
+      end
+
+      Bar.new.bar
+      )) { int32 }
+  end
+
+  it "uses method of enclosing scope" do
+    assert_type(%(
+      class Foo
+        def foo
+          with self yield
+        end
+      end
+
+      class Bar
+        def bar
+          Foo.new.foo do
+            baz
+          end
+        end
+
+        def baz
+          1
+        end
+      end
+
+      Bar.new.bar
+      )) { int32 }
+  end
 end

@@ -58,7 +58,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       accept obj
       call_args << downcast(@last, target_def.owner, obj.type, true)
     elsif owner.passed_as_self?
-      if yield_scope = context.vars["%scope"]?
+      if node.uses_with_scope? && (yield_scope = context.vars["%scope"]?)
         call_args << yield_scope.pointer
       else
         call_args << llvm_self(owner)

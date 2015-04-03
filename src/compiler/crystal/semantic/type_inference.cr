@@ -34,6 +34,7 @@ module Crystal
     property parent
     property types
     property block_nest
+    property with_scope
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -634,8 +635,9 @@ module Crystal
       block_visitor.call = @call
       block_visitor.fun_literal_context = @fun_literal_context
       block_visitor.parent = self
+      block_visitor.with_scope = node.scope || with_scope
 
-      block_scope = node.scope || @scope
+      block_scope = @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)
 
       block_visitor.scope = block_scope
@@ -848,6 +850,7 @@ module Crystal
       else
         node.scope = @scope || current_type.metaclass
       end
+      node.with_scope = with_scope
       node.parent_visitor = self
     end
 

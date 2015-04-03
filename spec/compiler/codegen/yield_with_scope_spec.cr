@@ -101,4 +101,80 @@ describe "Type inference: yield with scope" do
       a.a { aa }
       ))
   end
+
+  it "uses instance variable of enclosing scope" do
+    run(%(
+      class Foo
+        def foo
+          with self yield
+        end
+      end
+
+      class Bar
+        def initialize
+          @x = 1
+        end
+
+        def bar
+          Foo.new.foo do
+            @x + 1
+          end
+        end
+      end
+
+      Bar.new.bar
+      )).to_i.should eq(2)
+  end
+
+  it "uses method of enclosing scope" do
+    run(%(
+      class Foo
+        def foo
+          with self yield
+        end
+      end
+
+      class Bar
+        def bar
+          Foo.new.foo do
+            baz + 1
+          end
+        end
+
+        def baz
+          1
+        end
+      end
+
+      Bar.new.bar
+      )).to_i.should eq(2)
+  end
+
+  it "uses method of with object" do
+    run(%(
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def foo
+          with self yield
+        end
+
+        def coco
+          @x + 1
+        end
+      end
+
+      class Bar
+        def bar
+          Foo.new.foo do
+            coco
+          end
+        end
+      end
+
+      Bar.new.bar
+      )).to_i.should eq(2)
+  end
 end

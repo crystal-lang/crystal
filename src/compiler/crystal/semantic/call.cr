@@ -6,11 +6,16 @@ require "./type_lookup"
 
 class Crystal::Call
   property! scope
+  property with_scope
   property! parent_visitor
   property target_defs
   property expanded
+
   property? is_expansion
   @is_expansion = false
+
+  getter? uses_with_scope
+  @uses_with_scope = false
 
   def mod
     scope.program
@@ -27,6 +32,7 @@ class Crystal::Call
 
     ::raise "Zero target defs for #{self}"
   end
+
 
   def update_input(from)
     recalculate
@@ -123,6 +129,8 @@ class Crystal::Call
       lookup_matches_in_super(arg_types)
     elsif name == "previous_def"
       lookup_previous_def_matches(arg_types)
+    elsif with_scope = @with_scope
+      lookup_matches_in_with_scope with_scope, arg_types
     else
       lookup_matches_in scope, arg_types
     end
@@ -185,25 +193,34 @@ class Crystal::Call
     lookup_matches_in_type(owner, arg_types, self_type, def_name)
   end
 
+  def lookup_matches_in_with_scope(owner, arg_types)
+    signature = CallSignature.new(name, arg_types, block, named_args)
+
+    matches = check_tuple_indexer(owner, name, args, arg_types)
+    matches ||= lookup_matches_checking_expansion(owner, signature)
+
+    if matches.empty? && owner.class? && owner.abstract
+      matches = owner.virtual_type.lookup_matches(signature)
+    end
+
+    if matches.empty?
+      @uses_with_scope = false
+      return lookup_matches_in scope, arg_types
+    end
+
+    if matches.empty?
+      raise_matches_not_found(matches.owner || owner, name, matches)
+    end
+
+    @uses_with_scope = true
+    instantiate matches, owner, nil
+  end
+
   def lookup_matches_in_type(owner, arg_types, self_type, def_name)
     signature = CallSignature.new(def_name, arg_types, block, named_args)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-
-    unless matches
-      # If this call is an expansion (because of default or named args) we must
-      # resolve the call in the type that defined the original method, without
-      # triggering a virtual lookup. But the context of lookup must be preseved.
-      if is_expansion?
-        matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
-        matches.each do |match|
-          match.context.owner = owner
-          match.context.type_lookup = owner
-        end
-      else
-        matches = bubbling_exception { lookup_matches_with_signature(owner, signature) }
-      end
-    end
+    matches ||= lookup_matches_checking_expansion(owner, signature)
 
     if matches.empty?
       if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?
@@ -264,6 +281,22 @@ class Crystal::Call
 
   def lookup_matches_in(owner : Nil, arg_types)
     raise "Bug: trying to lookup matches in nil in #{self}"
+  end
+
+  def lookup_matches_checking_expansion(owner, signature)
+    # If this call is an expansion (because of default or named args) we must
+    # resolve the call in the type that defined the original method, without
+    # triggering a virtual lookup. But the context of lookup must be preseved.
+    if is_expansion?
+      matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
+      matches.each do |match|
+        match.context.owner = owner
+        match.context.type_lookup = owner
+      end
+    else
+      matches = bubbling_exception { lookup_matches_with_signature(owner, signature) }
+    end
+    matches
   end
 
   def lookup_matches_with_signature(owner : Program, signature)
@@ -510,6 +543,12 @@ class Crystal::Call
   end
 
   def in_macro_target
+    if with_scope = @with_scope
+      with_scope = with_scope.metaclass unless with_scope.metaclass?
+      macros = yield with_scope
+      return macros if macros
+    end
+
     node_scope = scope
     node_scope = node_scope.metaclass unless node_scope.metaclass?
 
