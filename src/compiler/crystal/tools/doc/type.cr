@@ -96,6 +96,10 @@ class Crystal::Doc::Type
     @type.is_a?(Program)
   end
 
+  def program
+    @generator.type(@type.program)
+  end
+
   def enum?
     kind == :enum
   end
@@ -258,7 +262,7 @@ class Crystal::Doc::Type
         subclasses = [] of Type
         type.subclasses.each do |subclass|
           case subclass
-          when GenericClassInstanceType
+          when GenericClassInstanceType, CStructOrUnionType
             next
           end
 

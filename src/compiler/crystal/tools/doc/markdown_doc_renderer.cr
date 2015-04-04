@@ -35,7 +35,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
       method = lookup_method @type, name, args
       if method
-        text = method_link @type, method, "#{method.prefix}#{text}"
+        text = method_link method, "#{method.prefix}#{text}"
         @io << text
         super
         return
@@ -70,7 +70,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
         if another_type && @type.must_be_included?
           method = lookup_method another_type, method_name, method_args
           if method
-            next method_link another_type, method, match_text
+            next method_link method, match_text
           end
         end
       end
@@ -97,7 +97,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
         method = lookup_method @type, method_name, method_args
         if method && method.must_be_included?
-          next method_link @type, method, match_text
+          next method_link method, match_text
         end
       end
 
@@ -164,8 +164,8 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     %(<a href="#{type.path_from(@type)}">#{text}</a>)
   end
 
-  def method_link(type, method, text)
-    %(<a href="#{type.path_from(@type)}##{method.anchor}">#{text}</a>)
+  def method_link(method, text)
+    %(<a href="#{method.type.path_from(@type)}##{method.anchor}">#{text}</a>)
   end
 
   def lookup_method(type, name, args)
@@ -180,6 +180,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
     type.lookup_method(name, args_count) ||
       type.lookup_class_method(name, args_count) ||
-      type.lookup_macro(name, args_count)
+      type.lookup_macro(name, args_count) ||
+      type.program.lookup_macro(name, args_count)
   end
 end

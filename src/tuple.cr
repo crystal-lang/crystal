@@ -183,7 +183,7 @@ struct Tuple
     true
   end
 
-  # Implements the comparison operator for Tuple.
+  # Implements the comparison operator.
   #
   # Each object in each tuple is compared (using the <=> operator).
   #

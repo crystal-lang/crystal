@@ -113,7 +113,7 @@ struct Number
     {self / number, self % number}
   end
 
-  # Implements the comparison operator for Char.
+  # Implements the comparison operator.
   #
   # See `Object#<=>`
   def <=>(other)

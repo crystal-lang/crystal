@@ -59,7 +59,7 @@ struct Char
     ord - other.ord
   end
 
-  # Implements the comparison operator for Char.
+  # Implements the comparison operator.
   #
   # ```
   # 'a' <=> 'c' #=> -2
