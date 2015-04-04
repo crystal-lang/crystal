@@ -61,6 +61,13 @@ describe "String" do
       "FooBar"["Bar"]?.should eq "Bar"
       "FooBar"["Baz"]?.should be_nil
     end
+
+    it "gets with index and []?" do
+      "hello"[1]?.should eq('e')
+      "hello"[5]?.should be_nil
+      "hello"[-1]?.should eq('o')
+      "hello"[-6]?.should be_nil
+    end
   end
 
   describe "byte_slice" do
@@ -670,6 +677,12 @@ describe "String" do
 
   it "does byte_at" do
     "hello".byte_at(1).should eq('e'.ord)
+    expect_raises(IndexOutOfBounds) { "hello".byte_at(5) }
+  end
+
+  it "does byte_at?" do
+    "hello".byte_at?(1).should eq('e'.ord)
+    "hello".byte_at?(5).should be_nil
   end
 
   it "does chars" do

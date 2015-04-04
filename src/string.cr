@@ -216,17 +216,7 @@ class String
   end
 
   def [](index : Int)
-    return byte_at(index).chr if single_byte_optimizable?
-
-    index += length if index < 0
-
-    each_char_with_index do |char, i|
-      if index == i
-        return char
-      end
-    end
-
-    raise IndexOutOfBounds.new
+    at(index) { raise IndexOutOfBounds.new }
   end
 
   def [](range : Range(Int, Int))
@@ -271,6 +261,10 @@ class String
     end
   end
 
+  def []?(index : Int)
+    at(index) { nil }
+  end
+
   def []?(str : String)
     includes?(str) ? str : nil
   end
@@ -294,6 +288,27 @@ class String
 
   def [](regex : Regex, group)
     self[regex, group]?.not_nil!
+  end
+
+  def at(index : Int)
+    at(index) { raise IndexOutOfBounds }
+  end
+
+  def at(index : Int)
+    if single_byte_optimizable?
+      byte = byte_at?(index)
+      return byte ? byte.chr : yield
+    end
+
+    index += length if index < 0
+
+    each_char_with_index do |char, i|
+      if index == i
+        return char
+      end
+    end
+
+    yield
   end
 
   def byte_slice(start : Int, count : Int)
@@ -327,12 +342,20 @@ class String
   end
 
   def byte_at(index)
-    index += bytesize if index < 0
-    unless 0 <= index < bytesize
-      raise IndexOutOfBounds.new
-    end
+    byte_at(index) { raise IndexOutOfBounds.new }
+  end
 
-    cstr[index]
+  def byte_at?(index)
+    byte_at(index) { nil }
+  end
+
+  def byte_at(index)
+    index += bytesize if index < 0
+    if 0 <= index < bytesize
+      cstr[index]
+    else
+      yield
+    end
   end
 
   def unsafe_byte_at(index)
