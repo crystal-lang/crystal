@@ -64,6 +64,10 @@ describe "Tuple" do
     {1, 2}.should eq({1.0, 2.0})
   end
 
+  it "does == with another type" do
+    {1, 2}.should_not eq(1)
+  end
+
   it "does compare" do
     a = {1, 2}
     b = {3, 4}
