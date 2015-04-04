@@ -95,7 +95,7 @@ struct Tuple
     at(index)
   end
 
-  # Returns the element at the given index or `nil` if out of boudns.
+  # Returns the element at the given index or `nil` if out of bounds.
   #
   # ```
   # tuple = {1, "hello", 'x'}
@@ -106,7 +106,7 @@ struct Tuple
     at(index) { nil }
   end
 
-  # Returns the element at the given index or raises IndexOutOfBounds if out of boudns.
+  # Returns the element at the given index or raises IndexOutOfBounds if out of bounds.
   #
   # ```
   # tuple = {1, "hello", 'x'}
@@ -222,9 +222,9 @@ struct Tuple
     length <=> other.length
   end
 
-  # Returns a hash value based on this tuple's length and contents.
+  # returns a hash value based on this tuple's length and contents.
   #
-  # See `Object#hash`.
+  # see `object#hash`.
   def hash
     hash = 31 * length
     {% for i in 0 ... @length %}
