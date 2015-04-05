@@ -347,4 +347,42 @@ describe "Type inference: macro" do
       ex.to_s.should_not match(/did you mean/)
     end
   end
+
+  it "finds macro in included generic module" do
+    assert_type(%(
+      module Moo(T)
+        macro moo
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+
+        def foo
+          moo
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
+
+  it "finds macro in inherited generic class" do
+    assert_type(%(
+      class Moo(T)
+        macro moo
+          1
+        end
+      end
+
+      class Foo < Moo(Int32)
+        def foo
+          moo
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
 end

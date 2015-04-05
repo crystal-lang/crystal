@@ -1760,6 +1760,7 @@ module Crystal
     delegate lookup_macro, @module
     delegate lookup_macros, @module
     delegate has_def?, @module
+    delegate metaclass, @module
 
     def parents
       @parents ||= @module.parents.map do |t|
