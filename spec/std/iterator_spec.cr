@@ -9,9 +9,7 @@ describe Iterator do
       iterator.next.should eq(1)
       iterator.next.should eq(2)
       iterator.next.should eq(3)
-      expect_raises StopIteration do
-        iterator.next
-      end
+      iterator.next.should eq(Iterator::Stop::INSTANCE)
     end
   end
 
@@ -22,9 +20,7 @@ describe Iterator do
       iterator.next.should eq(1)
       iterator.next.should eq(2)
       iterator.next.should eq(3)
-      expect_raises StopIteration do
-        iterator.next
-      end
+      iterator.next.should eq(Iterator::Stop::INSTANCE)
     end
 
     it "does next with exclusive range" do
@@ -32,9 +28,7 @@ describe Iterator do
       iterator = r.iterator
       iterator.next.should eq(1)
       iterator.next.should eq(2)
-      expect_raises StopIteration do
-        iterator.next
-      end
+      iterator.next.should eq(Iterator::Stop::INSTANCE)
     end
   end
 

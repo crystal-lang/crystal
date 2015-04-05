@@ -1,10 +1,12 @@
-class StopIteration < Exception
-  def initialize
-    super("StopIteration")
-  end
-end
-
 module Iterator(T)
+  class Stop
+    INSTANCE = new
+  end
+
+  def stop
+    Stop::INSTANCE
+  end
+
   include Enumerable(T)
 
   def map(&func : T -> U)
@@ -40,10 +42,11 @@ module Iterator(T)
   end
 
   def each
-    while value = self.next
+    while true
+      value = self.next
+      break if value.is_a?(Stop)
       yield value
     end
-  rescue StopIteration
   end
 end
 
@@ -61,7 +64,7 @@ class ArrayIterator(T)
 
   def next
     if @index >= @array.length
-      raise StopIteration.new
+      return stop
     end
 
     value = @array.buffer[@index]
@@ -80,7 +83,7 @@ struct Range
   end
 end
 
-class RangeIterator(B)
+class RangeIterator(B, E)
   include Iterator(B)
 
   def initialize(@range : Range(B, E), @current = range.begin, @reached_end = false)
@@ -88,14 +91,14 @@ class RangeIterator(B)
 
   def next
     if @reached_end
-      raise StopIteration.new
+      return stop
     end
 
     if @current == @range.end
       @reached_end = true
 
       if @range.excludes_end?
-        raise StopIteration.new
+        return stop
       else
         return @current
       end
@@ -107,7 +110,7 @@ class RangeIterator(B)
   end
 
   def clone
-    RangeIterator(B).new(@range, @current, @reached_end)
+    RangeIterator(B, E).new(@range, @current, @reached_end)
   end
 end
 
@@ -118,7 +121,9 @@ struct MapIterator(I, T, U)
   end
 
   def next
-    @func.call(@iter.next)
+    value = @iter.next
+    return stop if value.is_a?(Stop)
+    @func.call(value)
   end
 
   def clone
@@ -135,6 +140,8 @@ struct SelectIterator(I, T)
   def next
     while true
       value = @iter.next
+      return stop if value.is_a?(Stop)
+
       if @func.call(value)
         return value
       end
@@ -155,6 +162,8 @@ struct RejectIterator(I, T)
   def next
     while true
       value = @iter.next
+      return stop if value.is_a?(Stop)
+
       unless @func.call(value)
         return value
       end
@@ -166,7 +175,7 @@ struct RejectIterator(I, T)
   end
 end
 
-struct TakeIterator(I, T)
+class TakeIterator(I, T)
   include Iterator(T)
 
   def initialize(@iter : Iterator(T), @n : Int)
@@ -175,10 +184,12 @@ struct TakeIterator(I, T)
   def next
     if @n > 0
       value = @iter.next
+      return stop if value.is_a?(Stop)
+
       @n -= 1
       value
     else
-      raise StopIteration.new
+      stop
     end
   end
 
@@ -187,7 +198,7 @@ struct TakeIterator(I, T)
   end
 end
 
-struct SkipIterator(I, T)
+class SkipIterator(I, T)
   include Iterator(T)
 
   def initialize(@iter : Iterator(T), @n : Int)
@@ -213,7 +224,13 @@ struct ZipIterator(I1, I2, T1, T2)
   end
 
   def next
-    {@iter1.next, @iter2.next}
+    v1 = @iter1.next
+    return stop if v1.is_a?(Stop)
+
+    v2 = @iter2.next
+    return stop if v2.is_a?(Stop)
+
+    {v1, v2}
   end
 
   def clone
@@ -229,10 +246,13 @@ class CycleIterator(I, T)
   end
 
   def next
-    @iterator.next
-  rescue StopIteration
-    @iterator = @original.clone
-    @iterator.next
+    value = @iterator.next
+    if value.is_a?(Stop)
+      @iterator = @original.clone
+      @iterator.next
+    else
+      value
+    end
   end
 end
 
@@ -243,7 +263,10 @@ class WithIndexIterator(I, T)
   end
 
   def next
-    value = {@iterator.next, @index}
+    v = @iterator.next
+    return stop if v.is_a?(Stop)
+
+    value = {v, @index}
     @index += 1
     value
   end
