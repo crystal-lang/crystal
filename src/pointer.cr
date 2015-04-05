@@ -328,13 +328,18 @@ struct Pointer(T)
   # no pointers to this memory, it will be automatically freed.
   #
   # ```
-  # # An Int32 occupies 4 bytes, so here we are requesting 40 bytes
+  # # Allocate memory for an Int32: 4 bytes
+  # ptr = Pointer(Int32).malloc
+  # ptr.value #=> 0
+  #
+  # # Allocate memory for 10 Int32: 40 bytes
   # ptr = Pointer(Int32).malloc(10)
   # ptr[0] #=> 0
   # ...
   # ptr[9] #=> 0
+  #
   # ```
-  def self.malloc(size : Int)
+  def self.malloc(size = 1 : Int)
     if size < 0
       raise ArgumentError.new("negative Pointer#malloc size")
     end
@@ -378,20 +383,6 @@ struct Pointer(T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr
-  end
-
-  # Allocates `sizeof(T)` bytes from the system's heap initialized
-  # to *value* and returns a pointer to the first byte from that memory.
-  # The memory is allocated by the `GC`, so when there are
-  # no pointers to this memory, it will be automatically freed.
-  #
-  # ```
-  # # An Int32 occupies 4 bytes, so here we are requesting 4 bytes.
-  # ptr = Pointer.malloc_one(42)
-  # ptr.value #=> 42
-  # ```
-  def self.malloc_one(value : T)
-    Pointer(T).malloc(1) { value }
   end
 
   # Returns a `PointerAppender` for this pointer.

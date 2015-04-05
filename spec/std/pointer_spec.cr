@@ -134,9 +134,4 @@ describe "Pointer" do
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end
-
-  it "mallocs one" do
-    a = Pointer.malloc_one(1234)
-    a.value.should eq(1234)
-  end
 end
