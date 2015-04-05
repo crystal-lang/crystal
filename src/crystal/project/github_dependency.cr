@@ -5,7 +5,7 @@ module Crystal
   class GitHubDependency < Dependency
     getter target_dir
 
-    def initialize(repo, name = nil : String?, ssh = nil : Bool?, branch = nil : String?)
+    def initialize(repo, name = nil : String?, ssh = false, branch = nil : String?)
       unless repo =~ /(.*)\/(.*)/
         raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
       end
