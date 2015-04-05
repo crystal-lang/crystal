@@ -5,7 +5,7 @@ module Crystal
   class GitHubDependency < Dependency
     getter target_dir
 
-    def initialize(repo, name = nil : String?, ssl = nil : Bool?, branch = nil : String?)
+    def initialize(repo, name = nil : String?, ssh = nil : Bool?, branch = nil : String?)
       unless repo =~ /(.*)\/(.*)/
         raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
       end
@@ -14,14 +14,14 @@ module Crystal
       @repository = $2
       @target_dir = ".deps/#{@author}-#{@repository}"
       @branch = " -b #{branch}" if branch
-      @use_ssl = ssl
+      @use_ssh = ssh
 
       super(name || @repository)
     end
 
     def install
       unless Dir.exists?(target_dir)
-        repo_url = if @use_ssl
+        repo_url = if @use_ssh
           "git@github.com:#{@author}/#{@repository}.git"
         else
           "git://github.com/#{@author}/#{@repository}.git"

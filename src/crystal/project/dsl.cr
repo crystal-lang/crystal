@@ -10,8 +10,8 @@ struct Crystal::Project::DSL
     def initialize(@project)
     end
 
-    def github(repository, name = nil : String, ssl = nil : Bool, branch = nil : String)
-      @project.dependencies << GitHubDependency.new(repository, name, ssl, branch)
+    def github(repository, name = nil : String, ssh = nil : Bool, branch = nil : String)
+      @project.dependencies << GitHubDependency.new(repository, name, ssh, branch)
     end
 
     def path(path, name = nil : String)
