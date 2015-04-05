@@ -5,7 +5,7 @@ module Crystal
   class GitHubDependency < Dependency
     getter target_dir
 
-    def initialize(repo, name = nil : String?)
+    def initialize(repo, name = nil : String?, ssl = nil : Bool?, branch = nil : String?)
       unless repo =~ /(.*)\/(.*)/
         raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
       end
@@ -13,13 +13,21 @@ module Crystal
       @author = $1
       @repository = $2
       @target_dir = ".deps/#{@author}-#{@repository}"
+      @branch = " -b #{branch}" if branch
+      @use_ssl = ssl
 
       super(name || @repository)
     end
 
     def install
       unless Dir.exists?(target_dir)
-        exec "git clone git://github.com/#{@author}/#{@repository}.git #{target_dir}"
+        repo_url = if @use_ssl
+          "git@github.com:#{@author}/#{@repository}.git"
+        else
+          "git://github.com/#{@author}/#{@repository}.git"
+        end
+
+        exec "git clone#{@branch} #{repo_url} #{target_dir}"
       end
       exec "ln -sf ../#{target_dir}/src libs/#{name}"
 
