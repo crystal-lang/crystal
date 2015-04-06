@@ -1194,7 +1194,7 @@ class String
     match
   end
 
-  def scan(pattern)
+  def scan(pattern : Regex)
     byte_offset = 0
 
     while match = pattern.match(self, byte_offset)
@@ -1208,8 +1208,25 @@ class String
     self
   end
 
-  def scan(pattern)
+  def scan(pattern : Regex)
     matches = [] of MatchData
+    scan(pattern) do |match|
+      matches << match
+    end
+    matches
+  end
+
+  def scan(pattern : String)
+    end_pos = bytesize - pattern.bytesize
+    reader = CharReader.new(self)
+    reader.each do |char|
+      break if reader.pos > end_pos
+      yield pattern if (cstr + reader.pos).memcmp(pattern.cstr, pattern.bytesize) == 0
+    end
+  end
+
+  def scan(pattern : String)
+    matches = [] of String
     scan(pattern) do |match|
       matches << match
     end

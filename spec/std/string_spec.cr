@@ -808,6 +808,17 @@ describe "String" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
     end
+
+    it "works with strings" do
+      res = [] of String
+      "bla bla ablf".scan("bl") { |s| res << s }
+      res.should eq(["bl", "bl", "bl"])
+    end
+
+    it "works with strings" do
+      res = [] of String
+      "bla bla ablf".scan("bl").should eq(["bl", "bl", "bl"])
+    end
   end
 
   it "has match" do
