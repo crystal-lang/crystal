@@ -202,10 +202,25 @@ describe Matrix do
   end
 
   describe "**" do
-    it "does matrix exponentiation" do
+    it "does ** with an Int" do
+      a = Matrix[[1, 1], [1, 0]]
+      b = Matrix[[3, 2], [2, 1]]
+      (a ** 3).should eq(b)
+
+      a = Matrix[[7, 6], [3, 9]]
+      b = Matrix[[67, 96], [48, 99]]
+      (a ** 2).should eq(b)
+
       a = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      b = Matrix[[1.0, 32.0, 243.0], [1024.0, 3125.0, 7776.0], [16807.0, 32768.0, 59049.0]]
-      (a ** 5).should eq(b)
+      (a ** 1).should eq(a)
+
+      a = Matrix[[1, 1], [1, 0]]
+      b = Matrix[[1, -1], [-1, 2]]
+      (a ** -2).should eq(b)
+
+      a = Matrix[[1, 1], [1, 0]]
+      b = Matrix[[1, 0], [0, 1]]
+      (a ** 0).should eq(b)
     end
   end
 
@@ -449,7 +464,7 @@ describe Matrix do
     it "returns an array of matrices, each with a single column" do
       a = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       b = a.column_vectors
-      c = [Matrix[[1, 4, 7]], Matrix[[2, 5, 8]], Matrix[[3, 6, 9]]]
+      c = [Matrix[[1], [4], [7]], Matrix[[2], [5], [8]], Matrix[[3], [6], [9]]]
       b.should eq(c)
     end
   end
@@ -465,68 +480,75 @@ describe Matrix do
   describe "lower_triangular?" do
     it "returns true if the matrix is lower triangular (1)" do
       m = Matrix[[1, 0, 0], [2, 8, 0], [4, 9, 7]]
-      m.lower_triangular?.should eq(true)
+      m.lower_triangular?.should be_true
     end
 
     it "returns true if the matrix is lower triangular (2)" do
       m = Matrix[[1, 2], [3, 4]]
-      m.lower_triangular?.should eq(false)
+      m.lower_triangular?.should be_false
     end
 
     it "returns true if the matrix is lower triangular (3)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      m.lower_triangular?.should eq(false)
+      m.lower_triangular?.should be_false
     end
   end
 
   describe "upper_triangular?" do
     it "returns true if the matrix is upper triangular (1)" do
       m = Matrix[[1, 4, 2], [0, 3, 4], [0, 0, 1]]
-      m.upper_triangular?.should eq(true)
+      m.upper_triangular?.should be_true
     end
 
     it "returns true if the matrix is upper triangular (2)" do
       m = Matrix[[1, 2], [3, 4]]
-      m.upper_triangular?.should eq(false)
+      m.upper_triangular?.should be_false
     end
 
     it "returns true if the matrix is upper triangular (3)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      m.upper_triangular?.should eq(false)
+      m.upper_triangular?.should be_false
     end
   end
 
   describe "permutation?" do
     it "returns true if the matrix is a permutation matrix (1)" do
       m = Matrix.identity(10)
-      m.permutation?.should eq(true)
+      m.permutation?.should be_true
     end
 
     it "returns true if the matrix is a permutation matrix (2)" do
       m = Matrix[[1, 0, 0], [0, 1, 0], [0, 1, 0]]
-      m.permutation?.should eq(false)
+      m.permutation?.should be_false
     end
 
     it "returns true if the matrix is a permutation matrix (3)" do
       m = Matrix[[1, 0, 0], [0, 1, 0], [0, 0, 0]]
-      m.permutation?.should eq(false)
+      m.permutation?.should be_false
+    end
+
+    it "returns true if the matrix is a permutation matrix (4)" do
+      Matrix[[0, 0, 1], [1, 0, 1], [0, 0, 0]].permutation?.should be_false
+      Matrix[[0, 1, 1], [0, 0, 0], [0, 1, 0]].permutation?.should be_false
+      Matrix[[0, 0, 0], [1, 0, 0], [1, 1, 0]].permutation?.should be_false
+      Matrix[[0, 0, 1], [1, 0, 1], [0, 0, 0]].permutation?.should be_false
     end
   end
 
   describe "regular?" do
     it "returns true if the matrix is regular (1)" do
       m = Matrix[[2, 6], [1, 3]]
-      m.regular?.should eq(false)
+      m.regular?.should be_false
     end
 
     it "returns true if the matrix is regular (2)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      m.regular?.should eq(false)
+      m.regular?.should be_false
     end
 
     it "returns true if the matrix is regular (3)" do
       m = Matrix[[1, 2], [3, 4]]
-      m.regular?.should eq(true)
+      m.regular?.should be_true
     end
   end
 
@@ -550,41 +572,41 @@ describe Matrix do
   describe "singular?" do
     it "returns true if the matrix is singular (1)" do
       m = Matrix[[2, 6], [1, 3]]
-      m.singular?.should eq(true)
+      m.singular?.should be_true
     end
 
     it "returns true if the matrix is singular (2)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      m.singular?.should eq(true)
+      m.singular?.should be_true
     end
 
     it "returns true if the matrix is singular (3)" do
       m = Matrix[[1, 2], [3, 4]]
-      m.singular?.should eq(false)
+      m.singular?.should be_false
     end
   end
 
   describe "square?" do
     it "returns true if the matrix is square, false otherwise (1)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-      m.square?.should eq(true)
+      m.square?.should be_true
     end
 
     it "returns true if the matrix is square, false otherwise (1)" do
       m = Matrix[[1, 2], [3, 4], [5, 6]]
-      m.square?.should eq(false)
+      m.square?.should be_false
     end
   end
 
   describe "symmetric?" do
     it "returns true if the matrix is symmetric (1)" do
       m = Matrix[[1, 2, 3], [2, 5, 6], [3, 6, 9]]
-      m.symmetric?.should eq(true)
+      m.symmetric?.should be_true
     end
 
     it "returns true if the matrix is symmetric (2)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [3, 6, 9]]
-      m.symmetric?.should eq(false)
+      m.symmetric?.should be_false
     end
   end
 

@@ -20,7 +20,7 @@ class Matrix(T)
   def_exception "DimensionMismatch", "Matrix dimension mismatch"
   def_exception "NotRegular", "Non-regular Matrix"
 
-  def_operators :+, :-, :*, :/, :**, :"^", :>>, :<<, :|, :&
+  def_operators :+, :-, :*, :/, :^, :>>, :<<, :|, :&
 
   def initialize(@rows : Int, @columns : Int)
     @buffer = Pointer(T).malloc(size)
@@ -228,6 +228,22 @@ class Matrix(T)
     matrix
   end
 
+  # Performs exponentiation
+  def **(other : Int)
+    m = self
+    if other == 0
+      Matrix.identity(@columns)
+    elsif other < 0
+      (other.abs - 1).times { m *= self }
+      m.inverse
+    elsif other == 1
+      clone
+    else
+      (other - 1).times { m *= self }
+      m
+    end
+  end
+
   # Performs division with another matrix.
   def /(other : Matrix)
     self * other.inverse
@@ -373,7 +389,7 @@ class Matrix(T)
 
   # Returns an array of arrays that correspond to the rows of the matrix.
   def rows
-    Array(Array(T)).new(@rows) { |i| row(i) }
+    Array.new(@rows) { |i| row(i) }
   end
 
   # Returns an array with the elements of the column at the given index.
@@ -395,7 +411,7 @@ class Matrix(T)
 
   # Returns an array of arrays that correspond to the columns of the matrix.
   def columns
-    Array(Array(T)).new(@columns) { |i| column(i) }
+    Array.new(@columns) { |i| column(i) }
   end
 
   # The number of columns.
@@ -461,6 +477,8 @@ class Matrix(T)
         else return false
         end
       end
+      return false unless found == 1
+      found = 0
       column(i) do |e|
         case e
         when 0 then next
@@ -468,7 +486,7 @@ class Matrix(T)
         else return false
         end
       end
-      return false unless found == 2
+      return false unless found == 1
     end
     true
   end
@@ -504,7 +522,7 @@ class Matrix(T)
 
   # Returns an array of smaller matrices, each representing a column from self.
   def column_vectors
-    Array.new(@columns) { |i| minor(0, @rows, i, 1).transpose! }
+    Array.new(@columns) { |i| minor(0, @rows, i, 1) }
   end
 
   # Returns a subsection of the matrix.
