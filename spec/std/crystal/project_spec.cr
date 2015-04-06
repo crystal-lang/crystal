@@ -19,7 +19,7 @@ module Crystal
         project = Project.new
         project.eval do
           deps do
-            git "https://example.com/owner/repo"
+            git "https://example.com/owner/repo.git"
           end
         end
         project.dependencies.length.should eq(1)
