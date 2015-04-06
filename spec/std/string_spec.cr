@@ -809,16 +809,24 @@ describe "String" do
       "hello".scan(r).map(&.[0]).should eq(["hello", ""])
     end
 
-    it "works with strings" do
+    it "works with strings with block" do
       res = [] of String
       "bla bla ablf".scan("bl") { |s| res << s }
       res.should eq(["bl", "bl", "bl"])
     end
 
     it "works with strings" do
-      res = [] of String
       "bla bla ablf".scan("bl").should eq(["bl", "bl", "bl"])
+      "hello".scan("world").should eq([] of String)
+      "bbb".scan("bb").should eq(["bb"])
+      "ⓧⓧⓧ".scan("ⓧⓧ").should eq(["ⓧⓧ"])
+      "ⓧ".scan("ⓧ").should eq(["ⓧ"])
+      "ⓧ ⓧ ⓧ".scan("ⓧ").should eq(["ⓧ", "ⓧ", "ⓧ"])
+      "".scan("").should eq([] of String)
+      "a".scan("").should eq([] of String)
+      "".scan("a").should eq([] of String)
     end
+
   end
 
   it "has match" do

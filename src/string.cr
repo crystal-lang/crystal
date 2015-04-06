@@ -1217,12 +1217,13 @@ class String
   end
 
   def scan(pattern : String)
-    end_pos = bytesize - pattern.bytesize
-    reader = CharReader.new(self)
-    reader.each do |char|
-      break if reader.pos > end_pos
-      yield pattern if (cstr + reader.pos).memcmp(pattern.cstr, pattern.bytesize) == 0
+    return self if pattern.empty?
+    index = 0
+    while index = byte_index(pattern, index)
+      yield pattern
+      index += pattern.bytesize
     end
+    self
   end
 
   def scan(pattern : String)
