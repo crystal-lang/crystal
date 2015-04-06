@@ -1011,6 +1011,8 @@ describe "Parser" do
 
   it_parses "if (\ntrue\n)\n1\nend", If.new(Expressions.new([true.bool] of ASTNode), 1.int32)
 
+  it_parses "my_def def foo\nloop do\nend\nend", Call.new(nil, "my_def", Def.new("foo", body: Call.new(nil, "loop", block: Block.new)))
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
   end

@@ -2282,6 +2282,10 @@ module Crystal
       @doc_enabled = false
       @def_nest += 1
 
+      # At this point we want to attach the "do" to calls inside the def,
+      # not to calls that might have this def as a macro argument.
+      @last_call_has_parenthesis = true
+
       next_token
 
       case current_char
