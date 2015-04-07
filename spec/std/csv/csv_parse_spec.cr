@@ -71,4 +71,11 @@ describe CSV do
       CSV.parse(StringIO.new(%("hel""lo",world))).should eq([[%(hel"lo), %(world)]])
     end
   end
+
+  it "parses row by row" do
+    parser = CSV::Parser.new("hello,world\ngood,bye\n")
+    parser.next_row.should eq(%w(hello world))
+    parser.next_row.should eq(%w(good bye))
+    parser.next_row.should be_nil
+  end
 end
