@@ -52,6 +52,8 @@ the specs. All specs should pass.
 Use the issue tracker for bugs, questions, proposals and feature requests.
 The issue tracker is very convenient for all of this because of its ability to link to a particular commit
 or another issue, include code snippets, etc.
+If you open a question, remember to close the issue once you are satisfied with the answer and you think
+there's no more room for discussion. We'll anyway close the issue after some days.
 
 If something is missing from the language it might be that it's not yet implemented
 (the language is still very young) or that it was purposely left out. If in doubt, just ask.
