@@ -133,7 +133,7 @@ struct TimeFormat
     end
 
     def get_month_name
-      MONTH_NAMES[time.month]
+      MONTH_NAMES[time.month - 1]
     end
 
     def get_short_month_name
