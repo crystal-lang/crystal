@@ -83,18 +83,4 @@ def fork()
   Process.fork()
 end
 
-def sleep(seconds : Int)
-  if seconds < 0
-    raise ArgumentError.new "sleep seconds must be positive"
-  end
-  LibC.sleep seconds.to_u32
-end
-
-def sleep(seconds : Float)
-  if seconds < 0
-    raise ArgumentError.new "sleep seconds must be positive"
-  end
-  LibC.usleep (seconds * 1E6).to_u32
-end
-
 require "./*"

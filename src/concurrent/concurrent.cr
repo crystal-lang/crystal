@@ -5,8 +5,12 @@ Fiber.rescheduler = -> do
   Scheduler.reschedule
 end
 
-def sleep(t : Int | Float)
-  Scheduler.sleep(t)
+def sleep(seconds : Int | Float)
+  if seconds < 0
+    raise ArgumentError.new "sleep seconds must be positive"
+  end
+
+  Scheduler.sleep(seconds)
   Scheduler.reschedule
 end
 

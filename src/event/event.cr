@@ -19,17 +19,13 @@ module Event
 
     def add_timer_event(time, callback, data = nil)
       event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::None, callback, data)
-      t :: LibC::TimeVal
-      t.tv_sec = time.to_i64
-      t.tv_usec = typeof(t.tv_usec).cast(0)
+      t = to_timeval(time)
       LibEvent2.event_add(event, pointerof(t))
     end
 
     def add_interval_event(time, callback, data = nil)
       event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::Persist, callback, data)
-      t :: LibC::TimeVal
-      t.tv_sec = time.to_i64
-      t.tv_usec = 0
+      t = to_timeval(time)
       LibEvent2.event_add(event, pointerof(t))
     end
 
@@ -52,6 +48,24 @@ module Event
 
     def to_unsafe
       @base
+    end
+
+    private def to_timeval(time : Int)
+      t :: LibC::TimeVal
+      t.tv_sec = time.to_i64
+      t.tv_usec = typeof(t.tv_usec).cast(0)
+      t
+    end
+
+    private def to_timeval(time : Float)
+      t :: LibC::TimeVal
+
+      seconds = time.to_i64
+      useconds = typeof(t.tv_usec).cast((time - seconds) * 1e6)
+
+      t.tv_sec = seconds.to_i64
+      t.tv_usec = useconds
+      t
     end
   end
 end
