@@ -81,7 +81,7 @@ class Crystal::Call
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
           msg << "undefined local variable or method '#{def_name}'"
         end
-        msg << " (did you mean '#{similar_name}'?)".colorize.yellow.bold if similar_name
+        msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
 
         # Check if it's an instance variable that was never assigned a value
         if obj.is_a?(InstanceVar)
@@ -91,9 +91,9 @@ class Crystal::Call
           if deps && deps.length == 1 && deps.first.same?(mod.nil_var)
             similar_name = scope.lookup_similar_instance_var_name(ivar.name)
             if similar_name
-              msg << " (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)".colorize.yellow.bold
+              msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
             else
-              msg << " (#{ivar.name} was never assigned a value)".colorize.yellow.bold
+              msg << colorize(" (#{ivar.name} was never assigned a value)").yellow.bold
             end
           end
         end
@@ -198,10 +198,10 @@ class Crystal::Call
       str << "\n - "
       append_def_full_name owner, a_def, str
       if defs.length > 1 && a_def.same?(matched_def)
-        str << " (trying this one)".colorize.blue
+        str << colorize(" (trying this one)").blue
       end
       if a_def.args.any? { |arg| arg.default_value && arg.name == argument_name }
-        str << " (did you mean this one?)".colorize.yellow.bold
+        str << colorize(" (did you mean this one?)").yellow.bold
       end
     end
   end
@@ -294,7 +294,7 @@ class Crystal::Call
           str << named_arg.name
           str << "'"
           if similar_name
-            str << " (did you mean '#{similar_name}'?)".colorize.yellow.bold
+            str << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
           end
 
           defs = owner.lookup_defs(a_def.name)
@@ -345,4 +345,7 @@ class Crystal::Call
     owner.to_s_with_method_name(def_name)
   end
 
+  private def colorize(obj)
+    mod.colorize(obj)
+  end
 end

@@ -18,6 +18,8 @@ USAGE
 
   VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
 
+  @@color = true
+
   def self.run(options = ARGV)
     command = options.first?
 
@@ -68,6 +70,7 @@ USAGE
       exit
     end
   rescue ex : Crystal::Exception
+    ex.color = @@color
     puts ex
     exit 1
   rescue ex
@@ -280,6 +283,14 @@ USAGE
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
           compiler.mcpu = cpu
         end
+      end
+
+      opts.on("--no-color", "Disable colored output") do
+        @@color = false
+        compiler.color = false
+      end
+
+      unless no_build
         opts.on("--no-build", "Disable build output") do
           compiler.no_build = true
         end
@@ -345,8 +356,7 @@ USAGE
   private def self.gather_sources(filenames)
     filenames.map do |filename|
       unless File.file?(filename)
-        puts "File #{filename} does not exist"
-        exit 1
+        error "File #{filename} does not exist"
       end
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
@@ -368,8 +378,15 @@ USAGE
   end
 
   private def self.error(msg)
-    print "Error: ".colorize.red.bold
-    puts msg.colorize.bold
+    # This is for the case where the main command is wrong
+    @@color = false if ARGV.includes?("--no-color")
+
+    print colorize("Error: ").red.bold
+    puts colorize(msg).toggle(@@color).bold
     exit 1
+  end
+
+  private def self.colorize(obj)
+    obj.colorize.toggle(@@color)
   end
 end

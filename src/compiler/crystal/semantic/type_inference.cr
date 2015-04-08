@@ -2989,7 +2989,7 @@ module Crystal
       unless target_type
         error_msg = String.build do |msg|
           msg << "undefined constant #{node}"
-          msg << " (did you mean '#{similar_name}'?)".colorize.yellow.bold if similar_name
+          msg << @mod.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
         end
         node.raise error_msg
       end

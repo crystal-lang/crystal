@@ -17,6 +17,7 @@ module Crystal
     property literal_expander
     property initialized_global_vars
     property? wants_doc
+    property? color
 
     def initialize
       super(self, self, "main")
@@ -33,6 +34,8 @@ module Crystal
       @initialized_global_vars = Set(String).new
       @file_modules = {} of String => FileModule
       @unions = {} of Array(Int32) => Type
+      @wants_doc = false
+      @color = true
 
       @types["Object"] = object = @object = ObjectType.new self, self, "Object", nil
       object.abstract = true
@@ -296,6 +299,10 @@ module Crystal
 
     def type_desc
       "main"
+    end
+
+    def colorize(obj)
+      obj.colorize.toggle(@color)
     end
 
     def to_s(io)

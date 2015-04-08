@@ -20,6 +20,7 @@ module Crystal
     property? dump_ll
     property  link_flags
     property  mcpu
+    property? color
     property? no_build
     property  n_threads
     property  prelude
@@ -35,6 +36,7 @@ module Crystal
     def initialize
       @debug = false
       @dump_ll = false
+      @color = true
       @no_build = false
       @n_threads = 8.to_i32
       @prelude = "prelude"
@@ -59,6 +61,7 @@ module Crystal
       program.flags << "release" if @release
       program.flags.merge @flags
       program.wants_doc = wants_doc?
+      program.color = color?
 
       node, original_node = parse program, sources
       node = infer_type program, node
@@ -103,8 +106,8 @@ module Crystal
       parser.wants_doc = wants_doc?
       parser.parse
     rescue ex : InvalidByteSequenceError
-      print "Error: ".colorize.red.bold
-      print "file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ".colorize.bold
+      print colorize("Error: ").red.bold
+      print colorize("file '#{Crystal.relative_filename(source.filename)}' is not a valid Crystal source file: ").bold
       puts "#{ex.message}"
       exit 1
     end
@@ -291,8 +294,8 @@ module Crystal
 
       success = ::system(command)
       unless success
-        print "Error: ".colorize.red.bold
-        puts "execution of command failed with code: #{$?.exit}: `#{command}`".colorize.bright
+        print colorize("Error: ").red.bold
+        puts colorize("execution of command failed with code: #{$?.exit}: `#{command}`").bright
         exit 3
       end
       success
@@ -307,6 +310,10 @@ module Crystal
       else
         yield
       end
+    end
+
+    private def colorize(obj)
+      obj.colorize.toggle(@color)
     end
 
     class CompilationUnit

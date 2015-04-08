@@ -4,6 +4,8 @@ require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception
+    property? color
+
     def to_s(io)
       to_s_with_source(nil, io)
     end
@@ -16,6 +18,14 @@ module Crystal
 
     def relative_filename(filename)
       Crystal.relative_filename(filename)
+    end
+
+    def colorize(obj)
+      obj.colorize.toggle(@color)
+    end
+
+    def with_color
+      ::with_color.toggle(@color)
     end
   end
 
@@ -35,9 +45,9 @@ module Crystal
 
     def append_to_s(source, io)
       if @filename
-        io << "Syntax error in #{relative_filename(@filename)}:#{@line_number}: #{@message.colorize.bold}"
+        io << "Syntax error in #{relative_filename(@filename)}:#{@line_number}: #{colorize(@message).bold}"
       else
-        io << "Syntax error in line #{@line_number}: #{@message.colorize.bold}"
+        io << "Syntax error in line #{@line_number}: #{colorize(@message).bold}"
       end
 
       source = fetch_source(source)
@@ -87,6 +97,10 @@ module Crystal
   class TypeException < Exception
     getter :node
     getter :inner
+
+    def color=(@color)
+      inner.try &.color=(@color)
+    end
 
     def self.for_node(node, message, inner = nil)
       location = node.location
@@ -177,7 +191,7 @@ module Crystal
       if @inner
         io << msg
       else
-        io << msg.colorize.bold
+        io << colorize(msg).bold
       end
     end
 
@@ -231,7 +245,7 @@ module Crystal
       io.puts ("=" * 80)
       io.puts
 
-      io << "Error: ".colorize.bold
+      io << colorize("Error: ").bold
       case nil_reason.reason
       when :not_in_initialize
         scope = nil_reason.scope.not_nil!
@@ -245,9 +259,9 @@ module Crystal
           instance_var_not_initialized scope, nil_reason.name, io
         end
       when :used_before_initialized
-        io << "instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable".colorize.bold
+        io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
       when :used_self_before_initialized
-        io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable".colorize.bold
+        io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
       end
 
       if nil_reason_nodes = nil_reason.nodes
@@ -258,7 +272,7 @@ module Crystal
     end
 
     def instance_var_not_initialized(scope, var_name, io)
-      io << "instance variable '#{var_name}' of #{scope} was not initialized in all of the 'initialize' methods, rendering it nilable".colorize.bold
+      io << colorize("instance variable '#{var_name}' of #{scope} was not initialized in all of the 'initialize' methods, rendering it nilable").bold
       defs = defs_without_instance_var_initialized scope, var_name
       unless defs.empty?
         io << "."
