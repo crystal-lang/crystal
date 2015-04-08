@@ -1,10 +1,10 @@
 class Object
   def colorize
-    ColorizedObject.new(self)
+    Colorize::Object.new(self)
   end
 
   def colorize(fore)
-    ColorizedObject.new(self).fore(fore)
+    Colorize::Object.new(self).fore(fore)
   end
 end
 
@@ -16,7 +16,7 @@ def with_color(color : Symbol)
   "".colorize(color)
 end
 
-struct ColorizedObject(T)
+struct Colorize::Object(T)
   FORE_DEFAULT        =  "39"
   FORE_BLACK          =  "30"
   FORE_RED            =  "31"
@@ -77,6 +77,7 @@ struct ColorizedObject(T)
     @fore = FORE_DEFAULT
     @back = BACK_DEFAULT
     @mode = 0
+    @on = true
   end
 
   {% for name in COLORS %}
@@ -135,6 +136,10 @@ struct ColorizedObject(T)
     back color
   end
 
+  def toggle(@on)
+    self
+  end
+
   def to_s(io)
     surround(io) do
       io << @object
@@ -153,7 +158,7 @@ struct ColorizedObject(T)
     append_end(io) if must_append_end
   end
 
-  STACK = [] of ColorizedObject(String)
+  STACK = [] of Colorize::Object(String)
 
   def push(io = STDOUT)
     last_color = STACK.last?
@@ -172,6 +177,8 @@ struct ColorizedObject(T)
   end
 
   protected def append_start(io, reset = false)
+    return false unless @on
+
     fore_is_default = @fore == FORE_DEFAULT
     back_is_default = @back == BACK_DEFAULT
     mode_is_default = @mode == 0

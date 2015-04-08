@@ -136,4 +136,13 @@ describe "colorize" do
     end
     io.to_s.should eq("\e[31mhello\e[0;32;1mworld\e[0;31mbye\e[0m")
   end
+
+  it "toggles off" do
+    "hello".colorize.black.toggle(false).to_s.should eq("hello")
+    "hello".colorize.toggle(false).black.to_s.should eq("hello")
+  end
+
+  it "toggles off and on" do
+    "hello".colorize.toggle(false).black.toggle(true).to_s.should eq("\e[30mhello\e[0m")
+  end
 end
