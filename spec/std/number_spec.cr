@@ -78,4 +78,17 @@ describe "Number" do
     25641_i16.between?(594_i64, 487696874_u32).should be_true
     594_i64.between?(25641_i16, 487696874_u32).should be_false
   end
+
+  it "steps from int to float" do
+    count = 0
+    0.step(by: 0.1, limit: 0.3) do |x|
+      typeof(x).should eq(typeof(0.1))
+      case count
+      when 0 then x.should eq(0.0)
+      when 1 then x.should eq(0.1)
+      when 2 then x.should eq(0.2)
+      end
+      count += 1
+    end
+  end
 end

@@ -43,8 +43,8 @@ struct Number
   # 7
   # 9
   # ```
-  def step(limit = nil, by = 1, &block : self ->)
-    x = self
+  def step(limit = nil, by = 1)
+    x = self + (by - by)
 
     if limit
       if by > 0
