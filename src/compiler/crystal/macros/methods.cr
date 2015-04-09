@@ -598,6 +598,8 @@ module Crystal
       case type
       when CStructType
         is_struct = true
+      when CUnionType
+        return ArrayLiteral.new
       when InstanceVarContainer
         is_struct = false
       else

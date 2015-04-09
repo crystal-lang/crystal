@@ -82,4 +82,19 @@ describe "Code gen: c union" do
       foo.x = -> { }
       ))
   end
+
+  it "does to_s" do
+    run(%(
+      require "prelude"
+
+      lib LibNVG
+        union Color
+          array: Int32
+        end
+      end
+
+      color = LibNVG::Color.new
+      color.to_s
+      )).to_string.should eq("LibNVG::Color()")
+  end
 end
