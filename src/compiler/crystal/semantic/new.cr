@@ -161,8 +161,8 @@ module Crystal
 
       exps = Array(ASTNode).new(4)
       exps << assign
-      exps << call_gc unless instance_type.struct?
       exps << init
+      exps << call_gc unless instance_type.struct?
       exps << var
 
       def_args = args.clone
