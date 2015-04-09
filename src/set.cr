@@ -53,6 +53,10 @@ class Set(T)
     self
   end
 
+  def each
+    @hash.each_key
+  end
+
   def &(other : Set)
     set = Set(T).new
     each do |value|

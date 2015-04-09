@@ -91,4 +91,12 @@ describe "Number" do
       count += 1
     end
   end
+
+  it "does step iterator" do
+    iter = 0.step(by: 0.1, limit: 0.3)
+    iter.next.should eq(0.0)
+    iter.next.should eq(0.1)
+    iter.next.should eq(0.2)
+    iter.next.should be_a(Iterator::Stop)
+  end
 end

@@ -96,6 +96,10 @@ struct Int
     self
   end
 
+  def times
+    TimesIterator.new(self)
+  end
+
   def upto(n, &block : self -> )
     x = self
     while x <= n
@@ -206,6 +210,27 @@ struct Int
       length = {{capacity}} - 1 - position
       io.write(chars.to_slice + position + 1, length)
       {length, length}
+    end
+  end
+
+  class TimesIterator(T)
+    include Iterator(T)
+
+    def initialize(@n : T, @index = 0)
+    end
+
+    def next
+      if @index < @n
+        value = @index
+        @index += 1
+        value
+      else
+        stop
+      end
+    end
+
+    def clone
+      TimesIterator(T).new(@n, @index)
     end
   end
 end

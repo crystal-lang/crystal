@@ -382,4 +382,25 @@ describe "Hash" do
     x.delete_if { |k, v| v % 2 == 0 }
     x.should eq({a: 1, c: 3})
   end
+
+  it "gets each iterator" do
+    iter = {a: 1, b: 2}.each
+    iter.next.should eq({:a, 1})
+    iter.next.should eq({:b, 2})
+    iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "gets each key iterator" do
+    iter = {a: 1, b: 2}.each_key
+    iter.next.should eq(:a)
+    iter.next.should eq(:b)
+    iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "gets each value iterator" do
+    iter = {a: 1, b: 2}.each_value
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should be_a(Iterator::Stop)
+  end
 end

@@ -178,4 +178,12 @@ describe "Int" do
     expect_raises(DivisionByZero) { 1 % 0 }
     (4 % 2).should eq(0)
   end
+
+  it "gets times iterator" do
+    iter = 3.times
+    iter.next.should eq(0)
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should be_a(Iterator::Stop)
+  end
 end

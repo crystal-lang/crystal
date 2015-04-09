@@ -897,4 +897,41 @@ describe "Array" do
     ary2 = ary.map_with_index { |e, i| e + i }
     ary2.should eq([1, 2, 4, 5])
   end
+
+  describe "each iterator" do
+    it "does next" do
+      a = [1, 2, 3]
+      iterator = a.each
+      iterator.next.should eq(1)
+      iterator.next.should eq(2)
+      iterator.next.should eq(3)
+      iterator.next.should be_a(Iterator::Stop)
+    end
+
+    it "cycles" do
+      [1, 2, 3].cycle.take(8).join.should eq("12312312")
+    end
+  end
+
+  describe "each_index iterator" do
+    it "does next" do
+      a = [1, 2, 3]
+      iterator = a.each_index
+      iterator.next.should eq(0)
+      iterator.next.should eq(1)
+      iterator.next.should eq(2)
+      iterator.next.should be_a(Iterator::Stop)
+    end
+  end
+
+  describe "reverse_each iterator" do
+    it "does next" do
+      a = [1, 2, 3]
+      iterator = a.reverse_each
+      iterator.next.should eq(3)
+      iterator.next.should eq(2)
+      iterator.next.should eq(1)
+      iterator.next.should be_a(Iterator::Stop)
+    end
+  end
 end

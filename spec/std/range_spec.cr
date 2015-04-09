@@ -29,4 +29,27 @@ describe "Range" do
   it "does inspect" do
     (1...5).inspect.should eq("1...5")
   end
+
+  describe "each iterator" do
+    it "does next with inclusive range" do
+      a = 1..3
+      iterator = a.each
+      iterator.next.should eq(1)
+      iterator.next.should eq(2)
+      iterator.next.should eq(3)
+      iterator.next.should be_a(Iterator::Stop)
+    end
+
+    it "does next with exclusive range" do
+      r = 1...3
+      iterator = r.each
+      iterator.next.should eq(1)
+      iterator.next.should eq(2)
+      iterator.next.should be_a(Iterator::Stop)
+    end
+
+    it "cycles" do
+      (1..3).cycle.take(8).join.should eq("12312312")
+    end
+  end
 end

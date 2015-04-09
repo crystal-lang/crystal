@@ -319,6 +319,63 @@ module IO
       yield line
     end
   end
+
+  def each_line
+    LineIterator.new(self)
+  end
+
+  def each_char
+    while char = read_char
+      yield char
+    end
+  end
+
+  def each_char
+    CharIterator.new(self)
+  end
+
+  def each_byte
+    while byte = read_byte
+      yield byte
+    end
+  end
+
+  def each_byte
+    ByteIterator.new(self)
+  end
+
+  struct LineIterator(I)
+    include Iterator(String)
+
+    def initialize(@io : I)
+    end
+
+    def next
+      @io.gets || stop
+    end
+  end
+
+  struct CharIterator(I)
+    include Iterator(Char)
+
+    def initialize(@io : I)
+    end
+
+    def next
+      @io.read_char || stop
+    end
+  end
+
+  struct ByteIterator(I)
+    include Iterator(UInt8)
+
+    def initialize(@io : I)
+    end
+
+    def next
+      @io.read_byte || stop
+    end
+  end
 end
 
 require "./io/*"

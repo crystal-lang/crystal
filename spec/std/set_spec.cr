@@ -79,4 +79,12 @@ describe "Set" do
     h2 = { Set{1, 2, 3} => 1 }
     h1.should eq(h2)
   end
+
+  it "gets each iterator" do
+    iter = Set{1, 2, 3}.each
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq(3)
+    iter.next.should be_a(Iterator::Stop)
+  end
 end

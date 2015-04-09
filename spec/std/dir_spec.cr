@@ -146,4 +146,15 @@ describe "Dir" do
   it "does to_s" do
     Dir.new(__DIR__).to_s.should eq("#<Dir:#{__DIR__}>")
   end
+
+  it "gets dir iterator" do
+    filenames = [] of String
+
+    iter = Dir.new(__DIR__).each
+    iter.each do |filename|
+      filenames << filename
+    end
+
+    filenames.includes?("dir_spec.cr").should be_true
+  end
 end

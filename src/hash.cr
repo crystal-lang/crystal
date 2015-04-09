@@ -162,16 +162,28 @@ class Hash(K, V)
     self
   end
 
+  def each
+    Iterator(K, V).new(@first)
+  end
+
   def each_key
     each do |key, value|
       yield key
     end
   end
 
+  def each_key
+    KeyIterator(K).new(@first)
+  end
+
   def each_value
     each do |key, value|
       yield value
     end
+  end
+
+  def each_value
+    ValueIterator(V).new(@first)
   end
 
   def each_with_index
@@ -438,6 +450,49 @@ class Hash(K, V)
     property :back
 
     def initialize(@key : K, @value : V)
+    end
+  end
+
+  class BaseIterator
+    def initialize(@current)
+    end
+
+    def base_next
+      if current = @current
+        value = yield current
+        @current = current.fore
+        value
+      else
+        stop
+      end
+    end
+
+    def clone
+      self.class.new(@curent)
+    end
+  end
+
+  class Iterator(K, V) < BaseIterator
+    include ::Iterator({K, V})
+
+    def next
+      base_next { |entry| {entry.key, entry.value} }
+    end
+  end
+
+  class KeyIterator(K) < BaseIterator
+    include ::Iterator(K)
+
+    def next
+      base_next &.key
+    end
+  end
+
+  class ValueIterator(V) < BaseIterator
+    include ::Iterator(V)
+
+    def next
+      base_next &.value
     end
   end
 

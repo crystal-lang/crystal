@@ -369,6 +369,10 @@ class Array(T)
     @length
   end
 
+  def cycle
+    each.cycle
+  end
+
   def delete(obj)
     delete_if { |e| e == obj }
   end
@@ -433,6 +437,10 @@ class Array(T)
     end
   end
 
+  def each
+    Iterator.new(self)
+  end
+
   def each_index
     i = 0
     while i < length
@@ -440,6 +448,10 @@ class Array(T)
       i += 1
     end
     self
+  end
+
+  def each_index
+    IndexIterator.new(self)
   end
 
   def empty?
@@ -669,6 +681,10 @@ class Array(T)
       yield @buffer[i]
     end
     self
+  end
+
+  def reverse_each
+    ReverseIterator.new(self)
   end
 
   def rindex(value)
@@ -980,6 +996,61 @@ class Array(T)
       unless h.has_key?(key)
         h[key] = o
       end
+    end
+  end
+
+  class Iterator(T)
+    include ::Iterator(T)
+
+    def initialize(@array : Array(T), @index = 0)
+    end
+
+    def next
+      value = @array.at(@index) { stop }
+      @index += 1
+      value
+    end
+
+    def clone
+      Iterator(T).new(@array, @index)
+    end
+  end
+
+  class IndexIterator(T)
+    include ::Iterator(T)
+
+    def initialize(@array : Array(T), @index = 0)
+    end
+
+    def next
+      return stop if @index >= @array.length
+
+      value = @index
+      @index += 1
+      value
+    end
+
+    def clone
+      each_index(T).new(@array, @index)
+    end
+  end
+
+  class ReverseIterator(T)
+    include ::Iterator(T)
+
+    def initialize(@array : Array(T), @index = array.length - 1)
+    end
+
+    def next
+      return stop if @index < 0
+
+      value = @array.at(@index) { stop }
+      @index -= 1
+      value
+    end
+
+    def clone
+      Iterator(T).new(@array, @index)
     end
   end
 end

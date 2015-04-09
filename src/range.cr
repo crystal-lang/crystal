@@ -7,6 +7,10 @@ struct Range(B, E)
   def initialize(@begin : B, @end : E, @exclusive : Bool)
   end
 
+  def cycle
+    each.cycle
+  end
+
   def each
     current = @begin
     while current < @end
@@ -15,6 +19,10 @@ struct Range(B, E)
     end
     yield current unless @exclusive
     self
+  end
+
+  def each
+    Iterator.new(self)
   end
 
   def step(n = 1)
@@ -55,5 +63,34 @@ struct Range(B, E)
 
   def inspect(io)
     to_s(io)
+  end
+
+  class Iterator(B, E)
+    include ::Iterator(B)
+
+    def initialize(@range : Range(B, E), @current = range.begin, @reached_end = false)
+    end
+
+    def next
+      return stop if @reached_end
+
+      if @current == @range.end
+        @reached_end = true
+
+        if @range.excludes_end?
+          return stop
+        else
+          return @current
+        end
+      else
+        value = @current
+        @current = @current.succ
+        value
+      end
+    end
+
+    def clone
+      Iterator(B, E).new(@range, @current, @reached_end)
+    end
   end
 end

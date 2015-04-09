@@ -30,4 +30,33 @@ describe "IO" do
       end
     end
   end
+
+  describe "IO iterators" do
+    it "iterates by line" do
+      io = StringIO.new("hello\nbye\n")
+      lines = io.each_line
+      lines.next.should eq("hello\n")
+      lines.next.should eq("bye\n")
+      lines.next.should be_a(Iterator::Stop)
+    end
+
+    it "iterates by char" do
+      io = StringIO.new("abあぼ")
+      chars = io.each_char
+      chars.next.should eq('a')
+      chars.next.should eq('b')
+      chars.next.should eq('あ')
+      chars.next.should eq('ぼ')
+      chars.next.should be_a(Iterator::Stop)
+    end
+
+    it "iterates by byte" do
+      io = StringIO.new("ab")
+      bytes = io.each_byte
+      bytes.next.should eq('a'.ord)
+      bytes.next.should eq('b'.ord)
+      bytes.next.should be_a(Iterator::Stop)
+    end
+  end
+
 end

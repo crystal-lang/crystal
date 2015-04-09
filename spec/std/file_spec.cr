@@ -312,4 +312,32 @@ describe "File" do
       file.to_s.should eq("#<File:#{__FILE__} (closed)>")
     end
   end
+
+  it "iterates with each_char" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    i = 0
+    file.each_char do |char|
+      case i
+      when 0 then char.should eq('H')
+      when 1 then char.should eq('e')
+      else
+        break
+      end
+      i += 1
+    end
+  end
+
+  it "iterates with each_byte" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    i = 0
+    file.each_byte do |byte|
+      case i
+      when 0 then byte.should eq('H'.ord)
+      when 1 then byte.should eq('e'.ord)
+      else
+        break
+      end
+      i += 1
+    end
+  end
 end

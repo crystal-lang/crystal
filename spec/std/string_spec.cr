@@ -877,4 +877,28 @@ describe "String" do
     sprintf("Hello %d world", 123).should eq("Hello 123 world")
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")
   end
+
+  it "gets each_char iterator" do
+    iter = "abc".each_char
+    iter.next.should eq('a')
+    iter.next.should eq('b')
+    iter.next.should eq('c')
+    iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "cycles chars" do
+    "abc".each_char.cycle.take(8).join.should eq("abcabcab")
+  end
+
+  it "gets each_byte iterator" do
+    iter = "abc".each_byte
+    iter.next.should eq('a'.ord)
+    iter.next.should eq('b'.ord)
+    iter.next.should eq('c'.ord)
+    iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "cycles bytes" do
+    "abc".each_byte.cycle.take(8).join.should eq("9798999798999798")
+  end
 end

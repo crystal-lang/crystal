@@ -132,6 +132,10 @@ class Dir
     end
   end
 
+  def each
+    Iterator.new(self)
+  end
+
   # Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.
   #
   # ```
@@ -297,6 +301,19 @@ class Dir
 
   def to_s(io)
     io << "#<Dir:" << @path << ">"
+  end
+
+  struct Iterator
+    include ::Iterator(String)
+
+    def initialize(@dir)
+    end
+
+    def next
+      @dir.read || stop
+    end
+
+    # TOOD: how to implement clone?
   end
 end
 

@@ -1247,6 +1247,10 @@ class String
     self
   end
 
+  def each_char
+    CharIterator.new(CharReader.new(self))
+  end
+
   def each_char_with_index
     i = 0
     each_char do |char|
@@ -1269,6 +1273,10 @@ class String
       yield byte
     end
     self
+  end
+
+  def each_byte
+    ByteIterator.new(self)
   end
 
   def inspect(io)
@@ -1477,6 +1485,48 @@ class String
 
   def unsafe_byte_slice(byte_offset)
     Slice.new(cstr + byte_offset, bytesize - byte_offset)
+  end
+
+  class CharIterator
+    include Iterator(Char)
+
+    def initialize(@reader, @end = false)
+    end
+
+    def next
+      return stop if @end
+
+      value = @reader.current_char
+      @reader.next_char
+      @end = true unless @reader.has_next?
+
+      value
+    end
+
+    def clone
+      CharIterator.new(@reader, @end)
+    end
+  end
+
+  class ByteIterator
+    include Iterator(UInt8)
+
+    def initialize(@string, @index = 0)
+    end
+
+    def next
+      if @index >= @string.bytesize
+        stop
+      else
+        value = @string.unsafe_byte_at(@index)
+        @index += 1
+        value
+      end
+    end
+
+    def clone
+      ByteIterator.new(@string, @index)
+    end
   end
 
 end

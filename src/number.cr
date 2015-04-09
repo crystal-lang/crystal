@@ -68,6 +68,10 @@ struct Number
     self
   end
 
+  def step(limit = nil, by = 1)
+    StepIterator.new(self + (by - by), limit, by)
+  end
+
   # Returns the absolute value of this number.
   #
   # ```
@@ -165,5 +169,34 @@ struct Number
     x = self.to_f
     y = base ** digits
     self.class.cast((x * y).round / y)
+  end
+
+  class StepIterator(T, L, B)
+    include Iterator(T)
+
+    def initialize(@n : T, @limit : L, @by : B)
+    end
+
+    def next
+      if limit = @limit
+        if @by > 0
+          return stop if @n > limit
+        elsif @by < 0
+          return stop if @n < limit
+        end
+
+        value = @n
+        @n += @by
+        value
+      else
+        value = @n
+        @n += @by
+        value
+      end
+    end
+
+    def clone
+      StepIterator(T, L, B).new(@n, @limit, @by)
+    end
   end
 end
