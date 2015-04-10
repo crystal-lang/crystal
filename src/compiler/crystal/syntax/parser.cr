@@ -3605,6 +3605,7 @@ module Crystal
         skip_statement_end
         Assign.new(ident, value)
       when :GLOBAL
+        location = @token.location
         name = @token.value.to_s[1 .. -1]
         next_token_skip_space_or_newline
         if @token.type == :"="
@@ -3616,6 +3617,11 @@ module Crystal
         check :":"
         next_token_skip_space_or_newline
         type = parse_single_type
+
+        if 'A' <= name[0] <= 'Z'
+          raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
+        end
+
         skip_statement_end
         ExternalVar.new(name, type, real_name)
       else
