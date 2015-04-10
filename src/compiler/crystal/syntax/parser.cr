@@ -3453,11 +3453,11 @@ module Crystal
     end
 
     def make_pointer_type(node)
-      Generic.new(Path.global("Pointer"), [node] of ASTNode)
+      Generic.new(Path.global("Pointer").at(node), [node] of ASTNode).at(node)
     end
 
     def make_static_array_type(type, size)
-      Generic.new(Path.global("StaticArray"), [type, size] of ASTNode).at(type.location)
+      Generic.new(Path.global("StaticArray").at(type), [type, size] of ASTNode).at(type.location).at(type)
     end
 
     def make_tuple_type(types)
