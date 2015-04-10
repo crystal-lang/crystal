@@ -1075,20 +1075,27 @@ class String
           str << '_'
           str << char.downcase
         elsif last_is_upcase && upcase
-          # This is the case of ABCde or ABCDe: if the next char is upcase (case 1) we need
-          #                       ^        ^
-          # to append this char as downcase. Otherwise (case 2), we need to append an underscore
-          # and then the char as downcase. So we save this char in 'mem' and decide later.
+          # This is the case of 1) ABCde, 2) ABCDe or 3) ABC_de:if the next char is upcase (case 1) we need
+          #                          ^         ^           ^
+          # 1) we need to append this char as downcase
+          # 2) we need to append an underscore and then the char as downcase, so we save this char
+          #    in 'mem' and decide later
+          # 3) we need to append this char as downcase and then a single underscore
           if mem
-            # This is case 2
+            # case 2
             str << mem.downcase
           end
           mem = char
         else
           if mem
-            # This is case 1
-            str << '_'
-            str << mem.downcase
+            if char == '_'
+              # case 3
+              str << mem.downcase
+            else
+              # case 1
+              str << '_'
+              str << mem.downcase
+            end
             mem = nil
           end
           str << char
