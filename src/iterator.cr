@@ -9,6 +9,8 @@ module Iterator(T)
 
   include Enumerable(T)
 
+  abstract def rewind
+
   def map(&func : T -> U)
     Map(typeof(self), T, U).new(self, func)
   end
@@ -60,10 +62,6 @@ module Iterator(T)
       return stop if value.is_a?(Stop)
       @func.call(value)
     end
-
-    def clone
-      Map.new(@iter.clone, @func)
-    end
   end
 
   struct Select(I, T)
@@ -82,10 +80,6 @@ module Iterator(T)
         end
       end
     end
-
-    def clone
-      Select(I, T).new(@iter.clone, @func)
-    end
   end
 
   struct Reject(I, T)
@@ -103,10 +97,6 @@ module Iterator(T)
           return value
         end
       end
-    end
-
-    def clone
-      Reject(I, T).new(@iter.clone, @func)
     end
   end
 
@@ -127,10 +117,6 @@ module Iterator(T)
         stop
       end
     end
-
-    def clone
-      TakeIterator(I, T).new(@iter.clone, @n)
-    end
   end
 
   class Skip(I, T)
@@ -145,10 +131,6 @@ module Iterator(T)
         @n -= 1
       end
       @iter.next
-    end
-
-    def clone
-      Skip(I, T).new(@iter.clone, @n)
     end
   end
 
@@ -167,23 +149,18 @@ module Iterator(T)
 
       {v1, v2}
     end
-
-    def clone
-      Zip(I1, I2, T1, T2).new(@iter1.clone, @iter2.clone)
-    end
   end
 
   class Cycle(I, T)
     include Iterator(T)
 
     def initialize(@iterator : Iterator(T))
-      @original = @iterator.clone
     end
 
     def next
       value = @iterator.next
       if value.is_a?(Stop)
-        @iterator = @original.clone
+        @iterator.rewind
         @iterator.next
       else
         value
@@ -204,10 +181,6 @@ module Iterator(T)
       value = {v, @index}
       @index += 1
       value
-    end
-
-    def clone
-      WithIndex(I, T).new(@iterator.clone, @index)
     end
   end
 end

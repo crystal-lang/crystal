@@ -106,6 +106,12 @@ class BufferedIO(T)
     @io.to_fd_io
   end
 
+  def rewind
+    @io.rewind
+    @out_buffer.rewind
+    @buffer_rem = @buffer.to_slice[0, 0]
+  end
+
   private def fill_buffer
     length = @io.read(@buffer.to_slice).to_i
     @buffer_rem = @buffer.to_slice[0, length]

@@ -97,7 +97,7 @@ struct Int
   end
 
   def times
-    TimesIterator.new(self)
+    TimesIterator(typeof(self)).new(self)
   end
 
   def upto(n, &block : self -> )
@@ -229,8 +229,9 @@ struct Int
       end
     end
 
-    def clone
-      TimesIterator(T).new(@n, @index)
+    def rewind
+      @index = 0
+      self
     end
   end
 end

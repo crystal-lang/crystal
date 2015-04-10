@@ -901,11 +901,14 @@ describe "Array" do
   describe "each iterator" do
     it "does next" do
       a = [1, 2, 3]
-      iterator = a.each
-      iterator.next.should eq(1)
-      iterator.next.should eq(2)
-      iterator.next.should eq(3)
-      iterator.next.should be_a(Iterator::Stop)
+      iter = a.each
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -916,22 +919,28 @@ describe "Array" do
   describe "each_index iterator" do
     it "does next" do
       a = [1, 2, 3]
-      iterator = a.each_index
-      iterator.next.should eq(0)
-      iterator.next.should eq(1)
-      iterator.next.should eq(2)
-      iterator.next.should be_a(Iterator::Stop)
+      iter = a.each_index
+      iter.next.should eq(0)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(0)
     end
   end
 
   describe "reverse_each iterator" do
     it "does next" do
       a = [1, 2, 3]
-      iterator = a.reverse_each
-      iterator.next.should eq(3)
-      iterator.next.should eq(2)
-      iterator.next.should eq(1)
-      iterator.next.should be_a(Iterator::Stop)
+      iter = a.reverse_each
+      iter.next.should eq(3)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
     end
   end
 end

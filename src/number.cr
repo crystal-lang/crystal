@@ -175,6 +175,7 @@ struct Number
     include Iterator(T)
 
     def initialize(@n : T, @limit : L, @by : B)
+      @original = @n
     end
 
     def next
@@ -195,8 +196,9 @@ struct Number
       end
     end
 
-    def clone
-      StepIterator(T, L, B).new(@n, @limit, @by)
+    def rewind
+      @n = @original
+      self
     end
   end
 end

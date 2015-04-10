@@ -13,4 +13,16 @@ describe Enumerator do
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
   end
+
+  it "rewinds" do
+    iter = Enumerator(Int32).new do |y|
+      y << 1
+      y << 2
+      y << 3
+    end
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.rewind
+    iter.next.should eq(1)
+  end
 end

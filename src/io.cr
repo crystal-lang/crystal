@@ -353,6 +353,11 @@ module IO
     def next
       @io.gets || stop
     end
+
+    def rewind
+      @io.rewind
+      self
+    end
   end
 
   struct CharIterator(I)
@@ -364,6 +369,11 @@ module IO
     def next
       @io.read_char || stop
     end
+
+    def rewind
+      @io.rewind
+      self
+    end
   end
 
   struct ByteIterator(I)
@@ -374,6 +384,11 @@ module IO
 
     def next
       @io.read_byte || stop
+    end
+
+    def rewind
+      @io.rewind
+      self
     end
   end
 end

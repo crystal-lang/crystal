@@ -72,6 +72,8 @@ lib LibC
     fun readdir = readdir64(dir : Dir*) : DirEntry*
   end
 
+  fun rewinddir(dir : Dir*)
+
   fun glob(pattern : UInt8*, flags : GlobFlags, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
   fun globfree(result : Glob*)
 end
@@ -151,6 +153,12 @@ class Dir
     else
       nil
     end
+  end
+
+  # Repositions this directory to the first entry.
+  def rewind
+    LibC.rewinddir(@dir)
+    self
   end
 
   # Closes the directory stream.
@@ -313,7 +321,10 @@ class Dir
       @dir.read || stop
     end
 
-    # TOOD: how to implement clone?
+    def rewind
+      @dir.rewind
+      self
+    end
   end
 end
 

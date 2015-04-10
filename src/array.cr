@@ -1011,8 +1011,9 @@ class Array(T)
       value
     end
 
-    def clone
-      Iterator(T).new(@array, @index)
+    def rewind
+      @index = 0
+      self
     end
   end
 
@@ -1030,8 +1031,9 @@ class Array(T)
       value
     end
 
-    def clone
-      each_index(T).new(@array, @index)
+    def rewind
+      @index = 0
+      self
     end
   end
 
@@ -1049,8 +1051,9 @@ class Array(T)
       value
     end
 
-    def clone
-      Iterator(T).new(@array, @index)
+    def rewind
+      @index = @array.length - 1
+      self
     end
   end
 end

@@ -38,6 +38,9 @@ describe "IO" do
       lines.next.should eq("hello\n")
       lines.next.should eq("bye\n")
       lines.next.should be_a(Iterator::Stop)
+
+      lines.rewind
+      lines.next.should eq("hello\n")
     end
 
     it "iterates by char" do
@@ -48,6 +51,9 @@ describe "IO" do
       chars.next.should eq('あ')
       chars.next.should eq('ぼ')
       chars.next.should be_a(Iterator::Stop)
+
+      chars.rewind
+      chars.next.should eq('a')
     end
 
     it "iterates by byte" do
@@ -56,6 +62,9 @@ describe "IO" do
       bytes.next.should eq('a'.ord)
       bytes.next.should eq('b'.ord)
       bytes.next.should be_a(Iterator::Stop)
+
+      bytes.rewind
+      bytes.next.should eq('a'.ord)
     end
   end
 

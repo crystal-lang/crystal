@@ -89,8 +89,10 @@ struct Range(B, E)
       end
     end
 
-    def clone
-      Iterator(B, E).new(@range, @current, @reached_end)
+    def rewind
+      @current = @range.begin
+      @reached_end = false
+      self
     end
   end
 end

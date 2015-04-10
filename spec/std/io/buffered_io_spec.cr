@@ -71,4 +71,12 @@ describe "BufferedIO" do
     res.should be(str)
     str.to_s.should eq("Hello")
   end
+
+  it "rewindws" do
+    str = StringIO.new("hello\nworld\n")
+    io = BufferedIO.new str
+    io.gets.should eq("hello\n")
+    io.rewind
+    io.gets.should eq("hello\n")
+  end
 end

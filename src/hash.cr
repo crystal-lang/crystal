@@ -163,7 +163,7 @@ class Hash(K, V)
   end
 
   def each
-    Iterator(K, V).new(@first)
+    Iterator(K, V).new(self, @first)
   end
 
   def each_key
@@ -173,7 +173,7 @@ class Hash(K, V)
   end
 
   def each_key
-    KeyIterator(K).new(@first)
+    KeyIterator(K, V).new(self, @first)
   end
 
   def each_value
@@ -183,7 +183,7 @@ class Hash(K, V)
   end
 
   def each_value
-    ValueIterator(V).new(@first)
+    ValueIterator(K, V).new(self, @first)
   end
 
   def each_with_index
@@ -453,8 +453,8 @@ class Hash(K, V)
     end
   end
 
-  class BaseIterator
-    def initialize(@current)
+  module BaseIterator
+    def initialize(@hash, @current)
     end
 
     def base_next
@@ -467,12 +467,13 @@ class Hash(K, V)
       end
     end
 
-    def clone
-      self.class.new(@curent)
+    def rewind
+      @current = @hash.@first
     end
   end
 
-  class Iterator(K, V) < BaseIterator
+  class Iterator(K, V)
+    include BaseIterator
     include ::Iterator({K, V})
 
     def next
@@ -480,7 +481,8 @@ class Hash(K, V)
     end
   end
 
-  class KeyIterator(K) < BaseIterator
+  class KeyIterator(K, V)
+    include BaseIterator
     include ::Iterator(K)
 
     def next
@@ -488,7 +490,8 @@ class Hash(K, V)
     end
   end
 
-  class ValueIterator(V) < BaseIterator
+  class ValueIterator(K, V)
+    include BaseIterator
     include ::Iterator(V)
 
     def next

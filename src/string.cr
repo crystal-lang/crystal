@@ -1503,8 +1503,10 @@ class String
       value
     end
 
-    def clone
-      CharIterator.new(@reader, @end)
+    def rewind
+      @reader.pos = 0
+      @end = false
+      self
     end
   end
 
@@ -1524,11 +1526,11 @@ class String
       end
     end
 
-    def clone
-      ByteIterator.new(@string, @index)
+    def rewind
+      @index = 0
+      self
     end
   end
-
 end
 
 require "./string/formatter"

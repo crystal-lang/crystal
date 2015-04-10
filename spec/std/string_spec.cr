@@ -884,6 +884,9 @@ describe "String" do
     iter.next.should eq('b')
     iter.next.should eq('c')
     iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq('a')
   end
 
   it "cycles chars" do
@@ -896,6 +899,9 @@ describe "String" do
     iter.next.should eq('b'.ord)
     iter.next.should eq('c'.ord)
     iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq('a'.ord)
   end
 
   it "cycles bytes" do

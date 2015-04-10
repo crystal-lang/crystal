@@ -44,6 +44,11 @@ class StringIO
     @bytesize == 0
   end
 
+  def rewind
+    @pos = 0
+    self
+  end
+
   def to_s
     String.new @buffer, @bytesize
   end
