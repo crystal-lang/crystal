@@ -1104,4 +1104,6 @@ describe "Parser" do
   assert_syntax_error "def foo(*args : Int32); end"
 
   assert_syntax_error "a = 1; b = 2; a, b += 1, 2"
+
+  assert_syntax_error "lib LibC\n$Errno : Int32\nend", "external variables must start with lowercase, use for example `$errno = Errno : Int32`"
 end

@@ -869,7 +869,7 @@ module Crystal
     def declare_lib_var(name, type, attributes)
       var = @llvm_mod.globals[name]?
       unless var
-        var = llvm_mod.globals.add(llvm_c_type(type), name)
+        var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
         var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       end

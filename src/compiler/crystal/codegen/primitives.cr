@@ -351,6 +351,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     var = declare_lib_var name, node.type, external.attributes
 
     @last = call_args[0]
+
+    if external.type.passed_by_value?
+      @last = load @last
+    end
+
     store @last, var
 
     if node.type.fun?
@@ -364,7 +369,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     external = target_def as External
     name = (target_def as External).real_name
     var = declare_lib_var name, node.type, external.attributes
-    @last = load var
+
+    if external.type.passed_by_value?
+      @last = var
+    else
+      @last = load var
+    end
 
     if node.type.fun?
       @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM::VoidPointer.null)

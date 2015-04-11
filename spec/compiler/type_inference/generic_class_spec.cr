@@ -400,4 +400,20 @@ describe "Type inference: generic class" do
       ),
       "can't use Number in unions yet, use a more specific type"
   end
+
+  it "finds generic type argument from method with default value" do
+    assert_type(%(
+      module It(T)
+        def foo(x = 0)
+          T
+        end
+      end
+
+      class Foo(B)
+        include It(B)
+      end
+
+      Foo(Int32).new.foo
+      )) { int32.metaclass }
+  end
 end

@@ -744,6 +744,7 @@ describe "String" do
     "Foo".underscore.should eq("foo")
     "FooBar".underscore.should eq("foo_bar")
     "ABCde".underscore.should eq("ab_cde")
+    "FOO_bar".underscore.should eq("foo_bar")
   end
 
   it "does camelcase" do
