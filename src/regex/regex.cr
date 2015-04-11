@@ -1,16 +1,17 @@
 require "./*"
 
 class Regex
-  IGNORE_CASE = 1
-  MULTILINE = 4
-  EXTENDED = 8
-  ANCHORED = 16
-  UTF_8 = 0x00000800
+  IGNORE_CASE   = 1
+  MULTILINE     = 4
+  EXTENDED      = 8
+  ANCHORED      = 16
+  UTF_8         = 0x00000800
+  NO_UTF8_CHECK = 0x00002000
 
   getter source
 
   def initialize(@source, modifiers = 0)
-    @re = LibPCRE.compile(@source, modifiers | UTF_8, out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, modifiers | UTF_8 | NO_UTF8_CHECK, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
@@ -18,7 +19,7 @@ class Regex
   def match(str, pos = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
-    ret = LibPCRE.exec(@re, nil, str, str.bytesize, pos, options, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, nil, str, str.bytesize, pos, options | NO_UTF8_CHECK, ovector, ovector_size)
     if ret > 0
       match = MatchData.new(self, @re, str, pos, ovector, @captures)
     else
