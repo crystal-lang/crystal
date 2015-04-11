@@ -12,6 +12,7 @@ describe Enumerator do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
+    iter.next.should be_a(Iterator::Stop)
   end
 
   it "rewinds" do

@@ -4,25 +4,49 @@ require "iterator"
 describe Iterator do
   describe "map" do
     it "does map with Range iterator" do
-      (1..3).each.map { |x| x * 2 }.to_a.should eq([2, 4, 6])
+      iter = (1..3).each.map &.*(2)
+      iter.next.should eq(2)
+      iter.next.should eq(4)
+      iter.next.should eq(6)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(2)
     end
   end
 
   describe "select" do
     it "does select with Range iterator" do
-      (1..3).each.select { |x| x >= 2 }.to_a.should eq([2, 3])
+      iter = (1..3).each.select &.>=(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(2)
     end
   end
 
   describe "reject" do
     it "does reject with Range iterator" do
-      (1..3).each.reject { |x| x >= 2 }.to_a.should eq([1])
+      iter = (1..3).each.reject &.>=(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
     end
   end
 
   describe "take" do
     it "does take with Range iterator" do
-      (1..3).each.take(2).to_a.should eq([1, 2])
+      iter = (1..3).each.take(2)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
     end
 
     it "does take with more than available" do
@@ -32,7 +56,12 @@ describe Iterator do
 
   describe "skip" do
     it "does skip with Range iterator" do
-      (1..3).each.skip(2).to_a.should eq([3])
+      iter = (1..3).each.skip(2)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
     end
   end
 
@@ -40,13 +69,28 @@ describe Iterator do
     it "does skip with Range iterator" do
       r1 = (1..3).each
       r2 = (4..6).each
-      r1.zip(r2).to_a.should eq([{1, 4}, {2, 5}, {3, 6}])
+      iter = r1.zip(r2)
+      iter.next.should eq({1, 4})
+      iter.next.should eq({2, 5})
+      iter.next.should eq({3, 6})
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq({1, 4})
     end
   end
 
   describe "cycle" do
     it "does cycle from range" do
-      (1..3).each.cycle.take(10).to_a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
+      iter = (1..3).each.cycle
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+
+      iter.rewind
+      iter.next.should eq(1)
     end
 
     it "cycles an empty array" do
@@ -58,7 +102,51 @@ describe Iterator do
 
   describe "with_index" do
     it "does with_index from range" do
-      (1..3).each.with_index.to_a.should eq([{1, 0}, {2, 1}, {3, 2}])
+      iter = (1..3).each.with_index
+      iter.next.should eq({1, 0})
+      iter.next.should eq({2, 1})
+      iter.next.should eq({3, 2})
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq({1, 0})
+    end
+
+    it "does with_index with offset from range" do
+      iter = (1..3).each.with_index(10)
+      iter.next.should eq({1, 10})
+      iter.next.should eq({2, 11})
+      iter.next.should eq({3, 12})
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq({1, 10})
+    end
+  end
+
+  describe "with object" do
+    it "does with object" do
+      iter = (1..3).each.with_object("a")
+      iter.next.should eq({1, "a"})
+      iter.next.should eq({2, "a"})
+      iter.next.should eq({3, "a"})
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq({1, "a"})
+    end
+  end
+
+  describe "slice" do
+    it "slices" do
+      iter = (1..8).each.slice(3)
+      iter.next.should eq([1, 2, 3])
+      iter.next.should eq([4, 5, 6])
+      iter.next.should eq([7, 8])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq([1, 2, 3])
     end
   end
 

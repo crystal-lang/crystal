@@ -202,5 +202,36 @@ describe "Enumerable" do
       [1, 2, 3, 4].each_slice(2) { |slice| array << slice }
       array.should eq([[1, 2], [3, 4]])
     end
+
+    it "returns each_slice iterator" do
+      iter = [1, 2, 3, 4, 5].each_slice(2)
+      iter.next.should eq([1, 2])
+      iter.next.should eq([3, 4])
+      iter.next.should eq([5])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq([1, 2])
+    end
+  end
+
+  it "gets each_with_index iterator" do
+    iter = [1, 2].each_with_index
+    iter.next.should eq({1, 0})
+    iter.next.should eq({2, 1})
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq({1, 0})
+  end
+
+  it "gets each_with_object iterator" do
+    iter = [1, 2].each_with_object("a")
+    iter.next.should eq({1, "a"})
+    iter.next.should eq({2, "a"})
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq({1, "a"})
   end
 end

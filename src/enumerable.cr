@@ -55,6 +55,10 @@ module Enumerable(T)
     nil
   end
 
+  def each_slice(count : Int)
+    each.slice(count)
+  end
+
   def each_with_index(offset = 0)
     i = offset
     each do |elem|
@@ -63,11 +67,19 @@ module Enumerable(T)
     end
   end
 
+  def each_with_index(offset = 0)
+    each.with_index(offset)
+  end
+
   def each_with_object(obj)
     each do |elem|
       yield elem, obj
     end
     obj
+  end
+
+  def each_with_object(obj)
+    each.with_object(obj)
   end
 
   def find(if_none = nil)

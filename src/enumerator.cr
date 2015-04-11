@@ -22,16 +22,24 @@ class Enumerator(T)
 
   def initialize(&@block : Yielder(T) ->)
     @yielder = Yielder(T).new
+    @finished = false
     start
   end
 
   def next
-    @yielder.receive
+    if @finished
+      stop
+    else
+      value = @yielder.receive
+      @finished = true if value.is_a?(Stop)
+      value
+    end
   end
 
   def rewind
     @yielder.kill
     @yielder = Yielder(T).new
+    @finished = false
     start
     self
   end

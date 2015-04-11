@@ -39,8 +39,27 @@ module Iterator(T)
     Cycle(typeof(self), T).new(self)
   end
 
+  # TODO: use default argument "offset" after 0.6.1, a bug prevents using it
   def with_index
-    WithIndex(typeof(self), T).new(self)
+    with_index 0
+  end
+
+  def with_index(offset)
+    WithIndex(typeof(self), T).new(self, offset)
+  end
+
+  def with_object(obj)
+    WithObject(typeof(self), T, typeof(obj)).new(self, obj)
+  end
+
+  def slice(n)
+    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
+
+    Slice(typeof(self), T).new(self, n)
+  end
+
+  def each_slice(n)
+    slice(n)
   end
 
   def each
@@ -62,6 +81,11 @@ module Iterator(T)
       return stop if value.is_a?(Stop)
       @func.call(value)
     end
+
+    def rewind
+      @iter.rewind
+      self
+    end
   end
 
   struct Select(I, T)
@@ -79,6 +103,11 @@ module Iterator(T)
           return value
         end
       end
+    end
+
+    def rewind
+      @iter.rewind
+      self
     end
   end
 
@@ -98,12 +127,18 @@ module Iterator(T)
         end
       end
     end
+
+    def rewind
+      @iter.rewind
+      self
+    end
   end
 
   class Take(I, T)
     include Iterator(T)
 
     def initialize(@iter : Iterator(T), @n : Int)
+      @original = @n
     end
 
     def next
@@ -117,12 +152,19 @@ module Iterator(T)
         stop
       end
     end
+
+    def rewind
+      @iter.rewind
+      @n = @original
+      self
+    end
   end
 
   class Skip(I, T)
     include Iterator(T)
 
     def initialize(@iter : Iterator(T), @n : Int)
+      @original = @n
     end
 
     def next
@@ -131,6 +173,12 @@ module Iterator(T)
         @n -= 1
       end
       @iter.next
+    end
+
+    def rewind
+      @iter.rewind
+      @n = @original
+      self
     end
   end
 
@@ -149,9 +197,15 @@ module Iterator(T)
 
       {v1, v2}
     end
+
+    def rewind
+      @iter1.rewind
+      @iter2.rewind
+      self
+    end
   end
 
-  class Cycle(I, T)
+  struct Cycle(I, T)
     include Iterator(T)
 
     def initialize(@iterator : Iterator(T))
@@ -166,12 +220,17 @@ module Iterator(T)
         value
       end
     end
+
+    def rewind
+      @iterator.rewind
+      self
+    end
   end
 
   class WithIndex(I, T)
     include Iterator({T, Int32})
 
-    def initialize(@iterator : Iterator(T), @index = 0)
+    def initialize(@iterator : Iterator(T), @offset, @index = offset)
     end
 
     def next
@@ -181,6 +240,61 @@ module Iterator(T)
       value = {v, @index}
       @index += 1
       value
+    end
+
+    def rewind
+      @iterator.rewind
+      @index = @offset
+      self
+    end
+  end
+
+  struct WithObject(I, T, O)
+    include Iterator({T, O})
+
+    def initialize(@iterator : Iterator(T), @object : O)
+    end
+
+    def next
+      v = @iterator.next
+      return stop if v.is_a?(Stop)
+
+      {v, @object}
+    end
+
+    def rewind
+      @iterator.rewind
+      self
+    end
+  end
+
+  struct Slice(I, T)
+    include Iterator(Array(T))
+
+    def initialize(@iterator : Iterator(T), @n)
+    end
+
+    def next
+      values = Array(T).new(@n)
+      @n.times do
+        value = @iterator.next
+        if value.is_a?(Stop)
+          break
+        else
+          values << value
+        end
+      end
+
+      if values.empty?
+        stop
+      else
+        values
+      end
+    end
+
+    def rewind
+      @iterator.rewind
+      self
     end
   end
 end
