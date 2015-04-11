@@ -645,7 +645,7 @@ describe "Type inference: fun" do
       block = foo { |elems| Bar.new((elems[0] as Bar).value) }
       elems = [Foo.new, Bar.new(1)]
       block
-      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+      )) { fun_of(array_of(types["Foo"].virtual_type), types["Bar"]) }
   end
 
   it "uses array argument of fun arg (4)" do

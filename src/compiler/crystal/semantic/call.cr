@@ -618,21 +618,23 @@ class Crystal::Call
       # Check if the call has a block arg (foo &bar). If so, we need to see if the
       # passed block has the same signature as the def's block arg. We use that
       # same FunLiteral (bar) for this call.
-      if call_block_arg = self.block_arg
-        check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
-        fun_literal = call_block_arg
-      else
-        # Otherwise, we create a FunLiteral and type it
-        if block.args.length > fun_args.length
-          raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+      fun_literal = block.fun_literal
+      unless fun_literal
+        if call_block_arg = self.block_arg
+          check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
+          fun_literal = call_block_arg
+        else
+          # Otherwise, we create a FunLiteral and type it
+          if block.args.length > fun_args.length
+            raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+          end
+
+          fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
+          fun_literal.force_void = true unless block_arg_fun_output
+          fun_literal.accept parent_visitor
         end
-
-        fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
-        fun_literal.force_void = true unless block_arg_fun_output
-        fun_literal.accept parent_visitor
+        block.fun_literal = fun_literal
       end
-
-      block.fun_literal = fun_literal
 
       # Now check if the FunLiteral's type (the block's type) matches the block arg specification.
       # If not, we delay it for later and compute the type based on the block arg return type, if any.
@@ -666,6 +668,13 @@ class Crystal::Call
           block.body.type = mod.void
           block_arg_type = mod.fun_of(fun_args, mod.void)
         end
+      end
+
+      # Because the block's type might be used as a free variable, we bind
+      # ourself to the block so when its type changes we recalculate ourself.
+      if block_arg_fun_output
+        block.try &.remove_input_observer(self)
+        block.try &.add_input_observer(self)
       end
     else
       block.accept parent_visitor
