@@ -809,4 +809,53 @@ describe "Block inference" do
       ),
       "'Foo#new' is not expected to be invoked with a block, but a block was given"
   end
+
+  it "recalculates call that uses block arg output as free var" do
+    assert_type(%(
+      def foo(&block : Int32 -> U)
+        block
+        U
+      end
+
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def x=(@x)
+        end
+
+        def bar
+          foo do |x|
+            @x
+          end
+        end
+      end
+
+      z = Foo.new.bar
+      Foo.new.x = 'a'
+      z
+      )) { union_of(char, int32).metaclass }
+  end
+
+  it "finds type inside module in block" do
+    assert_type(%(
+      module Moo
+        class Foo
+        end
+
+        class Bar
+          def initialize(&block : Int32 -> U)
+            block
+          end
+        end
+      end
+
+      z = nil
+      module Moo
+        z = Bar.new { Foo.new }
+      end
+      z
+      )) { types["Moo"].types["Bar"] }
+  end
 end
