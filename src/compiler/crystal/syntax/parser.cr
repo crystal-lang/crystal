@@ -2998,7 +2998,7 @@ module Crystal
       when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
         # Nothing
       when :"*"
-        unless ident_start?(current_char)
+        if current_char.whitespace?
           return nil
         end
       when :"::"
@@ -3081,7 +3081,7 @@ module Crystal
       else
         splat = false
         if @token.type == :"*"
-          if ident_start?(current_char)
+          unless current_char.whitespace?
             splat = true
             next_token
           end
