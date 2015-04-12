@@ -159,6 +159,37 @@ module Spec
       "expected: value #{@target.inspect}\n to not match: #{@value.inspect}"
     end
   end
+
+  # @private
+  # Provides the implementation for `contain`. Uses `#includes?` to
+  # determine if it matches. Not intended to be instantiated directly.
+  class ContainExpectation(T)
+    # Creates ContainExpectation(T) instance
+    # @param expected - item that is expected to be contained in actual
+    def initialize(@expected : T)
+      @actual = NullActual.new
+    end
+
+    # Checks if expected item is contained in provided actual value.
+    # @param actual - value where item is expected to be contained
+    def match(@actual)
+      @actual.includes?(@expected)
+    end
+
+    def failure_message
+      "expected:   #{@actual.inspect}\nto include: #{@expected.inspect}"
+    end
+
+    def negative_failure_message
+      "expected: value #{@actual.inspect}\nto not include: #{@expected.inspect}"
+    end
+
+    class NullActual
+      def includes?(value)
+        fail "actual can't be empty"
+      end
+    end
+  end
 end
 
 def eq(value)
@@ -199,6 +230,12 @@ end
 
 def match(value)
  Spec::MatchExpectation.new(value)
+end
+
+# Passes if actual includes expected. Works on collections and String.
+# @param expected - item expected to be contained in actual
+def contain(expected)
+  Spec::ContainExpectation.new(expected)
 end
 
 macro be_a(type)
