@@ -10,6 +10,8 @@ These are the most important things in need right now:
 * Documenting the standard library
 * Adding missing bits of the standard library, and/or improving its performance
 
+## Contributing to the documentation
+
 The main site and official language documentation is on the `gh-pages` branch. Just check it out
 and do `rake build && jekyll serve` to browse it. We use [GitBook](https://www.gitbook.com/) for the documentation,
 check the `_gitbook` directory.
