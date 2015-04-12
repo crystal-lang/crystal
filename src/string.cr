@@ -560,6 +560,22 @@ class String
     gsub(pattern) { replacement }
   end
 
+  # Returns a string where all ocurrences of the given *pattern* are replaced
+  # with a *hash* of replacements. If the *hash* contains the matched pattern,
+  # the corresponding value is used as a replacement. Otherwise the match is
+  # not included in the returned string.
+  #
+  # ```
+  # # "he" and "l" are matched and replaced,
+  # # but "o" is not and so is not included
+  # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
+  # ```
+  def gsub(pattern : Regex, hash : Hash(String, _))
+    gsub(pattern) do |match|
+      hash[match]?
+    end
+  end
+
   # Returns a string where all occurrences of the given *string* are replaced
   # with the given *replacement*.
   #
@@ -591,6 +607,18 @@ class String
       if byte_offset < bytesize
         buffer.write unsafe_byte_slice(byte_offset)
       end
+    end
+  end
+
+  # Returns a string where all chars in the given hash are replaced
+  # by the corresponding hash values.
+  #
+  # ```
+  # "hello".gsub({'e' => 'a', 'l' => 'd'}) #=> "haddo"
+  # ```
+  def gsub(hash : Hash(Char, _))
+    gsub do |char|
+      hash[char]? || char
     end
   end
 
