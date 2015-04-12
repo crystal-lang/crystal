@@ -506,6 +506,16 @@ describe "String" do
     result.should eq("fa be")
   end
 
+  it "gsubs with char hash" do
+    str = "hello"
+    str.gsub({'e' => 'a', 'l' => 'd'}).should eq("haddo")
+  end
+
+  it "gsubs with regex and hash" do
+    str = "hello"
+    str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
+  end
+
   it "dumps" do
     "a".dump.should eq("\"a\"")
     "\\".dump.should eq("\"\\\\\"")
