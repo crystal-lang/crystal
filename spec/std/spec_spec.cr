@@ -41,6 +41,30 @@ describe "Spec matchers" do
     end
   end
 
+  describe "should contain" do
+    it "passes when string includes? specified substring" do
+      "hello world!".should contain("hello")
+    end
+
+    it "does not pass when string does not includes? specified substring" do
+      expect_raises Spec::AssertionFailed, %{expected:   "hello world!"\nto include: "crystal"} do
+        "hello world!".should contain("crystal")
+      end
+    end
+  end
+
+  describe "should_not contain" do
+    it "passes when string does not includes? specified substring" do
+      "hello world!".should_not contain("crystal")
+    end
+
+    it "does not pass when string does not includes? specified substring" do
+      expect_raises Spec::AssertionFailed, %{expected: value "hello world!"\nto not include: "world"} do
+        "hello world!".should_not contain("world")
+      end
+    end
+  end
+
   context "should work as describe" do
     it "is true" do
       true.should be_truthy

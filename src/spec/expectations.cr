@@ -159,6 +159,25 @@ module Spec
       "expected: value #{@target.inspect}\n to not match: #{@value.inspect}"
     end
   end
+
+  class ContainExpectation(T)
+    def initialize(@value : T)
+      @target = ""
+    end
+
+    def match(value)
+      @target = value
+      @target.includes?(@value)
+    end
+
+    def failure_message
+      "expected:   #{@target.inspect}\nto include: #{@value.inspect}"
+    end
+
+    def negative_failure_message
+      "expected: value #{@target.inspect}\nto not include: #{@value.inspect}"
+    end
+  end
 end
 
 def eq(value)
@@ -199,6 +218,10 @@ end
 
 def match(value)
  Spec::MatchExpectation.new(value)
+end
+
+def contain(value)
+  Spec::ContainExpectation.new(value)
 end
 
 macro be_a(type)
