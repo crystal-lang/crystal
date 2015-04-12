@@ -46,6 +46,18 @@ describe "Spec matchers" do
       "hello world!".should contain("hello")
     end
 
+    it "works with array" do
+      [1, 2, 3, 5, 8].should contain(5)
+    end
+
+    it "works with set" do
+      [1, 2, 3, 5, 8].to_set.should contain(8)
+    end
+
+    it "works with range" do
+      (50 .. 55).should contain(53)
+    end
+
     it "does not pass when string does not includes? specified substring" do
       expect_raises Spec::AssertionFailed, %{expected:   "hello world!"\nto include: "crystal"} do
         "hello world!".should contain("crystal")
