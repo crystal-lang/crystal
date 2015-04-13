@@ -718,6 +718,8 @@ module Crystal
     end
 
     def visit(node : FunPointer)
+      return false if node.call?
+
       obj = node.obj
 
       if obj
