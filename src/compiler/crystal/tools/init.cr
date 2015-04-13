@@ -120,7 +120,11 @@ DIR  - directory where project will be generated,
       def render
         Dir.mkdir_p(File.dirname(full_path))
         File.write(full_path, to_s)
-        puts "      create  #{full_path}" unless config.silent
+        puts log_message unless config.silent
+      end
+
+      def log_message
+        "      #{"create".colorize(:light_green)}  #{full_path}" 
       end
 
       def module_name
