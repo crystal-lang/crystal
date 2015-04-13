@@ -12,7 +12,7 @@ end
 
 def run_init_project(skeleton_type, name, dir, author)
   Crystal::Init::InitProject.new(
-    Crystal::Init::Config.new(skeleton_type, name, dir, author)
+    Crystal::Init::Config.new(skeleton_type, name, dir, author, true)
   ).run
 end
 

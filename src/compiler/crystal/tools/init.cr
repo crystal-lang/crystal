@@ -3,6 +3,8 @@ require "option_parser"
 
 module Crystal
   module Init
+    WHICH_GIT_COMMAND = "which git >/dev/null"
+
     def self.run(args)
       config = Config.new
 
@@ -36,9 +38,8 @@ DIR  - directory where project will be generated,
     end
 
     def self.fetch_author
-      author = `which git >/dev/null && git config --get user.name`.strip
-      return "[your-name-here]" if author == ""
-      author
+      return "[your-name-here]" unless system(WHICH_GIT_COMMAND)
+      `git config --get user.name`.strip
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -65,15 +66,17 @@ DIR  - directory where project will be generated,
       property name
       property dir
       property author
+      property silent
 
       def initialize
         @skeleton_type = "none"
         @name = "none"
         @dir = "none"
         @author = "none"
+        @silent = false
       end
 
-      def initialize(@skeleton_type, @name, @dir, @author)
+      def initialize(@skeleton_type, @name, @dir, @author, @silent = false)
       end
     end
 
@@ -115,6 +118,7 @@ DIR  - directory where project will be generated,
       def render
         Dir.mkdir_p(File.dirname(full_path))
         File.write(full_path, to_s)
+        puts "      create  #{full_path}" unless config.silent
       end
 
       def module_name
