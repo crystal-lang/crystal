@@ -105,6 +105,8 @@ DIR  - directory where project will be generated,
 
          SpecHelperView,
          SpecExampleView,
+
+         GitInitView,
         ]
       end
     end
@@ -126,6 +128,27 @@ DIR  - directory where project will be generated,
       end
 
       abstract def full_path
+    end
+
+    class GitInitView < View
+      getter config
+
+      def initialize(@config)
+      end
+
+      def render
+        return unless system(WHICH_GIT_COMMAND)
+        return command if config.silent
+        puts command
+      end
+
+      def full_path
+        "#{config.dir}/.git"
+      end
+
+      private def command
+        `git init #{config.dir}`
+      end
     end
 
     TEMPLATE_DIR = "#{__DIR__}/init/template"
