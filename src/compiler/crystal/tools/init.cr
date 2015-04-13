@@ -83,6 +83,16 @@ DIR  - directory where project will be generated,
     abstract class View
       getter config
 
+      @@views = [] of View.class
+
+      def self.views
+        @@views
+      end
+
+      def self.register(view)
+        views << view
+      end
+
       def initialize(@config)
       end
 
@@ -106,8 +116,6 @@ DIR  - directory where project will be generated,
     class InitProject
       getter config
 
-      @@views = [] of View.class
-
       def initialize(@config)
       end
 
@@ -118,24 +126,11 @@ DIR  - directory where project will be generated,
       end
 
       def views
-        self.class.views
-      end
-
-      def self.views
-        @@views
-      end
-
-      def self.register_view(view)
-        views << view
+        View.views
       end
     end
 
     class GitInitView < View
-      getter config
-
-      def initialize(@config)
-      end
-
       def render
         return unless system(WHICH_GIT_COMMAND)
         return command if config.silent
@@ -161,7 +156,7 @@ DIR  - directory where project will be generated,
         end
       end
 
-      InitProject.register_view({{name.id}})
+      View.register({{name.id}})
     end
 
     template GitignoreView, "gitignore.ecr", ".gitignore"
@@ -176,6 +171,6 @@ DIR  - directory where project will be generated,
     template SpecHelperView, "spec_helper.cr.ecr", "spec/spec_helper.cr"
     template SpecExampleView, "example_spec.cr.ecr", "spec/#{config.name}_spec.cr"
 
-    InitProject.register_view(GitInitView)
+    View.register(GitInitView)
   end
 end
