@@ -80,37 +80,6 @@ DIR  - directory where project will be generated,
       end
     end
 
-    class InitProject
-      getter config
-
-      def initialize(@config)
-      end
-
-      def run
-        views.each do |view|
-          view.new(config).render
-        end
-      end
-
-      def views
-        [
-         GitignoreView,
-         LicenseView,
-         ReadmeView,
-         TravisView,
-         ProjectileView,
-
-         SrcExampleView,
-         SrcVersionView,
-
-         SpecHelperView,
-         SpecExampleView,
-
-         GitInitView,
-        ]
-      end
-    end
-
     abstract class View
       getter config
 
@@ -132,6 +101,33 @@ DIR  - directory where project will be generated,
       end
 
       abstract def full_path
+    end
+
+    class InitProject
+      getter config
+
+      @@views = [] of View.class
+
+      def initialize(@config)
+      end
+
+      def run
+        views.each do |view|
+          view.new(config).render
+        end
+      end
+
+      def views
+        self.class.views
+      end
+
+      def self.views
+        @@views
+      end
+
+      def self.register_view(view)
+        views << view
+      end
     end
 
     class GitInitView < View
@@ -164,6 +160,8 @@ DIR  - directory where project will be generated,
           "#{config.dir}/#{{{full_path}}}"
         end
       end
+
+      InitProject.register_view({{name.id}})
     end
 
     template GitignoreView, "gitignore.ecr", ".gitignore"
@@ -177,5 +175,7 @@ DIR  - directory where project will be generated,
 
     template SpecHelperView, "spec_helper.cr.ecr", "spec/spec_helper.cr"
     template SpecExampleView, "example_spec.cr.ecr", "spec/#{config.name}_spec.cr"
+
+    InitProject.register_view(GitInitView)
   end
 end
