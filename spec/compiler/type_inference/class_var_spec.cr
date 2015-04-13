@@ -98,4 +98,31 @@ describe "Type inference: class var" do
       ),
       "illegal attribute"
   end
+
+  it "allows self.class as type var in class body (#537)" do
+    assert_type(%(
+      class Bar(T)
+      end
+
+      class Foo
+        @@bar = Bar(self.class).new
+
+        def self.bar
+          @@bar
+        end
+      end
+
+      Foo.bar
+      )) { (types["Bar"] as GenericClassType).instantiate([types["Foo"].virtual_type!.metaclass] of TypeVar) }
+  end
+
+  it "errors if using self as type var but there's no self" do
+    assert_error %(
+      class Bar(T)
+      end
+
+      Bar(self).new
+      ),
+      "there's no self in this scope"
+  end
 end

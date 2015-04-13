@@ -2516,7 +2516,12 @@ module Crystal
     end
 
     def visit(node : Self)
-      node.type = scope.instance_type
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+
+      node.type = the_self.instance_type
     end
 
     def visit(node : PointerOf)
