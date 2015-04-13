@@ -1,8 +1,11 @@
+require "compiler/crystal/tools/init"
+
 module Crystal::Command
   USAGE = <<-USAGE
 Usage: crystal [command] [switches] [program file] [--] [arguments]
 
 Command:
+    init                     generate new crystal project
     build                    compile program file
     browser                  open an http server to browse program file
     deps                     install project dependencies
@@ -28,6 +31,9 @@ USAGE
         run_command options
       else
         case
+        when "init".starts_with?(command)
+          options.shift
+          init options
         when "build".starts_with?(command)
           options.shift
           build options
@@ -80,6 +86,10 @@ USAGE
     end
     puts
     error "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues"
+  end
+
+  private def self.init(options)
+    Init.run(options)
   end
 
   private def self.build(options)
