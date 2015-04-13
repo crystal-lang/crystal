@@ -18,8 +18,8 @@ end
 
 module Crystal
   describe Init::InitProject do
-    `rm -r tmp/example`
-    `rm -r tmp/example_app`
+    `[[ -d tmp/example ]] && rm -r tmp/example`
+    `[[ -d tmp/example_app ]] && rm -r tmp/example_app`
 
     run_init_project("lib", "example", "tmp/example", "John Smith")
     run_init_project("app", "example_app", "tmp/example_app", "John Smith")
