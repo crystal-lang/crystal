@@ -43,7 +43,7 @@ DIR  - directory where project will be generated,
 
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
-      unless ["lib", "app"].includes?(skeleton_type)
+      unless {"lib", "app"}.includes?(skeleton_type)
         puts "invalid TYPE value: #{skeleton_type}"
         puts opts
         exit 1
