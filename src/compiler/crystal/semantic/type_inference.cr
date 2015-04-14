@@ -2859,6 +2859,8 @@ module Crystal
           node.body.accept StructOrUnionVisitor.new(self, type)
         end
       end
+
+      type
     end
 
     def check_call_convention_attributes(node)
