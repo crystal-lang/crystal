@@ -335,6 +335,10 @@ module Crystal
       fun_type(type.fun_type)
     end
 
+    def llvm_c_type(type : CStructOrUnionType)
+      llvm_struct_type(type)
+    end
+
     def llvm_c_type(type)
       llvm_arg_type(type)
     end

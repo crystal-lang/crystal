@@ -1,4 +1,4 @@
-require "./*"
+require "./**"
 
 module LLVM
   @@initialized = false

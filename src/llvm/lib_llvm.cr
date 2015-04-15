@@ -37,6 +37,7 @@ lib LibLLVM
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : UInt8*) : BasicBlockRef
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
+  fun vector_type = LLVMVectorType(element_type : TypeRef, count : UInt32) : TypeRef
   fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_and = LLVMBuildAnd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
@@ -226,4 +227,10 @@ lib LibLLVM
   fun set_function_call_convention = LLVMSetFunctionCallConv(fn : ValueRef, cc : LLVM::CallConvention)
   fun set_instruction_call_convention = LLVMSetInstructionCallConv(instr : ValueRef, cc : LLVM::CallConvention)
   fun get_instruction_call_convention = LLVMGetInstructionCallConv(instr : ValueRef) : LLVM::CallConvention
+  fun get_int_type_width = LLVMGetIntTypeWidth(ty : TypeRef) : UInt32
+  fun is_packed_struct = LLVMIsPackedStruct(ty : TypeRef) : Int32
+  fun get_struct_element_types = LLVMGetStructElementTypes(ty : TypeRef, dest : TypeRef*)
+  fun count_struct_element_types = LLVMCountStructElementTypes(ty : TypeRef) : UInt32
+  fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
+  fun get_array_length = LLVMGetArrayLength(ty : TypeRef) : UInt32
 end

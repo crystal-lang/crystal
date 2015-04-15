@@ -111,8 +111,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
-    is_external = target_def.is_a?(External)
+    if target_def.is_a?(External)
+      codegen_fun_signature_external(mangled_name, target_def)
+    else
+      codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
+    end
+  end
 
+  def codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
     args = Array(Arg).new(target_def.args.length + 1)
 
     if !is_fun_literal && self_type.passed_as_self?
@@ -126,39 +132,21 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       args.push Arg.new(block_arg.name, type: block_arg.type)
     end
 
-    # This is the case where we declared a fun that was not used and now we
-    # are defining its body.
-    if is_external && (existing_fun = @llvm_mod.functions[mangled_name]?)
-      context.fun = existing_fun
-      return args
-    end
-
     target_def.special_vars.try &.each do |special_var_name|
       args.push Arg.new(special_var_name, type: target_def.vars.not_nil![special_var_name].type)
     end
 
-    if is_external
-      llvm_args_types = args.map { |arg| llvm_c_type(arg.type) }
-      llvm_return_type = llvm_c_return_type(target_def.type)
-
-      if needs_sret?(llvm_return_type)
-        llvm_args_types.insert 0, llvm_return_type.pointer
-        llvm_return_type = LLVM::Void
-        target_def.sret = true
+    llvm_args_types = args.map do |arg|
+      arg_type = arg.type
+      if arg_type.void?
+        arg_type = LLVM::Int8
+      else
+        arg_type = llvm_arg_type(arg_type)
+        arg_type = arg_type.pointer if arg.special_var?
       end
-    else
-      llvm_args_types = args.map do |arg|
-        arg_type = arg.type
-        if arg_type.void?
-          arg_type = LLVM::Int8
-        else
-          arg_type = llvm_arg_type(arg_type)
-          arg_type = arg_type.pointer if arg.special_var?
-        end
-        arg_type
-      end
-      llvm_return_type = llvm_type(target_def.type)
+      arg_type
     end
+    llvm_return_type = llvm_type(target_def.type)
 
     if is_closure
       llvm_args_types.insert(0, LLVM::VoidPointer)
@@ -167,35 +155,9 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       offset = 0
     end
 
-    offset += 1 if target_def.sret?
+    no_inline = setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
-    context.fun = @llvm_mod.functions.add(
-      mangled_name,
-      llvm_args_types,
-      llvm_return_type,
-      target_def.varargs,
-    )
-    context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-
-    if target_def.is_a?(External) && (call_convention = target_def.call_convention)
-      context.fun.call_convention = call_convention
-    end
-
-    no_inline = false
-    target_def.attributes.try &.each do |attribute|
-      case attribute.name
-      when "NoInline"
-        context.fun.add_attribute LLVM::Attribute::NoInline
-        context.fun.linkage = LLVM::Linkage::External
-        no_inline = true
-      when "AlwaysInline"
-        context.fun.add_attribute LLVM::Attribute::AlwaysInline
-      when "ReturnsTwice"
-        context.fun.add_attribute LLVM::Attribute::ReturnsTwice
-      end
-    end
-
-    if @single_module && !target_def.is_a?(External) && !no_inline
+    if @single_module && !no_inline
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -215,9 +177,100 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     args
   end
 
-  def needs_sret?(llvm_type)
-    # TODO: this logic is specific to AMD64, find out the logic for other ABIs
-    @llvm_typer.size_of(llvm_type) > (2 * @llvm_typer.pointer_size)
+  def codegen_fun_signature_external(mangled_name, target_def)
+    args = target_def.args.dup
+
+    # This is the case where we declared a fun that was not used and now we
+    # are defining its body.
+    if existing_fun = @llvm_mod.functions[mangled_name]?
+      context.fun = existing_fun
+      return args
+    end
+
+    offset = 0
+
+    abi_info = abi_info(target_def)
+
+    llvm_args_types = Array(LLVM::Type).new(abi_info.arg_types.length)
+    abi_info.arg_types.each do |arg_type|
+      case arg_type.kind
+      when LLVM::ABI::ArgKind::Direct
+        llvm_args_types << (arg_type.cast || arg_type.type)
+      when LLVM::ABI::ArgKind::Indirect
+        llvm_args_types << arg_type.type.pointer
+      else
+        # ignore
+      end
+    end
+
+    ret_type = abi_info.return_type
+    case ret_type.kind
+    when LLVM::ABI::ArgKind::Direct
+      llvm_return_type = (ret_type.cast || ret_type.type)
+    when LLVM::ABI::ArgKind::Indirect
+      sret = true
+      offset += 1
+      llvm_args_types.insert 0, ret_type.type.pointer
+      llvm_return_type = LLVM::Void
+    else
+      llvm_return_type = LLVM::Void
+    end
+
+    setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
+
+    if call_convention = target_def.call_convention
+      context.fun.call_convention = call_convention
+    end
+
+    args.each_with_index do |arg, i|
+      param = context.fun.params[i + offset]
+      param.name = arg.name
+
+      if attr = abi_info.arg_types[i].attr
+        param.add_attribute attr
+      end
+    end
+
+    # This is for sret
+    if (attr = abi_info.return_type.attr) && attr == LLVM::Attribute::StructRet
+      context.fun.params[0].add_attribute attr
+    end
+
+    args
+  end
+
+  def abi_info(external)
+    external.abi_info ||= begin
+      llvm_args_types = external.args.map { |arg| llvm_c_type(arg.type) }
+      llvm_return_type = llvm_c_return_type(external.type)
+
+      @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
+    end
+  end
+
+  def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
+    context.fun = @llvm_mod.functions.add(
+      mangled_name,
+      llvm_args_types,
+      llvm_return_type,
+      target_def.varargs,
+    )
+    context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
+
+    no_inline = false
+    target_def.attributes.try &.each do |attribute|
+      case attribute.name
+      when "NoInline"
+        context.fun.add_attribute LLVM::Attribute::NoInline
+        context.fun.linkage = LLVM::Linkage::External
+        no_inline = true
+      when "AlwaysInline"
+        context.fun.add_attribute LLVM::Attribute::AlwaysInline
+      when "ReturnsTwice"
+        context.fun.add_attribute LLVM::Attribute::ReturnsTwice
+      end
+    end
+    no_inline
   end
 
   def setup_closure_vars(closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)
