@@ -48,6 +48,8 @@ class Array(T)
   include Comparable(Array)
 
   getter length
+  @length :: Int32
+  @capacity :: Int32
 
   # Creates a new empty Array backed by a buffer that is initially
   # `initial_capacity` big.
@@ -85,7 +87,7 @@ class Array(T)
       raise ArgumentError.new("negative array size: #{size}")
     end
 
-    @length = size
+    @length = size.to_i
     @capacity = Math.max(size, 3)
     @buffer = Pointer(T).malloc(size, value)
   end
