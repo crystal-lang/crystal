@@ -112,9 +112,19 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     {call_args, false}
   end
 
+  def call_abi_info(target_def, node)
+    # For varargs we need to compute abi info for the arguments, which may be more
+    # than those specified in the function definition
+    if target_def.varargs
+      abi_info(target_def, node)
+    else
+      abi_info(target_def)
+    end
+  end
+
   def prepare_call_args_external(node, target_def, owner)
     has_out = false
-    abi_info = abi_info(target_def)
+    abi_info = call_abi_info(target_def, node)
 
     call_args = Array(LLVM::Value).new(node.args.length + 1)
     old_needs_value = @needs_value
@@ -164,30 +174,26 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         call_arg = check_fun_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
       end
 
-      abi_arg_type = abi_info.arg_types[i]?
-      if abi_arg_type
-        case abi_arg_type.kind
-        when LLVM::ABI::ArgKind::Direct
-          if cast = abi_arg_type.cast
-            final_value = alloca cast
-            final_value_casted = bit_cast final_value, LLVM::VoidPointer
-            gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
-            size = @abi.size(abi_arg_type.type)
-            align = @abi.align(abi_arg_type.type)
-            memcpy(final_value_casted, gep_call_arg, int32(size), int32(align), int1(0))
-            call_arg = load final_value
-          else
-            # Keep same call arg
-          end
-          call_args << call_arg
-        when LLVM::ABI::ArgKind::Indirect
-          # Pass argument as is (will be passed byval)
-          call_args << call_arg
-        when LLVM::ABI::ArgKind::Ignore
-          # Ignore
+      abi_arg_type = abi_info.arg_types[i]
+      case abi_arg_type.kind
+      when LLVM::ABI::ArgKind::Direct
+        if cast = abi_arg_type.cast
+          final_value = alloca cast
+          final_value_casted = bit_cast final_value, LLVM::VoidPointer
+          gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
+          size = @abi.size(abi_arg_type.type)
+          align = @abi.align(abi_arg_type.type)
+          memcpy(final_value_casted, gep_call_arg, int32(size), int32(align), int1(0))
+          call_arg = load final_value
+        else
+          # Keep same call arg
         end
-      else
         call_args << call_arg
+      when LLVM::ABI::ArgKind::Indirect
+        # Pass argument as is (will be passed byval)
+        call_args << call_arg
+      when LLVM::ABI::ArgKind::Ignore
+        # Ignore
       end
     end
 
@@ -423,7 +429,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def set_call_attributes_external(node, target_def)
-    abi_info = abi_info(target_def)
+    abi_info = call_abi_info(target_def, node)
+
     sret = abi_info.return_type.attr == LLVM::Attribute::StructRet
     arg_offset = 1
     arg_offset += 1 if sret

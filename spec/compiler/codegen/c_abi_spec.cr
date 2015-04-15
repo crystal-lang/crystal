@@ -22,6 +22,25 @@ describe "Code gen: C ABI" do
     str.should contain("declare void @foo({ i64 })")
   end
 
+  it "passes struct less than 64 bits as { i64 } in varargs" do
+    mod = build(%(
+      lib LibC
+        struct Struct
+          x : Int8
+          y : Int16
+        end
+
+        fun foo(...)
+      end
+
+      s = LibC::Struct.new
+      LibC.foo(s)
+      )).first_value
+    str = mod.to_s
+    puts str
+    str.should contain("call void (...)* @foo({ i64 }")
+  end
+
   it "passes struct between 64 and 128 bits as { i64, i64 }" do
     mod = build(%(
       lib LibC

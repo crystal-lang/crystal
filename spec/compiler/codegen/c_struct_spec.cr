@@ -293,22 +293,6 @@ describe "Code gen: struct" do
       )).to_i.should eq(3)
   end
 
-  it "returns big struct" do
-    build(%(
-      lib LibC
-        struct Big
-          x : Int64
-          y : Int64
-          z : Int32
-        end
-
-        fun foo(y : Int32) : Big
-      end
-
-      s = LibC.foo(1)
-      ))
-  end
-
   it "does to_s" do
     run(%(
       require "prelude"
