@@ -193,7 +193,7 @@ class Matrix(T)
   # Returns a new matrix of the same size after calling the unary #- method
   # on every element. Best suited to numeric matrices.
   def -
-    map { |e| -e }
+    map { |e| -e }
   end
 
   # Performs addition with another matrix.
