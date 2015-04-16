@@ -1868,9 +1868,18 @@ module Crystal
     getter :link_attributes
     property? :used
 
-    def initialize(program, container, name, @link_attributes)
+    def initialize(program, container, name)
       super(program, container, name)
       @used = false
+    end
+
+    def add_link_attributes(link_attributes)
+      if link_attributes
+        my_link_attributes = @link_attributes ||= [] of LinkAttribute
+        link_attributes.each do |attr|
+          my_link_attributes << attr unless my_link_attributes.includes?(attr)
+        end
+      end
     end
 
     def metaclass

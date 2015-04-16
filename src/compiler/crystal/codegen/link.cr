@@ -1,5 +1,5 @@
 module Crystal
-  class LinkAttribute
+  struct LinkAttribute
     getter :lib
     getter :ldflags
     getter :framework
