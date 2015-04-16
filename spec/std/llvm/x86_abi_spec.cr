@@ -27,26 +27,9 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.length.should eq(2)
 
-        arg_type = info.arg_types[0]
-        arg_type.kind.should eq(ArgKind::Direct)
-        arg_type.type.should eq(LLVM::Int32)
-        arg_type.cast.should be_nil
-        arg_type.pad.should be_nil
-        arg_type.attr.should be_nil
-
-        arg_type = info.arg_types[1]
-        arg_type.kind.should eq(ArgKind::Direct)
-        arg_type.type.should eq(LLVM::Int64)
-        arg_type.cast.should be_nil
-        arg_type.pad.should be_nil
-        arg_type.attr.should be_nil
-
-        ret_type = info.return_type
-        ret_type.kind.should eq(ArgKind::Direct)
-        ret_type.type.should eq(LLVM::Int8)
-        ret_type.cast.should be_nil
-        ret_type.pad.should be_nil
-        ret_type.attr.should be_nil
+        info.arg_types[0].should eq(ArgType.direct(LLVM::Int32))
+        info.arg_types[1].should eq(ArgType.direct(LLVM::Int64))
+        info.return_type.should eq(ArgType.direct(LLVM::Int8))
       end
     end
   end

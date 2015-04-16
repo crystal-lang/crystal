@@ -21,7 +21,7 @@ abstract class LLVM::ABI
     Ignore
   end
 
-  class ArgType
+  struct ArgType
     getter kind
     getter type
     getter cast

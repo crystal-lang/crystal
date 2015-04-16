@@ -92,26 +92,9 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.length.should eq(2)
 
-        arg_type = info.arg_types[0]
-        arg_type.kind.should eq(ArgKind::Direct)
-        arg_type.type.should eq(LLVM::Int32)
-        arg_type.cast.should be_nil
-        arg_type.pad.should be_nil
-        arg_type.attr.should be_nil
-
-        arg_type = info.arg_types[1]
-        arg_type.kind.should eq(ArgKind::Direct)
-        arg_type.type.should eq(LLVM::Int64)
-        arg_type.cast.should be_nil
-        arg_type.pad.should be_nil
-        arg_type.attr.should be_nil
-
-        ret_type = info.return_type
-        ret_type.kind.should eq(ArgKind::Direct)
-        ret_type.type.should eq(LLVM::Int8)
-        ret_type.cast.should be_nil
-        ret_type.pad.should be_nil
-        ret_type.attr.should be_nil
+        info.arg_types[0].should eq(ArgType.direct(LLVM::Int32))
+        info.arg_types[1].should eq(ArgType.direct(LLVM::Int64))
+        info.return_type.should eq(ArgType.direct(LLVM::Int8))
       end
 
       it "does with structs less than 64 bits" do
@@ -122,19 +105,8 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.length.should eq(1)
 
-        arg_type = info.arg_types[0]
-        arg_type.kind.should eq(ArgKind::Direct)
-        arg_type.type.should eq(str)
-        arg_type.cast.should eq(LLVM::Type.struct([LLVM::Int64]))
-        arg_type.pad.should be_nil
-        arg_type.attr.should be_nil
-
-        ret_type = info.return_type
-        ret_type.kind.should eq(ArgKind::Direct)
-        ret_type.type.should eq(str)
-        ret_type.cast.should eq(LLVM::Type.struct([LLVM::Int64]))
-        ret_type.pad.should be_nil
-        ret_type.attr.should be_nil
+        info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64])))
+        info.return_type.should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64])))
       end
 
       it "does with structs between 64 and 128 bits" do
@@ -145,19 +117,8 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.length.should eq(1)
 
-        arg_type = info.arg_types[0]
-        arg_type.kind.should eq(ArgKind::Direct)
-        arg_type.type.should eq(str)
-        arg_type.cast.should eq(LLVM::Type.struct([LLVM::Int64, LLVM::Int64]))
-        arg_type.pad.should be_nil
-        arg_type.attr.should be_nil
-
-        ret_type = info.return_type
-        ret_type.kind.should eq(ArgKind::Direct)
-        ret_type.type.should eq(str)
-        ret_type.cast.should eq(LLVM::Type.struct([LLVM::Int64, LLVM::Int64]))
-        ret_type.pad.should be_nil
-        ret_type.attr.should be_nil
+        info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64, LLVM::Int64])))
+        info.return_type.should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64, LLVM::Int64])))
       end
 
       it "does with structs between 64 and 128 bits" do
@@ -168,19 +129,8 @@ class LLVM::ABI
         info = abi.abi_info(arg_types, return_type, true)
         info.arg_types.length.should eq(1)
 
-        arg_type = info.arg_types[0]
-        arg_type.kind.should eq(ArgKind::Indirect)
-        arg_type.type.should eq(str)
-        arg_type.cast.should be_nil
-        arg_type.pad.should be_nil
-        arg_type.attr.should eq(Attribute::ByVal)
-
-        ret_type = info.return_type
-        ret_type.kind.should eq(ArgKind::Indirect)
-        ret_type.type.should eq(str)
-        ret_type.cast.should be_nil
-        ret_type.pad.should be_nil
-        ret_type.attr.should eq(Attribute::StructRet)
+        info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+        info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
       end
     end
   end
