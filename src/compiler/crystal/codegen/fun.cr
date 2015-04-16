@@ -198,7 +198,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
         llvm_args_types << (arg_type.cast || arg_type.type)
       when LLVM::ABI::ArgKind::Indirect
         llvm_args_types << arg_type.type.pointer
-      else
+      when LLVM::ABI::ArgKind::Ignore
         # ignore
       end
     end
@@ -222,13 +222,18 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       context.fun.call_convention = call_convention
     end
 
-    args.each_with_index do |arg, i|
+    i = 0
+    args.each do |arg|
       param = context.fun.params[i + offset]
       param.name = arg.name
 
-      if attr = abi_info.arg_types[i].attr
+      abi_arg_type = abi_info.arg_types[i]
+
+      if attr = abi_arg_type.attr
         param.add_attribute attr
       end
+
+      i += 1 unless abi_arg_type.kind == LLVM::ABI::ArgKind::Ignore
     end
 
     # This is for sret
