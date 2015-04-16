@@ -1,5 +1,20 @@
 # Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi.rs
-module LLVM::ABI
+abstract class LLVM::ABI
+  getter target_data
+  getter is_osx
+  getter is_windows
+
+  def initialize(target_machine : TargetMachine)
+    @target_data = target_machine.data_layout
+    triple = target_machine.triple
+    @is_osx = !!(triple =~ /apple/)
+    @is_windows = !!(triple =~ /windows/)
+  end
+
+  abstract def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
+  abstract def size(type : Type)
+  abstract def align(type : Type)
+
   enum ArgKind
     Direct
     Indirect

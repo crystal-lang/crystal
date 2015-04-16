@@ -1,8 +1,8 @@
-# Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86_64.rs
-module LLVM::ABI::X86_64
-  extend self
+require "../abi"
 
-  def abi_info(atys, rty, ret_def)
+# Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86_64.rs
+class LLVM::ABI::X86_64 < LLVM::ABI
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
     arg_tys = Array(LLVM::Type).new(atys.length)
     arg_tys = atys.map do |arg_type|
       x86_64_type(arg_type, Attribute::ByVal) { |cls| pass_by_val?(cls) }

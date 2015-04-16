@@ -233,4 +233,7 @@ lib LibLLVM
   fun count_struct_element_types = LLVMCountStructElementTypes(ty : TypeRef) : UInt32
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_array_length = LLVMGetArrayLength(ty : TypeRef) : UInt32
+  fun abi_size_of_type = LLVMABISizeOfType(td : TargetDataRef, ty : TypeRef) : UInt64
+  fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
+  fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
 end

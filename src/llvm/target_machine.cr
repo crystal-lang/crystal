@@ -2,9 +2,14 @@ struct LLVM::TargetMachine
   def initialize(@unwrap)
   end
 
+  def target
+    target = LibLLVM.get_target_machine_target(self)
+    target ? Target.new(target) : raise "Couldn't get target"
+  end
+
   def data_layout
     layout = LibLLVM.get_target_machine_data(self)
-    layout ? TargetData.new(layout) : nil
+    layout ? TargetData.new(layout) : raise "Missing layout for #{self}"
   end
 
   def triple
@@ -28,6 +33,18 @@ struct LLVM::TargetMachine
       raise String.new(error_msg)
     end
     true
+  end
+
+  def abi
+    triple = self.triple
+    case triple
+    when /x86_64/
+      ABI::X86_64.new(self)
+    when /i386|i686/
+      ABI::X86.new(self)
+    else
+      raise "Unsupported ABI for target triple: #{triple}"
+    end
   end
 
   def to_unsafe

@@ -10,6 +10,14 @@ struct LLVM::TargetData
     size_in_bits(type) / 8
   end
 
+  def abi_size(type)
+    LibLLVM.abi_size_of_type(self, type)
+  end
+
+  def abi_alignment(type)
+    LibLLVM.abi_alignment_of_type(self, type)
+  end
+
   def to_unsafe
     @unwrap
   end

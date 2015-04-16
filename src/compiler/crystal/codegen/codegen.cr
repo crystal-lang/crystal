@@ -99,7 +99,7 @@ module Crystal
 
     def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
-      @abi = LLVM::ABI::X86_64
+      @abi = @mod.target_machine.abi
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type

@@ -16,7 +16,7 @@ module Crystal
       @union_value_cache = TypeCache.new
 
       machine = program.target_machine
-      @layout = machine.data_layout.not_nil!
+      @layout = machine.data_layout
       @landing_pad_type = LLVM::Type.struct([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end
 

@@ -37,7 +37,6 @@ describe "Code gen: C ABI" do
       LibC.foo(s)
       )).first_value
     str = mod.to_s
-    puts str
     str.should contain("call void (...)* @foo({ i64 }")
   end
 
