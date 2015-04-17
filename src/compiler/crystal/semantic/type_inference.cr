@@ -71,6 +71,7 @@ module Crystal
       @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
+      @in_is_a = false
       @attributes  = nil
       @lib_def_pass = 0
 
@@ -1284,7 +1285,9 @@ module Crystal
       node.obj.accept self
 
       @in_type_args += 1
+      @in_is_a = true
       node.const.accept self
+      @in_is_a = false
       @in_type_args -= 1
 
       node.type = mod.bool
@@ -2022,13 +2025,23 @@ module Crystal
     end
 
     def end_visit(node : Union)
-      node.type = @mod.type_merge(node.types.map do |subtype|
+      old_in_is_a, @in_is_a = @in_is_a, false
+
+      types = node.types.map do |subtype|
         instance_type = subtype.type.instance_type
         unless instance_type.allowed_in_generics?
           subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
         end
         instance_type
-      end)
+      end
+
+      @in_is_a = old_in_is_a
+
+      if @in_is_a
+        node.type = @mod.type_merge_union_of(types)
+      else
+        node.type = @mod.type_merge(types)
+      end
     end
 
     def end_visit(node : Virtual)

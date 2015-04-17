@@ -486,4 +486,26 @@ describe "Codegen: is_a?" do
       bar.is_a?(Foo(Float32))
       )).to_b.should be_false
   end
+
+  it "doesn't type merge (1) (#548)" do
+    run(%(
+      class Base; end
+      class A < Base; end
+      class B < Base; end
+      class C < Base; end
+
+      C.new.is_a?(A | B)
+      )).to_b.should be_false
+  end
+
+  it "doesn't type merge (2) (#548)" do
+    run(%(
+      class Base; end
+      class A < Base; end
+      class B < Base; end
+      class C < Base; end
+
+      A.new.is_a?(A | B) && B.new.is_a?(A | B)
+      )).to_b.should be_true
+  end
 end
