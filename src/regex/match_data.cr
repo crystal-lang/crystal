@@ -52,18 +52,22 @@ class MatchData
     match
   end
 
+  def inspect(io : IO)
+    to_s(io)
+  end
+
   def to_s(io : IO)
-    io << "MatchData("
-    @string.inspect(io)
+    io << "#<MatchData "
+    self[0].inspect(io)
     if length > 0
-      io << " ["
+      io << " "
       length.times do |i|
-        io << ", " if i > 0
+        io << " " if i > 0
+        io << (i + 1) << ":"
         self[i + 1].inspect(io)
       end
-      io << "]"
     end
-    io << ")"
+    io << ">"
   end
 
   private def byte_index_to_char_index(index)
