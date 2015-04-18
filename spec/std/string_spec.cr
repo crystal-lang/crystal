@@ -848,7 +848,11 @@ describe "String" do
   end
 
   it "has match" do
-    "FooBar".match(/oo/).should_not be_nil
+    "FooBar".match(/oo/).not_nil![0].should eq("oo")
+  end
+
+  it "matches with position" do
+    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
   end
 
   it "has size (same as length)" do
