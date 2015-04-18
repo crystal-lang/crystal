@@ -1089,6 +1089,7 @@ class String
         slice_offset = match_offset
       end
       break if limit && ary.length + 1 == limit
+      break if slice_offset > bytesize
     end
 
     if slice_offset < bytesize
