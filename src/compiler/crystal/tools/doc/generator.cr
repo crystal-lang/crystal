@@ -7,7 +7,6 @@ class Crystal::Doc::Generator
   end
 
   def run
-    `rm -rf #{@dir}`
     Dir.mkdir_p @dir
 
     types = collect_subtypes(@program)
