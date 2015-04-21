@@ -640,7 +640,7 @@ class Array(T)
 
   def push(*values)
     values.each do |value|
-      push value
+      self << value
     end
   end
 
