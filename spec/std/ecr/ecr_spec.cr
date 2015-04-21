@@ -21,11 +21,11 @@ describe "ECR" do
         %(__str__ << " 2 "),
       %(#<loc:"foo.cr",2,25> end ),
     ]
-    program.should eq(pieces.join("\n") + "\n")
+    expect(program).to eq(pieces.join("\n") + "\n")
   end
 
   it "does ecr_file" do
     view = ECRSpecHelloView.new("world!")
-    view.to_s.strip.should eq("Hello world! 012")
+    expect(view.to_s.strip).to eq("Hello world! 012")
   end
 end

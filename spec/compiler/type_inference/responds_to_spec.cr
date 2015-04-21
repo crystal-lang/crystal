@@ -14,7 +14,7 @@ describe "Type inference: responds_to?" do
       "
     result = infer_type nodes
     mod, nodes = result.program, result.node as Expressions
-    (nodes.last as If).then.type.should eq(mod.int32)
+    expect((nodes.last as If).then.type).to eq(mod.int32)
   end
 
   it "restricts other types inside if else" do

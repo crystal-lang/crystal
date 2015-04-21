@@ -2,18 +2,18 @@ require "../../spec_helper"
 
 describe "Code gen: void" do
   it "codegens void assignment" do
-    run("
+    expect(run("
       fun foo : Void
       end
 
       a = foo
       a
       1
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens void assignment in case" do
-    run("
+    expect(run("
       require \"prelude\"
 
       fun foo : Void
@@ -30,11 +30,11 @@ describe "Code gen: void" do
 
       bar
       1
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens void assignment in case with local variable" do
-    run("
+    expect(run("
       require \"prelude\"
 
       fun foo : Void
@@ -52,7 +52,7 @@ describe "Code gen: void" do
 
       bar
       1
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens unreachable code" do

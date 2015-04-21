@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: block" do
   it "generate inline" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -10,11 +10,11 @@ describe "Code gen: block" do
       foo do
         1
       end
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "passes yield arguments" do
-    run("
+    expect(run("
       def foo
         yield 1
       end
@@ -22,11 +22,11 @@ describe "Code gen: block" do
       foo do |x|
         x + 1
       end
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "pass arguments to yielder function" do
-    run("
+    expect(run("
       def foo(a)
         yield a
       end
@@ -34,11 +34,11 @@ describe "Code gen: block" do
       foo(3) do |x|
         x + 1
       end
-    ").to_i.should eq(4)
+    ").to_i).to eq(4)
   end
 
   it "pass self to yielder function" do
-    run("
+    expect(run("
       struct Int
         def foo
           yield self
@@ -48,11 +48,11 @@ describe "Code gen: block" do
       3.foo do |x|
         x + 1
       end
-    ").to_i.should eq(4)
+    ").to_i).to eq(4)
   end
 
   it "pass self and arguments to yielder function" do
-    run("
+    expect(run("
       struct Int
         def foo(i)
           yield self, i
@@ -62,11 +62,11 @@ describe "Code gen: block" do
       3.foo(2) do |x, i|
         x + i
       end
-    ").to_i.should eq(5)
+    ").to_i).to eq(5)
   end
 
   it "allows access to local variables" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -75,11 +75,11 @@ describe "Code gen: block" do
       foo do
         x + 1
       end
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "can access instance vars from yielder function" do
-    run("
+    expect(run("
       class Foo
         def initialize
           @x = 1
@@ -92,11 +92,11 @@ describe "Code gen: block" do
       Foo.new.foo do |x|
         x + 1
       end
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "can set instance vars from yielder function" do
-    run("
+    expect(run("
       class Foo
         def initialize
           @x = 1
@@ -113,11 +113,11 @@ describe "Code gen: block" do
       a = Foo.new
       a.foo { 2 }
       a.value
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "can use instance methods from yielder function" do
-    run("
+    expect(run("
       class Foo
         def foo
           yield value
@@ -128,11 +128,11 @@ describe "Code gen: block" do
       end
 
       Foo.new.foo { |x| x + 1 }
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "can call methods from block when yielder is an instance method" do
-    run("
+    expect(run("
       class Foo
         def foo
           yield
@@ -144,11 +144,11 @@ describe "Code gen: block" do
       end
 
       Foo.new.foo { bar }
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "nested yields" do
-    run("
+    expect(run("
       def bar
         yield
       end
@@ -158,33 +158,33 @@ describe "Code gen: block" do
       end
 
       a = foo { 1 }
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "assigns yield to argument" do
-    run("
+    expect(run("
       def foo(x)
         yield
         x = 1
       end
 
       foo(1) { 1 }
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "can use global constant" do
-    run("
+    expect(run("
       FOO = 1
       def foo
         yield
         FOO
       end
       foo { }
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "return from yielder function" do
-    run("
+    expect(run("
       def foo
         yield
         return 1
@@ -192,11 +192,11 @@ describe "Code gen: block" do
 
       foo { }
       2
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "return from block" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -207,11 +207,11 @@ describe "Code gen: block" do
       end
 
       bar
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "return from yielder function (2)" do
-    run("
+    expect(run("
       def foo
         yield
         return 1 if true
@@ -223,11 +223,11 @@ describe "Code gen: block" do
       end
 
       bar
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "union value of yielder function" do
-    run("
+    expect(run("
       def foo
         yield
         a = 1.1
@@ -236,11 +236,11 @@ describe "Code gen: block" do
       end
 
       foo {}.to_i
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "allow return from function called from yielder function" do
-    run("
+    expect(run("
       def foo
         return 2
       end
@@ -252,22 +252,22 @@ describe "Code gen: block" do
       end
 
       bar {}
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "" do
-    run("
+    expect(run("
       def foo
         yield
         true ? return 1 : return 1.1
       end
 
       foo {}.to_i
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "return from block that always returns from function that always yields inside if block" do
-    run("
+    expect(run("
       def bar
         yield
         2
@@ -282,11 +282,11 @@ describe "Code gen: block" do
       end
 
       foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "return from block that always returns from function that conditionally yields" do
-    run("
+    expect(run("
       def bar
         if true
           yield
@@ -299,11 +299,11 @@ describe "Code gen: block" do
       end
 
       foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "call block from dispatch" do
-    run("
+    expect(run("
       def bar(y)
         yield y
       end
@@ -315,11 +315,11 @@ describe "Code gen: block" do
       end
 
       foo.to_i
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "call block from dispatch and use local vars" do
-    run("
+    expect(run("
       def bar(y)
         yield y
       end
@@ -336,11 +336,11 @@ describe "Code gen: block" do
       end
 
       foo.to_i
-    ").to_i.should eq(4)
+    ").to_i).to eq(4)
   end
 
   it "break without value returns nil" do
-    run("
+    expect(run("
       require \"nil\"
       require \"value\"
 
@@ -354,11 +354,11 @@ describe "Code gen: block" do
       end
 
       x.nil?
-    ").to_b.should be_true
+    ").to_b).to be_true
   end
 
   it "break block with yielder inside while" do
-    run("
+    expect(run("
       require \"prelude\"
       a = 0
       10.times do
@@ -366,11 +366,11 @@ describe "Code gen: block" do
         break if a > 5
       end
       a
-    ").to_i.should eq(6)
+    ").to_i).to eq(6)
   end
 
   it "break from block returns from yielder" do
-    run("
+    expect(run("
       def foo
         yield
         yield
@@ -379,11 +379,11 @@ describe "Code gen: block" do
       a = 0
       foo { a += 1; break }
       a
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "break from block with value" do
-    run("
+    expect(run("
       def foo
         while true
           yield
@@ -394,11 +394,11 @@ describe "Code gen: block" do
       foo do
         break 1
       end
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "returns from block with value" do
-    run("
+    expect(run("
       require \"prelude\"
 
       def foo
@@ -415,11 +415,11 @@ describe "Code gen: block" do
       end
 
       bar.to_i
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "doesn't codegen after while that always yields and breaks" do
-    run("
+    expect(run("
       def foo
         while true
           yield
@@ -430,18 +430,18 @@ describe "Code gen: block" do
       foo do
         break 2
       end
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "break from block with value" do
-    run("
+    expect(run("
       require \"prelude\"
       10.times { break 20 }
-    ").to_i.should eq(20)
+    ").to_i).to eq(20)
   end
 
   it "doesn't codegen call if arg yields and always breaks" do
-    run("
+    expect(run("
       require \"nil\"
 
       def foo
@@ -449,11 +449,11 @@ describe "Code gen: block" do
       end
 
       foo { break 2 }.to_i
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "codegens nested return" do
-    run("
+    expect(run("
       def bar
         yield
         a = 1
@@ -468,11 +468,11 @@ describe "Code gen: block" do
       end
 
       z
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "codegens nested break" do
-    run("
+    expect(run("
       def bar
         yield
         a = 1
@@ -483,11 +483,11 @@ describe "Code gen: block" do
       end
 
       foo { break 2 }
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "codegens call with block with call with arg that yields" do
-    run("
+    expect(run("
       def bar
         yield
         a = 2
@@ -498,11 +498,11 @@ describe "Code gen: block" do
       end
 
       foo { break 3 }
-    ").to_i.should eq(3)
+    ").to_i).to eq(3)
   end
 
   it "can break without value from yielder that returns nilable (1)" do
-    run("
+    expect(run("
       require \"nil\"
       require \"reference\"
 
@@ -516,11 +516,11 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    ").to_b.should be_true
+    ").to_b).to be_true
   end
 
   it "can break without value from yielder that returns nilable (2)" do
-    run("
+    expect(run("
       require \"nil\"
       require \"reference\"
 
@@ -534,11 +534,11 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    ").to_b.should be_true
+    ").to_b).to be_true
   end
 
   it "break with value from yielder that returns a nilable" do
-    run("
+    expect(run("
       require \"nil\"
       require \"reference\"
 
@@ -553,11 +553,11 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    ").to_b.should be_false
+    ").to_b).to be_false
   end
 
   it "can use self inside a block called from dispatch" do
-    run("
+    expect(run("
       require \"nil\"
 
       class Foo
@@ -577,11 +577,11 @@ describe "Code gen: block" do
 
       123.foo
       $x.to_i
-    ").to_i.should eq(123)
+    ").to_i).to eq(123)
   end
 
   it "return from block called from dispatch" do
-    run("
+    expect(run("
       class Foo
         def do; yield; end
       end
@@ -596,11 +596,11 @@ describe "Code gen: block" do
       end
 
       foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "breaks from while in function called from block" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -615,21 +615,21 @@ describe "Code gen: block" do
       foo do
         bar
       end
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "allows modifying yielded value (with literal)" do
-    run("
+    expect(run("
       def foo
         yield 1
       end
 
       foo { |x| x = 2; x }
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "allows modifying yielded value (with variable)" do
-    run("
+    expect(run("
       def foo
         a = 1
         yield a
@@ -637,7 +637,7 @@ describe "Code gen: block" do
       end
 
       foo { |x| x = 2; x }
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "it yields nil from another call" do
@@ -660,7 +660,7 @@ describe "Code gen: block" do
   end
 
   it "allows yield from dispatch call" do
-    run("
+    expect(run("
       def foo(x : Value)
         yield 1
       end
@@ -679,7 +679,7 @@ describe "Code gen: block" do
       x = 0
       bar { |i| x = i }
       x
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "block with nilable type" do
@@ -724,7 +724,7 @@ describe "Code gen: block" do
   end
 
   it "allows yields with less arguments than in block" do
-    run("
+    expect(run("
       struct Nil
         def to_i
           0
@@ -740,11 +740,11 @@ describe "Code gen: block" do
         a += x + y.to_i
       end
       a
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens block with nilable type with return (1)" do
-    run("
+    expect(run("
       struct Nil; def nil?; true; end; end
       class Reference; def nil?; false; end; end
 
@@ -756,11 +756,11 @@ describe "Code gen: block" do
       end
 
       foo { false }.nil?
-      ").to_b.should be_true
+      ").to_b).to be_true
   end
 
   it "codegens block with nilable type with return (2)" do
-    run("
+    expect(run("
       struct Nil; def nil?; true; end; end
       class Reference; def nil?; false; end; end
 
@@ -772,7 +772,7 @@ describe "Code gen: block" do
       end
 
       foo { false }.nil?
-      ").to_b.should be_false
+      ").to_b).to be_false
   end
 
   it "codegens block with union with return" do
@@ -791,7 +791,7 @@ describe "Code gen: block" do
   end
 
   it "codegens if with call with block (ssa issue)" do
-    run("
+    expect(run("
       def bar
         yield
       end
@@ -807,11 +807,11 @@ describe "Code gen: block" do
       end
 
       foo
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens block with return and yield and no return" do
-    run("
+    expect(run("
       lib LibC
         fun exit : NoReturn
       end
@@ -828,11 +828,11 @@ describe "Code gen: block" do
       end
 
       foo 1
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens while/break inside block" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -843,21 +843,21 @@ describe "Code gen: block" do
         end
         1
       end
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens block with union arg (1)" do
-    run("
+    expect(run("
       def foo
         yield 1 || 1.5
       end
 
       foo { |x| x }.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens block with union arg (2)" do
-    run("
+    expect(run("
       struct Number
         def abs
           self
@@ -878,11 +878,11 @@ describe "Code gen: block" do
       a.each do |x|
         x.abs
       end.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens block with virtual type arg" do
-    run("
+    expect(run("
       class Var(T)
         def initialize(x : T)
           @x = x
@@ -909,22 +909,22 @@ describe "Code gen: block" do
       a.each do |x|
         x.bar
       end
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens call with blocks of different type without args" do
-    run("
+    expect(run("
       def foo
         yield
       end
 
       foo { 1.1 }
       foo { 1 }
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens dispatch with block and break (1)" do
-    run("
+    expect(run("
       class Foo(T)
         def initialize(@x : T)
         end
@@ -941,11 +941,11 @@ describe "Code gen: block" do
         n += x
       end
       n.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens dispatch with block and break (2)" do
-    run("
+    expect(run("
       require \"prelude\"
 
       a = [1, 2, 3] || [1.5]
@@ -955,7 +955,7 @@ describe "Code gen: block" do
         n += x
       end
       n.to_i
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
    end
 
   it "codegens block call when argument type changes" do
@@ -987,7 +987,7 @@ describe "Code gen: block" do
   end
 
   it "executes yield expression if no arg is given for block" do
-    run("
+    expect(run("
       def foo
         a = 1
         yield (a = 2)
@@ -995,11 +995,11 @@ describe "Code gen: block" do
       end
 
       foo { }
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens bug with block and arg and var" do
-    run("
+    expect(run("
       def foo
         yield 1
       end
@@ -1010,11 +1010,11 @@ describe "Code gen: block" do
         a = 'A'
         a.ord
       end
-      ").to_i.should eq(65)
+      ").to_i).to eq(65)
   end
 
   it "allows using var as block arg with outer var" do
-    run("
+    expect(run("
       def foo
         yield 'a'
       end
@@ -1022,11 +1022,11 @@ describe "Code gen: block" do
       a = foo do |a|
         1
       end
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "allows initialize with yield (#224)" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize
           @x = yield 1
@@ -1041,11 +1041,11 @@ describe "Code gen: block" do
         a + 1
       end
       foo.x
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "uses block inside array literal (bug)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo
@@ -1054,7 +1054,7 @@ describe "Code gen: block" do
 
       ary = [foo { |x| x.abs }]
       ary[0]
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated" do
@@ -1118,7 +1118,7 @@ describe "Code gen: block" do
   end
 
   it "codegens bug with yield not_nil! that is never not nil" do
-    run(%(
+    expect(run(%(
       lib LibC
         fun exit(Int32) : NoReturn
       end
@@ -1157,11 +1157,11 @@ describe "Code gen: block" do
       end
 
       extra.to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "uses block var with same name as local var" do
-    run(%(
+    expect(run(%(
       def foo
         yield "hello"
       end
@@ -1171,11 +1171,11 @@ describe "Code gen: block" do
         a
       end
       a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "doesn't crash on untyped array to_s" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Bar(T)
@@ -1188,11 +1188,11 @@ describe "Code gen: block" do
       end
 
       Foo(Int32).new.foo { |k| k + 1 }.to_s
-      )).to_string.should eq("[]")
+      )).to_string).to eq("[]")
   end
 
   it "codegens block which always breaks but never enters (#494)" do
-    run(%(
+    expect(run(%(
       def foo
         while 1 == 2
           yield
@@ -1203,6 +1203,6 @@ describe "Code gen: block" do
       foo do
         break 10
       end
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 end

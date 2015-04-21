@@ -11,8 +11,8 @@ module Crystal
             github "owner/repo"
           end
         end
-        project.dependencies.length.should eq(1)
-        project.dependencies[0].should be_a(GitHubDependency)
+        expect(project.dependencies.length).to eq(1)
+        expect(project.dependencies[0]).to be_a(GitHubDependency)
       end
 
       it "adds local dependencies" do
@@ -23,8 +23,8 @@ module Crystal
           end
         end
 
-        project.dependencies.length.should eq(1)
-        project.dependencies[0].should be_a(PathDependency)
+        expect(project.dependencies.length).to eq(1)
+        expect(project.dependencies[0]).to be_a(PathDependency)
       end
     end
   end

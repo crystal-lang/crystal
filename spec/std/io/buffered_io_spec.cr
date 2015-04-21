@@ -3,72 +3,72 @@ require "spec"
 describe "BufferedIO" do
   it "does gets" do
     io = BufferedIO.new(StringIO.new("hello\nworld\n"))
-    io.gets.should eq("hello\n")
-    io.gets.should eq("world\n")
-    io.gets.should be_nil
+    expect(io.gets).to eq("hello\n")
+    expect(io.gets).to eq("world\n")
+    expect(io.gets).to be_nil
   end
 
   it "does gets with big line" do
     big_line = "a" * 20_000
     io = BufferedIO.new(StringIO.new("#{big_line}\nworld\n"))
-    io.gets.should eq("#{big_line}\n")
+    expect(io.gets).to eq("#{big_line}\n")
   end
 
   it "does gets with char delimiter" do
     io = BufferedIO.new(StringIO.new("hello world"))
-    io.gets('w').should eq("hello w")
-    io.gets('r').should eq("or")
-    io.gets('r').should eq("ld")
-    io.gets('r').should be_nil
+    expect(io.gets('w')).to eq("hello w")
+    expect(io.gets('r')).to eq("or")
+    expect(io.gets('r')).to eq("ld")
+    expect(io.gets('r')).to be_nil
   end
 
   it "does gets with unicode char delimiter" do
     io = BufferedIO.new(StringIO.new("こんにちは"))
-    io.gets('ち').should eq("こんにち")
-    io.gets('ち').should eq("は")
-    io.gets('ち').should be_nil
+    expect(io.gets('ち')).to eq("こんにち")
+    expect(io.gets('ち')).to eq("は")
+    expect(io.gets('ち')).to be_nil
   end
 
   it "does puts" do
     str = StringIO.new
     io = BufferedIO.new(str)
     io.puts "Hello"
-    str.to_s.should eq("")
+    expect(str.to_s).to eq("")
     io.flush
-    str.to_s.should eq("Hello\n")
+    expect(str.to_s).to eq("Hello\n")
   end
 
   it "does read" do
     io = BufferedIO.new(StringIO.new("hello world"))
-    io.read(5).should eq("hello")
-    io.read(10).should eq(" world")
-    io.read(5).should eq("")
+    expect(io.read(5)).to eq("hello")
+    expect(io.read(10)).to eq(" world")
+    expect(io.read(5)).to eq("")
   end
 
   it "reads char" do
     io = BufferedIO.new(StringIO.new("hi 世界"))
-    io.read_char.should eq('h')
-    io.read_char.should eq('i')
-    io.read_char.should eq(' ')
-    io.read_char.should eq('世')
-    io.read_char.should eq('界')
-    io.read_char.should be_nil
+    expect(io.read_char).to eq('h')
+    expect(io.read_char).to eq('i')
+    expect(io.read_char).to eq(' ')
+    expect(io.read_char).to eq('世')
+    expect(io.read_char).to eq('界')
+    expect(io.read_char).to be_nil
   end
 
   it "reads byte" do
     io = BufferedIO.new(StringIO.new("hello"))
-    io.read_byte.should eq('h'.ord)
-    io.read_byte.should eq('e'.ord)
-    io.read_byte.should eq('l'.ord)
-    io.read_byte.should eq('l'.ord)
-    io.read_byte.should eq('o'.ord)
-    io.read_char.should be_nil
+    expect(io.read_byte).to eq('h'.ord)
+    expect(io.read_byte).to eq('e'.ord)
+    expect(io.read_byte).to eq('l'.ord)
+    expect(io.read_byte).to eq('l'.ord)
+    expect(io.read_byte).to eq('o'.ord)
+    expect(io.read_char).to be_nil
   end
 
   it "does new with block" do
     str = StringIO.new
     res = BufferedIO.new str, &.print "Hello"
-    res.should be(str)
-    str.to_s.should eq("Hello")
+    expect(res).to be(str)
+    expect(str.to_s).to eq("Hello")
   end
 end

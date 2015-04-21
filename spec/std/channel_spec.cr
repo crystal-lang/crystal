@@ -2,11 +2,11 @@ require "spec"
 
 describe Channel do
   it "creates unbuffered with no arguments" do
-    Channel(Int32).new.should be_a(UnbufferedChannel(Int32))
+    expect(Channel(Int32).new).to be_a(UnbufferedChannel(Int32))
   end
 
   it "creates buffered with capacity argument" do
-    Channel(Int32).new(32).should be_a(BufferedChannel(Int32))
+    expect(Channel(Int32).new(32)).to be_a(BufferedChannel(Int32))
   end
 end
 
@@ -15,7 +15,7 @@ describe UnbufferedChannel do
     ch = UnbufferedChannel(Int32).new
     spawn { ch.send(ch.receive) }
     ch.send 123
-    ch.receive.should eq(123)
+    expect(ch.receive).to eq(123)
   end
 
   it "blocks if there is no receiver" do
@@ -28,11 +28,11 @@ describe UnbufferedChannel do
     end
 
     Scheduler.yield
-    state.should eq(1)
-    ch.receive.should eq(123)
-    state.should eq(1)
+    expect(state).to eq(1)
+    expect(ch.receive).to eq(123)
+    expect(state).to eq(1)
     Scheduler.yield
-    state.should eq(2)
+    expect(state).to eq(2)
   end
 
   it "deliver many senders" do
@@ -41,23 +41,23 @@ describe UnbufferedChannel do
     spawn { ch.send 2; ch.send 5 }
     spawn { ch.send 3; ch.send 6 }
 
-    (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
+    expect((1..6).map { ch.receive }.sort).to eq([1, 2, 3, 4, 5, 6])
   end
 
   it "gets ready when there is a sender" do
     ch = UnbufferedChannel(Int32).new
-    ch.ready?.should be_false
+    expect(ch.ready?).to be_false
     spawn { ch.send 123 }
     Scheduler.yield
-    ch.ready?.should be_true
-    ch.receive.should eq(123)
+    expect(ch.ready?).to be_true
+    expect(ch.receive).to eq(123)
   end
 
   it "works with select" do
     ch1 = UnbufferedChannel(Int32).new
     ch2 = UnbufferedChannel(Int32).new
     spawn { ch1.send 123 }
-    Channel.select(ch1, ch2).should eq(ch1)
+    expect(Channel.select(ch1, ch2)).to eq(ch1)
   end
 end
 
@@ -66,7 +66,7 @@ describe BufferedChannel do
     ch = BufferedChannel(Int32).new
     spawn { ch.send(ch.receive) }
     ch.send 123
-    ch.receive.should eq(123)
+    expect(ch.receive).to eq(123)
   end
 
   it "blocks when full" do
@@ -75,38 +75,38 @@ describe BufferedChannel do
     spawn { 2.times { ch.receive }; freed = true }
 
     ch.send 1
-    ch.full?.should be_false
-    freed.should be_false
+    expect(ch.full?).to be_false
+    expect(freed).to be_false
 
     ch.send 2
-    ch.full?.should be_true
-    freed.should be_false
+    expect(ch.full?).to be_true
+    expect(freed).to be_false
 
     ch.send 3
-    ch.full?.should be_false
-    freed.should be_true
+    expect(ch.full?).to be_false
+    expect(freed).to be_true
   end
 
   it "doesn't block when not full" do
     ch = BufferedChannel(Int32).new
     done = false
     spawn { ch.send 123; done = true }
-    done.should be_false
+    expect(done).to be_false
     Scheduler.yield
-    done.should be_true
+    expect(done).to be_true
   end
 
   it "gets ready with data" do
     ch = BufferedChannel(Int32).new
-    ch.ready?.should be_false
+    expect(ch.ready?).to be_false
     ch.send 123
-    ch.ready?.should be_true
+    expect(ch.ready?).to be_true
   end
 
   it "works with select" do
     ch1 = BufferedChannel(Int32).new
     ch2 = BufferedChannel(Int32).new
     spawn { ch1.send 123 }
-    Channel.select(ch1, ch2).should eq(ch1)
+    expect(Channel.select(ch1, ch2)).to eq(ch1)
   end
 end

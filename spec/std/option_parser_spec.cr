@@ -8,8 +8,8 @@ private def expect_capture_option(args, option, value)
       flag = flag_value
     end
   end
-  flag.should eq(value)
-  args.length.should eq(0)
+  expect(flag).to eq(value)
+  expect(args.length).to eq(0)
 end
 
 private def expect_doesnt_capture_option(args, option)
@@ -19,7 +19,7 @@ private def expect_doesnt_capture_option(args, option)
       flag = true
     end
   end
-  flag.should be_false
+  expect(flag).to be_false
 end
 
 private def expect_missing_option(option)
@@ -145,7 +145,7 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
+    expect(parser.to_s).to eq([
       "Usage: foo",
       "    -f, --flag                       some flag"
       "    -g[FLAG]                         some other flag"
@@ -164,7 +164,7 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
+    expect(parser.to_s).to eq([
       "Usage: foo",
       "",
       "Type F flags:",
@@ -192,7 +192,7 @@ describe "OptionParser" do
           count += 1
         end
       end
-      count.should eq(3)
+      expect(count).to eq(3)
     end
 
     it "gets a single flag option multiple times" do
@@ -203,7 +203,7 @@ describe "OptionParser" do
           values << value
         end
       end
-      values.should eq(%w(1 2))
+      expect(values).to eq(%w(1 2))
     end
 
     it "gets a double flag option multiple times" do
@@ -214,7 +214,7 @@ describe "OptionParser" do
           values << value
         end
       end
-      values.should eq(%w(1 2))
+      expect(values).to eq(%w(1 2))
     end
   end
 
@@ -231,9 +231,9 @@ describe "OptionParser" do
           g = true
         end
       end
-      f.should be_true
-      g.should be_false
-      args.should eq(["bar", "baz", "qux", "-g"])
+      expect(f).to be_true
+      expect(g).to be_false
+      expect(args).to eq(["bar", "baz", "qux", "-g"])
     end
 
     it "ignores everything after -- with single flag)" do
@@ -248,9 +248,9 @@ describe "OptionParser" do
           g = v
         end
       end
-      f.should eq("bar")
-      g.should be_nil
-      args.should eq(["x", "baz", "qux", "-g", "lala"])
+      expect(f).to eq("bar")
+      expect(g).to be_nil
+      expect(args).to eq(["x", "baz", "qux", "-g", "lala"])
     end
 
     it "ignores everything after -- with double flag" do
@@ -265,9 +265,9 @@ describe "OptionParser" do
           g = v
         end
       end
-      f.should eq("bar")
-      g.should be_nil
-      args.should eq(["x", "baz", "qux", "--g", "lala"])
+      expect(f).to eq("bar")
+      expect(g).to be_nil
+      expect(args).to eq(["x", "baz", "qux", "--g", "lala"])
     end
 
     it "returns a pair with things coming before and after --" do
@@ -282,9 +282,9 @@ describe "OptionParser" do
           unknown_args = {before_dash, after_dash}
         end
       end
-      f.should eq("bar")
-      args.should eq(["baz", "qux"])
-      unknown_args.should eq({["baz"], ["qux"]})
+      expect(f).to eq("bar")
+      expect(args).to eq(["baz", "qux"])
+      expect(unknown_args).to eq({["baz"], ["qux"]})
     end
 
     it "returns a pair with things coming before and after --, without --" do
@@ -299,9 +299,9 @@ describe "OptionParser" do
           unknown_args = {before_dash, after_dash}
         end
       end
-      f.should eq("bar")
-      args.should eq(["baz"])
-      unknown_args.should eq({["baz"], [] of String})
+      expect(f).to eq("bar")
+      expect(args).to eq(["baz"])
+      expect(unknown_args).to eq({["baz"], [] of String})
     end
 
     it "initializes without block and does parse!" do
@@ -315,7 +315,7 @@ describe "OptionParser" do
             f = v
           end
         end.parse!
-        f.should eq("hi")
+        expect(f).to eq("hi")
       ensure
         ARGV.clear
         ARGV.concat old_argv

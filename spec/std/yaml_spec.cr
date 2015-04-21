@@ -3,22 +3,22 @@ require "yaml"
 
 describe "YAML" do
   describe "parser" do
-    assert { YAML.load("foo").should eq("foo") }
-    assert { YAML.load("- foo\n- bar").should eq(["foo", "bar"]) }
-    assert { YAML.load_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
-    assert { YAML.load("foo: bar").should eq({"foo" => "bar"}) }
-    assert { YAML.load("--- []\n").should eq([] of YAML::Type) }
-    assert { YAML.load("---\n...").should eq("") }
+    assert { expect(YAML.load("foo")).to eq("foo") }
+    assert { expect(YAML.load("- foo\n- bar")).to eq(["foo", "bar"]) }
+    assert { expect(YAML.load_all("---\nfoo\n---\nbar\n")).to eq(["foo", "bar"]) }
+    assert { expect(YAML.load("foo: bar")).to eq({"foo" => "bar"}) }
+    assert { expect(YAML.load("--- []\n")).to eq([] of YAML::Type) }
+    assert { expect(YAML.load("---\n...")).to eq("") }
 
     it "parses recursive sequence" do
       doc = YAML.load("--- &foo\n- *foo\n") as Array
-      doc[0].object_id.should eq(doc.object_id)
+      expect(doc[0].object_id).to eq(doc.object_id)
     end
 
     it "parses alias to scalar" do
       doc = YAML.load("---\n- &x foo\n- *x\n") as Array
-      doc.should eq(["foo", "foo"])
-      doc[0].object_id.should eq(doc[1].object_id)
+      expect(doc).to eq(["foo", "foo"])
+      expect(doc[0].object_id).to eq(doc[1].object_id)
     end
   end
 end

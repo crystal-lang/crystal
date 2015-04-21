@@ -58,7 +58,7 @@ describe "Type inference: exception" do
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
-    def_instance.not_nil!.raises.should be_true
+    expect(def_instance.not_nil!.raises).to be_true
   end
 
   it "types exception var with no types" do
@@ -200,7 +200,7 @@ describe "Type inference: exception" do
     mod = result.program
     eh = (result.node as Expressions).expressions[-1]
     call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
-    call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
+    expect(call_p_n.args.first.type).to eq(mod.union_of(mod.int32, mod.nil))
   end
 
   it "types var as nilable inside ensure (2)" do
@@ -218,7 +218,7 @@ describe "Type inference: exception" do
     mod = result.program
     eh = (result.node as Expressions).expressions[-1]
     call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
-    call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
+    expect(call_p_n.args.first.type).to eq(mod.union_of(mod.int32, mod.nil))
   end
 
   it "marks fun as raises" do
@@ -229,7 +229,7 @@ describe "Type inference: exception" do
       )) { int32 }
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    a_def.not_nil!.raises.should be_true
+    expect(a_def.not_nil!.raises).to be_true
   end
 
   it "marks def as raises" do
@@ -243,13 +243,13 @@ describe "Type inference: exception" do
       )) { int32 }
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    a_def.not_nil!.raises.should be_true
+    expect(a_def.not_nil!.raises).to be_true
   end
 
   it "marks fun literal as raises" do
     result = assert_type("->{ 1 }.call") { int32 }
     call = result.node as Call
-    call.target_def.raises.should be_true
+    expect(call.target_def.raises).to be_true
   end
 
   it "shadows local variable (1)" do

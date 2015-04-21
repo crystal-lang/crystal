@@ -4,11 +4,11 @@ require "uri"
 private def assert_uri(string, scheme = nil, host = nil, port = nil, path = nil, query = nil)
   it "parse #{string}" do
     uri = URI.parse(string)
-    uri.scheme.should eq(scheme)
-    uri.host.should eq(host)
-    uri.port.should eq(port)
-    uri.path.should eq(path)
-    uri.query.should eq(query)
+    expect(uri.scheme).to eq(scheme)
+    expect(uri.host).to eq(host)
+    expect(uri.port).to eq(port)
+    expect(uri.path).to eq(path)
+    expect(uri.query).to eq(query)
   end
 end
 
@@ -23,18 +23,18 @@ describe "URI" do
   assert_uri("/foo", path: "/foo")
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
 
-  assert { URI.parse("http://www.google.com/foo").full_path.should eq("/foo") }
-  assert { URI.parse("http://www.google.com").full_path.should eq("/") }
-  assert { URI.parse("http://www.google.com/foo?q=1").full_path.should eq("/foo?q=1") }
-  assert { URI.parse("http://www.google.com/?q=1").full_path.should eq("/?q=1") }
-  assert { URI.parse("http://www.google.com?q=1").full_path.should eq("/?q=1") }
+  assert { expect(URI.parse("http://www.google.com/foo").full_path).to eq("/foo") }
+  assert { expect(URI.parse("http://www.google.com").full_path).to eq("/") }
+  assert { expect(URI.parse("http://www.google.com/foo?q=1").full_path).to eq("/foo?q=1") }
+  assert { expect(URI.parse("http://www.google.com/?q=1").full_path).to eq("/?q=1") }
+  assert { expect(URI.parse("http://www.google.com?q=1").full_path).to eq("/?q=1") }
 
   describe "to_s" do
-    assert { URI.new("http", "www.google.com").to_s.should eq("http://www.google.com") }
-    assert { URI.new("http", "www.google.com", 80).to_s.should eq("http://www.google.com") }
-    assert { URI.new("http", "www.google.com", 1234).to_s.should eq("http://www.google.com:1234") }
-    assert { URI.new("http", "www.google.com", 80, "/hello").to_s.should eq("http://www.google.com/hello") }
-    assert { URI.new("http", "www.google.com", 80, "/hello", "a=1").to_s.should eq("http://www.google.com/hello?a=1") }
+    assert { expect(URI.new("http", "www.google.com").to_s).to eq("http://www.google.com") }
+    assert { expect(URI.new("http", "www.google.com", 80).to_s).to eq("http://www.google.com") }
+    assert { expect(URI.new("http", "www.google.com", 1234).to_s).to eq("http://www.google.com:1234") }
+    assert { expect(URI.new("http", "www.google.com", 80, "/hello").to_s).to eq("http://www.google.com/hello") }
+    assert { expect(URI.new("http", "www.google.com", 80, "/hello", "a=1").to_s).to eq("http://www.google.com/hello?a=1") }
   end
 end
 

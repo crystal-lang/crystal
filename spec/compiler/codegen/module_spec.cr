@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: module" do
   it "codegens pointer of module with method" do
-    run("
+    expect(run("
       module Moo
       end
 
@@ -17,11 +17,11 @@ describe "Code gen: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens pointer of module with method with two including types" do
-    run("
+    expect(run("
       module Moo
       end
 
@@ -45,11 +45,11 @@ describe "Code gen: module" do
       p.value = Foo.new
       p.value = Bar.new
       p.value.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens pointer of module with method with two including types with one struct" do
-    run("
+    expect(run("
       module Foo
       end
 
@@ -73,11 +73,11 @@ describe "Code gen: module" do
       p.value = Bar.new
       p.value = Coco.new
       p.value.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens pointer of module with method with two including types with one struct (2)" do
-    run("
+    expect(run("
       module Foo
       end
 
@@ -102,11 +102,11 @@ describe "Code gen: module" do
       p.value = Coco.new
       x = p.value
       x.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens pointer of module and pass value to method" do
-    run(%(
+    expect(run(%(
       module Foo
       end
 
@@ -125,11 +125,11 @@ describe "Code gen: module" do
       p = Pointer(Foo).malloc(1_u64)
       p.value = Bar.new
       foo p.value
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens pointer of module with block" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       module Moo
@@ -156,11 +156,11 @@ describe "Code gen: module" do
         x = io
       end
       x.not_nil!.foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens module with virtual type" do
-    run(%(
+    expect(run(%(
       module Moo
       end
 
@@ -181,11 +181,11 @@ describe "Code gen: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Bar.new
       p.value.foo
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "declares proc with module type" do
-    run(%(
+    expect(run(%(
       module Moo
         def moo
           1
@@ -202,7 +202,7 @@ describe "Code gen: module" do
 
       foo = ->(x : Moo) { x.moo }
       foo.call(Bar.new)
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "declares proc with module type and invoke it with two different types that return themselves" do

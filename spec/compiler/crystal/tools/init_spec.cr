@@ -25,60 +25,60 @@ module Crystal
     run_init_project("app", "example_app", "tmp/example_app", "John Smith")
 
     describe_file "example/.gitignore" do |gitignore|
-      gitignore.should contain("/.deps/")
-      gitignore.should contain("/.deps.lock")
-      gitignore.should contain("/libs/")
-      gitignore.should contain("/.crystal/")
+      expect(gitignore).to contain("/.deps/")
+      expect(gitignore).to contain("/.deps.lock")
+      expect(gitignore).to contain("/libs/")
+      expect(gitignore).to contain("/.crystal/")
     end
 
     describe_file "example_app/.gitignore" do |gitignore|
-      gitignore.should contain("/.deps/")
-      gitignore.should_not contain("/.deps.lock")
-      gitignore.should contain("/libs/")
-      gitignore.should contain("/.crystal/")
+      expect(gitignore).to contain("/.deps/")
+      expect(gitignore).to_not contain("/.deps.lock")
+      expect(gitignore).to contain("/libs/")
+      expect(gitignore).to contain("/.crystal/")
     end
 
     describe_file "example/LICENSE" do |license|
-      license.should match %r{Copyright \(c\) \d+ John Smith}
+      expect(license).to match %r{Copyright \(c\) \d+ John Smith}
     end
 
     describe_file "example/README.md" do |readme|
-      readme.should contain("# example")
+      expect(readme).to contain("# example")
 
-      readme.should contain(%{```crystal
+      expect(readme).to contain(%{```crystal
 deps do
   github "[your-github-name]/example"
 end
 ```})
 
-      readme.should contain(%{require "example"})
-      readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example/fork )})
-      readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
+      expect(readme).to contain(%{require "example"})
+      expect(readme).to contain(%{1. Fork it ( https://github.com/[your-github-name]/example/fork )})
+      expect(readme).to contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
     end
 
     describe_file "example/Projectfile" do |projectfile|
-      projectfile.should eq(%{deps do\nend\n})
+      expect(projectfile).to eq(%{deps do\nend\n})
     end
 
     describe_file "example/.travis.yml" do |travis|
       parsed = YAML.load(travis) as Hash
 
-      parsed["language"].should eq("c")
+      expect(parsed["language"]).to eq("c")
 
-      (parsed["before_install"] as String)
-        .should contain("curl http://dist.crystal-lang.org/apt/setup.sh | sudo bash")
+      expect(parsed["before_install"] as String)
+        .to contain("curl http://dist.crystal-lang.org/apt/setup.sh | sudo bash")
 
-      (parsed["before_install"] as String)
-        .should contain("sudo apt-get -q update")
+      expect(parsed["before_install"] as String)
+        .to contain("sudo apt-get -q update")
 
-      (parsed["install"] as String)
-        .should contain("sudo apt-get install crystal")
+      expect(parsed["install"] as String)
+        .to contain("sudo apt-get install crystal")
 
-      parsed["script"].should eq(["crystal spec"])
+      expect(parsed["script"]).to eq(["crystal spec"])
     end
 
     describe_file "example/src/example.cr" do |example|
-      example.should eq(%{require "./example/*"
+      expect(example).to eq(%{require "./example/*"
 
 module Example
   # TODO Put your code here
@@ -87,26 +87,26 @@ end
     end
 
     describe_file "example/src/example/version.cr" do |version|
-      version.should eq(%{module Example
+      expect(version).to eq(%{module Example
   VERSION = "0.0.1"
 end
 })
     end
 
     describe_file "example/spec/spec_helper.cr" do |example|
-      example.should eq(%{require "spec"
+      expect(example).to eq(%{require "spec"
 require "../src/example"
 })
     end
 
     describe_file "example/spec/example_spec.cr" do |example|
-      example.should eq(%{require "./spec_helper"
+      expect(example).to eq(%{require "./spec_helper"
 
 describe Example do
   # TODO: Write tests
 
   it "works" do
-    false.should eq(true)
+    expect(false).to eq(true)
   end
 end
 })

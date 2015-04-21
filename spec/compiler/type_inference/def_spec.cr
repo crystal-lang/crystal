@@ -22,8 +22,8 @@ describe "Type inference: def" do
     result = infer_type input
     mod, input = result.program, result.node as Expressions
 
-    input[1].type.should eq(mod.int32)
-    input[2].type.should eq(mod.float64)
+    expect(input[1].type).to eq(mod.int32)
+    expect(input[2].type).to eq(mod.float64)
   end
 
   it "types a call with an argument uses a new scope" do
@@ -34,7 +34,7 @@ describe "Type inference: def" do
     input = parse "struct Int; def foo; 2.5; end; end; 1.foo"
     result = infer_type input
     mod, input = result.program, result.node as Expressions
-    (input.last as Call).target_def.owner.should eq(mod.int32)
+    expect((input.last as Call).target_def.owner).to eq(mod.int32)
   end
 
   it "types putchar with Char" do
@@ -95,8 +95,8 @@ describe "Type inference: def" do
     mod, input = result.program, result.node as Expressions
 
     call = input.last as Call
-    call.type.should eq(mod.union_of(mod.int32, mod.nil))
-    call.target_def.body.type.should eq(mod.nil)
+    expect(call.type).to eq(mod.union_of(mod.int32, mod.nil))
+    expect(call.target_def.body.type).to eq(mod.nil)
   end
 
   it "reports undefined method" do

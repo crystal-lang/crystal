@@ -2,16 +2,16 @@ require "spec"
 require "levenshtein"
 
 describe "levenshtein" do
-  assert { levenshtein("algorithm", "altruistic").should eq(6) }
-  assert { levenshtein("1638452297", "444488444").should eq(9) }
-  assert { levenshtein("", "").should eq(0) }
-  assert { levenshtein("", "a").should eq(1) }
-  assert { levenshtein("aaapppp", "").should eq(7) }
-  assert { levenshtein("frog", "fog").should eq(1) }
-  assert { levenshtein("fly", "ant").should eq(3) }
-  assert { levenshtein("elephant", "hippo").should eq(7) }
-  assert { levenshtein("hippo", "elephant").should eq(7) }
-  assert { levenshtein("hippo", "zzzzzzzz").should eq(8) }
-  assert { levenshtein("hello", "hallo").should eq(1) }
-  assert { levenshtein("こんにちは", "こんちは").should eq(1) }
+  assert { expect(levenshtein("algorithm", "altruistic")).to eq(6) }
+  assert { expect(levenshtein("1638452297", "444488444")).to eq(9) }
+  assert { expect(levenshtein("", "")).to eq(0) }
+  assert { expect(levenshtein("", "a")).to eq(1) }
+  assert { expect(levenshtein("aaapppp", "")).to eq(7) }
+  assert { expect(levenshtein("frog", "fog")).to eq(1) }
+  assert { expect(levenshtein("fly", "ant")).to eq(3) }
+  assert { expect(levenshtein("elephant", "hippo")).to eq(7) }
+  assert { expect(levenshtein("hippo", "elephant")).to eq(7) }
+  assert { expect(levenshtein("hippo", "zzzzzzzz")).to eq(8) }
+  assert { expect(levenshtein("hello", "hallo")).to eq(1) }
+  assert { expect(levenshtein("こんにちは", "こんちは")).to eq(1) }
 end

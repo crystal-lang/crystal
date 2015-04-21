@@ -2,36 +2,36 @@ require "../../spec_helper"
 
 describe "Code gen: closure" do
   it "codegens simple closure at global scope" do
-    run("
+    expect(run("
       a = 1
       foo = ->{ a }
       foo.call
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens simple closure in function" do
-    run("
+    expect(run("
       def foo
         a = 1
         ->{ a }
       end
 
       foo.call
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens simple closure in function with argument" do
-    run("
+    expect(run("
       def foo(a)
         ->{ a }
       end
 
       foo(1).call
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens simple closure in block" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -42,11 +42,11 @@ describe "Code gen: closure" do
       end
 
       f.call
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens closured nested in block" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -57,11 +57,11 @@ describe "Code gen: closure" do
         -> { a + b }
       end
       f.call
-    ").to_i.should eq(3)
+    ").to_i).to eq(3)
   end
 
   it "codegens closured nested in block with a call with a closure with same names" do
-    run("
+    expect(run("
       def foo
         a = 3
         f = -> { a }
@@ -73,11 +73,11 @@ describe "Code gen: closure" do
         -> { a + x }
       end
       f.call
-    ").to_i.should eq(4)
+    ").to_i).to eq(4)
   end
 
   it "codegens closure with block that declares same var" do
-    run("
+    expect(run("
       def foo
         a = 1
         yield a
@@ -88,11 +88,11 @@ describe "Code gen: closure" do
         -> { a + x }
       end
       f.call
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens closure with def that has an if" do
-    run("
+    expect(run("
       def foo
         yield 1 if 1
         yield 2
@@ -102,11 +102,11 @@ describe "Code gen: closure" do
         -> { x }
       end
       f.call
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens multiple nested blocks" do
-    run("
+    expect(run("
       def foo
         yield 1
         yield 2
@@ -122,11 +122,11 @@ describe "Code gen: closure" do
         end
       end
       f.call
-      ").to_i.should eq(9)
+      ").to_i).to eq(9)
   end
 
   it "codegens closure with nested context without new closured vars" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -136,11 +136,11 @@ describe "Code gen: closure" do
         -> { a }
       end
       f.call
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens closure with nested context without new closured vars" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -157,11 +157,11 @@ describe "Code gen: closure" do
         end
       end
       f.call
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens closure with nested context without new closured vars but with block arg" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -179,31 +179,31 @@ describe "Code gen: closure" do
         end
       end
       f.call
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "unifies types of closured var" do
-    run("
+    expect(run("
       a = 1
       f = -> { a }
       a = 2.5
       f.call.to_i
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens closure with block" do
-    run("
+    expect(run("
       def foo
         yield
       end
 
       a = 1
       ->{ foo { a } }.call
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens closure with self and var" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -219,11 +219,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens closure with implicit self and var" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -239,11 +239,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens closure with instance var and var" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -255,11 +255,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens closure with instance var" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -270,11 +270,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens closure with instance var and block" do
-    run("
+    expect(run("
       def bar
         yield
       end
@@ -292,11 +292,11 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegen closure in instance method without self closured" do
-    run("
+    expect(run("
       class Foo
         def foo
           ->(a : Int32) { a }
@@ -304,7 +304,7 @@ describe "Code gen: closure" do
       end
 
       Foo.new.foo.call(1)
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens closure inside initialize inside block with self" do
@@ -326,7 +326,7 @@ describe "Code gen: closure" do
   end
 
   it "doesn't free closure memory (bug)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo
@@ -348,57 +348,57 @@ describe "Code gen: closure" do
         a += func.call
       end
       a
-      )).to_i.should eq(1249975000_i64)
+      )).to_i).to eq(1249975000_i64)
   end
 
   it "codegens nested closure" do
-    run(%(
+    expect(run(%(
       a = 1
       ->{ ->{ a } }.call.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens super nested closure" do
-    run(%(
+    expect(run(%(
       a = 1
       ->{ ->{ -> { -> { a } } } }.call.call.call.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens nested closure with block (1)" do
-    run(%(
+    expect(run(%(
       def foo
         yield
       end
 
       a = 1
       ->{ foo { ->{ a } } }.call.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens nested closure with block (2)" do
-    run(%(
+    expect(run(%(
       def foo
         yield
       end
 
       a = 1
       ->{ ->{ foo { a } } }.call.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens nested closure with nested closured variable" do
-    run(%(
+    expect(run(%(
       a = 1
       ->{
         b = 2
         ->{ a + b }
       }.call.call
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "codegens super nested closure with nested closured variable" do
-    run(%(
+    expect(run(%(
       def foo
         yield 4
       end
@@ -419,11 +419,11 @@ describe "Code gen: closure" do
           }
         }
       }.call.call.call.call.call
-      )).to_i.should eq(10)
+      )).to_i).to eq(10)
   end
 
   it "codegens fun literal with struct" do
-    run(%(
+    expect(run(%(
       struct Foo
         def initialize(@x)
         end
@@ -437,11 +437,11 @@ describe "Code gen: closure" do
 
       obj = Foo.new(2)
       f.call(obj)
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "codegens closure with struct" do
-    run(%(
+    expect(run(%(
       struct Foo
         def initialize(@x)
         end
@@ -458,11 +458,11 @@ describe "Code gen: closure" do
 
       obj = Foo.new(2)
       f.call(obj)
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "codegens closure with self and arguments" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -478,22 +478,22 @@ describe "Code gen: closure" do
 
       f = Foo.new(1).bar
       f.call(2)
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "codegens nested closure that mentions var in both contexts" do
-    run(%(
+    expect(run(%(
       a = 1
       f = ->{
         a
         -> { a }
       }
       f.call.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "transforms block to fun literal" do
-    run("
+    expect(run("
       def foo(&block : Int32 -> Int32)
         block.call(1)
       end
@@ -502,11 +502,11 @@ describe "Code gen: closure" do
       foo do |x|
         x + a
       end
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "transforms block to fun literal with free var" do
-    run("
+    expect(run("
       def foo(&block : Int32 -> U)
         block
       end
@@ -515,11 +515,11 @@ describe "Code gen: closure" do
       g = foo { |x| x + a }
       h = foo { |x| x.to_f + a }
       (g.call(3) + h.call(5)).to_i
-      ").to_i.should eq(10)
+      ").to_i).to eq(10)
   end
 
   it "allows passing block as fun literal to new and to initialize" do
-    run("
+    expect(run("
       class Foo
         def initialize(&block : Int32 -> Float64)
           @block = block
@@ -533,11 +533,11 @@ describe "Code gen: closure" do
       a = 1
       foo = Foo.new { |x| x.to_f + a }
       foo.block.call(1).to_i
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "allows giving less block args when transforming block to fun literal" do
-    run("
+    expect(run("
       def foo(&block : Int32 -> U)
         block.call(1)
       end
@@ -547,11 +547,11 @@ describe "Code gen: closure" do
         1.5 + a
       end
       v.to_i
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "allows passing fun literal to def that captures block with &" do
-    run("
+    expect(run("
       def foo(&block : Int32 -> Int32)
         block.call(1)
       end
@@ -559,11 +559,11 @@ describe "Code gen: closure" do
       a = 1
       f = ->(x : Int32) { x + a }
       foo &f
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "allows mixing yield and block.call" do
-    run(%(
+    expect(run(%(
       def foo(&block : Int32 ->)
         yield 1
         block.call 2
@@ -572,11 +572,11 @@ describe "Code gen: closure" do
       a = 0
       foo { |x| a += x }
       a
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "closures struct self" do
-    run(%(
+    expect(run(%(
       struct Foo
         def initialize(@x)
         end
@@ -587,6 +587,6 @@ describe "Code gen: closure" do
       end
 
       Foo.new(1).foo.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 end

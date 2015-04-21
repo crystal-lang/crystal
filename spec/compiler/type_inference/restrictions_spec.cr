@@ -14,17 +14,17 @@ describe "Restrictions" do
   describe "restrict" do
     it "restricts type with same type" do
       mod = Program.new
-      mod.int32.restrict(mod.int32, MatchContext.new(mod, mod)).should eq(mod.int32)
+      expect(mod.int32.restrict(mod.int32, MatchContext.new(mod, mod))).to eq(mod.int32)
     end
 
     it "restricts type with another type" do
       mod = Program.new
-      mod.int32.restrict(mod.int16, MatchContext.new(mod, mod)).should be_nil
+      expect(mod.int32.restrict(mod.int16, MatchContext.new(mod, mod))).to be_nil
     end
 
     it "restricts type with superclass" do
       mod = Program.new
-      mod.int32.restrict(mod.value, MatchContext.new(mod, mod)).should eq(mod.int32)
+      expect(mod.int32.restrict(mod.value, MatchContext.new(mod, mod))).to eq(mod.int32)
     end
 
     it "restricts type with included module" do
@@ -38,7 +38,7 @@ describe "Restrictions" do
         end
       ")
 
-      mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod)).should eq(mod.types["Foo"])
+      expect(mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod))).to eq(mod.types["Foo"])
     end
 
     it "restricts virtual type with included module 1" do
@@ -48,7 +48,7 @@ describe "Restrictions" do
         class A; include M; end
       ")
 
-      mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod)).should eq(mod.t("A+"))
+      expect(mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod))).to eq(mod.t("A+"))
     end
 
     it "restricts virtual type with included module 2" do
@@ -62,7 +62,7 @@ describe "Restrictions" do
         class E < A; end
       ")
 
-      mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("B+"), mod.t("C+")))
+      expect(mod.t("A+").restrict(mod.t("M"), MatchContext.new(mod, mod))).to eq(mod.union_of(mod.t("B+"), mod.t("C+")))
     end
   end
 

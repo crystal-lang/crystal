@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: hooks" do
   it "does inherited macro" do
-    run("
+    expect(run("
       class Foo
         macro inherited
           $x = 1
@@ -13,11 +13,11 @@ describe "Code gen: hooks" do
       end
 
       $x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does included macro" do
-    run("
+    expect(run("
       module Foo
         macro included
           $x = 1
@@ -29,11 +29,11 @@ describe "Code gen: hooks" do
       end
 
       $x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does extended macro" do
-    run("
+    expect(run("
       module Foo
         macro extended
           $x = 1
@@ -45,11 +45,11 @@ describe "Code gen: hooks" do
       end
 
       $x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does inherited macro recursively" do
-    run("
+    expect(run("
       $x = 0
       class Foo
         macro inherited
@@ -64,6 +64,6 @@ describe "Code gen: hooks" do
       end
 
       $x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 end

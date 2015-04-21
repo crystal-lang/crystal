@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: untyped expression spec" do
   it "raises if class was never instantiated" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo
@@ -20,6 +20,6 @@ describe "Code gen: untyped expression spec" do
       rescue ex
         ex.message.includes?("Foo in `foo` was never instantiated")
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 end

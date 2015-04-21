@@ -25,8 +25,8 @@ describe "Type inference: initialize" do
     result = infer_type node
     mod = result.program
     foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
-    foo.instance_vars["@another"].type.should eq(mod.int32)
+    expect(foo.instance_vars["@baz"].type).to eq(mod.union_of(mod.nil, mod.types["Baz"]))
+    expect(foo.instance_vars["@another"].type).to eq(mod.int32)
   end
 
   it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
@@ -59,8 +59,8 @@ describe "Type inference: initialize" do
     result = infer_type node
     mod = result.program
     foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
-    foo.instance_vars["@another"].type.should eq(mod.int32)
+    expect(foo.instance_vars["@baz"].type).to eq(mod.union_of(mod.nil, mod.types["Baz"]))
+    expect(foo.instance_vars["@another"].type).to eq(mod.int32)
   end
 
   it "types instance vars as nilable if doesn't invoke super with default arguments" do
@@ -87,8 +87,8 @@ describe "Type inference: initialize" do
     result = infer_type node
     mod = result.program
     foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@baz"].type.should eq(mod.types["Baz"])
-    foo.instance_vars["@another"].type.should eq(mod.int32)
+    expect(foo.instance_vars["@baz"].type).to eq(mod.types["Baz"])
+    expect(foo.instance_vars["@another"].type).to eq(mod.int32)
   end
 
   it "checks instance vars of included modules" do
@@ -119,10 +119,10 @@ describe "Type inference: initialize" do
     mod = result.program
 
     foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
+    expect(foo.instance_vars["@x"].type).to eq(mod.union_of(mod.nil, mod.int32, mod.char))
 
     bar = mod.types["Bar"] as NonGenericClassType
-    bar.instance_vars.length.should eq(0)
+    expect(bar.instance_vars.length).to eq(0)
   end
 
   it "errors when instance variable never assigned" do

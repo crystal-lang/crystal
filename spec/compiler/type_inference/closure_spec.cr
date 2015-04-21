@@ -9,14 +9,14 @@ describe "Type inference: closure" do
     result = assert_type("x = 1; -> { x }; x") { int32 }
     program = result.program
     var = program.vars["x"]
-    var.closured.should be_true
+    expect(var.closured).to be_true
   end
 
   it "marks variable as closured in program on assign" do
     result = assert_type("x = 1; -> { x = 1 }; x") { int32 }
     program = result.program
     var = program.vars["x"]
-    var.closured.should be_true
+    expect(var.closured).to be_true
   end
 
   it "marks variable as closured in def" do
@@ -25,7 +25,7 @@ describe "Type inference: closure" do
     call = node.expressions.last as Call
     target_def = call.target_def
     var = target_def.vars.not_nil!["x"]
-    var.closured.should be_true
+    expect(var.closured).to be_true
   end
 
   it "marks variable as closured in block" do
@@ -44,7 +44,7 @@ describe "Type inference: closure" do
     call = node.expressions.last as Call
     block = call.block.not_nil!
     var = block.vars.not_nil!["x"]
-    var.closured.should be_true
+    expect(var.closured).to be_true
   end
 
   it "unifies types of closured var (1)" do
@@ -77,7 +77,7 @@ describe "Type inference: closure" do
       ") { int32 }
     program = result.program
     var = program.vars.not_nil!["a"]
-    var.closured.should be_true
+    expect(var.closured).to be_true
   end
 
   it "doesn't mark var as closured if only used in block" do
@@ -92,7 +92,7 @@ describe "Type inference: closure" do
       ") { int32 }
     program = result.program
     var = program.vars["x"]
-    var.closured.should be_false
+    expect(var.closured).to be_false
   end
 
   it "doesn't mark var as closured if only used in two block" do
@@ -112,7 +112,7 @@ describe "Type inference: closure" do
     call = node[1] as Call
     block = call.block.not_nil!
     var = block.vars.not_nil!["x"]
-    var.closured.should be_false
+    expect(var.closured).to be_false
   end
 
   it "doesn't mark self var as closured, but marks method as self closured" do
@@ -130,8 +130,8 @@ describe "Type inference: closure" do
     call = node.expressions[-2] as Call
     target_def = call.target_def
     var = target_def.vars.not_nil!["self"]
-    var.closured.should be_false
-    target_def.self_closured.should be_true
+    expect(var.closured).to be_false
+    expect(target_def.self_closured).to be_true
   end
 
   it "marks method as self closured if instance var is read" do
@@ -147,7 +147,7 @@ describe "Type inference: closure" do
     ") { int32 }
     node = result.node as Expressions
     call = node.expressions[-2] as Call
-    call.target_def.self_closured.should be_true
+    expect(call.target_def.self_closured).to be_true
   end
 
   it "marks method as self closured if instance var is written" do
@@ -163,7 +163,7 @@ describe "Type inference: closure" do
     ") { int32 }
     node = result.node as Expressions
     call = node.expressions[-2] as Call
-    call.target_def.self_closured.should be_true
+    expect(call.target_def.self_closured).to be_true
   end
 
   it "marks method as self closured if explicit self call is made" do
@@ -182,7 +182,7 @@ describe "Type inference: closure" do
     ") { int32 }
     node = result.node as Expressions
     call = node.expressions[-2] as Call
-    call.target_def.self_closured.should be_true
+    expect(call.target_def.self_closured).to be_true
   end
 
   it "marks method as self closured if implicit self call is made" do
@@ -201,7 +201,7 @@ describe "Type inference: closure" do
     ") { int32 }
     node = result.node as Expressions
     call = node.expressions[-2] as Call
-    call.target_def.self_closured.should be_true
+    expect(call.target_def.self_closured).to be_true
   end
 
   it "marks method as self closured if used inside a block" do
@@ -221,7 +221,7 @@ describe "Type inference: closure" do
     ") { int32 }
     node = result.node as Expressions
     call = node.expressions[-2] as Call
-    call.target_def.self_closured.should be_true
+    expect(call.target_def.self_closured).to be_true
   end
 
   it "errors if sending closured fun literal to C" do
@@ -442,7 +442,7 @@ describe "Type inference: closure" do
       ->{ a = 1; ->{ a } }
       )) { fun_of(fun_of(int32)) }
     fn = result.node as FunLiteral
-    fn.def.closure.should be_false
+    expect(fn.def.closure).to be_false
   end
 
   it "marks outer fun inside a block as closured" do
@@ -455,7 +455,7 @@ describe "Type inference: closure" do
       ->{ ->{ foo { a } } }
       )) { fun_of(fun_of(int32)) }
     fn = (result.node as Expressions).last as FunLiteral
-    fn.def.closure.should be_true
+    expect(fn.def.closure).to be_true
   end
 
   it "marks outer fun as closured when using self" do
@@ -470,9 +470,9 @@ describe "Type inference: closure" do
       )) { fun_of(fun_of(types["Foo"])) }
     call = (result.node as Expressions).last as Call
     a_def = call.target_def
-    a_def.self_closured.should be_true
+    expect(a_def.self_closured).to be_true
     fn = (a_def.body as FunLiteral)
-    fn.def.closure.should be_true
+    expect(fn.def.closure).to be_true
   end
 
   it "can use fun typedef as block type" do

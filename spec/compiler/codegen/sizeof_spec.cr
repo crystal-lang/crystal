@@ -2,11 +2,11 @@ require "../../spec_helper"
 
 describe "Code gen: sizeof" do
   it "gets sizeof int" do
-    run("sizeof(Int32)").to_i.should eq(4)
+    expect(run("sizeof(Int32)").to_i).to eq(4)
   end
 
   it "gets sizeof struct" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x, @y, @z)
         end
@@ -15,12 +15,12 @@ describe "Code gen: sizeof" do
       Foo.new(1, 2, 3)
 
       sizeof(Foo)
-      ").to_i.should eq(12)
+      ").to_i).to eq(12)
   end
 
   it "gets sizeof class" do
     # A class is represented as a pointer to its data
-    run("
+    expect(run("
       class Foo
         def initialize(@x, @y, @z)
         end
@@ -29,7 +29,7 @@ describe "Code gen: sizeof" do
       Foo.new(1, 2, 3)
 
       sizeof(Foo)
-      ").to_i.should eq(sizeof(Void*))
+      ").to_i).to eq(sizeof(Void*))
   end
 
   it "gets sizeof union" do
@@ -49,14 +49,14 @@ describe "Code gen: sizeof" do
     #
     # In 32 bits structs are aligned to 4 bytes, so it remains the same.
     ifdef x86_64
-      size.should eq(16)
+      expect(size).to eq(16)
     else
-      size.should eq(12)
+      expect(size).to eq(12)
     end
   end
 
   it "gets instance_sizeof class" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x, @y, @z)
         end
@@ -65,7 +65,7 @@ describe "Code gen: sizeof" do
       Foo.new(1, 2, 3)
 
       instance_sizeof(Foo)
-      ").to_i.should eq(16)
+      ").to_i).to eq(16)
   end
 
   it "gives error if using instance_sizeof on something that's not a class" do
@@ -74,11 +74,11 @@ describe "Code gen: sizeof" do
 
   it "gets sizeof Void" do
     # Same as the size of a byte
-    run("sizeof(Void)").to_i.should eq(1)
+    expect(run("sizeof(Void)").to_i).to eq(1)
   end
 
   it "gets sizeof NoReturn" do
     # Same as the size of a byte
-    run("sizeof(NoReturn)").to_i.should eq(1)
+    expect(run("sizeof(NoReturn)").to_i).to eq(1)
   end
 end

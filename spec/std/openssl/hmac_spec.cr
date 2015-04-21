@@ -16,7 +16,7 @@ describe OpenSSL::HMAC do
     {:ripemd160, "20d23140503df606c91bda9293f1ad4a23afe509"},
   ].each do |tuple|
     it "computes #{tuple[0]}" do
-      OpenSSL::HMAC.hexdigest(tuple[0], "foo", "bar").should eq(tuple[1])
+      expect(OpenSSL::HMAC.hexdigest(tuple[0], "foo", "bar")).to eq(tuple[1])
     end
   end
 end

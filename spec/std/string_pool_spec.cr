@@ -4,8 +4,8 @@ require "string_pool"
 describe StringPool do
   it "is empty" do
     pool = StringPool.new
-    pool.empty?.should be_true
-    pool.length.should eq(0)
+    expect(pool.empty?).to be_true
+    expect(pool.length).to eq(0)
   end
 
   it "gets string" do
@@ -13,10 +13,10 @@ describe StringPool do
     s1 = pool.get "foo"
     s2 = pool.get "foo"
 
-    s1.should eq("foo")
-    s2.should eq("foo")
-    s1.object_id.should eq(s2.object_id)
-    pool.length.should eq(1)
+    expect(s1).to eq("foo")
+    expect(s2).to eq("foo")
+    expect(s1.object_id).to eq(s2.object_id)
+    expect(pool.length).to eq(1)
   end
 
   it "gets string IO" do
@@ -26,10 +26,10 @@ describe StringPool do
     s1 = pool.get io
     s2 = pool.get "foo"
 
-    s1.should eq("foo")
-    s2.should eq("foo")
-    s1.object_id.should eq(s2.object_id)
-    pool.length.should eq(1)
+    expect(s1).to eq("foo")
+    expect(s2).to eq("foo")
+    expect(s1.object_id).to eq(s2.object_id)
+    expect(pool.length).to eq(1)
   end
 
   it "gets slice" do
@@ -39,10 +39,10 @@ describe StringPool do
     s1 = pool.get(slice)
     s2 = pool.get(slice)
 
-    s1.should eq("aaa")
-    s2.should eq("aaa")
-    s1.object_id.should eq(s2.object_id)
-    pool.length.should eq(1)
+    expect(s1).to eq("aaa")
+    expect(s2).to eq("aaa")
+    expect(s1.object_id).to eq(s2.object_id)
+    expect(pool.length).to eq(1)
   end
 
   it "gets pointer with length" do
@@ -52,10 +52,10 @@ describe StringPool do
     s1 = pool.get(slice.pointer(slice.length), slice.length)
     s2 = pool.get(slice.pointer(slice.length), slice.length)
 
-    s1.should eq("aaa")
-    s2.should eq("aaa")
-    s1.object_id.should eq(s2.object_id)
-    pool.length.should eq(1)
+    expect(s1).to eq("aaa")
+    expect(s2).to eq("aaa")
+    expect(s1.object_id).to eq(s2.object_id)
+    expect(pool.length).to eq(1)
   end
 
   it "puts many" do
@@ -63,6 +63,6 @@ describe StringPool do
     10_000.times do |i|
       pool.get(i.to_s)
     end
-    pool.length.should eq(10_000)
+    expect(pool.length).to eq(10_000)
   end
 end

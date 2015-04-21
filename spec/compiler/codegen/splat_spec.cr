@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: splat" do
   it "splats" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -12,11 +12,11 @@ describe "Code gen: splat" do
       end
 
       foo 1, 1, 1
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "splats with another arg" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -26,11 +26,11 @@ describe "Code gen: splat" do
       end
 
       foo 10, 1, 1
-      )).to_i.should eq(12)
+      )).to_i).to eq(12)
   end
 
   it "splats with two other args" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -40,22 +40,22 @@ describe "Code gen: splat" do
       end
 
       foo 10, 2, 20
-      )).to_i.should eq(31)
+      )).to_i).to eq(31)
   end
 
   it "splats on call" do
-    run(%(
+    expect(run(%(
       def foo(x, y)
         x + y
       end
 
       tuple = {1, 2}
       foo *tuple
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "splats without args" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -65,11 +65,11 @@ describe "Code gen: splat" do
       end
 
       foo
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "splats with default value" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -79,11 +79,11 @@ describe "Code gen: splat" do
       end
 
       foo
-      )).to_i.should eq(100)
+      )).to_i).to eq(100)
   end
 
   it "splats with default value (2)" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -93,11 +93,11 @@ describe "Code gen: splat" do
       end
 
       foo 10
-      )).to_i.should eq(110)
+      )).to_i).to eq(110)
   end
 
   it "splats with default value (3)" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def length; {{@length}}; end
       end
@@ -107,11 +107,11 @@ describe "Code gen: splat" do
       end
 
       foo 10, 20, 30, 40
-      )).to_i.should eq(32)
+      )).to_i).to eq(32)
   end
 
   it "splats in initialize" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(*args)
           @x, @y = args
@@ -128,6 +128,6 @@ describe "Code gen: splat" do
 
       foo = Foo.new 1, 2
       foo.x + foo.y
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 end

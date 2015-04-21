@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: array literal spec" do
   it "creates custom non-generic array" do
-    run(%(
+    expect(run(%(
       class Custom
         def initialize
           @value = 0
@@ -19,11 +19,11 @@ describe "Code gen: array literal spec" do
 
       custom = Custom {1, 2, 3}
       custom.value
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "creates custom generic array" do
-    run(%(
+    expect(run(%(
       class Custom(T)
         def initialize
           @value = 0
@@ -40,11 +40,11 @@ describe "Code gen: array literal spec" do
 
       custom = Custom {1, 2, 3}
       custom.value
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "creates custom generic array with type var" do
-    run(%(
+    expect(run(%(
       class Custom(T)
         def initialize
           @value = 0
@@ -61,11 +61,11 @@ describe "Code gen: array literal spec" do
 
       custom = Custom(Int32) {1, 2, 3}
       custom.value
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "creates custom generic array via alias" do
-    run(%(
+    expect(run(%(
       class Custom(T)
         def initialize
           @value = 0
@@ -84,11 +84,11 @@ describe "Code gen: array literal spec" do
 
       custom = MyCustom {1, 2, 3}
       custom.value
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "creates custom generic array via alias (2)" do
-    run(%(
+    expect(run(%(
       class Custom(T)
         def initialize
           @value = 0
@@ -107,11 +107,11 @@ describe "Code gen: array literal spec" do
 
       custom = MyCustom {1, 2, 3}
       custom.value
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "creates custom non-generic array in nested module" do
-    run(%(
+    expect(run(%(
       class Foo::Custom
         def initialize
           @value = 0
@@ -128,6 +128,6 @@ describe "Code gen: array literal spec" do
 
       custom = Foo::Custom {1, 2, 3}
       custom.value
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 end

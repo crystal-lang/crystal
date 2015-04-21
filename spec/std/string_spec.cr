@@ -4,100 +4,100 @@ describe "String" do
   describe "[]" do
     it "gets with positive index" do
       c = "hello!"[1]
-      c.should be_a(Char)
-      c.should eq('e')
+      expect(c).to be_a(Char)
+      expect(c).to eq('e')
     end
 
     it "gets with negative index" do
-      "hello!"[-1].should eq('!')
+      expect("hello!"[-1]).to eq('!')
     end
 
     it "gets with inclusive range" do
-      "hello!"[1 .. 4].should eq("ello")
+      expect("hello!"[1 .. 4]).to eq("ello")
     end
 
     it "gets with inclusive range with negative indices" do
-      "hello!"[-5 .. -2].should eq("ello")
+      expect("hello!"[-5 .. -2]).to eq("ello")
     end
 
     it "gets with exclusive range" do
-      "hello!"[1 ... 4].should eq("ell")
+      expect("hello!"[1 ... 4]).to eq("ell")
     end
 
     it "gets with start and count" do
-      "hello"[1, 3].should eq("ell")
+      expect("hello"[1, 3]).to eq("ell")
     end
 
     it "gets with exclusive range with unicode" do
-      "há日本語"[1 .. 3].should eq("á日本")
+      expect("há日本語"[1 .. 3]).to eq("á日本")
     end
 
     it "gets with exclusive with start and count" do
-      "há日本語"[1, 3].should eq("á日本")
+      expect("há日本語"[1, 3]).to eq("á日本")
     end
 
     it "gets with exclusive with start and count to end" do
-      "há日本語"[1, 4].should eq("á日本語")
+      expect("há日本語"[1, 4]).to eq("á日本語")
     end
 
     it "gets with single char" do
-      ";"[0 .. -2].should eq("")
+      expect(";"[0 .. -2]).to eq("")
     end
 
     describe "with a regex" do
-      assert { "FooBar"[/o+/].should eq "oo" }
-      assert { "FooBar"[/([A-Z])/, 1].should eq "F" }
-      assert { "FooBar"[/x/]?.should be_nil }
-      assert { "FooBar"[/x/, 1]?.should be_nil }
-      assert { "FooBar"[/(x)/, 1]?.should be_nil }
-      assert { "FooBar"[/o(o)/, 2]?.should be_nil }
-      assert { "FooBar"[/o(?<this>o)/, "this"].should eq "o" }
-      assert { "FooBar"[/(?<this>x)/, "that"]?.should be_nil }
+      assert { expect("FooBar"[/o+/]).to eq "oo" }
+      assert { expect("FooBar"[/([A-Z])/, 1]).to eq "F" }
+      assert { expect("FooBar"[/x/]?).to be_nil }
+      assert { expect("FooBar"[/x/, 1]?).to be_nil }
+      assert { expect("FooBar"[/(x)/, 1]?).to be_nil }
+      assert { expect("FooBar"[/o(o)/, 2]?).to be_nil }
+      assert { expect("FooBar"[/o(?<this>o)/, "this"]).to eq "o" }
+      assert { expect("FooBar"[/(?<this>x)/, "that"]?).to be_nil }
     end
 
     it "gets with a string" do
-      "FooBar"["Bar"].should eq "Bar"
+      expect("FooBar"["Bar"]).to eq "Bar"
       expect_raises { "FooBar"["Baz"] }
-      "FooBar"["Bar"]?.should eq "Bar"
-      "FooBar"["Baz"]?.should be_nil
+      expect("FooBar"["Bar"]?).to eq "Bar"
+      expect("FooBar"["Baz"]?).to be_nil
     end
 
     it "gets with index and []?" do
-      "hello"[1]?.should eq('e')
-      "hello"[5]?.should be_nil
-      "hello"[-1]?.should eq('o')
-      "hello"[-6]?.should be_nil
+      expect("hello"[1]?).to eq('e')
+      expect("hello"[5]?).to be_nil
+      expect("hello"[-1]?).to eq('o')
+      expect("hello"[-6]?).to be_nil
     end
   end
 
   describe "byte_slice" do
     it "gets byte_slice" do
-      "hello".byte_slice(1, 3).should eq("ell")
+      expect("hello".byte_slice(1, 3)).to eq("ell")
     end
 
     it "gets byte_slice with negative count" do
-      "hello".byte_slice(1, -10).should eq("")
+      expect("hello".byte_slice(1, -10)).to eq("")
     end
 
     it "gets byte_slice with start out of bounds" do
-      "hello".byte_slice(10, 3).should eq("")
+      expect("hello".byte_slice(10, 3)).to eq("")
     end
 
     it "gets byte_slice with large count" do
-      "hello".byte_slice(1, 10).should eq("ello")
+      expect("hello".byte_slice(1, 10)).to eq("ello")
     end
 
     it "gets byte_slice with negative index" do
-      "hello".byte_slice(-2, 3).should eq("lo")
+      expect("hello".byte_slice(-2, 3)).to eq("lo")
     end
   end
 
   it "does to_i" do
-    "1234".to_i.should eq(1234)
+    expect("1234".to_i).to eq(1234)
   end
 
   it "does to_i with base" do
-    "12ab".to_i(16).should eq(4779)
+    expect("12ab".to_i(16)).to eq(4779)
   end
 
   it "raises on to_i(1)" do
@@ -109,338 +109,338 @@ describe "String" do
   end
 
   it "does to_i32" do
-    "1234".to_i32.should eq(1234)
+    expect("1234".to_i32).to eq(1234)
   end
 
   it "does to_i64" do
-    "1234123412341234".to_i64.should eq(1234123412341234_i64)
+    expect("1234123412341234".to_i64).to eq(1234123412341234_i64)
   end
 
   it "does to_u64" do
-    "9223372036854775808".to_u64.should eq(9223372036854775808_u64)
+    expect("9223372036854775808".to_u64).to eq(9223372036854775808_u64)
   end
 
   it "does to_f" do
-    "1234.56".to_f.should eq(1234.56_f64)
+    expect("1234.56".to_f).to eq(1234.56_f64)
   end
 
   it "does to_f32" do
-    "1234.56".to_f32.should eq(1234.56_f32)
+    expect("1234.56".to_f32).to eq(1234.56_f32)
   end
 
   it "does to_f64" do
-    "1234.56".to_f64.should eq(1234.56_f64)
+    expect("1234.56".to_f64).to eq(1234.56_f64)
   end
 
   it "compares strings: different length" do
-    "foo".should_not eq("fo")
+    expect("foo").to_not eq("fo")
   end
 
   it "compares strings: same object" do
     f = "foo"
-    f.should eq(f)
+    expect(f).to eq(f)
   end
 
   it "compares strings: same length, same string" do
-    "foo".should eq("fo" + "o")
+    expect("foo").to eq("fo" + "o")
   end
 
   it "compares strings: same length, different string" do
-    "foo".should_not eq("bar")
+    expect("foo").to_not eq("bar")
   end
 
   it "interpolates string" do
     foo = "<foo>"
     bar = 123
-    "foo #{bar}".should eq("foo 123")
-    "foo #{ bar}".should eq("foo 123")
-    "#{foo} bar".should eq("<foo> bar")
+    expect("foo #{bar}").to eq("foo 123")
+    expect("foo #{ bar}").to eq("foo 123")
+    expect("#{foo} bar").to eq("<foo> bar")
   end
 
   it "multiplies" do
     str = "foo"
-    (str * 0).should eq("")
-    (str * 3).should eq("foofoofoo")
+    expect((str * 0)).to eq("")
+    expect((str * 3)).to eq("foofoofoo")
   end
 
   it "multiplies with length one" do
     str = "f"
-    (str * 0).should eq("")
-    (str * 10).should eq("ffffffffff")
+    expect((str * 0)).to eq("")
+    expect((str * 10)).to eq("ffffffffff")
   end
 
   describe "downcase" do
-    assert { "HELLO!".downcase.should eq("hello!") }
-    assert { "HELLO MAN!".downcase.should eq("hello man!") }
+    assert { expect("HELLO!".downcase).to eq("hello!") }
+    assert { expect("HELLO MAN!".downcase).to eq("hello man!") }
   end
 
   describe "upcase" do
-    assert { "hello!".upcase.should eq("HELLO!") }
-    assert { "hello man!".upcase.should eq("HELLO MAN!") }
+    assert { expect("hello!".upcase).to eq("HELLO!") }
+    assert { expect("hello man!".upcase).to eq("HELLO MAN!") }
   end
 
   describe "capitalize" do
-    assert { "HELLO!".capitalize.should eq("Hello!") }
-    assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
-    assert { "".capitalize.should eq("") }
+    assert { expect("HELLO!".capitalize).to eq("Hello!") }
+    assert { expect("HELLO MAN!".capitalize).to eq("Hello man!") }
+    assert { expect("".capitalize).to eq("") }
   end
 
   describe "chomp" do
-    assert { "hello\n".chomp.should eq("hello") }
-    assert { "hello\r".chomp.should eq("hello") }
-    assert { "hello\r\n".chomp.should eq("hello") }
-    assert { "hello".chomp.should eq("hello") }
-    assert { "hello".chomp.should eq("hello") }
-    assert { "かたな\n".chomp.should eq("かたな") }
-    assert { "かたな\r".chomp.should eq("かたな") }
-    assert { "かたな\r\n".chomp.should eq("かたな") }
-    assert { "hello\n\n".chomp.should eq("hello\n") }
-    assert { "hello\r\n\n".chomp.should eq("hello\r\n") }
+    assert { expect("hello\n".chomp).to eq("hello") }
+    assert { expect("hello\r".chomp).to eq("hello") }
+    assert { expect("hello\r\n".chomp).to eq("hello") }
+    assert { expect("hello".chomp).to eq("hello") }
+    assert { expect("hello".chomp).to eq("hello") }
+    assert { expect("かたな\n".chomp).to eq("かたな") }
+    assert { expect("かたな\r".chomp).to eq("かたな") }
+    assert { expect("かたな\r\n".chomp).to eq("かたな") }
+    assert { expect("hello\n\n".chomp).to eq("hello\n") }
+    assert { expect("hello\r\n\n".chomp).to eq("hello\r\n") }
   end
 
   describe "strip" do
-    assert { "  hello  \n\t\f\v\r".strip.should eq("hello") }
-    assert { "hello".strip.should eq("hello") }
-    assert { "かたな \n\f\v".strip.should eq("かたな") }
-    assert { "  \n\t かたな \n\f\v".strip.should eq("かたな") }
-    assert { "  \n\t かたな".strip.should eq("かたな") }
-    assert { "かたな".strip.should eq("かたな") }
+    assert { expect("  hello  \n\t\f\v\r".strip).to eq("hello") }
+    assert { expect("hello".strip).to eq("hello") }
+    assert { expect("かたな \n\f\v".strip).to eq("かたな") }
+    assert { expect("  \n\t かたな \n\f\v".strip).to eq("かたな") }
+    assert { expect("  \n\t かたな".strip).to eq("かたな") }
+    assert { expect("かたな".strip).to eq("かたな") }
   end
 
   describe "rstrip" do
-    assert { "  hello  ".rstrip.should eq("  hello") }
-    assert { "hello".rstrip.should eq("hello") }
-    assert { "  かたな \n\f\v".rstrip.should eq("  かたな") }
-    assert { "かたな".rstrip.should eq("かたな") }
+    assert { expect("  hello  ".rstrip).to eq("  hello") }
+    assert { expect("hello".rstrip).to eq("hello") }
+    assert { expect("  かたな \n\f\v".rstrip).to eq("  かたな") }
+    assert { expect("かたな".rstrip).to eq("かたな") }
   end
 
   describe "lstrip" do
-    assert { "  hello  ".lstrip.should eq("hello  ") }
-    assert { "hello".lstrip.should eq("hello") }
-    assert { "  \n\v かたな  ".lstrip.should eq("かたな  ") }
-    assert { "  かたな".lstrip.should eq("かたな") }
+    assert { expect("  hello  ".lstrip).to eq("hello  ") }
+    assert { expect("hello".lstrip).to eq("hello") }
+    assert { expect("  \n\v かたな  ".lstrip).to eq("かたな  ") }
+    assert { expect("  かたな".lstrip).to eq("かたな") }
   end
 
   describe "empty?" do
-    assert { "a".empty?.should be_false }
-    assert { "".empty?.should be_true }
+    assert { expect("a".empty?).to be_false }
+    assert { expect("".empty?).to be_true }
   end
 
   describe "index" do
     describe "by char" do
-      assert { "foo".index('o').should eq(1) }
-      assert { "foo".index('g').should be_nil }
-      assert { "bar".index('r').should eq(2) }
-      assert { "日本語".index('本').should eq(1) }
-      assert { "bar".index('あ').should be_nil }
+      assert { expect("foo".index('o')).to eq(1) }
+      assert { expect("foo".index('g')).to be_nil }
+      assert { expect("bar".index('r')).to eq(2) }
+      assert { expect("日本語".index('本')).to eq(1) }
+      assert { expect("bar".index('あ')).to be_nil }
 
       describe "with offset" do
-        assert { "foobarbaz".index('a', 5).should eq(7) }
-        assert { "foobarbaz".index('a', -4).should eq(7) }
-        assert { "foo".index('g', 1).should be_nil }
-        assert { "foo".index('g', -20).should be_nil }
-        assert { "日本語日本語".index('本', 2).should eq(4) }
+        assert { expect("foobarbaz".index('a', 5)).to eq(7) }
+        assert { expect("foobarbaz".index('a', -4)).to eq(7) }
+        assert { expect("foo".index('g', 1)).to be_nil }
+        assert { expect("foo".index('g', -20)).to be_nil }
+        assert { expect("日本語日本語".index('本', 2)).to eq(4) }
       end
     end
 
     describe "by string" do
-      assert { "foo bar".index("o b").should eq(2) }
-      assert { "foo".index("fg").should be_nil }
-      assert { "foo".index("").should eq(0) }
-      assert { "foo".index("foo").should eq(0) }
-      assert { "日本語日本語".index("本語").should eq(1) }
+      assert { expect("foo bar".index("o b")).to eq(2) }
+      assert { expect("foo".index("fg")).to be_nil }
+      assert { expect("foo".index("")).to eq(0) }
+      assert { expect("foo".index("foo")).to eq(0) }
+      assert { expect("日本語日本語".index("本語")).to eq(1) }
 
       describe "with offset" do
-        assert { "foobarbaz".index("ba", 4).should eq(6) }
-        assert { "foobarbaz".index("ba", -5).should eq(6) }
-        assert { "foo".index("ba", 1).should be_nil }
-        assert { "foo".index("ba", -20).should be_nil }
-        assert { "日本語日本語".index("本語", 2).should eq(4) }
+        assert { expect("foobarbaz".index("ba", 4)).to eq(6) }
+        assert { expect("foobarbaz".index("ba", -5)).to eq(6) }
+        assert { expect("foo".index("ba", 1)).to be_nil }
+        assert { expect("foo".index("ba", -20)).to be_nil }
+        assert { expect("日本語日本語".index("本語", 2)).to eq(4) }
       end
     end
   end
 
   describe "rindex" do
     describe "by char" do
-      assert { "foobar".rindex('a').should eq(4) }
-      assert { "foobar".rindex('g').should be_nil }
-      assert { "日本語日本語".rindex('本').should eq(4) }
+      assert { expect("foobar".rindex('a')).to eq(4) }
+      assert { expect("foobar".rindex('g')).to be_nil }
+      assert { expect("日本語日本語".rindex('本')).to eq(4) }
 
       describe "with offset" do
-        assert { "faobar".rindex('a', 3).should eq(1) }
-        assert { "faobarbaz".rindex('a', -3).should eq(4) }
-        assert { "日本語日本語".rindex('本', 3).should eq(1) }
+        assert { expect("faobar".rindex('a', 3)).to eq(1) }
+        assert { expect("faobarbaz".rindex('a', -3)).to eq(4) }
+        assert { expect("日本語日本語".rindex('本', 3)).to eq(1) }
       end
     end
 
     describe "by string" do
-      assert { "foo baro baz".rindex("o b").should eq(7) }
-      assert { "foo baro baz".rindex("fg").should be_nil }
-      assert { "日本語日本語".rindex("日本").should eq(3) }
+      assert { expect("foo baro baz".rindex("o b")).to eq(7) }
+      assert { expect("foo baro baz".rindex("fg")).to be_nil }
+      assert { expect("日本語日本語".rindex("日本")).to eq(3) }
 
       describe "with offset" do
-        assert { "foo baro baz".rindex("o b", 6).should eq(2) }
-        assert { "foo baro baz".rindex("fg").should be_nil }
-        assert { "日本語日本語".rindex("日本", 2).should eq(0) }
+        assert { expect("foo baro baz".rindex("o b", 6)).to eq(2) }
+        assert { expect("foo baro baz".rindex("fg")).to be_nil }
+        assert { expect("日本語日本語".rindex("日本", 2)).to eq(0) }
       end
     end
   end
 
   describe "byte_index" do
-    assert { "foo".byte_index('o'.ord).should eq(1) }
-    assert { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
-    assert { "foo".byte_index('a'.ord).should be_nil }
+    assert { expect("foo".byte_index('o'.ord)).to eq(1) }
+    assert { expect("foo bar booz".byte_index('o'.ord, 3)).to eq(9) }
+    assert { expect("foo".byte_index('a'.ord)).to be_nil }
 
     it "gets byte index of string" do
-      "hello world".byte_index("lo").should eq(3)
+      expect("hello world".byte_index("lo")).to eq(3)
     end
   end
 
   describe "includes?" do
     describe "by char" do
-      assert { "foo".includes?('o').should be_true }
-      assert { "foo".includes?('g').should be_false }
+      assert { expect("foo".includes?('o')).to be_true }
+      assert { expect("foo".includes?('g')).to be_false }
     end
 
     describe "by string" do
-      assert { "foo bar".includes?("o b").should be_true }
-      assert { "foo".includes?("fg").should be_false }
-      assert { "foo".includes?("").should be_true }
+      assert { expect("foo bar".includes?("o b")).to be_true }
+      assert { expect("foo".includes?("fg")).to be_false }
+      assert { expect("foo".includes?("")).to be_true }
     end
   end
 
   describe "split" do
     describe "by char" do
-      assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo".split(',').should eq(["foo"]) }
-      assert { "foo".split(' ').should eq(["foo"]) }
-      assert { "   foo".split(' ').should eq(["foo"]) }
-      assert { "foo   ".split(' ').should eq(["foo"]) }
-      assert { "   foo  bar".split(' ').should eq(["foo", "bar"]) }
-      assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["foo", "bar", "baz"]) }
-      assert { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
-      assert { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
-      assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["foo", "bar", "baz"]) }
-      assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(',', 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "foo bar baz qux".split(' ', 1).should eq(["foo bar baz qux"]) }
-      assert { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
-      assert { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
-      assert { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
+      assert { expect("foo,bar,,baz,".split(',')).to eq(["foo", "bar", "", "baz"]) }
+      assert { expect("foo,bar,,baz".split(',')).to eq(["foo", "bar", "", "baz"]) }
+      assert { expect("foo".split(',')).to eq(["foo"]) }
+      assert { expect("foo".split(' ')).to eq(["foo"]) }
+      assert { expect("   foo".split(' ')).to eq(["foo"]) }
+      assert { expect("foo   ".split(' ')).to eq(["foo"]) }
+      assert { expect("   foo  bar".split(' ')).to eq(["foo", "bar"]) }
+      assert { expect("   foo   bar\n\t  baz   ".split(' ')).to eq(["foo", "bar", "baz"]) }
+      assert { expect("   foo   bar\n\t  baz   ".split).to eq(["foo", "bar", "baz"]) }
+      assert { expect("   foo   bar\n\t  baz   ".split(2)).to eq(["foo", "bar\n\t  baz   "]) }
+      assert { expect("   foo   bar\n\t  baz   ".split(" ")).to eq(["foo", "bar", "baz"]) }
+      assert { expect("foo,bar,baz,qux".split(',', 1)).to eq(["foo,bar,baz,qux"]) }
+      assert { expect("foo,bar,baz,qux".split(',', 3)).to eq(["foo", "bar", "baz,qux"]) }
+      assert { expect("foo,bar,baz,qux".split(',', 30)).to eq(["foo", "bar", "baz", "qux"]) }
+      assert { expect("foo bar baz qux".split(' ', 1)).to eq(["foo bar baz qux"]) }
+      assert { expect("foo bar baz qux".split(' ', 3)).to eq(["foo", "bar", "baz qux"]) }
+      assert { expect("foo bar baz qux".split(' ', 30)).to eq(["foo", "bar", "baz", "qux"]) }
+      assert { expect("日本語 \n\t 日本 \n\n 語".split).to eq(["日本語", "日本", "語"]) }
+      assert { expect("日本ん語日本ん語".split('ん')).to eq(["日本", "語日本", "語"]) }
     end
 
     describe "by string" do
-      assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo".split(":-").should eq(["foo"]) }
-      assert { "foo".split("").should eq(["f", "o", "o"]) }
-      assert { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
-      assert { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "a b c".split(" ", 2).should eq(["a", "b c"]) }
+      assert { expect("foo:-bar:-:-baz:-".split(":-")).to eq(["foo", "bar", "", "baz"]) }
+      assert { expect("foo:-bar:-:-baz".split(":-")).to eq(["foo", "bar", "", "baz"]) }
+      assert { expect("foo".split(":-")).to eq(["foo"]) }
+      assert { expect("foo".split("")).to eq(["f", "o", "o"]) }
+      assert { expect("日本さん語日本さん語".split("さん")).to eq(["日本", "語日本", "語"]) }
+      assert { expect("foo,bar,baz,qux".split(",", 1)).to eq(["foo,bar,baz,qux"]) }
+      assert { expect("foo,bar,baz,qux".split(",", 3)).to eq(["foo", "bar", "baz,qux"]) }
+      assert { expect("foo,bar,baz,qux".split(",", 30)).to eq(["foo", "bar", "baz", "qux"]) }
+      assert { expect("a b c".split(" ", 2)).to eq(["a", "b c"]) }
     end
 
     describe "by regex" do
-      assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo\n\tbar\n\t\n\tbaz".split(/(\n\t)+/).should eq(["foo", "bar", "baz"]) }
-      assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
-      assert { "foo,bar,baz,qux".split(/,/, 1).should eq(["foo,bar,baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
-      assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
-      assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
-      assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
-      assert { "hello world".split(/\b/).should eq(["hello", " ", "world"]) }
-      assert { "abc".split(//).should eq(["a", "b", "c"]) }
-      assert { "hello".split(/\w+/).empty?.should be_true }
-      assert { "foo".split(/o/).should eq(["f"]) }
+      assert { expect("foo\n\tbar\n\t\n\tbaz".split(/\n\t/)).to eq(["foo", "bar", "", "baz"]) }
+      assert { expect("foo\n\tbar\n\t\n\tbaz".split(/(\n\t)+/)).to eq(["foo", "bar", "baz"]) }
+      assert { expect("foo,bar".split(/,/, 1)).to eq(["foo,bar"]) }
+      assert { expect("foo,bar,baz,qux".split(/,/, 1)).to eq(["foo,bar,baz,qux"]) }
+      assert { expect("foo,bar,baz,qux".split(/,/, 3)).to eq(["foo", "bar", "baz,qux"]) }
+      assert { expect("foo,bar,baz,qux".split(/,/, 30)).to eq(["foo", "bar", "baz", "qux"]) }
+      assert { expect("a b c".split(Regex.new(" "), 2)).to eq(["a", "b c"]) }
+      assert { expect("日本ん語日本ん語".split(/ん/)).to eq(["日本", "語日本", "語"]) }
+      assert { expect("hello world".split(/\b/)).to eq(["hello", " ", "world"]) }
+      assert { expect("abc".split(//)).to eq(["a", "b", "c"]) }
+      assert { expect("hello".split(/\w+/).empty?).to be_true }
+      assert { expect("foo".split(/o/)).to eq(["f"]) }
 
       it "works with complex regex" do
         r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
-        "hello".split(r).should eq(["", "hello"])
+        expect("hello".split(r)).to eq(["", "hello"])
       end
     end
   end
 
   describe "starts_with?" do
-    assert { "foobar".starts_with?("foo").should be_true }
-    assert { "foobar".starts_with?("").should be_true }
-    assert { "foobar".starts_with?("foobarbaz").should be_false }
-    assert { "foobar".starts_with?("foox").should be_false }
-    assert { "foobar".starts_with?('f').should be_true }
-    assert { "foobar".starts_with?('g').should be_false }
-    assert { "よし".starts_with?('よ').should be_true }
-    assert { "よし!".starts_with?("よし").should be_true }
+    assert { expect("foobar".starts_with?("foo")).to be_true }
+    assert { expect("foobar".starts_with?("")).to be_true }
+    assert { expect("foobar".starts_with?("foobarbaz")).to be_false }
+    assert { expect("foobar".starts_with?("foox")).to be_false }
+    assert { expect("foobar".starts_with?('f')).to be_true }
+    assert { expect("foobar".starts_with?('g')).to be_false }
+    assert { expect("よし".starts_with?('よ')).to be_true }
+    assert { expect("よし!".starts_with?("よし")).to be_true }
   end
 
   describe "ends_with?" do
-    assert { "foobar".ends_with?("bar").should be_true }
-    assert { "foobar".ends_with?("").should be_true }
-    assert { "foobar".ends_with?("foobarbaz").should be_false }
-    assert { "foobar".ends_with?("xbar").should be_false }
-    assert { "foobar".ends_with?('r').should be_true }
-    assert { "foobar".ends_with?('x').should be_false }
-    assert { "よし".ends_with?('し').should be_true }
-    assert { "よし".ends_with?('な').should be_false }
+    assert { expect("foobar".ends_with?("bar")).to be_true }
+    assert { expect("foobar".ends_with?("")).to be_true }
+    assert { expect("foobar".ends_with?("foobarbaz")).to be_false }
+    assert { expect("foobar".ends_with?("xbar")).to be_false }
+    assert { expect("foobar".ends_with?('r')).to be_true }
+    assert { expect("foobar".ends_with?('x')).to be_false }
+    assert { expect("よし".ends_with?('し')).to be_true }
+    assert { expect("よし".ends_with?('な')).to be_false }
   end
 
   describe "=~" do
     it "matches with group" do
       "foobar" =~ /(o+)ba(r?)/
-      $1.should eq("oo")
-      $2.should eq("r")
+      expect($1).to eq("oo")
+      expect($2).to eq("r")
     end
   end
 
   describe "delete" do
-    assert { "foobar".delete {|char| char == 'o' }.should eq("fbar") }
-    assert { "hello world".delete("lo").should eq("he wrd") }
-    assert { "hello world".delete("lo", "o").should eq("hell wrld") }
-    assert { "hello world".delete("hello", "^l").should eq("ll wrld") }
-    assert { "hello world".delete("ej-m").should eq("ho word") }
-    assert { "hello^world".delete("\\^aeiou").should eq("hllwrld") }
-    assert { "hello-world".delete("a\\-eo").should eq("hllwrld") }
-    assert { "hello world\\r\\n".delete("\\").should eq("hello worldrn") }
-    assert { "hello world\\r\\n".delete("\\A").should eq("hello world\\r\\n") }
-    assert { "hello world\\r\\n".delete("X-\\w").should eq("hello orldrn") }
+    assert { expect("foobar".delete {|char| char == 'o' }).to eq("fbar") }
+    assert { expect("hello world".delete("lo")).to eq("he wrd") }
+    assert { expect("hello world".delete("lo", "o")).to eq("hell wrld") }
+    assert { expect("hello world".delete("hello", "^l")).to eq("ll wrld") }
+    assert { expect("hello world".delete("ej-m")).to eq("ho word") }
+    assert { expect("hello^world".delete("\\^aeiou")).to eq("hllwrld") }
+    assert { expect("hello-world".delete("a\\-eo")).to eq("hllwrld") }
+    assert { expect("hello world\\r\\n".delete("\\")).to eq("hello worldrn") }
+    assert { expect("hello world\\r\\n".delete("\\A")).to eq("hello world\\r\\n") }
+    assert { expect("hello world\\r\\n".delete("X-\\w")).to eq("hello orldrn") }
 
     it "deletes one char" do
       deleted = "foobar".delete('o')
-      deleted.bytesize.should eq(4)
-      deleted.should eq("fbar")
+      expect(deleted.bytesize).to eq(4)
+      expect(deleted).to eq("fbar")
 
       deleted = "foobar".delete('x')
-      deleted.bytesize.should eq(6)
-      deleted.should eq("foobar")
+      expect(deleted.bytesize).to eq(6)
+      expect(deleted).to eq("foobar")
     end
   end
 
   it "reverses string" do
     reversed = "foobar".reverse
-    reversed.bytesize.should eq(6)
-    reversed.should eq("raboof")
+    expect(reversed.bytesize).to eq(6)
+    expect(reversed).to eq("raboof")
   end
 
   it "reverses utf-8 string" do
     reversed = "こんいちは".reverse
-    reversed.bytesize.should eq(15)
-    reversed.length.should eq(5)
-    reversed.should eq("はちいんこ")
+    expect(reversed.bytesize).to eq(15)
+    expect(reversed.length).to eq(5)
+    expect(reversed).to eq("はちいんこ")
   end
 
   it "gsubs char with char" do
     replaced = "foobar".gsub('o', 'e')
-    replaced.bytesize.should eq(6)
-    replaced.should eq("feebar")
+    expect(replaced.bytesize).to eq(6)
+    expect(replaced).to eq("feebar")
   end
 
   it "gsubs char with string" do
     replaced = "foobar".gsub('o', "ex")
-    replaced.bytesize.should eq(8)
-    replaced.should eq("fexexbar")
+    expect(replaced.bytesize).to eq(8)
+    expect(replaced).to eq("fexexbar")
   end
 
   it "gsubs char with string depending on the char" do
@@ -456,251 +456,251 @@ describe "String" do
         char
       end
     end
-    replaced.bytesize.should eq(18)
-    replaced.should eq("somethingthingbexr")
+    expect(replaced.bytesize).to eq(18)
+    expect(replaced).to eq("somethingthingbexr")
   end
 
   it "gsubs with regex and block" do
     actual = "foo booor booooz".gsub(/o+/) do |str|
       "#{str}#{str.length}"
     end
-    actual.should eq("foo2 booo3r boooo4z")
+    expect(actual).to eq("foo2 booo3r boooo4z")
   end
 
   it "gsubs with regex and block with group" do
     actual = "foo booor booooz".gsub(/(o+).*?(o+)/) do |str, match|
       "#{match[1].length}#{match[2].length}"
     end
-    actual.should eq("f23r b31z")
+    expect(actual).to eq("f23r b31z")
   end
 
   it "gsubs with regex and string" do
-    "foo boor booooz".gsub(/o+/, "a").should eq("fa bar baz")
+    expect("foo boor booooz".gsub(/o+/, "a")).to eq("fa bar baz")
   end
 
   it "gsubs with regex and string, returns self if no match" do
     str = "hello"
-    str.gsub(/a/, "b").should be(str)
+    expect(str.gsub(/a/, "b")).to be(str)
   end
 
   it "gsubs with regex and string (utf-8)" do
-    "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
+    expect("fここ bここr bここここz".gsub(/こ+/, "そこ")).to eq("fそこ bそこr bそこz")
   end
 
   it "gsubs with string and string" do
-    "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
+    expect("foo boor booooz".gsub("oo", "a")).to eq("fa bar baaz")
   end
 
   it "gsubs with string and string return self if no match" do
     str = "hello"
-    str.gsub("a", "b").should be(str)
+    expect(str.gsub("a", "b")).to be(str)
   end
 
   it "gsubs with string and string (utf-8)" do
-    "fここ bここr bここここz".gsub("ここ", "そこ").should eq("fそこ bそこr bそこそこz")
+    expect("fここ bここr bここここz".gsub("ここ", "そこ")).to eq("fそこ bそこr bそこそこz")
   end
 
   it "gsubs with string and block" do
     i = 0
     result = "foo boo".gsub("oo") do |value|
-      value.should eq("oo")
+      expect(value).to eq("oo")
       i += 1
       i == 1 ? "a" : "e"
     end
-    result.should eq("fa be")
+    expect(result).to eq("fa be")
   end
 
   it "gsubs with char hash" do
     str = "hello"
-    str.gsub({'e' => 'a', 'l' => 'd'}).should eq("haddo")
+    expect(str.gsub({'e' => 'a', 'l' => 'd'})).to eq("haddo")
   end
 
   it "gsubs with regex and hash" do
     str = "hello"
-    str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
+    expect(str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"})).to eq("halala")
   end
 
   it "dumps" do
-    "a".dump.should eq("\"a\"")
-    "\\".dump.should eq("\"\\\\\"")
-    "\"".dump.should eq("\"\\\"\"")
-    "\b".dump.should eq("\"\\b\"")
-    "\e".dump.should eq("\"\\e\"")
-    "\f".dump.should eq("\"\\f\"")
-    "\n".dump.should eq("\"\\n\"")
-    "\r".dump.should eq("\"\\r\"")
-    "\t".dump.should eq("\"\\t\"")
-    "\v".dump.should eq("\"\\v\"")
-    "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u{E1}\"")
-    "\u{81}".dump.should eq("\"\\u{81}\"")
+    expect("a".dump).to eq("\"a\"")
+    expect("\\".dump).to eq("\"\\\\\"")
+    expect("\"".dump).to eq("\"\\\"\"")
+    expect("\b".dump).to eq("\"\\b\"")
+    expect("\e".dump).to eq("\"\\e\"")
+    expect("\f".dump).to eq("\"\\f\"")
+    expect("\n".dump).to eq("\"\\n\"")
+    expect("\r".dump).to eq("\"\\r\"")
+    expect("\t".dump).to eq("\"\\t\"")
+    expect("\v".dump).to eq("\"\\v\"")
+    expect("\#{".dump).to eq("\"\\\#{\"")
+    expect("á".dump).to eq("\"\\u{E1}\"")
+    expect("\u{81}".dump).to eq("\"\\u{81}\"")
   end
 
   it "inspects" do
-    "a".inspect.should eq("\"a\"")
-    "\\".inspect.should eq("\"\\\\\"")
-    "\"".inspect.should eq("\"\\\"\"")
-    "\b".inspect.should eq("\"\\b\"")
-    "\e".inspect.should eq("\"\\e\"")
-    "\f".inspect.should eq("\"\\f\"")
-    "\n".inspect.should eq("\"\\n\"")
-    "\r".inspect.should eq("\"\\r\"")
-    "\t".inspect.should eq("\"\\t\"")
-    "\v".inspect.should eq("\"\\v\"")
-    "\#{".inspect.should eq("\"\\\#{\"")
-    "á".inspect.should eq("\"á\"")
-    "\u{81}".inspect.should eq("\"\\u{81}\"")
+    expect("a".inspect).to eq("\"a\"")
+    expect("\\".inspect).to eq("\"\\\\\"")
+    expect("\"".inspect).to eq("\"\\\"\"")
+    expect("\b".inspect).to eq("\"\\b\"")
+    expect("\e".inspect).to eq("\"\\e\"")
+    expect("\f".inspect).to eq("\"\\f\"")
+    expect("\n".inspect).to eq("\"\\n\"")
+    expect("\r".inspect).to eq("\"\\r\"")
+    expect("\t".inspect).to eq("\"\\t\"")
+    expect("\v".inspect).to eq("\"\\v\"")
+    expect("\#{".inspect).to eq("\"\\\#{\"")
+    expect("á".inspect).to eq("\"á\"")
+    expect("\u{81}".inspect).to eq("\"\\u{81}\"")
   end
 
   it "does *" do
     str = "foo" * 10
-    str.bytesize.should eq(30)
-    str.should eq("foofoofoofoofoofoofoofoofoofoo")
+    expect(str.bytesize).to eq(30)
+    expect(str).to eq("foofoofoofoofoofoofoofoofoofoo")
   end
 
   describe "+" do
     it "does for both ascii" do
       str = "foo" + "bar"
-      str.bytesize.should eq(6)
-      str.@length.should eq(6)
-      str.should eq("foobar")
+      expect(str.bytesize).to eq(6)
+      expect(str.@length).to eq(6)
+      expect(str).to eq("foobar")
     end
 
     it "does for both unicode" do
       str = "青い" + "旅路"
-      str.@length.should eq(4)
-      str.should eq("青い旅路")
+      expect(str.@length).to eq(4)
+      expect(str).to eq("青い旅路")
     end
 
     it "does with ascii char" do
       str = "foo"
       str2 = str + '/'
-      str2.should eq("foo/")
-      str2.bytesize.should eq(4)
-      str2.length.should eq(4)
+      expect(str2).to eq("foo/")
+      expect(str2.bytesize).to eq(4)
+      expect(str2.length).to eq(4)
     end
 
     it "does with unicode char" do
       str = "fooba"
       str2 = str + 'る'
-      str2.should eq("foobaる")
-      str2.bytesize.should eq(8)
-      str2.length.should eq(6)
+      expect(str2).to eq("foobaる")
+      expect(str2.bytesize).to eq(8)
+      expect(str2.length).to eq(6)
     end
   end
 
   it "does %" do
-    ("foo" % 1).should        eq("foo")
-    ("foo %d" % 1).should     eq("foo 1")
-    ("%d" % 123).should       eq("123")
-    ("%+d" % 123).should      eq("+123")
-    ("%+d" % -123).should     eq("-123")
-    ("% d" % 123).should      eq(" 123")
-    ("%20d" % 123).should     eq("                 123")
-    ("%+20d" % 123).should    eq("                +123")
-    ("%+20d" % -123).should   eq("                -123")
-    ("% 20d" % 123).should    eq("                 123")
-    ("%020d" % 123).should    eq("00000000000000000123")
-    ("%+020d" % 123).should   eq("+0000000000000000123")
-    ("% 020d" % 123).should   eq(" 0000000000000000123")
-    ("%-d" % 123).should      eq("123")
-    ("%-20d" % 123).should    eq("123                 ")
-    ("%-+20d" % 123).should   eq("+123                ")
-    ("%-+20d" % -123).should  eq("-123                ")
-    ("%- 20d" % 123).should   eq(" 123                ")
-    ("%s" % 'a').should       eq("a")
-    ("%-s" % 'a').should      eq("a")
-    ("%20s" % 'a').should     eq("                   a")
-    ("%-20s" % 'a').should    eq("a                   ")
+    expect(("foo" % 1)).to        eq("foo")
+    expect(("foo %d" % 1)).to     eq("foo 1")
+    expect(("%d" % 123)).to       eq("123")
+    expect(("%+d" % 123)).to      eq("+123")
+    expect(("%+d" % -123)).to     eq("-123")
+    expect(("% d" % 123)).to      eq(" 123")
+    expect(("%20d" % 123)).to     eq("                 123")
+    expect(("%+20d" % 123)).to    eq("                +123")
+    expect(("%+20d" % -123)).to   eq("                -123")
+    expect(("% 20d" % 123)).to    eq("                 123")
+    expect(("%020d" % 123)).to    eq("00000000000000000123")
+    expect(("%+020d" % 123)).to   eq("+0000000000000000123")
+    expect(("% 020d" % 123)).to   eq(" 0000000000000000123")
+    expect(("%-d" % 123)).to      eq("123")
+    expect(("%-20d" % 123)).to    eq("123                 ")
+    expect(("%-+20d" % 123)).to   eq("+123                ")
+    expect(("%-+20d" % -123)).to  eq("-123                ")
+    expect(("%- 20d" % 123)).to   eq(" 123                ")
+    expect(("%s" % 'a')).to       eq("a")
+    expect(("%-s" % 'a')).to      eq("a")
+    expect(("%20s" % 'a')).to     eq("                   a")
+    expect(("%-20s" % 'a')).to    eq("a                   ")
 
-    ("%%%d" % 1).should eq("%1")
-    ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
+    expect(("%%%d" % 1)).to eq("%1")
+    expect(("foo %d bar %s baz %d goo" % [1, "hello", 2])).to eq("foo 1 bar hello baz 2 goo")
 
-    ("%b" % 123).should eq("1111011")
-    ("%+b" % 123).should eq("+1111011")
-    ("% b" % 123).should eq(" 1111011")
-    ("%-b" % 123).should eq("1111011")
-    ("%10b" % 123).should eq("   1111011")
-    ("%-10b" % 123).should eq("1111011   ")
+    expect(("%b" % 123)).to eq("1111011")
+    expect(("%+b" % 123)).to eq("+1111011")
+    expect(("% b" % 123)).to eq(" 1111011")
+    expect(("%-b" % 123)).to eq("1111011")
+    expect(("%10b" % 123)).to eq("   1111011")
+    expect(("%-10b" % 123)).to eq("1111011   ")
 
-    ("%o" % 123).should eq("173")
-    ("%+o" % 123).should eq("+173")
-    ("% o" % 123).should eq(" 173")
-    ("%-o" % 123).should eq("173")
-    ("%6o" % 123).should eq("   173")
-    ("%-6o" % 123).should eq("173   ")
+    expect(("%o" % 123)).to eq("173")
+    expect(("%+o" % 123)).to eq("+173")
+    expect(("% o" % 123)).to eq(" 173")
+    expect(("%-o" % 123)).to eq("173")
+    expect(("%6o" % 123)).to eq("   173")
+    expect(("%-6o" % 123)).to eq("173   ")
 
-    ("%x" % 123).should eq("7B")
-    ("%+x" % 123).should eq("+7B")
-    ("% x" % 123).should eq(" 7B")
-    ("%-x" % 123).should eq("7B")
-    ("%6x" % 123).should eq("    7B")
-    ("%-6x" % 123).should eq("7B    ")
+    expect(("%x" % 123)).to eq("7B")
+    expect(("%+x" % 123)).to eq("+7B")
+    expect(("% x" % 123)).to eq(" 7B")
+    expect(("%-x" % 123)).to eq("7B")
+    expect(("%6x" % 123)).to eq("    7B")
+    expect(("%-6x" % 123)).to eq("7B    ")
 
-    ("こんに%xちは" % 123).should eq("こんに7Bちは")
+    expect(("こんに%xちは" % 123)).to eq("こんに7Bちは")
 
-    ("%f" % 123).should eq("123.000000")
+    expect(("%f" % 123)).to eq("123.000000")
 
-    ("%g" % 123).should eq("123")
-    ("%12f" % 123.45).should eq("  123.450000")
-    ("%-12f" % 123.45).should eq("123.450000  ")
-    ("% f" % 123.45).should eq(" 123.450000")
-    ("%+f" % 123).should eq("+123.000000")
-    ("%012f" % 123).should eq("00123.000000")
-    ("%.f" % 1234.56).should eq("1235")
-    ("%.2f" % 1234.5678).should eq("1234.57")
-    ("%10.2f" % 1234.5678).should eq("   1234.57")
-    ("%e" % 123.45).should eq("1.234500e+02")
-    ("%E" % 123.45).should eq("1.234500E+02")
-    ("%G" % 12345678.45).should eq("1.23457E+07")
-    ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
-    ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
-    ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
+    expect(("%g" % 123)).to eq("123")
+    expect(("%12f" % 123.45)).to eq("  123.450000")
+    expect(("%-12f" % 123.45)).to eq("123.450000  ")
+    expect(("% f" % 123.45)).to eq(" 123.450000")
+    expect(("%+f" % 123)).to eq("+123.000000")
+    expect(("%012f" % 123)).to eq("00123.000000")
+    expect(("%.f" % 1234.56)).to eq("1235")
+    expect(("%.2f" % 1234.5678)).to eq("1234.57")
+    expect(("%10.2f" % 1234.5678)).to eq("   1234.57")
+    expect(("%e" % 123.45)).to eq("1.234500e+02")
+    expect(("%E" % 123.45)).to eq("1.234500E+02")
+    expect(("%G" % 12345678.45)).to eq("1.23457E+07")
+    expect(("%a" % 12345678.45)).to eq("0x1.78c29ce666666p+23")
+    expect(("%A" % 12345678.45)).to eq("0X1.78C29CE666666P+23")
+    expect(("%100.50g" % 123.45)).to eq("                                                  123.4500000000000028421709430404007434844970703125")
   end
 
   it "escapes chars" do
-    "\b"[0].should eq('\b')
-    "\t"[0].should eq('\t')
-    "\n"[0].should eq('\n')
-    "\v"[0].should eq('\v')
-    "\f"[0].should eq('\f')
-    "\r"[0].should eq('\r')
-    "\e"[0].should eq('\e')
-    "\""[0].should eq('"')
-    "\\"[0].should eq('\\')
+    expect("\b"[0]).to eq('\b')
+    expect("\t"[0]).to eq('\t')
+    expect("\n"[0]).to eq('\n')
+    expect("\v"[0]).to eq('\v')
+    expect("\f"[0]).to eq('\f')
+    expect("\r"[0]).to eq('\r')
+    expect("\e"[0]).to eq('\e')
+    expect("\""[0]).to eq('"')
+    expect("\\"[0]).to eq('\\')
   end
 
   it "escapes with octal" do
-    "\3"[0].ord.should eq(3)
-    "\23"[0].ord.should eq((2 * 8) + 3)
-    "\123"[0].ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
-    "\033"[0].ord.should eq((3 * 8) + 3)
-    "\033a"[1].should eq('a')
+    expect("\3"[0].ord).to eq(3)
+    expect("\23"[0].ord).to eq((2 * 8) + 3)
+    expect("\123"[0].ord).to eq((1 * 8 * 8) + (2 * 8) + 3)
+    expect("\033"[0].ord).to eq((3 * 8) + 3)
+    expect("\033a"[1]).to eq('a')
   end
 
   it "escapes with unicode" do
-    "\u{12}".codepoint_at(0).should eq(1 * 16 + 2)
-    "\u{A}".codepoint_at(0).should eq(10)
-    "\u{AB}".codepoint_at(0).should eq(10 * 16 + 11)
-    "\u{AB}1".codepoint_at(1).should eq('1'.ord)
+    expect("\u{12}".codepoint_at(0)).to eq(1 * 16 + 2)
+    expect("\u{A}".codepoint_at(0)).to eq(10)
+    expect("\u{AB}".codepoint_at(0)).to eq(10 * 16 + 11)
+    expect("\u{AB}1".codepoint_at(1)).to eq('1'.ord)
   end
 
   it "does char_at" do
-    "いただきます".char_at(2).should eq('だ')
+    expect("いただきます".char_at(2)).to eq('だ')
   end
 
   it "does byte_at" do
-    "hello".byte_at(1).should eq('e'.ord)
+    expect("hello".byte_at(1)).to eq('e'.ord)
     expect_raises(IndexOutOfBounds) { "hello".byte_at(5) }
   end
 
   it "does byte_at?" do
-    "hello".byte_at?(1).should eq('e'.ord)
-    "hello".byte_at?(5).should be_nil
+    expect("hello".byte_at?(1)).to eq('e'.ord)
+    expect("hello".byte_at?(5)).to be_nil
   end
 
   it "does chars" do
-    "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
+    expect("ぜんぶ".chars).to eq(['ぜ', 'ん', 'ぶ'])
   end
 
   it "allows creating a string with zeros" do
@@ -709,72 +709,72 @@ describe "String" do
     p[1] = '\0'.ord.to_u8
     p[2] = 'b'.ord.to_u8
     s = String.new(p, 3)
-    s[0].should eq('a')
-    s[1].should eq('\0')
-    s[2].should eq('b')
-    s.bytesize.should eq(3)
+    expect(s[0]).to eq('a')
+    expect(s[1]).to eq('\0')
+    expect(s[2]).to eq('b')
+    expect(s.bytesize).to eq(3)
   end
 
   it "tr" do
-    "bla".tr("a", "h").should eq("blh")
-    "bla".tr("a", "⊙").should eq("bl⊙")
-    "bl⊙a".tr("⊙", "a").should eq("blaa")
-    "bl⊙a".tr("⊙", "ⓧ").should eq("blⓧa")
-    "bl⊙a⊙asdfd⊙dsfsdf⊙⊙⊙".tr("a⊙", "ⓧt").should eq("bltⓧtⓧsdfdtdsfsdfttt")
-    "hello".tr("aeiou", "*").should eq("h*ll*")
-    "hello".tr("el", "ip").should eq("hippo")
-    "Lisp".tr("Lisp", "Crys").should eq("Crys")
-    "hello".tr("helo", "1212").should eq("12112")
-    "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
-    "über".tr("ü","u").should eq("uber")
+    expect("bla".tr("a", "h")).to eq("blh")
+    expect("bla".tr("a", "⊙")).to eq("bl⊙")
+    expect("bl⊙a".tr("⊙", "a")).to eq("blaa")
+    expect("bl⊙a".tr("⊙", "ⓧ")).to eq("blⓧa")
+    expect("bl⊙a⊙asdfd⊙dsfsdf⊙⊙⊙".tr("a⊙", "ⓧt")).to eq("bltⓧtⓧsdfdtdsfsdfttt")
+    expect("hello".tr("aeiou", "*")).to eq("h*ll*")
+    expect("hello".tr("el", "ip")).to eq("hippo")
+    expect("Lisp".tr("Lisp", "Crys")).to eq("Crys")
+    expect("hello".tr("helo", "1212")).to eq("12112")
+    expect("this".tr("this", "ⓧ")).to eq("ⓧⓧⓧⓧ")
+    expect("über".tr("ü","u")).to eq("uber")
   end
 
   describe "compare" do
     it "compares with == when same string" do
-      "foo".should eq("foo")
+      expect("foo").to eq("foo")
     end
 
     it "compares with == when different strings same contents" do
       s1 = "foo#{1}"
       s2 = "foo#{1}"
-      s1.should eq(s2)
+      expect(s1).to eq(s2)
     end
 
     it "compares with == when different contents" do
       s1 = "foo#{1}"
       s2 = "foo#{2}"
-      s1.should_not eq(s2)
+      expect(s1).to_not eq(s2)
     end
 
     it "sorts strings" do
       s1 = "foo1"
       s2 = "foo"
       s3 = "bar"
-      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+      expect([s1, s2, s3].sort).to eq(["bar", "foo", "foo1"])
     end
   end
 
   it "does underscore" do
-    "Foo".underscore.should eq("foo")
-    "FooBar".underscore.should eq("foo_bar")
-    "ABCde".underscore.should eq("ab_cde")
-    "FOO_bar".underscore.should eq("foo_bar")
+    expect("Foo".underscore).to eq("foo")
+    expect("FooBar".underscore).to eq("foo_bar")
+    expect("ABCde".underscore).to eq("ab_cde")
+    expect("FOO_bar".underscore).to eq("foo_bar")
   end
 
   it "does camelcase" do
-    "foo".camelcase.should eq("Foo")
-    "foo_bar".camelcase.should eq("FooBar")
+    expect("foo".camelcase).to eq("Foo")
+    expect("foo_bar".camelcase).to eq("FooBar")
   end
 
   it "answers ascii_only?" do
-    "a".ascii_only?.should be_true
-    "あ".ascii_only?.should be_false
+    expect("a".ascii_only?).to be_true
+    expect("あ".ascii_only?).to be_false
 
     str = String.new(1) do |buffer|
       buffer.value = 'a'.ord.to_u8
       {1, 0}
     end
-    str.ascii_only?.should be_true
+    expect(str.ascii_only?).to be_true
 
     str = String.new(4) do |buffer|
       count = 0
@@ -784,16 +784,16 @@ describe "String" do
       end
       {count, 0}
     end
-    str.ascii_only?.should be_false
+    expect(str.ascii_only?).to be_false
   end
 
   describe "scan" do
     it "does without block" do
       a = "cruel world"
-      a.scan(/\w+/).map(&.[0]).should eq(["cruel", "world"])
-      a.scan(/.../).map(&.[0]).should eq(["cru", "el ", "wor"])
-      a.scan(/(...)/).map(&.[1]).should eq(["cru", "el ", "wor"])
-      a.scan(/(..)(..)/).map { |m| {m[1], m[2]} }.should eq([{"cr", "ue"}, {"l ", "wo"}])
+      expect(a.scan(/\w+/).map(&.[0])).to eq(["cruel", "world"])
+      expect(a.scan(/.../).map(&.[0])).to eq(["cru", "el ", "wor"])
+      expect(a.scan(/(...)/).map(&.[1])).to eq(["cru", "el ", "wor"])
+      expect(a.scan(/(..)(..)/).map { |m| {m[1], m[2]} }).to eq([{"cr", "ue"}, {"l ", "wo"}])
     end
 
     it "does with block" do
@@ -802,11 +802,11 @@ describe "String" do
       a.scan(/\w(o+)/) do |match|
         case i
         when 0
-          match[0].should eq("foo")
-          match[1].should eq("oo")
+          expect(match[0]).to eq("foo")
+          expect(match[1]).to eq("oo")
         when 1
-          match[0].should eq("goo")
-          match[1].should eq("oo")
+          expect(match[0]).to eq("goo")
+          expect(match[1]).to eq("oo")
         else
           fail "expected two matches"
         end
@@ -816,87 +816,87 @@ describe "String" do
 
     it "does with utf-8" do
       a = "こん こん"
-      a.scan(/こ/).map(&.[0]).should eq(["こ", "こ"])
+      expect(a.scan(/こ/).map(&.[0])).to eq(["こ", "こ"])
     end
 
     it "works when match is empty" do
       r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
-      "hello".scan(r).map(&.[0]).should eq(["hello", ""])
+      expect("hello".scan(r).map(&.[0])).to eq(["hello", ""])
     end
 
     it "works with strings with block" do
       res = [] of String
       "bla bla ablf".scan("bl") { |s| res << s }
-      res.should eq(["bl", "bl", "bl"])
+      expect(res).to eq(["bl", "bl", "bl"])
     end
 
     it "works with strings" do
-      "bla bla ablf".scan("bl").should eq(["bl", "bl", "bl"])
-      "hello".scan("world").should eq([] of String)
-      "bbb".scan("bb").should eq(["bb"])
-      "ⓧⓧⓧ".scan("ⓧⓧ").should eq(["ⓧⓧ"])
-      "ⓧ".scan("ⓧ").should eq(["ⓧ"])
-      "ⓧ ⓧ ⓧ".scan("ⓧ").should eq(["ⓧ", "ⓧ", "ⓧ"])
-      "".scan("").should eq([] of String)
-      "a".scan("").should eq([] of String)
-      "".scan("a").should eq([] of String)
+      expect("bla bla ablf".scan("bl")).to eq(["bl", "bl", "bl"])
+      expect("hello".scan("world")).to eq([] of String)
+      expect("bbb".scan("bb")).to eq(["bb"])
+      expect("ⓧⓧⓧ".scan("ⓧⓧ")).to eq(["ⓧⓧ"])
+      expect("ⓧ".scan("ⓧ")).to eq(["ⓧ"])
+      expect("ⓧ ⓧ ⓧ".scan("ⓧ")).to eq(["ⓧ", "ⓧ", "ⓧ"])
+      expect("".scan("")).to eq([] of String)
+      expect("a".scan("")).to eq([] of String)
+      expect("".scan("a")).to eq([] of String)
     end
 
     it "does with number and string" do
-      "1ab4".scan(/\d+/).map(&.[0]).should eq(["1", "4"])
+      expect("1ab4".scan(/\d+/).map(&.[0])).to eq(["1", "4"])
     end
   end
 
   it "has match" do
-    "FooBar".match(/oo/).not_nil![0].should eq("oo")
+    expect("FooBar".match(/oo/).not_nil![0]).to eq("oo")
   end
 
   it "matches with position" do
-    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
+    expect("こんにちは".match(/./, 1).not_nil![0]).to eq("ん")
   end
 
   it "has size (same as length)" do
-    "テスト".size.should eq(3)
+    expect("テスト".size).to eq(3)
   end
 
   describe "count" do
-    assert { "hello world".count("lo").should eq(5) }
-    assert { "hello world".count("lo", "o").should eq(2) }
-    assert { "hello world".count("hello", "^l").should eq(4) }
-    assert { "hello world".count("ej-m").should eq(4) }
-    assert { "hello^world".count("\\^aeiou").should eq(4) }
-    assert { "hello-world".count("a\\-eo").should eq(4) }
-    assert { "hello world\\r\\n".count("\\").should eq(2) }
-    assert { "hello world\\r\\n".count("\\A").should eq(0) }
-    assert { "hello world\\r\\n".count("X-\\w").should eq(3) }
-    assert { "aabbcc".count('a').should eq(2) }
-    assert { "aabbcc".count {|c| ['a', 'b'].includes?(c) }.should eq(4) }
+    assert { expect("hello world".count("lo")).to eq(5) }
+    assert { expect("hello world".count("lo", "o")).to eq(2) }
+    assert { expect("hello world".count("hello", "^l")).to eq(4) }
+    assert { expect("hello world".count("ej-m")).to eq(4) }
+    assert { expect("hello^world".count("\\^aeiou")).to eq(4) }
+    assert { expect("hello-world".count("a\\-eo")).to eq(4) }
+    assert { expect("hello world\\r\\n".count("\\")).to eq(2) }
+    assert { expect("hello world\\r\\n".count("\\A")).to eq(0) }
+    assert { expect("hello world\\r\\n".count("X-\\w")).to eq(3) }
+    assert { expect("aabbcc".count('a')).to eq(2) }
+    assert { expect("aabbcc".count {|c| ['a', 'b'].includes?(c) }).to eq(4) }
   end
 
   describe "squeeze" do
-    assert { "aaabbbccc".squeeze {|c| ['a', 'b'].includes?(c) }.should eq("abccc") }
-    assert { "aaabbbccc".squeeze {|c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
-    assert { "a       bbb".squeeze.should eq("a b") }
-    assert { "a    bbb".squeeze(' ').should eq("a bbb") }
-    assert { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
+    assert { expect("aaabbbccc".squeeze {|c| ['a', 'b'].includes?(c) }).to eq("abccc") }
+    assert { expect("aaabbbccc".squeeze {|c| ['a', 'c'].includes?(c) }).to eq("abbbc") }
+    assert { expect("a       bbb".squeeze).to eq("a b") }
+    assert { expect("a    bbb".squeeze(' ')).to eq("a bbb") }
+    assert { expect("aaabbbcccddd".squeeze("b-d")).to eq("aaabcd") }
   end
 
   describe "ljust" do
-    assert { "123".ljust(2).should eq("123") }
-    assert { "123".ljust(5).should eq("123  ") }
-    assert { "12".ljust(7, '-').should eq("12-----") }
-    assert { "12".ljust(7, 'あ').should eq("12あああああ") }
+    assert { expect("123".ljust(2)).to eq("123") }
+    assert { expect("123".ljust(5)).to eq("123  ") }
+    assert { expect("12".ljust(7, '-')).to eq("12-----") }
+    assert { expect("12".ljust(7, 'あ')).to eq("12あああああ") }
   end
 
   describe "rjust" do
-    assert { "123".rjust(2).should eq("123") }
-    assert { "123".rjust(5).should eq("  123") }
-    assert { "12".rjust(7, '-').should eq("-----12") }
-    assert { "12".rjust(7, 'あ').should eq("あああああ12") }
+    assert { expect("123".rjust(2)).to eq("123") }
+    assert { expect("123".rjust(5)).to eq("  123") }
+    assert { expect("12".rjust(7, '-')).to eq("-----12") }
+    assert { expect("12".rjust(7, 'あ')).to eq("あああああ12") }
   end
 
   it "uses sprintf from top-level" do
-    sprintf("Hello %d world", 123).should eq("Hello 123 world")
-    sprintf("Hello %d world", [123]).should eq("Hello 123 world")
+    expect(sprintf("Hello %d world", 123)).to eq("Hello 123 world")
+    expect(sprintf("Hello %d world", [123])).to eq("Hello 123 world")
   end
 end

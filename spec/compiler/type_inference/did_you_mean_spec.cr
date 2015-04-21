@@ -114,7 +114,7 @@ describe "Type inference: did you mean" do
       infer_type nodes
       fail "TypeException wasn't raised"
     rescue ex : Crystal::TypeException
-      ex.to_s.includes?("did you mean").should be_false
+      expect(ex.to_s.includes?("did you mean")).to be_false
     end
   end
 

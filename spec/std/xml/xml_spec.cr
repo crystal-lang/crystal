@@ -11,67 +11,67 @@ describe XML do
         </person>
       </people>
       ))
-    doc.document.should eq(doc)
-    doc.name.should eq("document")
-    doc.attributes.empty?.should be_true
+    expect(doc.document).to eq(doc)
+    expect(doc.name).to eq("document")
+    expect(doc.attributes.empty?).to be_true
 
     people = doc.root.not_nil!
-    people.name.should eq("people")
-    people.type.should eq(XML::Type::ELEMENT_NODE)
+    expect(people.name).to eq("people")
+    expect(people.type).to eq(XML::Type::ELEMENT_NODE)
 
-    people.attributes.empty?.should be_true
+    expect(people.attributes.empty?).to be_true
 
     children = doc.children
-    children.length.should eq(1)
-    children.empty?.should be_false
+    expect(children.length).to eq(1)
+    expect(children.empty?).to be_false
 
     people = children[0]
-    people.name.should eq("people")
+    expect(people.name).to eq("people")
 
-    people.document.should eq(doc)
+    expect(people.document).to eq(doc)
 
     children = people.children
-    children.length.should eq(3)
+    expect(children.length).to eq(3)
 
     text = children[0]
-    text.name.should eq("text")
-    text.content.should eq("\n        ")
+    expect(text.name).to eq("text")
+    expect(text.content).to eq("\n        ")
 
     person = children[1]
-    person.name.should eq("person")
+    expect(person.name).to eq("person")
 
     text = children[2]
-    text.content.should eq("\n      ")
+    expect(text.content).to eq("\n      ")
 
     attrs = person.attributes
-    attrs.empty?.should be_false
-    attrs.length.should eq(2)
+    expect(attrs.empty?).to be_false
+    expect(attrs.length).to eq(2)
 
     attr = attrs[0]
-    attr.name.should eq("id")
-    attr.content.should eq("1")
-    attr.text.should eq("1")
-    attr.inner_text.should eq("1")
+    expect(attr.name).to eq("id")
+    expect(attr.content).to eq("1")
+    expect(attr.text).to eq("1")
+    expect(attr.inner_text).to eq("1")
 
     attr = attrs[1]
-    attr.name.should eq("id2")
-    attr.content.should eq("2")
+    expect(attr.name).to eq("id2")
+    expect(attr.content).to eq("2")
 
-    attrs["id"].content.should eq("1")
-    attrs["id2"].content.should eq("2")
+    expect(attrs["id"].content).to eq("1")
+    expect(attrs["id2"].content).to eq("2")
 
-    attrs["id3"]?.should be_nil
+    expect(attrs["id3"]?).to be_nil
     expect_raises(MissingKey) { attrs["id3"] }
 
-    person["id"].should eq("1")
-    person["id2"].should eq("2")
-    person["id3"]?.should be_nil
+    expect(person["id"]).to eq("1")
+    expect(person["id2"]).to eq("2")
+    expect(person["id3"]?).to be_nil
     expect_raises(MissingKey) { person["id3"] }
 
     name = person.children.find { |node| node.name == "name" }.not_nil!
-    name.content.should eq("John")
+    expect(name.content).to eq("John")
 
-    name.parent.should eq(person)
+    expect(name.parent).to eq(person)
   end
 
   it "parses from io" do
@@ -85,12 +85,12 @@ describe XML do
       ))
 
     doc = XML.parse(io)
-    doc.document.should eq(doc)
-    doc.name.should eq("document")
+    expect(doc.document).to eq(doc)
+    expect(doc.name).to eq("document")
 
     people = doc.children.find { |node| node.name == "people" }.not_nil!
     person = people.children.find { |node| node.name == "person" }.not_nil!
-    person["id"].should eq("1")
+    expect(person["id"]).to eq("1")
   end
 
   it "does to_s" do
@@ -104,7 +104,7 @@ describe XML do
       )
 
     doc = XML.parse(string)
-    doc.to_s.strip.should eq(<<-XML
+    expect(doc.to_s.strip).to eq(<<-XML
 <?xml version="1.0" encoding="UTF-8"?>
 <people>
   <person id="1" id2="2">
@@ -125,26 +125,26 @@ XML
       ))
 
     people = doc.first_element_child.not_nil!
-    people.name.should eq("people")
+    expect(people.name).to eq("people")
 
     person = people.first_element_child.not_nil!
-    person.name.should eq("person")
-    person["id"].should eq("1")
+    expect(person.name).to eq("person")
+    expect(person["id"]).to eq("1")
 
     text = person.next.not_nil!
-    text.content.should eq("\n        ")
+    expect(text.content).to eq("\n        ")
 
-    text.previous.should eq(person)
-    text.previous_sibling.should eq(person)
+    expect(text.previous).to eq(person)
+    expect(text.previous_sibling).to eq(person)
 
-    person.next_sibling.should eq(text)
+    expect(person.next_sibling).to eq(text)
 
     person2 = text.next.not_nil!
-    person2.name.should eq("person")
-    person2["id"].should eq("2")
+    expect(person2.name).to eq("person")
+    expect(person2["id"]).to eq("2")
 
-    person.next_element.should eq(person2)
-    person2.previous_element.should eq(person)
+    expect(person.next_element).to eq(person2)
+    expect(person2.previous_element).to eq(person)
   end
 
   it "handles errors" do
@@ -163,11 +163,11 @@ XML
       ))
     namespaces = doc.root.not_nil!.namespace_scopes
 
-    namespaces.length.should eq(2)
-    namespaces[0].href.should eq("http://www.w3.org/2005/Atom")
-    namespaces[0].prefix.should be_nil
-    namespaces[1].href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")
-    namespaces[1].prefix.should eq("openSearch")
+    expect(namespaces.length).to eq(2)
+    expect(namespaces[0].href).to eq("http://www.w3.org/2005/Atom")
+    expect(namespaces[0].prefix).to be_nil
+    expect(namespaces[1].href).to eq("http://a9.com/-/spec/opensearchrss/1.0/")
+    expect(namespaces[1].prefix).to eq("openSearch")
   end
 
   it "gets root namespaces as hash" do
@@ -177,7 +177,7 @@ XML
       </feed>
       ))
     namespaces = doc.root.not_nil!.namespaces
-    namespaces.should eq({
+    expect(namespaces).to eq({
       "xmlns" => "http://www.w3.org/2005/Atom",
       "xmlns:openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
     })

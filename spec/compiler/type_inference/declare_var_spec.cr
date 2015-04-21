@@ -24,7 +24,7 @@ describe "Type inference: declare var" do
     mod = result.program
 
     foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@x"].type.should eq(mod.int32)
+    expect(foo.instance_vars["@x"].type).to eq(mod.int32)
   end
 
   it "declares instance var of generic class" do
@@ -36,7 +36,7 @@ describe "Type inference: declare var" do
       Foo(Int32).new") do
         foo = types["Foo"] as GenericClassType
         foo_i32 = foo.instantiate([int32] of TypeVar)
-        foo_i32.lookup_instance_var("@x").type.should eq(int32)
+        expect(foo_i32.lookup_instance_var("@x").type).to eq(int32)
         foo_i32
     end
   end
@@ -55,7 +55,7 @@ describe "Type inference: declare var" do
       f") do
         foo = types["Foo"] as GenericClassType
         foo_i32 = foo.instantiate([int32] of TypeVar)
-        foo_i32.lookup_instance_var("@x").type.should eq(int32)
+        expect(foo_i32.lookup_instance_var("@x").type).to eq(int32)
         foo_i32
     end
   end

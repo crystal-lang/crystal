@@ -2,23 +2,23 @@ require "spec"
 
 describe "Dir" do
   it "tests exists? on existing directory" do
-    Dir.exists?(File.join([__DIR__, "../"])).should be_true
+    expect(Dir.exists?(File.join([__DIR__, "../"]))).to be_true
   end
 
   it "tests exists? on existing file" do
-    Dir.exists?(__FILE__).should be_false
+    expect(Dir.exists?(__FILE__)).to be_false
   end
 
   it "tests exists? on nonexistent directory" do
-    Dir.exists?(File.join([__DIR__, "/foo/bar/"])).should be_false
+    expect(Dir.exists?(File.join([__DIR__, "/foo/bar/"]))).to be_false
   end
 
   it "tests mkdir and rmdir with a new path" do
     path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
-    Dir.mkdir(path, 0700).should eq(0)
-    Dir.exists?(path).should be_true
-    Dir.rmdir(path).should eq(0)
-    Dir.exists?(path).should be_false
+    expect(Dir.mkdir(path, 0700)).to eq(0)
+    expect(Dir.exists?(path)).to be_true
+    expect(Dir.rmdir(path)).to eq(0)
+    expect(Dir.exists?(path)).to be_false
   end
 
   it "tests mkdir with an existing path" do
@@ -29,15 +29,15 @@ describe "Dir" do
 
   it "tests mkdir_p with a new path" do
     path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    Dir.mkdir_p(path).should eq(0)
-    Dir.exists?(path).should be_true
+    expect(Dir.mkdir_p(path)).to eq(0)
+    expect(Dir.exists?(path)).to be_true
     path = File.join({path, "a", "b", "c"})
-    Dir.mkdir_p(path).should eq(0)
-    Dir.exists?(path).should be_true
+    expect(Dir.mkdir_p(path)).to eq(0)
+    expect(Dir.exists?(path)).to be_true
   end
 
   it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(__DIR__).should eq(0)
+    expect(Dir.mkdir_p(__DIR__)).to eq(0)
     expect_raises Errno do
       Dir.mkdir_p(__FILE__)
     end
@@ -60,7 +60,7 @@ describe "Dir" do
     Dir.foreach(__DIR__) do |file|
       next unless file.ends_with?(".cr")
 
-      result.includes?(File.join(__DIR__, file)).should be_true
+      expect(result.includes?(File.join(__DIR__, file))).to be_true
     end
   end
 
@@ -70,7 +70,7 @@ describe "Dir" do
     {__DIR__, "#{__DIR__}/io", "#{__DIR__}/html"}.each do |dir|
       Dir.foreach(dir) do |file|
         next unless file.ends_with?(".cr")
-        result.includes?(File.join(dir, file)).should be_true
+        expect(result.includes?(File.join(dir, file))).to be_true
       end
     end
   end
@@ -84,7 +84,7 @@ describe "Dir" do
     Dir.foreach(__DIR__) do |file|
       next unless file.ends_with?(".cr")
 
-      result.includes?(File.join(__DIR__, file)).should be_true
+      expect(result.includes?(File.join(__DIR__, file))).to be_true
     end
   end
 
@@ -92,9 +92,9 @@ describe "Dir" do
     it "should work" do
       cwd = Dir.working_directory
       Dir.chdir("..")
-      Dir.working_directory.should_not eq(cwd)
+      expect(Dir.working_directory).to_not eq(cwd)
       Dir.cd(cwd)
-      Dir.working_directory.should eq(cwd)
+      expect(Dir.working_directory).to eq(cwd)
     end
 
     it "raises" do
@@ -107,10 +107,10 @@ describe "Dir" do
       cwd = Dir.working_directory
 
       Dir.chdir("..") do
-        Dir.working_directory.should_not eq(cwd)
+        expect(Dir.working_directory).to_not eq(cwd)
       end
 
-      Dir.working_directory.should eq(cwd)
+      expect(Dir.working_directory).to eq(cwd)
     end
   end
 
@@ -123,7 +123,7 @@ describe "Dir" do
     end
     dir.close
 
-    filenames.includes?("dir_spec.cr").should be_true
+    expect(filenames.includes?("dir_spec.cr")).to be_true
   end
 
   it "opens with open" do
@@ -135,15 +135,15 @@ describe "Dir" do
       end
     end
 
-    filenames.includes?("dir_spec.cr").should be_true
+    expect(filenames.includes?("dir_spec.cr")).to be_true
   end
 
   it "lists entries" do
     filenames = Dir.entries(__DIR__)
-    filenames.includes?("dir_spec.cr").should be_true
+    expect(filenames.includes?("dir_spec.cr")).to be_true
   end
 
   it "does to_s" do
-    Dir.new(__DIR__).to_s.should eq("#<Dir:#{__DIR__}>")
+    expect(Dir.new(__DIR__).to_s).to eq("#<Dir:#{__DIR__}>")
   end
 end

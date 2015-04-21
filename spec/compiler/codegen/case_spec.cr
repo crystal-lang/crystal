@@ -2,19 +2,19 @@ require "../../spec_helper"
 
 describe "Code gen: case" do
   it "codegens case with one condition" do
-    run("require \"object\"; case 1; when 1; 2; else; 3; end").to_i.should eq(2)
+    expect(run("require \"object\"; case 1; when 1; 2; else; 3; end").to_i).to eq(2)
   end
 
   it "codegens case with two conditions" do
-    run("require \"object\"; case 1; when 0, 1; 2; else; 3; end").to_i.should eq(2)
+    expect(run("require \"object\"; case 1; when 0, 1; 2; else; 3; end").to_i).to eq(2)
   end
 
   it "codegens case with else" do
-    run("require \"object\"; case 1; when 0; 2; else; 3; end").to_i.should eq(3)
+    expect(run("require \"object\"; case 1; when 0; 2; else; 3; end").to_i).to eq(3)
   end
 
   it "codegens case that always returns" do
-    run("
+    expect(run("
       require \"object\"
       def foo
         if true
@@ -27,11 +27,11 @@ describe "Code gen: case" do
       end
 
       foo
-    ").to_i.should eq(3)
+    ").to_i).to eq(3)
   end
 
   it "codegens case when cond is a call" do
-    run("
+    expect(run("
       require \"object\"
 
       $a = 0
@@ -48,11 +48,11 @@ describe "Code gen: case" do
       else
         3
       end
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "codegens case with class" do
-    run("
+    expect(run("
       require \"nil\"
       struct Int32
         def foo
@@ -67,11 +67,11 @@ describe "Code gen: case" do
       when Char
         a.ord
       end.to_i
-      ").to_i.should eq(-1)
+      ").to_i).to eq(-1)
   end
 
   it "codegens value-less case" do
-    run("
+    expect(run("
       case
       when 1 == 2
         1
@@ -80,6 +80,6 @@ describe "Code gen: case" do
       else
         3
       end
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 end

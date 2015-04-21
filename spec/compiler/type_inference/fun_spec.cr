@@ -259,7 +259,7 @@ describe "Type inference: fun" do
 
   it "types nil or fun type" do
     result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
-    result.node.type.should be_a(NilableFunType)
+    expect(result.node.type).to be_a(NilableFunType)
   end
 
   it "undefs fun" do
@@ -506,7 +506,7 @@ describe "Type inference: fun" do
       end
       ))
     foo = result.program.types["LibFoo"].lookup_first_def("foo", nil) as External
-    foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
+    expect(foo.call_convention).to eq(LLVM::CallConvention::X86_StdCall)
   end
 
   it "errors if wrong number of arguments for CallConvention" do

@@ -17,21 +17,21 @@ describe "HTML" do
           end
         end
       end
-      str.should eq %(<html><head><title>Crystal Programming Language</title></head><body><a href="http://crystal-lang.org">Crystal rocks!</a><form method="POST"><input name="name"></input></form></body></html>)
+      expect(str).to eq %(<html><head><title>Crystal Programming Language</title></head><body><a href="http://crystal-lang.org">Crystal rocks!</a><form method="POST"><input name="name"></input></form></body></html>)
     end
 
     it "escapes attribute values" do
       str = HTML::Builder.new.build do
         a({href: "<>"}) {}
       end
-      str.should eq %(<a href="&lt;&gt;"></a>)
+      expect(str).to eq %(<a href="&lt;&gt;"></a>)
     end
 
     it "escapes text" do
       str = HTML::Builder.new.build do
         a { text "<>" }
       end
-      str.should eq %(<a>&lt;&gt;</a>)
+      expect(str).to eq %(<a>&lt;&gt;</a>)
     end
   end
 end

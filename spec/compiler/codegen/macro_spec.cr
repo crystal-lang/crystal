@@ -2,21 +2,21 @@ require "../../spec_helper"
 
 describe "Code gen: macro" do
   it "expands macro" do
-    run("macro foo; 1 + 2; end; foo").to_i.should eq(3)
+    expect(run("macro foo; 1 + 2; end; foo").to_i).to eq(3)
   end
 
   it "expands macro with arguments" do
-    run(%(
+    expect(run(%(
       macro foo(n)
         {{n}} + 2
       end
 
       foo(1)
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "expands macro that invokes another macro" do
-    run(%(
+    expect(run(%(
       macro foo
         def x
           1 + 2
@@ -29,11 +29,11 @@ describe "Code gen: macro" do
 
       bar
       x
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "expands macro defined in class" do
-    run(%(
+    expect(run(%(
       class Foo
         macro foo
           def bar
@@ -46,11 +46,11 @@ describe "Code gen: macro" do
 
       foo = Foo.new
       foo.bar
-    )).to_i.should eq(1)
+    )).to_i).to eq(1)
   end
 
   it "expands macro defined in base class" do
-    run(%(
+    expect(run(%(
       class Object
         macro foo
           def bar
@@ -65,48 +65,48 @@ describe "Code gen: macro" do
 
       foo = Foo.new
       foo.bar
-    )).to_i.should eq(1)
+    )).to_i).to eq(1)
   end
 
   it "expands inline macro" do
-    run(%(
+    expect(run(%(
       a = {{ 1 }}
       a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "expands inline macro for" do
-    run(%(
+    expect(run(%(
       a = 0
       {% for i in [1, 2, 3] %}
         a += {{i}}
       {% end %}
       a
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "expands inline macro if (true)" do
-    run(%(
+    expect(run(%(
       a = 0
       {% if 1 == 1 %}
         a += 1
       {% end %}
       a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "expands inline macro if (false)" do
-    run(%(
+    expect(run(%(
       a = 0
       {% if 1 == 2 %}
         a += 1
       {% end %}
       a
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "finds macro in class" do
-    run(%(
+    expect(run(%(
       class Foo
         macro foo
           1 + 2
@@ -118,11 +118,11 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "expands def macro" do
-    run(%(
+    expect(run(%(
       def bar_baz
         1
       end
@@ -132,21 +132,21 @@ describe "Code gen: macro" do
       end
 
       foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "expands def macro with var" do
-    run(%(
+    expect(run(%(
       macro def foo : Int32
         a = {{ 1 }}
       end
 
       foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "expands def macro with @instance_vars" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -158,11 +158,11 @@ describe "Code gen: macro" do
 
       foo = Foo.new(1)
       foo.to_s
-      )).to_string.should eq("x")
+      )).to_string).to eq("x")
   end
 
   it "expands def macro with @instance_vars with subclass" do
-    run(%(
+    expect(run(%(
       class Reference
         macro def to_s : String
           {{ @instance_vars.last.stringify }}
@@ -180,11 +180,11 @@ describe "Code gen: macro" do
       end
 
       Bar.new(1, 2).to_s
-      )).to_string.should eq("y")
+      )).to_string).to eq("y")
   end
 
   it "expands def macro with @instance_vars with virtual" do
-    run(%(
+    expect(run(%(
       class Reference
         macro def to_s : String
           {{ @instance_vars.last.stringify }}
@@ -202,11 +202,11 @@ describe "Code gen: macro" do
       end
 
       (Bar.new(1, 2) || Foo.new(1)).to_s
-      )).to_string.should eq("y")
+      )).to_string).to eq("y")
   end
 
   it "expands def macro with @class_name" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -218,11 +218,11 @@ describe "Code gen: macro" do
 
       foo = Foo.new(1)
       foo.to_s
-      )).to_string.should eq("Foo")
+      )).to_string).to eq("Foo")
   end
 
   it "expands macro and resolves type correctly" do
-    run(%(
+    expect(run(%(
       class Foo
         macro def foo : Int32
           1
@@ -234,11 +234,11 @@ describe "Code gen: macro" do
       end
 
       Bar.new.foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "expands def macro with @class_name with virtual" do
-    run(%(
+    expect(run(%(
       class Reference
         macro def to_s : String
           {{ @class_name }}
@@ -252,11 +252,11 @@ describe "Code gen: macro" do
       end
 
       (Bar.new || Foo.new).to_s
-      )).to_string.should eq("Bar")
+      )).to_string).to eq("Bar")
   end
 
   it "expands def macro with @class_name with virtual (2)" do
-    run(%(
+    expect(run(%(
       class Reference
         macro def to_s : String
           {{ @class_name }}
@@ -270,11 +270,11 @@ describe "Code gen: macro" do
       end
 
       (Foo.new || Bar.new).to_s
-      )).to_string.should eq("Foo")
+      )).to_string).to eq("Foo")
   end
 
   it "allows overriding macro definition when redefining base class" do
-    run(%(
+    expect(run(%(
       class Foo
         macro def inspect : String
           {{@class_name}}
@@ -291,11 +291,11 @@ describe "Code gen: macro" do
       end
 
       Bar.new.inspect
-      )).to_string.should eq("OH NO")
+      )).to_string).to eq("OH NO")
   end
 
   it "uses invocation context" do
-    run(%(
+    expect(run(%(
       macro foo
         def bar
           {{@class_name}}
@@ -307,11 +307,11 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar
-      )).to_string.should eq("Foo")
+      )).to_string).to eq("Foo")
   end
 
   it "allows macro with default arguments" do
-    run(%(
+    expect(run(%(
       def bar
         2
       end
@@ -321,11 +321,11 @@ describe "Code gen: macro" do
       end
 
       foo(1)
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "expands def macro with instance var and method call (bug)" do
-    run(%(
+    expect(run(%(
       struct Nil
         def to_i
           0
@@ -340,11 +340,11 @@ describe "Code gen: macro" do
       end
 
       Foo.new.foo.to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "expands @class_name in virtual metaclass (1)" do
-    run(%(
+    expect(run(%(
       class Class
         macro def to_s : String
           {{ @class_name }}
@@ -361,11 +361,11 @@ describe "Code gen: macro" do
       p.value = Bar
       p.value = Foo
       p.value.to_s
-      )).to_string.should eq("Foo:Class")
+      )).to_string).to eq("Foo:Class")
   end
 
   it "expands @class_name in virtual metaclass (2)" do
-    run(%(
+    expect(run(%(
       class Class
         macro def to_s : String
           {{ @class_name }}
@@ -382,11 +382,11 @@ describe "Code gen: macro" do
       p.value = Foo
       p.value = Bar
       p.value.to_s
-      )).to_string.should eq("Bar:Class")
+      )).to_string).to eq("Bar:Class")
   end
 
   it "doesn't skip abstract classes when defining macro methods" do
-    run(%(
+    expect(run(%(
       class Object
         macro def foo : Int32
           1
@@ -410,11 +410,11 @@ describe "Code gen: macro" do
 
       t = Type1.new || Type2.new
       t.foo
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "doesn't reuse macro nodes (bug)" do
-    run(%(
+    expect(run(%(
       def foo(x)
         {% for y in [1, 2] %}
           x + 1
@@ -423,18 +423,18 @@ describe "Code gen: macro" do
 
       foo 1
       foo(1.5).to_i
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "can use constants" do
-    run(%(
+    expect(run(%(
       A = 1
       {{ A }}
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "can refer to types" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x, @y)
         end
@@ -443,81 +443,81 @@ describe "Code gen: macro" do
       Foo.new(1, 2)
 
       {{ Foo.instance_vars.last.name }}
-      )).to_string.should eq("y")
+      )).to_string).to eq("y")
   end
 
   it "runs macro with splat" do
-    run(%(
+    expect(run(%(
       macro foo(*args)
         {{args.length}}
       end
 
       foo 1, 1, 1
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "runs macro with arg and splat" do
-    run(%(
+    expect(run(%(
       macro foo(name, *args)
         {{args.length}}
       end
 
       foo bar, 1, 1, 1
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "runs macro with arg and splat in first position (1)" do
-    run(%(
+    expect(run(%(
       macro foo(*args, name)
         {{args.length}}
       end
 
       foo 1, 1, 1, bar
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "runs macro with arg and splat in first position (2)" do
-    run(%(
+    expect(run(%(
       macro foo(*args, name)
         {{name}}
       end
 
       foo 1, 1, 1, "hello"
-      )).to_string.should eq("hello")
+      )).to_string).to eq("hello")
   end
 
   it "runs macro with arg and splat in the middle (1)" do
-    run(%(
+    expect(run(%(
       macro foo(foo, *args, name)
         {{args.length}}
       end
 
       foo x, 1, 1, 1, bar
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "runs macro with arg and splat in the middle (2)" do
-    run(%(
+    expect(run(%(
       macro foo(foo, *args, name)
         {{foo}}
       end
 
       foo "yellow", 1, 1, 1, bar
-      )).to_string.should eq("yellow")
+      )).to_string).to eq("yellow")
   end
 
   it "runs macro with arg and splat in the middle (3)" do
-    run(%(
+    expect(run(%(
       macro foo(foo, *args, name)
         {{name}}
       end
 
       foo "yellow", 1, 1, 1, "cool"
-      )).to_string.should eq("cool")
+      )).to_string).to eq("cool")
   end
 
   it "expands macro that yields" do
-    run(%(
+    expect(run(%(
       def foo
         {% for i in 0 .. 2 %}
           yield {{i}}
@@ -529,29 +529,29 @@ describe "Code gen: macro" do
         a += x
       end
       a
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "can refer to abstract (1)" do
-    run(%(
+    expect(run(%(
       class Foo
       end
 
       {{ Foo.abstract? }}
-      )).to_b.should be_false
+      )).to_b).to be_false
   end
 
   it "can refer to abstract (2)" do
-    run(%(
+    expect(run(%(
       abstract class Foo
       end
 
       {{ Foo.abstract? }}
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "can refer to @type" do
-    run(%(
+    expect(run(%(
       class Foo
         macro def foo : String
           {{@type.name}}
@@ -559,11 +559,11 @@ describe "Code gen: macro" do
       end
 
       Foo.new.foo
-      )).to_string.should eq("Foo")
+      )).to_string).to eq("Foo")
   end
 
   it "receives &block" do
-    run(%(
+    expect(run(%(
       macro foo(&block)
         bar {{block}}
       end
@@ -575,21 +575,21 @@ describe "Code gen: macro" do
       foo do |x|
         x + 1
       end
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "executes with named arguments" do
-    run(%(
+    expect(run(%(
       macro foo(x = 1)
         {{x}} + 1
       end
 
       foo x: 2
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "gets correct class name when there are classes in the middle" do
-    run(%(
+    expect(run(%(
       class Foo
         macro def class_desc : String
           {{@class_name}}
@@ -608,7 +608,7 @@ describe "Code gen: macro" do
       a = Pointer(Foo).malloc(1_u64)
       a.value = Qux.new
       a.value.class_desc
-      )).to_string.should eq("Qux")
+      )).to_string).to eq("Qux")
   end
 
   it "transforms hooks (bug)" do
@@ -633,7 +633,7 @@ describe "Code gen: macro" do
   end
 
   it "executs subclasses" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo
@@ -650,11 +650,11 @@ describe "Code gen: macro" do
 
       names = {{ Foo.subclasses.map &.name }}
       names.join("-")
-      )).to_string.should eq("Bar-Baz")
+      )).to_string).to eq("Bar-Baz")
   end
 
   it "executs all_subclasses" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo
@@ -668,11 +668,11 @@ describe "Code gen: macro" do
 
       names = {{ Foo.all_subclasses.map &.name }}
       names.join("-")
-      )).to_string.should eq("Bar-Baz")
+      )).to_string).to eq("Bar-Baz")
   end
 
   it "gets enum members with @enum_members (will be deprecated)" do
-    run(%(
+    expect(run(%(
       enum Color
         Red
         Green
@@ -692,11 +692,11 @@ describe "Code gen: macro" do
       end
 
       Color.red.value + Color.green.value + Color.blue.value
-      )).to_i.should eq(0 + 1 + 2)
+      )).to_i).to eq(0 + 1 + 2)
   end
 
   it "gets enum members with @constants" do
-    run(%(
+    expect(run(%(
       enum Color
         Red
         Green
@@ -716,11 +716,11 @@ describe "Code gen: macro" do
       end
 
       Color.red.value + Color.green.value + Color.blue.value
-      )).to_i.should eq(0 + 1 + 2)
+      )).to_i).to eq(0 + 1 + 2)
   end
 
   it "gets enum members as constants" do
-    run(%(
+    expect(run(%(
       enum Color
         Red
         Green
@@ -728,11 +728,11 @@ describe "Code gen: macro" do
       end
 
       {{Color.constants[1].stringify}}
-      )).to_string.should eq("Green")
+      )).to_string).to eq("Green")
   end
 
   it "says that enum has Flags attribute" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Color
         Red
@@ -741,11 +741,11 @@ describe "Code gen: macro" do
       end
 
       {{Color.has_attribute?("Flags")}}
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "says that enum doesn't have Flags attribute" do
-    run(%(
+    expect(run(%(
       enum Color
         Red
         Green
@@ -753,11 +753,11 @@ describe "Code gen: macro" do
       end
 
       {{Color.has_attribute?("Flags")}}
-      )).to_b.should be_false
+      )).to_b).to be_false
   end
 
   it "gets methods" do
-    run(%(
+    expect(run(%(
       class Foo
         def bar
           1
@@ -769,11 +769,11 @@ describe "Code gen: macro" do
       end
 
       Foo.new.first_method_name
-      )).to_string.should eq("bar")
+      )).to_string).to eq("bar")
   end
 
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
-    run(%(
+    expect(run(%(
       class Object
         macro def class_name : String
           {{@class_name}}
@@ -799,11 +799,11 @@ describe "Code gen: macro" do
       class C < B; end
       A.children.value = C.new
       A.children.value.class_name
-      )).to_string.should eq("C")
+      )).to_string).to eq("C")
   end
 
   it "recalculates method when virtual metaclass type is added" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       $x = [] of String
@@ -839,11 +839,11 @@ describe "Code gen: macro" do
 
       run
       $x.join(", ")
-      )).to_string.should eq("Test:Class, RunnableTest:Class")
+      )).to_string).to eq("Test:Class, RunnableTest:Class")
   end
 
   it "correctly recomputes call (bug)" do
-    run(%(
+    expect(run(%(
       class Object
         def in_object
           in_class(1)
@@ -874,11 +874,11 @@ describe "Code gen: macro" do
 
       f2 = Baz.new || Foo.new
       f2.class.in_object
-      )).to_string.should eq("Baz:Class")
+      )).to_string).to eq("Baz:Class")
   end
 
   it "doesn't override local variable when using macro variable" do
-    run(%(
+    expect(run(%(
       macro foo(x)
         %a = {{x}}
         %a
@@ -888,11 +888,11 @@ describe "Code gen: macro" do
       foo(2)
       foo(3)
       a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "doesn't override local variable when using macro variable (2)" do
-    run(%(
+    expect(run(%(
       macro foo(x)
         %a = {{x}} + 10
         %a
@@ -902,11 +902,11 @@ describe "Code gen: macro" do
       z = foo(2)
       w = foo(3)
       a + z + w
-      )).to_i.should eq(26)
+      )).to_i).to eq(26)
   end
 
   it "uses indexed macro variable" do
-    run(%(
+    expect(run(%(
       macro foo(*elems)
         {% for elem, i in elems %}
           %var{i} = {{elem}}
@@ -923,11 +923,11 @@ describe "Code gen: macro" do
       z += foo 4, 5, 6
       z += foo 40, 50, 60
       z
-      )).to_i.should eq(4 + 5 + 6 + 40 + 50 + 60)
+      )).to_i).to eq(4 + 5 + 6 + 40 + 50 + 60)
   end
 
   it "uses indexed macro variable with many keys" do
-    run(%(
+    expect(run(%(
       macro foo(*elems)
         {% for elem, i in elems %}
           %var{elem, i} = {{elem}}
@@ -942,11 +942,11 @@ describe "Code gen: macro" do
 
       z = foo 4, 5, 6
       z
-      )).to_i.should eq(4 + 5 + 6)
+      )).to_i).to eq(4 + 5 + 6)
   end
 
   it "codegens macro def with splat (#496)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro def bar(*args) : Int32
           args[0] + args[1] + args[2]
@@ -954,11 +954,11 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar(1, 2, 3)
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "codegens macro def with default arg (similar to #496)"  do
-    run(%(
+    expect(run(%(
       class Foo
         macro def bar(foo = 1) : Int32
           foo + 2
@@ -966,6 +966,6 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 end

@@ -15,10 +15,10 @@ describe HTTP::WebSocket do
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(5)
-      result.final?.should be_true
-      String.new(buffer[0, result.length]).should eq("Hello")
+      expect(result.type).to eq(:text)
+      expect(result.length).to eq(5)
+      expect(result.final?).to be_true
+      expect(String.new(buffer[0, result.length])).to eq("Hello")
     end
 
     it "can read partial packets" do
@@ -31,16 +31,16 @@ describe HTTP::WebSocket do
 
       2.times do
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(3)
-        result.final?.should be_false
-        String.new(buffer).should eq("Hel")
+        expect(result.type).to eq(:text)
+        expect(result.length).to eq(3)
+        expect(result.final?).to be_false
+        expect(String.new(buffer)).to eq("Hel")
 
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(2)
-        result.final?.should be_true
-        String.new(buffer[0, 2]).should eq("lo")
+        expect(result.type).to eq(:text)
+        expect(result.length).to eq(2)
+        expect(result.final?).to be_true
+        expect(String.new(buffer[0, 2])).to eq("lo")
       end
     end
 
@@ -54,16 +54,16 @@ describe HTTP::WebSocket do
 
       2.times do
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(3)
-        result.final?.should be_false
-        String.new(buffer).should eq("Hel")
+        expect(result.type).to eq(:text)
+        expect(result.length).to eq(3)
+        expect(result.final?).to be_false
+        expect(String.new(buffer)).to eq("Hel")
 
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(2)
-        result.final?.should be_true
-        String.new(buffer[0, 2]).should eq("lo")
+        expect(result.type).to eq(:text)
+        expect(result.length).to eq(2)
+        expect(result.final?).to be_true
+        expect(String.new(buffer[0, 2])).to eq("lo")
       end
     end
 
@@ -78,16 +78,16 @@ describe HTTP::WebSocket do
 
       2.times do
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(3)
-        result.final?.should be_false
-        String.new(buffer[0, 3]).should eq("Hel")
+        expect(result.type).to eq(:text)
+        expect(result.length).to eq(3)
+        expect(result.final?).to be_false
+        expect(String.new(buffer[0, 3])).to eq("Hel")
 
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(2)
-        result.final?.should be_true
-        String.new(buffer[0, 2]).should eq("lo")
+        expect(result.type).to eq(:text)
+        expect(result.length).to eq(2)
+        expect(result.final?).to be_true
+        expect(String.new(buffer[0, 2])).to eq("lo")
       end
     end
 
@@ -98,10 +98,10 @@ describe HTTP::WebSocket do
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
-      result.type.should eq(:ping)
-      result.length.should eq(5)
-      result.final?.should be_true
-      String.new(buffer[0, result.length]).should eq("Hello")
+      expect(result.type).to eq(:ping)
+      expect(result.length).to eq(5)
+      expect(result.final?).to be_true
+      expect(String.new(buffer[0, result.length])).to eq("Hello")
     end
 
     it "read ping packet in between fragmented packet" do
@@ -114,22 +114,22 @@ describe HTTP::WebSocket do
       buffer = Slice(UInt8).new(64)
 
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(3)
-      result.final?.should be_false
-      String.new(buffer[0, 3]).should eq("Hel")
+      expect(result.type).to eq(:text)
+      expect(result.length).to eq(3)
+      expect(result.final?).to be_false
+      expect(String.new(buffer[0, 3])).to eq("Hel")
 
       result = ws.receive(buffer)
-      result.type.should eq(:ping)
-      result.length.should eq(5)
-      result.final?.should be_true
-      String.new(buffer[0, result.length]).should eq("Hello")
+      expect(result.type).to eq(:ping)
+      expect(result.length).to eq(5)
+      expect(result.final?).to be_true
+      expect(String.new(buffer[0, result.length])).to eq("Hello")
 
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(2)
-      result.final?.should be_true
-      String.new(buffer[0, 2]).should eq("lo")
+      expect(result.type).to eq(:text)
+      expect(result.length).to eq(2)
+      expect(result.final?).to be_true
+      expect(String.new(buffer[0, 2])).to eq("lo")
     end
 
     it "read long packet" do
@@ -140,10 +140,10 @@ describe HTTP::WebSocket do
       buffer = Slice(UInt8).new(2048)
 
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(1023)
-      result.final?.should be_true
-      String.new(buffer[0, 1023]).should eq("x" * 1023)
+      expect(result.type).to eq(:text)
+      expect(result.length).to eq(1023)
+      expect(result.final?).to be_true
+      expect(String.new(buffer[0, 1023])).to eq("x" * 1023)
     end
   end
 end

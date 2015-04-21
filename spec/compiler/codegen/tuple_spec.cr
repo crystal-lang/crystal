@@ -2,29 +2,29 @@ require "../../spec_helper"
 
 describe "Code gen: tuple" do
   it "codegens tuple [0]" do
-    run("{1, true}[0]").to_i.should eq(1)
+    expect(run("{1, true}[0]").to_i).to eq(1)
   end
 
   it "codegens tuple [1]" do
-    run("{1, true}[1]").to_b.should be_true
+    expect(run("{1, true}[1]").to_b).to be_true
   end
 
   it "codegens tuple [1] (2)" do
-    run("{true, 3}[1]").to_i.should eq(3)
+    expect(run("{true, 3}[1]").to_i).to eq(3)
   end
 
   it "passed tuple to def" do
-    run("
+    expect(run("
       def foo(t)
         t[1]
       end
 
       foo({1, 2, 3})
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "accesses a tuple type and creates instance from it" do
-    run("
+    expect(run("
       struct Tuple
         def types
           T
@@ -43,11 +43,11 @@ describe "Code gen: tuple" do
       t = {Foo.new(1)}
       f = t.types[0].new(2)
       f.x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "allows malloc pointer of tuple" do
-    run("
+    expect(run("
       struct Pointer
         def self.malloc(size : Int)
           malloc(size.to_u64)
@@ -62,20 +62,20 @@ describe "Code gen: tuple" do
 
       p = foo({1, 2})
       p.value[0] + p.value[1]
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens tuple union (bug because union size was computed incorrectly)" do
-    run(%(
+    expect(run(%(
       require "prelude"
       x = 1 == 1 ? {1, 1, 1} : {1}
       i = 2
       x[i]
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens tuple class" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -96,11 +96,11 @@ describe "Code gen: tuple" do
       foo_class = tuple_class[0]
       foo2 = foo_class.new(2)
       foo2.x
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "gets length at compile time" do
-    run(%(
+    expect(run(%(
       struct Tuple
         def my_length
           {{ @length }}
@@ -108,6 +108,6 @@ describe "Code gen: tuple" do
       end
 
       {1, 1}.my_length
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 end

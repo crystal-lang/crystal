@@ -3,7 +3,7 @@ require "json"
 
 private def it_parses(string, expected_value, file = __FILE__, line = __LINE__)
   it "parses #{string}", file, line do
-    JSON.parse(string).should eq(expected_value)
+    expect(JSON.parse(string)).to eq(expected_value)
   end
 end
 

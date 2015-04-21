@@ -6,81 +6,81 @@ describe "ECR::Lexer" do
     lexer = ECR::Lexer.new("hello")
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq("hello")
-    token.line_number.should eq(1)
-    token.column_number.should eq(1)
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq("hello")
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(1)
 
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    expect(token.type).to eq(:EOF)
   end
 
   it "lexes with <% %>" do
     lexer = ECR::Lexer.new("hello <% foo %> bar")
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq("hello ")
-    token.column_number.should eq(1)
-    token.line_number.should eq(1)
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq("hello ")
+    expect(token.column_number).to eq(1)
+    expect(token.line_number).to eq(1)
 
     token = lexer.next_token
-    token.type.should eq(:CONTROL)
-    token.value.should eq(" foo ")
-    token.line_number.should eq(1)
-    token.column_number.should eq(9)
+    expect(token.type).to eq(:CONTROL)
+    expect(token.value).to eq(" foo ")
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(9)
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq(" bar")
-    token.line_number.should eq(1)
-    token.column_number.should eq(16)
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq(" bar")
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(16)
 
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    expect(token.type).to eq(:EOF)
   end
 
   it "lexes with <%= %>" do
     lexer = ECR::Lexer.new("hello <%= foo %> bar")
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq("hello ")
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq("hello ")
 
     token = lexer.next_token
-    token.type.should eq(:OUTPUT)
-    token.value.should eq(" foo ")
+    expect(token.type).to eq(:OUTPUT)
+    expect(token.value).to eq(" foo ")
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq(" bar")
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq(" bar")
 
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    expect(token.type).to eq(:EOF)
   end
 
   it "lexes with <% %> and correct location info" do
     lexer = ECR::Lexer.new("hi\nthere <% foo\nbar %> baz")
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq("hi\nthere ")
-    token.line_number.should eq(1)
-    token.column_number.should eq(1)
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq("hi\nthere ")
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(1)
 
     token = lexer.next_token
-    token.type.should eq(:CONTROL)
-    token.value.should eq(" foo\nbar ")
-    token.line_number.should eq(2)
-    token.column_number.should eq(9)
+    expect(token.type).to eq(:CONTROL)
+    expect(token.value).to eq(" foo\nbar ")
+    expect(token.line_number).to eq(2)
+    expect(token.column_number).to eq(9)
 
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.value.should eq(" baz")
-    token.line_number.should eq(3)
-    token.column_number.should eq(7)
+    expect(token.type).to eq(:STRING)
+    expect(token.value).to eq(" baz")
+    expect(token.line_number).to eq(3)
+    expect(token.column_number).to eq(7)
 
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    expect(token.type).to eq(:EOF)
   end
 end

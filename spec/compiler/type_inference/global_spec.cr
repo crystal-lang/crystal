@@ -6,9 +6,9 @@ describe "Global inference" do
     result = infer_type node
     mod, node = result.program, result.node as Assign
 
-    node.type.should eq(mod.int32)
-    node.target.type.should eq(mod.int32)
-    node.value.type.should eq(mod.int32)
+    expect(node.type).to eq(mod.int32)
+    expect(node.target.type).to eq(mod.int32)
+    expect(node.value.type).to eq(mod.int32)
   end
 
   it "infers type of global assign with union" do
@@ -16,8 +16,8 @@ describe "Global inference" do
     result = infer_type nodes
     mod, node = result.program, result.node as Expressions
 
-    (node[0] as Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
-    (node[1] as Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
+    expect((node[0] as Assign).target.type).to eq(mod.union_of(mod.int32, mod.char))
+    expect((node[1] as Assign).target.type).to eq(mod.union_of(mod.int32, mod.char))
   end
 
   it "infers type of global reference" do

@@ -5,28 +5,28 @@ describe "StringIO" do
     str = String.build do |io|
       io << 'a'
     end
-    str.should eq("a")
+    expect(str).to eq("a")
   end
 
   it "appends a string" do
     str = String.build do |io|
       io << "hello"
     end
-    str.should eq("hello")
+    expect(str).to eq("hello")
   end
 
   it "writes to a buffer with count" do
     str = String.build do |io|
       io.write Slice.new("hello".cstr, 3)
     end
-    str.should eq("hel")
+    expect(str).to eq("hel")
   end
 
   it "appends a byte" do
     str = String.build do |io|
       io.write_byte 'a'.ord.to_u8
     end
-    str.should eq("a")
+    expect(str).to eq("a")
   end
 
   it "appends to another buffer" do
@@ -35,90 +35,90 @@ describe "StringIO" do
 
     s2 = StringIO.new
     s1.to_s(s2)
-    s2.to_s.should eq("hello")
+    expect(s2.to_s).to eq("hello")
   end
 
   it "writes" do
     io = StringIO.new
     io << "foo" << "bar"
-    io.to_s.should eq("foobar")
+    expect(io.to_s).to eq("foobar")
   end
 
   it "puts" do
     io = StringIO.new
     io.puts "foo"
-    io.to_s.should eq("foo\n")
+    expect(io.to_s).to eq("foo\n")
   end
 
   it "print" do
     io = StringIO.new
     io.print "foo"
-    io.to_s.should eq("foo")
+    expect(io.to_s).to eq("foo")
   end
 
   it "reads single line content" do
     io = StringIO.new("foo")
-    io.gets.should eq("foo")
+    expect(io.gets).to eq("foo")
   end
 
   it "reads each line" do
     io = StringIO.new("foo\r\nbar\r\n")
-    io.gets.should eq("foo\r\n")
-    io.gets.should eq("bar\r\n")
-    io.gets.should eq(nil)
+    expect(io.gets).to eq("foo\r\n")
+    expect(io.gets).to eq("bar\r\n")
+    expect(io.gets).to eq(nil)
   end
 
   it "gets with char as delimiter" do
     io = StringIO.new("hello world")
-    io.gets('w').should eq("hello w")
-    io.gets('r').should eq("or")
-    io.gets('r').should eq("ld")
-    io.gets('r').should eq(nil)
+    expect(io.gets('w')).to eq("hello w")
+    expect(io.gets('r')).to eq("or")
+    expect(io.gets('r')).to eq("ld")
+    expect(io.gets('r')).to eq(nil)
   end
 
   it "reads all remaining content" do
     io = StringIO.new("foo\nbar\nbaz\n")
-    io.gets.should eq("foo\n")
-    io.read.should eq("bar\nbaz\n")
+    expect(io.gets).to eq("foo\n")
+    expect(io.read).to eq("bar\nbaz\n")
   end
 
   it "reads utf-8 string" do
     io = StringIO.new("há日本語")
-    io.gets.should eq("há日本語")
+    expect(io.gets).to eq("há日本語")
   end
 
   it "reads N chars" do
     io = StringIO.new("foobarbaz")
-    io.read(3).should eq("foo")
-    io.read(50).should eq("barbaz")
+    expect(io.read(3)).to eq("foo")
+    expect(io.read(50)).to eq("barbaz")
   end
 
   it "write single byte" do
     io = StringIO.new
     io.write_byte 97_u8
-    io.to_s.should eq("a")
+    expect(io.to_s).to eq("a")
   end
 
   it "writes and reads" do
     io = StringIO.new
     io << "foo" << "bar"
-    io.gets.should eq("foobar")
+    expect(io.gets).to eq("foobar")
   end
 
   it "does puts" do
     io = StringIO.new
     io.puts
-    io.to_s.should eq("\n")
+    expect(io.to_s).to eq("\n")
   end
 
   it "read chars from UTF-8 string" do
     io = StringIO.new("há日本語")
-    io.read_char.should eq('h')
-    io.read_char.should eq('á')
-    io.read_char.should eq('日')
-    io.read_char.should eq('本')
-    io.read_char.should eq('語')
-    io.read_char.should eq(nil)
+    expect(io.read_char).to eq('h')
+    expect(io.read_char).to eq('á')
+    expect(io.read_char).to eq('日')
+    expect(io.read_char).to eq('本')
+    expect(io.read_char).to eq('語')
+    expect(io.read_char).to eq(nil)
   end
 
   it "does each_line" do
@@ -127,15 +127,15 @@ describe "StringIO" do
     io.each_line do |line|
       case counter
       when 0
-        line.should eq("a\n")
+        expect(line).to eq("a\n")
       when 1
-        line.should eq("bb\n")
+        expect(line).to eq("bb\n")
       when 2
-        line.should eq("cc")
+        expect(line).to eq("cc")
       end
       counter += 1
     end
-    counter.should eq(3)
+    expect(counter).to eq(3)
   end
 
   it "writes an array of btyes" do
@@ -143,12 +143,12 @@ describe "StringIO" do
       bytes = ['a'.ord.to_u8, 'b'.ord.to_u8]
       io.write bytes
     end
-    str.should eq("ab")
+    expect(str).to eq("ab")
   end
 
   it "raises on EOF with read_line" do
     str = StringIO.new("hello")
-    str.read_line.should eq("hello")
+    expect(str.read_line).to eq("hello")
 
     expect_raises IO::EOFError, "end of file reached" do
       str.read_line
@@ -157,8 +157,8 @@ describe "StringIO" do
 
   it "raises on EOF with readline and delimiter" do
     str = StringIO.new("hello")
-    str.read_line('e').should eq("he")
-    str.read_line('e').should eq("llo")
+    expect(str.read_line('e')).to eq("he")
+    expect(str.read_line('e')).to eq("llo")
 
     expect_raises IO::EOFError, "end of file reached" do
       str.read_line
@@ -168,12 +168,12 @@ describe "StringIO" do
   it "writes with printf" do
     str = StringIO.new
     str.printf "Hello %d", 123
-    str.to_s.should eq("Hello 123")
+    expect(str.to_s).to eq("Hello 123")
   end
 
   it "writes with printf as an array" do
     str = StringIO.new
     str.printf "Hello %d", [123]
-    str.to_s.should eq("Hello 123")
+    expect(str.to_s).to eq("Hello 123")
   end
 end

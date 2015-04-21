@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 private def expect_to_s(original, expected = original, file = __FILE__, line = __LINE__)
   it "does to_s of #{original.inspect}", file, line do
-    Parser.parse(original).to_s.should eq(expected), file, line
+    expect(Parser.parse(original).to_s).to eq(expected), file, line
   end
 end
 

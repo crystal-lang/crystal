@@ -231,7 +231,7 @@ describe "Type inference: module" do
       Foo
       ") {
       foo = types["Foo"]
-      foo.module?.should be_true
+      expect(foo.module?).to be_true
       foo.metaclass
     }
   end
@@ -243,7 +243,7 @@ describe "Type inference: module" do
       Foo
       ") {
       foo = types["Foo"]
-      foo.module?.should be_true
+      expect(foo.module?).to be_true
       foo.metaclass
     }
   end

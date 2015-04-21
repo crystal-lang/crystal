@@ -130,7 +130,7 @@ describe "Type inference: lib" do
     mod = result.program
     lib_type = mod.types["LibC"] as LibType
     foo = lib_type.lookup_first_def("foo", false) as External
-    foo.real_name.should eq("bar")
+    expect(foo.real_name).to eq("bar")
   end
 
   it "error if passing type to LibC with to_unsafe but type doesn't match" do
@@ -360,9 +360,9 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(2)
-    attrs[0].lib.should eq("SDL")
-    attrs[1].lib.should eq("SDLMain")
+    expect(attrs.length).to eq(2)
+    expect(attrs[0].lib).to eq("SDL")
+    expect(attrs[1].lib).to eq("SDLMain")
   end
 
   it "supports forward references (#399)" do
@@ -419,9 +419,9 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(2)
-    attrs[0].lib.should eq("SDL")
-    attrs[1].lib.should eq("SDLMain")
+    expect(attrs.length).to eq(2)
+    expect(attrs[0].lib).to eq("SDL")
+    expect(attrs[1].lib).to eq("SDLMain")
   end
 
   it "reopens lib and adds same link attributes" do
@@ -439,7 +439,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(1)
-    attrs[0].lib.should eq("SDL")
+    expect(attrs.length).to eq(1)
+    expect(attrs[0].lib).to eq("SDL")
   end
 end

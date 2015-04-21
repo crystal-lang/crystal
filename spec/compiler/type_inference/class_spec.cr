@@ -33,7 +33,7 @@ describe "Type inference: class" do
     end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
-    type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    expect(type.instance_vars["@coco"].type).to eq(mod.union_of(mod.nil, mod.int32))
   end
 
   it "types generic of generic type" do
@@ -73,11 +73,11 @@ describe "Type inference: class" do
     mod, node = result.program, result.node as Expressions
     foo = mod.types["Foo"] as GenericClassType
 
-    node[1].type.should eq(foo.instantiate([mod.int32] of TypeVar))
-    (node[1].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    expect(node[1].type).to eq(foo.instantiate([mod.int32] of TypeVar))
+    expect((node[1].type as InstanceVarContainer).instance_vars["@coco"].type).to eq(mod.union_of(mod.nil, mod.int32))
 
-    node[3].type.should eq(foo.instantiate([mod.float64] of TypeVar))
-    (node[3].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
+    expect(node[3].type).to eq(foo.instantiate([mod.float64] of TypeVar))
+    expect((node[3].type as InstanceVarContainer).instance_vars["@coco"].type).to eq(mod.union_of(mod.nil, mod.float64))
   end
 
   it "types instance variable on getter" do
@@ -103,8 +103,8 @@ describe "Type inference: class" do
     result = infer_type input
     mod, node = result.program, result.node as Expressions
 
-    node[3].type.should eq(mod.union_of(mod.nil, mod.int32))
-    input.last.type.should eq(mod.union_of(mod.nil, mod.float64))
+    expect(node[3].type).to eq(mod.union_of(mod.nil, mod.int32))
+    expect(input.last.type).to eq(mod.union_of(mod.nil, mod.float64))
   end
 
   it "types recursive type" do
@@ -127,8 +127,8 @@ describe "Type inference: class" do
     mod, input = result.program, result.node as Expressions
     node = mod.types["Node"] as NonGenericClassType
 
-    node.lookup_instance_var("@next").type.should eq(mod.union_of(mod.nil, node))
-    input.last.type.should eq(node)
+    expect(node.lookup_instance_var("@next").type).to eq(mod.union_of(mod.nil, node))
+    expect(input.last.type).to eq(node)
   end
 
   it "types self inside method call without obj" do
@@ -214,8 +214,8 @@ describe "Type inference: class" do
       end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
-    type.type_vars["T"].type.should eq(mod.int32)
-    type.instance_vars["@value"].type.should eq(mod.int32)
+    expect(type.type_vars["T"].type).to eq(mod.int32)
+    expect(type.instance_vars["@value"].type).to eq(mod.int32)
   end
 
   it "does automatic type inference of new for generic types 2" do
@@ -233,8 +233,8 @@ describe "Type inference: class" do
     end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
-    type.type_vars["T"].type.should eq(mod.bool)
-    type.instance_vars["@value"].type.should eq(mod.bool)
+    expect(type.type_vars["T"].type).to eq(mod.bool)
+    expect(type.instance_vars["@value"].type).to eq(mod.bool)
   end
 
   it "does automatic type inference of new for nested generic type" do
@@ -252,8 +252,8 @@ describe "Type inference: class" do
     result = infer_type nodes
     mod = result.program
     type = nodes.last.type as GenericClassInstanceType
-    type.type_vars["T"].type.should eq(mod.int32)
-    type.instance_vars["@x"].type.should eq(mod.int32)
+    expect(type.type_vars["T"].type).to eq(mod.int32)
+    expect(type.instance_vars["@x"].type).to eq(mod.int32)
   end
 
   it "reports uninitialized constant" do
@@ -631,7 +631,7 @@ describe "Type inference: class" do
       B.new(A.new).foo
       ") { int32 }
     b = result.program.types["B"] as InstanceVarContainer
-    b.instance_vars.length.should eq(0)
+    expect(b.instance_vars.length).to eq(0)
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do

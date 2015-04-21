@@ -38,9 +38,9 @@ def assert_type(str, flags = nil)
   input = program.infer_type input
   expected_type = with program yield program
   if input.is_a?(Expressions)
-    input.last.type.should eq(expected_type)
+    expect(input.last.type).to eq(expected_type)
   else
-    input.type.should eq(expected_type)
+    expect(input.type).to eq(expected_type)
   end
   InferTypeResult.new(program, input)
 end
@@ -63,19 +63,19 @@ def assert_normalize(from, to, flags = nil)
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = normalizer.normalize(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip)
+  expect(to_nodes.to_s.strip).to eq(to.strip)
 end
 
 def assert_expand(from, to)
   from_nodes = Parser.parse(from)
   to_nodes = LiteralExpander.new(Program.new).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip)
+  expect(to_nodes.to_s.strip).to eq(to.strip)
 end
 
 def assert_after_type_inference(before, after)
   node = Parser.parse(before)
   result = infer_type node
-  result.node.to_s.strip.should eq(after.strip)
+  expect(result.node.to_s.strip).to eq(after.strip)
 end
 
 def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__)
@@ -84,9 +84,9 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
       parse str
       fail "expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
-      ex.message.not_nil!.includes?(message).should be_true, metafile, metaline if message
-      ex.line_number.should eq(line), metafile, metaline if line
-      ex.column_number.should eq(column), metafile, metaline if column
+      expect(ex.message.not_nil!.includes?(message)).to be_true, metafile, metaline if message
+      expect(ex.line_number).to eq(line), metafile, metaline if line
+      expect(ex.column_number).to eq(column), metafile, metaline if column
     end
   end
 end
@@ -111,7 +111,7 @@ def assert_macro(macro_args, macro_body, expected)
   result = program.expand_macro program, a_macro, call
   result = result.source
   result = result[0 .. -2] if result.ends_with?(';')
-  result.should eq(expected)
+  expect(result).to eq(expected)
 end
 
 def parse(string, wants_doc = false)

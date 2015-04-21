@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Codegen: class var" do
   it "codegens class var" do
-    run("
+    expect(run("
       class Foo
         @@foo = 1
 
@@ -12,11 +12,11 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens class var as nil" do
-    run("
+    expect(run("
       require \"nil\"
 
       class Foo
@@ -26,11 +26,11 @@ describe "Codegen: class var" do
       end
 
       Foo.foo.to_i
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "codegens class var inside instance method" do
-    run("
+    expect(run("
       class Foo
         @@foo = 1
 
@@ -40,11 +40,11 @@ describe "Codegen: class var" do
       end
 
       Foo.new.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens class var as nil if assigned for the first time inside method" do
-    run("
+    expect(run("
       require \"nil\"
 
       class Foo
@@ -55,25 +55,25 @@ describe "Codegen: class var" do
       end
 
       Foo.foo.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens class var of program" do
-    run("
+    expect(run("
       @@foo = 1
       @@foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens class var of program as nil" do
-    run("
+    expect(run("
       require \"nil\"
       @@foo.to_i
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "codegens class var inside module" do
-    run("
+    expect(run("
       module Foo
         @@foo = 1
 
@@ -83,11 +83,11 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "accesses class var from fun literal" do
-    run("
+    expect(run("
       class Foo
         @@a = 1
 
@@ -97,6 +97,6 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 end

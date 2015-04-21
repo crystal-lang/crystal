@@ -16,9 +16,9 @@ describe "Logger" do
       logger.info "info:skip"
       logger.error "error:show"
 
-      r.gets.should match(/info:show/)
-      r.gets.should match(/debug:show/)
-      r.gets.should match(/error:show/)
+      expect(r.gets).to match(/info:show/)
+      expect(r.gets).to match(/debug:show/)
+      expect(r.gets).to match(/error:show/)
     end
   end
 
@@ -27,7 +27,7 @@ describe "Logger" do
       logger = Logger.new(w)
       logger.info 12345
 
-      r.gets.should match(/12345/)
+      expect(r.gets).to match(/12345/)
     end
   end
 
@@ -37,7 +37,7 @@ describe "Logger" do
       logger.progname = "crystal"
       logger.warn "message"
 
-      r.gets.should match(/W, \[.+? #\d+\]  WARN -- crystal: message\n/)
+      expect(r.gets).to match(/W, \[.+? #\d+\]  WARN -- crystal: message\n/)
     end
   end
 
@@ -49,7 +49,7 @@ describe "Logger" do
       end
       logger.warn "message", "prog"
 
-      r.gets.should eq("W prog: message\n")
+      expect(r.gets).to eq("W prog: message\n")
     end
   end
 
@@ -59,8 +59,8 @@ describe "Logger" do
       logger.error { "message" }
       logger.unknown { "another message" }
 
-      r.gets.should match(/ERROR -- : message\n/)
-      r.gets.should match(/  ANY -- : another message\n/)
+      expect(r.gets).to match(/ERROR -- : message\n/)
+      expect(r.gets).to match(/  ANY -- : another message\n/)
     end
   end
 
@@ -70,8 +70,8 @@ describe "Logger" do
       logger.error("crystal") { "message" }
       logger.unknown("shard") { "another message" }
 
-      r.gets.should match(/ERROR -- crystal: message\n/)
-      r.gets.should match(/  ANY -- shard: another message\n/)
+      expect(r.gets).to match(/ERROR -- crystal: message\n/)
+      expect(r.gets).to match(/  ANY -- shard: another message\n/)
     end
   end
 end

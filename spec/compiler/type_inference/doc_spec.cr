@@ -9,8 +9,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    expect(foo.doc).to eq("Hello")
+    expect(foo.locations.length).to eq(1)
   end
 
   it "stores doc for abstract class" do
@@ -21,7 +21,7 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
+    expect(foo.doc).to eq("Hello")
   end
 
   it "stores doc for struct" do
@@ -32,8 +32,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    expect(foo.doc).to eq("Hello")
+    expect(foo.locations.length).to eq(1)
   end
 
   it "stores doc for module" do
@@ -44,8 +44,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    expect(foo.doc).to eq("Hello")
+    expect(foo.locations.length).to eq(1)
   end
 
   it "stores doc for def" do
@@ -59,7 +59,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
   end
 
   it "stores doc for def when using ditto" do
@@ -77,7 +77,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar2").first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
   end
 
   it "stores doc for def with visibility" do
@@ -91,7 +91,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
   end
 
   it "stores doc for def with attribute" do
@@ -106,7 +106,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
   end
 
   it "stores doc for abstract def" do
@@ -119,7 +119,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
   end
 
   it "stores doc for macro" do
@@ -133,7 +133,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     bar = foo.metaclass.lookup_macros("bar").not_nil!.first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
   end
 
   it "stores doc for fun def" do
@@ -145,7 +145,7 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.lookup_defs("foo").first
-    foo.doc.should eq("Hello")
+    expect(foo.doc).to eq("Hello")
   end
 
   it "stores doc for enum" do
@@ -156,8 +156,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    expect(foo.doc).to eq("Hello")
+    expect(foo.locations.length).to eq(1)
   end
 
   it "stores doc for enum with @[Flags]" do
@@ -169,7 +169,7 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
+    expect(foo.doc).to eq("Hello")
   end
 
   it "stores doc for enum member" do
@@ -182,8 +182,8 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     a = foo.types["A"]
-    a.doc.should eq("Hello")
-    a.locations.length.should eq(1)
+    expect(a.doc).to eq("Hello")
+    expect(a.locations.length).to eq(1)
   end
 
   it "stores doc for constant" do
@@ -193,8 +193,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     a = program.types["A"]
-    a.doc.should eq("Hello")
-    a.locations.length.should eq(1)
+    expect(a.doc).to eq("Hello")
+    expect(a.locations.length).to eq(1)
   end
 
   it "stores doc for alias" do
@@ -204,8 +204,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     a = program.types["A"]
-    a.doc.should eq("Hello")
-    a.locations.length.should eq(1)
+    expect(a.doc).to eq("Hello")
+    expect(a.locations.length).to eq(1)
   end
 
   it "stores doc for nodes defined in macro call" do
@@ -230,10 +230,10 @@ describe "Type inference: doc" do
     foo = program.types["Foo"]
 
     bar = foo.lookup_defs("bar").first
-    bar.doc.should eq("Hello")
+    expect(bar.doc).to eq("Hello")
 
     bar_assign = foo.lookup_defs("bar=").first
-    bar_assign.doc.should eq("Hello")
+    expect(bar_assign.doc).to eq("Hello")
   end
 
   it "stores doc for nodes defined in macro call (2)" do
@@ -248,7 +248,7 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
+    expect(foo.doc).to eq("Hello")
   end
 
   it "stores doc for class if reopening" do
@@ -262,8 +262,8 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
-    foo.locations.length.should eq(2)
+    expect(foo.doc).to eq("Hello")
+    expect(foo.locations.length).to eq(2)
   end
 
   it "stores doc for module if reopening" do
@@ -277,7 +277,7 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.doc.should eq("Hello")
+    expect(foo.doc).to eq("Hello")
   end
 
   it "stores locations for auto-generated module" do
@@ -287,6 +287,6 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.locations.length.should eq(1)
+    expect(foo.locations.length).to eq(1)
   end
 end
