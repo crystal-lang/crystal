@@ -73,4 +73,16 @@ describe "Code gen: alias" do
       foo(2).to_i
       )).to_i.should eq(1)
   end
+
+  it "doesn't break with alias for link attributes" do
+    result = infer_type(%(
+      alias Foo = Int32
+
+      module B
+        alias Bar = Foo
+        alias Foo = B
+      end
+      ))
+    result.program.link_attributes
+  end
 end
