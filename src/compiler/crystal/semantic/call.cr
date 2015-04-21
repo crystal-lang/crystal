@@ -485,6 +485,14 @@ class Crystal::Call
     case lookup
     when VirtualType
       parents = lookup.base_type.parents
+    when NonGenericModuleType
+      ancestors = parent_visitor.scope.ancestors
+      index_of_ancestor = ancestors.index(lookup).not_nil!
+      parents = ancestors[index_of_ancestor + 1 .. -1]
+    when GenericModuleType
+      ancestors = parent_visitor.scope.ancestors
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
+      parents = ancestors[index_of_ancestor + 1 .. -1]
     when GenericType
       parents = parent_visitor.typed_def.owner.parents
     else
@@ -494,13 +502,14 @@ class Crystal::Call
     if parents && parents.length > 0
       parents_length = parents.length
       parents.each_with_index do |parent, i|
-        if i == parents_length - 1 || parent.lookup_first_def(enclosing_def.name, block)
+        if parent.lookup_first_def(enclosing_def.name, block)
           return lookup_matches_in(parent, arg_types, scope, enclosing_def.name)
         end
       end
+      lookup_matches_in(parents.last, arg_types, scope, enclosing_def.name)
+    else
+      raise "there's no superclass in this scope"
     end
-
-    nil
   end
 
   def lookup_previous_def_matches(arg_types)

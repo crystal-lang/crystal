@@ -178,4 +178,120 @@ describe "Type inference: super" do
       ),
       "no overload matches 'Foo#initialize'"
   end
+
+  it "calls super in module method (1) (#556)" do
+    assert_type(%(
+      class Parent
+        def a
+          1
+        end
+      end
+
+      module Mod
+        def a
+          super
+        end
+      end
+
+      class Child < Parent
+        include Mod
+      end
+
+      Child.new.a
+      )) { int32 }
+  end
+
+  it "calls super in module method (2) (#556)" do
+    assert_type(%(
+      class Parent
+        def a
+          1
+        end
+      end
+
+      module Mod2
+        def a
+          'a'
+        end
+      end
+
+      module Mod
+        def a
+          super
+        end
+      end
+
+      class Child < Parent
+        include Mod2
+        include Mod
+      end
+
+      Child.new.a
+      )) { char }
+  end
+
+  it "calls super in module method (3) (#556)" do
+    assert_type(%(
+      class Parent
+        def a
+          1
+        end
+      end
+
+      module Mod2
+      end
+
+      module Mod
+        def a
+          super
+        end
+      end
+
+      class Child < Parent
+        include Mod2
+        include Mod
+      end
+
+      Child.new.a
+      )) { int32 }
+  end
+
+  it "errors if calling super on module method and not found" do
+    assert_error %(
+      module Mod
+        def a
+          super
+        end
+      end
+
+      class Child
+        include Mod
+      end
+
+      Child.new.a
+      ),
+      "undefined method 'a'"
+  end
+
+  it "calls super in generic module method" do
+    assert_type(%(
+      class Parent
+        def a
+          1
+        end
+      end
+
+      module Mod(T)
+        def a
+          super
+        end
+      end
+
+      class Child < Parent
+        include Mod(Int32)
+      end
+
+      Child.new.a
+      )) { int32 }
+  end
 end

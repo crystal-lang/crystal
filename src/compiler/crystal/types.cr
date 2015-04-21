@@ -261,6 +261,19 @@ module Crystal
       nil
     end
 
+    def ancestors
+      ancestors = [] of Type
+      collect_ancestors(ancestors)
+      ancestors
+    end
+
+    def collect_ancestors(ancestors)
+      parents.try &.each do |parent|
+        ancestors << parent
+        parent.collect_ancestors(ancestors)
+      end
+    end
+
     def superclass
       raise "Bug: #{self} doesn't implement superclass"
     end

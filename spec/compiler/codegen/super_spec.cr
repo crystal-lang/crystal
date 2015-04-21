@@ -254,4 +254,48 @@ describe "Codegen: super" do
       Foo(Int32).new.foo
       ))
   end
+
+  it "calls super in module method (#556)" do
+    run(%(
+      class Parent
+        def a
+          1
+        end
+      end
+
+      module Mod
+        def a
+          super
+        end
+      end
+
+      class Child < Parent
+        include Mod
+      end
+
+      Child.new.a
+      )).to_i.should eq(1)
+  end
+
+  it "calls super in generic module method" do
+    run(%(
+      class Parent
+        def a
+          1
+        end
+      end
+
+      module Mod(T)
+        def a
+          super
+        end
+      end
+
+      class Child < Parent
+        include Mod(Int32)
+      end
+
+      Child.new.a
+      )).to_i.should eq(1)
+  end
 end
