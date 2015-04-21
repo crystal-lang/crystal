@@ -175,21 +175,21 @@ describe "type inference: alias" do
     end
   end
 
-    it "includes module through alias" do
-      assert_type(%(
-        module Moo
-          def bar
-            1
-          end
+  it "includes module through alias" do
+    assert_type(%(
+      module Moo
+        def bar
+          1
         end
+      end
 
-        alias Alias = Moo
+      alias Alias = Moo
 
-        class Foo
-          include Alias
-        end
+      class Foo
+        include Alias
+      end
 
-        Foo.new.bar
-        )) { int32 }
-    end
+      Foo.new.bar
+      )) { int32 }
+  end
 end
