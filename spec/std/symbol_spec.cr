@@ -5,9 +5,10 @@ describe Symbol do
     expect(:foo.inspect).to eq(%(:foo))
     expect(:"{".inspect).to eq(%(:"{"))
     expect(:"hi there".inspect).to eq(%(:"hi there"))
-    expect(# :かたな.inspect).to eq(%(:かたな))
+    # TODO: make it a pending spec
+    #expect(:かたな.inspect).to eq(%(:かたな))
   end
-  
+
   it "can be compared with another symbol" do
     expect(:s.between?(:a, :z)).to be_true
     expect(:a.between?(:s, :z)).to be_false

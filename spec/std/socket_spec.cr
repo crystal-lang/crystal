@@ -62,17 +62,18 @@ describe "TCPSocket" do
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
 
-        expect(# client.addr.family).to eq("AF_INET")
-        expect(# client.addr.ip_address).to eq("127.0.0.1")
+        # TODO: make pending spec
+        #expect(client.addr.family).to eq("AF_INET")
+        #expect(client.addr.ip_address).to eq("127.0.0.1")
 
         sock = server.accept
 
-        expect(# sock.addr.family).to eq("AF_INET6")
-        expect(# sock.addr.ip_port).to eq(12345)
-        expect(# sock.addr.ip_address).to eq("::ffff:127.0.0.1")
+        #expect(sock.addr.family).to eq("AF_INET6")
+        #expect(sock.addr.ip_port).to eq(12345)
+        #expect(sock.addr.ip_address).to eq("::ffff:127.0.0.1")
 
-        expect(# sock.peeraddr.family).to eq("AF_INET6")
-        expect(# sock.peeraddr.ip_address).to eq("::ffff:127.0.0.1")
+        #expect(sock.peeraddr.family).to eq("AF_INET6")
+        #expect(sock.peeraddr.ip_address).to eq("::ffff:127.0.0.1")
 
         client << "ping"
         expect(sock.read(4)).to eq("ping")

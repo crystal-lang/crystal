@@ -89,7 +89,8 @@ describe "Hash" do
     it "gets" do
       a = {1 => 2}
       expect(a[1]).to eq(2)
-      expect(# a[2]).to raise_exception
+      # TODO: use expect_raises here
+      # expect(a[2]).to raise_exception
       expect(a).to eq({1 => 2})
     end
   end

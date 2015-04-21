@@ -163,10 +163,11 @@ describe "Code gen: class" do
       ").to_i).to eq(2)
   end
 
-  # it "gets object_id of class" do
-  #   program = Program.new
-  expect()#   program.run("Reference.object_id").to_i).to eq(program.reference.metaclass.type_id)
-  # end
+  # FIXME: figure out why it is commented but not pending
+  #it "gets object_id of class" do
+  #  program = Program.new
+  #  expect(program.run("Reference.object_id").to_i).to eq(program.reference.metaclass.type_id)
+  #end
 
   it "calls method on Class class" do
     expect(run("
