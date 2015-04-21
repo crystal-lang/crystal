@@ -1380,6 +1380,8 @@ module Crystal
       created_new_type = false
 
       if type
+        type = type.remove_alias
+
         unless type.is_a?(ClassType)
           node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
         end
@@ -1494,6 +1496,8 @@ module Crystal
 
       type = scope.types[name]?
       if type
+        type = type.remove_alias
+
         unless type.module?
           node.raise "#{type} is not a module, it's a #{type.type_desc}"
         end

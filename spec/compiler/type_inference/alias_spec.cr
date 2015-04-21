@@ -136,4 +136,60 @@ describe "type inference: alias" do
       ),
       "undefined constant Rec::A"
   end
+
+  %w(class module struct).each do |type|
+    it "reopens #{type} through alias" do
+      assert_type(%(
+        #{type} Foo
+        end
+
+        alias Bar = Foo
+
+        #{type} Bar
+          def self.bar
+            1
+          end
+        end
+
+        Bar.bar
+        )) { int32 }
+    end
+  end
+
+  %w(class struct).each do |type|
+    it "inherits #{type} through alias" do
+      assert_type(%(
+        #{type} Parent
+        end
+
+        alias Alias = Parent
+
+        #{type} Child  < Alias
+          def self.bar
+            1
+          end
+        end
+
+        Child.bar
+        )) { int32 }
+    end
+  end
+
+    it "includes module through alias" do
+      assert_type(%(
+        module Moo
+          def bar
+            1
+          end
+        end
+
+        alias Alias = Moo
+
+        class Foo
+          include Alias
+        end
+
+        Foo.new.bar
+        )) { int32 }
+    end
 end
