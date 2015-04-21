@@ -112,4 +112,28 @@ describe "type inference: alias" do
       command(foo)
       )) { int32 }
   end
+
+  it "resolves type through alias (#563)" do
+    assert_type(%(
+      module A
+        Foo = 1
+      end
+
+      alias B = A
+      B::Foo
+      )) { int32 }
+  end
+
+  it "errors if trying to resolve type of recursive alias" do
+    assert_error %(
+      class Foo(T)
+        A = 1
+      end
+
+      alias Rec = Int32 | Foo(Rec)
+
+      Rec::A
+      ),
+      "undefined constant Rec::A"
+  end
 end
