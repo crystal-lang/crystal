@@ -84,7 +84,7 @@ class Hash(K, V)
       if block = @block
         block.call(self, key)
       else
-        raise MissingKey.new "Missing hash value: #{key}"
+        raise MissingKey.new "Missing hash value: #{key.inspect}"
       end
     end
   end

@@ -327,8 +327,8 @@ def gets
   STDIN.gets
 end
 
-def read_line
-  STDIN.readline
+def read_line(delimiter = '\n' : Char)
+  STDIN.read_line(delimiter)
 end
 
 def print(obj)

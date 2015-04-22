@@ -8,7 +8,7 @@ struct SimpleHash(K, V)
 
   def [](key)
     fetch(key) do
-      raise MissingKey.new "Missing hash value: #{key}"
+      raise MissingKey.new "Missing hash value: #{key.inspect}"
     end
   end
 
@@ -98,7 +98,7 @@ struct SimpleHash(K, V)
   def object_id
     @values.object_id
   end
-  
+
   def inspect(io : IO)
     to_s(io)
   end
