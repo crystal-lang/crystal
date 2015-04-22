@@ -177,6 +177,7 @@ module Crystal
 
         meta_var = new_meta_var(var.name)
         meta_var.bind_to(var)
+        meta_var.freeze_type = node.type
 
         @vars[var.name] = meta_var
         @meta_vars[var.name] = meta_var
@@ -353,7 +354,13 @@ module Crystal
       @type_filters = nil
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
-      meta_var.bind_to value
+
+      begin
+        meta_var.bind_to value
+      rescue ex : FrozenTypeException
+        target.raise ex.message
+      end
+
       meta_var.assigned_to = true
       check_closured meta_var
 

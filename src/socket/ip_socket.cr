@@ -10,13 +10,13 @@ class IPSocket < Socket
 
       if addrlen == sizeof(LibC::SockAddrIn6)
         family_name = "AF_INET6"
-        addr = (pointerof(addr) as LibC::SockAddrIn6*).value
+        result_addr = (pointerof(addr) as LibC::SockAddrIn6*).value
       else
         family_name = "AF_INET"
-        addr = (pointerof(addr) as LibC::SockAddrIn*).value
+        result_addr = (pointerof(addr) as LibC::SockAddrIn*).value
       end
 
-      Addr.new(family_name, LibC.htons(addr.port.to_i32).to_u16, Socket.inet_ntop(addr))
+      Addr.new(family_name, LibC.htons(result_addr.port.to_i32).to_u16, Socket.inet_ntop(result_addr))
     end
   end
 

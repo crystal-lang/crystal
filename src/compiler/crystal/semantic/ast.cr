@@ -30,6 +30,16 @@ module Crystal
       @type = type
     end
 
+    def set_type_from(type, from)
+      set_type type
+    rescue ex : FrozenTypeException
+      if from && !location
+        from.raise ex.message
+      else
+        ::raise ex
+      end
+    end
+
     def type=(type)
       return if type.nil? || @type.same?(type)
 
@@ -136,7 +146,7 @@ module Crystal
       return if @type.same? new_type
       return unless new_type
 
-      set_type(map_type(new_type))
+      set_type_from(map_type(new_type), from)
       @dirty = true
     end
 
@@ -333,7 +343,7 @@ module Crystal
               if visitor
                 numeric_value = visitor.interpret_enum_value(value)
                 type_var = NumberLiteral.new(numeric_value, :i32)
-                type_var.set_type(node_type.program.int32)
+                type_var.set_type_from(node_type.program.int32, from)
               else
                 node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
               end
