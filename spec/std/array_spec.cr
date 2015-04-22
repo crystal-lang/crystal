@@ -897,4 +897,10 @@ describe "Array" do
     ary2 = ary.map_with_index { |e, i| e + i }
     ary2.should eq([1, 2, 4, 5])
   end
+
+  it "does + with different types (#568)" do
+    a = [1, 2, 3]
+    a += ["hello"]
+    a.should eq([1, 2, 3, "hello"])
+  end
 end
