@@ -249,7 +249,7 @@ module IO
     count = buffer.length
     while count > 0
       read_bytes = read(buffer, count)
-      raise "Unexpected EOF" if read_bytes == 0
+      raise EOFError.new if read_bytes == 0
       count -= read_bytes
       buffer += read_bytes
     end
