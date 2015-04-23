@@ -150,6 +150,30 @@ describe Iterator do
     end
   end
 
+  describe "uniq" do
+    it "without block" do
+      iter = (1..8).each.map { |x| x % 3 }.uniq
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(0)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+    end
+
+    it "with block" do
+      iter = (1..8).each.uniq { |x| x % 3 }
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+    end
+  end
+
   it "combines many iterators" do
     (1..100).each
             .select { |x| 50 <= x < 60 }

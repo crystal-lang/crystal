@@ -15,12 +15,12 @@ module Iterator(T)
     Map(typeof(self), T, U).new(self, func)
   end
 
-  def select(&func : T -> _)
-    Select(typeof(self), T).new(self, func)
+  def select(&func : T -> U)
+    Select(typeof(self), T, U).new(self, func)
   end
 
-  def reject(&func : T -> _)
-    Reject(typeof(self), T).new(self, func)
+  def reject(&func : T -> U)
+    Reject(typeof(self), T, U).new(self, func)
   end
 
   def take(n)
@@ -37,6 +37,14 @@ module Iterator(T)
 
   def cycle
     Cycle(typeof(self), T).new(self)
+  end
+
+  def uniq
+    uniq &.itself
+  end
+
+  def uniq(&func : T -> U)
+    Uniq(typeof(self), T, U).new(self, func)
   end
 
   # TODO: use default argument "offset" after 0.6.1, a bug prevents using it
@@ -88,7 +96,7 @@ module Iterator(T)
     end
   end
 
-  struct Select(I, T)
+  struct Select(I, T, B)
     include Iterator(T)
 
     def initialize(@iter : Iterator(T), @func : T -> B)
@@ -111,7 +119,7 @@ module Iterator(T)
     end
   end
 
-  struct Reject(I, T)
+  struct Reject(I, T, B)
     include Iterator(T)
 
     def initialize(@iter : Iterator(T), @func : T -> B)
@@ -295,6 +303,35 @@ module Iterator(T)
     def rewind
       @iterator.rewind
       self
+    end
+  end
+
+  struct Uniq(I, T, U)
+    include Iterator(T)
+
+    def initialize(@iterator : Iterator(T), @func : T -> U)
+      @hash = {} of T => Bool
+    end
+
+    def next
+      while true
+        value = @iterator.next
+        if value.is_a?(Stop)
+          return stop
+        end
+
+        transformed = @func.call value
+
+        unless @hash[transformed]?
+          @hash[transformed] = true
+          return value
+        end
+      end
+    end
+
+    def rewind
+      @iterator.rewind
+      @hash.clear
     end
   end
 end
