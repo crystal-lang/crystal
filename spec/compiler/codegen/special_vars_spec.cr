@@ -73,4 +73,31 @@ describe "Codegen: special vars" do
       $?
       )).to_string.should eq("hey")
   end
+
+  it "works lazily" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        getter string
+
+        def initialize(@string)
+        end
+      end
+
+      def bar(&block : Foo -> _)
+        block
+      end
+
+      block = bar do |foo|
+        case foo.string
+        when /foo-(.+)/
+          $1
+        else
+          "baz"
+        end
+      end
+      block.call(Foo.new("foo-bar"))
+      )).to_string.should eq("bar")
+  end
 end

@@ -57,7 +57,6 @@ module Crystal
 
     @unreachable = false
     @is_initialize = false
-    @has_special_vars_defined = false
 
     def initialize(@mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
@@ -157,7 +156,8 @@ module Crystal
           node.type = current_type.metaclass
         end
       elsif node.special_var?
-        define_special_var(node.name, mod.nil_var)
+        special_var = define_special_var(node.name, mod.nil_var)
+        node.bind_to special_var
       else
         node.raise "read before definition of '#{node.name}'"
       end
@@ -3342,7 +3342,7 @@ module Crystal
       end
 
       @vars[name] = meta_var
-      @has_special_vars_defined = true
+      meta_var
     end
 
     def new_meta_var(name, context = current_context)
