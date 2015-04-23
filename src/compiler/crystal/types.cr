@@ -261,6 +261,19 @@ module Crystal
       nil
     end
 
+    def ancestors
+      ancestors = [] of Type
+      collect_ancestors(ancestors)
+      ancestors
+    end
+
+    def collect_ancestors(ancestors)
+      parents.try &.each do |parent|
+        ancestors << parent
+        parent.collect_ancestors(ancestors)
+      end
+    end
+
     def superclass
       raise "Bug: #{self} doesn't implement superclass"
     end
@@ -1868,9 +1881,18 @@ module Crystal
     getter :link_attributes
     property? :used
 
-    def initialize(program, container, name, @link_attributes)
+    def initialize(program, container, name)
       super(program, container, name)
       @used = false
+    end
+
+    def add_link_attributes(link_attributes)
+      if link_attributes
+        my_link_attributes = @link_attributes ||= [] of LinkAttribute
+        link_attributes.each do |attr|
+          my_link_attributes << attr unless my_link_attributes.includes?(attr)
+        end
+      end
     end
 
     def metaclass

@@ -403,4 +403,43 @@ it "errors if unknown named arg" do
       ),
       "can't define 'def' for lib"
   end
+
+  it "reopens lib and adds more link attributes" do
+    result = infer_type(%(
+      @[Link("SDL")]
+      lib LibSDL
+        fun init = SDL_Init(flags : UInt32) : Int32
+      end
+
+      @[Link("SDLMain")]
+      lib LibSDL
+      end
+
+      LibSDL.init(0_u32)
+      ))
+    sdl = result.program.types["LibSDL"] as LibType
+    attrs = sdl.link_attributes.not_nil!
+    attrs.length.should eq(2)
+    attrs[0].lib.should eq("SDL")
+    attrs[1].lib.should eq("SDLMain")
+  end
+
+  it "reopens lib and adds same link attributes" do
+    result = infer_type(%(
+      @[Link("SDL")]
+      lib LibSDL
+        fun init = SDL_Init(flags : UInt32) : Int32
+      end
+
+      @[Link("SDL")]
+      lib LibSDL
+      end
+
+      LibSDL.init(0_u32)
+      ))
+    sdl = result.program.types["LibSDL"] as LibType
+    attrs = sdl.link_attributes.not_nil!
+    attrs.length.should eq(1)
+    attrs[0].lib.should eq("SDL")
+  end
 end

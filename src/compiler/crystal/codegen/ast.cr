@@ -160,9 +160,6 @@ module Crystal
   end
 
   class Def
-    @sret = false
-    property? sret
-
     def mangled_name(self_type)
       name = String.build do |str|
         str << "*"
@@ -237,5 +234,9 @@ module Crystal
     def varargs
       false
     end
+  end
+
+  class External
+    property abi_info
   end
 end

@@ -17,11 +17,21 @@ class Regex
   end
 
   def match(str, pos = 0, options = 0)
+    if byte_index = str.char_index_to_byte_index(pos)
+      match = match_at_byte_index(str, byte_index, options)
+    else
+      match = nil
+    end
+
+    $~ = match
+  end
+
+  def match_at_byte_index(str, byte_index = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
-    ret = LibPCRE.exec(@re, nil, str, str.bytesize, pos, options | NO_UTF8_CHECK, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, nil, str, str.bytesize, byte_index, options | NO_UTF8_CHECK, ovector, ovector_size)
     if ret > 0
-      match = MatchData.new(self, @re, str, pos, ovector, @captures)
+      match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
     else
       match = nil
     end

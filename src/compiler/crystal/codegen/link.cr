@@ -1,5 +1,5 @@
 module Crystal
-  class LinkAttribute
+  struct LinkAttribute
     getter :lib
     getter :ldflags
     getter :framework
@@ -44,7 +44,7 @@ module Crystal
       end
     end
 
-    private def link_attributes
+    def link_attributes
       attrs = [] of LinkAttribute
       add_link_attributes @types, attrs
       attrs
@@ -80,6 +80,8 @@ module Crystal
 
     private def add_link_attributes(types, attrs)
       types.each_value do |type|
+        next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
+
         if type.is_a?(LibType) && type.used? && (link_attrs = type.link_attributes)
           attrs.concat link_attrs
         end

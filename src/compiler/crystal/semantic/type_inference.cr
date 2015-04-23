@@ -71,6 +71,7 @@ module Crystal
       @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
+      @in_is_a = false
       @attributes  = nil
       @lib_def_pass = 0
 
@@ -176,6 +177,7 @@ module Crystal
 
         meta_var = new_meta_var(var.name)
         meta_var.bind_to(var)
+        meta_var.freeze_type = node.type
 
         @vars[var.name] = meta_var
         @meta_vars[var.name] = meta_var
@@ -352,7 +354,13 @@ module Crystal
       @type_filters = nil
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
-      meta_var.bind_to value
+
+      begin
+        meta_var.bind_to value
+      rescue ex : FrozenTypeException
+        target.raise ex.message
+      end
+
       meta_var.assigned_to = true
       check_closured meta_var
 
@@ -718,6 +726,8 @@ module Crystal
     end
 
     def visit(node : FunPointer)
+      return false if node.call?
+
       obj = node.obj
 
       if obj
@@ -1282,7 +1292,9 @@ module Crystal
       node.obj.accept self
 
       @in_type_args += 1
+      @in_is_a = true
       node.const.accept self
+      @in_is_a = false
       @in_type_args -= 1
 
       node.type = mod.bool
@@ -1375,6 +1387,8 @@ module Crystal
       created_new_type = false
 
       if type
+        type = type.remove_alias
+
         unless type.is_a?(ClassType)
           node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
         end
@@ -1489,6 +1503,8 @@ module Crystal
 
       type = scope.types[name]?
       if type
+        type = type.remove_alias
+
         unless type.module?
           node.raise "#{type} is not a module, it's a #{type.type_desc}"
         end
@@ -1576,9 +1592,11 @@ module Crystal
       if type
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
-        type = LibType.new @mod, current_type, node.name, link_attributes
+        type = LibType.new @mod, current_type, node.name
         current_type.types[node.name] = type
       end
+
+      type.add_link_attributes(link_attributes)
 
       pushing_type(type) do
         @lib_def_pass = 1
@@ -2018,13 +2036,23 @@ module Crystal
     end
 
     def end_visit(node : Union)
-      node.type = @mod.type_merge(node.types.map do |subtype|
+      old_in_is_a, @in_is_a = @in_is_a, false
+
+      types = node.types.map do |subtype|
         instance_type = subtype.type.instance_type
         unless instance_type.allowed_in_generics?
           subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
         end
         instance_type
-      end)
+      end
+
+      @in_is_a = old_in_is_a
+
+      if @in_is_a
+        node.type = @mod.type_merge_union_of(types)
+      else
+        node.type = @mod.type_merge(types)
+      end
     end
 
     def end_visit(node : Virtual)
@@ -2514,7 +2542,12 @@ module Crystal
     end
 
     def visit(node : Self)
-      node.type = scope.instance_type
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+
+      node.type = the_self.instance_type
     end
 
     def visit(node : PointerOf)
@@ -2852,6 +2885,8 @@ module Crystal
           node.body.accept StructOrUnionVisitor.new(self, type)
         end
       end
+
+      type
     end
 
     def check_call_convention_attributes(node)

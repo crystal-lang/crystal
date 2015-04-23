@@ -84,7 +84,10 @@ describe "Regex" do
 
   it "does to_s" do
     /foo/.to_s.should eq("/foo/")
-    /f(o)(x)/.match("fox").to_s.should eq(%(MatchData("fox" ["o", "x"])))
+    /f(o)(x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
+    /fox/.match("the fox").to_s.should eq(%(#<MatchData "fox">))
+    /f(o)(x)/.match("the fox").inspect.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
+    /fox/.match("the fox").inspect.should eq(%(#<MatchData "fox">))
   end
 
   it "does inspect" do

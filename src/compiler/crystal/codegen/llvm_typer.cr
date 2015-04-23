@@ -16,7 +16,7 @@ module Crystal
       @union_value_cache = TypeCache.new
 
       machine = program.target_machine
-      @layout = machine.data_layout.not_nil!
+      @layout = machine.data_layout
       @landing_pad_type = LLVM::Type.struct([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end
 
@@ -333,6 +333,10 @@ module Crystal
 
     def llvm_c_type(type : NilableFunType)
       fun_type(type.fun_type)
+    end
+
+    def llvm_c_type(type : CStructOrUnionType)
+      llvm_struct_type(type)
     end
 
     def llvm_c_type(type)

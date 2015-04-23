@@ -1013,6 +1013,9 @@ describe "Parser" do
 
   it_parses "my_def def foo\nloop do\nend\nend", Call.new(nil, "my_def", Def.new("foo", body: Call.new(nil, "loop", block: Block.new)))
 
+  it_parses "foo(*{1})", Call.new(nil, "foo", Splat.new(TupleLiteral.new([1.int32] of ASTNode)))
+  it_parses "foo *{1}", Call.new(nil, "foo", Splat.new(TupleLiteral.new([1.int32] of ASTNode)))
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
   end

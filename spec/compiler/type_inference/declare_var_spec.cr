@@ -9,10 +9,6 @@ describe "Type inference: declare var" do
     assert_type("a :: Int32; a") { int32 }
   end
 
-  it "types declare var and changes its type" do
-    assert_type("a :: Int32; while 1 == 2; a = 'a'; end; a") { union_of(int32, char) }
-  end
-
   it "declares instance var which appears in initialize" do
     result = assert_type("
       class Foo
@@ -134,5 +130,13 @@ describe "Type inference: declare var" do
       Bar.new
       ),
       "can't declare variable of generic non-instantiated type Foo"
+  end
+
+  it "errors if declares var and then assigns other type" do
+    assert_error %(
+      x :: Int32
+      x = 1_i64
+      ),
+      "type must be Int32, not (Int32 | Int64)"
   end
 end

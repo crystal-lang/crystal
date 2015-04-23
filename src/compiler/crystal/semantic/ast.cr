@@ -30,6 +30,16 @@ module Crystal
       @type = type
     end
 
+    def set_type_from(type, from)
+      set_type type
+    rescue ex : FrozenTypeException
+      if from && !location
+        from.raise ex.message
+      else
+        ::raise ex
+      end
+    end
+
     def type=(type)
       return if type.nil? || @type.same?(type)
 
@@ -136,7 +146,7 @@ module Crystal
       return if @type.same? new_type
       return unless new_type
 
-      set_type(map_type(new_type))
+      set_type_from(map_type(new_type), from)
       @dirty = true
     end
 
@@ -190,8 +200,29 @@ module Crystal
   end
 
   class PointerOf
+    # This is to detect cases like `x = pointerof(x)`, where
+    # the type keeps growing indefinitely
+    @growth = 0
+
     def map_type(type)
-      type.try &.program.pointer_of(type)
+      old_type = self.type?
+      new_type = type.try &.program.pointer_of(type)
+      if old_type && grew?(old_type, new_type)
+        @growth += 1
+        if @growth > 4
+          raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
+        end
+      else
+        @growth = 0
+      end
+
+      new_type
+    end
+
+    def grew?(old_type, new_type)
+      new_type = new_type as PointerInstanceType
+      element_type = new_type.element_type
+      element_type.is_a?(UnionType) && element_type.includes_type?(old_type)
     end
   end
 
@@ -312,7 +343,7 @@ module Crystal
               if visitor
                 numeric_value = visitor.interpret_enum_value(value)
                 type_var = NumberLiteral.new(numeric_value, :i32)
-                type_var.set_type(node_type.program.int32)
+                type_var.set_type_from(node_type.program.int32, from)
               else
                 node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
               end

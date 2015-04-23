@@ -245,4 +245,17 @@ describe "Type inference: struct" do
       ),
       "struct LibC::Bar already defines a field named 'a'"
   end
+
+  it "marks as packed" do
+    result = infer_type(%(
+      lib LibFoo
+        @[Packed]
+        struct Struct
+          x, y : Int32
+        end
+      end
+      ))
+    foo_struct = result.program.types["LibFoo"].types["Struct"] as CStructType
+    foo_struct.packed.should be_true
+  end
 end

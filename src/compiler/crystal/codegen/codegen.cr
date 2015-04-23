@@ -99,6 +99,7 @@ module Crystal
 
     def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
+      @abi = @mod.target_machine.abi
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
@@ -1480,6 +1481,10 @@ module Crystal
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
       call @mod.memset(@llvm_mod), [pointer, value, trunc(size, LLVM::Int32), int32(4), int1(0)]
+    end
+
+    def memcpy(dest, src, len, align, volatile)
+      call @mod.memcpy(@llvm_mod), [dest, src, len, align, volatile]
     end
 
     def realloc(buffer, size)

@@ -46,6 +46,9 @@ it's time to setup your environment to compile Crystal itself, which is written 
 the `install` and `before_install` sections found in [.travis.yml](https://github.com/manastech/crystal/blob/master/.travis.yml).
 These set-up LLVM and its required libraries.
 
+**Note**: if you are on a Mac make sure to install the LLVM that is used in that travis script, the LLVM that you download
+or get from homebrew has a bug (uninstall the LLVM from homebrew too).
+
 Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
 the specs. All specs should pass.
 

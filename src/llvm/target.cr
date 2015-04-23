@@ -33,7 +33,7 @@ struct LLVM::Target
       reloc = LLVM::RelocMode::PIC,
       code_model = LLVM::CodeModel::Default)
     target_machine = LibLLVM.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model)
-    target_machine ? TargetMachine.new(target_machine) : nil
+    target_machine ? TargetMachine.new(target_machine) : raise "Couldn't create target machine"
   end
 
   def to_s(io)

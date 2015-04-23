@@ -112,4 +112,84 @@ describe "type inference: alias" do
       command(foo)
       )) { int32 }
   end
+
+  it "resolves type through alias (#563)" do
+    assert_type(%(
+      module A
+        Foo = 1
+      end
+
+      alias B = A
+      B::Foo
+      )) { int32 }
+  end
+
+  it "errors if trying to resolve type of recursive alias" do
+    assert_error %(
+      class Foo(T)
+        A = 1
+      end
+
+      alias Rec = Int32 | Foo(Rec)
+
+      Rec::A
+      ),
+      "undefined constant Rec::A"
+  end
+
+  %w(class module struct).each do |type|
+    it "reopens #{type} through alias" do
+      assert_type(%(
+        #{type} Foo
+        end
+
+        alias Bar = Foo
+
+        #{type} Bar
+          def self.bar
+            1
+          end
+        end
+
+        Bar.bar
+        )) { int32 }
+    end
+  end
+
+  %w(class struct).each do |type|
+    it "inherits #{type} through alias" do
+      assert_type(%(
+        #{type} Parent
+        end
+
+        alias Alias = Parent
+
+        #{type} Child  < Alias
+          def self.bar
+            1
+          end
+        end
+
+        Child.bar
+        )) { int32 }
+    end
+  end
+
+  it "includes module through alias" do
+    assert_type(%(
+      module Moo
+        def bar
+          1
+        end
+      end
+
+      alias Alias = Moo
+
+      class Foo
+        include Alias
+      end
+
+      Foo.new.bar
+      )) { int32 }
+  end
 end

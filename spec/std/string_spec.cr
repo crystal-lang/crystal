@@ -353,10 +353,14 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
       assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
+      assert { "hello world".split(/\b/).should eq(["hello", " ", "world"]) }
+      assert { "abc".split(//).should eq(["a", "b", "c"]) }
+      assert { "hello".split(/\w+/).empty?.should be_true }
+      assert { "foo".split(/o/).should eq(["f"]) }
 
-      it "works when match is empty" do
+      it "works with complex regex" do
         r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
-        "hello".split(r).should eq(["", ""])
+        "hello".split(r).should eq(["", "hello"])
       end
     end
   end
@@ -838,10 +842,17 @@ describe "String" do
       "".scan("a").should eq([] of String)
     end
 
+    it "does with number and string" do
+      "1ab4".scan(/\d+/).map(&.[0]).should eq(["1", "4"])
+    end
   end
 
   it "has match" do
-    "FooBar".match(/oo/).should_not be_nil
+    "FooBar".match(/oo/).not_nil![0].should eq("oo")
+  end
+
+  it "matches with position" do
+    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
   end
 
   it "has size (same as length)" do

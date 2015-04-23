@@ -96,4 +96,12 @@ describe "Type inference: pointer" do
       LibC.foo.value
       )) { int32 }
   end
+
+  it "detects recursive pointerof expansion (#551) (#553)" do
+    assert_error %(
+      x = 1
+      x = pointerof(x)
+      ),
+      "recursive pointerof expansion"
+  end
 end

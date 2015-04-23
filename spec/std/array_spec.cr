@@ -898,6 +898,12 @@ describe "Array" do
     ary2.should eq([1, 2, 4, 5])
   end
 
+  it "does + with different types (#568)" do
+    a = [1, 2, 3]
+    a += ["hello"]
+    a.should eq([1, 2, 3, "hello"])
+  end
+
   describe "each iterator" do
     it "does next" do
       a = [1, 2, 3]

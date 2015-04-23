@@ -253,4 +253,8 @@ module Crystal
   class VirtualMetaclassType
     delegate lookup_type, instance_type
   end
+
+  class AliasType
+    delegate types, aliased_type
+  end
 end

@@ -112,5 +112,9 @@ module Crystal
     def memset(llvm_mod)
       llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [LLVM::VoidPointer, LLVM::Int8, LLVM::Int32, LLVM::Int32, LLVM::Int1], LLVM::Void)
     end
+
+    def memcpy(llvm_mod)
+      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", [LLVM::VoidPointer, LLVM::VoidPointer, LLVM::Int32, LLVM::Int32, LLVM::Int1], LLVM::Void)
+    end
   end
 end

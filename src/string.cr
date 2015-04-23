@@ -530,7 +530,7 @@ class String
   # ```
   def gsub(pattern : Regex, &block : String, MatchData -> _)
     byte_offset = 0
-    match = pattern.match(self, byte_offset)
+    match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
 
     String.build(bytesize) do |buffer|
@@ -541,7 +541,7 @@ class String
         str = match[0]
         buffer << yield str, match
         byte_offset = index + str.bytesize
-        match = pattern.match(self, byte_offset)
+        match = pattern.match_at_byte_index(self, byte_offset)
       end
 
       if byte_offset < bytesize
@@ -913,6 +913,22 @@ class String
     nil
   end
 
+  # Returns the byte index of a char index, or nil if out of bounds.
+  #
+  # ```
+  # "hello".char_index_to_byte_index(1)     #=> 1
+  # "こんにちは".char_index_to_byte_index(1) #=> 3
+  # ```
+  def char_index_to_byte_index(index)
+    reader = CharReader.new(self)
+    reader.each_with_index do |char, i|
+      if i == index
+        return reader.pos
+      end
+    end
+    nil
+  end
+
   def includes?(c : Char)
     !!index(c)
   end
@@ -1062,19 +1078,44 @@ class String
     end
 
     ary = Array(String).new
-    byte_offset = 0
+    match_offset = 0
+    slice_offset = 0
+    last_slice_offset = 0
 
-    while match = separator.match(self, byte_offset)
+    while match = separator.match_at_byte_index(self, match_offset)
       index = match.byte_begin(0)
-      ary.push byte_slice(byte_offset, index - byte_offset)
+      slice_length = index - slice_offset
       match_bytesize = match[0].bytesize
-      break if match_bytesize == 0
-      byte_offset = index + match_bytesize
+
+      if slice_offset == 0 && slice_length == 0 && match_bytesize == 0
+        # Skip
+      elsif slice_offset == bytesize && slice_length == 0
+        ary.push byte_slice(last_slice_offset)
+      else
+        ary.push byte_slice(slice_offset, slice_length)
+      end
+
+      last_slice_offset = slice_offset
+
+      if match_bytesize == 0
+        match_offset = index + 1
+        slice_offset = index
+      else
+        match_offset = index + match_bytesize
+        slice_offset = match_offset
+      end
       break if limit && ary.length + 1 == limit
+      break if slice_offset > bytesize
     end
 
-    if byte_offset < bytesize
-      ary.push byte_slice(byte_offset)
+    if slice_offset < bytesize
+      ary.push byte_slice(slice_offset)
+    end
+
+    unless limit
+      while ary.last?.try &.empty?
+        ary.pop
+      end
     end
 
     ary
@@ -1223,8 +1264,8 @@ class String
     end
   end
 
-  def match(regex : Regex)
-    match = regex.match self
+  def match(regex : Regex, pos = 0)
+    match = regex.match self, pos
     $~ = match
     match
   end
@@ -1232,7 +1273,7 @@ class String
   def scan(pattern : Regex)
     byte_offset = 0
 
-    while match = pattern.match(self, byte_offset)
+    while match = pattern.match_at_byte_index(self, byte_offset)
       index = match.byte_begin(0)
       yield match
       match_bytesize = match[0].bytesize
