@@ -124,8 +124,12 @@ struct Pointer(T)
   # ptr1[3] #=> 4
   # ```
   def copy_from(source : Pointer(T), count : Int)
-    while (count -= 1) >= 0
-      self[count] = source[count]
+    if self.class == source.class
+      Intrinsics.memcpy(self as Void*, source as Void*, (count * sizeof(T)).to_u32, 0_u32, false)
+    else
+      while (count -= 1) >= 0
+        self[count] = source[count]
+      end
     end
     self
   end
@@ -148,7 +152,7 @@ struct Pointer(T)
   # ptr2[2] #=> 13
   # ptr2[3] #=> 14
   # ```
-  def copy_to(target : Pointer(T), count : Int)
+  def copy_to(target : Pointer, count : Int)
     target.copy_from(self, count)
   end
 
@@ -170,11 +174,15 @@ struct Pointer(T)
   # ptr1[3] #=> 3
   # ```
   def move_from(source : Pointer(T), count : Int)
-    if source.address < address
-      copy_from source, count
+    if self.class == source.class
+      Intrinsics.memmove(self as Void*, source as Void*, (count * sizeof(T)).to_u32, 0_u32, false)
     else
-      count.times do |i|
-        self[i] = source[i]
+      if source.address < address
+        copy_from source, count
+      else
+        count.times do |i|
+          self[i] = source[i]
+        end
       end
     end
     self
@@ -197,7 +205,7 @@ struct Pointer(T)
   # ptr1[2] #=> 2
   # ptr1[3] #=> 3
   # ```
-  def move_to(target : Pointer(T), count : Int)
+  def move_to(target : Pointer, count : Int)
     target.move_from(self, count)
   end
 

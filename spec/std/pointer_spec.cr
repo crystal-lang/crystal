@@ -1,5 +1,10 @@
 require "spec"
 
+private def reset(p1, p2)
+  p1.value = 10
+  p2.value = 20
+end
+
 describe "Pointer" do
   it "does malloc with value" do
     p1 = Pointer.malloc(4, 1)
@@ -133,5 +138,68 @@ describe "Pointer" do
 
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
+  end
+
+  it "copies/move with different types" do
+    p1 = Pointer(Int32).malloc(1)
+    p2 = Pointer(Int32 | String).malloc(1)
+
+    reset p1, p2
+    p1.copy_from(p1, 1)
+    p1.value.should eq(10)
+
+    # p1.copy_from(p2, 10) # invalid
+
+    reset p1, p2
+    p2.copy_from(p1, 1)
+    p2.value.should eq(10)
+
+    reset p1, p2
+    p2.copy_from(p2, 1)
+    p2.value.should eq(20)
+
+    reset p1, p2
+    p1.move_from(p1, 1)
+    p1.value.should eq(10)
+
+    # p1.move_from(p2, 10) # invalid
+
+    reset p1, p2
+    p2.move_from(p1, 1)
+    p2.value.should eq(10)
+
+    reset p1, p2
+    p2.move_from(p2, 1)
+    p2.value.should eq(20)
+
+    # ---
+
+    reset p1, p2
+    p1.copy_to(p1, 1)
+    p1.value.should eq(10)
+
+    reset p1, p2
+    p1.copy_to(p2, 1)
+    p2.value.should eq(10)
+
+    # p2.copy_to(p1, 10) # invalid
+
+    reset p1, p2
+    p2.copy_to(p2, 1)
+    p2.value.should eq(20)
+
+    reset p1, p2
+    p1.move_to(p1, 1)
+    p1.value.should eq(10)
+
+    reset p1, p2
+    p1.move_to(p2, 1)
+    p2.value.should eq(10)
+
+    # p2.move_to(p1, 10) # invalid
+
+    reset p1, p2
+    p2.move_to(p2, 1)
+    p2.value.should eq(20)
   end
 end
