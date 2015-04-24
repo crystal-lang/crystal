@@ -453,26 +453,6 @@ class Crystal::Call
     end
   end
 
-  def find_owner_trace(node, owner)
-    owner_trace = [] of ASTNode
-
-    visited = Set(typeof(object_id)).new
-    visited.add node.object_id
-    while deps = node.dependencies?
-      dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
-      if dependencies.length > 0
-        node = dependencies.first
-        nil_reason = node.nil_reason if node.is_a?(MetaInstanceVar)
-        owner_trace << node if node
-        visited.add node.object_id
-      else
-        break
-      end
-    end
-
-    MethodTraceException.new(owner, owner_trace, nil_reason)
-  end
-
   def lookup_matches_in_super(arg_types)
     if scope.is_a?(Program)
       raise "there's no superclass in this scope"

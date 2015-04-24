@@ -69,7 +69,7 @@ class Crystal::Call
     if defs.empty?
       check_macro_wrong_number_of_arguments(def_name)
 
-      owner_trace = find_owner_trace(obj, owner) if obj
+      owner_trace = obj.try &.find_owner_trace(owner)
       similar_name = owner.lookup_similar_def_name(def_name, self.args.length, block)
 
       error_msg = String.build do |msg|
@@ -151,7 +151,7 @@ class Crystal::Call
     end
 
     if args.length == 1 && args.first.type.includes_type?(mod.nil)
-      owner_trace = find_owner_trace(args.first, mod.nil)
+      owner_trace = args.first.find_owner_trace(mod.nil)
     end
 
     arg_names = [] of Array(String)

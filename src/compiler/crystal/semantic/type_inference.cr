@@ -418,7 +418,11 @@ module Crystal
       target.bind_to var
       node.bind_to value
 
-      var.bind_to node
+      begin
+        var.bind_to node
+      rescue ex : FrozenTypeException
+        target.raise ex.message
+      end
 
       if @is_initialize
         var_name = target.name

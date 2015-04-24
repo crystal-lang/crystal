@@ -95,8 +95,8 @@ module Crystal
   end
 
   class TypeException < Exception
-    getter :node
-    getter :inner
+    getter node
+    property inner
 
     def color=(@color)
       inner.try &.color=(@color)
