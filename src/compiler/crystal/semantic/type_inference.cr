@@ -3320,9 +3320,9 @@ module Crystal
     end
 
     def lookup_similar_var_name(name)
-      SimilarName.find(name) do |similar_name|
+      Levenshtein.find(name) do |finder|
         @vars.each_key do |var_name|
-          similar_name.test(var_name)
+          finder.test(var_name)
         end
       end
     end

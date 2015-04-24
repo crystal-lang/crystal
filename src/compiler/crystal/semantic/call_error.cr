@@ -287,7 +287,7 @@ class Crystal::Call
           named_arg.raise "argument '#{named_arg.name}' already specified"
         end
       else
-        similar_name = SimilarName.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
+        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
 
         msg = String.build do |str|
           str << "no argument named '"

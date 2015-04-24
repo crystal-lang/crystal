@@ -22,12 +22,12 @@ module Crystal
       return nil unless name =~ SuggestableName
 
       if (defs = self.defs)
-        best_match = SimilarName.find(name) do |similar_name|
+        best_match = Levenshtein.find(name) do |finder|
           defs.each do |def_name, hash|
             if def_name =~ SuggestableName
               hash.each do |filter, overload|
                 if filter.max_length == args_length && filter.yields == !!block
-                  similar_name.test(def_name)
+                  finder.test(def_name)
                 end
               end
             end
@@ -58,9 +58,9 @@ module Crystal
         previous_type = type
         type = previous_type.types[name]?
         unless type
-          best_match = SimilarName.find(name.downcase) do |similar_name|
+          best_match = Levenshtein.find(name.downcase) do |finder|
             previous_type.types.each_key do |type_name|
-              similar_name.test(type_name.downcase, type_name)
+              finder.test(type_name.downcase, type_name)
             end
           end
 
@@ -83,7 +83,7 @@ module Crystal
 
   module InstanceVarContainer
     def lookup_similar_instance_var_name(name)
-      SimilarName.find(name, all_instance_vars.keys.select { |key| key != name })
+      Levenshtein.find(name, all_instance_vars.keys.select { |key| key != name })
     end
   end
 

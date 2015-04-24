@@ -1,4 +1,12 @@
-def levenshtein(string1, string2)
+# Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
+#
+# ```
+# levenshtein("algorithm", "altruistic") #=> 6
+# levenshtein("hello", "hallo")          #=> 1
+# levenshtein("こんにちは", "こんちは")    #=> 1
+# levensthein("hey", "hey")              #=> 0
+# ```
+def levenshtein(string1 : String, string2 : String)
   return 0 if string1 == string2
 
   s = string1.chars
@@ -31,4 +39,65 @@ def levenshtein(string1, string2)
   end
 
   v1[t_len]
+end
+
+module Levenshtein
+  # Finds the closest string to a given string amongst many strings.
+  #
+  # ```
+  # finder = Levenshtein::Finder.new "hallo"
+  # finder.test "hay"
+  # finder.test "hall"
+  # finder.test "hallo world"
+  #
+  # finder.best_match #=> "hall"
+  # ```
+  class Finder
+    record Entry, value, distance
+
+    def initialize(@target : String, tolerance = nil : Int?)
+      @tolerance = tolerance || (target.length / 5.0).ceil.to_i
+    end
+
+    def test(name : String, value = name : String)
+      distance = levenshtein(@target, name)
+      if distance <= @tolerance
+        if best_entry = @best_entry
+          if distance < best_entry.distance
+            @best_entry = Entry.new(value, distance)
+          end
+        else
+          @best_entry = Entry.new(value, distance)
+        end
+      end
+    end
+
+    def best_match
+      @best_entry.try &.value
+    end
+
+    def self.find(name, tolerance = nil)
+      sn = new name, tolerance
+      yield sn
+      sn.best_match
+    end
+
+    def self.find(name, all_names, tolerance = nil)
+      find(name, tolerance) do |similar|
+        all_names.each do |a_name|
+          similar.test(a_name)
+        end
+      end
+    end
+  end
+
+  def self.find(name, tolerance = nil)
+    Finder.find(name, tolerance) do |sn|
+      yield sn
+    end
+  end
+
+  def self.find(name, all_names, tolerance = nil)
+    Finder.find(name, all_names, tolerance)
+  end
 end

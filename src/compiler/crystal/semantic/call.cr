@@ -1,7 +1,7 @@
+require "levenshtein"
 require "../syntax/ast"
 require "../types"
 require "../primitives"
-require "../similar_name"
 require "./type_lookup"
 
 class Crystal::Call

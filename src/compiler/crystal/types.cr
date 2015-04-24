@@ -1,4 +1,4 @@
-require "./similar_name"
+require "levenshtein"
 require "./syntax/ast"
 
 module Crystal
