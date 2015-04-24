@@ -2,17 +2,17 @@ require "../../spec_helper"
 
 describe "Code gen: struct" do
   it "creates structs" do
-    run("
+    expect(run("
       struct Foo
       end
 
       f = Foo.allocate
       1
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "creates structs with instance var" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -24,11 +24,11 @@ describe "Code gen: struct" do
 
       f = Foo.new(1)
       f.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "assigning a struct makes a copy (1)" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -47,11 +47,11 @@ describe "Code gen: struct" do
       g.x = 2
 
       g.x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "assigning a struct makes a copy (2)" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -70,11 +70,11 @@ describe "Code gen: struct" do
       g.x = 2
 
       f.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "passes a struct as a parameter makes a copy" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -96,11 +96,11 @@ describe "Code gen: struct" do
       foo(f)
 
       f.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "passes a generic struct as a parameter makes a copy" do
-    run("
+    expect(run("
       struct Foo(T)
         def initialize(@x)
         end
@@ -122,11 +122,11 @@ describe "Code gen: struct" do
       foo(f)
 
       f.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "returns struct as a copy" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -148,11 +148,11 @@ describe "Code gen: struct" do
 
       g = foo(f)
       g.x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "creates struct in def" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -167,11 +167,11 @@ describe "Code gen: struct" do
       end
 
       foo.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "declares const struct" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -184,11 +184,11 @@ describe "Code gen: struct" do
       FOO = Foo.new(1)
 
       FOO.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "uses struct in if" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -206,11 +206,11 @@ describe "Code gen: struct" do
         $foo = FOO
       end
       $foo.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "uses nilable struct" do
-    run("
+    expect(run("
       struct Nil
         def nil?
           true
@@ -228,11 +228,11 @@ describe "Code gen: struct" do
 
       f = Foo.new || nil
       f.nil? ? 1 : 2
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "returns self" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -250,11 +250,11 @@ describe "Code gen: struct" do
       f = Foo.new(1)
       g = f.foo
       g.x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "returns self with block" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -273,11 +273,11 @@ describe "Code gen: struct" do
       f = Foo.new(1)
       g = f.foo { }
       g.x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "does phi of struct" do
-    run("
+    expect(run("
       struct Foo
         def initialize(@x)
         end
@@ -293,11 +293,11 @@ describe "Code gen: struct" do
             Foo.new(1)
           end
       x.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "allows assinging to struct argument (bug)" do
-    run("
+    expect(run("
       struct Foo
         def bar
           2
@@ -309,6 +309,6 @@ describe "Code gen: struct" do
       end
 
       foo(Foo.new)
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 end

@@ -5,10 +5,10 @@ describe "Lexer comments" do
     lexer = Lexer.new(%(# Hello\n1))
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    expect(token.type).to eq(:NEWLINE)
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    expect(token.type).to eq(:NUMBER)
   end
 
   it "lexes with comments enabled" do
@@ -16,14 +16,14 @@ describe "Lexer comments" do
     lexer.comments_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:COMMENT)
-    token.value.should eq("# Hello")
+    expect(token.type).to eq(:COMMENT)
+    expect(token.value).to eq("# Hello")
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    expect(token.type).to eq(:NEWLINE)
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    expect(token.type).to eq(:NUMBER)
   end
 
   it "lexes with comments enabled (2)" do
@@ -31,17 +31,17 @@ describe "Lexer comments" do
     lexer.comments_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    expect(token.type).to eq(:NUMBER)
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
+    expect(token.type).to eq(:SPACE)
 
     token = lexer.next_token
-    token.type.should eq(:COMMENT)
-    token.value.should eq("# Hello")
+    expect(token.type).to eq(:COMMENT)
+    expect(token.value).to eq("# Hello")
 
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    expect(token.type).to eq(:EOF)
   end
 
   it "lexes correct number of spaces" do
@@ -49,16 +49,16 @@ describe "Lexer comments" do
     lexer.count_whitespace = true
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    expect(token.type).to eq(:NUMBER)
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
-    token.value.should eq("   ")
+    expect(token.type).to eq(:SPACE)
+    expect(token.value).to eq("   ")
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    expect(token.type).to eq(:NUMBER)
 
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    expect(token.type).to eq(:EOF)
   end
 end

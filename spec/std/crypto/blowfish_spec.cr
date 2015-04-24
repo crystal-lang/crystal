@@ -7,12 +7,12 @@ describe "Blowfish" do
     orig_l, orig_r = 0xfedcba98, 0x76543210
 
     l, r = bf.encrypt_pair(orig_l, orig_r)
-    l.should eq(0xcc91732b)
-    r.should eq(0x8022f684)
+    expect(l).to eq(0xcc91732b)
+    expect(r).to eq(0x8022f684)
 
     l, r = bf.decrypt_pair(l, r)
-    l.should eq(orig_l)
-    r.should eq(orig_r)
+    expect(l).to eq(orig_l)
+    expect(r).to eq(orig_r)
   end
 
   it "raises if the key is empty" do
@@ -36,7 +36,7 @@ describe "Blowfish" do
     bf.salted_expand_key("a" * length, salt)
 
     l, r = bf.encrypt_pair(orig_l, orig_r)
-    l.should eq(0xc8f07bef)
-    r.should eq(0x57deba64)
+    expect(l).to eq(0xc8f07bef)
+    expect(r).to eq(0x57deba64)
   end
 end

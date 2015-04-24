@@ -3,7 +3,7 @@ require "../../spec_helper"
 describe "Codegen: special vars" do
   ["$~", "$?"].each do |name|
     it "codegens #{name}" do
-      run(%(
+      expect(run(%(
         class Object; def not_nil!; self; end; end
 
         def foo(z)
@@ -12,11 +12,11 @@ describe "Codegen: special vars" do
 
         foo(2)
         #{name}
-        )).to_string.should eq("hey")
+        )).to_string).to eq("hey")
     end
 
     it "codegens #{name} with nilable (1)" do
-      run(%(
+      expect(run(%(
         require "prelude"
 
         def foo
@@ -32,11 +32,11 @@ describe "Codegen: special vars" do
         rescue ex
           "ouch"
         end
-        )).to_string.should eq("ouch")
+        )).to_string).to eq("ouch")
     end
 
     it "codegens #{name} with nilable (2)" do
-      run(%(
+      expect(run(%(
         require "prelude"
 
         def foo
@@ -52,12 +52,12 @@ describe "Codegen: special vars" do
         rescue ex
           "ouch"
         end
-        )).to_string.should eq("foo")
+        )).to_string).to eq("foo")
     end
   end
 
   it "codegens $~ two levels" do
-    run(%(
+    expect(run(%(
       class Object; def not_nil!; self; end; end
 
       def foo
@@ -71,7 +71,7 @@ describe "Codegen: special vars" do
 
       bar
       $?
-      )).to_string.should eq("hey")
+      )).to_string).to eq("hey")
   end
 
   it "works lazily" do

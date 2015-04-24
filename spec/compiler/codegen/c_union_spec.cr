@@ -4,31 +4,31 @@ CodeGenUnionString = "lib LibFoo; union Bar; x : Int32; y : Int64; z : Float32; 
 
 describe "Code gen: c union" do
   it "codegens union property default value" do
-    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x").to_i.should eq(0)
+    expect(run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x").to_i).to eq(0)
   end
 
   it "codegens union property default value 2" do
-    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z").to_f32.should eq(0)
+    expect(run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z").to_f32).to eq(0)
   end
 
   it "codegens union property setter 1" do
-    run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.x = 42; bar.x").to_i.should eq(42)
+    expect(run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.x = 42; bar.x").to_i).to eq(42)
   end
 
   it "codegens union property setter 2" do
-    run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.z = 42.0_f32; bar.z").to_f32.should eq(42.0)
+    expect(run("#{CodeGenUnionString}; bar = LibFoo::Bar.new; bar.z = 42.0_f32; bar.z").to_f32).to eq(42.0)
   end
 
   it "codegens union property setter 1 via pointer" do
-    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x = 42; bar.value.x").to_i.should eq(42)
+    expect(run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x = 42; bar.value.x").to_i).to eq(42)
   end
 
   it "codegens union property setter 2 via pointer" do
-    run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z = 42.0_f32; bar.value.z").to_f32.should eq(42.0)
+    expect(run("#{CodeGenUnionString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.z = 42.0_f32; bar.value.z").to_f32).to eq(42.0)
   end
 
   it "codegens struct inside union" do
-    run("
+    expect(run("
       lib LibFoo
         struct Baz
           lele : Int64
@@ -46,11 +46,11 @@ describe "Code gen: c union" do
       a.value.z = LibFoo::Baz.new
       a.value.z.lala = 10
       a.value.z.lala
-      ").to_i.should eq(10)
+      ").to_i).to eq(10)
   end
 
   it "codegens assign c union to union" do
-    run("
+    expect(run("
       lib LibFoo
         union Bar
           x : Int32
@@ -65,7 +65,7 @@ describe "Code gen: c union" do
       else
         1
       end
-      ").to_i.should eq(10)
+      ").to_i).to eq(10)
   end
 
   it "builds union setter with fun type" do
@@ -84,7 +84,7 @@ describe "Code gen: c union" do
   end
 
   it "does to_s" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       lib LibNVG
@@ -95,6 +95,6 @@ describe "Code gen: c union" do
 
       color = LibNVG::Color.new
       color.to_s
-      )).to_string.should eq("LibNVG::Color()")
+      )).to_string).to eq("LibNVG::Color()")
   end
 end

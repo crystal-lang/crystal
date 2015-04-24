@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: cast" do
   it "allows casting object to pointer and back" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -16,31 +16,31 @@ describe "Code gen: cast" do
       p = f as Void*
       f = p as Foo
       f.x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts from int to int" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1
       b = a as Int32
       b.abs
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts from union to single type" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 || 'a'
       b = a as Int32
       b.abs
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts from union to single type raises" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 || 'a'
@@ -50,21 +50,21 @@ describe "Code gen: cast" do
       rescue ex
         ex.message == "cast to Char failed"
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "casts from union to another union" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 || 1.5 || 'a'
       b = a as Int32 | Float64
       b.abs.to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts from union to another union raises" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 || 1.5 || 'a'
@@ -74,11 +74,11 @@ describe "Code gen: cast" do
       rescue ex
         ex.message == "cast to (Float64 | Char) failed"
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "casts from virtual to single type" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class CastSpecFoo
@@ -96,11 +96,11 @@ describe "Code gen: cast" do
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
       b = a as CastSpecBar
       b.bar
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts from virtual to single type raises" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class CastSpecFoo
@@ -122,20 +122,20 @@ describe "Code gen: cast" do
       rescue ex
         ex.message == "cast to CastSpecBaz failed"
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "casts from pointer to pointer" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1_i64
       (pointerof(a) as Int32*).value
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts to module" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       module CastSpecMoo
@@ -165,21 +165,21 @@ describe "Code gen: cast" do
       a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new || CastSpecBan.new
       m = a as CastSpecMoo
       m.moo
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "casts from nilable to nil" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 == 2 ? Reference.new : nil
       c = a as Nil
       c == nil
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "casts from nilable to nil raises" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 == 1 ? Reference.new : nil
@@ -189,21 +189,21 @@ describe "Code gen: cast" do
       rescue ex
         ex.message.includes? "cast to Nil failed"
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "casts from nilable to reference" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 == 1 ? Reference.new : nil
       c = a as Reference
       c == nil
-      )).to_b.should be_false
+      )).to_b).to be_false
   end
 
   it "casts from nilable to reference raises" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 1 == 2 ? Reference.new : nil
@@ -213,11 +213,11 @@ describe "Code gen: cast" do
       rescue ex
         ex.message == "cast to Reference failed"
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "casts to base class making it virtual" do
-    run(%(
+    expect(run(%(
       class Foo
         def foo
           1
@@ -233,47 +233,47 @@ describe "Code gen: cast" do
       bar = Bar.new
       x = (bar as Foo).foo
       x.to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts to bigger union" do
-    run(%(
+    expect(run(%(
       x = 1.5 as Int32 | Float64
       x.to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "allows casting nil to Void*" do
-    run(%(
+    expect(run(%(
       (nil as Void*).address
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "allows casting nilable type to Void* (1)" do
-    run(%(
+    expect(run(%(
       a = 1 == 1 ? Reference.new : nil
       (a as Void*).address
-      )).to_i.should_not eq(0)
+      )).to_i).to_not eq(0)
   end
 
   it "allows casting nilable type to Void* (2)" do
-    run(%(
+    expect(run(%(
       a = 1 == 2 ? Reference.new : nil
       (a as Void*).address
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "allows casting nilable type to Void* (3)" do
-    run(%(
+    expect(run(%(
       class Foo
       end
       a = 1 == 1 ? Reference.new : (1 == 2 ? Foo.new : nil)
       (a as Void*).address
-      )).to_i.should_not eq(0)
+      )).to_i).to_not eq(0)
   end
 
   it "errors if casting to a non-allocated type" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo
@@ -292,6 +292,6 @@ describe "Code gen: cast" do
       rescue ex
         ex.message.includes?("can't cast to Baz because it was never instantiated")
       end
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 end

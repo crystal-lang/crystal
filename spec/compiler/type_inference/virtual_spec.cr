@@ -108,7 +108,7 @@ describe "Type inference: virtual" do
       ")
     result = infer_type nodes
     mod, nodes = result.program, result.node as Expressions
-    (nodes.last as Call).target_defs.not_nil!.length.should eq(1)
+    expect((nodes.last as Call).target_defs.not_nil!.length).to eq(1)
   end
 
   it "dispatches virtual method with overload" do
@@ -131,7 +131,7 @@ describe "Type inference: virtual" do
       ")
     result = infer_type nodes
     mod, nodes = result.program, result.node as Expressions
-    (nodes.last as Call).target_defs.not_nil!.length.should eq(2)
+    expect((nodes.last as Call).target_defs.not_nil!.length).to eq(2)
   end
 
   it "works with restriction alpha" do
@@ -202,10 +202,10 @@ describe "Type inference: virtual" do
     mod = result.program
 
     var = mod.types["Var"] as InstanceVarContainer
-    var.instance_vars.length.should eq(0)
+    expect(var.instance_vars.length).to eq(0)
 
     base = mod.types["Base"] as InstanceVarContainer
-    base.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    expect(base.instance_vars["@x"].type).to eq(mod.union_of(mod.nil, mod.int32))
   end
 
   it "types inspect" do

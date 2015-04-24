@@ -8,9 +8,9 @@ describe "Type inference: var" do
     result = infer_type input
     mod = result.program
     node = result.node as Assign
-    node.target.type.should eq(mod.int32)
-    node.value.type.should eq(mod.int32)
-    node.type.should eq(mod.int32)
+    expect(node.target.type).to eq(mod.int32)
+    expect(node.value.type).to eq(mod.int32)
+    expect(node.type).to eq(mod.int32)
   end
 
   it "types a variable" do
@@ -18,8 +18,8 @@ describe "Type inference: var" do
     result = infer_type input
     mod = result.program
     node = result.node as Expressions
-    node.last.type.should eq(mod.int32)
-    node.type.should eq(mod.int32)
+    expect(node.last.type).to eq(mod.int32)
+    expect(node.type).to eq(mod.int32)
   end
 
   it "reports undefined local variable or method" do

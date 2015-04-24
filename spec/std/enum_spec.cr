@@ -16,66 +16,66 @@ end
 describe Enum do
   describe "to_s" do
     it "for simple enum" do
-      SpecEnum::One.to_s.should eq("One")
-      SpecEnum::Two.to_s.should eq("Two")
-      SpecEnum::Three.to_s.should eq("Three")
+      expect(SpecEnum::One.to_s).to eq("One")
+      expect(SpecEnum::Two.to_s).to eq("Two")
+      expect(SpecEnum::Three.to_s).to eq("Three")
     end
 
     it "for flags enum" do
-      SpecEnumFlags::None.to_s.should eq("None")
-      SpecEnumFlags::All.to_s.should eq("One, Two, Three")
-      (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One, Two")
+      expect(SpecEnumFlags::None.to_s).to eq("None")
+      expect(SpecEnumFlags::All.to_s).to eq("One, Two, Three")
+      expect((SpecEnumFlags::One | SpecEnumFlags::Two).to_s).to eq("One, Two")
     end
   end
 
   it "does +" do
-    (SpecEnum::One + 1).should eq(SpecEnum::Two)
+    expect((SpecEnum::One + 1)).to eq(SpecEnum::Two)
   end
 
   it "does -" do
-    (SpecEnum::Two - 1).should eq(SpecEnum::One)
+    expect((SpecEnum::Two - 1)).to eq(SpecEnum::One)
   end
 
   it "sorts" do
-    [SpecEnum::Three, SpecEnum::One, SpecEnum::Two].sort.should eq([SpecEnum::One, SpecEnum::Two, SpecEnum::Three])
+    expect([SpecEnum::Three, SpecEnum::One, SpecEnum::Two].sort).to eq([SpecEnum::One, SpecEnum::Two, SpecEnum::Three])
   end
 
   it "does includes?" do
-    (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::One).should be_true
-    (SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::Three).should be_false
+    expect((SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::One)).to be_true
+    expect((SpecEnumFlags::One | SpecEnumFlags::Two).includes?(SpecEnumFlags::Three)).to be_false
   end
 
   describe "names" do
     it "for simple enum" do
-      SpecEnum.names.should eq(%w(One Two Three))
+      expect(SpecEnum.names).to eq(%w(One Two Three))
     end
 
     it "for flags enum" do
-      SpecEnumFlags.names.should eq(%w(One Two Three))
+      expect(SpecEnumFlags.names).to eq(%w(One Two Three))
     end
   end
 
   describe "values" do
     it "for simple enum" do
-      SpecEnum.values.should eq([SpecEnum::One, SpecEnum::Two, SpecEnum::Three])
+      expect(SpecEnum.values).to eq([SpecEnum::One, SpecEnum::Two, SpecEnum::Three])
     end
 
     it "for flags enum" do
-      SpecEnumFlags.values.should eq([SpecEnumFlags::One, SpecEnumFlags::Two, SpecEnumFlags::Three])
+      expect(SpecEnumFlags.values).to eq([SpecEnumFlags::One, SpecEnumFlags::Two, SpecEnumFlags::Three])
     end
   end
 
   it "has hash" do
-    SpecEnum::Two.hash.should eq(1.hash)
+    expect(SpecEnum::Two.hash).to eq(1.hash)
   end
 
   it "parses" do
-    SpecEnum.parse("Two").should eq(SpecEnum::Two)
+    expect(SpecEnum.parse("Two")).to eq(SpecEnum::Two)
     expect_raises(Exception, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
   end
 
   it "parses?" do
-    SpecEnum.parse?("Two").should eq(SpecEnum::Two)
-    SpecEnum.parse?("Four").should be_nil
+    expect(SpecEnum.parse?("Two")).to eq(SpecEnum::Two)
+    expect(SpecEnum.parse?("Four")).to be_nil
   end
 end

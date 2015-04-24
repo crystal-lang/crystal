@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: virtual type" do
   it "call base method" do
-    run("
+    expect(run("
       class Foo
         def coco
           1
@@ -15,11 +15,11 @@ describe "Code gen: virtual type" do
       a = Foo.new
       a = Bar.new
       a.coco
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "call overwritten method" do
-    run("
+    expect(run("
       class Foo
         def coco
           1
@@ -35,11 +35,11 @@ describe "Code gen: virtual type" do
       a = Foo.new
       a = Bar.new
       a.coco
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "call base overwritten method" do
-    run("
+    expect(run("
       class Foo
         def coco
           1
@@ -55,11 +55,11 @@ describe "Code gen: virtual type" do
       a = Bar.new
       a = Foo.new
       a.coco
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "dispatch call with virtual type argument" do
-    run("
+    expect(run("
       class Foo
       end
 
@@ -77,11 +77,11 @@ describe "Code gen: virtual type" do
       a = Bar.new
       a = Foo.new
       coco(a)
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "can belong to union" do
-    run("
+    expect(run("
       class Foo
         def foo; 1; end
       end
@@ -94,11 +94,11 @@ describe "Code gen: virtual type" do
       x = Bar.new
       x = Baz.new
       x.foo
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "lookup instance variables in parent types" do
-    run("
+    expect(run("
       class Foo
         def initialize
           @x = 1
@@ -116,11 +116,11 @@ describe "Code gen: virtual type" do
 
       a = Bar.new || Foo.new
       a.foo
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "assign instance variable in virtual type" do
-    run("
+    expect(run("
       class Foo
         def foo
           @x = 1
@@ -132,11 +132,11 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens non-virtual call that calls virtual call to another virtual call" do
-    run("
+    expect(run("
       class Foo
         def foo
           foo2
@@ -155,11 +155,11 @@ describe "Code gen: virtual type" do
 
       bar = Bar.new
       bar.bar
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "casts virtual type to base virtual type" do
-    run("
+    expect(run("
       class Object
         def bar
           1
@@ -177,7 +177,7 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens call to Object#to_s from virtual type" do
@@ -208,7 +208,7 @@ describe "Code gen: virtual type" do
   end
 
   it "codegens virtual call with explicit self" do
-    run("
+    expect(run("
       class Foo
         def foo
           self.bar
@@ -224,11 +224,11 @@ describe "Code gen: virtual type" do
 
       f = Foo.new || Bar.new
       f.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens virtual call with explicit self and nilable type" do
-    run("
+    expect(run("
       class Foo
         def foo
           self.bar
@@ -250,7 +250,7 @@ describe "Code gen: virtual type" do
 
       f = Bar.new || nil
       f.foo.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "initializes ivars to nil even if object never instantiated" do
@@ -289,7 +289,7 @@ describe "Code gen: virtual type" do
   end
 
   it "doesn't lookup in Value+ when virtual type is Object+" do
-    run("
+    expect(run("
       require \"bool\"
       require \"reference\"
 
@@ -304,11 +304,11 @@ describe "Code gen: virtual type" do
 
       a = Foo.new
       a.foo
-      ").to_b.should be_true
+      ").to_b).to be_true
   end
 
   it "correctly dispatch call with block when the obj is a virtual type" do
-    run("
+    expect(run("
       class Foo
         def each
           yield self
@@ -331,11 +331,11 @@ describe "Code gen: virtual type" do
       y = 0
       a.each {|x| y = x.foo}
       y
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "dispatch call with nilable virtual arg" do
-    run("
+    expect(run("
       class Foo
       end
 
@@ -356,11 +356,11 @@ describe "Code gen: virtual type" do
 
       x = lala
       foo(x)
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   pending "calls class method 1" do
-    run("
+    expect(run("
       class Foo
         def self.foo
           1
@@ -374,11 +374,11 @@ describe "Code gen: virtual type" do
       end
 
       (Foo.new || Bar.new).class.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   pending "calls class method 2" do
-    run("
+    expect(run("
       class Foo
         def self.foo
           1
@@ -392,11 +392,11 @@ describe "Code gen: virtual type" do
       end
 
       (Bar.new || Foo.new).class.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   pending "calls class method 3" do
-    run("
+    expect(run("
       class Base
         def self.foo
           1
@@ -413,11 +413,11 @@ describe "Code gen: virtual type" do
       end
 
       (Foo.new || Base.new).class.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "dispatches on virtual metaclass (1)" do
-    run("
+    expect(run("
       class Foo
         def self.coco
           1
@@ -432,11 +432,11 @@ describe "Code gen: virtual type" do
 
       some_long_var = Foo || Bar
       some_long_var.coco
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "dispatches on virtual metaclass (2)" do
-    run("
+    expect(run("
       class Foo
         def self.coco
           1
@@ -451,11 +451,11 @@ describe "Code gen: virtual type" do
 
       some_long_var = Bar || Foo
       some_long_var.coco
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "dispatches on virtual metaclass (3)" do
-    run("
+    expect(run("
       class Foo
         def self.coco
           1
@@ -473,11 +473,11 @@ describe "Code gen: virtual type" do
 
       some_long_var = Baz || Foo
       some_long_var.coco
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens new for simple type, then for virtual" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -493,11 +493,11 @@ describe "Code gen: virtual type" do
       x = Foo.new(1)
       y = (Foo || Bar).new(1)
       y.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens new twice for virtual" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -513,11 +513,11 @@ describe "Code gen: virtual type" do
       y = (Foo || Bar).new(1)
       y = (Foo || Bar).new(1)
       y.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens allocate for virtual type with custom new" do
-    run("
+    expect(run("
       class Foo
         def self.new
           allocate
@@ -536,11 +536,11 @@ describe "Code gen: virtual type" do
 
       foo = (Bar || Foo).new
       foo.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "returns type with virtual type def type" do
-    run("
+    expect(run("
       class Foo
         def foo
           1
@@ -559,11 +559,11 @@ describe "Code gen: virtual type" do
       end
 
       foo.foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "casts virtual type to union" do
-    run("
+    expect(run("
       class Foo
       end
 
@@ -589,11 +589,11 @@ describe "Code gen: virtual type" do
 
       f = Baz.new || Bar.new
       x(f)
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "casts union to virtual" do
-    run("
+    expect(run("
       module Moo
       end
 
@@ -620,6 +620,6 @@ describe "Code gen: virtual type" do
 
       reference = Bar.new || Baz.new
       reference.object_id == foo(reference)
-      ").to_b.should be_true
+      ").to_b).to be_true
   end
 end

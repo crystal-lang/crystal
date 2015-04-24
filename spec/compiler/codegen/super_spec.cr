@@ -2,19 +2,19 @@ require "../../spec_helper"
 
 describe "Codegen: super" do
   it "codegens super without arguments" do
-    run("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i.should eq(1)
+    expect(run("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i).to eq(1)
   end
 
   it "codegens super without arguments but parent has arguments" do
-    run("class Foo; def foo(x); x + 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i.should eq(2)
+    expect(run("class Foo; def foo(x); x + 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i).to eq(2)
   end
 
   it "codegens super without arguments and instance variable" do
-    run("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i.should eq(1)
+    expect(run("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i).to eq(1)
   end
 
   it "codegens super that calls subclass method" do
-    run("
+    expect(run("
       class Foo
         def foo
           bar
@@ -37,11 +37,11 @@ describe "Codegen: super" do
 
       b = Bar.new
       b.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens super that calls subclass method 2" do
-    run("
+    expect(run("
       class Foo
         def foo
           self.bar
@@ -64,11 +64,11 @@ describe "Codegen: super" do
 
       b = Bar.new
       b.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens super that calls subclass method 3" do
-    run("
+    expect(run("
       class Foo
         def foo
           self.bar
@@ -91,11 +91,11 @@ describe "Codegen: super" do
 
       b = Foo.new || Bar.new
       b.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens super that calls subclass method 4" do
-    run("
+    expect(run("
       class Foo
         def foo
           self.bar
@@ -118,11 +118,11 @@ describe "Codegen: super" do
 
       b = Bar.new || Foo.new
       b.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens super that calls subclass method 5" do
-    run("
+    expect(run("
       module Mod
         def add_def
           another
@@ -154,11 +154,11 @@ describe "Codegen: super" do
 
       c = PrimitiveType.new || IntegerType.new
       c.add_def
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens super that calls subclass method 6" do
-    run("
+    expect(run("
       module Mod
         def add_def
           another
@@ -190,11 +190,11 @@ describe "Codegen: super" do
 
       c = IntegerType.new || PrimitiveType.new
       c.add_def
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens super inside closure" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -212,11 +212,11 @@ describe "Codegen: super" do
 
       f = Bar.new(1).foo
       f.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens super inside closure forwarding args" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -234,7 +234,7 @@ describe "Codegen: super" do
 
       f = Bar.new(1).foo(2)
       f.call(3)
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "build super on generic class (bug)" do
@@ -256,7 +256,7 @@ describe "Codegen: super" do
   end
 
   it "calls super in module method (#556)" do
-    run(%(
+    expect(run(%(
       class Parent
         def a
           1
@@ -274,11 +274,11 @@ describe "Codegen: super" do
       end
 
       Child.new.a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "calls super in generic module method" do
-    run(%(
+    expect(run(%(
       class Parent
         def a
           1
@@ -296,6 +296,6 @@ describe "Codegen: super" do
       end
 
       Child.new.a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 end

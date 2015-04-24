@@ -4,27 +4,27 @@ CodeGenStructString = "lib LibFoo; struct Bar; x : Int32; y : Float32; end; end"
 
 describe "Code gen: struct" do
   it "codegens struct property default value" do
-    run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x").to_i.should eq(0)
+    expect(run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.x").to_i).to eq(0)
   end
 
   it "codegens struct property setter" do
-    run("#{CodeGenStructString}; bar = LibFoo::Bar.new; bar.y = 2.5_f32; bar.y").to_f32.should eq(2.5)
+    expect(run("#{CodeGenStructString}; bar = LibFoo::Bar.new; bar.y = 2.5_f32; bar.y").to_f32).to eq(2.5)
   end
 
   it "codegens struct property setter via pointer" do
-    run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar.value.y").to_f32.should eq(2.5)
+    expect(run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar.value.y").to_f32).to eq(2.5)
   end
 
   it "codegens struct property setter via pointer" do
-    run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar.value.y").to_f32.should eq(2.5)
+    expect(run("#{CodeGenStructString}; bar = Pointer(LibFoo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar.value.y").to_f32).to eq(2.5)
   end
 
   it "codegens set struct value with constant" do
-    run("#{CodeGenStructString}; CONST = 1; bar = LibFoo::Bar.new; bar.x = CONST; bar.x").to_i.should eq(1)
+    expect(run("#{CodeGenStructString}; CONST = 1; bar = LibFoo::Bar.new; bar.x = CONST; bar.x").to_i).to eq(1)
   end
 
   it "codegens union inside struct" do
-    run("
+    expect(run("
       lib LibFoo
         union Bar
           x : Int32
@@ -39,11 +39,11 @@ describe "Code gen: struct" do
       a = Pointer(LibFoo::Baz).malloc(1_u64)
       a.value.lala.x = 10
       a.value.lala.x
-      ").to_i.should eq(10)
+      ").to_i).to eq(10)
   end
 
   it "codegens struct get inside struct" do
-    run("
+    expect(run("
       lib LibC
         struct Bar
           y : Int32
@@ -59,11 +59,11 @@ describe "Code gen: struct" do
       ((foo as Int32*) + 1_i64).value = 2
 
       foo.value.bar.y
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens struct set inside struct" do
-    run("
+    expect(run("
       lib LibC
         struct Bar
           y : Int32
@@ -81,11 +81,11 @@ describe "Code gen: struct" do
       foo.value.bar = bar
 
       foo.value.bar.y
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens pointer malloc of struct" do
-    run("
+    expect(run("
       lib LibC
         struct Foo
           x : Int32
@@ -95,11 +95,11 @@ describe "Code gen: struct" do
       p = Pointer(LibC::Foo).malloc(1_u64)
       p.value.x = 1
       p.value.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "passes struct to method (1)" do
-    run("
+    expect(run("
       lib LibC
         struct Foo
           x : Int32
@@ -117,11 +117,11 @@ describe "Code gen: struct" do
       f2 = foo(f1)
 
       f1.x
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "passes struct to method (2)" do
-    run("
+    expect(run("
       lib LibC
         struct Foo
           x : Int32
@@ -138,11 +138,11 @@ describe "Code gen: struct" do
 
       f2 = foo(f1)
       f2.x
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens struct access with -> and then ." do
-    run("
+    expect(run("
       lib LibC
         struct ScalarEvent
           x : Int32
@@ -159,11 +159,11 @@ describe "Code gen: struct" do
 
       e = Pointer(LibC::Event).malloc(1_u64)
       e.value.data.scalar.x
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "yields struct via ->" do
-    run("
+    expect(run("
       lib LibC
         struct ScalarEvent
           x : Int32
@@ -186,11 +186,11 @@ describe "Code gen: struct" do
       foo do |data|
         data.scalar.x
       end
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "codegens assign struct to union" do
-    run("
+    expect(run("
       lib LibFoo
         struct Coco
           x : Int32
@@ -200,11 +200,11 @@ describe "Code gen: struct" do
       x = LibFoo::Coco.new
       c = x || 0
       c.is_a?(LibFoo::Coco)
-    ").to_b.should be_true
+    ").to_b).to be_true
   end
 
   it "codegens passing pointerof(struct) to fun" do
-    run("
+    expect(run("
       lib LibC
         struct Foo
           a : Int32
@@ -219,7 +219,7 @@ describe "Code gen: struct" do
       f.a = 1
 
       foo pointerof(f)
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "builds struct setter with fun type (1)" do
@@ -253,7 +253,7 @@ describe "Code gen: struct" do
   end
 
   it "allows forward declarations" do
-    run(%(
+    expect(run(%(
       lib LibC
         struct A; end
         struct B; end
@@ -277,11 +277,11 @@ describe "Code gen: struct" do
       a.x = b
 
       a.y + a.x.value.y
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "allows using named arguments for new" do
-    run(%(
+    expect(run(%(
       lib LibC
         struct Point
           x, y : Int32
@@ -290,11 +290,11 @@ describe "Code gen: struct" do
 
       point = LibC::Point.new x: 1, y: 2
       point.x + point.y
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "does to_s" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       lib LibFoo
@@ -305,6 +305,6 @@ describe "Code gen: struct" do
 
       point = LibFoo::Point.new x: 1, y: 2
       point.to_s
-      )).to_string.should eq("LibFoo::Point(@x=1, @y=2)")
+      )).to_string).to eq("LibFoo::Point(@x=1, @y=2)")
   end
 end

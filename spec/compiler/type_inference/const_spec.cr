@@ -5,7 +5,7 @@ describe "Type inference: const" do
     input = parse("A = 1") as Assign
     result = infer_type input
     mod = result.program
-    input.target.type?.should be_nil # Don't type value until needed
+    expect(input.target.type?).to be_nil # Don't type value until needed
   end
 
   it "types a constant reference" do

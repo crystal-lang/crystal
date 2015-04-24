@@ -123,7 +123,7 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
-    node.should eq(Expressions.from expected_node)
+    expect(node).to eq(Expressions.from expected_node)
   end
 end
 
@@ -1022,22 +1022,22 @@ describe "Parser" do
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
+    expect(node.instance_vars).to eq(Set.new(["@x", "@y", "@z"]))
   end
 
   it "keeps instance variables declared in def in multi-assign" do
     node = Parser.parse("def foo; @x, @y = 1, 2; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y"]))
+    expect(node.instance_vars).to eq(Set.new(["@x", "@y"]))
   end
 
   it "keeps instance variables declared in def with ||= and &&=" do
     node = Parser.parse("def foo; @x ||= 1; @y &&= 1; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y"]))
+    expect(node.instance_vars).to eq(Set.new(["@x", "@y"]))
   end
 
   it "keeps instance variables declared in def with declare var" do
     node = Parser.parse("def foo; @x :: Int32; end") as Def
-    node.instance_vars.should eq(Set.new(["@x"]))
+    expect(node.instance_vars).to eq(Set.new(["@x"]))
   end
 
   assert_syntax_error "def foo(x = 1, y); end",

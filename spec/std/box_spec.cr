@@ -4,6 +4,6 @@ describe "Box" do
   it "boxes and unboxes" do
     a = 1
     box = Box.box(a)
-    Box(Int32).unbox(box).should eq(1)
+    expect(Box(Int32).unbox(box)).to eq(1)
   end
 end

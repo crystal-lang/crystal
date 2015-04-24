@@ -2,17 +2,17 @@ require "spec"
 
 describe "Random" do
   it "limited number" do
-    rand(1).should eq(0)
+    expect(rand(1)).to eq(0)
 
     x = rand(2)
-    x.should be >= 0
-    x.should be < 2
+    expect(x).to be >= 0
+    expect(x).to be < 2
   end
 
   it "float number" do
     x = rand
-    x.should be > 0
-    x.should be < 1
+    expect(x).to be > 0
+    expect(x).to be < 1
   end
 
   it "raises on invalid number" do
@@ -22,17 +22,17 @@ describe "Random" do
   end
 
   it "does with inclusive range" do
-    rand(1..1).should eq(1)
+    expect(rand(1..1)).to eq(1)
     x = rand(1..3)
-    x.should be >= 1
-    x.should be <= 3
+    expect(x).to be >= 1
+    expect(x).to be <= 3
   end
 
   it "does with exclusive range" do
-    rand(1...2).should eq(1)
+    expect(rand(1...2)).to eq(1)
     x = rand(1...4)
-    x.should be >= 1
-    x.should be < 4
+    expect(x).to be >= 1
+    expect(x).to be < 4
   end
 
   it "raises on invalid range" do
@@ -44,7 +44,7 @@ describe "Random" do
   it "allows creating a new default random" do
     rand = Random.new
     value = rand.rand
-    (0 <= value < 1).should be_true
+    expect((0 <= value < 1)).to be_true
   end
 
   it "allows creating a new default random with a seed" do
@@ -54,10 +54,10 @@ describe "Random" do
     rand = Random.new(1234)
     value2 = rand.rand
 
-    value1.should eq(value2)
+    expect(value1).to eq(value2)
   end
 
   it "gets a random bool" do
-    Random::DEFAULT.next_bool.should be_a(Bool)
+    expect(Random::DEFAULT.next_bool).to be_a(Bool)
   end
 end

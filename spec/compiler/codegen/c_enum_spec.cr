@@ -4,19 +4,19 @@ CodeGenCEnumString = "lib LibFoo; enum Bar; X, Y, Z = 10, W; end end"
 
 describe "Code gen: c enum" do
   it "codegens enum value" do
-    run("#{CodeGenCEnumString}; LibFoo::Bar::X").to_i.should eq(0)
+    expect(run("#{CodeGenCEnumString}; LibFoo::Bar::X").to_i).to eq(0)
   end
 
   it "codegens enum value 2" do
-    run("#{CodeGenCEnumString}; LibFoo::Bar::Y").to_i.should eq(1)
+    expect(run("#{CodeGenCEnumString}; LibFoo::Bar::Y").to_i).to eq(1)
   end
 
   it "codegens enum value 3" do
-    run("#{CodeGenCEnumString}; LibFoo::Bar::Z").to_i.should eq(10)
+    expect(run("#{CodeGenCEnumString}; LibFoo::Bar::Z").to_i).to eq(10)
   end
 
   it "codegens enum value 4" do
-    run("#{CodeGenCEnumString}; LibFoo::Bar::W").to_i.should eq(11)
+    expect(run("#{CodeGenCEnumString}; LibFoo::Bar::W").to_i).to eq(11)
   end
 
   [
@@ -32,7 +32,7 @@ describe "Code gen: c enum" do
     {"10 % 3", 1},
   ].each do |test_case|
     it "codegens enum with #{test_case[0]} " do
-      run("
+      expect(run("
         lib LibFoo
           enum Bar
             X = #{test_case[0]}
@@ -40,12 +40,12 @@ describe "Code gen: c enum" do
         end
 
         LibFoo::Bar::X
-        ").to_i.should eq(test_case[1])
+        ").to_i).to eq(test_case[1])
     end
   end
 
   it "codegens enum that refers to another enum constant" do
-    run("
+    expect(run("
       lib LibFoo
         enum Bar
           A = 1
@@ -55,11 +55,11 @@ describe "Code gen: c enum" do
       end
 
       LibFoo::Bar::C
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens enum that refers to another constant" do
-    run("
+    expect(run("
       lib LibFoo
         X = 10
         enum Bar
@@ -70,6 +70,6 @@ describe "Code gen: c enum" do
       end
 
       LibFoo::Bar::C
-      ").to_i.should eq(12)
+      ").to_i).to eq(12)
   end
 end

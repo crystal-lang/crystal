@@ -2,23 +2,23 @@ require "../../spec_helper"
 
 describe "Code gen: class" do
   it "codegens instace method with allocate" do
-    run("class Foo; def coco; 1; end; end; Foo.allocate.coco").to_i.should eq(1)
+    expect(run("class Foo; def coco; 1; end; end; Foo.allocate.coco").to_i).to eq(1)
   end
 
   it "codegens instace method with new and instance var" do
-    run("class Foo; def initialize; @coco = 2; end; def coco; @coco = 1; @coco; end; end; f = Foo.new; f.coco").to_i.should eq(1)
+    expect(run("class Foo; def initialize; @coco = 2; end; def coco; @coco = 1; @coco; end; end; f = Foo.new; f.coco").to_i).to eq(1)
   end
 
   it "codegens instace method with new" do
-    run("class Foo; def coco; 1; end; end; Foo.new.coco").to_i.should eq(1)
+    expect(run("class Foo; def coco; 1; end; end; Foo.new.coco").to_i).to eq(1)
   end
 
   it "codegens call to same instance" do
-    run("class Foo; def foo; 1; end; def bar; foo; end; end; Foo.new.bar").to_i.should eq(1)
+    expect(run("class Foo; def foo; 1; end; def bar; foo; end; end; Foo.new.bar").to_i).to eq(1)
   end
 
   it "codegens instance var" do
-    run("
+    expect(run("
       class Foo
         def initialize(@coco)
         end
@@ -30,7 +30,7 @@ describe "Code gen: class" do
       f = Foo.new(2)
       g = Foo.new(40)
       f.coco + g.coco
-      ").to_i.should eq(42)
+      ").to_i).to eq(42)
   end
 
   it "codegens recursive type" do
@@ -46,7 +46,7 @@ describe "Code gen: class" do
   end
 
   it "codegens method call of instance var" do
-    run("
+    expect(run("
       class List
         def initialize
           @last = 0
@@ -60,11 +60,11 @@ describe "Code gen: class" do
 
       l = List.new
       l.foo
-      ").to_f64.should eq(1.0)
+      ").to_f64).to eq(1.0)
   end
 
   it "codegens new which calls initialize" do
-    run("
+    expect(run("
       class Foo
         def initialize(value)
           @value = value
@@ -77,11 +77,11 @@ describe "Code gen: class" do
 
       f = Foo.new 1
       f.value
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "codegens method from another method without obj and accesses instance vars" do
-    run("
+    expect(run("
       class Foo
         def foo
           bar
@@ -94,11 +94,11 @@ describe "Code gen: class" do
 
       f = Foo.new
       f.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens virtual call that calls another method" do
-    run("
+    expect(run("
       class Foo
         def foo
           foo2
@@ -113,11 +113,11 @@ describe "Code gen: class" do
       end
 
       Bar.new.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codgens virtual method of generic class" do
-    run("
+    expect(run("
       require \"char\"
 
       class Object
@@ -137,11 +137,11 @@ describe "Code gen: class" do
       end
 
       Foo(Int32).new.foo.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "changes instance variable in method (ssa bug)" do
-    run("
+    expect(run("
       class Foo
         def initialize
           @var = 0
@@ -160,16 +160,17 @@ describe "Code gen: class" do
 
       foo = Foo.new
       foo.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
-  # it "gets object_id of class" do
-  #   program = Program.new
-  #   program.run("Reference.object_id").to_i.should eq(program.reference.metaclass.type_id)
-  # end
+  # FIXME: figure out why it is commented but not pending
+  #it "gets object_id of class" do
+  #  program = Program.new
+  #  expect(program.run("Reference.object_id").to_i).to eq(program.reference.metaclass.type_id)
+  #end
 
   it "calls method on Class class" do
-    run("
+    expect(run("
       class Class
         def foo
           1
@@ -180,11 +181,11 @@ describe "Code gen: class" do
       end
 
       Foo.foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "uses number type var" do
-    run("
+    expect(run("
       class Foo(T)
         def self.foo
           T
@@ -192,11 +193,11 @@ describe "Code gen: class" do
       end
 
       Foo(1).foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "calls class method without self" do
-    run("
+    expect(run("
       class Foo
         def self.coco
           1
@@ -205,11 +206,11 @@ describe "Code gen: class" do
         a = coco
       end
       a
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "calls class method without self (2)" do
-    run("
+    expect(run("
       class Foo
         def self.coco
           lala
@@ -228,11 +229,11 @@ describe "Code gen: class" do
         a = coco
       end
       a
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "assigns type to reference union type" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -245,19 +246,19 @@ describe "Code gen: class" do
       f = Foo.new(Bar.new)
       f.x = Baz.new
       1
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does to_s for class" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       Reference.to_s
-      )).to_string.should eq("Reference")
+      )).to_string).to eq("Reference")
   end
 
   it "allows fixing an instance variable's type" do
-    run(%(
+    expect(run(%(
       class Foo
         @x :: Bool
 
@@ -270,11 +271,11 @@ describe "Code gen: class" do
       end
 
       Foo.new(true).x
-      )).to_b.should be_true
+      )).to_b).to be_true
   end
 
   it "codegens initialize with instance var" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize
           @x
@@ -283,11 +284,11 @@ describe "Code gen: class" do
 
       Foo.new
       1
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "reads other instance var" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -295,11 +296,11 @@ describe "Code gen: class" do
 
       foo = Foo.new(1)
       foo.@x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "reads a virtual type instance var" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize(@x)
         end
@@ -310,11 +311,11 @@ describe "Code gen: class" do
 
       foo = Foo.new(1) || Bar.new(2)
       foo.@x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "runs with nil instance var" do
-    run("
+    expect(run("
       struct Nil
         def to_i
           0
@@ -335,11 +336,11 @@ describe "Code gen: class" do
 
       bar = Bar.new
       bar.x.to_i
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "runs with nil instance var when inheriting" do
-    run("
+    expect(run("
       struct Nil
         def to_i
           0
@@ -362,11 +363,11 @@ describe "Code gen: class" do
 
       bar = Bar.new
       bar.x.to_i
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "codegens bug #168" do
-    run("
+    expect(run("
       class A
         def foo
           x = @x
@@ -384,11 +385,11 @@ describe "Code gen: class" do
       end
 
       B.new(A.new).foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "allows initializing var with constant" do
-    run(%(
+    expect(run(%(
       class Foo
         A = 1
         @x = A
@@ -399,7 +400,7 @@ describe "Code gen: class" do
       end
 
       Foo.new.x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens class method" do
@@ -421,7 +422,7 @@ describe "Code gen: class" do
   end
 
   it "allows using self in class scope" do
-    run(%(
+    expect(run(%(
       class Foo
         def self.foo
           1
@@ -431,11 +432,11 @@ describe "Code gen: class" do
       end
 
       $x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "allows using self in class scope" do
-    run(%(
+    expect(run(%(
       class Foo
         def self.foo
           1
@@ -445,7 +446,7 @@ describe "Code gen: class" do
       end
 
       $x.foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "makes .class always be a virtual type even if no subclasses" do
@@ -462,7 +463,7 @@ describe "Code gen: class" do
   end
 
   it "does to_s for virtual metaclass type (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo; end
@@ -471,11 +472,11 @@ describe "Code gen: class" do
 
       a = Foo || A || B
       a.to_s
-      )).to_string.should eq("Foo")
+      )).to_string).to eq("Foo")
   end
 
   it "does to_s for virtual metaclass type (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo; end
@@ -484,11 +485,11 @@ describe "Code gen: class" do
 
       a = A || Foo || B
       a.to_s
-      )).to_string.should eq("A")
+      )).to_string).to eq("A")
   end
 
   it "does to_s for virtual metaclass type (3)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo; end
@@ -497,11 +498,11 @@ describe "Code gen: class" do
 
       a = B || A || Foo
       a.to_s
-      )).to_string.should eq("B")
+      )).to_string).to eq("B")
   end
 
   it "does to_s for virtual metaclass type (4)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo; end
@@ -516,7 +517,7 @@ describe "Code gen: class" do
 
       t = Obj(Foo+).t
       t.to_s
-      )).to_string.should eq("Foo")
+      )).to_string).to eq("Foo")
   end
 
   it "builds generic class bug" do
@@ -562,7 +563,7 @@ describe "Code gen: class" do
   end
 
   it "gets class of virtual type" do
-    run(%(
+    expect(run(%(
       class Foo
         def self.foo
           1
@@ -577,6 +578,6 @@ describe "Code gen: class" do
 
       f = Bar.new || Foo.new
       f.class.foo
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 end

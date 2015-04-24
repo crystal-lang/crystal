@@ -18,8 +18,8 @@ describe "Code gen: C ABI" do
       LibC.foo(s)
       )).first_value
     str = mod.to_s
-    str.should contain("call void @foo({ i64 }")
-    str.should contain("declare void @foo({ i64 })")
+    expect(str).to contain("call void @foo({ i64 }")
+    expect(str).to contain("declare void @foo({ i64 })")
   end
 
   it "passes struct less than 64 bits as { i64 } in varargs" do
@@ -37,7 +37,7 @@ describe "Code gen: C ABI" do
       LibC.foo(s)
       )).first_value
     str = mod.to_s
-    str.should contain("call void (...)* @foo({ i64 }")
+    expect(str).to contain("call void (...)* @foo({ i64 }")
   end
 
   it "passes struct between 64 and 128 bits as { i64, i64 }" do
@@ -55,8 +55,8 @@ describe "Code gen: C ABI" do
       LibC.foo(s)
       )).first_value
     str = mod.to_s
-    str.should contain("call void @foo({ i64, i64 }")
-    str.should contain("declare void @foo({ i64, i64 })")
+    expect(str).to contain("call void @foo({ i64, i64 }")
+    expect(str).to contain("declare void @foo({ i64, i64 })")
   end
 
   it "passes struct bigger than128 bits with byval" do
@@ -75,7 +75,7 @@ describe "Code gen: C ABI" do
       LibC.foo(s)
       )).first_value
     str = mod.to_s
-    str.scan(/byval/).length.should eq(2)
+    expect(str.scan(/byval/).length).to eq(2)
   end
 
   it "returns struct less than 64 bits as { i64 }" do
@@ -92,8 +92,8 @@ describe "Code gen: C ABI" do
       str = LibC.foo
       )).first_value
     str = mod.to_s
-    str.should contain("call { i64 } @foo()")
-    str.should contain("declare { i64 } @foo()")
+    expect(str).to contain("call { i64 } @foo()")
+    expect(str).to contain("declare { i64 } @foo()")
   end
 
   it "returns struct between 64 and 128 bits as { i64, i64 }" do
@@ -110,8 +110,8 @@ describe "Code gen: C ABI" do
       str = LibC.foo
       )).first_value
     str = mod.to_s
-    str.should contain("call { i64, i64 } @foo()")
-    str.should contain("declare { i64, i64 } @foo()")
+    expect(str).to contain("call { i64, i64 } @foo()")
+    expect(str).to contain("declare { i64, i64 } @foo()")
   end
 
   it "returns struct bigger than 128 bits with sret" do
@@ -129,7 +129,7 @@ describe "Code gen: C ABI" do
       str = LibC.foo(1)
       )).first_value
     str = mod.to_s
-    str.scan(/sret/).length.should eq(2)
-    str.should contain("sret, i32") # sret goes as first argument
+    expect(str.scan(/sret/).length).to eq(2)
+    expect(str).to contain("sret, i32") # sret goes as first argument
   end
 end

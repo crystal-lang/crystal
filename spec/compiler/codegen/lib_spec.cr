@@ -2,14 +2,14 @@ require "../../spec_helper"
 
 describe "Code gen: lib" do
   pending "codegens lib var set and get" do
-    run("
+    expect(run("
       lib LibC
         $errno : Int32
       end
 
       LibC.errno = 1
       LibC.errno
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "call to void function" do

@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: exception" do
   it "codegens rescue specific leaf exception" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Foo < Exception
@@ -22,11 +22,11 @@ describe "Code gen: exception" do
       rescue ex : Foo
         bar(ex)
       end
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens exception handler with return" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo
@@ -38,11 +38,11 @@ describe "Code gen: exception" do
       end
 
       foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "does ensure after rescue which returns (#171)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       $x = 0
@@ -59,11 +59,11 @@ describe "Code gen: exception" do
       foo
 
       $x
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "executes body if nothing raised (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       y = 1
@@ -73,11 +73,11 @@ describe "Code gen: exception" do
             y = 10
           end
       x + y
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "executes rescue if something is raised conditionally" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       y = 1
@@ -89,11 +89,11 @@ describe "Code gen: exception" do
             y = 4
           end
       x + y
-      )).to_i.should eq(8)
+      )).to_i).to eq(8)
   end
 
   it "executes rescue if something is raised unconditionally" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       y = 1
@@ -105,11 +105,11 @@ describe "Code gen: exception" do
             y = 3
           end
       x + y
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "can result into union (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       x = begin
@@ -118,11 +118,11 @@ describe "Code gen: exception" do
             2.1
           end
       x.to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "can result into union (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       y = begin
@@ -131,11 +131,11 @@ describe "Code gen: exception" do
             2.1
           end
       y.to_i
-    )).to_i.should eq(2)
+    )).to_i).to eq(2)
   end
 
   it "handles nested exceptions" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 0
@@ -151,11 +151,11 @@ describe "Code gen: exception" do
           end
 
       a + b
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "executes ensure when no exception is raised (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 0
@@ -167,11 +167,11 @@ describe "Code gen: exception" do
             a = 10
           end
       a
-      )).to_i.should eq(10)
+      )).to_i).to eq(10)
   end
 
   it "executes ensure when no exception is raised (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 0
@@ -183,11 +183,11 @@ describe "Code gen: exception" do
             a = 10
           end
       b
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "executes ensure when exception is raised (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 0
@@ -200,11 +200,11 @@ describe "Code gen: exception" do
             a = 2
           end
       a
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "executes ensure when exception is raised (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 0
@@ -217,11 +217,11 @@ describe "Code gen: exception" do
             a = 2
           end
       b
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "executes ensure when exception is unhandled (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -240,11 +240,11 @@ describe "Code gen: exception" do
             4
           end
       a
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "executes ensure when exception is unhandled (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -263,11 +263,11 @@ describe "Code gen: exception" do
             4
           end
       b
-      )).to_i.should eq(4)
+      )).to_i).to eq(4)
   end
 
   it "ensure without rescue" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       a = 0
@@ -281,11 +281,11 @@ describe "Code gen: exception" do
       end
 
       a
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "executes ensure when the main block returns" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo(x)
@@ -298,11 +298,11 @@ describe "Code gen: exception" do
 
       x = 0
       foo(pointerof(x)).to_i
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "executes ensure when the main block returns" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo(x)
@@ -316,11 +316,11 @@ describe "Code gen: exception" do
       x = 0
       foo(pointerof(x))
       x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "executes ensure when the main block yields and returns" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo2(x)
@@ -340,11 +340,11 @@ describe "Code gen: exception" do
       x = 0
       bar2(pointerof(x))
       x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "rescues with type" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -359,11 +359,11 @@ describe "Code gen: exception" do
           end
 
       a
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "rescues with types defaults to generic rescue" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -380,11 +380,11 @@ describe "Code gen: exception" do
           end
 
       a
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "handles exception in outer block (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -403,11 +403,11 @@ describe "Code gen: exception" do
           end
 
       x
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "handles exception in outer block (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -426,11 +426,11 @@ describe "Code gen: exception" do
           end
 
       p
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "handles subclass" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -444,11 +444,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "handle multiple exception types (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -461,11 +461,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "handle multiple exception types (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -478,11 +478,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "receives exception object" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception
@@ -499,11 +499,11 @@ describe "Code gen: exception" do
       end
 
       x
-      )).to_string.should eq("Ex1")
+      )).to_string).to eq("Ex1")
   end
 
   it "executes else if no exception is raised (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       x = 1
@@ -514,11 +514,11 @@ describe "Code gen: exception" do
             x = 3
           end
       x
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "executes else if no exception is raised (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       x = 1
@@ -529,11 +529,11 @@ describe "Code gen: exception" do
             x = 3
           end
       y
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "doesn't execute else if exception is raised (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -547,11 +547,11 @@ describe "Code gen: exception" do
             x = 3
           end
       x
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "doesn't execute else if exception is raised (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -565,11 +565,11 @@ describe "Code gen: exception" do
             x = 3
           end
       y
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "doesn't execute else if exception is raised conditionally (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -583,11 +583,11 @@ describe "Code gen: exception" do
             x = 3
           end
       x
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "doesn't execute else if exception is raised conditionally (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Ex1 < Exception; end
@@ -601,11 +601,11 @@ describe "Code gen: exception" do
             x = 3
           end
       y
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "handle exception raised by fun literal" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       x = 0
@@ -616,7 +616,7 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens issue #118 (1)" do
@@ -647,7 +647,7 @@ describe "Code gen: exception" do
   end
 
   it "captures exception thrown from proc" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       def foo
@@ -661,11 +661,11 @@ describe "Code gen: exception" do
         a = 2
       end
       a
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "uses exception after rescue" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       begin
@@ -673,6 +673,6 @@ describe "Code gen: exception" do
       rescue ex
       end
       ex.not_nil!.message
-      )).to_string.should eq("OH NO")
+      )).to_string).to eq("OH NO")
   end
 end

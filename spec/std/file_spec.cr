@@ -21,127 +21,127 @@ describe "File" do
   it "gets path" do
     path = "#{__DIR__}/data/test_file.txt"
     file = File.new path
-    file.path.should eq(path)
+    expect(file.path).to eq(path)
   end
 
   it "reads entire file" do
     str = File.read "#{__DIR__}/data/test_file.txt"
-    str.should eq("Hello World\n" * 20)
+    expect(str).to eq("Hello World\n" * 20)
   end
 
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
-    lines.length.should eq(20)
-    lines.first.should eq("Hello World\n")
+    expect(lines.length).to eq(20)
+    expect(lines.first).to eq("Hello World\n")
   end
 
   it "reads lines from file with each" do
     idx = 0
     File.each_line("#{__DIR__}/data/test_file.txt") do |line|
       if idx == 0
-        line.should eq("Hello World\n")
+        expect(line).to eq("Hello World\n")
       end
       idx += 1
     end
-    idx.should eq(20)
+    expect(idx).to eq(20)
   end
 
   describe "exists?" do
     it "gives true" do
-      File.exists?("#{__DIR__}/data/test_file.txt").should be_true
+      expect(File.exists?("#{__DIR__}/data/test_file.txt")).to be_true
     end
 
     it "gives false" do
-      File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      expect(File.exists?("#{__DIR__}/data/non_existing_file.txt")).to be_false
     end
   end
 
   describe "file?" do
     it "gives true" do
-      File.file?("#{__DIR__}/data/test_file.txt").should be_true
+      expect(File.file?("#{__DIR__}/data/test_file.txt")).to be_true
     end
 
     it "gives false" do
-      File.file?("#{__DIR__}/data").should be_false
+      expect(File.file?("#{__DIR__}/data")).to be_false
     end
   end
 
   describe "directory?" do
     it "gives true" do
-      File.directory?("#{__DIR__}/data").should be_true
+      expect(File.directory?("#{__DIR__}/data")).to be_true
     end
 
     it "gives false" do
-      File.directory?("#{__DIR__}/data/test_file.txt").should be_false
+      expect(File.directory?("#{__DIR__}/data/test_file.txt")).to be_false
     end
   end
 
   it "gets dirname" do
-    File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
-    File.dirname("foo").should eq(".")
-    File.dirname("").should eq(".")
+    expect(File.dirname("/Users/foo/bar.cr")).to eq("/Users/foo")
+    expect(File.dirname("foo")).to eq(".")
+    expect(File.dirname("")).to eq(".")
   end
 
   it "gets basename" do
-    File.basename("/foo/bar/baz.cr").should eq("baz.cr")
-    File.basename("/foo/").should eq("foo")
-    File.basename("foo").should eq("foo")
-    File.basename("").should eq("")
+    expect(File.basename("/foo/bar/baz.cr")).to eq("baz.cr")
+    expect(File.basename("/foo/")).to eq("foo")
+    expect(File.basename("foo")).to eq("foo")
+    expect(File.basename("")).to eq("")
   end
 
   it "gets basename removing suffix" do
-    File.basename("/foo/bar/baz.cr", ".cr").should eq("baz")
+    expect(File.basename("/foo/bar/baz.cr", ".cr")).to eq("baz")
   end
 
   it "gets extname" do
-    File.extname("/foo/bar/baz.cr").should eq(".cr")
-    File.extname("/foo/bar/baz.cr.cz").should eq(".cz")
-    File.extname("/foo/bar/.profile").should eq("")
-    File.extname("/foo/bar/.profile.sh").should eq(".sh")
-    File.extname("/foo/bar/foo.").should eq("")
-    File.extname("test").should eq("")
+    expect(File.extname("/foo/bar/baz.cr")).to eq(".cr")
+    expect(File.extname("/foo/bar/baz.cr.cz")).to eq(".cz")
+    expect(File.extname("/foo/bar/.profile")).to eq("")
+    expect(File.extname("/foo/bar/.profile.sh")).to eq(".sh")
+    expect(File.extname("/foo/bar/foo.")).to eq("")
+    expect(File.extname("test")).to eq("")
   end
 
   it "constructs a path from parts" do
-    File.join(["///foo", "bar"]).should eq("///foo/bar")
-    File.join(["///foo", "//bar"]).should eq("///foo//bar")
-    File.join(["/foo/", "/bar"]).should eq("/foo/bar")
-    File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
-    File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
-    File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+    expect(File.join(["///foo", "bar"])).to eq("///foo/bar")
+    expect(File.join(["///foo", "//bar"])).to eq("///foo//bar")
+    expect(File.join(["/foo/", "/bar"])).to eq("/foo/bar")
+    expect(File.join(["foo", "bar", "baz"])).to eq("foo/bar/baz")
+    expect(File.join(["foo", "//bar//", "baz///"])).to eq("foo//bar//baz///")
+    expect(File.join(["/foo/", "/bar/", "/baz/"])).to eq("/foo/bar/baz/")
   end
 
   it "gets stat for this file" do
     stat = File.stat(__FILE__)
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_false
-    stat.directory?.should be_false
-    stat.file?.should be_true
+    expect(stat.blockdev?).to be_false
+    expect(stat.chardev?).to be_false
+    expect(stat.directory?).to be_false
+    expect(stat.file?).to be_true
   end
 
   it "gets stat for this directory" do
     stat = File.stat(__DIR__)
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_false
-    stat.directory?.should be_true
-    stat.file?.should be_false
+    expect(stat.blockdev?).to be_false
+    expect(stat.chardev?).to be_false
+    expect(stat.directory?).to be_true
+    expect(stat.file?).to be_false
   end
 
   it "gets stat for a character device" do
     stat = File.stat("/dev/null")
-    stat.blockdev?.should be_false
-    stat.chardev?.should be_true
-    stat.directory?.should be_false
-    stat.file?.should be_false
+    expect(stat.blockdev?).to be_false
+    expect(stat.chardev?).to be_true
+    expect(stat.directory?).to be_false
+    expect(stat.file?).to be_false
   end
 
   it "gets stat for open file" do
     File.open(__FILE__, "r") do |file|
       stat = file.stat
-      stat.blockdev?.should be_false
-      stat.chardev?.should be_false
-      stat.directory?.should be_false
-      stat.file?.should be_true
+      expect(stat.blockdev?).to be_false
+      expect(stat.chardev?).to be_false
+      expect(stat.directory?).to be_false
+      expect(stat.file?).to be_true
     end
   end
 
@@ -154,19 +154,19 @@ describe "File" do
   it "gets stat mtime for new file" do
     tmp = Tempfile.new "tmp"
     begin
-      (tmp.stat.atime - Time.utc_now).total_seconds.should be < 5
-      (tmp.stat.ctime - Time.utc_now).total_seconds.should be < 5
-      (tmp.stat.mtime - Time.utc_now).total_seconds.should be < 5
+      expect((tmp.stat.atime - Time.utc_now).total_seconds).to be < 5
+      expect((tmp.stat.ctime - Time.utc_now).total_seconds).to be < 5
+      expect((tmp.stat.mtime - Time.utc_now).total_seconds).to be < 5
     ensure
       tmp.delete
     end
   end
 
   describe "size" do
-    assert { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
+    assert { expect(File.size("#{__DIR__}/data/test_file.txt")).to eq(240) }
     assert do
       File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
-        file.size.should eq(240)
+        expect(file.size).to eq(240)
       end
     end
   end
@@ -175,9 +175,9 @@ describe "File" do
     it "deletes a file" do
       filename = "#{__DIR__}/data/temp1.txt"
       File.open(filename, "w") {}
-      File.exists?(filename).should be_true
+      expect(File.exists?(filename)).to be_true
       File.delete(filename)
-      File.exists?(filename).should be_false
+      expect(File.exists?(filename)).to be_false
     end
 
     it "raises errno when file doesn't exist" do
@@ -194,9 +194,9 @@ describe "File" do
       filename2 = "#{__DIR__}/data/temp2.txt"
       File.open(filename, "w") { |f| f.puts "hello" }
       File.rename(filename, filename2)
-      File.exists?(filename).should be_false
-      File.exists?(filename2).should be_true
-      File.read(filename2).strip.should eq("hello")
+      expect(File.exists?(filename)).to be_false
+      expect(File.exists?(filename2)).to be_true
+      expect(File.read(filename2).strip).to eq("hello")
       File.delete(filename2)
     end
 
@@ -210,91 +210,91 @@ describe "File" do
 
   describe "expand_path" do
     it "converts a pathname to an absolute pathname" do
-      File.expand_path("").should eq(base)
-      File.expand_path("a").should eq(File.join([base, "a"]))
-      File.expand_path("a", nil).should eq(File.join([base, "a"]))
+      expect(File.expand_path("")).to eq(base)
+      expect(File.expand_path("a")).to eq(File.join([base, "a"]))
+      expect(File.expand_path("a", nil)).to eq(File.join([base, "a"]))
     end
 
     it "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
-      File.expand_path(".a").should eq(File.join([base, ".a"]))
-      File.expand_path("..a").should eq(File.join([base, "..a"]))
-      File.expand_path("a../b").should eq(File.join([base, "a../b"]))
+      expect(File.expand_path(".a")).to eq(File.join([base, ".a"]))
+      expect(File.expand_path("..a")).to eq(File.join([base, "..a"]))
+      expect(File.expand_path("a../b")).to eq(File.join([base, "a../b"]))
     end
 
     it "keeps trailing dots on absolute pathname" do
-      File.expand_path("a.").should eq(File.join([base, "a."]))
-      File.expand_path("a..").should eq(File.join([base, "a.."]))
+      expect(File.expand_path("a.")).to eq(File.join([base, "a."]))
+      expect(File.expand_path("a..")).to eq(File.join([base, "a.."]))
     end
 
     it "converts a pathname to an absolute pathname, using a complete path" do
-      File.expand_path("", "#{tmpdir}").should eq("#{tmpdir}")
-      File.expand_path("a", "#{tmpdir}").should eq("#{tmpdir}/a")
-      File.expand_path("../a", "#{tmpdir}/xxx").should eq("#{tmpdir}/a")
-      File.expand_path(".", "#{rootdir}").should eq("#{rootdir}")
+      expect(File.expand_path("", "#{tmpdir}")).to eq("#{tmpdir}")
+      expect(File.expand_path("a", "#{tmpdir}")).to eq("#{tmpdir}/a")
+      expect(File.expand_path("../a", "#{tmpdir}/xxx")).to eq("#{tmpdir}/a")
+      expect(File.expand_path(".", "#{rootdir}")).to eq("#{rootdir}")
     end
 
     it "expands a path with multi-byte characters" do
-      File.expand_path("Ångström").should eq("#{base}/Ångström")
+      expect(File.expand_path("Ångström")).to eq("#{base}/Ångström")
     end
 
     it "expands /./dir to /dir" do
-      File.expand_path("/./dir").should eq("/dir")
+      expect(File.expand_path("/./dir")).to eq("/dir")
     end
 
     it "replaces multiple / with a single /" do
-      File.expand_path("////some/path").should eq("/some/path")
-      File.expand_path("/some////path").should eq( "/some/path")
+      expect(File.expand_path("////some/path")).to eq("/some/path")
+      expect(File.expand_path("/some////path")).to eq( "/some/path")
     end
 
     it "expand path with" do
-      File.expand_path("../../bin", "/tmp/x").should eq("/bin")
-      File.expand_path("../../bin", "/tmp").should eq("/bin")
-      File.expand_path("../../bin", "/").should eq("/bin")
-      File.expand_path("../bin", "tmp/x").should eq(File.join([base, "tmp", "bin"]))
-      File.expand_path("../bin", "x/../tmp").should eq(File.join([base, "bin"]))
+      expect(File.expand_path("../../bin", "/tmp/x")).to eq("/bin")
+      expect(File.expand_path("../../bin", "/tmp")).to eq("/bin")
+      expect(File.expand_path("../../bin", "/")).to eq("/bin")
+      expect(File.expand_path("../bin", "tmp/x")).to eq(File.join([base, "tmp", "bin"]))
+      expect(File.expand_path("../bin", "x/../tmp")).to eq(File.join([base, "bin"]))
     end
 
     it "expand_path for commoms unix path  give a full path" do
-      File.expand_path("/tmp/").should eq("/tmp")
-      File.expand_path("/tmp/../../../tmp").should eq("/tmp")
-      File.expand_path("").should eq(base)
-      File.expand_path("./////").should eq(base)
-      File.expand_path(".").should eq(base)
-      File.expand_path(base).should eq(base)
+      expect(File.expand_path("/tmp/")).to eq("/tmp")
+      expect(File.expand_path("/tmp/../../../tmp")).to eq("/tmp")
+      expect(File.expand_path("")).to eq(base)
+      expect(File.expand_path("./////")).to eq(base)
+      expect(File.expand_path(".")).to eq(base)
+      expect(File.expand_path(base)).to eq(base)
     end
 
     it "converts a pathname to an absolute pathname, using ~ (home) as base" do
-      File.expand_path("~/").should eq(home)
-      File.expand_path("~/..badfilename").should eq("#{home}/..badfilename")
-      File.expand_path("..").should eq(base.split("/")[0...-1].join("/"))
-      File.expand_path("~/a","~/b").should eq("#{home}/a")
-      File.expand_path("~").should eq(home)
-      File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-      File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      expect(File.expand_path("~/")).to eq(home)
+      expect(File.expand_path("~/..badfilename")).to eq("#{home}/..badfilename")
+      expect(File.expand_path("..")).to eq(base.split("/")[0...-1].join("/"))
+      expect(File.expand_path("~/a","~/b")).to eq("#{home}/a")
+      expect(File.expand_path("~")).to eq(home)
+      expect(File.expand_path("~", "/tmp/gumby/ddd")).to eq(home)
+      expect(File.expand_path("~/a", "/tmp/gumby/ddd")).to eq(File.join([home, "a"]))
     end
   end
 
   it "writes" do
     filename = "#{__DIR__}/data/temp_write.txt"
     File.write(filename, "hello")
-    File.read(filename).strip.should eq("hello")
+    expect(File.read(filename).strip).to eq("hello")
     File.delete(filename)
   end
 
   it "does to_s" do
-    File.new(__FILE__).to_s.should eq("#<File:#{__FILE__}>")
+    expect(File.new(__FILE__).to_s).to eq("#<File:#{__FILE__}>")
   end
 
   describe "close" do
     it "is not closed when opening" do
       file = File.new(__FILE__)
-      file.closed?.should be_false
+      expect(file.closed?).to be_false
     end
 
     it "is closed when closed" do
       file = File.new(__FILE__)
       file.close
-      file.closed?.should be_true
+      expect(file.closed?).to be_true
     end
 
     it "raises when closing twice" do
@@ -309,7 +309,7 @@ describe "File" do
     it "does to_s when closed" do
       file = File.new(__FILE__)
       file.close
-      file.to_s.should eq("#<File:#{__FILE__} (closed)>")
+      expect(file.to_s).to eq("#<File:#{__FILE__} (closed)>")
     end
   end
 end

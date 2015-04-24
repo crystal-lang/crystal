@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: hash literal spec" do
   it "creates custom non-generic hash" do
-    run(%(
+    expect(run(%(
       class Custom
         def initialize
           @keys = 0
@@ -25,11 +25,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Custom {1 => 10, 2 => 20}
       custom.keys * custom.values
-      )).to_i.should eq(90)
+      )).to_i).to eq(90)
   end
 
   it "creates custom generic hash" do
-    run(%(
+    expect(run(%(
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -52,11 +52,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Custom {1 => 10, 2 => 20}
       custom.keys * custom.values
-      )).to_i.should eq(90)
+      )).to_i).to eq(90)
   end
 
   it "creates custom generic hash with type vars" do
-    run(%(
+    expect(run(%(
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -79,11 +79,11 @@ describe "Code gen: hash literal spec" do
 
       custom = Custom(Int32, Int32) {1 => 10, 2 => 20}
       custom.keys * custom.values
-      )).to_i.should eq(90)
+      )).to_i).to eq(90)
   end
 
   it "creates custom generic hash via alias (1)" do
-    run(%(
+    expect(run(%(
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -108,11 +108,11 @@ describe "Code gen: hash literal spec" do
 
       custom = MyCustom {1 => 10, 2 => 20}
       custom.keys * custom.values
-      )).to_i.should eq(90)
+      )).to_i).to eq(90)
   end
 
   it "creates custom generic hash via alias (2)" do
-    run(%(
+    expect(run(%(
       class Custom(K, V)
         def initialize
           @keys = 0
@@ -137,6 +137,6 @@ describe "Code gen: hash literal spec" do
 
       custom = MyCustom {1 => 10, 2 => 20}
       custom.keys * custom.values
-      )).to_i.should eq(90)
+      )).to_i).to eq(90)
   end
 end

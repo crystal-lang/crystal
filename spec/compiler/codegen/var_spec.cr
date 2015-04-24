@@ -2,11 +2,11 @@ require "../../spec_helper"
 
 describe "Code gen: var" do
   it "codegens var" do
-    run("a = 1; 1.5; a").to_i.should eq(1)
+    expect(run("a = 1; 1.5; a").to_i).to eq(1)
   end
 
   it "codegens ivar assignment when not-nil type filter applies" do
-    run("
+    expect(run("
       class Foo
         def foo
           if @a
@@ -18,11 +18,11 @@ describe "Code gen: var" do
 
       foo = Foo.new
       foo.foo
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens bug with instance vars and ssa" do
-    run("
+    expect(run("
       class Foo
         def initialize
           @angle = 0
@@ -39,11 +39,11 @@ describe "Code gen: var" do
 
       f = Foo.new
       f.foo
-      ").to_i.should eq(-1)
+      ").to_i).to eq(-1)
   end
 
   it "codegens bug with var, while, if, break and ssa" do
-    run("
+    expect(run("
       a = 1
       a = 2
 
@@ -56,11 +56,11 @@ describe "Code gen: var" do
       end
 
       a
-      ").to_i.should eq(2)
+      ").to_i).to eq(2)
   end
 
   it "codegens bug with union of int, nil and string (1): assigning nil to union must fill all zeros" do
-    run(%(
+    expect(run(%(
       struct Nil
         def foo
           1
@@ -80,11 +80,11 @@ describe "Code gen: var" do
         x = "a"
       end
       x.foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens bug with union of int, nil and string (2): assigning nil to union must fill all zeros" do
-    run(%(
+    expect(run(%(
       struct Nil
         def foo
           1
@@ -104,7 +104,7 @@ describe "Code gen: var" do
         x = "a"
       end
       x.foo
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens assignment that can never be reached" do

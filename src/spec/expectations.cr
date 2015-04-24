@@ -1,4 +1,25 @@
 module Spec
+  class Expectation(T)
+    getter target
+
+    def initialize(@target : T)
+    end
+
+    def to(expectation, file = __FILE__, line = __LINE__)
+      unless expectation.match(target)
+        fail(expectation.failure_message, file, line)
+      end
+    end
+
+    def to_not(expectation, file = __FILE__, line = __LINE__)
+      if expectation.match(target)
+        fail(expectation.negative_failure_message, file, line)
+      end
+    end
+
+    alias_method not_to, to_not
+  end
+
   class EqualExpectation(T)
     def initialize(@value : T)
     end
@@ -281,16 +302,22 @@ macro expect_raises(klass, message)
   end
 end
 
-class Object
-  def should(expectation, file = __FILE__, line = __LINE__)
-    unless expectation.match self
-      fail(expectation.failure_message, file, line)
+macro spec_enable_should
+  class Object
+    def should(expectation, file = __FILE__, line = __LINE__)
+      unless expectation.match self
+        fail(expectation.failure_message, file, line)
+      end
     end
-  end
 
-  def should_not(expectation, file = __FILE__, line = __LINE__)
-    if expectation.match self
-      fail(expectation.negative_failure_message, file, line)
+    def should_not(expectation, file = __FILE__, line = __LINE__)
+      if expectation.match self
+        fail(expectation.negative_failure_message, file, line)
+      end
     end
   end
+end
+
+def expect(target)
+  Spec::Expectation.new(target)
 end

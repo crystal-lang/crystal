@@ -6,23 +6,23 @@ describe "Codegen: while" do
   end
 
   it "codegens while with false" do
-    run("a = 1; while false; a = 2; end; a").to_i.should eq(1)
+    expect(run("a = 1; while false; a = 2; end; a").to_i).to eq(1)
   end
 
   it "codegens while with non-false condition" do
-    run("a = 1; while a < 10; a = a + 1; end; a").to_i.should eq(10)
+    expect(run("a = 1; while a < 10; a = a + 1; end; a").to_i).to eq(10)
   end
 
   it "codegens while as modifier" do
-    run("a = 1; begin; a += 1; end while false; a").to_i.should eq(2)
+    expect(run("a = 1; begin; a += 1; end while false; a").to_i).to eq(2)
   end
 
   it "break without value" do
-    run("a = 0; while a < 10; a += 1; break; end; a").to_i.should eq(1)
+    expect(run("a = 0; while a < 10; a += 1; break; end; a").to_i).to eq(1)
   end
 
   it "conditional break without value" do
-    run("a = 0; while a < 10; a += 1; break if a > 5; end; a").to_i.should eq(6)
+    expect(run("a = 0; while a < 10; a += 1; break if a > 5; end; a").to_i).to eq(6)
   end
 
   it "codegens endless while" do
@@ -30,17 +30,17 @@ describe "Codegen: while" do
   end
 
   it "codegens while with declared var 1" do
-    run("
+    expect(run("
       require \"nil\"
       while 1 == 2
         a = 2
       end
       a.to_i
-      ").to_i.should eq(0)
+      ").to_i).to eq(0)
   end
 
   it "codegens while with declared var 2" do
-    run("
+    expect(run("
       require \"nil\"
       while 1 == 1
         a = 2
@@ -50,11 +50,11 @@ describe "Codegen: while" do
         end
       end
       a.to_i
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "codegens while with declared var 3" do
-    run("
+    expect(run("
       require \"nil\"
       while 1 == 1
         a = 1
@@ -65,11 +65,11 @@ describe "Codegen: while" do
         end
       end
       a.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "skip block with next" do
-    run("
+    expect(run("
       i = 0
       x = 0
 
@@ -79,6 +79,6 @@ describe "Codegen: while" do
         x += i
       end
       x
-    ").to_i.should eq(25)
+    ").to_i).to eq(25)
   end
 end

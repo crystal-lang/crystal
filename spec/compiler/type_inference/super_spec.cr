@@ -12,7 +12,7 @@ describe "Type inference: super" do
     mod, type = result.program, result.node.type as NonGenericClassType
 
     superclass = type.superclass as NonGenericClassType
-    superclass.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    expect(superclass.instance_vars["@x"].type).to eq(mod.union_of(mod.nil, mod.int32))
   end
 
   it "types super without arguments but parent has arguments" do
@@ -38,11 +38,11 @@ describe "Type inference: super" do
     result = infer_type nodes
     mod, type = result.program, result.node.type as NonGenericClassType
 
-    type.should eq(mod.types["Baz"])
+    expect(type).to eq(mod.types["Baz"])
 
     superclass = type.superclass as NonGenericClassType
     superclass2 = superclass.superclass as NonGenericClassType
-    superclass2.instance_vars["@x"].type.should eq(mod.int32)
+    expect(superclass2.instance_vars["@x"].type).to eq(mod.int32)
   end
 
   it "types super when container method is defined in parent class two levels up" do

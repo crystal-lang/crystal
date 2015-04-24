@@ -4,16 +4,16 @@ require "csv"
 class CSV::Lexer
   def expect_cell(value, file = __FILE__, line = __LINE__)
     token = next_token
-    token.kind.should eq(:cell), file, line
-    token.value.should eq(value), file, line
+    expect(token.kind).to eq(:cell), file, line
+    expect(token.value).to eq(value), file, line
   end
 
   def expect_eof(file = __FILE__, line = __LINE__)
-    next_token.kind.should eq(:eof), file, line
+    expect(next_token.kind).to eq(:eof), file, line
   end
 
   def expect_newline(file = __FILE__, line = __LINE__)
-    next_token.kind.should eq(:newline), file, line
+    expect(next_token.kind).to eq(:newline), file, line
   end
 end
 

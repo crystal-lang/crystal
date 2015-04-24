@@ -2,24 +2,24 @@ require "../../spec_helper"
 
 private def assert_token_column_number(lexer, type, column_number)
   token = lexer.next_token
-  token.type.should eq(type)
-  token.column_number.should eq(column_number)
+  expect(token.type).to eq(type)
+  expect(token.column_number).to eq(column_number)
 end
 
 describe "Lexer: location" do
   it "stores line numbers" do
     lexer = Lexer.new "1\n2"
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.line_number.should eq(1)
+    expect(token.type).to eq(:NUMBER)
+    expect(token.line_number).to eq(1)
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
-    token.line_number.should eq(1)
+    expect(token.type).to eq(:NEWLINE)
+    expect(token.line_number).to eq(1)
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.line_number.should eq(2)
+    expect(token.type).to eq(:NUMBER)
+    expect(token.line_number).to eq(2)
   end
 
   it "stores column numbers" do
@@ -41,45 +41,45 @@ describe "Lexer: location" do
     lexer.filename = "bar"
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.line_number.should eq(1)
-    token.column_number.should eq(1)
-    token.filename.should eq("bar")
+    expect(token.type).to eq(:NUMBER)
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(1)
+    expect(token.filename).to eq("bar")
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
-    token.line_number.should eq(1)
-    token.column_number.should eq(2)
+    expect(token.type).to eq(:SPACE)
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(2)
 
     token = lexer.next_token
-    token.type.should eq(:"+")
-    token.line_number.should eq(1)
-    token.column_number.should eq(3)
+    expect(token.type).to eq(:"+")
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(3)
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
-    token.line_number.should eq(1)
-    token.column_number.should eq(4)
+    expect(token.type).to eq(:SPACE)
+    expect(token.line_number).to eq(1)
+    expect(token.column_number).to eq(4)
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.line_number.should eq(12)
-    token.column_number.should eq(34)
-    token.filename.should eq("foo")
+    expect(token.type).to eq(:NUMBER)
+    expect(token.line_number).to eq(12)
+    expect(token.column_number).to eq(34)
+    expect(token.filename).to eq("foo")
   end
 
   it "assigns correct loc location to node" do
     exps = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)]) as Expressions
     node = exps.expressions.first
     location = node.location.not_nil!
-    location.line_number.should eq(2)
-    location.column_number.should eq(3)
-    location.filename.should eq("foo.txt")
+    expect(location.line_number).to eq(2)
+    expect(location.column_number).to eq(3)
+    expect(location.filename).to eq("foo.txt")
   end
 
   it "parses var/call right after loc (#491)" do
     exps = Parser.parse(%[(#<loc:"foo.txt",2,3>msg)]) as Expressions
     exp = exps.expressions.first as Call
-    exp.name.should eq("msg")
+    expect(exp.name).to eq("msg")
   end
 end

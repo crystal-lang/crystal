@@ -14,19 +14,19 @@ describe "IO" do
       with_pipe do |read, write|
         write.puts "hey"
         write.close
-        IO.select({read}).includes?(read).should be_true
+        expect(IO.select({read}).includes?(read)).to be_true
       end
     end
 
     it "returns the available writable ios" do
       with_pipe do |read, write|
-        IO.select(nil, {write}).includes?(write).should be_true
+        expect(IO.select(nil, {write}).includes?(write)).to be_true
       end
     end
 
     it "times out" do
       with_pipe do |read, write|
-        IO.select({read}, nil, nil, 0.00001).should be_nil
+        expect(IO.select({read}, nil, nil, 0.00001)).to be_nil
       end
     end
   end

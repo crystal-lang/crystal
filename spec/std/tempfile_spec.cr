@@ -7,8 +7,8 @@ describe Tempfile do
     tempfile.print "Hello!"
     tempfile.close
 
-    File.exists?(tempfile.path).should be_true
-    File.read(tempfile.path).should eq("Hello!")
+    expect(File.exists?(tempfile.path)).to be_true
+    expect(File.read(tempfile.path)).to eq("Hello!")
   end
 
   it "creates and deletes" do
@@ -16,14 +16,14 @@ describe Tempfile do
     tempfile.close
     tempfile.delete
 
-    File.exists?(tempfile.path).should be_false
+    expect(File.exists?(tempfile.path)).to be_false
   end
 
   it "doesn't delete on open with block" do
     tempfile = Tempfile.open("foo") do |f|
       f.print "Hello!"
     end
-    File.exists?(tempfile.path).should be_true
+    expect(File.exists?(tempfile.path)).to be_true
   end
 
   it "creates and writes with TMPDIR environment variable" do
@@ -35,8 +35,8 @@ describe Tempfile do
       tempfile.print "Hello!"
       tempfile.close
 
-      File.exists?(tempfile.path).should be_true
-      File.read(tempfile.path).should eq("Hello!")
+      expect(File.exists?(tempfile.path)).to be_true
+      expect(File.read(tempfile.path)).to eq("Hello!")
     ensure
       ENV["TMPDIR"] = old_tmpdir if old_tmpdir
     end

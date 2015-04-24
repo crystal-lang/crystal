@@ -8,8 +8,8 @@ describe "Compiler" do
 
     Crystal::Command.run ["build", "#{__DIR__}/data/compiler_sample", "-o", tempfile.path]
 
-    File.exists?(tempfile.path).should be_true
+    expect(File.exists?(tempfile.path)).to be_true
 
-    `#{tempfile.path}`.should eq("Hello!")
+    expect(`#{tempfile.path}`).to eq("Hello!")
   end
 end

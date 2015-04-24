@@ -7,13 +7,13 @@ module Crystal
       it "uses the repository's name as the dependency name" do
         dependency = GitHubDependency.new("owner/repo")
 
-        dependency.name.should eq("repo")
+        expect(dependency.name).to eq("repo")
       end
 
       it "customizes GitHub dependency name" do
         dependency = GitHubDependency.new("owner/repo", "name")
 
-        dependency.name.should eq("name")
+        expect(dependency.name).to eq("name")
       end
 
       it "raises error with invalid GitHub project definition" do
@@ -26,19 +26,19 @@ module Crystal
         it "guesses name from project name like #{repo_name}" do
           dependency = GitHubDependency.new("owner/#{repo_name}")
 
-          dependency.name.should eq("repo")
+          expect(dependency.name).to eq("repo")
         end
 
         it "doesn't guess name from project name when specifying name" do
           dependency = GitHubDependency.new("owner/#{repo_name}", "name")
 
-          dependency.name.should eq("name")
+          expect(dependency.name).to eq("name")
         end
       end
 
       it "gets the target_dir" do
         dependency = GitHubDependency.new("owner/repo")
-        dependency.target_dir.should eq(".deps/owner-repo")
+        expect(dependency.target_dir).to eq(".deps/owner-repo")
       end
     end
   end

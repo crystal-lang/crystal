@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: method_missing" do
   it "does method_missing macro without args" do
-    run("
+    expect(run("
       class Foo
         def foo_something
           1
@@ -14,11 +14,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does method_missing macro with args" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           {{args.join(" + ").id}}
@@ -26,11 +26,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo(1, 2, 3)
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "does method_missing macro with block" do
-    run(%(
+    expect(run(%(
       class Foo
         def foo_something
           yield 1
@@ -48,11 +48,11 @@ describe "Code gen: method_missing" do
         a += x
       end
       a
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "does method_missing macro with block but not using it" do
-    run(%(
+    expect(run(%(
       class Foo
         def foo_something
           1 + 2
@@ -64,11 +64,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "does method_missing macro with virtual type (1)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           "{{@class_name.id}}{{name.id}}"
@@ -80,11 +80,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new || Bar.new
       foo.coco
-      )).to_string.should eq("Foococo")
+      )).to_string).to eq("Foococo")
   end
 
   it "does method_missing macro with virtual type (2)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           "{{@class_name.id}}{{name.id}}"
@@ -96,11 +96,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Foo.new
       foo.coco
-      )).to_string.should eq("Barcoco")
+      )).to_string).to eq("Barcoco")
   end
 
   it "does method_missing macro with virtual type (3)" do
-    run(%(
+    expect(run(%(
       class Foo
         def lala
           1
@@ -116,11 +116,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Foo.new
       foo.lala
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "does method_missing macro with virtual type (4)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           1
@@ -135,11 +135,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Foo.new
       foo.lala
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "does method_missing macro with virtual type (5)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           1
@@ -160,11 +160,11 @@ describe "Code gen: method_missing" do
 
       foo = Baz.new || Bar.new || Foo.new
       foo.lala
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "does method_missing macro with virtual type (6)" do
-    run(%(
+    expect(run(%(
       abstract class Foo
       end
 
@@ -182,11 +182,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Baz.new
       foo.lala
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "does method_missing macro with virtual type (7)" do
-    run(%(
+    expect(run(%(
       abstract class Foo
       end
 
@@ -204,11 +204,11 @@ describe "Code gen: method_missing" do
 
       foo = Baz.new || Bar.new
       foo.lala
-      )).to_i.should eq(3)
+      )).to_i).to eq(3)
   end
 
   it "does method_missing macro with virtual type (8)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           {{@class_name}}
@@ -223,11 +223,11 @@ describe "Code gen: method_missing" do
 
       bar = Bar.new
       bar.coco
-      )).to_string.should eq("Bar")
+      )).to_string).to eq("Bar")
   end
 
   it "does method_missing macro with module involved" do
-    run("
+    expect(run("
       module Moo
         def lala
           1
@@ -243,11 +243,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.lala
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does method_missing macro with top level method involved" do
-    run("
+    expect(run("
       def lala
         1
       end
@@ -264,11 +264,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new
       foo.bar
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "does method_missing macro with included module" do
-    run("
+    expect(run("
       module Moo
         macro method_missing(name, args, block)
           {{@class_name}}
@@ -280,11 +280,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.coco
-      ").to_string.should eq("Foo")
+      ").to_string).to eq("Foo")
   end
 
   it "does method_missing with assignment (bug)" do
-    run(%(
+    expect(run(%(
       class Foo
         macro method_missing(name, args, block)
           x = {{args[0]}}
@@ -294,11 +294,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new
       foo.bar(1)
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "does method_missing with assignment (2) (bug)" do
-    run(%(
+    expect(run(%(
       struct Nil
         def to_i
           0
@@ -314,6 +314,6 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new
       foo.bar(1).to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 end

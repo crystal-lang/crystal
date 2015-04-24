@@ -2,15 +2,15 @@ require "../../spec_helper"
 
 describe "Codegen: const" do
   it "define a constant" do
-    run("A = 1; A").to_i.should eq(1)
+    expect(run("A = 1; A").to_i).to eq(1)
   end
 
   it "support nested constant" do
-    run("class B; A = 1; end; B::A").to_i.should eq(1)
+    expect(run("class B; A = 1; end; B::A").to_i).to eq(1)
   end
 
   it "support constant inside a def" do
-    run("
+    expect(run("
       class Foo
         A = 1
 
@@ -20,11 +20,11 @@ describe "Codegen: const" do
       end
 
       Foo.new.foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "finds nearest constant first" do
-    run("
+    expect(run("
       A = 1
 
       class Foo
@@ -36,11 +36,11 @@ describe "Codegen: const" do
       end
 
       Foo.new.foo
-    ").to_f32.should eq(2.5)
+    ").to_f32).to eq(2.5)
   end
 
   it "allows constants with same name" do
-    run("
+    expect(run("
       A = 1
 
       class Foo
@@ -53,18 +53,18 @@ describe "Codegen: const" do
 
       A
       Foo.new.foo
-    ").to_f32.should eq(2.5)
+    ").to_f32).to eq(2.5)
   end
 
   it "constants with expression" do
-    run("
+    expect(run("
       A = 1 + 1
       A
-    ").to_i.should eq(2)
+    ").to_i).to eq(2)
   end
 
   it "finds global constant" do
-    run("
+    expect(run("
       A = 1
 
       class Foo
@@ -74,27 +74,27 @@ describe "Codegen: const" do
       end
 
       Foo.new.foo
-    ").to_i.should eq(1)
+    ").to_i).to eq(1)
   end
 
   it "define a constant in lib" do
-    run("lib LibFoo; A = 1; end; LibFoo::A").to_i.should eq(1)
+    expect(run("lib LibFoo; A = 1; end; LibFoo::A").to_i).to eq(1)
   end
 
   it "invokes block in const" do
-    run("require \"prelude\"; A = [\"1\"].map { |x| x.to_i }; A[0]").to_i.should eq(1)
+    expect(run("require \"prelude\"; A = [\"1\"].map { |x| x.to_i }; A[0]").to_i).to eq(1)
   end
 
   it "declare constants in right order" do
-    run(%(
+    expect(run(%(
       A = 1 + 1
       B = true ? A : 0
       B
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "uses correct types lookup" do
-    run("
+    expect(run("
       module A
         class B
           def foo
@@ -110,11 +110,11 @@ describe "Codegen: const" do
       end
 
       foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens variable assignment in const" do
-    run("
+    expect(run("
       class Foo
         def initialize(@x)
         end
@@ -134,11 +134,11 @@ describe "Codegen: const" do
       end
 
       foo
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "declaring var" do
-    run("
+    expect(run("
       BAR = begin
         a = 1
         while 1 == 2
@@ -153,11 +153,11 @@ describe "Codegen: const" do
       end
 
       Foo.new.compile
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "initialize const that might raise an exception" do
-    run("
+    expect(run("
       require \"prelude\"
       CONST = (raise \"OH NO\" if 1 == 2)
 
@@ -167,11 +167,11 @@ describe "Codegen: const" do
       end
 
       doit.nil?
-    ").to_b.should be_true
+    ").to_b).to be_true
   end
 
   it "allows implicit self in constant, called from another class (bug)" do
-    run("
+    expect(run("
       module Foo
         def self.foo
           1
@@ -187,11 +187,11 @@ describe "Codegen: const" do
       end
 
       Bar.new.bar
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens two consts with same variable name" do
-    run("
+    expect(run("
       A = begin
             a = 1
           end
@@ -201,19 +201,19 @@ describe "Codegen: const" do
           end
 
       (A + B).to_i
-      ").to_i.should eq(3)
+      ").to_i).to eq(3)
   end
 
   it "works with const initialized after global variable" do
-    run(%(
+    expect(run(%(
       $a = 1
       COCO = $a
       COCO
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "works with variable declared inside if" do
-    run(%(
+    expect(run(%(
       FOO = begin
         if 1 == 2
           x = 3
@@ -223,11 +223,11 @@ describe "Codegen: const" do
         x
       end
       FOO
-      )).to_i.should eq(4)
+      )).to_i).to eq(4)
   end
 
   it "codegens constant that refers to another constant that is a struct" do
-    run(%(
+    expect(run(%(
       struct Foo
         X = Foo.new(1)
         Y = X
@@ -241,11 +241,11 @@ describe "Codegen: const" do
       end
 
       Foo::Y.value
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens constant that is declared later because of virtual dispatch" do
-    run(%(
+    expect(run(%(
       class Base
         def base
         end
@@ -268,6 +268,6 @@ describe "Codegen: const" do
       end
 
       MyBase.new.base
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 end

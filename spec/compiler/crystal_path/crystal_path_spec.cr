@@ -4,19 +4,19 @@ describe Crystal::CrystalPath do
   it "finds file with .cr extension" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "test_files/file_one.cr"
-    matches.should eq(["#{__DIR__}/test_files/file_one.cr"])
+    expect(matches).to eq(["#{__DIR__}/test_files/file_one.cr"])
   end
 
   it "finds file without .cr extension" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "test_files/file_one"
-    matches.should eq(["#{__DIR__}/test_files/file_one.cr"])
+    expect(matches).to eq(["#{__DIR__}/test_files/file_one.cr"])
   end
 
   it "finds all files with *" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "test_files/*"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/file_one.cr",
       "#{__DIR__}/test_files/file_two.cr",
       ])
@@ -25,7 +25,7 @@ describe Crystal::CrystalPath do
   it "finds all files with **" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "test_files/**"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/file_one.cr",
       "#{__DIR__}/test_files/file_two.cr",
       "#{__DIR__}/test_files/test_folder/file_three.cr",
@@ -36,7 +36,7 @@ describe Crystal::CrystalPath do
   it "finds file in directory with its basename" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "test_files/test_folder"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/test_folder/test_folder.cr",
       ])
   end
@@ -51,7 +51,7 @@ describe Crystal::CrystalPath do
   it "finds file relative to another one if using ./" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "./file_two.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/file_two.cr",
       ])
   end
@@ -66,7 +66,7 @@ describe Crystal::CrystalPath do
   it "finds file relative to another one with directory if using ./" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "./test_folder/file_three.cr", relative_to: "#{__DIR__}/test_files/file_one.cr"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/test_folder/file_three.cr",
       ])
   end
@@ -81,7 +81,7 @@ describe Crystal::CrystalPath do
   it "finds files with * relative to another one if using ./" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "./test_folder/*", relative_to: "#{__DIR__}/test_files/file_one.cr"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/test_folder/file_three.cr",
       "#{__DIR__}/test_files/test_folder/test_folder.cr",
       ])
@@ -90,7 +90,7 @@ describe Crystal::CrystalPath do
   it "finds files with ** relative to another one" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "../**", relative_to: "#{__DIR__}/test_files/test_folder/file_three.cr"
-    matches.should eq([
+    expect(matches).to eq([
       "#{__DIR__}/test_files/file_one.cr",
       "#{__DIR__}/test_files/file_two.cr",
       "#{__DIR__}/test_files/test_folder/file_three.cr",

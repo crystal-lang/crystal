@@ -2,23 +2,23 @@ require "spec"
 
 describe "Regex" do
   it "matches with =~ and captures" do
-    ("fooba" =~ /f(o+)(bar?)/).should eq(0)
-    $~.length.should eq(2)
-    $1.should eq("oo")
-    $2.should eq("ba")
+    expect(("fooba" =~ /f(o+)(bar?)/)).to eq(0)
+    expect($~.length).to eq(2)
+    expect($1).to eq("oo")
+    expect($2).to eq("ba")
   end
 
   it "matches with =~ and gets utf-8 codepoint index" do
     index = "こんに" =~ /ん/
-    index.should eq(1)
+    expect(index).to eq(1)
   end
 
   it "matches with === and captures" do
     "foo" =~ /foo/
-    (/f(o+)(bar?)/ === "fooba").should be_true
-    $~.length.should eq(2)
-    $1.should eq("oo")
-    $2.should eq("ba")
+    expect((/f(o+)(bar?)/ === "fooba")).to be_true
+    expect($~.length).to eq(2)
+    expect($1).to eq("oo")
+    expect($2).to eq("ba")
   end
 
   it "raises if outside match range with []" do
@@ -33,18 +33,18 @@ describe "Regex" do
     end
 
     it "capture named group" do
-      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-      $~["g1"].should eq("oo")
-      $~["g2"].should eq("ba")
+      expect(("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/)).to eq(0)
+      expect($~["g1"]).to eq("oo")
+      expect($~["g2"]).to eq("ba")
     end
 
     it "capture empty group" do
-      ("foo" =~ /(?<g1>.*)foo/).should eq(0)
-      $~["g1"].should eq("")
+      expect(("foo" =~ /(?<g1>.*)foo/)).to eq(0)
+      expect($~["g1"]).to eq("")
     end
 
     it "raises exception when named group doesn't exist" do
-      ("foo" =~ /foo/).should eq(0)
+      expect(("foo" =~ /foo/)).to eq(0)
       expect_raises(ArgumentError) { $~["group"] }
     end
   end
@@ -52,46 +52,46 @@ describe "Regex" do
   describe "MatchData#[]?" do
     it "returns nil if outside match range with []" do
       "foo" =~ /foo/
-      $~[1]?.should be_nil
+      expect($~[1]?).to be_nil
     end
 
     it "capture named group" do
-      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-      $~["g1"]?.should eq("oo")
-      $~["g2"]?.should eq("ba")
+      expect(("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/)).to eq(0)
+      expect($~["g1"]?).to eq("oo")
+      expect($~["g2"]?).to eq("ba")
     end
 
     it "capture empty group" do
-      ("foo" =~ /(?<g1>.*)foo/).should eq(0)
-      $~["g1"]?.should eq("")
+      expect(("foo" =~ /(?<g1>.*)foo/)).to eq(0)
+      expect($~["g1"]?).to eq("")
     end
 
     it "returns nil exception when named group doesn't exist" do
-      ("foo" =~ /foo/).should eq(0)
-      $~["group"]?.should be_nil
+      expect(("foo" =~ /foo/)).to eq(0)
+      expect($~["group"]?).to be_nil
     end
   end
 
   it "matches multiline" do
-    ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
-    ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
+    expect(("foo\n<bar\n>baz" =~ /<bar.*?>/)).to be_nil
+    expect(("foo\n<bar\n>baz" =~ /<bar.*?>/m)).to eq(4)
   end
 
   it "matches ignore case" do
-    ("HeLlO" =~ /hello/).should be_nil
-    ("HeLlO" =~ /hello/i).should eq(0)
+    expect(("HeLlO" =~ /hello/)).to be_nil
+    expect(("HeLlO" =~ /hello/i)).to eq(0)
   end
 
   it "does to_s" do
-    /foo/.to_s.should eq("/foo/")
-    /f(o)(x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
-    /fox/.match("the fox").to_s.should eq(%(#<MatchData "fox">))
-    /f(o)(x)/.match("the fox").inspect.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
-    /fox/.match("the fox").inspect.should eq(%(#<MatchData "fox">))
+    expect(/foo/.to_s).to eq("/foo/")
+    expect(/f(o)(x)/.match("the fox").to_s).to eq(%(#<MatchData "fox" 1:"o" 2:"x">))
+    expect(/fox/.match("the fox").to_s).to eq(%(#<MatchData "fox">))
+    expect(/f(o)(x)/.match("the fox").inspect).to eq(%(#<MatchData "fox" 1:"o" 2:"x">))
+    expect(/fox/.match("the fox").inspect).to eq(%(#<MatchData "fox">))
   end
 
   it "does inspect" do
-    /foo/.inspect.should eq("/foo/")
+    expect(/foo/.inspect).to eq("/foo/")
   end
 
   it "raises exception with invalid regex" do
@@ -99,6 +99,6 @@ describe "Regex" do
   end
 
   it "escapes" do
-    Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello").should eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
+    expect(Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello")).to eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
   end
 end

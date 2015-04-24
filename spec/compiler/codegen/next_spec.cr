@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: next" do
   it "codegens next" do
-    run("
+    expect(run("
       def foo
         yield
       end
@@ -10,11 +10,11 @@ describe "Code gen: next" do
       foo do
         next 1
       end
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 
   it "codegens next conditionally" do
-    run("
+    expect(run("
       def foo
         yield 1
         yield 2
@@ -28,11 +28,11 @@ describe "Code gen: next" do
         a += i
       end
       a
-      ").to_i.should eq(4)
+      ").to_i).to eq(4)
   end
 
   it "codegens next conditionally with int type (2)" do
-    run("
+    expect(run("
       def foo
         x = 0
         x += yield 1
@@ -52,11 +52,11 @@ describe "Code gen: next" do
         end
         40
       end
-      ").to_i.should eq(100)
+      ").to_i).to eq(100)
   end
 
   it "codegens next with break (1)" do
-    run("
+    expect(run("
       def foo
         yield 1
       end
@@ -68,11 +68,11 @@ describe "Code gen: next" do
           next 10
         end
       end
-      ").to_i.should eq(20)
+      ").to_i).to eq(20)
   end
 
   it "codegens next with break (2)" do
-    run("
+    expect(run("
       def foo
         a = 0
         a += yield 1
@@ -88,11 +88,11 @@ describe "Code gen: next" do
         end
         30
       end
-      ").to_i.should eq(40)
+      ").to_i).to eq(40)
   end
 
   it "codegens next with break (3)" do
-    run("
+    expect(run("
       def foo
         a = 0
         a += yield 1
@@ -108,11 +108,11 @@ describe "Code gen: next" do
         end
         30
       end
-      ").to_i.should eq(20)
+      ").to_i).to eq(20)
   end
 
   it "codegens next with while inside block" do
-    run("
+    expect(run("
       def foo
         a = 0
         a += yield 4
@@ -133,11 +133,11 @@ describe "Code gen: next" do
         end
         20
       end
-      ").to_i.should eq(30)
+      ").to_i).to eq(30)
   end
 
   it "codegens next without expressions" do
-    run("
+    expect(run("
       struct Nil; def to_i; 0; end; end
 
       def foo
@@ -151,6 +151,6 @@ describe "Code gen: next" do
           next
         end
       end.to_i
-      ").to_i.should eq(1)
+      ").to_i).to eq(1)
   end
 end

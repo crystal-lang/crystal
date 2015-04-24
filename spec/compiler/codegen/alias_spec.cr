@@ -2,40 +2,40 @@ require "../../spec_helper"
 
 describe "Code gen: alias" do
   it "invokes methods on empty array of recursive alias (1)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       alias X = Array(X)
 
       a = [] of X
       b = a.map(&.to_s).join
-      )).to_string.should eq("")
+      )).to_string).to eq("")
   end
 
   it "invokes methods on empty array of recursive alias (2)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       alias X = Nil | Array(X)
 
       a = [] of X
       b = a.map(&.to_s).join
-      )).to_string.should eq("")
+      )).to_string).to eq("")
   end
 
   it "invokes methods on empty array of recursive alias (3)" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       alias X = Nil | Array(X)
 
       a = [] of X
       b = a.map(&.to_s).join
-      )).to_string.should eq("")
+      )).to_string).to eq("")
   end
 
   it "casts to recursive alias" do
-    run(%(
+    expect(run(%(
       require "prelude"
 
       class Bar(T)
@@ -46,11 +46,11 @@ describe "Code gen: alias" do
       a = 1 as Foo
       b = a as Int32
       b
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "casts to recursive alias" do
-    run(%(
+    expect(run(%(
       class Bar(T)
         def self.new(&block : -> T)
         end
@@ -71,7 +71,7 @@ describe "Code gen: alias" do
       end
 
       foo(2).to_i
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "doesn't break with alias for link attributes" do

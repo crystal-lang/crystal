@@ -14,7 +14,7 @@ describe CSV do
           row << "four"
         end
       end
-      string.should eq("one,two\nthree,four\n")
+      expect(string).to eq("one,two\nthree,four\n")
     end
 
     it "builds with numbers" do
@@ -28,7 +28,7 @@ describe CSV do
           row << 4
         end
       end
-      string.should eq("1,2\n3,4\n")
+      expect(string).to eq("1,2\n3,4\n")
     end
 
     it "builds with commas" do
@@ -37,7 +37,7 @@ describe CSV do
           row << %(hello,world)
         end
       end
-      string.should eq(%("hello,world"\n))
+      expect(string).to eq(%("hello,world"\n))
     end
 
     it "builds with quotes" do
@@ -46,21 +46,21 @@ describe CSV do
           row << %(he said "no")
         end
       end
-      string.should eq(%("he said ""no"""\n))
+      expect(string).to eq(%("he said ""no"""\n))
     end
 
     it "builds row from enumerable" do
       string = CSV.build do |csv|
         csv.row [1, 2, 3]
       end
-      string.should eq("1,2,3\n")
+      expect(string).to eq("1,2,3\n")
     end
 
     it "builds row from splat" do
       string = CSV.build do |csv|
         csv.row 1, 2, 3
       end
-      string.should eq("1,2,3\n")
+      expect(string).to eq("1,2,3\n")
     end
 
     it "skips inside row" do
@@ -71,7 +71,7 @@ describe CSV do
           row << 2
         end
       end
-      string.should eq("1,,2\n")
+      expect(string).to eq("1,,2\n")
     end
 
     it "concats enumerable to row" do
@@ -82,7 +82,7 @@ describe CSV do
           row << 5
         end
       end
-      string.should eq("1,2,3,4,5\n")
+      expect(string).to eq("1,2,3,4,5\n")
     end
 
     it "concats splat to row" do
@@ -93,7 +93,7 @@ describe CSV do
           row << 5
         end
       end
-      string.should eq("1,2,3,4,5\n")
+      expect(string).to eq("1,2,3,4,5\n")
     end
   end
 end

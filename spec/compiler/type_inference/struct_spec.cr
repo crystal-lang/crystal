@@ -8,7 +8,7 @@ describe "Type inference: struct" do
       Foo
       ") do
       str = types["Foo"] as NonGenericClassType
-      str.struct?.should be_true
+      expect(str.struct?).to be_true
       str.metaclass
     end
   end
@@ -20,10 +20,10 @@ describe "Type inference: struct" do
       Foo(Int32)
       ") do
       str = types["Foo"] as GenericClassType
-      str.struct?.should be_true
+      expect(str.struct?).to be_true
 
       str_inst = str.instantiate([int32] of TypeVar )
-      str_inst.struct?.should be_true
+      expect(str_inst.struct?).to be_true
       str_inst.metaclass
     end
   end
@@ -50,7 +50,7 @@ describe "Type inference: struct" do
       Foo.new || nil
       ") do | mod|
         type = union_of(types["Foo"], mod.nil)
-        type.should_not be_a(NilableType)
+        expect(type).to_not be_a(NilableType)
         type
       end
   end

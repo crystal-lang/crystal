@@ -6,8 +6,8 @@ describe "Type inference: struct" do
     mod = result.program
 
     bar = mod.types["LibFoo"].types["Bar"] as CStructType
-    bar.vars["x"].type.should eq(mod.int32)
-    bar.vars["y"].type.should eq(mod.float64)
+    expect(bar.vars["x"].type).to eq(mod.int32)
+    expect(bar.vars["y"].type).to eq(mod.float64)
   end
 
   it "types Struct#new" do
@@ -256,6 +256,6 @@ describe "Type inference: struct" do
       end
       ))
     foo_struct = result.program.types["LibFoo"].types["Struct"] as CStructType
-    foo_struct.packed.should be_true
+    expect(foo_struct.packed).to be_true
   end
 end

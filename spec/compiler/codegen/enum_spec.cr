@@ -2,17 +2,17 @@ require "../../spec_helper"
 
 describe "Code gen: enum" do
   it "codegens enum" do
-    run(%(
+    expect(run(%(
       enum Foo
         A = 1
       end
 
       Foo::A
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens enum without explicit value" do
-    run(%(
+    expect(run(%(
       enum Foo
         A
         B
@@ -20,43 +20,43 @@ describe "Code gen: enum" do
       end
 
       Foo::C
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "codegens enum value" do
-    run(%(
+    expect(run(%(
       enum Foo
         A = 1
       end
 
       Foo::A.value
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "creates enum from value" do
-    run(%(
+    expect(run(%(
       enum Foo
         A
         B
       end
 
       Foo.new(1).value
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens enum bitflags (1)" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
       end
 
       Foo::A
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 
   it "codegens enum bitflags (2)" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
@@ -64,11 +64,11 @@ describe "Code gen: enum" do
       end
 
       Foo::B
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "codegens enum bitflags (4)" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
@@ -77,22 +77,22 @@ describe "Code gen: enum" do
       end
 
       Foo::C
-      )).to_i.should eq(4)
+      )).to_i).to eq(4)
   end
 
   it "codegens enum bitflags None" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
       end
 
       Foo::None
-      )).to_i.should eq(0)
+      )).to_i).to eq(0)
   end
 
   it "codegens enum bitflags All" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
@@ -101,11 +101,11 @@ describe "Code gen: enum" do
       end
 
       Foo::All
-      )).to_i.should eq(1 + 2 + 4)
+      )).to_i).to eq(1 + 2 + 4)
   end
 
   it "codegens enum None redefined" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
@@ -113,11 +113,11 @@ describe "Code gen: enum" do
       end
 
       Foo::None
-      )).to_i.should eq(10)
+      )).to_i).to eq(10)
   end
 
   it "codegens enum All redefined" do
-    run(%(
+    expect(run(%(
       @[Flags]
       enum Foo
         A
@@ -125,11 +125,11 @@ describe "Code gen: enum" do
       end
 
       Foo::All
-      )).to_i.should eq(10)
+      )).to_i).to eq(10)
   end
 
   it "allows class vars in enum" do
-    run(%(
+    expect(run(%(
       enum Foo
         A
 
@@ -141,6 +141,6 @@ describe "Code gen: enum" do
       end
 
       Foo.class_var
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 end

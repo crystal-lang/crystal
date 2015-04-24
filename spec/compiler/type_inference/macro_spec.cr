@@ -5,7 +5,7 @@ describe "Type inference: macro" do
     input = parse "macro foo; 1; end; foo"
     result = infer_type input
     node = result.node as Expressions
-    (node.last as Call).expanded.should eq(parse "1")
+    expect((node.last as Call).expanded).to eq(parse "1")
   end
 
   it "errors if macro uses undefined variable" do
@@ -344,7 +344,7 @@ describe "Type inference: macro" do
     begin
       infer_type nodes
     rescue ex : TypeException
-      ex.to_s.should_not match(/did you mean/)
+      expect(ex.to_s).to_not match(/did you mean/)
     end
   end
 

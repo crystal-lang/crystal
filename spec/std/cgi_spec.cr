@@ -17,13 +17,13 @@ describe "CGI" do
   ].each do |tuple|
     from, to = tuple
     it "unescapes #{from}" do
-      CGI.unescape(from).should eq(to)
+      expect(CGI.unescape(from)).to eq(to)
     end
 
     it "unescapes #{from} to IO" do
-      String.build do |str|
+      expect(String.build do |str|
         CGI.unescape(from, str)
-      end.should eq(to)
+      end).to eq(to)
     end
   end
 
@@ -40,13 +40,13 @@ describe "CGI" do
   ].each do |tuple|
     from, to = tuple
     it "escapes #{to}" do
-      CGI.escape(to).should eq(from)
+      expect(CGI.escape(to)).to eq(from)
     end
 
     it "escapes #{to} to IO" do
-      String.build do |str|
+      expect(String.build do |str|
         CGI.escape(to, str)
-      end.should eq(from)
+      end).to eq(from)
     end
   end
 
@@ -61,11 +61,11 @@ describe "CGI" do
   ].each do |tuple|
     from, to = tuple
     it "parses #{from}" do
-      CGI.parse(from).should eq(to)
+      expect(CGI.parse(from)).to eq(to)
     end
   end
 
   it "escapes newline char" do
-    CGI.escape("\n").should eq("%0A")
+    expect(CGI.escape("\n")).to eq("%0A")
   end
 end

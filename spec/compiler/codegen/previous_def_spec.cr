@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "codegen: previous_def" do
   it "codegens previous def" do
-    run(%(
+    expect(run(%(
       def foo
         1
       end
@@ -12,11 +12,11 @@ describe "codegen: previous_def" do
       end
 
       foo
-      )).to_i.should eq(2)
+      )).to_i).to eq(2)
   end
 
   it "codeges previous def when inside fun and forwards args" do
-    run(%(
+    expect(run(%(
       def foo(z)
         z + 1
       end
@@ -27,11 +27,11 @@ describe "codegen: previous_def" do
 
       x = foo(2)
       x.call(3)
-      )).to_i.should eq(6)
+      )).to_i).to eq(6)
   end
 
   it "codegens previous def when inside fun with self" do
-    run(%(
+    expect(run(%(
       class Foo
         def initialize
           @x = 1
@@ -49,6 +49,6 @@ describe "codegen: previous_def" do
       end
 
       Foo.new.bar.call
-      )).to_i.should eq(1)
+      )).to_i).to eq(1)
   end
 end

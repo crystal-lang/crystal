@@ -5,13 +5,13 @@ private def it_lexes(string, expected_type, file = __FILE__, line = __LINE__)
   it "lexes #{string} from string", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(expected_type)
+    expect(token.type).to eq(expected_type)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new StringIO.new(string)
     token = lexer.next_token
-    token.type.should eq(expected_type)
+    expect(token.type).to eq(expected_type)
   end
 end
 
@@ -19,15 +19,15 @@ private def it_lexes_string(string, string_value, file = __FILE__, line = __LINE
   it "lexes #{string} from String", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.string_value.should eq(string_value)
+    expect(token.type).to eq(:STRING)
+    expect(token.string_value).to eq(string_value)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new StringIO.new(string)
     token = lexer.next_token
-    token.type.should eq(:STRING)
-    token.string_value.should eq(string_value)
+    expect(token.type).to eq(:STRING)
+    expect(token.string_value).to eq(string_value)
   end
 end
 
@@ -35,15 +35,15 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
   it "lexes #{string} from String", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:INT)
-    token.int_value.should eq(int_value)
+    expect(token.type).to eq(:INT)
+    expect(token.int_value).to eq(int_value)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new StringIO.new(string)
     token = lexer.next_token
-    token.type.should eq(:INT)
-    token.int_value.should eq(int_value)
+    expect(token.type).to eq(:INT)
+    expect(token.int_value).to eq(int_value)
   end
 end
 
@@ -51,15 +51,15 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
   it "lexes #{string} from String", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:FLOAT)
-    token.float_value.should eq(float_value)
+    expect(token.type).to eq(:FLOAT)
+    expect(token.float_value).to eq(float_value)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new StringIO.new(string)
     token = lexer.next_token
-    token.type.should eq(:FLOAT)
-    token.float_value.should eq(float_value)
+    expect(token.type).to eq(:FLOAT)
+    expect(token.float_value).to eq(float_value)
   end
 end
 

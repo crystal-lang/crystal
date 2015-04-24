@@ -19,7 +19,7 @@ describe "Block inference" do
       end
     ") as Expressions
     result = infer_type input
-    (input.last as Call).block.not_nil!.body.type.should eq(result.program.int32)
+    expect((input.last as Call).block.not_nil!.body.type).to eq(result.program.int32)
   end
 
   it "infer type of block argument" do
@@ -34,7 +34,7 @@ describe "Block inference" do
     ") as Expressions
     result = infer_type input
     mod = result.program
-    (input.last as Call).block.not_nil!.args[0].type.should eq(mod.int32)
+    expect((input.last as Call).block.not_nil!.args[0].type).to eq(mod.int32)
   end
 
   it "infer type of local variable" do
@@ -114,8 +114,8 @@ describe "Block inference" do
     end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
-    type.type_vars["T"].type.should eq(mod.float64)
-    type.instance_vars["@x"].type.should eq(mod.float64)
+    expect(type.type_vars["T"].type).to eq(mod.float64)
+    expect(type.instance_vars["@x"].type).to eq(mod.float64)
   end
 
   it "infers type of block before call taking other args free vars into account" do

@@ -4,15 +4,15 @@ describe "Thread" do
   it "allows passing an argumentless fun to execute" do
     a = 0
     thread = Thread.new { a = 1; 10 }
-    thread.join.should eq(10)
-    a.should eq(1)
+    expect(thread.join).to eq(10)
+    expect(a).to eq(1)
   end
 
   it "allows passing a fun with an argument to execute" do
     a = 0
     thread = Thread.new(3) { |i| a += i; 20 }
-    thread.join.should eq(20)
-    a.should eq(3)
+    expect(thread.join).to eq(20)
+    expect(a).to eq(3)
   end
 
   it "raises inside thread and gets it on join" do
@@ -25,7 +25,7 @@ describe "Thread" do
   it "gets a non-nilable value from join" do
     thread = Thread.new { 1 }
     value = thread.join
-    (value + 2).should eq(3)
+    expect((value + 2)).to eq(3)
   end
 end
 
@@ -42,10 +42,10 @@ describe "ConditionVariable" do
       end
     end
 
-    a.should eq(0)
+    expect(a).to eq(0)
     3.times do |i|
       m.synchronize { cv1.signal; cv2.wait(m) }
-      a.should eq(i + 1)
+      expect(a).to eq(i + 1)
     end
 
     thread.join
