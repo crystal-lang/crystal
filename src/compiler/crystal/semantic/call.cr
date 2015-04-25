@@ -363,11 +363,17 @@ class Crystal::Call
       unless typed_def
         typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, block_arg_type)
         def_instance_owner.add_def_instance(def_instance_key, typed_def) if use_cache
+
         if typed_def.macro_def?
           return_type = typed_def.return_type.not_nil!
           typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner.instance_type)
           mod.push_def_macro typed_def
         else
+          if typed_def_return_type = typed_def.return_type
+            return_type = TypeLookup.lookup(match.def.owner, typed_def_return_type, match_owner.instance_type)
+            typed_def.freeze_type = return_type
+          end
+
           check_recursive_splat_call match.def, typed_def_args do
             bubbling_exception do
               visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
