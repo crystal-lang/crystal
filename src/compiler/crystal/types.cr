@@ -726,7 +726,12 @@ module Crystal
     def add_subclass(subclass)
       subclasses << subclass
       notify_subclass_added
-      superclass.try &.notify_subclass_added
+
+      superclass = superclass()
+      while superclass
+        superclass.notify_subclass_added
+        superclass = superclass.superclass
+      end
     end
   end
 
