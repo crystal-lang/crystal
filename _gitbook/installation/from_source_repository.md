@@ -4,6 +4,13 @@ If you want to contribute then you might want to install Crystal from sources. B
 
 You will also need LLVM 3.5 present in the path. If you are using Mac and the Homebrew formula, this will be automatically configured for you if you install Crystal adding `--with-llvm` flag.
 
+If using Homebrew you will also need to install a few other libraries as well:
+
+```
+brew install libevent
+brew install boehmgc
+```
+
 Then clone the repository:
 
 ```
