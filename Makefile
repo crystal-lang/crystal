@@ -8,7 +8,15 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 ifeq (Darwin,$(shell uname))
-	BUILD_PATH := PATH=`brew --prefix llvm36`/bin:$$PATH LIBRARY_PATH=`brew --prefix crystal`/embedded/lib
+	# try llvm36, then llvm35, finally llvm
+	LLVM_PATH := $(shell brew --prefix llvm36)
+	ifneq ("",$(wildcard $(LLVM_PATH)))
+		LLVM_PATH := $(shell brew --prefix llvm35)
+	endif
+	ifneq ("",$(wildcard $(LLVM_PATH)))
+		LLVM_PATH := $(shell brew --prefix llvm)
+	endif
+	BUILD_PATH := PATH=$(LLVM_PATH)/bin:$$PATH LIBRARY_PATH=`brew --prefix crystal`/embedded/lib
 endif
 
 all: crystal
