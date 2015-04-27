@@ -117,6 +117,13 @@ struct Slice(T)
     io << "]"
   end
 
+  def to_a
+    Array(T).build(@length) do |pointer|
+      pointer.copy_from(@pointer, @length)
+      @length
+    end
+  end
+
   def to_unsafe
     @pointer
   end

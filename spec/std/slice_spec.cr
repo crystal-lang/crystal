@@ -100,4 +100,10 @@ describe "Slice" do
     slice = Slice(UInt8).new(4) { |i| i.to_u8 + 1 }
     slice.hexstring.should eq("01020304")
   end
+
+  it "does to_a" do
+    slice = Slice.new(3) { |i| i }
+    ary = slice.to_a
+    ary.should eq([0, 1, 2])
+  end
 end
