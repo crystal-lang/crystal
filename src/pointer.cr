@@ -416,6 +416,18 @@ struct Pointer(T)
   def to_slice(length)
     Slice.new(self, length)
   end
+
+  # Clears (sets to "zero" bytes) a number of values pointed by this pointer.
+  #
+  # ```
+  # ptr = Pointer.malloc(6) { |i| i + 10 } #   [10, 11, 12, 13, 14, 15]
+  # ptr.clear(3)
+  # ptr                                    #   [0, 0, 0, 13, 14, 15]
+  # ```
+  def clear(count = 1)
+    ptr = self as Pointer(Void)
+    Intrinsics.memset(self as Void*, 0_u8, (count * sizeof(T)).to_u32, 0_u32, false)
+  end
 end
 
 struct PointerAppender(T)

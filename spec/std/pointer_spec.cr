@@ -202,4 +202,42 @@ describe "Pointer" do
     p2.move_to(p2, 1)
     p2.value.should eq(20)
   end
+
+  describe "clear" do
+    it "clears one" do
+      ptr = Pointer(Int32).malloc(2)
+      ptr[0] = 10
+      ptr[1] = 20
+      ptr.clear
+      ptr[0].should eq(0)
+      ptr[1].should eq(20)
+    end
+
+    it "clears many" do
+      ptr = Pointer(Int32).malloc(4)
+      ptr[0] = 10
+      ptr[1] = 20
+      ptr[2] = 30
+      ptr[3] = 40
+      ptr.clear(2)
+      ptr[0].should eq(0)
+      ptr[1].should eq(0)
+      ptr[2].should eq(30)
+      ptr[3].should eq(40)
+    end
+
+    it "clears with union" do
+      ptr = Pointer(Int32 | Nil).malloc(4)
+      ptr[0] = 10
+      ptr[1] = 20
+      ptr[2] = 30
+      ptr[3] = 0
+      ptr.clear(2)
+      ptr[0].should be_nil
+      ptr[1].should be_nil
+      ptr[2].should eq(30)
+      ptr[3].should eq(0)
+      ptr[3].should_not be_nil
+    end
+  end
 end
