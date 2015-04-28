@@ -1352,7 +1352,7 @@ class String
   end
 
   def each_byte
-    ByteIterator.new(self)
+    to_slice.each
   end
 
   def inspect(io)
@@ -1582,28 +1582,6 @@ class String
     def rewind
       @reader.pos = 0
       @end = false
-      self
-    end
-  end
-
-  class ByteIterator
-    include Iterator(UInt8)
-
-    def initialize(@string, @index = 0)
-    end
-
-    def next
-      if @index >= @string.bytesize
-        stop
-      else
-        value = @string.unsafe_byte_at(@index)
-        @index += 1
-        value
-      end
-    end
-
-    def rewind
-      @index = 0
       self
     end
   end

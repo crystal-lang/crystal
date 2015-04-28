@@ -29,12 +29,7 @@ struct Slice(T)
   end
 
   def [](index : Int)
-    index += length if index < 0
-    unless 0 <= index < length
-      raise IndexOutOfBounds.new
-    end
-
-    @pointer[index]
+    at(index)
   end
 
   def []=(index : Int, value : T)
@@ -58,6 +53,19 @@ struct Slice(T)
     Slice.new(@pointer + start, count)
   end
 
+  def at(index : Int)
+    at(index) { raise IndexOutOfBounds.new }
+  end
+
+  def at(index : Int)
+    index += length if index < 0
+    if 0 <= index < length
+      @pointer[index]
+    else
+      yield
+    end
+  end
+
   def empty?
     @length == 0
   end
@@ -66,6 +74,10 @@ struct Slice(T)
     length.times do |i|
       yield @pointer[i]
     end
+  end
+
+  def each
+    Iterator(T).new(self)
   end
 
   def pointer(length)
@@ -119,5 +131,23 @@ struct Slice(T)
 
   def to_unsafe
     @pointer
+  end
+
+  class Iterator(T)
+    include ::Iterator(T)
+
+    def initialize(@slice : ::Slice(T), @index = 0)
+    end
+
+    def next
+      value = @slice.at(@index) { stop }
+      @index += 1
+      value
+    end
+
+    def rewind
+      @index = 0
+      self
+    end
   end
 end

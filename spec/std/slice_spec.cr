@@ -100,4 +100,16 @@ describe "Slice" do
     slice = Slice(UInt8).new(4) { |i| i.to_u8 + 1 }
     slice.hexstring.should eq("01020304")
   end
+
+  it "does iterator" do
+    slice = Slice(Int32).new(3) { |i| i + 1 }
+    iter = slice.each
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq(3)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+  end
 end
