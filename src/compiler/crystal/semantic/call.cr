@@ -565,7 +565,7 @@ class Crystal::Call
     block_arg_type = nil
 
     block = @block.not_nil!
-    ident_lookup = MatchTypeLookup.new(match.context)
+    ident_lookup = MatchTypeLookup.new(self, match.context)
 
     block_arg_fun = block_arg.fun
 
@@ -748,7 +748,7 @@ class Crystal::Call
   end
 
   class MatchTypeLookup < TypeLookup
-    def initialize(@context)
+    def initialize(@call, @context)
       super(@context.type_lookup)
     end
 
@@ -769,7 +769,9 @@ class Crystal::Call
     end
 
     def lookup_node_type(node)
-      node.accept self
+      @call.bubbling_exception do
+        node.accept self
+      end
       type
     end
   end

@@ -72,7 +72,13 @@ module Crystal
         type_var.accept self
         @type.not_nil!.virtual_type as TypeVar
       end
-      @type = instance_type.instantiate(type_vars)
+
+      begin
+        @type = instance_type.instantiate(type_vars)
+      rescue ex : Crystal::Exception
+        node.raise ex.message
+      end
+
       false
     end
 

@@ -607,7 +607,7 @@ module Crystal
         return add_hook :extended, a_def
       when "method_missing"
         if a_def.args.length != 3
-          raise "macro 'method_missing' expects 3 arguments: name, args, block"
+          raise TypeException.new "macro 'method_missing' expects 3 arguments: name, args, block"
         end
       end
 
@@ -618,7 +618,7 @@ module Crystal
 
     def add_hook(kind, a_def)
       if a_def.args.length != 0
-        raise "macro '#{kind}' must not have arguments"
+        raise TypeException.new "macro '#{kind}' must not have arguments"
       end
 
       hooks = @hooks ||= [] of Hook
@@ -669,7 +669,7 @@ module Crystal
 
     def include(mod)
       if mod == self
-        raise "cyclic include detected"
+        raise TypeException.new "cyclic include detected"
       else
         unless parents.includes?(mod)
           parents.insert 0, mod
@@ -1626,12 +1626,12 @@ module Crystal
     def new_generic_instance(program, generic_type, type_vars)
       n = type_vars["N"]
       unless n.is_a?(NumberLiteral)
-        raise "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
+        raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
       end
 
       value = n.value.to_i
       if value < 0
-        raise "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
+        raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
       end
 
       StaticArrayInstanceType.new program, generic_type, type_vars
@@ -1911,7 +1911,7 @@ module Crystal
           if existing
             existing = existing.def as External
             unless existing.compatible_with?(a_def)
-              raise "fun redefinition with different signature (was #{existing})"
+              raise TypeException.new "fun redefinition with different signature (was #{existing})"
             end
           end
         end

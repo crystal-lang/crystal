@@ -121,6 +121,10 @@ module Crystal
       super(message)
     end
 
+    def self.new(message)
+      new message, nil, 0, nil, 0
+    end
+
     def to_s_with_source(source, io)
       io << "Error "
       append_to_s source, io
