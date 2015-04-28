@@ -14,9 +14,35 @@ class BufferedIO(T)
     io
   end
 
-  def gets
+  def gets(delimiter = '\n' : Char)
+    if delimiter.ord >= 128
+      return super
+    end
+
+    delimiter_byte = delimiter.ord.to_u8
+
+    # We first check, after filling the buffer, if the delimiter
+    # is already in the buffer. In that case it's much faster to create
+    # a String from a slice of the buffer instead of appending to a
+    # StringIO, which happens in the other case.
+    fill_buffer if @buffer_rem.empty?
+    if @buffer_rem.empty?
+      return nil
+    end
+
+    endl = @buffer_rem.index(delimiter_byte)
+    if endl
+      string = String.new(@buffer_rem[0, endl + 1])
+      @buffer_rem += (endl + 1)
+      return string
+    end
+
+    # We didn't find the delimiter, so we append to a StringIO until we find it.
     String.build do |buffer|
       loop do
+        buffer.write @buffer_rem
+        @buffer_rem += @buffer_rem.length
+
         fill_buffer if @buffer_rem.empty?
 
         if @buffer_rem.empty?
@@ -27,14 +53,11 @@ class BufferedIO(T)
           end
         end
 
-        endl = @buffer_rem.index('\n'.ord.to_u8)
+        endl = @buffer_rem.index(delimiter_byte)
         if endl
           buffer.write @buffer_rem, endl + 1
           @buffer_rem += (endl + 1)
           break
-        else
-          buffer.write @buffer_rem
-          @buffer_rem += @buffer_rem.length
         end
       end
     end
