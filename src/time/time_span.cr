@@ -227,6 +227,14 @@ struct TimeSpan
 end
 
 struct Int
+  def week
+    weeks
+  end
+
+  def weeks
+    TimeSpan.new 7 * self, 0, 0, 0
+  end
+
   def day
     days
   end
