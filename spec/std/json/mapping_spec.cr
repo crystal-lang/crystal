@@ -104,8 +104,14 @@ describe "JSON mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    expect_raises Exception, "unknown json attribute: foo" do
+    expect_raises JSON::ParseException, "unknown json attribute: foo" do
       StrictJSONPerson.from_json(%({"name": "John", "age": 30, "foo": "bar"}))
+    end
+  end
+
+  it "raises if non-nilable attribute is nil" do
+    expect_raises JSON::ParseException, "missing json attribute: name" do
+      JSONPerson.from_json(%({"age": 30}))
     end
   end
 

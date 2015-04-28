@@ -36,7 +36,7 @@ class Object
         {% end %}
         else
           {% if strict %}
-            raise "unknown json attribute: #{_key}"
+            raise JSON::ParseException.new("unknown json attribute: #{_key}", 0, 0)
           {% else %}
             _pull.skip
           {% end %}
@@ -46,7 +46,7 @@ class Object
       {% for key, value in properties %}
         {% unless value[:nilable] %}
           if _{{key.id}}.is_a?(Nil)
-            raise "missing json attribute: {{(value[:key] || key).id}}"
+            raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
