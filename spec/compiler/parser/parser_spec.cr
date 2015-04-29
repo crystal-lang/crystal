@@ -936,6 +936,7 @@ describe "Parser" do
   it_parses "macro foo *y;end", Macro.new("foo", [Arg.new("y")], splat_index: 0)
 
   it_parses "def foo(x = 1, *y); 1; end", Def.new("foo", [Arg.new("x", 1.int32), Arg.new("y")], 1.int32, splat_index: 1)
+  it_parses "def foo(x, *y : Int32); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y", restriction: "Int32".path)], 1.int32, splat_index: 1)
 
   it_parses "foo *bar", Call.new(nil, "foo", "bar".call.splat)
   it_parses "foo(*bar)", Call.new(nil, "foo", "bar".call.splat)
@@ -1102,9 +1103,6 @@ describe "Parser" do
   assert_syntax_error "1 then"
   assert_syntax_error "return 1 foo"
   assert_syntax_error "return false foo"
-
-  assert_syntax_error "def foo(x, *args : Int32); end"
-  assert_syntax_error "def foo(*args : Int32); end"
 
   assert_syntax_error "a = 1; b = 2; a, b += 1, 2"
 

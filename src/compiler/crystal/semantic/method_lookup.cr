@@ -107,17 +107,28 @@ module Crystal
         end
       end
 
-      # The splat argument (always matches)
+      # The splat argument
       if splat_index == -1
         splat_length = 0
         offset = 0
       else
         splat_length = arg_types.length - (a_def.args.length - 1)
         offset = splat_index + splat_length
+        splat_arg = def_metadata.def.args[splat_index]
+
+        # If there's a restriction on a splat, zero splatted args don't match
+        return nil if splat_arg.restriction && splat_length == 0
 
         matched_arg_types ||= [] of Type
         splat_length.times do |i|
-          matched_arg_types.push arg_types[splat_index + i]
+          matched_arg_type = arg_types[splat_index + i]
+
+          # Check that every splatted type matches the restriction
+          if splat_arg.restriction && !match_arg(matched_arg_type, splat_arg, context)
+            return nil
+          end
+
+          matched_arg_types.push matched_arg_type
         end
       end
 

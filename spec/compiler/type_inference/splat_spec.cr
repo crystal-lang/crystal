@@ -76,4 +76,132 @@ describe "Type inference: splat" do
       end
       )) { int32 }
   end
+
+  it "errors if doesn't match splat with type restriction" do
+    assert_error %(
+      def foo(*args : Int32)
+      end
+
+      foo 1, 2, 3, 'a'
+      ),
+      "no overload matches"
+  end
+
+  it "works if matches splat with type restriction" do
+    assert_type(%(
+      def foo(*args : Int32)
+        args[0]
+      end
+
+      foo 1, 2, 3
+      )) { int32 }
+  end
+
+  it "oveloards with type restriction and splat (1)" do
+    assert_type(%(
+      def foo(arg : Int32)
+        1
+      end
+
+      def foo(*args : Int32)
+        'a'
+      end
+
+      foo 1
+      )) { int32 }
+  end
+
+  it "oveloards with type restriction and splat (2)" do
+    assert_type(%(
+      def foo(arg : Int32)
+        1
+      end
+
+      def foo(*args : Int32)
+        'a'
+      end
+
+      foo 1, 2, 3
+      )) { char }
+  end
+
+  it "errors if doesn't match splat with type restriction because of zero arguments" do
+    assert_error %(
+      def foo(*args : Int32)
+      end
+
+      foo
+      ),
+      "no overload matches"
+  end
+
+  it "oveloards with type restriction and splat (3)" do
+    assert_type(%(
+      def foo(*args : Char)
+        "hello"
+      end
+
+      def foo(*args : Int32)
+        1.5
+      end
+
+      foo 'a', 'b', 'c'
+      )) { string }
+  end
+
+  it "oveloards with type restriction and splat (4)" do
+    assert_type(%(
+      def foo(*args : Char)
+        "hello"
+      end
+
+      def foo(*args : Int32)
+        1.5
+      end
+
+      foo 1, 2, 3
+      )) { float64 }
+  end
+
+  it "oveloards with type restriction and splat (5)" do
+    assert_type(%(
+      def foo(*args : Int32)
+        "hello"
+      end
+
+      def foo
+        1.5
+      end
+
+      foo 1, 2, 3
+      )) { string }
+  end
+
+  it "oveloards with type restriction and splat (6)" do
+    assert_type(%(
+      def foo(*args : Int32)
+        "hello"
+      end
+
+      def foo
+        1.5
+      end
+
+      foo
+      )) { float64 }
+  end
+
+  it "oveloards with type restriction and splat (7)" do
+    assert_type(%(
+      def foo(*args)
+        foo args
+      end
+
+      def foo(args : Tuple)
+        'a'
+      end
+
+      foo 1, 2, 3
+      )) { char }
+  end
 end

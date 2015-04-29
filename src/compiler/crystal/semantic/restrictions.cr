@@ -51,8 +51,24 @@ module Crystal
         other_type = other_arg.type? || other_arg.restriction
         return false if self_type == nil && other_type != nil
         if self_type && other_type
+          # If this is a splat arg and the other not, this is not stricter than the other
+          return false if index == self.def.splat_index
+
           return false unless self_type.is_restriction_of?(other_type, owner)
         end
+      end
+
+      if (my_splat_index = self.def.splat_index) && (other_splat_index = other.def.splat_index) && (my_splat_index == other_splat_index)
+        self_arg = self.def.args[my_splat_index]
+        other_arg = other.def.args[other_splat_index]
+
+        if (self_restriction = self_arg.restriction) && (other_restriction = other_arg.restriction)
+          return false unless self_restriction.is_restriction_of?(other_restriction, owner)
+        end
+      end
+
+      if self.def.splat_index && !other.def.splat_index
+        return false
       end
 
       true

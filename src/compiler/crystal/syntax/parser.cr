@@ -2565,12 +2565,12 @@ module Crystal
             raise "argument must have a default value", arg_location
           end
         end
+      end
 
-        if @token.type == :":"
-          next_token_skip_space_or_newline
-          location = @token.location
-          restriction = parse_single_type
-        end
+      if @token.type == :":"
+        next_token_skip_space_or_newline
+        location = @token.location
+        restriction = parse_single_type
       end
 
       raise "Bug: arg_name is nil" unless arg_name
