@@ -16,7 +16,7 @@ module HTTP
       end
 
       name, value = line.chomp.split ':', 2
-      headers[name] = value.lstrip
+      headers.add(name, value.lstrip)
     end
   end
 
@@ -32,8 +32,10 @@ module HTTP
 
   def self.serialize_headers_and_body(io, headers, body)
     if headers
-      headers.each do |name, value|
-        io << name << ": " << value << "\r\n"
+      headers.each do |name, values|
+        values.each do |value|
+          io << name << ": " << value << "\r\n"
+        end
       end
     end
     io << "\r\n"
