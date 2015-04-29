@@ -95,8 +95,8 @@ module Crystal
   end
 
   class TypeException < Exception
-    getter :node
-    getter :inner
+    getter node
+    property inner
 
     def color=(@color)
       inner.try &.color=(@color)
@@ -119,6 +119,10 @@ module Crystal
 
     def initialize(message, @line, @column : Int32, @filename, @length, @inner = nil)
       super(message)
+    end
+
+    def self.new(message)
+      new message, nil, 0, nil, 0
     end
 
     def to_s_with_source(source, io)

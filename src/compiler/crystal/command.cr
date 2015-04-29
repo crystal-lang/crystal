@@ -228,6 +228,7 @@ USAGE
     exit_status = LibC.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
     if exit_status != 0
       puts "Program terminated abnormally with error code: #{exit_status}"
+      exit 1
     end
     File.delete output_filename
   end

@@ -32,6 +32,11 @@ module HTTP
       response.body?.should be_nil
     end
 
+    it "parses response with duplicated headers" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: a=b\r\nSet-Cookie: c=d\r\n\r\nhelloworld"))
+      response.headers.get("Set-Cookie").should eq(["a=b", "c=d"])
+    end
+
     it "parses response with chunked body" do
       response = Response.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n"))
       response.body.should eq("abcde0123456789")
@@ -41,7 +46,7 @@ module HTTP
     it "serialize with body" do
       headers = HTTP::Headers.new
       headers["Content-Type"] = "text/plain"
-      headers["Content-Length"] = 5
+      headers["Content-Length"] = "5"
 
       response = Response.new(200, "hello", headers)
       io = StringIO.new

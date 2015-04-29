@@ -252,7 +252,7 @@ describe "Type inference: def" do
 
       foo
       ),
-      "expected 'foo' to return Int32, not Char"
+      "type must be Int32, not Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -265,7 +265,7 @@ describe "Type inference: def" do
 
       Foo.new.foo
       ),
-      "expected 'Foo#foo' to return Int32, not Char"
+      "type must be Int32, not Char"
   end
 
   it "errors if return type doesn't match on class method" do
@@ -278,7 +278,7 @@ describe "Type inference: def" do
 
       Foo.foo
       ),
-      "expected 'Foo::foo' to return Int32, not Char"
+      "type must be Int32, not Char"
   end
 
   it "is ok if returns Int32? with explicit return" do

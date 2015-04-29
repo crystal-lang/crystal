@@ -418,7 +418,11 @@ module Crystal
       target.bind_to var
       node.bind_to value
 
-      var.bind_to node
+      begin
+        var.bind_to node
+      rescue ex : FrozenTypeException
+        target.raise ex.message
+      end
 
       if @is_initialize
         var_name = target.name
@@ -539,7 +543,7 @@ module Crystal
 
       begin
         current_type.metaclass.add_macro node
-      rescue ex
+      rescue ex : Crystal::Exception
         node.raise ex.message
       end
 
@@ -1784,7 +1788,7 @@ module Crystal
 
       begin
         old_external = current_type.add_def external
-      rescue ex
+      rescue ex : Crystal::Exception
         node.raise ex.message
       end
 
@@ -2827,7 +2831,7 @@ module Crystal
       begin
         current_type.include module_to_include
         run_hooks type.metaclass, current_type, kind, node
-      rescue ex
+      rescue ex : TypeException
         node_name.raise ex.message
       end
     end
@@ -3320,9 +3324,9 @@ module Crystal
     end
 
     def lookup_similar_var_name(name)
-      SimilarName.find(name) do |similar_name|
+      Levenshtein.find(name) do |finder|
         @vars.each_key do |var_name|
-          similar_name.test(var_name)
+          finder.test(var_name)
         end
       end
     end

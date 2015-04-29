@@ -77,4 +77,26 @@ describe HTTP::Headers do
     other["Baz"] = "Qux"
     headers["baz"]?.should be_nil
   end
+
+  it "adds string" do
+    headers = HTTP::Headers.new
+    headers.add("foo", "bar")
+    headers.add("foo", "baz")
+    headers["foo"].should eq("bar,baz")
+  end
+
+  it "adds array of string" do
+    headers = HTTP::Headers.new
+    headers.add("foo", "bar")
+    headers.add("foo", ["baz", "qux"])
+    headers["foo"].should eq("bar,baz,qux")
+  end
+
+  it "gets all values" do
+    headers = HTTP::Headers{"foo": "bar"}
+    headers.get("foo").should eq(["bar"])
+
+    headers.get?("foo").should eq(["bar"])
+    headers.get?("qux").should be_nil
+  end
 end

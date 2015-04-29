@@ -21,7 +21,7 @@ class HTTP::Request
   end
 
   def keep_alive?
-    case @headers.try(&.["Connection"]?).try &.downcase
+    case @headers["Connection"]?.try &.downcase
     when "keep-alive"
       return true
     when "close"

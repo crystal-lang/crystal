@@ -1109,4 +1109,12 @@ describe "Parser" do
   assert_syntax_error "a = 1; b = 2; a, b += 1, 2"
 
   assert_syntax_error "lib LibC\n$Errno : Int32\nend", "external variables must start with lowercase, use for example `$errno = Errno : Int32`"
+
+  assert_syntax_error "a += 1",
+                      "'+=' before definition of 'a'"
+  assert_syntax_error "self = 1",
+                      "can't change the value of self"
+  assert_syntax_error "self += 1",
+                      "can't change the value of self"
+
 end

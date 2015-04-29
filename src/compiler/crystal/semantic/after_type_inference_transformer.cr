@@ -238,8 +238,6 @@ module Crystal
             unless @transformed.includes?(target_def.object_id)
               @transformed.add(target_def.object_id)
 
-              check_return_type target_def
-
               node.bubbling_exception do
                 target_def.body = target_def.body.transform(self)
               end
@@ -281,19 +279,6 @@ module Crystal
       # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
 
       node
-    end
-
-    def check_return_type(a_def)
-      return if a_def.macro_def?
-
-      return_type = a_def.return_type
-      return unless return_type
-
-      owner = a_def.owner
-      resolved_return_type = TypeLookup.lookup(owner, return_type)
-      return if a_def.type == resolved_return_type
-
-      a_def.raise "expected '#{owner.to_s_with_method_name(a_def.name)}' to return #{resolved_return_type}, not #{a_def.type}"
     end
 
     def number_lines(source)

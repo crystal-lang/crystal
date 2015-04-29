@@ -69,7 +69,7 @@ class Crystal::Call
     if defs.empty?
       check_macro_wrong_number_of_arguments(def_name)
 
-      owner_trace = find_owner_trace(obj, owner) if obj
+      owner_trace = obj.try &.find_owner_trace(owner)
       similar_name = owner.lookup_similar_def_name(def_name, self.args.length, block)
 
       error_msg = String.build do |msg|
@@ -151,7 +151,7 @@ class Crystal::Call
     end
 
     if args.length == 1 && args.first.type.includes_type?(mod.nil)
-      owner_trace = find_owner_trace(args.first, mod.nil)
+      owner_trace = args.first.find_owner_trace(mod.nil)
     end
 
     arg_names = [] of Array(String)
@@ -287,7 +287,7 @@ class Crystal::Call
           named_arg.raise "argument '#{named_arg.name}' already specified"
         end
       else
-        similar_name = SimilarName.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
+        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
 
         msg = String.build do |str|
           str << "no argument named '"

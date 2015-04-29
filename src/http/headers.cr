@@ -1,10 +1,14 @@
 struct HTTP::Headers
   def initialize
-    @hash = {} of String => String
+    @hash = {} of String => Array(String)
   end
 
-  def []=(key, value)
-    @hash[key_name(key)] = value.to_s
+  def []=(key, value : String)
+    self[key] = [value]
+  end
+
+  def []=(key, value : Array(String))
+    @hash[key_name(key)] = value
   end
 
   def [](key)
@@ -12,19 +16,43 @@ struct HTTP::Headers
   end
 
   def []?(key)
-    @hash[key_name(key)]?
+    values = @hash[key_name(key)]?
+    values ? concat(values) : nil
+  end
+
+  def add(key, value : String)
+    existing = @hash[key_name(key)]?
+    if existing
+      existing << value
+    else
+      @hash[key_name(key)] = [value]
+    end
+    self
+  end
+
+  def add(key, value : Array(String))
+    existing = @hash[key_name(key)]?
+    if existing
+      existing.concat value
+    else
+      @hash[key_name(key)] = value
+    end
+    self
   end
 
   def fetch(key)
-    @hash.fetch key_name(key)
+    values = @hash.fetch key_name(key)
+    concat values
   end
 
   def fetch(key, default)
-    @hash.fetch key_name(key), default
+    fetch(key) { default }
   end
 
   def fetch(key)
-    @hash.fetch(key_name(key)) { |k| yield k }
+    k = key_name(key)
+    values = @hash[k]?
+    values ? concat(values) : yield k
   end
 
   def has_key?(key)
@@ -36,7 +64,8 @@ struct HTTP::Headers
   end
 
   def delete(key)
-    @hash.delete key_name(key)
+    values = @hash.delete key_name(key)
+    values ? concat(values) : nil
   end
 
   def merge!(other)
@@ -53,10 +82,30 @@ struct HTTP::Headers
     return false unless @hash.length == other.length
 
     other.each do |key, value|
-      return false unless @hash[key_name(key)]? == value
+      this_value = @hash[key_name(key)]?
+      if this_value
+        case value
+        when String
+          return false unless this_value.length == 1 && this_value[0] == value
+        when Array(String)
+          return false unless this_value == value
+        else
+          false
+        end
+      else
+        return false unless value.nil?
+      end
     end
 
     true
+  end
+
+  def get(key)
+    @hash[key_name(key)]
+  end
+
+  def get?(key)
+    @hash[key_name(key)]?
   end
 
   def dup
@@ -84,5 +133,24 @@ struct HTTP::Headers
 
   private def key_name(key)
     key.capitalize
+  end
+
+  private def cast(value : String)
+    [value]
+  end
+
+  private def cast(value : Array(String))
+    value
+  end
+
+  private def concat(values)
+    case values.length
+    when 0
+      ""
+    when 1
+      values.first
+    else
+      values.join ","
+    end
   end
 end

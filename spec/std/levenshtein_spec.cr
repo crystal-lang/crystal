@@ -14,4 +14,20 @@ describe "levenshtein" do
   assert { levenshtein("hippo", "zzzzzzzz").should eq(8) }
   assert { levenshtein("hello", "hallo").should eq(1) }
   assert { levenshtein("こんにちは", "こんちは").should eq(1) }
+
+  it "finds with finder" do
+    finder = Levenshtein::Finder.new "hallo"
+    finder.test "hay"
+    finder.test "hall"
+    finder.test "hallo world"
+    finder.best_match.should eq("hall")
+  end
+
+  it "finds with finder and other values" do
+    finder = Levenshtein::Finder.new "hallo"
+    finder.test "hay", "HAY"
+    finder.test "hall", "HALL"
+    finder.test "hallo world", "HALLO WORLD"
+    finder.best_match.should eq("HALL")
+  end
 end

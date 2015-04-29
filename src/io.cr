@@ -265,11 +265,7 @@ module IO
     end
   end
 
-  def gets
-    gets '\n'
-  end
-
-  def gets(delimiter : Char)
+  def gets(delimiter = '\n' : Char)
     buffer = StringIO.new
     while true
       unless ch = read_char
@@ -395,8 +391,8 @@ end
 
 require "./io/*"
 
-def gets
-  STDIN.gets
+def gets(delimiter = '\n' : Char)
+  STDIN.gets(delimiter)
 end
 
 def read_line(delimiter = '\n' : Char)

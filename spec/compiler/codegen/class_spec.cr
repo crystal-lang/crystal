@@ -579,4 +579,37 @@ describe "Code gen: class" do
       f.class.foo
       )).to_i.should eq(2)
   end
+
+  it "notifies superclass recursively on inheritance (#576)" do
+    run(%(
+      class Class
+        macro def name : String
+          {{ @class_name }}
+        end
+
+        def foo
+          name
+        end
+      end
+
+      class A
+      end
+
+      ptr = Pointer(A.class).malloc(1_u64)
+      ptr.value = A
+      ptr.value.foo
+
+      class B < A; end
+      ptr.value = B
+      ptr.value.foo
+
+      class C < B; end
+      ptr.value = C
+      ptr.value.foo
+
+      class D < C; end
+      ptr.value = D
+      ptr.value.foo
+      )).to_string.should eq("D:Class")
+  end
 end

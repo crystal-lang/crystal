@@ -109,6 +109,10 @@ struct TimeSpan
     (ticks % TicksPerSecond / TicksPerMillisecond).to_i32
   end
 
+  def total_weeks
+    total_days / 7
+  end
+
   def total_days
     ticks.to_f / TicksPerDay
   end
@@ -227,6 +231,14 @@ struct TimeSpan
 end
 
 struct Int
+  def week
+    weeks
+  end
+
+  def weeks
+    TimeSpan.new 7 * self, 0, 0, 0
+  end
+
   def day
     days
   end

@@ -112,4 +112,10 @@ describe "Slice" do
     iter.rewind
     iter.next.should eq(1)
   end
+
+  it "does to_a" do
+    slice = Slice.new(3) { |i| i }
+    ary = slice.to_a
+    ary.should eq([0, 1, 2])
+  end
 end

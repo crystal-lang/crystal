@@ -83,4 +83,15 @@ describe "Type inference: static array" do
       a = 1
       )) { int32 }
   end
+
+  it "doesn't crash on restriction (#584)" do
+    assert_error %(
+      def foo(&block : Int32[Int32] -> Int32)
+        block.call([0])
+      end
+
+      foo { |x| 0 }
+      ),
+      "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
+  end
 end

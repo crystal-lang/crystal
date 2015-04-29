@@ -33,8 +33,15 @@ module Crystal
     def set_type_from(type, from)
       set_type type
     rescue ex : FrozenTypeException
+      # See if we can find where the mismatched type came from
+      if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.length == 2
+        other_type = type.union_types.find { |type| type != freeze_type }
+        trace = from.find_owner_trace(other_type)
+        ex.inner = trace
+      end
+
       if from && !location
-        from.raise ex.message
+        from.raise ex.message, ex.inner
       else
         ::raise ex
       end
@@ -53,7 +60,7 @@ module Crystal
     end
 
     def bind_to(node : ASTNode)
-      bind do |dependencies|
+      bind(node) do |dependencies|
         dependencies.push node
         node.add_observer self
         node
@@ -70,7 +77,7 @@ module Crystal
       end
     end
 
-    def bind
+    def bind(from = nil)
       dependencies = @dependencies ||= Dependencies.new
 
       node = yield dependencies
@@ -83,7 +90,7 @@ module Crystal
       return if @type.same? new_type
       return unless new_type
 
-      set_type(map_type(new_type))
+      set_type_from(map_type(new_type), from)
       @dirty = true
       propagate
     end
@@ -166,6 +173,27 @@ module Crystal
 
     def visibility
       nil
+    end
+
+    def find_owner_trace(owner)
+      owner_trace = [] of ASTNode
+      node = self
+
+      visited = Set(typeof(object_id)).new
+      visited.add node.object_id
+      while deps = node.dependencies?
+        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
+        if dependencies.length > 0
+          node = dependencies.first
+          nil_reason = node.nil_reason if node.is_a?(MetaInstanceVar)
+          owner_trace << node if node
+          visited.add node.object_id
+        else
+          break
+        end
+      end
+
+      MethodTraceException.new(owner, owner_trace, nil_reason)
     end
   end
 
@@ -365,7 +393,7 @@ module Crystal
 
       begin
         generic_type = instance_type.instantiate(type_vars_types)
-      rescue ex
+      rescue ex : Crystal::Exception
         raise ex.message
       end
 

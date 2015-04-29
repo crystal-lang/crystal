@@ -466,6 +466,8 @@ describe Time do
     1.minutes.ticks.should eq(TimeSpan::TicksPerMinute)
     1.hour.ticks.should eq(TimeSpan::TicksPerHour)
     1.hours.ticks.should eq(TimeSpan::TicksPerHour)
+    1.week.should eq(7.days)
+    2.weeks.should eq(14.days)
   end
 
   it "preserves kind when adding" do

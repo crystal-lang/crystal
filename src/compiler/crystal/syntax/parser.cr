@@ -291,6 +291,8 @@ module Crystal
             atomic
           end
         when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
+          # Rewrite 'a += b' as 'a = a + b'
+
           unexpected_token unless allow_ops
 
           break unless can_be_assigned?(atomic)
@@ -299,7 +301,9 @@ module Crystal
             raise "can't reassign to constant"
           end
 
-          # Rewrite 'a += b' as 'a = a + b'
+          if atomic.is_a?(Var) && atomic.name == "self"
+            raise "can't change the value of self", location
+          end
 
           if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"

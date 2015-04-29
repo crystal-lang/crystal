@@ -1,7 +1,7 @@
+require "levenshtein"
 require "../syntax/ast"
 require "../types"
 require "../primitives"
-require "../similar_name"
 require "./type_lookup"
 
 class Crystal::Call
@@ -363,11 +363,17 @@ class Crystal::Call
       unless typed_def
         typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, block_arg_type)
         def_instance_owner.add_def_instance(def_instance_key, typed_def) if use_cache
+
         if typed_def.macro_def?
           return_type = typed_def.return_type.not_nil!
           typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner.instance_type)
           mod.push_def_macro typed_def
         else
+          if typed_def_return_type = typed_def.return_type
+            return_type = TypeLookup.lookup(match.def.owner, typed_def_return_type, match_owner.instance_type)
+            typed_def.freeze_type = return_type
+          end
+
           check_recursive_splat_call match.def, typed_def_args do
             bubbling_exception do
               visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
@@ -451,26 +457,6 @@ class Crystal::Call
     else
       block_arg.raise "expected a function type, not #{block_arg.type}"
     end
-  end
-
-  def find_owner_trace(node, owner)
-    owner_trace = [] of ASTNode
-
-    visited = Set(typeof(object_id)).new
-    visited.add node.object_id
-    while deps = node.dependencies?
-      dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
-      if dependencies.length > 0
-        node = dependencies.first
-        nil_reason = node.nil_reason if node.is_a?(MetaInstanceVar)
-        owner_trace << node if node
-        visited.add node.object_id
-      else
-        break
-      end
-    end
-
-    MethodTraceException.new(owner, owner_trace, nil_reason)
   end
 
   def lookup_matches_in_super(arg_types)
@@ -579,7 +565,7 @@ class Crystal::Call
     block_arg_type = nil
 
     block = @block.not_nil!
-    ident_lookup = MatchTypeLookup.new(match.context)
+    ident_lookup = MatchTypeLookup.new(self, match.context)
 
     block_arg_fun = block_arg.fun
 
@@ -762,7 +748,7 @@ class Crystal::Call
   end
 
   class MatchTypeLookup < TypeLookup
-    def initialize(@context)
+    def initialize(@call, @context)
       super(@context.type_lookup)
     end
 
@@ -783,7 +769,9 @@ class Crystal::Call
     end
 
     def lookup_node_type(node)
-      node.accept self
+      @call.bubbling_exception do
+        node.accept self
+      end
       type
     end
   end
