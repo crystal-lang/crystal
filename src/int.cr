@@ -15,12 +15,23 @@ struct Int
     to_f / other
   end
 
-  def %(x : Int)
-    if x == 0
+  def %(other : Int)
+    if other == 0
       raise DivisionByZero.new
+    elsif (self ^ other) >= 0
+      self.unsafe_mod(other)
+    else
+      me = self.unsafe_mod(other)
+      me == 0 ? me : me + other
     end
+  end
 
-    unsafe_mod x
+  def remainder(other : Int)
+    if other == 0
+      raise DivisionByZero.new
+    else
+      unsafe_mod other
+    end
   end
 
   def abs
@@ -192,7 +203,7 @@ struct Int
       negative = num < 0
 
       while num != 0
-        digit = (num % 10).abs
+        digit = num.remainder(10).abs
         chars.buffer[position] = ('0'.ord + digit).to_u8
         position -= 1
         num /= 10

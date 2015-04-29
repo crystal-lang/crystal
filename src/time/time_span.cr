@@ -94,19 +94,19 @@ struct TimeSpan
   end
 
   def hours
-    (ticks % TicksPerDay / TicksPerHour).to_i32
+    (ticks.remainder(TicksPerDay) / TicksPerHour).to_i32
   end
 
   def minutes
-    (ticks % TicksPerHour / TicksPerMinute).to_i32
+    (ticks.remainder(TicksPerHour) / TicksPerMinute).to_i32
   end
 
   def seconds
-    (ticks % TicksPerMinute / TicksPerSecond).to_i32
+    (ticks.remainder(TicksPerMinute) / TicksPerSecond).to_i32
   end
 
   def milliseconds
-    (ticks % TicksPerSecond / TicksPerMillisecond).to_i32
+    (ticks.remainder(TicksPerSecond) / TicksPerMillisecond).to_i32
   end
 
   def total_weeks
@@ -208,7 +208,7 @@ struct TimeSpan
     io << '0' if seconds < 10
     io << seconds
 
-    fractional = (ticks % TicksPerSecond).abs.to_i32
+    fractional = ticks.remainder(TicksPerSecond).abs.to_i32
     if fractional != 0
       io << '.'
       io << '0' if fractional < 1000000

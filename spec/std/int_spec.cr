@@ -189,4 +189,20 @@ describe "Int" do
     iter.rewind
     iter.next.should eq(0)
   end
+
+  it "does %" do
+    (7 % 5).should eq(2)
+    (-7 % 5).should eq(3)
+
+    (13 % -4).should eq(-3)
+    (-13 % -4).should eq(-1)
+  end
+
+  it "does remainder" do
+    7.remainder(5).should eq(2)
+    -7.remainder(5).should eq(-2)
+
+    13.remainder(-4).should eq(1)
+    -13.remainder(-4).should eq(-1)
+  end
 end
