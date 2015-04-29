@@ -9,6 +9,7 @@ module Iterator(T)
 
   include Enumerable(T)
 
+  abstract def next
   abstract def rewind
 
   def map(&func : T -> U)
