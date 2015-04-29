@@ -185,4 +185,104 @@ describe "Code gen: union type" do
       foo(a)
       )).to_string.should eq("(Int32 | Float64)")
   end
+
+  it "invokes method on union class" do
+    run(%(
+      struct Int32
+        def foo
+          3
+        end
+      end
+
+      struct Char
+        def foo
+          4
+        end
+      end
+
+      class Foo
+        def self.x
+          1
+        end
+      end
+
+      class Bar
+        def self.x
+          'a'
+        end
+      end
+
+      def foo(x : T)
+        T.x
+      end
+
+      a = Foo.new || Bar.new
+      f = foo(a)
+      f.foo
+      )).to_i.should eq(3)
+  end
+
+  it "invokes method on union class (2)" do
+    run(%(
+      struct Int32
+        def foo
+          3
+        end
+      end
+
+      struct Char
+        def foo
+          4
+        end
+      end
+
+      class Foo
+        def self.x(x : Int32)
+          1
+        end
+
+        def self.x(x : Char)
+          'a'
+        end
+      end
+
+      class Bar
+        def self.x(x)
+          1
+        end
+      end
+
+      def foo(x : T)
+        n = 'a' || 1
+        T.x(n)
+      end
+
+      a = Foo.new || Bar.new
+      f = foo(a)
+      f.foo
+      )).to_i.should eq(4)
+  end
+
+  it "invokes method on union class when nil is involved" do
+    run(%(
+      struct Int32
+        def self.foo
+          3
+        end
+      end
+
+      struct Nil
+        def self.foo
+          4
+        end
+      end
+
+      def foo(x : T)
+        T.foo
+      end
+
+      a = 1 == 1 ? 1 : nil
+      foo(a)
+      )).to_i.should eq(4)
+  end
 end

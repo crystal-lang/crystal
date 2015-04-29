@@ -138,6 +138,10 @@ struct Complex
   def /(other : Number)
     Complex.new(@real / other, @imag / other)
   end
+
+  def self.zero
+    new 0, 0
+  end
 end
 
 struct Number

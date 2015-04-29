@@ -2,6 +2,10 @@
 struct Number
   include Comparable(Number)
 
+  def self.zero
+    cast(0)
+  end
+
   # Returns self.
   def +
     self

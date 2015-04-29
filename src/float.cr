@@ -1,8 +1,4 @@
 struct Float
-  def self.zero
-    cast(0)
-  end
-
   def nan?
     !(self == self)
   end

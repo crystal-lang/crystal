@@ -178,7 +178,8 @@ module Crystal
       when 1
         types.first
       else
-        types_ids = types.map(&.type_id).sort!
+        types = types.sort_by! &.type_id
+        types_ids = types.map(&.type_id)
         @unions[types_ids] ||= make_union_type(types, types_ids)
       end
     end
@@ -188,9 +189,7 @@ module Crystal
       if types_ids.first == 0
         # Check if it's a Nilable type
         if types.length == 2
-          nil_index = types.index(&.nil_type?).not_nil!
-          other_index = 1 - nil_index
-          other_type = types[other_index]
+          other_type = types[1]
           if other_type.reference_like? && !other_type.virtual?
             return NilableType.new(self, other_type)
           else

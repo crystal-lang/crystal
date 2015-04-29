@@ -1,8 +1,4 @@
 struct Int
-  def self.zero
-    cast(0)
-  end
-
   def ~
     self ^ -1
   end

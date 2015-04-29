@@ -60,4 +60,27 @@ describe "Type inference: union" do
       LibC::Foo.new.a
       ), flags: "some_flag") { int32 }
   end
+
+  it "invokes method on union class" do
+    assert_type(%(
+      class Foo
+        def self.x
+          1
+        end
+      end
+
+      class Bar
+        def self.x
+          'a'
+        end
+      end
+
+      def foo(x : T)
+        T.x
+      end
+
+      a = Foo.new || Bar.new
+      foo(a)
+      )) { union_of(int32, char) }
+  end
 end

@@ -11,6 +11,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
 
     if target_defs.length > 1
+      # Check if it's a call on a union metaclass
+      if (obj = node.obj) && (obj_type = obj.type?) && obj_type.is_a?(MetaclassType) && (instance_type = obj_type.instance_type).is_a?(UnionType)
+        codegen_union_metaclass_call(instance_type, node)
+        return false
+      end
+
       codegen_dispatch node, target_defs
       return false
     end
@@ -324,6 +330,29 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
 
     @needs_value = old_needs_value
+  end
+
+  # We codegen a call to the first type in the union, and cast it to the node's type.
+  # So for example if you have ::(Int32 | Float64).zero it will give (0 as Int32 | Float)
+  def codegen_union_metaclass_call(union_type, node)
+    new_type = union_type.union_types.first.metaclass
+
+    call = node.clone
+    call.obj.not_nil!.set_type(new_type)
+
+    node.args.zip(call.args) do |node_arg, call_arg|
+      call_arg.set_type(node_arg.type?)
+    end
+
+    new_target_defs = node.target_defs.not_nil!.select { |a_def| a_def.owner == new_type }
+
+    call.target_defs = new_target_defs
+    call.bind_to(new_target_defs)
+    call.scope = call.type
+
+    call.accept(self)
+
+    @last = upcast(@last, node.type, call.type)
   end
 
   def codegen_call(node, target_def, self_type, call_args)
