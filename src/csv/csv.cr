@@ -15,9 +15,9 @@ module CSV
   end
 
   def self.build
-    io = StringIO.new
-    build(io) { |builder| yield builder }
-    io.to_s
+    String.build do |io|
+      build(io) { |builder| yield builder }
+    end
   end
 
   def self.build(io : IO)

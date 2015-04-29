@@ -154,9 +154,9 @@ module Crystal
       end
 
       if capacity <= 64
-        call = Call.new(Path.global("StringIO"), "new")
+        call = Call.new(Path.global(["String", "Builder"]), "new")
       else
-        call = Call.new(Path.global("StringIO"), "new", NumberLiteral.new(capacity))
+        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity))
       end
 
       node.expressions.each do |piece|

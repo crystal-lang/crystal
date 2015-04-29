@@ -108,9 +108,9 @@ class String
   # str #=> "hello 1"
   # ```
   def self.build(capacity = 64)
-    builder = StringIO.new(capacity)
-    yield builder
-    builder.to_s
+    String::Builder.build(capacity) do |builder|
+      yield builder
+    end
   end
 
   # Returns the number of bytes in this string.
@@ -1588,3 +1588,4 @@ class String
 end
 
 require "./string/formatter"
+require "./string/builder"
