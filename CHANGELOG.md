@@ -1,4 +1,4 @@
-## Next
+## 0.7.0 (2015-04-30)
 
 * Crystal has evented IO by default. Added `spawn` and `Channel`.
 * Correctly support the X86_64 and X86 ABIs. Now bindings to C APIs that pass and return structs works perfectly fine.
