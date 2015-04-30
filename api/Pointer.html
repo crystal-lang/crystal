@@ -11,6 +11,31 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>A typed pointer to some memory.</p>
+
+<p>This is the only unsafe type in Crystal. If you are using a pointer, you are writing
+unsafe code because a pointer doesn't know where it's pointing to nor how much memory
+starting from it is valid. However, pointers make it possible to interface with C and
+to implement efficient data structures. For example, both <code><a href="Array.html">Array</a></code> and <code><a href="Hash.html">Hash</a></code> are
+implemented using pointers.</p>
+
+<p>You can obtain pointers in four ways: <code><a href="Pointer.html#new%28address%20%3A%20Int%29-class-method">#new</a></code>, <code><a href="Pointer.html#malloc%28size%20%3A%20Int%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method">#malloc</a></code>, <code>pointerof</code> and by calling a C
+function that returns a pointer.</p>
+
+<p><code>pointerof(x)</code>, where <code>x</code> is a variable or an instance variable, returns a pointer to
+that variable:</p>
+
+<pre><code>x <span class="o">=</span> <span class="n">1</span>
+ptr <span class="o">=</span> <span class="k">pointerof</span>(x)
+ptr.value <span class="o">=</span> <span class="n">2</span>
+puts x <span class="c">#=> 2</span></code></pre>
+
+<p>Note that a pointer is <em>falsey</em> if it's null (if it's address is zero).</p>
+
+<p>For a safe alternative, see <code><a href="Slice.html">Slice</a></code>, which is a pointer with a length and with bounds checking.</p>
+
 
 
 
@@ -32,38 +57,53 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr">pointer.cr</a>
+    
+    <br/>
+  
+
+
+
 
 
   <h2>Class Method Summary</h2>
   <ul>
     
       <li class="entry-summary">
-        <a href="#malloc%28size%20%3A%20Int%29-class-method" class="signature"><strong>.malloc</strong>(size : Int)</a>
+        <a href="#malloc%28size%20%3A%20Int%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method" class="signature"><strong>.malloc</strong>(size : Int, &block : Int32 -> T)</a>
+        
+          <div class="summary"><p>Allocates <code>size * sizeof(T)</code> bytes from the system's heap initialized to the value returned by the block and returns a pointer to the first byte from that memory.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#malloc%28size%20%3A%20Int%2C%20%26block%29-class-method" class="signature"><strong>.malloc</strong>(size : Int, &block)</a>
+        <a href="#malloc%28size%20%3D%201%20%3A%20Int%29-class-method" class="signature"><strong>.malloc</strong>(size = 1 : Int)</a>
+        
+          <div class="summary"><p>Allocates <code>size * sizeof(T)</code> bytes from the system's heap initialized to zero and returns a pointer to the first byte from that memory.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#malloc%28size%20%3A%20Int%2C%20value%20%3A%20T%29-class-method" class="signature"><strong>.malloc</strong>(size : Int, value : T)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#malloc%28size%20%3A%20UInt64%29-class-method" class="signature"><strong>.malloc</strong>(size : UInt64)</a>
+          <div class="summary"><p>Allocates <code>size * sizeof(T)</code> bytes from the system's heap initialized to <em>value</em> and returns a pointer to the first byte from that memory.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#malloc_one%28value%20%3A%20T%29-class-method" class="signature"><strong>.malloc_one</strong>(value : T)</a>
+        <a href="#new%28address%20%3A%20Int%29-class-method" class="signature"><strong>.new</strong>(address : Int)</a>
+        
+          <div class="summary"><p>Returns a pointer that points to the given memory address.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#null-class-method" class="signature"><strong>.null</strong></a>
+        
+          <div class="summary"><p>Returns a pointer whose memory address is zero.</p></div>
         
       </li>
     
@@ -75,127 +115,177 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#%2B%28offset%20%3A%20Int64%29-instance-method" class="signature"><strong>#+</strong>(offset : Int64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%2B%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#+</strong>(other : Int)</a>
+        
+          <div class="summary"><p>Returns a new pointer whose address is this pointer's address incremented by <code>other * sizeof(T)</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#-%28other%20%3A%20self%29-instance-method" class="signature"><strong>#-</strong>(other : self)</a>
         
+          <div class="summary"><p>Returns how many T elements are there between this pointer and <em>other</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#-%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#-</strong>(other : Int)</a>
+        
+          <div class="summary"><p>Returns a new pointer whose address is this pointer's address decremented by <code>other * sizeof(T)</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%3D%3E%28other%20%3A%20self%29-instance-method" class="signature"><strong>#<=></strong>(other : self)</a>
         
+          <div class="summary"><p>Returns -1, 0 or 1 if this pointer's address is less, equal or greater than <em>other</em>'s address, respectively.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%5B%5D%28offset%29-instance-method" class="signature"><strong>#[]</strong>(offset)</a>
+        
+          <div class="summary"><p>Gets the value pointed at this pointer's address plus <code>offset * sizeof(T)</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%5B%5D%3D%28offset%2C%20value%20%3A%20T%29-instance-method" class="signature"><strong>#[]=</strong>(offset, value : T)</a>
         
+          <div class="summary"><p>Sets the value pointed at this pointer's address plus <code>offset * sizeof(T)</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#address-instance-method" class="signature"><strong>#address</strong></a>
+        
+          <div class="summary"><p>Returns the address of this pointer.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#appender-instance-method" class="signature"><strong>#appender</strong></a>
         
+          <div class="summary"><p>Returns a <code><a href="PointerAppender.html">PointerAppender</a></code> for this pointer.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#clear%28count%20%3D%201%29-instance-method" class="signature"><strong>#clear</strong>(count = 1)</a>
+        
+          <div class="summary"><p>Clears (sets to "zero" bytes) a number of values pointed by this pointer.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#copy_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#copy_from</strong>(source : Pointer(T), count : Int)</a>
         
+          <div class="summary"><p>Copies <em>count</em> elements from <em>source</em> into <em>self</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#copy_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#copy_to</strong>(target : Pointer(T), count : Int)</a>
+        <a href="#copy_to%28target%20%3A%20Pointer%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#copy_to</strong>(target : Pointer, count : Int)</a>
+        
+          <div class="summary"><p>Copies <em>count</em> elements from <em>self</em> into <em>target</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
+          <div class="summary"><p>Returns the address of this pointer.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#map%21%28size%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#map!</strong>(size : Int, &block)</a>
+        <a href="#map%21%28count%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#map!</strong>(count : Int, &block)</a>
+        
+          <div class="summary"><p>Sets <em>count</em> consecutive values pointed by this pointer to the values returned by the block.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#memcmp%28other%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#memcmp</strong>(other : Pointer(T), count : Int)</a>
         
+          <div class="summary"><p>Compares <em>count</em> elements from this pointer and <em>other</em>, byte by byte.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#move_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#move_from</strong>(source : Pointer(T), count : Int)</a>
         
+          <div class="summary"><p>Copies <em>count</em> elements from <em>source</em> into <em>self</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#move_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#move_to</strong>(target : Pointer(T), count : Int)</a>
+        <a href="#move_to%28target%20%3A%20Pointer%2C%20count%20%3A%20Int%29-instance-method" class="signature"><strong>#move_to</strong>(target : Pointer, count : Int)</a>
+        
+          <div class="summary"><p>Copies <em>count</em> elements from <em>self</em> into <em>source</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
         
+          <div class="summary"><p>Returns true if this pointer's address is zero.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#realloc%28size%20%3A%20UInt64%29-instance-method" class="signature"><strong>#realloc</strong>(size : UInt64)</a>
+        <a href="#null%3F-instance-method" class="signature"><strong>#null?</strong></a>
+        
+          <div class="summary"><p>Alias of <code><a href="Pointer.html#nil%3F-instance-method">#nil?</a></code></p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#realloc%28size%20%3A%20Int%29-instance-method" class="signature"><strong>#realloc</strong>(size : Int)</a>
         
+          <div class="summary"><p>Tries to change the size of the allocation pointed to by this pointer to <em>size</em>, and returns that pointer.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#shuffle%21%28size%20%3A%20Int%29-instance-method" class="signature"><strong>#shuffle!</strong>(size : Int)</a>
+        <a href="#shuffle%21%28count%20%3A%20Int%29-instance-method" class="signature"><strong>#shuffle!</strong>(count : Int)</a>
+        
+          <div class="summary"><p>Shuffles <em>count</em> consecutive values pointed by this pointer.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#swap%28i%2C%20j%29-instance-method" class="signature"><strong>#swap</strong>(i, j)</a>
         
+          <div class="summary"><p>Swaps the contents pointed at the offsets <code>i</code> and <code>j</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Appends a string representation of this pointer to the given <code><a href="IO.html">IO</a></code>, including its type and address in hexadecimal.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_slice%28length%29-instance-method" class="signature"><strong>#to_slice</strong>(length)</a>
         
+          <div class="summary"><p>Returns a <code><a href="Slice.html">Slice</a></code> that points to this pointer and is bounded by the given <em>length</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
         
+          <div class="summary"><p>Gets the value pointed by this pointer.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#value%3D%28value%20%3A%20T%29-instance-method" class="signature"><strong>#value=</strong>(value : T)</a>
+        
+          <div class="summary"><p>Sets the value pointed by this pointer.</p></div>
         
       </li>
     
@@ -209,27 +299,56 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="malloc%28size%20%3A%20Int%29-class-method">
+      <div class="signature" id="malloc%28size%20%3A%20Int%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method">
         
-        def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>)
+        def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>, &block : <a href="Int32.html">Int32</a> -> T)
       </div>
+      
+        <div class="doc"><p>Allocates <code>size * sizeof(T)</code> bytes from the system's heap initialized
+to the value returned by the block and returns a pointer to the first byte from that memory.
+The memory is allocated by the <code><a href="GC.html">GC</a></code>, so when there are
+no pointers to this memory, it will be automatically freed.</p>
+
+<pre><code><span class="c"># An Int32 occupies 4 bytes, so here we are requesting 16 bytes.</span>
+<span class="c"># i is an index in the range 0 .. 3</span>
+ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
+ptr[<span class="n">0</span>] <span class="c">#=> 10</span>
+ptr[<span class="n">1</span>] <span class="c">#=> 11</span>
+ptr[<span class="n">2</span>] <span class="c">#=> 12</span>
+ptr[<span class="n">3</span>] <span class="c">#=> 13</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L90" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L398" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="malloc%28size%20%3A%20Int%2C%20%26block%29-class-method">
+      <div class="signature" id="malloc%28size%20%3D%201%20%3A%20Int%29-class-method">
         
-        def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>, &block)
+        def self.<strong>malloc</strong>(size = <span class="n">1</span> : <a href="Int.html">Int</a>)
       </div>
+      
+        <div class="doc"><p>Allocates <code>size * sizeof(T)</code> bytes from the system's heap initialized
+to zero and returns a pointer to the first byte from that memory.
+The memory is allocated by the <code><a href="GC.html">GC</a></code>, so when there are
+no pointers to this memory, it will be automatically freed.</p>
+
+<pre><code><span class="c"># Allocate memory for an Int32: 4 bytes</span>
+ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc
+ptr.value <span class="c">#=> 0</span>
+
+<span class="c"># Allocate memory for 10 Int32: 40 bytes</span>
+ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc(<span class="n">10</span>)
+ptr[<span class="n">0</span>] <span class="c">#=> 0</span>
+...
+ptr[<span class="n">9</span>] <span class="c">#=> 0</span>
+</code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L104" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L358" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -240,34 +359,38 @@
         def self.<strong>malloc</strong>(size : <a href="Int.html">Int</a>, value : T)
       </div>
       
+        <div class="doc"><p>Allocates <code>size * sizeof(T)</code> bytes from the system's heap initialized
+to <em>value</em> and returns a pointer to the first byte from that memory.
+The memory is allocated by the <code><a href="GC.html">GC</a></code>, so when there are
+no pointers to this memory, it will be automatically freed.</p>
+
+<pre><code><span class="c"># An Int32 occupies 4 bytes, so here we are requesting 8 bytes</span>
+<span class="c"># initialized to the number 42</span>
+ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">2</span>, <span class="n">42</span>)
+ptr[<span class="n">0</span>] <span class="c">#=> 42</span>
+ptr[<span class="n">1</span>] <span class="c">#=> 42</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L378" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="malloc%28size%20%3A%20UInt64%29-class-method">
+      <div class="signature" id="new%28address%20%3A%20Int%29-class-method">
         
-        def self.<strong>malloc</strong>(size : <a href="UInt64.html">UInt64</a>)
+        def self.<strong>new</strong>(address : <a href="Int.html">Int</a>)
       </div>
       
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="malloc_one%28value%20%3A%20T%29-class-method">
-        
-        def self.<strong>malloc_one</strong>(value : T)
-      </div>
+        <div class="doc"><p>Returns a pointer that points to the given memory address. This doesn't allocate memory.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">5678</span>)
+ptr.address <span class="c">#=> 5678</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L110" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L337" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -278,9 +401,14 @@
         def self.<strong>null</strong>
       </div>
       
+        <div class="doc"><p>Returns a pointer whose memory address is zero. This doesn't allocate memory.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).null
+ptr.address <span class="c">#=> 0</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L86" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L327" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -291,26 +419,23 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="%2B%28offset%20%3A%20Int64%29-instance-method">
-        
-        def <strong>+</strong>(offset : <a href="Int64.html">Int64</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
       <div class="signature" id="%2B%28other%20%3A%20Int%29-instance-method">
         
         def <strong>+</strong>(other : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Returns a new pointer whose address is this pointer's address incremented by <code>other * sizeof(T)</code>.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
+ptr.address                    <span class="c">#=> 1234</span>
+
+<span class="c"># An Int32 occupies four bytes</span>
+ptr2 <span class="o">=</span> ptr <span class="o">+</span> <span class="n">1</span>
+ptr2.address                   <span class="c">#=> 1238</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L8" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -321,7 +446,12 @@
         def <strong>-</strong>(other : self)
       </div>
       
-        <div class="doc"></div>
+        <div class="doc"><p>Returns how many T elements are there between this pointer and <em>other</em>.
+That is, this is <code>(self.address - other.address) / sizeof(T)</code>.</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc(<span class="n">4</span>)
+ptr2 <span class="o">=</span> ptr1 <span class="o">+</span> <span class="n">2</span>
+ptr2 <span class="o">-</span> ptr1 <span class="c">#=> 2</span></code></pre></div>
       
       
     </div>
@@ -333,9 +463,18 @@
         def <strong>-</strong>(other : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Returns a new pointer whose address is this pointer's address decremented by <code>other * sizeof(T)</code>.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
+ptr.address                    <span class="c">#=> 1234</span>
+
+<span class="c"># An Int32 occupies four bytes</span>
+ptr2 <span class="o">=</span> ptr <span class="o">-</span> <span class="n">1</span>
+ptr2.address                   <span class="c">#=> 1230</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L12" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L70" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -346,9 +485,14 @@
         def <strong><=></strong>(other : self)
       </div>
       
+        <div class="doc"><p>Returns -1, 0 or 1 if this pointer's address is less, equal or greater than <em>other</em>'s address,
+respectively.</p>
+
+<p>See <code><a href="Object.html#%3C%3D%3E%28other%29-instance-method">Object#<=></a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L16" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -359,9 +503,17 @@
         def <strong>[]</strong>(offset)
       </div>
       
+        <div class="doc"><p>Gets the value pointed at this pointer's address plus <code>offset * sizeof(T)</code>.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
+ptr[<span class="n">0</span>] <span class="c">#=> 10</span>
+ptr[<span class="n">1</span>] <span class="c">#=> 11</span>
+ptr[<span class="n">2</span>] <span class="c">#=> 12</span>
+ptr[<span class="n">3</span>] <span class="c">#=> 13</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L91" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -372,9 +524,17 @@
         def <strong>[]=</strong>(offset, value : T)
       </div>
       
+        <div class="doc"><p>Sets the value pointed at this pointer's address plus <code>offset * sizeof(T)</code>.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc(<span class="n">4</span>) <span class="c"># [0, 0, 0, 0]</span>
+ptr[<span class="n">1</span>] <span class="o">=</span> <span class="n">42</span>
+
+ptr2 <span class="o">=</span> ptr <span class="o">+</span> <span class="n">1</span>
+ptr2.value <span class="c">#=> 42</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L104" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -385,7 +545,10 @@
         def <strong>address</strong>
       </div>
       
-        <div class="doc"></div>
+        <div class="doc"><p>Returns the address of this pointer.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
+ptr.address <span class="c">#=> 1234</span></code></pre></div>
       
       
     </div>
@@ -397,9 +560,30 @@
         def <strong>appender</strong>
       </div>
       
+        <div class="doc"><p>Returns a <code><a href="PointerAppender.html">PointerAppender</a></code> for this pointer.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L116" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L405" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="clear%28count%20%3D%201%29-instance-method">
+        
+        def <strong>clear</strong>(count = <span class="n">1</span>)
+      </div>
+      
+        <div class="doc"><p>Clears (sets to "zero" bytes) a number of values pointed by this pointer.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">6</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> } <span class="c">#   [10, 11, 12, 13, 14, 15]</span>
+ptr.clear(<span class="n">3</span>)
+ptr                                    <span class="c">#   [0, 0, 0, 13, 14, 15]</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L427" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -410,22 +594,56 @@
         def <strong>copy_from</strong>(source : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Copies <em>count</em> elements from <em>source</em> into <em>self</em>.
+If <em>source</em> and <em>self</em> overlap, behaviour is undefined.
+Use <code><a href="Pointer.html#move_from%28source%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">#move_from</a></code> if they overlap (slower but always works).</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }  <span class="c"># [1, 2, 3, 4]</span>
+ptr2 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">11</span> } <span class="c"># [11, 12, 13, 14]</span>
+
+<span class="c"># ptr2 -> [11, 12, 13, 14]</span>
+<span class="c">#          ^---^           <- copy this</span>
+<span class="c"># ptr1 -> [1,  2,  3,  4]</span>
+<span class="c">#          ^---^           <- here</span>
+ptr1.copy_from(ptr2, <span class="n">2</span>)
+ptr1[<span class="n">0</span>] <span class="c">#=> 11</span>
+ptr1[<span class="n">1</span>] <span class="c">#=> 12</span>
+ptr1[<span class="n">2</span>] <span class="c">#=> 3</span>
+ptr1[<span class="n">3</span>] <span class="c">#=> 4</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L28" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L126" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="copy_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+      <div class="signature" id="copy_to%28target%20%3A%20Pointer%2C%20count%20%3A%20Int%29-instance-method">
         
-        def <strong>copy_to</strong>(target : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+        def <strong>copy_to</strong>(target : <a href="Pointer.html">Pointer</a>, count : <a href="Int.html">Int</a>)
       </div>
+      
+        <div class="doc"><p>Copies <em>count</em> elements from <em>self</em> into <em>target</em>.
+If <em>self</em> and <em>target</em> overlap, behaviour is undefined.
+Use <code><a href="Pointer.html#move_to%28target%20%3A%20Pointer%2C%20count%20%3A%20Int%29-instance-method">#move_to</a></code> if they overlap (slower but always works).</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }  <span class="c"># [1, 2, 3, 4]</span>
+ptr2 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">11</span> } <span class="c"># [11, 12, 13, 14]</span>
+
+<span class="c"># ptr1 -> [1,  2,  3,  4]</span>
+<span class="c">#          ^---^           <- copy this</span>
+<span class="c"># ptr2 -> [11, 12, 13, 14]</span>
+<span class="c">#          ^---^           <- here</span>
+ptr1.copy_to(ptr2, <span class="n">2</span>)
+ptr2[<span class="n">0</span>] <span class="c">#=> 1</span>
+ptr2[<span class="n">1</span>] <span class="c">#=> 2</span>
+ptr2[<span class="n">2</span>] <span class="c">#=> 13</span>
+ptr2[<span class="n">3</span>] <span class="c">#=> 14</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L33" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L155" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -436,22 +654,34 @@
         def <strong>hash</strong>
       </div>
       
+        <div class="doc"><p>Returns the address of this pointer.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
+ptr.hash <span class="c">#=> 1234</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L249" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="map%21%28size%20%3A%20Int%2C%20%26block%29-instance-method">
+      <div class="signature" id="map%21%28count%20%3A%20Int%2C%20%26block%29-instance-method">
         
-        def <strong>map!</strong>(size : <a href="Int.html">Int</a>, &block)
+        def <strong>map!</strong>(count : <a href="Int.html">Int</a>, &block)
       </div>
+      
+        <div class="doc"><p>Sets <em>count</em> consecutive values pointed by this pointer to the
+values returned by the block.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># [1, 2, 3, 4]</span>
+ptr.map!(<span class="n">4</span>) { <span class="o">|</span>value<span class="o">|</span> value <span class="o">*</span> <span class="n">2</span> }
+ptr                                   <span class="c"># [2, 4, 6, 8]</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L80" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L315" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -462,9 +692,21 @@
         def <strong>memcmp</strong>(other : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Compares <em>count</em> elements from this pointer and <em>other</em>, byte by byte.</p>
+
+<p>Returns 0 if both pointers point to the same sequence of <em>count</em> bytes. Otherwise
+returns the difference between the first two differing bytes (treated as UInt8).</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }  <span class="c"># [1, 2, 3, 4]</span>
+ptr2 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">11</span> } <span class="c"># [11, 12, 13, 14]</span>
+
+ptr1.memcmp(ptr2, <span class="n">4</span>) <span class="c">#=> -10</span>
+ptr2.memcmp(ptr1, <span class="n">4</span>) <span class="c">#=> 10</span>
+ptr1.memcmp(ptr1, <span class="n">4</span>) <span class="c">#=> 0</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L225" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -475,22 +717,54 @@
         def <strong>move_from</strong>(source : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Copies <em>count</em> elements from <em>source</em> into <em>self</em>.
+<em>source</em> and <em>self</em> may overlap; the copy is always done in a non-destructive manner.</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># ptr1 -> [1, 2, 3, 4]</span>
+ptr2 <span class="o">=</span> ptr1 <span class="o">+</span> <span class="n">1</span>                        <span class="c">#             ^--------- ptr2</span>
+
+<span class="c"># [1, 2, 3, 4]</span>
+<span class="c">#  ^-----^       <- copy this</span>
+<span class="c">#     ^------^   <- here</span>
+ptr2.move_from(ptr1, <span class="n">3</span>)
+
+ptr1[<span class="n">0</span>] <span class="c">#=> 1</span>
+ptr1[<span class="n">1</span>] <span class="c">#=> 1</span>
+ptr1[<span class="n">2</span>] <span class="c">#=> 2</span>
+ptr1[<span class="n">3</span>] <span class="c">#=> 3</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L176" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="move_to%28target%20%3A%20Pointer%28T%29%2C%20count%20%3A%20Int%29-instance-method">
+      <div class="signature" id="move_to%28target%20%3A%20Pointer%2C%20count%20%3A%20Int%29-instance-method">
         
-        def <strong>move_to</strong>(target : <a href="Pointer.html">Pointer</a>(T), count : <a href="Int.html">Int</a>)
+        def <strong>move_to</strong>(target : <a href="Pointer.html">Pointer</a>, count : <a href="Int.html">Int</a>)
       </div>
+      
+        <div class="doc"><p>Copies <em>count</em> elements from <em>self</em> into <em>source</em>.
+<em>source</em> and <em>self</em> may overlap; the copy is always done in a non-destructive manner.</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># ptr1 -> [1, 2, 3, 4]</span>
+ptr2 <span class="o">=</span> ptr1 <span class="o">+</span> <span class="n">1</span>                        <span class="c">#             ^--------- ptr2</span>
+
+<span class="c"># [1, 2, 3, 4]</span>
+<span class="c">#  ^-----^       <- copy this</span>
+<span class="c">#     ^------^   <- here</span>
+ptr1.move_to(ptr2, <span class="n">3</span>)
+
+ptr1[<span class="n">0</span>] <span class="c">#=> 1</span>
+ptr1[<span class="n">1</span>] <span class="c">#=> 1</span>
+ptr1[<span class="n">2</span>] <span class="c">#=> 2</span>
+ptr1[<span class="n">3</span>] <span class="c">#=> 3</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L42" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L208" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -501,21 +775,32 @@
         def <strong>nil?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this pointer's address is zero.</p>
+
+<pre><code>a <span class="o">=</span> <span class="n">1</span>
+<span class="k">pointerof</span>(a).nil?         <span class="c">#=> false</span>
+
+b <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">0</span>)
+b.nil?                    <span class="c">#=> true</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L37" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="realloc%28size%20%3A%20UInt64%29-instance-method">
+      <div class="signature" id="null%3F-instance-method">
         
-        def <strong>realloc</strong>(size : <a href="UInt64.html">UInt64</a>)
+        def <strong>null?</strong>
       </div>
       
-        <div class="doc"></div>
+        <div class="doc"><p>Alias of <code><a href="Pointer.html#nil%3F-instance-method">#nil?</a></code></p></div>
       
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L42" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -526,22 +811,42 @@
         def <strong>realloc</strong>(size : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Tries to change the size of the allocation pointed to by this pointer to <em>size</em>,
+and returns that pointer.</p>
+
+<p>Since the space after the end of the block may be in use, realloc may find it
+necessary to copy the block to a new address where more free space is available.
+The value of realloc is the new address of the block.
+If the block needs to be moved, realloc copies the old contents.</p>
+
+<p>Remember to always assign the value of realloc.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># [1, 2, 3, 4]</span>
+ptr <span class="o">=</span> ptr.realloc(<span class="n">8</span>)
+ptr                                   <span class="c"># [1, 2, 3, 4, 0, 0, 0, 0]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L68" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L288" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="shuffle%21%28size%20%3A%20Int%29-instance-method">
+      <div class="signature" id="shuffle%21%28count%20%3A%20Int%29-instance-method">
         
-        def <strong>shuffle!</strong>(size : <a href="Int.html">Int</a>)
+        def <strong>shuffle!</strong>(count : <a href="Int.html">Int</a>)
       </div>
+      
+        <div class="doc"><p>Shuffles <em>count</em> consecutive values pointed by this pointer.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># [1, 2, 3, 4]</span>
+ptr.shuffle!(<span class="n">4</span>)
+ptr                                   <span class="c"># [3, 4, 1, 2]</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L72" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L299" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -552,9 +857,18 @@
         def <strong>swap</strong>(i, j)
       </div>
       
+        <div class="doc"><p>Swaps the contents pointed at the offsets <code>i</code> and <code>j</code>.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }
+ptr[<span class="n">2</span>] <span class="c">#=> 3</span>
+ptr[<span class="n">3</span>] <span class="c">#=> 4</span>
+ptr.swap(<span class="n">2</span>, <span class="n">3</span>)
+ptr[<span class="n">2</span>] <span class="c">#=> 4</span>
+ptr[<span class="n">3</span>] <span class="c">#=> 3</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L239" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -565,9 +879,18 @@
         def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
       </div>
       
+        <div class="doc"><p>Appends a string representation of this pointer to the given <code><a href="IO.html">IO</a></code>,
+including its type and address in hexadecimal.</p>
+
+<pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
+ptr1.to_s <span class="c">#=> Pointer(Int32)@0x4D2</span>
+
+ptr2 <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">0</span>)
+ptr2.to_s <span class="c">#=> Pointer(Int32).null</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L261" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -578,9 +901,15 @@
         def <strong>to_slice</strong>(length)
       </div>
       
+        <div class="doc"><p>Returns a <code><a href="Slice.html">Slice</a></code> that points to this pointer and is bounded by the given <em>length</em>.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">6</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> } <span class="c">#   [10, 11, 12, 13, 14, 15]</span>
+slice <span class="o">=</span> ptr.to_slice(<span class="n">4</span>)                <span class="c">#=> [10, 11, 12, 13]</span>
+slice.<span class="k">class</span>                            <span class="c">#=> Slice(Int32)</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/pointer.cr#L120" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/pointer.cr#L416" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -591,7 +920,11 @@
         def <strong>value</strong>
       </div>
       
-        <div class="doc"></div>
+        <div class="doc"><p>Gets the value pointed by this pointer.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc(<span class="n">4</span>)
+ptr.value <span class="o">=</span> <span class="n">42</span>
+ptr.value <span class="c">#=> 42</span></code></pre></div>
       
       
     </div>
@@ -603,7 +936,11 @@
         def <strong>value=</strong>(value : T)
       </div>
       
-        <div class="doc"></div>
+        <div class="doc"><p>Sets the value pointed by this pointer.</p>
+
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc(<span class="n">4</span>)
+ptr.value <span class="o">=</span> <span class="n">42</span>
+ptr.value <span class="c">#=> 42</span></code></pre></div>
       
       
     </div>

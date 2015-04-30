@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract class LLVM::ABI</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi.rs</p>
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../LLVM/ABI.html">LLVM::ABI</a></div>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="../LLVM/ABI/X86.html">LLVM::ABI::X86</a>,
+  
+    <a href="../LLVM/ABI/X86_64.html">LLVM::ABI::X86_64</a>
+  
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr">llvm/abi.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28target_machine%20%3A%20TargetMachine%29-class-method" class="signature"><strong>.new</strong>(target_machine : TargetMachine)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#abi_info%28atys%20%3A%20Array%28Type%29%2C%20rty%20%3A%20Type%2C%20ret_def%20%3A%20Bool%29-instance-method" class="signature"><strong>#abi_info</strong>(atys : Array(Type), rty : Type, ret_def : Bool)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#align%28type%20%3A%20Type%29-instance-method" class="signature"><strong>#align</strong>(type : Type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#is_osx-instance-method" class="signature"><strong>#is_osx</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#is_windows-instance-method" class="signature"><strong>#is_windows</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size%28type%20%3A%20Type%29-instance-method" class="signature"><strong>#size</strong>(type : Type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#target_data-instance-method" class="signature"><strong>#target_data</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28target_machine%20%3A%20TargetMachine%29-class-method">
+        
+        def self.<strong>new</strong>(target_machine : <a href="../LLVM/TargetMachine.html">TargetMachine</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L7" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abi_info%28atys%20%3A%20Array%28Type%29%2C%20rty%20%3A%20Type%2C%20ret_def%20%3A%20Bool%29-instance-method">
+        abstract 
+        def <strong>abi_info</strong>(atys : <a href="../Array.html">Array</a>(<a href="../LLVM/Type.html">Type</a>), rty : <a href="../LLVM/Type.html">Type</a>, ret_def : <a href="../Bool.html">Bool</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L14" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="align%28type%20%3A%20Type%29-instance-method">
+        abstract 
+        def <strong>align</strong>(type : <a href="../LLVM/Type.html">Type</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="is_osx-instance-method">
+        
+        def <strong>is_osx</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="is_windows-instance-method">
+        
+        def <strong>is_windows</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size%28type%20%3A%20Type%29-instance-method">
+        abstract 
+        def <strong>size</strong>(type : <a href="../LLVM/Type.html">Type</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="target_data-instance-method">
+        
+        def <strong>target_data</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi.cr#L3" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>abstract class Macros::ASTNode</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../Macros/ASTNode.html">Macros::ASTNode</a></div>
+
+
+
+
+
+
+
+  <h2>Direct Known Subclasses</h2>
+  
+    <a href="../Macros/Alias.html">Macros::Alias</a>,
+  
+    <a href="../Macros/Arg.html">Macros::Arg</a>,
+  
+    <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>,
+  
+    <a href="../Macros/Assign.html">Macros::Assign</a>,
+  
+    <a href="../Macros/Attribute.html">Macros::Attribute</a>,
+  
+    <a href="../Macros/BinaryOp.html">Macros::BinaryOp</a>,
+  
+    <a href="../Macros/Block.html">Macros::Block</a>,
+  
+    <a href="../Macros/BlockArg.html">Macros::BlockArg</a>,
+  
+    <a href="../Macros/BoolLiteral.html">Macros::BoolLiteral</a>,
+  
+    <a href="../Macros/Call.html">Macros::Call</a>,
+  
+    <a href="../Macros/Case.html">Macros::Case</a>,
+  
+    <a href="../Macros/Cast.html">Macros::Cast</a>,
+  
+    <a href="../Macros/CharLiteral.html">Macros::CharLiteral</a>,
+  
+    <a href="../Macros/ClassDef.html">Macros::ClassDef</a>,
+  
+    <a href="../Macros/ClassVar.html">Macros::ClassVar</a>,
+  
+    <a href="../Macros/ControlExpression.html">Macros::ControlExpression</a>,
+  
+    <a href="../Macros/DeclareVar.html">Macros::DeclareVar</a>,
+  
+    <a href="../Macros/Def.html">Macros::Def</a>,
+  
+    <a href="../Macros/EnumDef.html">Macros::EnumDef</a>,
+  
+    <a href="../Macros/ExceptionHandler.html">Macros::ExceptionHandler</a>,
+  
+    <a href="../Macros/Expressions.html">Macros::Expressions</a>,
+  
+    <a href="../Macros/Extend.html">Macros::Extend</a>,
+  
+    <a href="../Macros/ExternalVar.html">Macros::ExternalVar</a>,
+  
+    <a href="../Macros/Fun.html">Macros::Fun</a>,
+  
+    <a href="../Macros/FunDef.html">Macros::FunDef</a>,
+  
+    <a href="../Macros/FunLiteral.html">Macros::FunLiteral</a>,
+  
+    <a href="../Macros/FunPointer.html">Macros::FunPointer</a>,
+  
+    <a href="../Macros/Generic.html">Macros::Generic</a>,
+  
+    <a href="../Macros/Global.html">Macros::Global</a>,
+  
+    <a href="../Macros/HashLiteral.html">Macros::HashLiteral</a>,
+  
+    <a href="../Macros/If.html">Macros::If</a>,
+  
+    <a href="../Macros/IfDef.html">Macros::IfDef</a>,
+  
+    <a href="../Macros/ImplicitObj.html">Macros::ImplicitObj</a>,
+  
+    <a href="../Macros/Include.html">Macros::Include</a>,
+  
+    <a href="../Macros/InstanceVar.html">Macros::InstanceVar</a>,
+  
+    <a href="../Macros/IsA.html">Macros::IsA</a>,
+  
+    <a href="../Macros/LibDef.html">Macros::LibDef</a>,
+  
+    <a href="../Macros/Macro.html">Macros::Macro</a>,
+  
+    <a href="../Macros/MacroExpression.html">Macros::MacroExpression</a>,
+  
+    <a href="../Macros/MacroFor.html">Macros::MacroFor</a>,
+  
+    <a href="../Macros/MacroId.html">Macros::MacroId</a>,
+  
+    <a href="../Macros/MacroIf.html">Macros::MacroIf</a>,
+  
+    <a href="../Macros/MacroLiteral.html">Macros::MacroLiteral</a>,
+  
+    <a href="../Macros/MagicConstant.html">Macros::MagicConstant</a>,
+  
+    <a href="../Macros/Metaclass.html">Macros::Metaclass</a>,
+  
+    <a href="../Macros/ModuleDef.html">Macros::ModuleDef</a>,
+  
+    <a href="../Macros/MultiAssign.html">Macros::MultiAssign</a>,
+  
+    <a href="../Macros/NamedArgument.html">Macros::NamedArgument</a>,
+  
+    <a href="../Macros/NilLiteral.html">Macros::NilLiteral</a>,
+  
+    <a href="../Macros/Nop.html">Macros::Nop</a>,
+  
+    <a href="../Macros/NumberLiteral.html">Macros::NumberLiteral</a>,
+  
+    <a href="../Macros/Path.html">Macros::Path</a>,
+  
+    <a href="../Macros/RangeLiteral.html">Macros::RangeLiteral</a>,
+  
+    <a href="../Macros/ReadInstanceVar.html">Macros::ReadInstanceVar</a>,
+  
+    <a href="../Macros/RegexLiteral.html">Macros::RegexLiteral</a>,
+  
+    <a href="../Macros/Require.html">Macros::Require</a>,
+  
+    <a href="../Macros/Rescue.html">Macros::Rescue</a>,
+  
+    <a href="../Macros/RespondsTo.html">Macros::RespondsTo</a>,
+  
+    <a href="../Macros/Self.html">Macros::Self</a>,
+  
+    <a href="../Macros/StringInterpolation.html">Macros::StringInterpolation</a>,
+  
+    <a href="../Macros/StringLiteral.html">Macros::StringLiteral</a>,
+  
+    <a href="../Macros/StructOrUnionDef.html">Macros::StructOrUnionDef</a>,
+  
+    <a href="../Macros/SymbolLiteral.html">Macros::SymbolLiteral</a>,
+  
+    <a href="../Macros/TupleLiteral.html">Macros::TupleLiteral</a>,
+  
+    <a href="../Macros/TypeDef.html">Macros::TypeDef</a>,
+  
+    <a href="../Macros/TypeNode.html">Macros::TypeNode</a>,
+  
+    <a href="../Macros/TypeOf.html">Macros::TypeOf</a>,
+  
+    <a href="../Macros/UnaryExpression.html">Macros::UnaryExpression</a>,
+  
+    <a href="../Macros/Undef.html">Macros::Undef</a>,
+  
+    <a href="../Macros/Underscore.html">Macros::Underscore</a>,
+  
+    <a href="../Macros/Union.html">Macros::Union</a>,
+  
+    <a href="../Macros/Unless.html">Macros::Unless</a>,
+  
+    <a href="../Macros/Until.html">Macros::Until</a>,
+  
+    <a href="../Macros/Var.html">Macros::Var</a>,
+  
+    <a href="../Macros/Virtual.html">Macros::Virtual</a>,
+  
+    <a href="../Macros/VisibilityModifier.html">Macros::VisibilityModifier</a>,
+  
+    <a href="../Macros/When.html">Macros::When</a>,
+  
+    <a href="../Macros/While.html">Macros::While</a>,
+  
+    <a href="../Macros/Yield.html">Macros::Yield</a>
+  
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/docs/macros.cr">docs/macros.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

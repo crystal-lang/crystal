@@ -32,6 +32,16 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr">matrix.cr</a>
+    
+    <br/>
+  
+
+
+
 
 
   <h2>Class Method Summary</h2>
@@ -73,7 +83,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20%26block%20%3A%20Int32%2C%20Int32%2C%20Int32%20-%3E%20_%29-class-method" class="signature"><strong>.new</strong>(rows : Int, columns : Int, &block : Int32, Int32, Int32 -> _)</a>
+        <a href="#new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20%26block%20%3A%20Int32%2C%20Int32%2C%20Int32%20-%3E%20T%29-class-method" class="signature"><strong>.new</strong>(rows : Int, columns : Int, &block : Int32, Int32, Int32 -> T)</a>
         
           <div class="summary"><p>Creates a matrix with the given number of rows and columns.</p></div>
         
@@ -128,7 +138,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2A%2A%28other%20%3A%20T%20%7C%20Number%29-instance-method" class="signature"><strong>#**</strong>(other : T | Number)</a>
+        <a href="#%2A%2A%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#**</strong>(other : Int)</a>
+        
+          <div class="summary"><p>Performs exponentiation</p></div>
         
       </li>
     
@@ -240,14 +252,14 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#at%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#at</strong>(index : Int, &block)</a>
+        <a href="#at%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#at</strong>(index : Int)</a>
         
           <div class="summary"><p>Retrieves the element at the given linear index.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#at%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#at</strong>(index : Int)</a>
+        <a href="#at%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#at</strong>(index : Int, &block)</a>
         
           <div class="summary"><p>Retrieves the element at the given linear index.</p></div>
         
@@ -423,7 +435,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#minor%28row_range%20%3A%20Range%28Int%29%2C%20col_range%20%3A%20Range%28Int%29%29-instance-method" class="signature"><strong>#minor</strong>(row_range : Range(Int), col_range : Range(Int))</a>
+        <a href="#minor%28row_range%20%3A%20Range%28Int%2C%20Int%29%2C%20col_range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method" class="signature"><strong>#minor</strong>(row_range : Range(Int, Int), col_range : Range(Int, Int))</a>
         
           <div class="summary"><p>Returns a subsection of the matrix.</p></div>
         
@@ -661,7 +673,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L105" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -676,7 +688,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -691,7 +703,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L64" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L64" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -707,7 +719,7 @@ numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L75" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -722,15 +734,15 @@ numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L84" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L84" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20%26block%20%3A%20Int32%2C%20Int32%2C%20Int32%20-%3E%20_%29-class-method">
+      <div class="signature" id="new%28rows%20%3A%20Int%2C%20columns%20%3A%20Int%2C%20%26block%20%3A%20Int32%2C%20Int32%2C%20Int32%20-%3E%20T%29-class-method">
         
-        def self.<strong>new</strong>(rows : <a href="Int.html">Int</a>, columns : <a href="Int.html">Int</a>, &block : <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a> -> _)
+        def self.<strong>new</strong>(rows : <a href="Int.html">Int</a>, columns : <a href="Int.html">Int</a>, &block : <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a>, <a href="Int32.html">Int32</a> -> T)
       </div>
       
         <div class="doc"><p>Creates a matrix with the given number of rows and columns. It yields the
@@ -738,7 +750,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L35" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -753,7 +765,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L91" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L91" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -768,7 +780,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L54" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -781,7 +793,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L29" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -794,7 +806,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L25" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L25" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -812,7 +824,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -825,7 +837,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -840,20 +852,22 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L216" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L216" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%2A%2A%28other%20%3A%20T%20%7C%20Number%29-instance-method">
+      <div class="signature" id="%2A%2A%28other%20%3A%20Int%29-instance-method">
         
-        def <strong>**</strong>(other : T | <a href="Number.html">Number</a>)
+        def <strong>**</strong>(other : <a href="Int.html">Int</a>)
       </div>
+      
+        <div class="doc"><p>Performs exponentiation</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L232" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -866,7 +880,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -881,7 +895,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L200" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L200" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -896,7 +910,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L208" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L208" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -909,7 +923,7 @@ linear, row and column indexes in that order.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -925,7 +939,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L195" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L195" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -940,7 +954,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L232" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L248" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -953,7 +967,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -966,7 +980,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -981,7 +995,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L185" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L185" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -994,7 +1008,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1009,7 +1023,7 @@ on every element. Best suited to numeric matrices.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L131" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L131" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1025,7 +1039,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L111" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1040,7 +1054,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L122" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L122" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1055,7 +1069,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L142" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L142" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1071,7 +1085,7 @@ Returns nil if out of bounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L117" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L117" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1087,7 +1101,7 @@ bounds</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L137" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L137" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1100,23 +1114,7 @@ bounds</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="at%28index%20%3A%20Int%2C%20%26block%29-instance-method">
-        
-        def <strong>at</strong>(index : <a href="Int.html">Int</a>, &block)
-      </div>
-      
-        <div class="doc"><p>Retrieves the element at the given linear index.
-Yields if out of bounds.</p></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L169" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1132,7 +1130,23 @@ Raises if out of bounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L180" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L180" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at%28index%20%3A%20Int%2C%20%26block%29-instance-method">
+        
+        def <strong>at</strong>(index : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Retrieves the element at the given linear index.
+Yields if out of bounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L169" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1148,7 +1162,7 @@ Yields if out of bounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L151" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1164,7 +1178,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L163" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L163" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1179,7 +1193,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L771" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L789" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1194,7 +1208,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L388" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L404" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1209,7 +1223,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L380" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L396" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1224,7 +1238,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L402" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L418" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1239,7 +1253,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L506" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L524" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1254,7 +1268,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L397" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L413" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1269,7 +1283,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L544" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L562" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1284,7 +1298,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L417" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L433" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1297,7 +1311,7 @@ Raises IndexOutOfBounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L425" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L441" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1313,7 +1327,7 @@ row, then the elements of the second row, etc.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L238" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L254" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1336,7 +1350,7 @@ certain indices:
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L252" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1352,7 +1366,7 @@ See #each for the optional directives.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L314" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L330" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1368,7 +1382,7 @@ See #each for the optional directives.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L287" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L303" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1383,7 +1397,7 @@ See #each for the optional directives.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L430" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L446" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1396,7 +1410,7 @@ See #each for the optional directives.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L777" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L795" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1412,7 +1426,7 @@ returning true, nil otherwise</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L348" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L364" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1428,7 +1442,7 @@ the matrix, nil otherwise.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L339" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L355" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1441,7 +1455,7 @@ the matrix, nil otherwise.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L830" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L848" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1456,7 +1470,7 @@ the matrix, nil otherwise.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L596" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L614" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1471,7 +1485,7 @@ the matrix, nil otherwise.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L435" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L451" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1487,7 +1501,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L320" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L336" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1504,7 +1518,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L329" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L345" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1519,22 +1533,22 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L511" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L529" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="minor%28row_range%20%3A%20Range%28Int%29%2C%20col_range%20%3A%20Range%28Int%29%29-instance-method">
+      <div class="signature" id="minor%28row_range%20%3A%20Range%28Int%2C%20Int%29%2C%20col_range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method">
         
-        def <strong>minor</strong>(row_range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>), col_range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>))
+        def <strong>minor</strong>(row_range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>), col_range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>))
       </div>
       
         <div class="doc"><p>Returns a subsection of the matrix.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L535" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L553" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1549,7 +1563,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L453" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L469" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1564,7 +1578,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L634" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L652" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1579,7 +1593,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L477" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L495" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1592,7 +1606,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L709" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L727" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1607,7 +1621,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L698" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L716" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1622,7 +1636,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L366" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L382" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1637,7 +1651,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L358" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L374" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1652,7 +1666,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L407" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L423" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1667,7 +1681,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L501" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L519" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1682,7 +1696,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L375" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L391" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1695,7 +1709,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L719" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L737" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1710,7 +1724,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L714" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L732" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1723,7 +1737,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L742" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L760" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1738,7 +1752,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L736" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L754" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1751,7 +1765,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L731" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L749" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1766,7 +1780,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L724" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L742" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1781,7 +1795,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L482" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L500" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1796,7 +1810,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L412" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L428" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1811,7 +1825,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L487" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L505" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1826,7 +1840,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L759" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L777" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1841,7 +1855,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L747" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L765" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1856,7 +1870,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L492" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L510" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1871,7 +1885,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L784" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L802" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1886,7 +1900,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L789" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L807" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1901,7 +1915,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L798" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L816" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1916,7 +1930,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L660" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L678" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1929,7 +1943,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L693" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L711" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1944,7 +1958,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L668" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L686" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1959,7 +1973,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L444" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L460" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1972,7 +1986,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1990,7 +2004,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2003,7 +2017,7 @@ Yields the element and its linear, row and column indices in that order.</p></di
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/matrix.cr#L12" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/matrix.cr#L12" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>module Iterator(T)</h1>
+
+
+
+
+
+
+
+
+
+  <h2>Included Modules</h2>
+  
+    <a href="Enumerable.html">Enumerable(T)</a>
+  
+
+
+
+
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr">iterator.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_slice%28n%29-instance-method" class="signature"><strong>#each_slice</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#map</strong>(&func : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next-instance-method" class="signature"><strong>#next</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reject%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#reject</strong>(&func : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rewind-instance-method" class="signature"><strong>#rewind</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#select%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#select</strong>(&func : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#skip%28n%29-instance-method" class="signature"><strong>#skip</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#slice%28n%29-instance-method" class="signature"><strong>#slice</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#stop-instance-method" class="signature"><strong>#stop</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#take%28n%29-instance-method" class="signature"><strong>#take</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#uniq-instance-method" class="signature"><strong>#uniq</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#uniq%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#uniq</strong>(&func : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#with_index%28offset%29-instance-method" class="signature"><strong>#with_index</strong>(offset)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#with_index-instance-method" class="signature"><strong>#with_index</strong></a>
+        
+          <div class="summary"><p>TODO: use default argument "offset" after 0.6.1, a bug prevents using it</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#with_object%28obj%29-instance-method" class="signature"><strong>#with_object</strong>(obj)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#zip%28other%20%3A%20Iterator%28U%29%29-instance-method" class="signature"><strong>#zip</strong>(other : Iterator(U))</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cycle-instance-method">
+        
+        def <strong>cycle</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each%28%26block%29-instance-method">
+        
+        def <strong>each</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L74" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_slice%28n%29-instance-method">
+        
+        def <strong>each_slice</strong>(n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L70" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>map</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L15" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next-instance-method">
+        abstract 
+        def <strong>next</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reject%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>reject</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rewind-instance-method">
+        abstract 
+        def <strong>rewind</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="select%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>select</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="skip%28n%29-instance-method">
+        
+        def <strong>skip</strong>(n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="slice%28n%29-instance-method">
+        
+        def <strong>slice</strong>(n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="stop-instance-method">
+        
+        def <strong>stop</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L6" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="take%28n%29-instance-method">
+        
+        def <strong>take</strong>(n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="uniq-instance-method">
+        
+        def <strong>uniq</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="uniq%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>uniq</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="with_index%28offset%29-instance-method">
+        
+        def <strong>with_index</strong>(offset)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L56" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="with_index-instance-method">
+        
+        def <strong>with_index</strong>
+      </div>
+      
+        <div class="doc"><p>TODO: use default argument "offset" after 0.6.1, a bug prevents using it</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="with_object%28obj%29-instance-method">
+        
+        def <strong>with_object</strong>(obj)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L60" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="zip%28other%20%3A%20Iterator%28U%29%29-instance-method">
+        
+        def <strong>zip</strong>(other : <a href="Iterator.html">Iterator</a>(U))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

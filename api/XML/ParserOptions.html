@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>enum XML::ParserOptions</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>Store big lines numbers in text PSVI field</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/parser_options.cr">xml/parser_options.cr</a>
+    
+    <br/>
+  
+
+
+
+  
+    <h2>Enum Members</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>RECOVER</strong> = <code><span class="n">1</span></code>
+        
+          <div class="doc"><p>Recover on errors</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOENT</strong> = <code><span class="n">2</span></code>
+        
+          <div class="doc"><p>Substitute entities</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DTDLOAD</strong> = <code><span class="n">4</span></code>
+        
+          <div class="doc"><p>Load the external subset</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DTDATTR</strong> = <code><span class="n">8</span></code>
+        
+          <div class="doc"><p>Default DTD attributes</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>DTDVALID</strong> = <code><span class="n">16</span></code>
+        
+          <div class="doc"><p>Validate with the DTD</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOERROR</strong> = <code><span class="n">32</span></code>
+        
+          <div class="doc"><p>Suppress error reports</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOWARNING</strong> = <code><span class="n">64</span></code>
+        
+          <div class="doc"><p>Suppress warning reports</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PEDANTIC</strong> = <code><span class="n">128</span></code>
+        
+          <div class="doc"><p>Pedantic error reporting</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOBLANKS</strong> = <code><span class="n">256</span></code>
+        
+          <div class="doc"><p>Remove blank nodes</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SAX1</strong> = <code><span class="n">512</span></code>
+        
+          <div class="doc"><p>Use the SAX1 interface internally</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>XINCLUDE</strong> = <code><span class="n">1024</span></code>
+        
+          <div class="doc"><p>Implement XInclude substitition</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NONET</strong> = <code><span class="n">2048</span></code>
+        
+          <div class="doc"><p>Forbid network access</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NODICT</strong> = <code><span class="n">4096</span></code>
+        
+          <div class="doc"><p>Do not reuse the context dictionnary</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NSCLEAN</strong> = <code><span class="n">8192</span></code>
+        
+          <div class="doc"><p>Remove redundant namespaces declarations</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOCDATA</strong> = <code><span class="n">16384</span></code>
+        
+          <div class="doc"><p>Merge CDATA as text nodes</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOXINCNODE</strong> = <code><span class="n">32768</span></code>
+        
+          <div class="doc"><p>Do not generate XINCLUDE START/END nodes</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>COMPACT</strong> = <code><span class="n">65536</span></code>
+        
+          <div class="doc"><p>Compact small text nodes; no modification of the tree allowed afterwards (will possibly crash if you try to modify the tree)</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OLD10</strong> = <code><span class="n">131072</span></code>
+        
+          <div class="doc"><p>Parse using XML-1.0 before update 5</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>NOBASEFIX</strong> = <code><span class="n">262144</span></code>
+        
+          <div class="doc"><p>Do not fixup XINCLUDE xml:base uris</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>HUGE</strong> = <code><span class="n">524288</span></code>
+        
+          <div class="doc"><p>Relax any hardcoded limit from the parser</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>OLDSAX</strong> = <code><span class="n">1048576</span></code>
+        
+          <div class="doc"><p>Parse using SAX2 interface before 2.7.0</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>IGNORE_ENC</strong> = <code><span class="n">2097152</span></code>
+        
+          <div class="doc"><p>Ignore internal document encoding hint</p></div>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>BIG_LINES</strong> = <code><span class="n">4194304</span></code>
+        
+          <div class="doc"><p>Store big lines numbers in text PSVI field</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="value-instance-method">
+        
+        def <strong>value</strong>
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

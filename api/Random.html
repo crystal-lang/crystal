@@ -24,6 +24,21 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random/mt19937.cr">random/mt19937.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr">random.cr</a>
+    
+    <br/>
+  
+
+
+
   
     <h2>Constant Summary</h2>
   
@@ -40,6 +55,11 @@
 
   <h2>Class Method Summary</h2>
   <ul>
+    
+      <li class="entry-summary">
+        <a href="#new%28seed%20%3D%20new_seed%29-class-method" class="signature"><strong>.new</strong>(seed = new_seed)</a>
+        
+      </li>
     
       <li class="entry-summary">
         <a href="#new_seed-class-method" class="signature"><strong>.new_seed</strong></a>
@@ -89,7 +109,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#rand%28x%20%3A%20Range%28Int%29%29-instance-method" class="signature"><strong>#rand</strong>(x : Range(Int))</a>
+        <a href="#rand%28x%20%3A%20Range%28Int%2C%20Int%29%29-instance-method" class="signature"><strong>#rand</strong>(x : Range(Int, Int))</a>
         
       </li>
     
@@ -108,6 +128,19 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="new%28seed%20%3D%20new_seed%29-class-method">
+        
+        def self.<strong>new</strong>(seed = new_seed)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L10" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="new_seed-class-method">
         
         def self.<strong>new_seed</strong>
@@ -115,7 +148,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L6" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -128,7 +161,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L47" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L51" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -141,7 +174,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L51" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L55" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -159,7 +192,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L12" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L16" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -172,7 +205,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L24" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -185,7 +218,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L16" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -198,7 +231,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -211,20 +244,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L25" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L29" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="rand%28x%20%3A%20Range%28Int%29%29-instance-method">
+      <div class="signature" id="rand%28x%20%3A%20Range%28Int%2C%20Int%29%29-instance-method">
         
-        def <strong>rand</strong>(x : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>))
+        def <strong>rand</strong>(x : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>))
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L41" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -237,7 +270,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L33" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

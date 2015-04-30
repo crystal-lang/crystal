@@ -11,6 +11,49 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>Struct is the base type of structs you create in your program.
+It is set as a struct's superstruct when you don't specify one:</p>
+
+<pre><code><span class="k">struct</span> <span class="t">Foo</span> <span class="c"># < Struct</span>
+<span class="k">end</span></code></pre>
+
+<p>Structs inherit from <code><a href="Value.html">Value</a></code> so they are allocated on the stack and passed
+by value. For this reason you should prefer using structs for immutable
+data types and/or stateless wrappers of other types.</p>
+
+<p>Mutable structs are still allowed, but code involving them must remember
+that passing a struct to a method actually passes a copy to it, so the
+method should return the modified struct:</p>
+
+<pre><code><span class="k">struct</span> <span class="t">Mutable</span>
+  property value
+
+  <span class="k">def</span> <span class="m">initialize</span>(@value)
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="m">change_bad</span>(mutable)
+  mutable.value <span class="o">=</span> <span class="n">2</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="m">change_good</span>(mutable)
+  mutable.value <span class="o">=</span> <span class="n">2</span>
+  mutable
+<span class="k">end</span>
+
+mut <span class="o">=</span> <span class="t">Mutable</span>.<span class="k">new</span> <span class="n">1</span>
+change_bad(mut)
+mut.value              <span class="c">#=> 1</span>
+
+mut <span class="o">=</span> change_good(mut)
+mut.value              <span class="c">#=> 2</span></code></pre>
+
+<p>The standard library provides a useful <code><a href="toplevel.html#record%28name%2C%20%2Afields%29-macro">record</a></code> macro that allows you to
+create immutable structs with some fields, similar to a <code><a href="Tuple.html">Tuple</a></code> but using
+names instead of indices.</p>
+
 
 
 
@@ -32,7 +75,7 @@
   
     <a href="CharReader.html">CharReader</a>,
   
-    <a href="ColorizedObject.html">ColorizedObject(T)</a>,
+    <a href="Colorize/Object.html">Colorize::Object(T)</a>,
   
     <a href="Complex.html">Complex</a>,
   
@@ -44,6 +87,8 @@
   
     <a href="Curses/Window.html">Curses::Window</a>,
   
+    <a href="Dir/Iterator.html">Dir::Iterator</a>,
+  
     <a href="Event/Base.html">Event::Base</a>,
   
     <a href="HTML/Builder.html">HTML::Builder</a>,
@@ -52,7 +97,29 @@
   
     <a href="HTTP/WebSocket/PacketInfo.html">HTTP::WebSocket::PacketInfo</a>,
   
+    <a href="IO/ByteIterator.html">IO::ByteIterator(I)</a>,
+  
+    <a href="IO/CharIterator.html">IO::CharIterator(I)</a>,
+  
     <a href="IO/FdSet.html">IO::FdSet</a>,
+  
+    <a href="IO/LineIterator.html">IO::LineIterator(I)</a>,
+  
+    <a href="Iterator/Cycle.html">Iterator::Cycle(I, T)</a>,
+  
+    <a href="Iterator/Map.html">Iterator::Map(I, T, U)</a>,
+  
+    <a href="Iterator/Reject.html">Iterator::Reject(I, T, B)</a>,
+  
+    <a href="Iterator/Select.html">Iterator::Select(I, T, B)</a>,
+  
+    <a href="Iterator/Slice.html">Iterator::Slice(I, T)</a>,
+  
+    <a href="Iterator/Uniq.html">Iterator::Uniq(I, T, U)</a>,
+  
+    <a href="Iterator/WithObject.html">Iterator::WithObject(I, T, O)</a>,
+  
+    <a href="Iterator/Zip.html">Iterator::Zip(I1, I2, T1, T2)</a>,
   
     <a href="JSON/ArrayBuilder.html">JSON::ArrayBuilder(T)</a>,
   
@@ -60,69 +127,7 @@
   
     <a href="LEBReader.html">LEBReader</a>,
   
-    LibABI::UnwindException,
-  
-    LibC::Addrinfo,
-  
-    LibC::DirEntry,
-  
-    LibC::Glob,
-  
-    LibC::HostEnt,
-  
-    LibC::SockAddr,
-  
-    LibC::SockAddrIn,
-  
-    LibC::SockAddrIn6,
-  
-    LibC::SockAddrUn,
-  
-    LibC::Stat,
-  
-    LibC::TimeSpec,
-  
-    LibC::TimeVal,
-  
-    LibC::TimeZone,
-  
-    LibC::Tms,
-  
-    LibCrypto::Bio,
-  
-    LibCrypto::BioMethod,
-  
-    LibCrypto::MD5Context,
-  
-    LibGMP::MPZ,
-  
-    LibLLVM::JITCompilerOptions,
-  
-    LibTermios::Struct,
-  
-    LibYAML::AliasEvent,
-  
-    LibYAML::DocumentEndEvent,
-  
-    LibYAML::DocumentStartEvent,
-  
-    LibYAML::Event,
-  
-    LibYAML::EventData,
-  
-    LibYAML::MappingStartEvent,
-  
-    LibYAML::Mark,
-  
-    LibYAML::ScalarEvent,
-  
-    LibYAML::SequenceStartEvent,
-  
-    LibYAML::StreamStartEvent,
-  
-    LibYAML::TagDirective,
-  
-    LibYAML::VersionDirective,
+    <a href="LLVM/ABI/ArgType.html">LLVM::ABI::ArgType</a>,
   
     <a href="LLVM/BasicBlock.html">LLVM::BasicBlock</a>,
   
@@ -180,13 +185,15 @@
   
     <a href="OptionParser/Handler.html">OptionParser::Handler</a>,
   
+    <a href="OptionParser/ParseTask.html">OptionParser::ParseTask</a>,
+  
     <a href="PointerAppender.html">PointerAppender(T)</a>,
   
     <a href="PointerIO.html">PointerIO</a>,
   
     <a href="Process/Tms.html">Process::Tms</a>,
   
-    <a href="Range.html">Range(T)</a>,
+    <a href="Range.html">Range(B, E)</a>,
   
     <a href="SimpleHash.html">SimpleHash(K, V)</a>,
   
@@ -196,6 +203,10 @@
   
     <a href="Spec/Result.html">Spec::Result</a>,
   
+    <a href="String/Formatter.html">String::Formatter</a>,
+  
+    <a href="String/Formatter/Flags.html">String::Formatter::Flags</a>,
+  
     <a href="Time.html">Time</a>,
   
     <a href="TimeFormat.html">TimeFormat</a>,
@@ -204,9 +215,31 @@
   
     <a href="TimeFormat/Parser.html">TimeFormat::Parser</a>,
   
-    <a href="TimeSpan.html">TimeSpan</a>
+    <a href="TimeSpan.html">TimeSpan</a>,
+  
+    <a href="XML/Attributes.html">XML::Attributes</a>,
+  
+    <a href="XML/Namespace.html">XML::Namespace</a>,
+  
+    <a href="XML/Node.html">XML::Node</a>,
+  
+    <a href="XML/NodeSet.html">XML::NodeSet</a>,
+  
+    <a href="XML/Reader.html">XML::Reader</a>,
+  
+    <a href="XML/XPathContext.html">XML::XPathContext</a>
   
 
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr">struct.cr</a>
+    
+    <br/>
+  
 
 
 
@@ -218,22 +251,30 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#%3D%3D%28other%20%3A%20self%29-instance-method" class="signature"><strong>#==</strong>(other : self)</a>
+        <a href="#%3D%3D%28other%20%3A%20self%29%20%3A%20Bool-instance-method" class="signature"><strong>#==</strong>(other : self) : Bool</a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this struct is equal to <code>other</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        <a href="#hash%20%3A%20Int32-instance-method" class="signature"><strong>#hash</strong> : Int32</a>
+        
+          <div class="summary"><p>Returns a hash value based on this struct's instance variables hash values.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        <a href="#inspect%28io%20%3A%20IO%29%20%3A%20Nil-instance-method" class="signature"><strong>#inspect</strong>(io : IO) : Nil</a>
+        
+          <div class="summary"><p>Appends this struct's name and instance variables names and values to the given IO.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        
+          <div class="summary"><p>Same as <code><a href="Struct.html#inspect%28io%20%3A%20IO%29%20%3A%20Nil-instance-method">#inspect(io)</a></code>.</p></div>
         
       </li>
     
@@ -249,40 +290,75 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="%3D%3D%28other%20%3A%20self%29-instance-method">
+      <div class="signature" id="%3D%3D%28other%20%3A%20self%29%20%3A%20Bool-instance-method">
         
-        def <strong>==</strong>(other : self)
+        def <strong>==</strong>(other : self) : <a href="Bool.html">Bool</a>
       </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if this struct is equal to <code>other</code>.</p>
+
+<p>Both structs's instance vars are compared to each other. Thus, two
+structs are considered equal if each of their instance variables are
+equal. Subclasses should override this method to provide specific
+equality semantics.</p>
+
+<pre><code><span class="k">struct</span> <span class="t">Point</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@x, @y)
+  <span class="k">end</span>
+<span class="k">end</span>
+
+p1 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">1</span>, <span class="n">2</span>
+p2 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">1</span>, <span class="n">2</span>
+p3 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">3</span>, <span class="n">4</span>
+
+p1 <span class="o">==</span> p2            <span class="c">#=> true</span>
+p1 <span class="o">==</span> p3            <span class="c">#=> false</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/struct.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L66" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="hash-instance-method">
+      <div class="signature" id="hash%20%3A%20Int32-instance-method">
         
-        def <strong>hash</strong>
+        def <strong>hash</strong> : <a href="Int32.html">Int32</a>
       </div>
+      
+        <div class="doc"><p>Returns a hash value based on this struct's instance variables hash values.</p>
+
+<p>See <code><a href="Object.html#hash-instance-method">Object#hash</a></code></p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/struct.cr#L9" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="inspect%28io%20%3A%20IO%29-instance-method">
+      <div class="signature" id="inspect%28io%20%3A%20IO%29%20%3A%20Nil-instance-method">
         
-        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>) : <a href="Nil.html">Nil</a>
       </div>
+      
+        <div class="doc"><p>Appends this struct's name and instance variables names and values
+to the given IO.</p>
+
+<pre><code><span class="k">struct</span> <span class="t">Point</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@x, @y)
+  <span class="k">end</span>
+<span class="k">end</span>
+
+p1 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">1</span>, <span class="n">2</span>
+p1.to_s             <span class="c"># "Point(@x=1, @y=2)"</span>
+p1.inspect          <span class="c"># "Point(@x=1, @y=2)"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/struct.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L97" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -293,9 +369,11 @@
         def <strong>to_s</strong>(io)
       </div>
       
+        <div class="doc"><p>Same as <code><a href="Struct.html#inspect%28io%20%3A%20IO%29%20%3A%20Nil-instance-method">#inspect(io)</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/struct.cr#L30" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

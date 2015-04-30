@@ -32,6 +32,16 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr">io/buffered_io.cr</a>
+    
+    <br/>
+  
+
+
+
 
 
   <h2>Class Method Summary</h2>
@@ -65,7 +75,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gets-instance-method" class="signature"><strong>#gets</strong></a>
+        <a href="#gets%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-instance-method" class="signature"><strong>#gets</strong>(delimiter = '\n' : Char)</a>
         
       </li>
     
@@ -81,6 +91,11 @@
     
       <li class="entry-summary">
         <a href="#read_char-instance-method" class="signature"><strong>#read_char</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rewind-instance-method" class="signature"><strong>#rewind</strong></a>
         
       </li>
     
@@ -111,7 +126,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L10" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -124,7 +139,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -142,7 +157,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L101" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L124" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -155,20 +170,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L96" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L119" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="gets-instance-method">
+      <div class="signature" id="gets%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-instance-method">
         
-        def <strong>gets</strong>
+        def <strong>gets</strong>(delimiter = <span class="s">'\n'</span> : <a href="Char.html">Char</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -181,7 +196,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L84" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -194,7 +209,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L66" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -207,7 +222,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L77" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rewind-instance-method">
+        
+        def <strong>rewind</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L132" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -220,7 +248,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L128" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -233,7 +261,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io/buffered_io.cr#L92" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/buffered_io.cr#L115" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

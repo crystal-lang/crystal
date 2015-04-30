@@ -7,7 +7,7 @@
 <body>
 
 
-  <h1>class XML::Node</h1>
+  <h1>struct XML::Node</h1>
 
 
 
@@ -16,7 +16,7 @@
 
 
   <h2>Superclass hierarchy</h2>
-  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../XML/Node.html">XML::Node</a></div>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Value.html">Value</a></div><div style="padding-left: 40px"><a href="../Struct.html">Struct</a></div><div style="padding-left: 60px"><a href="../XML/Node.html">XML::Node</a></div>
 
 
 
@@ -24,19 +24,30 @@
 
 
 
-  <h2>Direct Known Subclasses</h2>
+
+
+
+  <h2>Defined in:</h2>
   
-    <a href="../XML/Attribute.html">XML::Attribute</a>,
-  
-    <a href="../XML/Document.html">XML::Document</a>,
-  
-    <a href="../XML/Element.html">XML::Element</a>,
-  
-    <a href="../XML/Text.html">XML::Text</a>
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr">xml/node.cr</a>
+    
+    <br/>
   
 
 
 
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>LOOKS_LIKE_XPATH</strong> = <code><span class="s">/^(\.\/|\/|\.\.|\.$)/</span></code>
+        
+      </li>
+    
+  </ul>
 
 
 
@@ -44,7 +55,17 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#new%28parent_node%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(parent_node = nil)</a>
+        <a href="#new%28node%20%3A%20%3A%3APointer%28LibXML%3A%3AAttr%29%29-class-method" class="signature"><strong>.new</strong>(node : ::Pointer(LibXML::Attr))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28node%20%3A%20LibXML%3A%3ADocPtr%29-class-method" class="signature"><strong>.new</strong>(node : LibXML::DocPtr)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28node%20%3A%20%3A%3APointer%28LibXML%3A%3ANode%29%29-class-method" class="signature"><strong>.new</strong>(node : ::Pointer(LibXML::Node))</a>
         
       </li>
     
@@ -56,22 +77,77 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20Node%29-instance-method" class="signature"><strong>#==</strong>(other : Node)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28attribute%20%3A%20String%29-instance-method" class="signature"><strong>#[]</strong>(attribute : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28attribute%20%3A%20String%29-instance-method" class="signature"><strong>#[]?</strong>(attribute : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#attribute%3F-instance-method" class="signature"><strong>#attribute?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#attributes-instance-method" class="signature"><strong>#attributes</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#child_nodes-instance-method" class="signature"><strong>#child_nodes</strong></a>
+        <a href="#cdata%3F-instance-method" class="signature"><strong>#cdata?</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#has_attributes%3F-instance-method" class="signature"><strong>#has_attributes?</strong></a>
+        <a href="#children-instance-method" class="signature"><strong>#children</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#has_child_nodes%3F-instance-method" class="signature"><strong>#has_child_nodes?</strong></a>
+        <a href="#comment%3F-instance-method" class="signature"><strong>#comment?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#content-instance-method" class="signature"><strong>#content</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#document-instance-method" class="signature"><strong>#document</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#document%3F-instance-method" class="signature"><strong>#document?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#element%3F-instance-method" class="signature"><strong>#element?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#first_element_child-instance-method" class="signature"><strong>#first_element_child</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fragment%3F-instance-method" class="signature"><strong>#fragment?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
       </li>
     
@@ -81,32 +157,147 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#name-instance-method" class="signature"><strong>#name</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#name%3D%28name%29-instance-method" class="signature"><strong>#name=</strong>(name)</a>
+        <a href="#namespace-instance-method" class="signature"><strong>#namespace</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#parent_node-instance-method" class="signature"><strong>#parent_node</strong></a>
+        <a href="#namespace_scopes-instance-method" class="signature"><strong>#namespace_scopes</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#parent_node%3D%28parent_node%29-instance-method" class="signature"><strong>#parent_node=</strong>(parent_node)</a>
+        <a href="#namespaces-instance-method" class="signature"><strong>#namespaces</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
+        <a href="#next-instance-method" class="signature"><strong>#next</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#value%3D%28value%29-instance-method" class="signature"><strong>#value=</strong>(value)</a>
+        <a href="#next_element-instance-method" class="signature"><strong>#next_element</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#next_sibling-instance-method" class="signature"><strong>#next_sibling</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#object_id-instance-method" class="signature"><strong>#object_id</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parent-instance-method" class="signature"><strong>#parent</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#previous-instance-method" class="signature"><strong>#previous</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#previous_element-instance-method" class="signature"><strong>#previous_element</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#previous_sibling-instance-method" class="signature"><strong>#previous_sibling</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#processing_instruction%3F-instance-method" class="signature"><strong>#processing_instruction?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#root-instance-method" class="signature"><strong>#root</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#text-instance-method" class="signature"><strong>#text</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#text%3F-instance-method" class="signature"><strong>#text?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_xml%28indent%20%3D%202%20%3A%20Int%2C%20indent_text%20%3D%20%22%20%22%2C%20options%20%3D%20SaveOptions.xml_default%20%3A%20SaveOptions%29-instance-method" class="signature"><strong>#to_xml</strong>(indent = 2 : Int, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_xml%28io%20%3A%20IO%2C%20indent%20%3D%202%2C%20indent_text%20%3D%20%22%20%22%2C%20options%20%3D%20SaveOptions.xml_default%20%3A%20SaveOptions%29-instance-method" class="signature"><strong>#to_xml</strong>(io : IO, indent = 2, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#type-instance-method" class="signature"><strong>#type</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xml%3F-instance-method" class="signature"><strong>#xml?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xpath%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method" class="signature"><strong>#xpath</strong>(path, namespaces = nil, variables = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xpath_bool%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method" class="signature"><strong>#xpath_bool</strong>(path, namespaces = nil, variables = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xpath_float%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method" class="signature"><strong>#xpath_float</strong>(path, namespaces = nil, variables = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xpath_node%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method" class="signature"><strong>#xpath_node</strong>(path, namespaces = nil, variables = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xpath_nodes%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method" class="signature"><strong>#xpath_nodes</strong>(path, namespaces = nil, variables = nil)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#xpath_string%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method" class="signature"><strong>#xpath_string</strong>(path, namespaces = nil, variables = nil)</a>
         
       </li>
     
@@ -120,14 +311,40 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28parent_node%20%3D%20nil%29-class-method">
+      <div class="signature" id="new%28node%20%3A%20%3A%3APointer%28LibXML%3A%3AAttr%29%29-class-method">
         
-        def self.<strong>new</strong>(parent_node = <span class="n">nil</span>)
+        def self.<strong>new</strong>(node : <a href="../Pointer.html">Pointer</a>(LibXML::Attr))
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/xml/dom.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L4" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28node%20%3A%20LibXML%3A%3ADocPtr%29-class-method">
+        
+        def self.<strong>new</strong>(node : LibXML::DocPtr)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L12" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28node%20%3A%20%3A%3APointer%28LibXML%3A%3ANode%29%29-class-method">
+        
+        def self.<strong>new</strong>(node : <a href="../Pointer.html">Pointer</a>(LibXML::Node))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L16" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -138,6 +355,58 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Node%29-instance-method">
+        
+        def <strong>==</strong>(other : <a href="../XML/Node.html">Node</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L27" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28attribute%20%3A%20String%29-instance-method">
+        
+        def <strong>[]</strong>(attribute : <a href="../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L19" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%3F%28attribute%20%3A%20String%29-instance-method">
+        
+        def <strong>[]?</strong>(attribute : <a href="../String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="attribute%3F-instance-method">
+        
+        def <strong>attribute?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L35" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="attributes-instance-method">
         
         def <strong>attributes</strong>
@@ -145,46 +414,137 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/xml/dom.cr#L28" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="child_nodes-instance-method">
+      <div class="signature" id="cdata%3F-instance-method">
         
-        def <strong>child_nodes</strong>
+        def <strong>cdata?</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/xml/dom.cr#L16" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L39" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="has_attributes%3F-instance-method">
+      <div class="signature" id="children-instance-method">
         
-        def <strong>has_attributes?</strong>
+        def <strong>children</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/xml/dom.cr#L32" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L43" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="has_child_nodes%3F-instance-method">
+      <div class="signature" id="comment%3F-instance-method">
         
-        def <strong>has_child_nodes?</strong>
+        def <strong>comment?</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/xml/dom.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L59" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="content-instance-method">
+        
+        def <strong>content</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L63" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="document-instance-method">
+        
+        def <strong>document</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="document%3F-instance-method">
+        
+        def <strong>document?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L76" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="element%3F-instance-method">
+        
+        def <strong>element?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L80" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="first_element_child-instance-method">
+        
+        def <strong>first_element_child</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L84" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fragment%3F-instance-method">
+        
+        def <strong>fragment?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L95" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="hash-instance-method">
+        
+        def <strong>hash</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -197,7 +557,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/xml/dom.cr#L40" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L103" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="inspect%28io%29-instance-method">
+        
+        def <strong>inspect</strong>(io)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,55 +582,359 @@
       </div>
       
       
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="name%3D%28name%29-instance-method">
-        
-        def <strong>name=</strong>(name)
-      </div>
-      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L187" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="parent_node-instance-method">
+      <div class="signature" id="namespace-instance-method">
         
-        def <strong>parent_node</strong>
+        def <strong>namespace</strong>
       </div>
       
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L201" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="parent_node%3D%28parent_node%29-instance-method">
+      <div class="signature" id="namespace_scopes-instance-method">
         
-        def <strong>parent_node=</strong>(parent_node)
+        def <strong>namespace_scopes</strong>
       </div>
       
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L206" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="value-instance-method">
+      <div class="signature" id="namespaces-instance-method">
         
-        def <strong>value</strong>
+        def <strong>namespaces</strong>
       </div>
       
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L218" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="value%3D%28value%29-instance-method">
+      <div class="signature" id="next-instance-method">
         
-        def <strong>value=</strong>(value)
+        def <strong>next</strong>
       </div>
       
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L167" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_element-instance-method">
+        
+        def <strong>next_element</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L176" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="next_sibling-instance-method">
+        
+        def <strong>next_sibling</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L172" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="object_id-instance-method">
+        
+        def <strong>object_id</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L235" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parent-instance-method">
+        
+        def <strong>parent</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L239" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="previous-instance-method">
+        
+        def <strong>previous</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L244" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="previous_element-instance-method">
+        
+        def <strong>previous_element</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L249" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="previous_sibling-instance-method">
+        
+        def <strong>previous_sibling</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L260" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="processing_instruction%3F-instance-method">
+        
+        def <strong>processing_instruction?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L264" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="root-instance-method">
+        
+        def <strong>root</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L268" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="text-instance-method">
+        
+        def <strong>text</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L273" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="text%3F-instance-method">
+        
+        def <strong>text?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L277" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="../IO.html">IO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L281" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_unsafe-instance-method">
+        
+        def <strong>to_unsafe</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L325" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_xml%28indent%20%3D%202%20%3A%20Int%2C%20indent_text%20%3D%20%22%20%22%2C%20options%20%3D%20SaveOptions.xml_default%20%3A%20SaveOptions%29-instance-method">
+        
+        def <strong>to_xml</strong>(indent = <span class="n">2</span> : <a href="../Int.html">Int</a>, indent_text = <span class="s">" "</span>, options = <span class="t">SaveOptions</span>.xml_default : <a href="../XML/SaveOptions.html">SaveOptions</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L285" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_xml%28io%20%3A%20IO%2C%20indent%20%3D%202%2C%20indent_text%20%3D%20%22%20%22%2C%20options%20%3D%20SaveOptions.xml_default%20%3A%20SaveOptions%29-instance-method">
+        
+        def <strong>to_xml</strong>(io : <a href="../IO.html">IO</a>, indent = <span class="n">2</span>, indent_text = <span class="s">" "</span>, options = <span class="t">SaveOptions</span>.xml_default : <a href="../XML/SaveOptions.html">SaveOptions</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L294" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="type-instance-method">
+        
+        def <strong>type</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L329" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xml%3F-instance-method">
+        
+        def <strong>xml?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L333" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xpath%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method">
+        
+        def <strong>xpath</strong>(path, namespaces = <span class="n">nil</span>, variables = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L337" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xpath_bool%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method">
+        
+        def <strong>xpath_bool</strong>(path, namespaces = <span class="n">nil</span>, variables = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L344" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xpath_float%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method">
+        
+        def <strong>xpath_float</strong>(path, namespaces = <span class="n">nil</span>, variables = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L348" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xpath_node%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method">
+        
+        def <strong>xpath_node</strong>(path, namespaces = <span class="n">nil</span>, variables = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L356" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xpath_nodes%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method">
+        
+        def <strong>xpath_nodes</strong>(path, namespaces = <span class="n">nil</span>, variables = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L352" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="xpath_string%28path%2C%20namespaces%20%3D%20nil%2C%20variables%20%3D%20nil%29-instance-method">
+        
+        def <strong>xpath_string</strong>(path, namespaces = <span class="n">nil</span>, variables = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/xml/node.cr#L360" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

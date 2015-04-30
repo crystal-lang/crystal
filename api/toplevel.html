@@ -24,6 +24,11 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+
+
+
   
     <h2>Constant Summary</h2>
   
@@ -164,6 +169,13 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#contain%28expected%29-class-method" class="signature"><strong>.contain</strong>(expected)</a>
+        
+          <div class="summary"><p>Passes if actual includes expected.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#context%28description%2C%20file%20%3D%20__FILE__%2C%20line%20%3D%20__LINE__%2C%20%26block%29-class-method" class="signature"><strong>.context</strong>(description, file = __FILE__, line = __LINE__, &block)</a>
         
       </li>
@@ -189,12 +201,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#fork%28%26block%29-class-method" class="signature"><strong>.fork</strong>(&block)</a>
+        <a href="#fork-class-method" class="signature"><strong>.fork</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#fork-class-method" class="signature"><strong>.fork</strong></a>
+        <a href="#fork%28%26block%29-class-method" class="signature"><strong>.fork</strong>(&block)</a>
         
       </li>
     
@@ -204,7 +216,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gets-class-method" class="signature"><strong>.gets</strong></a>
+        <a href="#gets%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-class-method" class="signature"><strong>.gets</strong>(delimiter = '\n' : Char)</a>
         
       </li>
     
@@ -249,7 +261,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#puts-class-method" class="signature"><strong>.puts</strong></a>
+        <a href="#printf%28format_string%2C%20args%20%3A%20Array%20%7C%20Tuple%29-class-method" class="signature"><strong>.printf</strong>(format_string, args : Array | Tuple)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#printf%28format_string%2C%20%2Aargs%29-class-method" class="signature"><strong>.printf</strong>(format_string, *args)</a>
         
       </li>
     
@@ -259,7 +276,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#raise%28ex%20%3A%20Exception%29-class-method" class="signature"><strong>.raise</strong>(ex : Exception)</a>
+        <a href="#puts-class-method" class="signature"><strong>.puts</strong></a>
         
       </li>
     
@@ -269,7 +286,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#rand%28x%29-class-method" class="signature"><strong>.rand</strong>(x)</a>
+        <a href="#raise%28ex%20%3A%20Exception%29-class-method" class="signature"><strong>.raise</strong>(ex : Exception)</a>
         
       </li>
     
@@ -279,17 +296,27 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#sleep%28seconds%20%3A%20Float%29-class-method" class="signature"><strong>.sleep</strong>(seconds : Float)</a>
+        <a href="#rand%28x%29-class-method" class="signature"><strong>.rand</strong>(x)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sleep%28seconds%20%3A%20Int%29-class-method" class="signature"><strong>.sleep</strong>(seconds : Int)</a>
+        <a href="#read_line%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-class-method" class="signature"><strong>.read_line</strong>(delimiter = '\n' : Char)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#spawn%28%26block%29-class-method" class="signature"><strong>.spawn</strong>(&block)</a>
+        <a href="#sleep%28seconds%20%3A%20Int%20%7C%20Float%29-class-method" class="signature"><strong>.sleep</strong>(seconds : Int | Float)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sprintf%28format_string%2C%20%2Aargs%29-class-method" class="signature"><strong>.sprintf</strong>(format_string, *args)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sprintf%28format_string%2C%20args%20%3A%20Array%20%7C%20Tuple%29-class-method" class="signature"><strong>.sprintf</strong>(format_string, args : Array | Tuple)</a>
         
       </li>
     
@@ -343,7 +370,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#expect_raises-macro" class="signature"><strong>expect_raises</strong></a>
+        <a href="#expect_raises%28klass%2C%20message%29-macro" class="signature"><strong>expect_raises</strong>(klass, message)</a>
         
       </li>
     
@@ -353,7 +380,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#expect_raises%28klass%2C%20message%29-macro" class="signature"><strong>expect_raises</strong>(klass, message)</a>
+        <a href="#expect_raises-macro" class="signature"><strong>expect_raises</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parallel%28%2Ajobs%29-macro" class="signature"><strong>parallel</strong>(*jobs)</a>
         
       </li>
     
@@ -375,6 +407,13 @@
       <li class="entry-summary">
         <a href="#spawn%28exp%29-macro" class="signature"><strong>spawn</strong>(exp)</a>
         
+          <div class="summary"><p>TODO: this doesn't work if a Call has a block or named arguments...</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#spawn-macro" class="signature"><strong>spawn</strong></a>
+        
       </li>
     
   </ul>
@@ -392,7 +431,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/raise.cr#L130" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/raise.cr#L130" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -405,7 +444,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/gc/null.cr#L1" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/gc/null.cr#L1" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -418,7 +457,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/gc/null.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/gc/null.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -431,7 +470,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/raise.cr#L75" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/raise.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -444,7 +483,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/raise.cr#L121" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/raise.cr#L121" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -457,7 +496,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/raise.cr#L147" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/raise.cr#L147" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -470,7 +509,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/gc/null.cr#L9" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/gc/null.cr#L9" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -483,7 +522,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/process/run.cr#L123" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/process/run.cr#L123" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -496,7 +535,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/main.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/main.cr#L35" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -509,7 +548,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L116" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L137" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -522,7 +561,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/main.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/main.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -535,7 +574,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L196" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L227" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -548,7 +587,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L168" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L199" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -561,7 +600,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L192" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L223" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -574,7 +613,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L176" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L207" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -587,7 +626,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L184" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L215" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -600,7 +639,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L188" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L219" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -613,7 +652,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L172" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L203" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -626,7 +665,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L180" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L211" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -639,7 +678,23 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/exception.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/exception.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="contain%28expected%29-class-method">
+        
+        def self.<strong>contain</strong>(expected)
+      </div>
+      
+        <div class="doc"><p>Passes if actual includes expected. Works on collections and String.
+@param expected - item expected to be contained in actual</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L237" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -652,7 +707,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L85" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L103" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -665,7 +720,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L79" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L97" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -678,7 +733,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L164" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L195" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -691,7 +746,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/main.cr#L30" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/main.cr#L30" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -704,20 +759,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L120" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="fork%28%26block%29-class-method">
-        
-        def self.<strong>fork</strong>(&block)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/process/process.cr#L78" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L141" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -730,7 +772,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/process/process.cr#L82" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/process/process.cr#L82" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fork%28%26block%29-class-method">
+        
+        def self.<strong>fork</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/process/process.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -743,20 +798,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fiber/fiber.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/fiber/fiber.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="gets-class-method">
+      <div class="signature" id="gets%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-class-method">
         
-        def self.<strong>gets</strong>
+        def self.<strong>gets</strong>(delimiter = <span class="s">'\n'</span> : <a href="Char.html">Char</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L313" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L394" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -769,7 +824,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L89" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -782,7 +837,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/prelude.cr#L51" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/prelude.cr#L52" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -795,7 +850,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L146" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L167" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -808,7 +863,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L200" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L231" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -821,7 +876,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L338" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L441" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -834,7 +889,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/spec.cr#L107" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/spec.cr#L128" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -847,7 +902,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L317" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L402" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -860,20 +915,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L322" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L407" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="puts-class-method">
+      <div class="signature" id="printf%28format_string%2C%20args%20%3A%20Array%20%7C%20Tuple%29-class-method">
         
-        def self.<strong>puts</strong>
+        def self.<strong>printf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L333" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L417" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="printf%28format_string%2C%20%2Aargs%29-class-method">
+        
+        def self.<strong>printf</strong>(format_string, *args)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L413" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -886,20 +954,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L328" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L431" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="raise%28ex%20%3A%20Exception%29-class-method">
+      <div class="signature" id="puts-class-method">
         
-        def self.<strong>raise</strong>(ex : <a href="Exception.html">Exception</a>)
+        def self.<strong>puts</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/raise.cr#L134" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L436" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -912,20 +980,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/raise.cr#L143" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/raise.cr#L143" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="rand%28x%29-class-method">
+      <div class="signature" id="raise%28ex%20%3A%20Exception%29-class-method">
         
-        def self.<strong>rand</strong>(x)
+        def self.<strong>raise</strong>(ex : <a href="Exception.html">Exception</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L60" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/raise.cr#L134" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -938,46 +1006,72 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/random.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L60" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="sleep%28seconds%20%3A%20Float%29-class-method">
+      <div class="signature" id="rand%28x%29-class-method">
         
-        def self.<strong>sleep</strong>(seconds : <a href="Float.html">Float</a>)
+        def self.<strong>rand</strong>(x)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/process/process.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/random.cr#L64" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="sleep%28seconds%20%3A%20Int%29-class-method">
+      <div class="signature" id="read_line%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-class-method">
         
-        def self.<strong>sleep</strong>(seconds : <a href="Int.html">Int</a>)
+        def self.<strong>read_line</strong>(delimiter = <span class="s">'\n'</span> : <a href="Char.html">Char</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/process/process.cr#L86" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L398" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="spawn%28%26block%29-class-method">
+      <div class="signature" id="sleep%28seconds%20%3A%20Int%20%7C%20Float%29-class-method">
         
-        def self.<strong>spawn</strong>(&block)
+        def self.<strong>sleep</strong>(seconds : <a href="Int.html">Int</a> | <a href="Float.html">Float</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/concurrent/concurrent.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/concurrent.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sprintf%28format_string%2C%20%2Aargs%29-class-method">
+        
+        def self.<strong>sprintf</strong>(format_string, *args)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L421" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sprintf%28format_string%2C%20args%20%3A%20Array%20%7C%20Tuple%29-class-method">
+        
+        def self.<strong>sprintf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L425" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -990,7 +1084,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/process/run.cr#L117" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/process/run.cr#L117" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1003,7 +1097,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/colorize.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/colorize.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1016,7 +1110,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/colorize.cr#L11" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/colorize.cr#L11" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1036,7 +1130,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/macros.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/macros.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1049,7 +1143,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L204" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L241" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1062,7 +1156,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fs/base.cr#L1" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/fs/base.cr#L1" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1075,7 +1169,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/intrinsics.cr#L9" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/intrinsics.cr#L9" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1088,33 +1182,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/fs/macros.cr#L1" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="expect_raises-macro">
-        
-        macro <strong>expect_raises</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L208" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="expect_raises%28klass%29-macro">
-        
-        macro <strong>expect_raises</strong>(klass)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L219" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/fs/macros.cr#L1" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1127,7 +1195,46 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/spec/expectations.cr#L227" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L264" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expect_raises%28klass%29-macro">
+        
+        macro <strong>expect_raises</strong>(klass)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L256" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="expect_raises-macro">
+        
+        macro <strong>expect_raises</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/spec/expectations.cr#L245" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="parallel%28%2Ajobs%29-macro">
+        
+        macro <strong>parallel</strong>(*jobs)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/concurrent.cr#L52" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1140,7 +1247,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/macros.cr#L16" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/macros.cr#L16" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1153,7 +1260,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/macros.cr#L1" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/macros.cr#L1" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1166,7 +1273,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/main.cr#L40" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/main.cr#L40" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1177,9 +1284,24 @@
         macro <strong>spawn</strong>(exp)
       </div>
       
+        <div class="doc"><p>TODO: this doesn't work if a Call has a block or named arguments... yet</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/concurrent/concurrent.cr#L58" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/concurrent.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="spawn-macro">
+        
+        macro <strong>spawn</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/concurrent.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

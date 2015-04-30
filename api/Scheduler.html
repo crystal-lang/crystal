@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class Scheduler</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Scheduler.html">Scheduler</a></div>
+
+
+
+
+
+
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr">concurrent/scheduler.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#create_fd_events%28io%20%3A%20FileDescriptorIO%29-class-method" class="signature"><strong>.create_fd_events</strong>(io : FileDescriptorIO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#destroy_fd_events%28event%29-class-method" class="signature"><strong>.destroy_fd_events</strong>(event)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#enqueue%28fibers%20%3A%20Enumerable%28Fiber%29%29-class-method" class="signature"><strong>.enqueue</strong>(fibers : Enumerable(Fiber))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#enqueue%28fiber%20%3A%20Fiber%29-class-method" class="signature"><strong>.enqueue</strong>(fiber : Fiber)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reschedule-class-method" class="signature"><strong>.reschedule</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sleep%28time%29-class-method" class="signature"><strong>.sleep</strong>(time)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#yield-class-method" class="signature"><strong>.yield</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="create_fd_events%28io%20%3A%20FileDescriptorIO%29-class-method">
+        
+        def self.<strong>create_fd_events</strong>(io : <a href="FileDescriptorIO.html">FileDescriptorIO</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="destroy_fd_events%28event%29-class-method">
+        
+        def self.<strong>destroy_fd_events</strong>(event)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L38" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="enqueue%28fibers%20%3A%20Enumerable%28Fiber%29%29-class-method">
+        
+        def self.<strong>enqueue</strong>(fibers : <a href="Enumerable.html">Enumerable</a>(<a href="Fiber.html">Fiber</a>))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L51" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="enqueue%28fiber%20%3A%20Fiber%29-class-method">
+        
+        def self.<strong>enqueue</strong>(fiber : <a href="Fiber.html">Fiber</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reschedule-class-method">
+        
+        def self.<strong>reschedule</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sleep%28time%29-class-method">
+        
+        def self.<strong>sleep</strong>(time)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L16" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="yield-class-method">
+        
+        def self.<strong>yield</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/concurrent/scheduler.cr#L42" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+
+
+</body>
+</html>

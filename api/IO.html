@@ -29,6 +29,26 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr">io.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io/error.cr">io/error.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/to_json.cr">json/to_json.cr</a>
+    
+    <br/>
+  
+
+
+
 
 
   <h2>Class Method Summary</h2>
@@ -71,7 +91,32 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#each_byte%28%26block%29-instance-method" class="signature"><strong>#each_byte</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_byte-instance-method" class="signature"><strong>#each_byte</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_char%28%26block%29-instance-method" class="signature"><strong>#each_char</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_char-instance-method" class="signature"><strong>#each_char</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#each_line%28%26block%29-instance-method" class="signature"><strong>#each_line</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_line-instance-method" class="signature"><strong>#each_line</strong></a>
         
       </li>
     
@@ -81,19 +126,31 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gets%28delimiter%20%3A%20Char%29-instance-method" class="signature"><strong>#gets</strong>(delimiter : Char)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#gets-instance-method" class="signature"><strong>#gets</strong></a>
+        <a href="#gets%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-instance-method" class="signature"><strong>#gets</strong>(delimiter = '\n' : Char)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#print%28obj%29-instance-method" class="signature"><strong>#print</strong>(obj)</a>
         
-          <div class="summary"><p>Same as <code><<</code></p></div>
+          <div class="summary"><p>Same as <code><a href="IO.html#%3C%3C%28obj%29-instance-method">#<<</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#printf%28format_string%2C%20args%20%3A%20Array%20%7C%20Tuple%29-instance-method" class="signature"><strong>#printf</strong>(format_string, args : Array | Tuple)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#printf%28format_string%2C%20%2Aargs%29-instance-method" class="signature"><strong>#printf</strong>(format_string, *args)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#puts%28string%20%3A%20String%29-instance-method" class="signature"><strong>#puts</strong>(string : String)</a>
+        
+          <div class="summary"><p>Writes the given string to this IO followed by a newline character unless the string already ends with one.</p></div>
         
       </li>
     
@@ -110,9 +167,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#puts%28string%20%3A%20String%29-instance-method" class="signature"><strong>#puts</strong>(string : String)</a>
-        
-          <div class="summary"><p>Writes the given string to this IO followed by a newline character unless the string already ends with one.</p></div>
+        <a href="#read-instance-method" class="signature"><strong>#read</strong></a>
         
       </li>
     
@@ -122,14 +177,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#read-instance-method" class="signature"><strong>#read</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#read%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#read</strong>(slice : Slice(UInt8), count)</a>
         
-          <div class="summary"><p>Reads count bytes from this IO into slice</p></div>
+          <div class="summary"><p>Reads count bytes from this IO into slice.</p></div>
         
       </li>
     
@@ -154,6 +204,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#read_line%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-instance-method" class="signature"><strong>#read_line</strong>(delimiter = '\n' : Char)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#reopen%28other%29-instance-method" class="signature"><strong>#reopen</strong>(other)</a>
         
       </li>
@@ -171,7 +226,7 @@
       <li class="entry-summary">
         <a href="#write%28slice%20%3A%20Slice%28UInt8%29%2C%20count%29-instance-method" class="signature"><strong>#write</strong>(slice : Slice(UInt8), count)</a>
         
-          <div class="summary"><p>Writes count bytes from slice into this IO</p></div>
+          <div class="summary"><p>Writes count bytes from slice into this IO.</p></div>
         
       </li>
     
@@ -202,7 +257,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L151" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -215,7 +270,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L159" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L159" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -223,7 +278,7 @@
     <div class="entry-detail">
       <div class="signature" id="select%28read_ios%2C%20write_ios%2C%20error_ios%2C%20timeout_sec%20%3A%20C%3A%3ATimeT%20%7C%20Int32%20%7C%20Float%20%7C%20%3A%3ANil%29-class-method">
         
-        def self.<strong>select</strong>(read_ios, write_ios, error_ios, timeout_sec : C::TimeT | <a href="Int32.html">Int32</a> | <a href="Float.html">Float</a> | <a href="Nil.html">::Nil</a>)
+        def self.<strong>select</strong>(read_ios, write_ios, error_ios, timeout_sec : C::TimeT | <a href="Int32.html">Int32</a> | <a href="Float.html">Float</a> | <a href="Nil.html">Nil</a>)
       </div>
       
         <div class="doc"><p>Returns an array of all given IOs that are</p>
@@ -238,7 +293,7 @@ are supported.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L79" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L79" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -251,7 +306,7 @@ are supported.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -272,7 +327,59 @@ This ends up calling <code>to_s(io)</code> on the object.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L179" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L179" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_byte%28%26block%29-instance-method">
+        
+        def <strong>each_byte</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L333" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_byte-instance-method">
+        
+        def <strong>each_byte</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L339" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_char%28%26block%29-instance-method">
+        
+        def <strong>each_char</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L323" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_char-instance-method">
+        
+        def <strong>each_char</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L329" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -285,7 +392,20 @@ This ends up calling <code>to_s(io)</code> on the object.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L304" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L313" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_line-instance-method">
+        
+        def <strong>each_line</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L319" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -298,33 +418,20 @@ This ends up calling <code>to_s(io)</code> on the object.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L148" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L148" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="gets%28delimiter%20%3A%20Char%29-instance-method">
+      <div class="signature" id="gets%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-instance-method">
         
-        def <strong>gets</strong>(delimiter : <a href="Char.html">Char</a>)
+        def <strong>gets</strong>(delimiter = <span class="s">'\n'</span> : <a href="Char.html">Char</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L263" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="gets-instance-method">
-        
-        def <strong>gets</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L259" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -335,39 +442,37 @@ This ends up calling <code>to_s(io)</code> on the object.</p></div>
         def <strong>print</strong>(obj)
       </div>
       
-        <div class="doc"><p>Same as <code><<</code></p></div>
+        <div class="doc"><p>Same as <code><a href="IO.html#%3C%3C%28obj%29-instance-method">#<<</a></code></p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L185" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L185" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="puts-instance-method">
+      <div class="signature" id="printf%28format_string%2C%20args%20%3A%20Array%20%7C%20Tuple%29-instance-method">
         
-        def <strong>puts</strong>
+        def <strong>printf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L202" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L210" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="puts%28obj%29-instance-method">
+      <div class="signature" id="printf%28format_string%2C%20%2Aargs%29-instance-method">
         
-        def <strong>puts</strong>(obj)
+        def <strong>printf</strong>(format_string, *args)
       </div>
-      
-        <div class="doc"><p>Writes the given object to this IO followed by a newline character.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L197" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L206" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -383,20 +488,35 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L191" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L191" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="read%28length%29-instance-method">
+      <div class="signature" id="puts-instance-method">
         
-        def <strong>read</strong>(length)
+        def <strong>puts</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L276" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L202" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="puts%28obj%29-instance-method">
+        
+        def <strong>puts</strong>(obj)
+      </div>
+      
+        <div class="doc"><p>Writes the given object to this IO followed by a newline character.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L197" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -409,7 +529,20 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L250" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L259" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28length%29-instance-method">
+        
+        def <strong>read</strong>(length)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L285" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -420,11 +553,11 @@ unless the string already ends with one.</p></div>
         def <strong>read</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
       </div>
       
-        <div class="doc"><p>Reads count bytes from this IO into slice</p></div>
+        <div class="doc"><p>Reads count bytes from this IO into slice. Returns the number of bytes read.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L135" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L135" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -437,7 +570,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L140" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L140" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -450,7 +583,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L206" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L215" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -463,7 +596,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L215" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L224" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -476,7 +609,20 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L239" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L248" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read_line%28delimiter%20%3D%20%27%5Cn%27%20%3A%20Char%29-instance-method">
+        
+        def <strong>read_line</strong>(delimiter = <span class="s">'\n'</span> : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L281" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -489,7 +635,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L169" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L169" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -502,7 +648,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L300" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L309" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -515,7 +661,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L291" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L300" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -526,11 +672,11 @@ unless the string already ends with one.</p></div>
         def <strong>write</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), count)
       </div>
       
-        <div class="doc"><p>Writes count bytes from slice into this IO</p></div>
+        <div class="doc"><p>Writes count bytes from slice into this IO. Returns the number of bytes written.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L138" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L138" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -543,7 +689,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L144" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L144" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -556,7 +702,7 @@ unless the string already ends with one.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/io.cr#L295" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/io.cr#L304" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

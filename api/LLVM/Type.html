@@ -27,6 +27,21 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/enums.cr">llvm/enums.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr">llvm/type.cr</a>
+    
+    <br/>
+  
+
+
+
 
 
   <h2>Class Method Summary</h2>
@@ -63,12 +78,17 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#struct%28name%20%3A%20String%2C%20packed%20%3D%20false%2C%20%26block%29-class-method" class="signature"><strong>.struct</strong>(name : String, packed = false, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#struct%28element_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20name%20%3D%20nil%2C%20packed%20%3D%20false%29-class-method" class="signature"><strong>.struct</strong>(element_types : Array(LLVM::Type), name = nil, packed = false)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#struct%28name%20%3A%20String%2C%20packed%20%3D%20false%2C%20%26block%29-class-method" class="signature"><strong>.struct</strong>(name : String, packed = false, &block)</a>
+        <a href="#vector%28element_type%2C%20count%29-class-method" class="signature"><strong>.vector</strong>(element_type, count)</a>
         
       </li>
     
@@ -95,7 +115,22 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#array_length-instance-method" class="signature"><strong>#array_length</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#element_type-instance-method" class="signature"><strong>#element_type</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#int_width-instance-method" class="signature"><strong>#int_width</strong></a>
         
       </li>
     
@@ -115,12 +150,22 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#packed_struct%3F-instance-method" class="signature"><strong>#packed_struct?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#pointer-instance-method" class="signature"><strong>#pointer</strong></a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#struct_element_types-instance-method" class="signature"><strong>#struct_element_types</strong></a>
         
       </li>
     
@@ -161,7 +206,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -174,7 +219,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -187,7 +232,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L19" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -200,7 +245,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L51" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L55" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -213,7 +258,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -226,20 +271,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L27" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="struct%28element_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20name%20%3D%20nil%2C%20packed%20%3D%20false%29-class-method">
-        
-        def self.<strong>struct</strong>(element_types : <a href="../Array.html">Array</a>(<a href="../LLVM/Type.html">LLVM::Type</a>), name = <span class="n">nil</span>, packed = <span class="n">false</span>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L27" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -252,7 +284,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="struct%28element_types%20%3A%20Array%28LLVM%3A%3AType%29%2C%20name%20%3D%20nil%2C%20packed%20%3D%20false%29-class-method">
+        
+        def self.<strong>struct</strong>(element_types : <a href="../Array.html">Array</a>(<a href="../LLVM/Type.html">LLVM::Type</a>), name = <span class="n">nil</span>, packed = <span class="n">false</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L47" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="vector%28element_type%2C%20count%29-class-method">
+        
+        def self.<strong>vector</strong>(element_type, count)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L35" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -265,7 +323,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L11" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L11" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -278,7 +336,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -296,7 +354,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L83" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L92" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="array_length-instance-method">
+        
+        def <strong>array_length</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L125" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="element_type-instance-method">
+        
+        def <strong>element_type</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L116" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -309,7 +393,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L87" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L130" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="int_width-instance-method">
+        
+        def <strong>int_width</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L96" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -322,7 +419,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L59" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L68" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -335,7 +432,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L67" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -348,7 +445,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L80" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="packed_struct%3F-instance-method">
+        
+        def <strong>packed_struct?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L101" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -361,7 +471,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L79" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L88" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -374,7 +484,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L55" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L59" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="struct_element_types-instance-method">
+        
+        def <strong>struct_element_types</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L106" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -387,7 +510,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L7" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L7" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -400,7 +523,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L75" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L84" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -413,7 +536,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L2" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -426,7 +549,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/llvm/type.cr#L63" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/type.cr#L72" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

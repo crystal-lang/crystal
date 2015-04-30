@@ -11,6 +11,10 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The top-level number type.</p>
+
 
 
 
@@ -19,6 +23,11 @@
   <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Number.html">Number</a></div>
 
 
+
+  <h2>Included Modules</h2>
+  
+    <a href="Comparable.html">Comparable(Number)</a>
+  
 
 
 
@@ -34,6 +43,21 @@
 
 
 
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr">number.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr">complex.cr</a>
+    
+    <br/>
+  
+
+
+
 
 
   <h2>Class Method Summary</h2>
@@ -41,6 +65,13 @@
     
       <li class="entry-summary">
         <a href="#%5B%5D%28%2Anums%29-class-method" class="signature"><strong>.[]</strong>(*nums)</a>
+        
+          <div class="summary"><p>Creates an Array of self with the given values, which will be casted to this type with the <code>cast</code> method (defined in each Number type).</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#zero-class-method" class="signature"><strong>.zero</strong></a>
         
       </li>
     
@@ -57,12 +88,14 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B-instance-method" class="signature"><strong>#+</strong></a>
+        <a href="#%2B%28other%20%3A%20Complex%29-instance-method" class="signature"><strong>#+</strong>(other : Complex)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%20%3A%20Complex%29-instance-method" class="signature"><strong>#+</strong>(other : Complex)</a>
+        <a href="#%2B-instance-method" class="signature"><strong>#+</strong></a>
+        
+          <div class="summary"><p>Returns self.</p></div>
         
       </li>
     
@@ -79,6 +112,8 @@
       <li class="entry-summary">
         <a href="#%3C%3D%3E%28other%29-instance-method" class="signature"><strong>#<=></strong>(other)</a>
         
+          <div class="summary"><p>Implements the comparison operator.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -89,10 +124,14 @@
       <li class="entry-summary">
         <a href="#abs-instance-method" class="signature"><strong>#abs</strong></a>
         
+          <div class="summary"><p>Returns the absolute value of this number.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#abs2-instance-method" class="signature"><strong>#abs2</strong></a>
+        
+          <div class="summary"><p>Returns the square of self (<code>self * self</code>).</p></div>
         
       </li>
     
@@ -104,6 +143,8 @@
       <li class="entry-summary">
         <a href="#divmod%28number%29-instance-method" class="signature"><strong>#divmod</strong>(number)</a>
         
+          <div class="summary"><p>Return a tuple of two elements containing the quotient and modulus obtained by dividing self by <code>number</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -114,20 +155,33 @@
       <li class="entry-summary">
         <a href="#round%28digits%2C%20base%20%3D%2010%29-instance-method" class="signature"><strong>#round</strong>(digits, base = 10)</a>
         
+          <div class="summary"><p>Rounds this number to a given precision in decimal digits.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#sign-instance-method" class="signature"><strong>#sign</strong></a>
+        
+          <div class="summary"><p>Returns the sign of this number as an Int32.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#significant%28digits%2C%20base%20%3D%2010%29-instance-method" class="signature"><strong>#significant</strong>(digits, base = 10)</a>
         
+          <div class="summary"><p>Keeps <code>digits</code> significants digits of this number in the given <code>base</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#step%28limit%20%3D%20nil%2C%20by%20%3D%201%2C%20%26block%29-instance-method" class="signature"><strong>#step</strong>(limit = nil, by = 1, &block)</a>
+        
+          <div class="summary"><p>Invokes the given block with the sequence of numbers starting at <code>self</code>, incremented by <code>by</code> on each call, and with an optional <code>limit</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#step%28limit%20%3D%20nil%2C%20by%20%3D%201%29-instance-method" class="signature"><strong>#step</strong>(limit = nil, by = 1)</a>
         
       </li>
     
@@ -151,9 +205,31 @@
         def self.<strong>[]</strong>(*nums)
       </div>
       
+        <div class="doc"><p>Creates an Array of self with the given values, which will be casted
+to this type with the <code>cast</code> method (defined in each Number type).</p>
+
+<pre><code>floats <span class="o">=</span> <span class="t">Float64</span>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+floats.<span class="k">class</span>                 <span class="c">#=> Array(Float64)</span>
+
+ints <span class="o">=</span> <span class="t">Int64</span>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
+ints.<span class="k">class</span>                   <span class="c">#=> Array(Int64)</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L24" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="zero-class-method">
+        
+        def self.<strong>zero</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -171,20 +247,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L168" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%2B-instance-method">
-        
-        def <strong>+</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L172" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -197,7 +260,22 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L160" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L164" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B-instance-method">
+        
+        def <strong>+</strong>
+      </div>
+      
+        <div class="doc"><p>Returns self.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L10" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -210,7 +288,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L164" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L168" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -223,7 +301,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L172" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L176" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -234,9 +312,13 @@
         def <strong><=></strong>(other)
       </div>
       
+        <div class="doc"><p>Implements the comparison operator.</p>
+
+<p>See <code><a href="Object.html#%3C%3D%3E%28other%29-instance-method">Object#<=></a></code></p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L127" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -249,7 +331,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L152" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L156" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -260,9 +342,14 @@
         def <strong>abs</strong>
       </div>
       
+        <div class="doc"><p>Returns the absolute value of this number.</p>
+
+<pre><code><span class="n">123</span>.abs  <span class="c">#=> 123</span>
+<span class="n">-123</span>.abs <span class="c">#=> 123</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L40" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L85" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -273,9 +360,14 @@
         def <strong>abs2</strong>
       </div>
       
+        <div class="doc"><p>Returns the square of self (<code>self * self</code>).</p>
+
+<pre><code><span class="n">4</span>.abs2   <span class="c">#=> 16</span>
+<span class="n">1.5</span>.abs2 <span class="c">#=> 2.25</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L44" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -288,7 +380,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L156" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L160" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -299,9 +391,15 @@
         def <strong>divmod</strong>(number)
       </div>
       
+        <div class="doc"><p>Return a tuple of two elements containing the quotient
+and modulus obtained by dividing self by <code>number</code>.</p>
+
+<pre><code><span class="n">11</span>.divmod(<span class="n">3</span>)  <span class="c">#=> {3, 2}</span>
+<span class="n">11</span>.divmod(<span class="n">-3</span>) <span class="c">#=> {-3, 2}</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L52" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L120" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -314,7 +412,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L148" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L152" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -325,9 +423,13 @@
         def <strong>round</strong>(digits, base = <span class="n">10</span>)
       </div>
       
+        <div class="doc"><p>Rounds this number to a given precision in decimal digits.</p>
+
+<pre><code><span class="n">-1763.116</span>.round(<span class="n">2</span>) <span class="c">#=> -1763.12</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L82" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L172" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -338,9 +440,17 @@
         def <strong>sign</strong>
       </div>
       
+        <div class="doc"><p>Returns the sign of this number as an Int32.</p>
+
+<ul><li>-1 if this number is negative</li><li>0 if this number is zero</li><li>1 if this number is positive</li></ul>
+
+<pre><code><span class="n">123</span>.sign <span class="c">#=> 1</span>
+<span class="n">0</span>.sign   <span class="c">#=> 0</span>
+<span class="n">-42</span>.sign <span class="c">#=> -1</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L48" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L109" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -351,9 +461,22 @@
         def <strong>significant</strong>(digits, base = <span class="n">10</span>)
       </div>
       
+        <div class="doc"><p>Keeps <code>digits</code> significants digits of this number in the given <code>base</code>.</p>
+
+<pre><code><span class="n">1234.567</span>.significant(<span class="n">1</span>)         <span class="c">#=> 1000</span>
+<span class="n">1234.567</span>.significant(<span class="n">2</span>)         <span class="c">#=> 1200</span>
+<span class="n">1234.567</span>.significant(<span class="n">3</span>)         <span class="c">#=> 1230</span>
+<span class="n">1234.567</span>.significant(<span class="n">4</span>)         <span class="c">#=> 1235</span>
+<span class="n">1234.567</span>.significant(<span class="n">5</span>)         <span class="c">#=> 1234.6</span>
+<span class="n">1234.567</span>.significant(<span class="n">6</span>)         <span class="c">#=> 1234.57</span>
+<span class="n">1234.567</span>.significant(<span class="n">7</span>)         <span class="c">#=> 1234.567</span>
+<span class="n">1234.567</span>.significant(<span class="n">8</span>)         <span class="c">#=> 1234.567</span>
+
+<span class="n">15.159</span>.significant(<span class="n">1</span>, base <span class="o">=</span> <span class="n">2</span>) <span class="c">#=> 16</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L60" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L145" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -364,9 +487,36 @@
         def <strong>step</strong>(limit = <span class="n">nil</span>, by = <span class="n">1</span>, &block)
       </div>
       
+        <div class="doc"><p>Invokes the given block with the sequence of numbers starting at <code>self</code>,
+incremented by <code>by</code> on each call, and with an optional <code>limit</code>.</p>
+
+<pre><code><span class="n">3</span>.step(by: <span class="n">2</span>, limit: <span class="n">10</span>) <span class="k">do</span> <span class="o">|</span>n<span class="o">|</span>
+  puts n
+<span class="k">end</span></code></pre>
+
+<p>Output:</p>
+
+<pre><code>3
+5
+7
+9</code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/number.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="step%28limit%20%3D%20nil%2C%20by%20%3D%201%29-instance-method">
+        
+        def <strong>step</strong>(limit = <span class="n">nil</span>, by = <span class="n">1</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/number.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -379,7 +529,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/complex.cr#L144" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/complex.cr#L148" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

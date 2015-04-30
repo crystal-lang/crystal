@@ -43,6 +43,12 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Array.html">Array(T)</a>,
   
+    <a href="Array/IndexIterator.html">Array::IndexIterator(T)</a>,
+  
+    <a href="Array/Iterator.html">Array::Iterator(T)</a>,
+  
+    <a href="Array/ReverseIterator.html">Array::ReverseIterator(T)</a>,
+  
     <a href="Benchmark/Report.html">Benchmark::Report</a>,
   
     <a href="Benchmark/Tms.html">Benchmark::Tms</a>,
@@ -52,6 +58,8 @@ the instance is no longer referred by any other entity in the program.</p>
     <a href="Box.html">Box(T)</a>,
   
     <a href="BufferedIO.html">BufferedIO(T)</a>,
+  
+    <a href="Channel.html">Channel(T)</a>,
   
     <a href="ConditionVariable.html">ConditionVariable</a>,
   
@@ -64,12 +72,6 @@ the instance is no longer referred by any other entity in the program.</p>
     <a href="CSV/Lexer.html">CSV::Lexer</a>,
   
     <a href="CSV/Parser.html">CSV::Parser</a>,
-  
-    <a href="DB/Sql/Literal.html">DB::Sql::Literal</a>,
-  
-    <a href="DB/Sql/MysqlDialect.html">DB::Sql::MysqlDialect</a>,
-  
-    <a href="DB/Sql/Node.html">DB::Sql::Node</a>,
   
     <a href="Dir.html">Dir</a>,
   
@@ -95,6 +97,12 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Hash/Entry.html">Hash::Entry(K, V)</a>,
   
+    <a href="Hash/Iterator.html">Hash::Iterator(K, V)</a>,
+  
+    <a href="Hash/KeyIterator.html">Hash::KeyIterator(K, V)</a>,
+  
+    <a href="Hash/ValueIterator.html">Hash::ValueIterator(K, V)</a>,
+  
     <a href="HTTP/Client.html">HTTP::Client</a>,
   
     <a href="HTTP/Handler.html">HTTP::Handler</a>,
@@ -111,6 +119,16 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="IniFile.html">IniFile</a>,
   
+    <a href="Int/TimesIterator.html">Int::TimesIterator(T)</a>,
+  
+    <a href="Iterator/Skip.html">Iterator::Skip(I, T)</a>,
+  
+    <a href="Iterator/Stop.html">Iterator::Stop</a>,
+  
+    <a href="Iterator/Take.html">Iterator::Take(I, T)</a>,
+  
+    <a href="Iterator/WithIndex.html">Iterator::WithIndex(I, T)</a>,
+  
     <a href="JSON/Lexer.html">JSON::Lexer</a>,
   
     <a href="JSON/Parser.html">JSON::Parser</a>,
@@ -121,9 +139,15 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="JSON/Token.html">JSON::Token</a>,
   
+    <a href="LLVM/ABI.html">LLVM::ABI</a>,
+  
+    <a href="LLVM/ABI/FunctionType.html">LLVM::ABI::FunctionType</a>,
+  
     <a href="LLVM/Context.html">LLVM::Context</a>,
   
     <a href="Logger.html">Logger(T)</a>,
+  
+    <a href="Macros/ASTNode.html">Macros::ASTNode</a>,
   
     <a href="Markdown.html">Markdown</a>,
   
@@ -136,6 +160,8 @@ the instance is no longer referred by any other entity in the program.</p>
     <a href="Matrix.html">Matrix(T)</a>,
   
     <a href="Mutex.html">Mutex</a>,
+  
+    <a href="Number/StepIterator.html">Number::StepIterator(T, L, B)</a>,
   
     <a href="OAuth2/AccessToken.html">OAuth2::AccessToken</a>,
   
@@ -165,9 +191,15 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Random/MT19937.html">Random::MT19937</a>,
   
+    <a href="Range/Iterator.html">Range::Iterator(B, E)</a>,
+  
     <a href="Regex.html">Regex</a>,
   
+    <a href="Scheduler.html">Scheduler</a>,
+  
     <a href="Set.html">Set(T)</a>,
+  
+    <a href="Slice/Iterator.html">Slice::Iterator(T)</a>,
   
     <a href="Spec/Be.html">Spec::Be(T)</a>,
   
@@ -181,6 +213,10 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Spec/CloseExpectation.html">Spec::CloseExpectation</a>,
   
+    <a href="Spec/ContainExpectation.html">Spec::ContainExpectation(T)</a>,
+  
+    <a href="Spec/ContainExpectation/NullActual.html">Spec::ContainExpectation::NullActual</a>,
+  
     <a href="Spec/Context.html">Spec::Context</a>,
   
     <a href="Spec/EqualExpectation.html">Spec::EqualExpectation(T)</a>,
@@ -191,7 +227,9 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="String.html">String</a>,
   
-    <a href="String/Formatter.html">String::Formatter</a>,
+    <a href="String/Builder.html">String::Builder</a>,
+  
+    <a href="String/CharIterator.html">String::CharIterator</a>,
   
     <a href="StringIO.html">StringIO</a>,
   
@@ -203,13 +241,19 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="URI.html">URI</a>,
   
-    <a href="XML/Node.html">XML::Node</a>,
-  
-    <a href="XML/Reader.html">XML::Reader</a>,
-  
     <a href="YAML/Parser.html">YAML::Parser</a>
   
 
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr">reference.cr</a>
+    
+    <br/>
+  
 
 
 
@@ -242,13 +286,6 @@ the instance is no longer referred by any other entity in the program.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
-        
-          <div class="summary"><p>Returns self.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
           <div class="summary"><p>Returns this reference's <code><a href="Reference.html#object_id-instance-method">#object_id</a></code> as the hash value.</p></div>
@@ -256,7 +293,7 @@ the instance is no longer referred by any other entity in the program.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        <a href="#inspect%28io%20%3A%20IO%29%20%3A%20Nil-instance-method" class="signature"><strong>#inspect</strong>(io : IO) : Nil</a>
         
       </li>
     
@@ -275,13 +312,6 @@ the instance is no longer referred by any other entity in the program.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#same%3F%28other%20%3A%20Reference%29-instance-method" class="signature"><strong>#same?</strong>(other : Reference)</a>
-        
-          <div class="summary"><p>Returns true if this reference is the same as other.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#same%3F%28other%20%3A%20Nil%29-instance-method" class="signature"><strong>#same?</strong>(other : Nil)</a>
         
           <div class="summary"><p>Returns false: a reference is never nil.</p></div>
@@ -289,7 +319,14 @@ the instance is no longer referred by any other entity in the program.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        <a href="#same%3F%28other%20%3A%20Reference%29-instance-method" class="signature"><strong>#same?</strong>(other : Reference)</a>
+        
+          <div class="summary"><p>Returns true if this reference is the same as other.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29%20%3A%20Nil-instance-method" class="signature"><strong>#to_s</strong>(io : IO) : Nil</a>
         
       </li>
     
@@ -314,7 +351,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L41" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L41" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -329,7 +366,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -340,27 +377,11 @@ the instance is no longer referred by any other entity in the program.</p>
         def <strong>==</strong>(other : self)
       </div>
       
-        <div class="doc"><p>Returns true if this reference is the same as other. Invokes <code><a href="Reference.html#same%3F%28other%20%3A%20Reference%29-instance-method">#same?</a></code></p></div>
+        <div class="doc"><p>Returns true if this reference is the same as other. Invokes <code><a href="Reference.html#same%3F%28other%20%3A%20Nil%29-instance-method">#same?</a></code></p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L15" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="clone-instance-method">
-        
-        def <strong>clone</strong>
-      </div>
-      
-        <div class="doc"><p>Returns self. Subclasses must override this method to provide
-custom clone behaviour.</p></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L52" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -375,20 +396,20 @@ custom clone behaviour.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="inspect%28io%20%3A%20IO%29-instance-method">
+      <div class="signature" id="inspect%28io%20%3A%20IO%29%20%3A%20Nil-instance-method">
         
-        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>) : <a href="Nil.html">Nil</a>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -403,7 +424,7 @@ custom clone behaviour.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L36" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -428,6 +449,21 @@ ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true<
     <hr/>
   
     <div class="entry-detail">
+      <div class="signature" id="same%3F%28other%20%3A%20Nil%29-instance-method">
+        
+        def <strong>same?</strong>(other : <a href="Nil.html">Nil</a>)
+      </div>
+      
+        <div class="doc"><p>Returns false: a reference is never nil.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L31" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="same%3F%28other%20%3A%20Reference%29-instance-method">
         
         def <strong>same?</strong>(other : <a href="Reference.html">Reference</a>)
@@ -438,35 +474,20 @@ true if this reference's <code><a href="Reference.html#object_id-instance-method
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="same%3F%28other%20%3A%20Nil%29-instance-method">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29%20%3A%20Nil-instance-method">
         
-        def <strong>same?</strong>(other : <a href="Nil.html">Nil</a>)
-      </div>
-      
-        <div class="doc"><p>Returns false: a reference is never nil.</p></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L31" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
-        
-        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>) : <a href="Nil.html">Nil</a>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/reference.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L70" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

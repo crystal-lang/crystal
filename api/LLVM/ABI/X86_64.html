@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>class LLVM::ABI::X86_64</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86_64.rs</p>
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../../LLVM/ABI.html">LLVM::ABI</a></div><div style="padding-left: 60px"><a href="../../LLVM/ABI/X86_64.html">LLVM::ABI::X86_64</a></div>
+
+
+
+
+
+
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr">llvm/abi/x86_64.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#abi_info%28atys%20%3A%20Array%28Type%29%2C%20rty%20%3A%20Type%2C%20ret_def%20%3A%20Bool%29-instance-method" class="signature"><strong>#abi_info</strong>(atys : Array(Type), rty : Type, ret_def : Bool)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#align%28offset%2C%20type%29-instance-method" class="signature"><strong>#align</strong>(offset, type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#align%28type%20%3A%20Type%29-instance-method" class="signature"><strong>#align</strong>(type : Type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#all_mem%28reg_classes%29-instance-method" class="signature"><strong>#all_mem</strong>(reg_classes)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#classify%28type%29-instance-method" class="signature"><strong>#classify</strong>(type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#classify%28ty%2C%20cls%2C%20ix%2C%20off%29-instance-method" class="signature"><strong>#classify</strong>(ty, cls, ix, off)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#classify_struct%28tys%2C%20cls%2C%20i%2C%20off%2C%20packed%29-instance-method" class="signature"><strong>#classify_struct</strong>(tys, cls, i, off, packed)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fixup%28ty%2C%20cls%29-instance-method" class="signature"><strong>#fixup</strong>(ty, cls)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#llreg%28reg_classes%29-instance-method" class="signature"><strong>#llreg</strong>(reg_classes)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#llvec_len%28reg_classes%29-instance-method" class="signature"><strong>#llvec_len</strong>(reg_classes)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pass_by_val%3F%28cls%29-instance-method" class="signature"><strong>#pass_by_val?</strong>(cls)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#register%3F%28type%29-instance-method" class="signature"><strong>#register?</strong>(type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size%28type%20%3A%20Type%29-instance-method" class="signature"><strong>#size</strong>(type : Type)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sret%3F%28cls%29-instance-method" class="signature"><strong>#sret?</strong>(cls)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unify%28cls%2C%20i%2C%20newv%29-instance-method" class="signature"><strong>#unify</strong>(cls, i, newv)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#x86_64_type%28type%2C%20ind_attr%2C%20%26block%29-instance-method" class="signature"><strong>#x86_64_type</strong>(type, ind_attr, &block)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abi_info%28atys%20%3A%20Array%28Type%29%2C%20rty%20%3A%20Type%2C%20ret_def%20%3A%20Bool%29-instance-method">
+        
+        def <strong>abi_info</strong>(atys : <a href="../../Array.html">Array</a>(<a href="../../LLVM/Type.html">Type</a>), rty : <a href="../../LLVM/Type.html">Type</a>, ret_def : <a href="../../Bool.html">Bool</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="align%28offset%2C%20type%29-instance-method">
+        
+        def <strong>align</strong>(offset, type)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L279" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="align%28type%20%3A%20Type%29-instance-method">
+        
+        def <strong>align</strong>(type : <a href="../../LLVM/Type.html">Type</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L226" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="all_mem%28reg_classes%29-instance-method">
+        
+        def <strong>all_mem</strong>(reg_classes)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L187" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="classify%28type%29-instance-method">
+        
+        def <strong>classify</strong>(type)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L56" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="classify%28ty%2C%20cls%2C%20ix%2C%20off%29-instance-method">
+        
+        def <strong>classify</strong>(ty, cls, ix, off)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L68" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="classify_struct%28tys%2C%20cls%2C%20i%2C%20off%2C%20packed%29-instance-method">
+        
+        def <strong>classify_struct</strong>(tys, cls, i, off, packed)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L106" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fixup%28ty%2C%20cls%29-instance-method">
+        
+        def <strong>fixup</strong>(ty, cls)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L115" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="llreg%28reg_classes%29-instance-method">
+        
+        def <strong>llreg</strong>(reg_classes)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L191" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="llvec_len%28reg_classes%29-instance-method">
+        
+        def <strong>llvec_len</strong>(reg_classes)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L217" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pass_by_val%3F%28cls%29-instance-method">
+        
+        def <strong>pass_by_val?</strong>(cls)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L43" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="register%3F%28type%29-instance-method">
+        
+        def <strong>register?</strong>(type)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L34" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size%28type%20%3A%20Type%29-instance-method">
+        
+        def <strong>size</strong>(type : <a href="../../LLVM/Type.html">Type</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L251" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sret%3F%28cls%29-instance-method">
+        
+        def <strong>sret?</strong>(cls)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unify%28cls%2C%20i%2C%20newv%29-instance-method">
+        
+        def <strong>unify</strong>(cls, i, newv)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L163" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="x86_64_type%28type%2C%20ind_attr%2C%20%26block%29-instance-method">
+        
+        def <strong>x86_64_type</strong>(type, ind_attr, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/llvm/abi/x86_64.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

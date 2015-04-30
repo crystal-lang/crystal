@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../../css/style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+
+  <h1>struct String::Formatter::Flags</h1>
+
+
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../../Value.html">Value</a></div><div style="padding-left: 40px"><a href="../../Struct.html">Struct</a></div><div style="padding-left: 60px"><a href="../../String/Formatter/Flags.html">String::Formatter::Flags</a></div>
+
+
+
+
+
+
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/string/formatter.cr">string/formatter.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#base-instance-method" class="signature"><strong>#base</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#base%3D%28base%29-instance-method" class="signature"><strong>#base=</strong>(base)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#float-instance-method" class="signature"><strong>#float</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#float%3D%28float%29-instance-method" class="signature"><strong>#float=</strong>(float)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#left_padding%3F-instance-method" class="signature"><strong>#left_padding?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minus-instance-method" class="signature"><strong>#minus</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minus%3D%28minus%29-instance-method" class="signature"><strong>#minus=</strong>(minus)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#padding_char-instance-method" class="signature"><strong>#padding_char</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#plus-instance-method" class="signature"><strong>#plus</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#plus%3D%28plus%29-instance-method" class="signature"><strong>#plus=</strong>(plus)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#precision-instance-method" class="signature"><strong>#precision</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#precision%3D%28precision%29-instance-method" class="signature"><strong>#precision=</strong>(precision)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#precision_length-instance-method" class="signature"><strong>#precision_length</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#precision_length%3D%28precision_length%29-instance-method" class="signature"><strong>#precision_length=</strong>(precision_length)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#right_padding%3F-instance-method" class="signature"><strong>#right_padding?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sharp-instance-method" class="signature"><strong>#sharp</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sharp%3D%28sharp%29-instance-method" class="signature"><strong>#sharp=</strong>(sharp)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#space-instance-method" class="signature"><strong>#space</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#space%3D%28space%29-instance-method" class="signature"><strong>#space=</strong>(space)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#wants_padding%3F-instance-method" class="signature"><strong>#wants_padding?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#width-instance-method" class="signature"><strong>#width</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#width%3D%28width%29-instance-method" class="signature"><strong>#width=</strong>(width)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#width_length-instance-method" class="signature"><strong>#width_length</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#width_length%3D%28width_length%29-instance-method" class="signature"><strong>#width_length=</strong>(width_length)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#zero-instance-method" class="signature"><strong>#zero</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#zero%3D%28zero%29-instance-method" class="signature"><strong>#zero=</strong>(zero)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new-class-method">
+        
+        def self.<strong>new</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/string/formatter.cr#L273" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="base-instance-method">
+        
+        def <strong>base</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="base%3D%28base%29-instance-method">
+        
+        def <strong>base=</strong>(base)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="float-instance-method">
+        
+        def <strong>float</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="float%3D%28float%29-instance-method">
+        
+        def <strong>float=</strong>(float)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="left_padding%3F-instance-method">
+        
+        def <strong>left_padding?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/string/formatter.cr#L287" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minus-instance-method">
+        
+        def <strong>minus</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="minus%3D%28minus%29-instance-method">
+        
+        def <strong>minus=</strong>(minus)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="padding_char-instance-method">
+        
+        def <strong>padding_char</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/string/formatter.cr#L295" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="plus-instance-method">
+        
+        def <strong>plus</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="plus%3D%28plus%29-instance-method">
+        
+        def <strong>plus=</strong>(plus)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="precision-instance-method">
+        
+        def <strong>precision</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="precision%3D%28precision%29-instance-method">
+        
+        def <strong>precision=</strong>(precision)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="precision_length-instance-method">
+        
+        def <strong>precision_length</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="precision_length%3D%28precision_length%29-instance-method">
+        
+        def <strong>precision_length=</strong>(precision_length)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="right_padding%3F-instance-method">
+        
+        def <strong>right_padding?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/string/formatter.cr#L291" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sharp-instance-method">
+        
+        def <strong>sharp</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sharp%3D%28sharp%29-instance-method">
+        
+        def <strong>sharp=</strong>(sharp)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="space-instance-method">
+        
+        def <strong>space</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="space%3D%28space%29-instance-method">
+        
+        def <strong>space=</strong>(space)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="wants_padding%3F-instance-method">
+        
+        def <strong>wants_padding?</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/string/formatter.cr#L283" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="width-instance-method">
+        
+        def <strong>width</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="width%3D%28width%29-instance-method">
+        
+        def <strong>width=</strong>(width)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="width_length-instance-method">
+        
+        def <strong>width_length</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="width_length%3D%28width_length%29-instance-method">
+        
+        def <strong>width_length=</strong>(width_length)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="zero-instance-method">
+        
+        def <strong>zero</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="zero%3D%28zero%29-instance-method">
+        
+        def <strong>zero=</strong>(zero)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

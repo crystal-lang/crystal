@@ -11,6 +11,46 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>An Array is an ordered, integer-indexed collection of objects of type T.</p>
+
+<p>Array indexing starts at 0. A negative index is assumed to be
+relative to the end of the array: -1 indicates the last element,
+-2 is the next to last element, and so on.</p>
+
+<p>An Array can be created using the usual <code><a href="Array.html#new%28pull%20%3A%20JSON%3A%3APullParser%29-class-method">.new</a></code> method (several are provided), or with an array literal:</p>
+
+<pre><code><span class="t">Array</span>(<span class="t">Int32</span>).<span class="k">new</span>  <span class="c">#=> []</span>
+[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]         <span class="c"># Array(Int32)</span>
+[<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>] <span class="c"># Array(Int32 | String | Char)</span></code></pre>
+
+<p>An Array can have mixed types, meaning T will be a union of types, but these are determined
+when the array is created, either by specifying T or by using an array literal. In the later
+case, T will be set to the union of the array literal elements.</p>
+
+<p>When creating an empty array you must always specify T:</p>
+
+<pre><code><span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span> <span class="c"># same as Array(Int32)</span>
+<span class="o">[]</span>          <span class="c"># syntax error</span></code></pre>
+
+<p>An Array is implemented using an internal buffer of some capacity
+that is reallocated when elements are pushed to it and more capacity
+is needed. This is normally known as a <a href="http://en.wikipedia.org/wiki/Dynamic_array" target="_blank">dynamic array</a>.</p>
+
+<p>You can use a special array literal syntax with other types too, as long as they define an argless
+<code><a href="Array.html#new%28pull%20%3A%20JSON%3A%3APullParser%29-class-method">.new</a></code> method and a <code><a href="Array.html#%3C%3C%28value%20%3A%20T%29-instance-method">#<<</a></code> method. <code><a href="Set.html">Set</a></code> is one such type:</p>
+
+<pre><code>set <span class="o">=</span> <span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>} <span class="c">#=> [1, 2, 3]</span>
+set.<span class="k">class</span>          <span class="c">#=> Set(Int32)</span></code></pre>
+
+<p>The above is the same as this:</p>
+
+<pre><code>set <span class="o">=</span> <span class="t">Set</span>(<span class="k">typeof</span>(<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>)).<span class="k">new</span>
+set <span class="o"><<</span> <span class="n">1</span>
+set <span class="o"><<</span> <span class="n">2</span>
+set <span class="o"><<</span> <span class="n">3</span></code></pre>
+
 
 
 
@@ -31,11 +71,26 @@
 
 
 
-  <h2>Direct Known Subclasses</h2>
-  
-    <a href="XML/Attributes.html">XML::Attributes</a>
-  
 
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr">array.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/set.cr">set.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/to_json.cr">json/to_json.cr</a>
+    
+    <br/>
+  
 
 
 
@@ -43,6 +98,13 @@
 
   <h2>Class Method Summary</h2>
   <ul>
+    
+      <li class="entry-summary">
+        <a href="#build%28capacity%20%3A%20Int%2C%20%26block%29-class-method" class="signature"><strong>.build</strong>(capacity : Int, &block)</a>
+        
+          <div class="summary"><p>Creates a new Array, allocating an internal buffer with the given capacity, and yielding that buffer.</p></div>
+        
+      </li>
     
       <li class="entry-summary">
         <a href="#from_json%28string_or_io%2C%20%26block%29-class-method" class="signature"><strong>.from_json</strong>(string_or_io, &block)</a>
@@ -60,17 +122,23 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28size%2C%20%26block%29-class-method" class="signature"><strong>.new</strong>(size, &block)</a>
+        <a href="#new%28size%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method" class="signature"><strong>.new</strong>(size, &block : Int32 -> T)</a>
+        
+          <div class="summary"><p>Creates a new Array of the given size and invokes the block once for each index of the array, assigning the block's value in that index.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#new%28size%2C%20value%20%3A%20T%29-class-method" class="signature"><strong>.new</strong>(size, value : T)</a>
         
+          <div class="summary"><p>Creates a new Array of the given size filled with the same value in each position.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#new%28initial_capacity%20%3D%203%20%3A%20Int%29-class-method" class="signature"><strong>.new</strong>(initial_capacity = 3 : Int)</a>
+        
+          <div class="summary"><p>Creates a new empty Array backed by a buffer that is initially <code>initial_capacity</code> big.</p></div>
         
       </li>
     
@@ -83,6 +151,8 @@
     
       <li class="entry-summary">
         <a href="#%26%28other%20%3A%20Array%28U%29%29-instance-method" class="signature"><strong>#&</strong>(other : Array(U))</a>
+        
+          <div class="summary"><p>Set intersection: returns a new array containing elements common to the two arrays, excluding any duplicates.</p></div>
         
       </li>
     
@@ -107,22 +177,22 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%3D%3D%28other%20%3A%20Array%29-instance-method" class="signature"><strong>#==</strong>(other : Array)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%3D%3D%28other%29-instance-method" class="signature"><strong>#==</strong>(other)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28range%20%3A%20Range%29-instance-method" class="signature"><strong>#[]</strong>(range : Range)</a>
+        <a href="#%3D%3D%28other%20%3A%20Array%29-instance-method" class="signature"><strong>#==</strong>(other : Array)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%5B%5D%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#[]</strong>(index : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28range%20%3A%20Range%29-instance-method" class="signature"><strong>#[]</strong>(range : Range)</a>
         
       </li>
     
@@ -159,10 +229,14 @@
       <li class="entry-summary">
         <a href="#clear-instance-method" class="signature"><strong>#clear</strong></a>
         
+          <div class="summary"><p>Removes all elements from self.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
+        
+          <div class="summary"><p>Returns a new Array that has this array's elements cloned.</p></div>
         
       </li>
     
@@ -197,6 +271,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#delete%28obj%29-instance-method" class="signature"><strong>#delete</strong>(obj)</a>
         
       </li>
@@ -214,6 +293,8 @@
       <li class="entry-summary">
         <a href="#dup-instance-method" class="signature"><strong>#dup</strong></a>
         
+          <div class="summary"><p>Returns a new Array that has exactly this array's elements.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -222,7 +303,17 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#each_index%28%26block%29-instance-method" class="signature"><strong>#each_index</strong>(&block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_index-instance-method" class="signature"><strong>#each_index</strong></a>
         
       </li>
     
@@ -242,12 +333,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#fill%28value%20%3A%20T%2C%20range%20%3A%20Range%28Int%29%29-instance-method" class="signature"><strong>#fill</strong>(value : T, range : Range(Int))</a>
+        <a href="#fill%28value%20%3A%20T%2C%20range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method" class="signature"><strong>#fill</strong>(value : T, range : Range(Int, Int))</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#fill%28range%20%3A%20Range%28Int%29%2C%20%26block%29-instance-method" class="signature"><strong>#fill</strong>(range : Range(Int), &block)</a>
+        <a href="#fill%28range%20%3A%20Range%28Int%2C%20Int%29%2C%20%26block%29-instance-method" class="signature"><strong>#fill</strong>(range : Range(Int, Int), &block)</a>
         
       </li>
     
@@ -327,12 +418,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#length%3D%28length%29-instance-method" class="signature"><strong>#length=</strong>(length)</a>
+        <a href="#length%3D%28length%20%3A%20Int%29-instance-method" class="signature"><strong>#length=</strong>(length : Int)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#map%28%26block%29-instance-method" class="signature"><strong>#map</strong>(&block)</a>
+        <a href="#map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#map</strong>(&block : T -> U)</a>
         
       </li>
     
@@ -342,7 +433,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#map_with_index%28%26block%29-instance-method" class="signature"><strong>#map_with_index</strong>(&block)</a>
+        <a href="#map_with_index%28%26block%20%3A%20T%2C%20Int32%20-%3E%20U%29-instance-method" class="signature"><strong>#map_with_index</strong>(&block : T, Int32 -> U)</a>
         
       </li>
     
@@ -352,12 +443,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#pop%28%26block%29-instance-method" class="signature"><strong>#pop</strong>(&block)</a>
+        <a href="#pop%28n%29-instance-method" class="signature"><strong>#pop</strong>(n)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#pop%28n%29-instance-method" class="signature"><strong>#pop</strong>(n)</a>
+        <a href="#pop%28%26block%29-instance-method" class="signature"><strong>#pop</strong>(&block)</a>
         
       </li>
     
@@ -372,12 +463,17 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#push%28value%20%3A%20T%29-instance-method" class="signature"><strong>#push</strong>(value : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#push%28%2Avalues%29-instance-method" class="signature"><strong>#push</strong>(*values)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#push%28value%20%3A%20T%29-instance-method" class="signature"><strong>#push</strong>(value : T)</a>
+        <a href="#reject%21%28%26block%29-instance-method" class="signature"><strong>#reject!</strong>(&block)</a>
         
       </li>
     
@@ -402,6 +498,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#reverse_each-instance-method" class="signature"><strong>#reverse_each</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#rindex%28%26block%29-instance-method" class="signature"><strong>#rindex</strong>(&block)</a>
         
       </li>
@@ -412,12 +513,17 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#sample%28n%29-instance-method" class="signature"><strong>#sample</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#sample-instance-method" class="signature"><strong>#sample</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sample%28n%29-instance-method" class="signature"><strong>#sample</strong>(n)</a>
+        <a href="#select%21%28%26block%29-instance-method" class="signature"><strong>#select!</strong>(&block)</a>
         
       </li>
     
@@ -517,22 +623,30 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#uniq%28%26block%29-instance-method" class="signature"><strong>#uniq</strong>(&block)</a>
+        <a href="#uniq%28%26block%20%3A%20T%20-%3E%20_%29-instance-method" class="signature"><strong>#uniq</strong>(&block : T -> _)</a>
+        
+          <div class="summary"><p>Returns a new array by removing duplicate values in <code>self</code>, using the block's value for comparison.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#uniq-instance-method" class="signature"><strong>#uniq</strong></a>
         
+          <div class="summary"><p>Returns a new array by removing duplicate values in <code>self</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#uniq%21%28%26block%29-instance-method" class="signature"><strong>#uniq!</strong>(&block)</a>
         
+          <div class="summary"><p>Removes duplicate elements from <code>self</code>, using the block's value for comparison.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#uniq%21-instance-method" class="signature"><strong>#uniq!</strong></a>
+        
+          <div class="summary"><p>Removes duplicate elements from <code>self</code>.</p></div>
         
       </li>
     
@@ -557,7 +671,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20Array%28U%29%29-instance-method" class="signature"><strong>#|</strong>(other : Array(U))</a>
+        <a href="#%7C%28other_ary%20%3A%20Array%28U%29%29-instance-method" class="signature"><strong>#|</strong>(other_ary : Array(U))</a>
+        
+          <div class="summary"><p>Set union: returns a new array by joining ary with <code>other_ary</code>, excluding any duplicates and preserving the order from the original array.</p></div>
         
       </li>
     
@@ -571,6 +687,29 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="build%28capacity%20%3A%20Int%2C%20%26block%29-class-method">
+        
+        def self.<strong>build</strong>(capacity : <a href="Int.html">Int</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Creates a new Array, allocating an internal buffer with the given capacity,
+and yielding that buffer. The block must return the desired length of the array.</p>
+
+<p>This method is <strong>unsafe</strong>, but is usually used to initialize the buffer
+by passing it to a C function.</p>
+
+<pre><code><span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>) <span class="k">do</span> <span class="o">|</span>buffer<span class="o">|</span>
+  <span class="t">LibSome</span>.fill_buffer_and_return_number_of_elements_filled(buffer)
+<span class="k">end</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L127" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="from_json%28string_or_io%2C%20%26block%29-class-method">
         
         def self.<strong>from_json</strong>(string_or_io, &block)
@@ -578,7 +717,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/from_json.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/from_json.cr#L6" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -591,7 +730,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/from_json.cr#L55" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/from_json.cr#L55" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -604,20 +743,31 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/from_json.cr#L63" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/from_json.cr#L63" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28size%2C%20%26block%29-class-method">
+      <div class="signature" id="new%28size%2C%20%26block%20%3A%20Int32%20-%3E%20T%29-class-method">
         
-        def self.<strong>new</strong>(size, &block)
+        def self.<strong>new</strong>(size, &block : <a href="Int32.html">Int32</a> -> T)
       </div>
+      
+        <div class="doc"><p>Creates a new Array of the given size and invokes the
+block once for each index of the array, assigning the
+block's value in that index.</p>
+
+<pre><code><span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>) { <span class="o">|</span>i<span class="o">|</span> (i <span class="o">+</span> <span class="n">1</span>) <span class="o">**</span> <span class="n">2</span> } <span class="c">#=> [1, 4, 9]</span>
+
+ary <span class="o">=</span> <span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>) { [<span class="n">1</span>] }
+puts ary <span class="c">#=> [[1], [1], [1]]</span>
+ary[<span class="n">0</span>][<span class="n">0</span>] <span class="o">=</span> <span class="n">2</span>
+puts ary <span class="c">#=> [[2], [1], [1]]</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -628,9 +778,19 @@
         def self.<strong>new</strong>(size, value : T)
       </div>
       
+        <div class="doc"><p>Creates a new Array of the given size filled with the
+same value in each position.</p>
+
+<pre><code><span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>, <span class="s">'a'</span>) <span class="c">#=> ['a', 'a', 'a']</span>
+
+ary <span class="o">=</span> <span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>, [<span class="n">1</span>])
+puts ary <span class="c">#=> [[1], [1], [1]]</span>
+ary[<span class="n">0</span>][<span class="n">0</span>] <span class="o">=</span> <span class="n">2</span>
+puts ary <span class="c">#=> [[2], [2], [2]]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L85" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -641,9 +801,20 @@
         def self.<strong>new</strong>(initial_capacity = <span class="n">3</span> : <a href="Int.html">Int</a>)
       </div>
       
+        <div class="doc"><p>Creates a new empty Array backed by a buffer that is initially
+<code>initial_capacity</code> big.</p>
+
+<p>The <code>initial_capacity</code> is useful to avoid unnecesary reallocations
+of the internal buffer in case of growth. If you have an estimate
+of the maxinum number of elements an array will hold, you should
+initialize it with that capacity for improved execution performance.</p>
+
+<pre><code>ary <span class="o">=</span> <span class="t">Array</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">5</span>)
+ary.length <span class="c">#=> 0</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L7" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L67" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -659,9 +830,17 @@
         def <strong>&</strong>(other : <a href="Array.html">Array</a>(U))
       </div>
       
+        <div class="doc"><p>Set intersection: returns a new array containing elements common to the two arrays, excluding any duplicates.
+The order is preserved from the original array.</p>
+
+<pre><code>[ <span class="n">1</span>, <span class="n">1</span>, <span class="n">3</span>, <span class="n">5</span> ] <span class="o">&</span> [ <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span> ]                 <span class="c">#=> [ 1, 3 ]</span>
+[ <span class="s">'a'</span>, <span class="s">'b'</span>, <span class="s">'b'</span>, <span class="s">'z'</span> ] <span class="o">&</span> [ <span class="s">'a'</span>, <span class="s">'b'</span>, <span class="s">'c'</span> ]   <span class="c">#=> [ 'a', 'b' ]</span></code></pre>
+
+<p>See also: <code><a href="Array.html#uniq%28%26block%20%3A%20T%20-%3E%20_%29-instance-method">#uniq</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L159" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -674,7 +853,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L83" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L209" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -687,7 +866,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L92" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L218" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -700,7 +879,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L101" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L227" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -713,20 +892,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L41" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%3D%3D%28other%20%3A%20Array%29-instance-method">
-        
-        def <strong>==</strong>(other : <a href="Array.html">Array</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L33" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L141" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -739,20 +905,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L137" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%5B%5D%28range%20%3A%20Range%29-instance-method">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Array%29-instance-method">
         
-        def <strong>[]</strong>(range : <a href="Range.html">Range</a>)
+        def <strong>==</strong>(other : <a href="Array.html">Array</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L118" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L133" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -765,7 +931,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L231" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28range%20%3A%20Range%29-instance-method">
+        
+        def <strong>[]</strong>(range : <a href="Range.html">Range</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L244" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -778,7 +957,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L128" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L254" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -791,7 +970,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L113" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L239" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -804,7 +983,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L109" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L235" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -817,7 +996,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L133" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L274" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -830,7 +1009,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L137" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L278" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -843,7 +1022,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L146" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L287" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -854,9 +1033,14 @@
         def <strong>clear</strong>
       </div>
       
+        <div class="doc"><p>Removes all elements from self.</p>
+
+<pre><code>a <span class="o">=</span> [ <span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span>, <span class="s">"d"</span>, <span class="s">"e"</span> ]
+a.clear    <span class="c">#=> []</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L150" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L297" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -867,9 +1051,24 @@
         def <strong>clone</strong>
       </div>
       
+        <div class="doc"><p>Returns a new Array that has this array's elements cloned.
+That is, it returns a deep copy of this array.</p>
+
+<p>Use <code><a href="Array.html#dup-instance-method">#dup</a></code> if you want a shallow copy.</p>
+
+<pre><code>ary <span class="o">=</span> [[<span class="n">1</span>, <span class="n">2</span>], [<span class="n">3</span>, <span class="n">4</span>]]
+ary2 <span class="o">=</span> ary.clone
+ary[<span class="n">0</span>][<span class="n">0</span>] <span class="o">=</span> <span class="n">5</span>
+puts ary  <span class="c">#=> [[5, 2], [3, 4]]</span>
+puts ary2 <span class="c">#=> [[1, 2], [3, 4]]</span>
+
+ary2 <span class="o"><<</span> [<span class="n">7</span>, <span class="n">8</span>]
+puts ary  <span class="c">#=> [[5, 2], [3, 4]]</span>
+puts ary2 <span class="c">#=> [[1, 2], [3, 4], [7, 8]]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L155" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L319" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -882,7 +1081,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L163" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L327" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -895,7 +1094,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L159" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L323" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -908,7 +1107,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L169" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L333" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -921,7 +1120,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L173" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L337" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -934,7 +1133,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L186" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L350" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -947,7 +1146,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L207" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L371" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cycle-instance-method">
+        
+        def <strong>cycle</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L375" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -960,7 +1172,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L211" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L379" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -973,7 +1185,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L215" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L383" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -986,7 +1198,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L224" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L393" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -997,9 +1209,24 @@
         def <strong>dup</strong>
       </div>
       
+        <div class="doc"><p>Returns a new Array that has exactly this array's elements.
+That is, it returns a shallow copy of this array.</p>
+
+<p>Use <code><a href="Array.html#clone-instance-method">#clone</a></code> if you want a deep copy.</p>
+
+<pre><code>ary <span class="o">=</span> [[<span class="n">1</span>, <span class="n">2</span>], [<span class="n">3</span>, <span class="n">4</span>]]
+ary2 <span class="o">=</span> ary.dup
+ary[<span class="n">0</span>][<span class="n">0</span>] <span class="o">=</span> <span class="n">5</span>
+puts ary  <span class="c">#=> [[5, 2], [3, 4]]</span>
+puts ary2 <span class="c">#=> [[5, 2], [3, 4]]</span>
+
+ary2 <span class="o"><<</span> [<span class="n">7</span>, <span class="n">8</span>]
+puts ary  <span class="c">#=> [[5, 2], [3, 4]]</span>
+puts ary2 <span class="c">#=> [[5, 2], [3, 4], [7, 8]]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L246" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L433" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1012,7 +1239,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L253" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L440" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each-instance-method">
+        
+        def <strong>each</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L446" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1025,7 +1265,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L259" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L450" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_index-instance-method">
+        
+        def <strong>each_index</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L459" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1038,7 +1291,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L268" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L463" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1051,7 +1304,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L272" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L467" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1064,33 +1317,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L286" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L481" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="fill%28value%20%3A%20T%2C%20range%20%3A%20Range%28Int%29%29-instance-method">
+      <div class="signature" id="fill%28value%20%3A%20T%2C%20range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method">
         
-        def <strong>fill</strong>(value : T, range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>))
+        def <strong>fill</strong>(value : T, range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>))
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L339" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L534" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="fill%28range%20%3A%20Range%28Int%29%2C%20%26block%29-instance-method">
+      <div class="signature" id="fill%28range%20%3A%20Range%28Int%2C%20Int%29%2C%20%26block%29-instance-method">
         
-        def <strong>fill</strong>(range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>), &block)
+        def <strong>fill</strong>(range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>), &block)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L311" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L506" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1103,7 +1356,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L280" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L475" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1116,7 +1369,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L327" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L522" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1129,7 +1382,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L335" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L530" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1142,7 +1395,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L296" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L491" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1155,7 +1408,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L331" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L526" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1168,7 +1421,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L343" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L538" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1181,7 +1434,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L347" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L542" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1194,7 +1447,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L351" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L546" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1207,7 +1460,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L355" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L550" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1220,7 +1473,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L361" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L556" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1233,7 +1486,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L378" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L573" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1246,7 +1499,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L386" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L581" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1259,7 +1512,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L382" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L577" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1272,7 +1525,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L390" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L585" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1285,33 +1538,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="length%3D%28length%29-instance-method">
+      <div class="signature" id="length%3D%28length%20%3A%20Int%29-instance-method">
         
-        def <strong>length=</strong>(length)
+        def <strong>length=</strong>(length : <a href="Int.html">Int</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L394" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L589" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="map%28%26block%29-instance-method">
+      <div class="signature" id="map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">
         
-        def <strong>map</strong>(&block)
+        def <strong>map</strong>(&block : T -> U)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L398" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L593" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1324,20 +1577,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L402" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L597" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="map_with_index%28%26block%29-instance-method">
+      <div class="signature" id="map_with_index%28%26block%20%3A%20T%2C%20Int32%20-%3E%20U%29-instance-method">
         
-        def <strong>map_with_index</strong>(&block)
+        def <strong>map_with_index</strong>(&block : T, <a href="Int32.html">Int32</a> -> U)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L407" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L612" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1350,20 +1603,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L411" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="pop%28%26block%29-instance-method">
-        
-        def <strong>pop</strong>(&block)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L415" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L616" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1376,7 +1616,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L424" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L631" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="pop%28%26block%29-instance-method">
+        
+        def <strong>pop</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L620" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1389,7 +1642,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L437" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L645" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1402,20 +1655,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L441" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="push%28%2Avalues%29-instance-method">
-        
-        def <strong>push</strong>(*values)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L452" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L649" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1428,7 +1668,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L445" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L653" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="push%28%2Avalues%29-instance-method">
+        
+        def <strong>push</strong>(*values)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L660" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reject%21%28%26block%29-instance-method">
+        
+        def <strong>reject!</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L607" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1441,7 +1707,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L458" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L666" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1454,7 +1720,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L465" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L673" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1467,7 +1733,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L469" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L677" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1480,7 +1746,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L480" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L688" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="reverse_each-instance-method">
+        
+        def <strong>reverse_each</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L695" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1493,7 +1772,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L491" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L703" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1506,20 +1785,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L487" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="sample-instance-method">
-        
-        def <strong>sample</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L500" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L699" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1532,7 +1798,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L505" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L717" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sample-instance-method">
+        
+        def <strong>sample</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L712" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="select%21%28%26block%29-instance-method">
+        
+        def <strong>select!</strong>(&block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L602" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1545,7 +1837,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L535" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L747" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1558,7 +1850,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L539" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L751" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1571,7 +1863,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L550" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L763" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1584,7 +1876,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L564" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L778" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1597,7 +1889,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L572" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L786" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1610,7 +1902,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L576" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L790" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1623,7 +1915,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L568" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L782" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1636,7 +1928,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L585" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L799" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1649,7 +1941,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L581" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L795" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1662,7 +1954,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L594" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L808" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1675,7 +1967,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L589" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L803" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1688,7 +1980,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L599" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L813" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1701,7 +1993,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L603" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L817" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1714,7 +2006,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L607" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L821" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1727,7 +2019,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L620" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L834" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1740,7 +2032,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/json/to_json.cr#L167" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/to_json.cr#L167" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1753,7 +2045,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L624" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L838" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1766,7 +2058,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/set.cr#L100" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/set.cr#L105" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1779,20 +2071,27 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L633" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L847" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="uniq%28%26block%29-instance-method">
+      <div class="signature" id="uniq%28%26block%20%3A%20T%20-%3E%20_%29-instance-method">
         
-        def <strong>uniq</strong>(&block)
+        def <strong>uniq</strong>(&block : T -> _)
       </div>
+      
+        <div class="doc"><p>Returns a new array by removing duplicate values in <code>self</code>, using the block's
+value for comparison.</p>
+
+<pre><code>a <span class="o">=</span> [{<span class="s">"student"</span>,<span class="s">"sam"</span>}, {<span class="s">"student"</span>,<span class="s">"george"</span>}, {<span class="s">"teacher"</span>,<span class="s">"matz"</span>}]
+a.uniq { <span class="o">|</span>s<span class="o">|</span> s[<span class="n">0</span>] } <span class="c"># => [{"student", "sam"}, {"teacher", "matz"}]</span>
+a                   <span class="c"># => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L641" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L870" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1803,9 +2102,15 @@
         def <strong>uniq</strong>
       </div>
       
+        <div class="doc"><p>Returns a new array by removing duplicate values in <code>self</code>.</p>
+
+<pre><code>a <span class="o">=</span> [ <span class="s">"a"</span>, <span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"b"</span>, <span class="s">"c"</span> ]
+a.uniq   <span class="c"># => ["a", "b", "c"]</span>
+a        <span class="c"># => [ "a", "a", "b", "b", "c" ]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L637" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L858" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1816,9 +2121,15 @@
         def <strong>uniq!</strong>(&block)
       </div>
       
+        <div class="doc"><p>Removes duplicate elements from <code>self</code>, using the block's value for comparison. Returns <code>self</code>.</p>
+
+<pre><code>a <span class="o">=</span> [{<span class="s">"student"</span>,<span class="s">"sam"</span>}, {<span class="s">"student"</span>,<span class="s">"george"</span>}, {<span class="s">"teacher"</span>,<span class="s">"matz"</span>}]
+a.uniq! { <span class="o">|</span>s<span class="o">|</span> s[<span class="n">0</span>] } <span class="c"># => [{"student", "sam"}, {"teacher", "matz"}]</span>
+a                    <span class="c"># => [{"student", "sam"}, {"teacher", "matz"}]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L654" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L897" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1829,9 +2140,15 @@
         def <strong>uniq!</strong>
       </div>
       
+        <div class="doc"><p>Removes duplicate elements from <code>self</code>. Returns <code>self</code>.</p>
+
+<pre><code>a <span class="o">=</span> [ <span class="s">"a"</span>, <span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"b"</span>, <span class="s">"c"</span> ]
+a.uniq!   <span class="c"># => ["a", "b", "c"]</span>
+a         <span class="c"># => ["a", "b", "c"]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L650" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L886" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1844,7 +2161,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L675" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L923" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1857,7 +2174,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L679" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L927" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1870,7 +2187,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L690" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L938" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1883,20 +2200,27 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L684" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L932" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20Array%28U%29%29-instance-method">
+      <div class="signature" id="%7C%28other_ary%20%3A%20Array%28U%29%29-instance-method">
         
-        def <strong>|</strong>(other : <a href="Array.html">Array</a>(U))
+        def <strong>|</strong>(other_ary : <a href="Array.html">Array</a>(U))
       </div>
+      
+        <div class="doc"><p>Set union: returns a new array by joining ary with <code>other_ary</code>, excluding any duplicates
+and preserving the order from the original array.</p>
+
+<pre><code>[ <span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span> ] <span class="o">|</span> [ <span class="s">"c"</span>, <span class="s">"d"</span>, <span class="s">"a"</span> ]    <span class="c">#=> [ "a", "b", "c", "d" ]</span></code></pre>
+
+<p>See also: <code><a href="Array.html#uniq%28%26block%20%3A%20T%20-%3E%20_%29-instance-method">#uniq</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/48461ba58d207bb5de04c9f2270eff03930beeb1/src/array.cr#L64" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/array.cr#L187" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
