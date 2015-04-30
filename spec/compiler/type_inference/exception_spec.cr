@@ -46,6 +46,25 @@ describe "Type inference: exception" do
 
   it "marks method calling method that raises as raises" do
     result = assert_type("
+      lib LibFoo
+        @[Raises]
+        fun some_fun : Int32
+      end
+
+      def foo
+        LibFoo.some_fun
+      end
+
+      foo
+    ") { int32 }
+    mod = result.program
+    a_def = mod.lookup_first_def("foo", false)
+    def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
+    def_instance.not_nil!.raises.should be_true
+  end
+
+  it "marks method calling lib fun that raises as raises" do
+    result = assert_type("
       @[Raises]
       fun some_fun : Int32; 1; end
 
