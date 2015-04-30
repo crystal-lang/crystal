@@ -1,3 +1,7 @@
+## 0.7.1 (2015-04-30)
+
+* Fixed [#597](https://github.com/manastech/crystal/issues/597).
+
 ## 0.7.0 (2015-04-30)
 
 * Crystal has evented IO by default. Added `spawn` and `Channel`.

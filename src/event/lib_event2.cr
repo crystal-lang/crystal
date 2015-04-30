@@ -1,5 +1,5 @@
-@[Link("event")]
 @[Link("rt")] ifdef linux
+@[Link("event")]
 lib LibEvent2
   type EventBase = Void*
   type Event = Void*
