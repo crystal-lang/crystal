@@ -39,6 +39,10 @@ struct Enum
     {% end %}
   end
 
+  def to_i
+    value.to_i32
+  end
+
   def +(other : Int)
     self.class.new(value + other)
   end

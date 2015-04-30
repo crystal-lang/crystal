@@ -1,6 +1,6 @@
 require "spec"
 
-enum SpecEnum
+enum SpecEnum : Int8
   One
   Two
   Three
@@ -26,6 +26,16 @@ describe Enum do
       SpecEnumFlags::All.to_s.should eq("One, Two, Three")
       (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One, Two")
     end
+  end
+
+  it "gets value" do
+    SpecEnum::Two.value.should eq(1)
+    SpecEnum::Two.value.should be_a(Int8)
+  end
+
+  it "gets value with to_i" do
+    SpecEnum::Two.to_i.should eq(1)
+    SpecEnum::Two.to_i.should be_a(Int32)
   end
 
   it "does +" do
