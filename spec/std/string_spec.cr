@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require "spec"
 
 describe "String" do
@@ -764,6 +765,7 @@ describe "String" do
   it "does camelcase" do
     "foo".camelcase.should eq("Foo")
     "foo_bar".camelcase.should eq("FooBar")
+    "foo-bar".camelcase.should eq("Foo::Bar")
   end
 
   it "answers ascii_only?" do

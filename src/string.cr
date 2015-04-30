@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 lib LibC
   fun atoi(str : UInt8*) : Int32
   fun atoll(str : UInt8*) : Int64
@@ -1185,6 +1186,10 @@ class String
       each_char do |char|
         if first
           str << char.upcase
+        elsif char == '-'
+          last_is_underscore = true
+          str << ':'
+          str << ':'
         elsif char == '_'
           last_is_underscore = true
         elsif last_is_underscore
