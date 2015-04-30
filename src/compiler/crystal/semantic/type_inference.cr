@@ -454,7 +454,7 @@ module Crystal
 
       type = current_type.types[target.names.first]?
       if type
-        target.raise "already initialized constant #{target}"
+        target.raise "already initialized constant #{type}"
       end
 
       target.bind_to value
