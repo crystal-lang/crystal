@@ -571,11 +571,6 @@ module Crystal
     @used = false
 
     property :call_convention
-
-    # Assume all external raises, in case they invoke functions defined in Crystal
-    def raises
-      true
-    end
   end
 
   class EnumDef
