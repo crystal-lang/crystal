@@ -14,9 +14,9 @@ struct TimeFormat
       @pm = false
     end
 
-    def time
+    def time(kind = Time::Kind::Unspecified)
       @hour += 12 if @pm
-      Time.new @year, @month, @day, @hour, @minute, @second, @millisecond
+      Time.new @year, @month, @day, @hour, @minute, @second, @millisecond, kind
     end
 
     def year
