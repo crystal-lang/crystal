@@ -1,13 +1,35 @@
 ## Next
 
-* Exception class is now shown on unhandled exceptions
+* Crystal has evented IO by default. Added `spawn` and `Channel`.
+* Correctly support the X86_64 and X86 ABIs. Now bindings to C APIs that pass and return structs works perfectly fine.
+* Added `crystal init` to quickly create a skeleton library or application (thanks @waterlink)
 * Added `--emit` flag to the compiler. Now you can easily see the generated LLVM IR, LLVM bitcode, assembly and object files.
-* Added `BigInt#to_s(base)`, `BigInt::cast` and bit operators (thanks @Exilor)
-* The following types are now disallowed in generics (for now): Object, Value, Reference, Number, Int and Float.
+* Added `--no-color` flag to supress color output, useful for editor tools.
 * Added macro vars: `%var` and `%var{x, y}` create uniqely named variables inside macros.
+* Added [typed splats](https://github.com/manastech/crystal/issues/291).
+* Added `Iterator` and many methods that return iterators, like `Array#each`, `Hash#each`, `Int#times`, `Int#step`, `String#each_char`, etc.
+* Added `sprintf` and improved `String#%` to support floats and float formatting.
+* Added more variants of `String#gsub`.
+* Added `Pointer#clear` and use it to clear an `Array`'s values when doing `pop` and other shrinking methods.
+* Added `BigInt#to_s(base)`, `BigInt::cast` and bit operators (thanks @Exilor)
+* Allow invoking methods on a union class as long as all types in the union have it.
 * Allow specifying a def's return type. The compiler checks the return type only for that def for now (not for subclasses overrding the method). The return type appears in the documentation.
+* Allow constants and computed constants for a StaticArray length.
+* Allow class vars in enums.
+* Allow private and protected defs in enums.
+* Allow reopening a `lib` and adding more `@[Link]` attributes to it, even allowing duplicated attributes.
+* Allow getting a function pointer to a lib fun without specifying its types (i.e. `->LibC.getenv`)
+* Allow specifying `ditto` for a doc comment to reuse the previous comment.
+* Changed the semantic of `%`: previously it meant `remainder`, not it means `modulo`, similar to Ruby and Python. Added `Int#remainder`.
+* `#to_s` and `#inspect` now work for a union class.
+* Spec: added global `before_each` and `after_each` hooks, which will simplify the use of mocking libraries like [timecop.cr](https://github.com/waterlink/timecop.cr) and [webmock.cr](https://github.com/manastech/webmock.cr).
 * `Range(T)` is now `Range(B, E)` again (much more flexible).
-* Many bug fixes.
+* Improved Regex performance.
+* Better XML support.
+* Support LLVM 3.6.
+* Exception class is now shown on unhandled exceptions
+* The following types are now disallowed in generics (for now): Object, Value, Reference, Number, Int and Float.
+* Lots of bug fixes, enhancements and optimizations.
 
 ## 0.6.1 (2015-03-04)
 
