@@ -872,4 +872,18 @@ describe "Block inference" do
       bar &->foo
       )) { int32 }
   end
+
+  it "errors if declares class inside captured block" do
+    assert_error %(
+      def foo(&block)
+        block.call
+      end
+
+      foo do
+        class B
+        end
+      end
+      ),
+      "can't declare class inside block"
+  end
 end

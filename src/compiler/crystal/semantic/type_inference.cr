@@ -3360,7 +3360,7 @@ module Crystal
     end
 
     def inside_block?
-      @block_context
+      @untyped_def || @block_context
     end
 
     def pushing_type(type)
