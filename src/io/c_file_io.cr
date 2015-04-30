@@ -21,6 +21,7 @@ lib LibC
   fun popen(command : UInt8*, mode : UInt8*) : File
   fun pclose(stream : File) : Int32
   fun fileno(stream : File) : Int32
+  fun getdelim(linep : UInt8**, linecapp : SizeT*, delimiter : Int32, stream : File) : SSizeT
 
   fun rename(oldname : UInt8*, newname : UInt8*) : Int32
 
@@ -66,6 +67,20 @@ struct CFileIO
 
   def write(slice : Slice(UInt8), count)
     LibC.fwrite(slice.pointer(count), LibC::SizeT.cast(1), LibC::SizeT.cast(count), @file)
+  end
+
+  def gets(delimiter = '\n' : Char)
+    if delimiter.ord >= 128
+      return super
+    end
+
+    linep = Pointer(UInt8).null
+    linecapp = LibC::SizeT.zero
+
+    written = LibC.getdelim(pointerof(linep), pointerof(linecapp), delimiter.ord, @file)
+    return nil if written == -1
+
+    String.new Slice.new(linep, written.to_i32)
   end
 
   def flush
