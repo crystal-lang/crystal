@@ -1991,7 +1991,7 @@ module Crystal
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          extras = parse_arg(args, nil, true, found_default_value, found_splat)
+          extras = parse_arg(args, nil, true, found_default_value, found_splat, allow_restrictions: false)
           if !found_default_value && extras.default_value
             found_default_value = true
           end
@@ -2015,7 +2015,7 @@ module Crystal
         next_token
       when :IDENT, :"*"
         while @token.type != :NEWLINE && @token.type != :";"
-          extras = parse_arg(args, nil, false, found_default_value, found_splat)
+          extras = parse_arg(args, nil, false, found_default_value, found_splat, allow_restrictions: false)
           if !found_default_value && extras.default_value
             found_default_value = true
           end
@@ -2510,7 +2510,7 @@ module Crystal
 
     record ArgExtras, block_arg, default_value, splat
 
-    def parse_arg(args, extra_assigns, parenthesis, found_default_value, found_splat)
+    def parse_arg(args, extra_assigns, parenthesis, found_default_value, found_splat, allow_restrictions = true)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
@@ -2567,7 +2567,7 @@ module Crystal
         end
       end
 
-      if @token.type == :":"
+      if allow_restrictions && @token.type == :":"
         next_token_skip_space_or_newline
         location = @token.location
         restriction = parse_single_type
