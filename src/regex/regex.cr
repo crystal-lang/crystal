@@ -13,6 +13,8 @@ class Regex
   def initialize(@source, modifiers = 0)
     @re = LibPCRE.compile(@source, modifiers | UTF_8 | NO_UTF8_CHECK, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
+    @extra = LibPCRE.study(@re, 0, out studyerrptr)
+    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.nil? && studyerrptr
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
@@ -29,7 +31,7 @@ class Regex
   def match_at_byte_index(str, byte_index = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
-    ret = LibPCRE.exec(@re, nil, str, str.bytesize, byte_index, options | NO_UTF8_CHECK, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, options | NO_UTF8_CHECK, ovector, ovector_size)
     if ret > 0
       match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
     else
