@@ -1,6 +1,7 @@
 ## 0.7.1 (2015-04-30)
 
 * Fixed [#597](https://github.com/manastech/crystal/issues/597).
+* Fixed [#599](https://github.com/manastech/crystal/issues/599).
 
 ## 0.7.0 (2015-04-30)
 
