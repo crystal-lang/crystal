@@ -227,8 +227,9 @@ end
 def expect
   begin
     yield
-  rescue Object => e
-    Spec::Expectation.new(e) and return
+  rescue _ex_ : Object
+    Spec::Expectation.new(e)
+    return
   ensure
     Spec::Expectation.new(nil)
   end
