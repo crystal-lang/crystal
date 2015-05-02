@@ -272,7 +272,7 @@ def be
 end
 
 def raise_error(base, message="")
-  RaiseErrorExpecation.new(base, message)
+  Spec::RaiseErrorExpecation.new(base, message)
 end
 
 def match(value)
