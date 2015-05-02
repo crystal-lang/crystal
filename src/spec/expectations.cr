@@ -16,6 +16,17 @@ module Spec
     end
   end
 
+  class RaiseErrorExpecation(T)
+    def initialize(@value : T, @message="")
+    end
+
+  def matches(value, message)
+    expect(@value).to eq value
+    unless message.empty?
+      expect(@value.message).to eq message
+    end
+  end
+
   class EqualExpectation(T)
     def initialize(@value : T)
     end
@@ -213,6 +224,16 @@ def expect(value)
   Spec::Expectation.new(value)
 end
 
+def expect
+  begin
+    yield
+  rescue Object => e
+    Spec::Expectation.new(e) and return
+  ensure
+    Spec::Expectation.new(nil)
+  end
+end
+
 def eq(value)
   Spec::EqualExpectation.new value
 end
@@ -247,6 +268,10 @@ end
 
 def be
   Spec::Be
+end
+
+def raise_error(base, message="")
+  RaiseErrorExpecation.new(base, message)
 end
 
 def match(value)

@@ -58,11 +58,11 @@ describe "Spec matchers" do
       expect(50 .. 55).to contain(53)
     end
 
-    #it "does not pass when string does not includes? specified substring" do
-    #  expect do
-    #    expect("hello world!").to contain("crystal")
-    #  end.to raise_exception(Spec::AssertionFailed, %{expected:   "hello world!"\nto include: "crystal"})
-    #end
+    it "does not pass when string does not includes? specified substring" do
+      expect do
+        expect("hello world!").to contain("crystal")
+      end.to raise_error(Spec::AssertionFailed, %{expected:   "hello world!"\nto include: "crystal"})
+    end
   end
 
   describe "expect to_not contain" do
@@ -70,11 +70,11 @@ describe "Spec matchers" do
       expect("hello world!").to contain("crystal")
     end
 
-    #it "does not pass when string does not includes? specified substring" do
-    #  expect_raises Spec::AssertionFailed, %{expected: value "hello world!"\nto not include: "world"} do
-    #    expect("hello world!").to_not contain("world")
-    #  end
-    #end
+    it "does not pass when string does not includes? specified substring" do
+      expect do
+        expect("hello world!").to contain("crystal")
+      end.to raise_error Spec::AssertionFailed, %{expected: value "hello world!"\nto not include: "world"}
+    end
   end
 
   context "expect to work as describe" do
