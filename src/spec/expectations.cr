@@ -1,4 +1,21 @@
 module Spec
+  class Expectation(T)
+    def initialize(@value : T)
+    end
+
+    def to(matcher, file = __FILE__, line = __LINE__)
+      unless match.match @value
+        fail(matcher.failure_message, file, line)
+      end
+    end
+
+    def to_not(matcher, file = __FILE__, line = __LINE__)
+      if matcher.match @value
+        fail(matcher.negative_failure_message, file, line)
+      end
+    end
+  end
+
   class EqualExpectation(T)
     def initialize(@value : T)
     end
@@ -190,6 +207,10 @@ module Spec
       end
     end
   end
+end
+
+def expect(value)
+  Expectation.new(value)
 end
 
 def eq(value)
