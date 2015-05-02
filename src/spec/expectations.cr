@@ -210,7 +210,7 @@ module Spec
 end
 
 def expect(value)
-  Expectation.new(value)
+  Spec::Expectation.new(value)
 end
 
 def eq(value)
