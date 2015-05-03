@@ -768,6 +768,10 @@ module Crystal
       end
     end
 
+    def raw_including_types
+      @including_types
+    end
+
     def passed_by_value?
       including_types = including_types()
       if including_types
@@ -1350,6 +1354,15 @@ module Crystal
       "generic module"
     end
 
+    def add_including_type(type)
+      including_types = @including_types ||= [] of Type
+      including_types.push type
+    end
+
+    def raw_including_types
+      @including_types
+    end
+
     def to_s(io)
       super
       io << "("
@@ -1766,7 +1779,7 @@ module Crystal
     end
 
     def add_including_type(type)
-      # TODO
+      @module.add_including_type type
     end
 
     delegate container, @module

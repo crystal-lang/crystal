@@ -275,6 +275,29 @@ class Crystal::Doc::Type
     end
   end
 
+  def including_types
+    @including_types ||= begin
+      case type = @type
+      when NonGenericModuleType
+        gather_including_types type
+      when GenericModuleType
+        gather_including_types type
+      else
+        [] of Type
+      end
+    end
+  end
+
+  private def gather_including_types(type)
+    including_types = [] of Type
+    type.raw_including_types.try &.each do |subtype|
+      if @generator.must_include? subtype
+        including_types << @generator.type(subtype)
+      end
+    end
+    including_types.uniq!.sort_by! &.full_name.downcase
+  end
+
   def container
     case type = @type
     when ContainedType

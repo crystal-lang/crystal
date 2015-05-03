@@ -31,6 +31,7 @@
 <%= OtherTypesTemplate.new("Included Modules", type, type.included_modules) %>
 <%= OtherTypesTemplate.new("Extended Modules", type, type.extended_modules) %>
 <%= OtherTypesTemplate.new("Direct Known Subclasses", type, type.subclasses) %>
+<%= OtherTypesTemplate.new("Direct including types", type, type.including_types) %>
 
 <% if locations = type.locations %>
   <h2>Defined in:</h2>
