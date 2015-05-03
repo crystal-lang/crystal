@@ -48,12 +48,7 @@ module Iterator(T)
     Uniq(typeof(self), T, U).new(self, func)
   end
 
-  # TODO: use default argument "offset" after 0.6.1, a bug prevents using it
-  def with_index
-    with_index 0
-  end
-
-  def with_index(offset)
+  def with_index(offset = 0)
     WithIndex(typeof(self), T).new(self, offset)
   end
 
