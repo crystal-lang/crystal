@@ -63,7 +63,7 @@ module Event
       seconds = typeof(t.tv_sec).cast(time)
       useconds = typeof(t.tv_usec).cast((time - seconds) * 1e6)
 
-      t.tv_sec = seconds.to_i64
+      t.tv_sec = seconds
       t.tv_usec = useconds
       t
     end
