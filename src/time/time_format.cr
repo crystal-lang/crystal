@@ -9,10 +9,10 @@ struct TimeFormat
   def initialize(@pattern : String)
   end
 
-  def parse(string)
+  def parse(string, kind = Time::Kind::Unspecified)
     parser = Parser.new(string)
     parser.visit(pattern)
-    parser.time
+    parser.time(kind)
   end
 
   def format(time : Time)

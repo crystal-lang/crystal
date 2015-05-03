@@ -259,8 +259,8 @@ struct Time
     TimeFormat.new(format).format(self, io)
   end
 
-  def self.parse(time, pattern)
-    TimeFormat.new(pattern).parse(time)
+  def self.parse(time, pattern, kind=Time::Kind::Unspecified)
+    TimeFormat.new(pattern).parse(time, kind)
   end
 
   # Returns the number of seconds since the Epoch

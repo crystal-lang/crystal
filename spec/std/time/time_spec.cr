@@ -397,6 +397,11 @@ describe Time do
     Time.parse("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
   end
 
+  it "can parse in UTC" do
+    time = Time.parse("2014-10-31 11:12:13", "%F %T", Time::Kind::Utc)
+    time.kind.should eq(Time::Kind::Utc)
+  end
+
   it "at" do
     t1 = Time.new 2014, 11, 25, 10, 11, 12, 13
     t2 = Time.new 2014, 6, 25, 10, 11, 12, 13
