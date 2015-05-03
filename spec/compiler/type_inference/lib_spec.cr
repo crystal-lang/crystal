@@ -442,4 +442,23 @@ it "errors if unknown named arg" do
     attrs.length.should eq(1)
     attrs[0].lib.should eq("SDL")
   end
+
+  it "errors if using void as argument (related to #508)" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Void)
+      end
+      ),
+      "can't use Void as argument type"
+  end
+
+  it "errors if using void via typedef as argument (related to #508)" do
+    assert_error %(
+      lib LibFoo
+        type Foo = Void
+        fun foo(x : Foo)
+      end
+      ),
+      "can't use Void as argument type"
+  end
 end

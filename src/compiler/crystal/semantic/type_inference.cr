@@ -1736,7 +1736,7 @@ module Crystal
         restriction = arg.restriction.not_nil!
         restriction.accept self
 
-        arg_type = check_primitive_like(restriction.not_nil!)
+        arg_type = check_arg_primitive_like(restriction.not_nil!)
 
         Arg.new(arg.name, type: arg_type).at(arg.location)
       end
@@ -3042,8 +3042,20 @@ module Crystal
       node.raise ex.message
     end
 
+    def check_arg_primitive_like(node)
+      type = check_primitive_like(node)
+
+      real_type = type.remove_typedef
+      if real_type.void?
+        node.raise "can't use Void as argument type"
+      end
+
+      type
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
+
       unless type.primitive_like?
         msg = String.build do |msg|
           msg << "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
