@@ -115,4 +115,26 @@ describe "Code gen: primitives" do
   it "codegens crystal_type_id for class" do
     build(%(String.crystal_type_id))
   end
+
+  it "can invoke cast on primitive typedef (#614)" do
+    build(%(
+      lib Test
+        type K = Int32
+        fun foo : K
+      end
+
+      Test.foo.to_i
+      ))
+  end
+
+  it "can invoke binary on primitive typedef (#614)" do
+    build(%(
+      lib Test
+        type K = Int32
+        fun foo : K
+      end
+
+      Test.foo + 1
+      ))
+  end
 end

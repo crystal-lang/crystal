@@ -176,6 +176,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     @last
   end
 
+  def codegen_binary_op(op, t1 : TypeDefType, t2, p1, p2)
+    codegen_binary_op op, t1.remove_typedef, t2, p1, p2
+  end
+
   def codegen_binary_op(op, t1, t2, p1, p2)
     raise "Bug: codegen_binary_op called with #{t1} #{op} #{t2}"
   end
@@ -224,6 +228,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_cast(from_type : SymbolType, to_type : IntegerType, arg)
     arg
+  end
+
+  def codegen_cast(from_type : TypeDefType, to_type, arg)
+    codegen_cast from_type.remove_typedef, to_type, arg
   end
 
   def codegen_cast(from_type, to_type, arg)

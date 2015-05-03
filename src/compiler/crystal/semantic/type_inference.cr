@@ -2456,9 +2456,9 @@ module Crystal
     def visit_binary(node)
       case typed_def.name
       when "+", "-", "*", "/", "unsafe_div"
-        t1 = scope
+        t1 = scope.remove_typedef
         t2 = typed_def.args[0].type
-        node.type = t1.integer? && t2.float? ? t2 : t1
+        node.type = t1.integer? && t2.float? ? t2 : scope
       when "==", "<", "<=", ">", ">=", "!="
         node.type = @mod.bool
       when "%", "<<", ">>", "|", "&", "^", "unsafe_mod"

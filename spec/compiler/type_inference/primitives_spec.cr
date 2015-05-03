@@ -130,4 +130,37 @@ describe "Type inference: primitives" do
       p.value
       ") { types["Int"] }
   end
+
+  it "can invoke cast on primitive typedef (#614)" do
+    assert_type(%(
+      lib Test
+        type K = Int32
+        fun foo : K
+      end
+
+      Test.foo.to_i
+      )) { int32 }
+  end
+
+  it "can invoke binary on primitive typedef (#614)" do
+    assert_type(%(
+      lib Test
+        type K = Int32
+        fun foo : K
+      end
+
+      Test.foo + 1
+      )) { types["Test"].types["K"] }
+  end
+
+  it "can invoke binary on primitive typedef (2) (#614)" do
+    assert_type(%(
+      lib Test
+        type K = Int32
+        fun foo : K
+      end
+
+      Test.foo << 1
+      )) { types["Test"].types["K"] }
+  end
 end
