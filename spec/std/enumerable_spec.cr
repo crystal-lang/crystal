@@ -117,6 +117,12 @@ describe "Enumerable" do
     assert { [1, 2, 3].sum(4.5).should eq(10.5) }
     assert { (1..3).sum { |x| x * 2 }.should eq(12) }
     assert { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
+
+    it "uses zero from type" do
+      typeof([1, 2, 3].sum).should eq(Int32)
+      typeof([1.5, 2.5, 3.5].sum).should eq(Float64)
+      typeof([1, 2, 3].sum(&.to_f)).should eq(Float64)
+    end
   end
 
   describe "compact map" do

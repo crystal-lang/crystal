@@ -360,11 +360,11 @@ module Enumerable(T)
     ary
   end
 
-  def sum(initial = 0)
+  def sum(initial = T.zero)
     sum initial, &.itself
   end
 
-  def sum(initial = 0)
+  def sum(initial = typeof(yield first).zero)
     inject(initial) { |memo, e| memo + (yield e) }
   end
 
