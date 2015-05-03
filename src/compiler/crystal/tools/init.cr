@@ -107,7 +107,7 @@ DIR  - directory where project will be generated,
       end
 
       def module_name
-        config.name.camelcase
+        config.name.camelcase.split("-").map(&.capitalize).join("::")
       end
 
       abstract def full_path
