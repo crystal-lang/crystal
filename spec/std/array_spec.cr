@@ -497,10 +497,14 @@ describe "Array" do
     end
   end
 
-  it "does product" do
+  it "does product with block" do
     r = [] of Int32
     [1,2,3].product([5,6]) { |a, b| r << a; r << b }
     r.should eq([1,5,1,6,2,5,2,6,3,5,3,6])
+  end
+
+  it "does product without block" do
+    [1, 2, 3].product(['a', 'b']).should eq([{1,'a'}, {1,'b'}, {2,'a'}, {2,'b'}, {3,'a'}, {3,'b'}])
   end
 
   it "does replace" do

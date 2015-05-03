@@ -646,7 +646,15 @@ class Array(T)
     pop { nil }
   end
 
-  def product(ary)
+  def product(ary : Array(U))
+    result = Array({T, U}).new(length * ary.length)
+    product(ary) do |x, y|
+      result << {x, y}
+    end
+    result
+  end
+
+  def product(ary, &block)
     self.each { |a| ary.each { |b| yield a, b } }
   end
 
