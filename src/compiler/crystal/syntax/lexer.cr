@@ -524,7 +524,7 @@ module Crystal
           when 'u'
             value = consume_char_unicode_escape
             @token.value = value.chr
-          when '0', '1', '2', '3', '4', '5', '6', '7', '8'
+          when '0', '1', '2', '3', '4', '5', '6', '7'
             char_value = consume_octal_escape(char2)
             @token.value = char_value.chr
           else
@@ -1584,7 +1584,7 @@ module Crystal
             next_char
             @token.type = :STRING
             @token.value = value
-          when '0', '1', '2', '3', '4', '5', '6', '7', '8'
+          when '0', '1', '2', '3', '4', '5', '6', '7'
             char_value = consume_octal_escape(char)
             next_char
             @token.type = :STRING
@@ -1898,7 +1898,7 @@ module Crystal
     def consume_octal_escape(char)
       char_value = char - '0'
       count = 1
-      while count <= 3 && '0' <= peek_next_char <= '8'
+      while count <= 3 && '0' <= peek_next_char < '8'
         next_char
         char_value = char_value * 8 + (current_char - '0')
         count += 1
