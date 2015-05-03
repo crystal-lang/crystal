@@ -125,4 +125,18 @@ describe "Type inference: class var" do
       ),
       "there's no self in this scope"
   end
+
+  it "allows class var in primitive types (#612)" do
+    assert_type("
+      struct Int64
+        @@foo = 1
+
+        def self.foo
+          @@foo
+        end
+      end
+
+      Int64.foo
+      ") { int32 }
+  end
 end

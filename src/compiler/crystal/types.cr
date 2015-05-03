@@ -1079,6 +1079,7 @@ module Crystal
 
   class PrimitiveType < ClassType
     include DefInstanceContainer
+    include ClassVarContainer
 
     getter :bytes
 
