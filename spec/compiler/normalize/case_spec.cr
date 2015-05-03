@@ -36,4 +36,8 @@ describe "Normalize: case" do
   it "normalizes case without value with many expressions in when" do
     assert_normalize "case when 2, 9; 3; when 4; 5; end", "if if __temp_1 = 2\n  __temp_1\nelse\n  9\nend\n  3\nelse\n  if 4\n    5\n  end\nend"
   end
+
+  it "normalizes case with nil to is_a?" do
+    assert_normalize "x = 1; case x; when nil; 'b'; end", "x = 1\nif x.is_a?(::Nil)\n  'b'\nend"
+  end
 end
