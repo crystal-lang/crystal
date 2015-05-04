@@ -27,6 +27,22 @@ module Crystal
     def with_color
       ::with_color.toggle(@color)
     end
+
+    def replace_leading_tabs_with_spaces(line)
+      found_non_space = false
+      line.gsub do |char|
+        if found_non_space
+          char
+        elsif char == '\t'
+          ' '
+        elsif char.whitespace?
+          char
+        else
+          found_non_space = true
+          char
+        end
+      end
+    end
   end
 
   class SyntaxException < Exception
@@ -58,7 +74,7 @@ module Crystal
           line = lines[@line_number - 1]
           if line
             io << "\n\n"
-            io << line.chomp
+            io << replace_leading_tabs_with_spaces(line.chomp)
             io << "\n"
             (@column_number - 1).times do
               io << " "
@@ -168,7 +184,7 @@ module Crystal
 
       if lines && (line_number = @line) && (line = lines[line_number - 1]?)
         io << "\n\n"
-        io << line.chomp
+        io << replace_leading_tabs_with_spaces(line.chomp)
         io << "\n"
         io << (" " * (@column - 1))
         with_color.green.bold.surround(io) do
@@ -333,7 +349,7 @@ module Crystal
       name_length = node.name_length
 
       io << "    "
-      io << line.chomp
+      io << replace_leading_tabs_with_spaces(line.chomp)
       io.puts
 
       return unless name_column > 0
