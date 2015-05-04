@@ -162,6 +162,18 @@ module Crystal
             BoolLiteral.new(false)
           end
         end
+      when "+"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            piece = arg.value
+          when StringLiteral
+            piece = arg.value
+          else
+            raise "StringLiteral#+ expects char or string, not #{arg.class_desc}"
+          end
+          StringLiteral.new(@value + piece)
+        end
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
       when "chars"
