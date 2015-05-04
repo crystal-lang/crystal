@@ -1,4 +1,32 @@
 module Spec
+  class Expectation(T)
+    def initialize(@value : T)
+    end
+
+    def to(matcher, file = __FILE__, line = __LINE__)
+      unless match.match @value
+        fail(matcher.failure_message, file, line)
+      end
+    end
+
+    def to_not(matcher, file = __FILE__, line = __LINE__)
+      if matcher.match @value
+        fail(matcher.negative_failure_message, file, line)
+      end
+    end
+  end
+
+  class RaiseErrorExpecation(T)
+    def initialize(@value : T, @message="")
+    end
+
+  def matches(value, message)
+    expect(@value).to eq value
+    unless message.empty?
+      expect(@value.message).to eq message
+    end
+  end
+
   class EqualExpectation(T)
     def initialize(@value : T)
     end
@@ -192,6 +220,21 @@ module Spec
   end
 end
 
+def expect(value)
+  Spec::Expectation.new(value)
+end
+
+def expect
+  begin
+    yield
+  rescue _ex_ : Object
+    Spec::Expectation.new(e)
+    return
+  ensure
+    Spec::Expectation.new(nil)
+  end
+end
+
 def eq(value)
   Spec::EqualExpectation.new value
 end
@@ -226,6 +269,10 @@ end
 
 def be
   Spec::Be
+end
+
+def raise_error(base, message="")
+  Spec::RaiseErrorExpecation.new(base, message)
 end
 
 def match(value)
