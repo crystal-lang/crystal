@@ -116,6 +116,15 @@ SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
+# wire up OS X to a version of LLVM from homebrew if installed
+if [ "`uname`" = "Darwin" ]; then
+  LLVM_NAME=$(brew list | grep llvm | head -n1)
+  if [ "$LLVM_NAME" != "" ]; then
+    LLVM_PATH=$(brew --prefix $LLVM_NAME)
+    export PATH=$LLVM_PATH/bin:$PATH
+  fi
+fi
+
 export CRYSTAL_PATH=$CRYSTAL_ROOT/src:libs
 
 if [ -x "$CRYSTAL_DIR/crystal" ]
