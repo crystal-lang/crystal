@@ -1064,7 +1064,7 @@ module Crystal
 
       if @token.keyword?(:else)
         unless rescues
-          raise "'else' is useless without 'rescue'"
+          raise "'else' is useless without 'rescue'", @token, 4
         end
 
         next_token_skip_statement_end
