@@ -133,4 +133,22 @@ describe "Restrictions" do
       ),
       "can't lookup type in union (Int32 | Float64)"
   end
+
+  it "errors if can't find type on lookup" do
+    assert_error %(
+      def foo(x : Something)
+      end
+
+      foo 1
+      ), "undefined constant Something"
+  end
+
+  it "errors if can't find type on lookup with nested type" do
+    assert_error %(
+      def foo(x : Foo::Bar)
+      end
+
+      foo 1
+      ), "undefined constant Foo::Bar"
+  end
 end

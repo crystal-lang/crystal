@@ -91,7 +91,7 @@ class File
       end
     end
 
-    def initialize(@stat : LibC::Stat | LibUV::Stat)
+    def initialize(@stat : LibC::Stat)
     end
 
     def atime

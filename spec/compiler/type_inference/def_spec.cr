@@ -119,7 +119,7 @@ describe "Type inference: def" do
       def foo(x : Int, y : Int)
       end
 
-      def foo(x : Int, y : Double)
+      def foo(x : Int, y : Float)
       end
 
       foo(1 || 'a', 1 || 1.5)

@@ -1291,6 +1291,10 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :")"
           type_var_name = check_const
+          if type_var_name.length > 1
+            raise "type variables can only be single letters", @token
+          end
+
           if type_vars.includes? type_var_name
             raise "duplicated type var name: #{type_var_name}", @token
           end

@@ -230,8 +230,8 @@ class Hash(K, V)
     array
   end
 
-  def merge(other : Hash(K2, V2))
-    hash = Hash(K | K2, V | V2).new
+  def merge(other : Hash(L, W))
+    hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge! other
     hash

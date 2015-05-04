@@ -91,14 +91,14 @@ describe "Type inference: module" do
 
   it "includes module but wrong number of arguments" do
     assert_error "
-      module Foo(T1, T2)
+      module Foo(T, U)
       end
 
       class Bar
         include Foo(Int)
       end
       ",
-      "wrong number of type vars for Foo(T1, T2) (1 for 2)"
+      "wrong number of type vars for Foo(T, U) (1 for 2)"
   end
 
   it "includes generic module but wrong number of arguments 2" do

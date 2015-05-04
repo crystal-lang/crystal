@@ -1116,4 +1116,7 @@ describe "Parser" do
                       "can't change the value of self"
 
   assert_syntax_error "macro foo(x : Int32); end"
+
+  assert_syntax_error "class Foo(Something); end", "type variables can only be single letters"
+  assert_syntax_error "module Foo(Something); end", "type variables can only be single letters"
 end

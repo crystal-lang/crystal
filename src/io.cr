@@ -76,7 +76,7 @@ module IO
   # are supported.
   #
   # If timeout_sec is nil, this method blocks until an IO is ready.
-  def self.select(read_ios, write_ios, error_ios, timeout_sec : C::TimeT|Int32|Float?)
+  def self.select(read_ios, write_ios, error_ios, timeout_sec : LibC::TimeT|Int|Float?)
     nfds = 0
     read_ios.try &.each do |io|
       nfds = io.fd if io.fd > nfds

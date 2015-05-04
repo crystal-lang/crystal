@@ -21,7 +21,7 @@ struct BigInt < Int
     LibGMP.init_set_ui(out @mpz, num.to_u64)
   end
 
-  def initialize(@mpz : MPZ)
+  def initialize(@mpz : LibGMP::MPZ)
   end
 
   def self.new

@@ -186,8 +186,8 @@ module Iterator(T)
     end
   end
 
-  struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
+  struct Zip(I, J, T, U)
+    include Iterator({T, U})
 
     def initialize(@iter1, @iter2)
     end
