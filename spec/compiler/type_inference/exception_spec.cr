@@ -297,4 +297,19 @@ describe "Type inference: exception" do
       a
       )) { nilable types["Exception"].virtual_type }
   end
+
+  it "doesn't consider vars as nilable inside else (#610)" do
+    assert_type(%(
+      require "prelude"
+
+      x = 1
+      begin
+        a = 1
+      rescue
+      else
+        x = a
+      end
+      x
+      )) { int32 }
+  end
 end

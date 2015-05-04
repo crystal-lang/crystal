@@ -2640,18 +2640,24 @@ module Crystal
       # Save old vars to know if new variables are declared inside begin/rescue/else
       before_body_vars = @vars.dup
 
-      # Any variable assigned in the body (begin) will have, inside rescue/else
+      # Any variable assigned in the body (begin) will have, inside rescue
       # blocks, all types that were assigned to them, because we can't know at which
       # point an exception is raised.
       exception_handler_vars = @exception_handler_vars = @vars.dup
 
       node.body.accept self
 
+      # We need the variables after the begin block to use in the else,
+      # but we don't dup them if we don't need them
+      if node.else
+        after_exception_handler_vars = @vars.dup
+      end
+
       @exception_handler_vars = nil
 
       if node.rescues || node.else
         # Any variable introduced in the begin block is possibly nil
-        # in the rescue/else blocks because we can't know if an exception
+        # in the rescue blocks because we can't know if an exception
         # was raised before assigning any of the vars.
         exception_handler_vars.each do |name, var|
           unless before_body_vars[name]?
@@ -2659,7 +2665,7 @@ module Crystal
           end
         end
 
-        # Now, using these vars, visit all rescue/else blocks and keep
+        # Now, using these vars, visit all rescue blocks and keep
         # the results in this variable.
         all_rescue_vars = [] of MetaVars
 
@@ -2670,8 +2676,10 @@ module Crystal
           all_rescue_vars << @vars unless @unreachable
         end
 
+        # In the else block the types are the same as in the begin block,
+        # because we assume no exception was raised.
         node.else.try do |a_else|
-          @vars = exception_handler_vars.dup
+          @vars = after_exception_handler_vars.not_nil!.dup
           @unreachable = false
           a_else.accept self
           all_rescue_vars << @vars unless @unreachable
