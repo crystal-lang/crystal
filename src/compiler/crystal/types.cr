@@ -977,6 +977,8 @@ module Crystal
 
       if create || owned_instance_vars.includes?(name)
         instance_vars[name] ||= MetaInstanceVar.new(name)
+        resort_instance_vars if struct?
+        instance_vars[name]
       else
         instance_vars[name]?
       end
@@ -1029,6 +1031,22 @@ module Crystal
       instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
         instance_vars_in_initialize.try(&.includes?(name)) ||
         superclass.try &.has_instance_var_in_initialize?(name)
+    end
+
+    def resort_instance_vars
+      # p instance_vars
+      sorted = instance_vars.to_a.sort_by do |pair|
+        bytes = 1
+        if type = pair[1].type?
+          if type.responds_to?(:bytes)
+            bytes = type.bytes % 8
+          end
+        end
+        bytes.to_i32
+      end
+      @instance_vars = Hash.zip(sorted.map(&.[0]), sorted.map(&.[1]))
+      # p instance_vars
+      # puts
     end
   end
 
