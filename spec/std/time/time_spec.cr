@@ -49,6 +49,11 @@ describe Time do
     end
   end
 
+  it "initialize at_epoch" do
+    seconds = Time.now.to_i
+    Time.at_epoch(seconds).to_i.should eq(seconds)
+  end
+
   it "fields" do
     Time::MaxValue.ticks.should eq(3155378975999999999)
     Time::MinValue.ticks.should eq(0)
