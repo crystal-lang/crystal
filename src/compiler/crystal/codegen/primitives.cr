@@ -265,14 +265,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_pointer_set(node, target_def, call_args)
-    type = context.type as PointerInstanceType
+    type = context.type.remove_typedef as PointerInstanceType
     value = call_args[1]
     assign call_args[0], type.element_type, node.type, value
     value
   end
 
   def codegen_primitive_pointer_get(node, target_def, call_args)
-    type = context.type as PointerInstanceType
+    type = context.type.remove_typedef as PointerInstanceType
     to_lhs call_args[0], type.element_type
   end
 

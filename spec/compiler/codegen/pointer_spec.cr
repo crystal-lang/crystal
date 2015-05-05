@@ -286,4 +286,16 @@ describe "Code gen: pointer" do
       ptr ? 20 : 30
       )).to_i.should eq(30)
   end
+
+  it "can use typedef pointer value get and set (#630)" do
+    build(%(
+      lib LibFoo
+        type MyObj = Int32*
+        fun foo : MyObj
+      end
+
+      LibFoo.foo.value
+      LibFoo.foo.value = 1
+      ))
+  end
 end
