@@ -105,8 +105,9 @@ struct String::Formatter
     when 'd'
       flags.base = 10
       int flags
-    when 'x'
+    when 'x', 'X'
       flags.base = 16
+      flags.type = char
       int flags
     when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
       flags.type = char
@@ -147,7 +148,12 @@ struct String::Formatter
         end
       end
 
-      int.to_s(flags.base, @io)
+      # if we are requesting lower-case "digits"
+      if flags.base > 10 && flags.type == 'x'
+        @io << int.to_s(flags.base).downcase
+      else
+        int.to_s(flags.base, @io)
+      end
 
       if flags.right_padding?
         pad_int int, flags

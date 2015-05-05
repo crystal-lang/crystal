@@ -630,14 +630,22 @@ describe "String" do
     ("%6o" % 123).should eq("   173")
     ("%-6o" % 123).should eq("173   ")
 
-    ("%x" % 123).should eq("7B")
-    ("%+x" % 123).should eq("+7B")
-    ("% x" % 123).should eq(" 7B")
-    ("%-x" % 123).should eq("7B")
-    ("%6x" % 123).should eq("    7B")
-    ("%-6x" % 123).should eq("7B    ")
+    ("%x" % 123).should eq("7b")
+    ("%+x" % 123).should eq("+7b")
+    ("% x" % 123).should eq(" 7b")
+    ("%-x" % 123).should eq("7b")
+    ("%6x" % 123).should eq("    7b")
+    ("%-6x" % 123).should eq("7b    ")
 
-    ("こんに%xちは" % 123).should eq("こんに7Bちは")
+    ("%X" % 123).should eq("7B")
+    ("%+X" % 123).should eq("+7B")
+    ("% X" % 123).should eq(" 7B")
+    ("%-X" % 123).should eq("7B")
+    ("%6X" % 123).should eq("    7B")
+    ("%-6X" % 123).should eq("7B    ")
+
+    ("こんに%xちは" % 123).should eq("こんに7bちは")
+    ("こんに%Xちは" % 123).should eq("こんに7Bちは")
 
     ("%f" % 123).should eq("123.000000")
 
