@@ -1,10 +1,23 @@
+# A symbol is a constant that is identified by a name without you having to give
+# it a numeric value.
+#
+# ```
+# :hello
+# :welcome
+# :"symbol with spaces"
+# ```
+#
+# Internally a symbol is represented as an `Int32`, so it's very efficient.
+#
+# You can't dynamically create symbols: when you compile your program each symbol
+# gets assigned a unique number.
 struct Symbol
   include Comparable(Symbol)
 
   def <=>(other : Symbol)
     to_s <=> other.to_s
   end
-  
+
   def inspect(io : IO)
     io << ":"
 
