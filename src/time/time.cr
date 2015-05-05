@@ -92,6 +92,10 @@ struct Time
     new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
 
+  def self.at(seconds : Int, kind = Kind::Utc)
+    new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, kind)
+  end
+
   def +(other : TimeSpan)
     add_ticks other.ticks
   end
