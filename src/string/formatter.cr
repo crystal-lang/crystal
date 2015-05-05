@@ -102,7 +102,7 @@ struct String::Formatter
     when 'o'
       flags.base = 8
       int flags
-    when 'd'
+    when 'd', 'i'
       flags.base = 10
       int flags
     when 'x', 'X'
