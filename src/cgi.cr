@@ -34,7 +34,7 @@ module CGI
         char.each_byte do |byte|
           io.write_byte '%'.ord.to_u8
           io.write_byte '0'.ord.to_u8 if byte < 16
-          byte.to_s(16, io)
+          byte.to_s(16, io, upcase: true)
         end
       end
     end

@@ -148,12 +148,7 @@ struct String::Formatter
         end
       end
 
-      # if we are requesting lower-case "digits"
-      if flags.base > 10 && flags.type == 'x'
-        @io << int.to_s(flags.base).downcase
-      else
-        int.to_s(flags.base, @io)
-      end
+      int.to_s(flags.base, @io, upcase: flags.type == 'X')
 
       if flags.right_padding?
         pad_int int, flags

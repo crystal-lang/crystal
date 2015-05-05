@@ -197,13 +197,13 @@ struct Int
     self % other
   end
 
-  def to_s(base : Int)
+  def to_s(base : Int, upcase = false : Bool)
     String.build do |io|
-      to_s(base, io)
+      to_s(base, io, upcase)
     end
   end
 
-  def to_s(base : Int, io : IO)
+  def to_s(base : Int, io : IO, upcase = false : Bool)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
     if self == 0
@@ -225,7 +225,7 @@ struct Int
     while num > 0
       digit = num % base
       if digit >= 10
-        str.write_byte ('A'.ord + digit - 10).to_u8
+        str.write_byte ((upcase ? 'A' : 'a').ord + digit - 10).to_u8
       else
         str.write_byte ('0'.ord + digit).to_u8
       end
