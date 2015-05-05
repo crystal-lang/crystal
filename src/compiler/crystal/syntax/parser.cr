@@ -2798,15 +2798,16 @@ module Crystal
 
       is_var = is_var?(name)
 
-      # We don't want the next token to be a regex literal if the call's name is
-      # a variable in the current scope (it's unlikely that there will be a method
-      # with that name that accepts a regex as a first argument).
-      # This allows us to write: a = 1; b = 2; a /b
-      if is_var
-        @wants_regex = false
-      end
-
+      @wants_regex = false
       next_token
+
+      if @token.type == :SPACE
+        # We don't want the next token to be a regex literal if the call's name is
+        # a variable in the current scope (it's unlikely that there will be a method
+        # with that name that accepts a regex as a first argument).
+        # This allows us to write: a = 1; b = 2; a /b
+        @wants_regex = !is_var
+      end
 
       case name
       when "super"

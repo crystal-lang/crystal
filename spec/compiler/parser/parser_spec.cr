@@ -1020,6 +1020,7 @@ describe "Parser" do
   it_parses "a.b/2", Call.new(Call.new("a".call, "b"), "/", 2.int32)
   it_parses "a.b /2/", Call.new("a".call, "b", regex("2"))
   it_parses "a.b / 2", Call.new(Call.new("a".call, "b"), "/", 2.int32)
+  it_parses "a/b", Call.new("a".call, "/", "b".call)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
