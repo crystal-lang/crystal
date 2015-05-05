@@ -49,9 +49,11 @@ describe Time do
     end
   end
 
-  it "initialize at_epoch" do
+  it "initialize with .at" do
     seconds = Time.now.to_i
-    Time.at_epoch(seconds).to_i.should eq(seconds)
+    from_at = Time.at(seconds)
+    from_at.to_i.should eq(seconds)
+    typeof(from_at).should eq(Time)
   end
 
   it "fields" do
