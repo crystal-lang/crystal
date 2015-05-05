@@ -109,7 +109,7 @@ struct String::Formatter
       flags.base = 16
       int flags
     when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
-      flags.float = char
+      flags.type = char
       float flags
     when '%'
       char '%'
@@ -199,7 +199,7 @@ struct String::Formatter
       io << '.'
       io << precision if precision != 0
     end
-    io << flags.float
+    io << flags.type
 
     original_format_buf
   end
@@ -268,14 +268,14 @@ struct String::Formatter
   struct Flags
     property space, sharp, plus, minus, zero, base
     property width, width_length
-    property float, precision, precision_length
+    property type, precision, precision_length
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false
       @width = 0
       @width_length = 0
       @base = 10
-      @float = 'f'
+      @type = ' '
       @precision = nil
       @precision_length = 0
     end
