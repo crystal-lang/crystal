@@ -330,6 +330,14 @@ describe "MacroExpander" do
       assert_macro "", %({{"hello".ends_with?("tro")}}), [] of ASTNode, %(false)
     end
 
+    it "executes string + string" do
+      assert_macro "", %({{"hello" + " world"}}), [] of ASTNode, %("hello world")
+    end
+
+    it "executes string + char" do
+      assert_macro "", %({{"hello" + 'w'}}), [] of ASTNode, %("hellow")
+    end
+
     it "executes string =~ (false)" do
       assert_macro "", %({{"hello" =~ /hei/}}), [] of ASTNode, %(false)
     end
