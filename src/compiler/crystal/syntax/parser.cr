@@ -560,10 +560,13 @@ module Crystal
             atomic = parse_is_a(atomic).at(location)
           else
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
+
+            @wants_regex = false
             next_token
 
             space_consumed = false
             if @token.type == :SPACE
+              @wants_regex = true
               next_token
               space_consumed = true
             end
