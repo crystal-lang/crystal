@@ -102,14 +102,15 @@ struct String::Formatter
     when 'o'
       flags.base = 8
       int flags
-    when 'd'
+    when 'd', 'i'
       flags.base = 10
       int flags
-    when 'x'
+    when 'x', 'X'
       flags.base = 16
+      flags.type = char
       int flags
     when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
-      flags.float = char
+      flags.type = char
       float flags
     when '%'
       char '%'
@@ -147,7 +148,12 @@ struct String::Formatter
         end
       end
 
-      int.to_s(flags.base, @io)
+      # if we are requesting lower-case "digits"
+      if flags.base > 10 && flags.type == 'x'
+        @io << int.to_s(flags.base).downcase
+      else
+        int.to_s(flags.base, @io)
+      end
 
       if flags.right_padding?
         pad_int int, flags
@@ -199,7 +205,7 @@ struct String::Formatter
       io << '.'
       io << precision if precision != 0
     end
-    io << flags.float
+    io << flags.type
 
     original_format_buf
   end
@@ -268,14 +274,14 @@ struct String::Formatter
   struct Flags
     property space, sharp, plus, minus, zero, base
     property width, width_length
-    property float, precision, precision_length
+    property type, precision, precision_length
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false
       @width = 0
       @width_length = 0
       @base = 10
-      @float = 'f'
+      @type = ' '
       @precision = nil
       @precision_length = 0
     end
