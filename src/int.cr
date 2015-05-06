@@ -206,8 +206,8 @@ struct Int
   def to_s(base : Int, io : IO, upcase = false : Bool)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
-    if self == 0
-      io << "0"
+    if self == 0 || self == 1
+      io << self == 0 ? "0" : "1"
       return
     end
 
