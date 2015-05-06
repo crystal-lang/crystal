@@ -87,4 +87,6 @@ describe Markdown do
   assert_render "---", "<hr/>"
   assert_render "___", "<hr/>"
   assert_render "  *  *  *  ", "<hr/>"
+
+  assert_render "hello < world", "<p>hello &lt; world</p>"
 end
