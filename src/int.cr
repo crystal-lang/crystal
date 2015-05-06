@@ -214,6 +214,9 @@ struct Int
     str = StringIO.new
     num = self
 
+    letter_a = (upcase ? 'A' : 'a').ord - 10
+    zero = '0'.ord
+
     if num < 0
       str.write_byte '-'.ord.to_u8
       num = num.abs
@@ -222,12 +225,21 @@ struct Int
       init = 0
     end
 
+    # bit-shifting, performance optimized for base 2
+    if base == 2
+      while num > 0
+        digit = num & 1
+        str.write_byte (zero + digit).to_u8
+        num = num >> 1
+      end
+    end
+
     while num > 0
       digit = num % base
       if digit >= 10
-        str.write_byte ((upcase ? 'A' : 'a').ord + digit - 10).to_u8
+        str.write_byte (letter_a + digit).to_u8
       else
-        str.write_byte ('0'.ord + digit).to_u8
+        str.write_byte (zero + digit).to_u8
       end
       num /= base
     end
