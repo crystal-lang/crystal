@@ -3,7 +3,7 @@
 If a variable is the condition of an `if`, inside the `then` branch the variable will be considered as not having the `Nil` type:
 
 ``` ruby
-a = 1 > 2 ? nil : 3
+a = some_condition ? nil : 3
 # a is Int32 or Nil
 
 if a
@@ -33,7 +33,7 @@ Here, the right-hand side of the `&&` expression is also guaranteed to have `a` 
 
 Of course, reassigning a variable inside the `then` branch makes that variable have a new type based on the expression assigned.
 
-The above logic doesn’t work with instance variables, class variables or global variables:
+The above logic **doesn’t** work with instance variables, class variables or global variables:
 
 ``` ruby
 if @a

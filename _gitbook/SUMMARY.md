@@ -7,9 +7,12 @@
    * [On Mac OSX using Homebrew](installation/on_mac_osx_using_homebrew.md)
    * [From a tar.gz](installation/from_a_targz.md)
    * [From sources](installation/from_source_repository.md)
-* [Overview](overview/README.md)
+* [Overview and Examples](overview/README.md)
+   * [Hello World!](overview/hello_world.md)
+   * [HTTP Server](overview/http_server.md)
 * [Syntax and semantics](syntax_and_semantics/README.md)
    * [Comments](syntax_and_semantics/comments.md)
+   * [Literals](syntax_and_semantics/literals.md)
    * [Local variables](syntax_and_semantics/local_variables.md)
    * [Global variables](syntax_and_semantics/global_variables.md)
        * [Thread local](syntax_and_semantics/thread_local.md)
@@ -38,11 +41,12 @@
        * [Classes and methods](syntax_and_semantics/classes_and_methods.md)
            * [new, initialize and allocate](syntax_and_semantics/new,_initialize_and_allocate.md)
            * [Methods and instance variables](syntax_and_semantics/methods_and_instance_variables.md)
+           * [Instance variables type inference](syntax_and_semantics/instance_variables_type_inference.md)
            * [Overloading](syntax_and_semantics/overloading.md)
            * [Default and named arguments](syntax_and_semantics/default_and_named_arguments.md)
+           * [Splats and tuples](syntax_and_semantics/splats_and_tuples.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Visibility](syntax_and_semantics/visibility.md)
-           * [Instance variables type inference](syntax_and_semantics/instance_variables_type_inference.md)
            * [Inheritance](syntax_and_semantics/inheritance.md)
                * [Virtual and abstract types](syntax_and_semantics/virtual_and_abstract_types.md)
            * [finalize](syntax_and_semantics/finalize.md)
@@ -50,7 +54,7 @@
        * [Generics](syntax_and_semantics/generics.md)
        * [Structs](syntax_and_semantics/structs.md)
        * [Constants](syntax_and_semantics/constants.md)
-       * [Blocks and Procs](blocks_and_procs.md)
+       * [Blocks and Procs](syntax_and_semantics/blocks_and_procs.md)
            * Proc literal
            * Proc pointer
        * [alias](syntax_and_semantics/alias.md)
@@ -76,7 +80,6 @@
    * [Compile-time flags](syntax_and_semantics/compile_time_flags.md)
        * [Cross-compilation](syntax_and_semantics/cross-compilation.md)
    * [Macros](syntax_and_semantics/macros.md)
-       * [Macro methods](syntax_and_semantics/macro_methods.md)
    * [C bindings](syntax_and_semantics/c_bindings/README.md)
        * [lib](syntax_and_semantics/c_bindings/lib.md)
        * [fun](syntax_and_semantics/c_bindings/fun.md)
@@ -90,22 +93,4 @@
        * [type](syntax_and_semantics/c_bindings/type.md)
        * [alias](syntax_and_semantics/c_bindings/alias.md)
        * [Callbacks](syntax_and_semantics/c_bindings/callbacks.md)
-* [Built-in types](builtin_types/README.md)
-   * [Nil](builtin_types/nil.md)
-   * [Bool](builtin_types/bool.md)
-   * [Integer types](builtin_types/integer_types.md)
-   * [Floating point types](builtin_types/floating_point_types.md)
-   * [Char](builtin_types/char.md)
-   * String
-   * [Symbol](builtin_types/symbol.md)
-   * [Reference](builtin_types/reference.md)
-   * [Value](builtin_types/value.md)
-   * [Struct](builtin_types/struct.md)
-   * [Pointer](builtin_types/pointer.md)
-   * StaticArray
-   * Tuple
-   * Range
-   * Array
-   * Hash
-   * Regex
 

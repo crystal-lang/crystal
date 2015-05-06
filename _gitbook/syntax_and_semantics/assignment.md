@@ -16,6 +16,8 @@ local = 1
 $global = 4
 ```
 
+Each of the above kinds of variables will be explained later on.
+
 Some syntax sugar that contains the `=` character is available:
 
 ``` ruby

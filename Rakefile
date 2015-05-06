@@ -52,7 +52,9 @@ end
 
 desc 'Build docs'
 task :docs do
-  system "gitbook build ./_gitbook --output ./docs"
+  system "gitbook build ./_gitbook "
+  system "rm -rf ./docs"
+  system "mv ./_gitbook/_book ./docs"
 end
 
 desc 'Parse all haml items'

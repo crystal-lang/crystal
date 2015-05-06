@@ -6,7 +6,7 @@ A `union` declaration inside a `lib` declares a C union:
 lib U
   # In C:
   #
-  #  union TimeZone {
+  #  union IntOrFloat {
   #    int some_int;
   #    double some_float;
   #  };

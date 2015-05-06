@@ -114,7 +114,9 @@ That is, the compiler does global type inference and tells you whenever you make
 
 If you do want to have different `Person` types, one with `@name` being an `Int32` and one with `@name` being a `String`, you must use [generics](generics.html).
 
-Finally, if an instance variable is not assigned in all of the `initialize` defined in a class, it will be considered as also having the type `Nil`:
+## Nilable instance variables
+
+If an instance variable is not assigned in all of the `initialize` defined in a class, it will be considered as also having the type `Nil`:
 
 ``` ruby
 class Person
@@ -157,3 +159,36 @@ john.address.length
 ```
 
 To deal with `Nil`, and generally with union types, you have several options: use an [if var](if_var.html), [if var.is_a?](if_varis_a.html), [case](case.html) and [is_a?](is_a.html).
+
+## Catch-all initialization
+
+Instance variables can also be initialized outside `initialize` methods:
+
+``` ruby
+class Person
+  @age = 0
+
+  def initialize(@name)
+  end
+end
+```
+
+This will initialize `@age` to zero in every constructor. This is useful to avoid duplication, but also to avoid the `Nil` type when reopening a class and adding instance variables to it.
+
+## Specifying the types of instance variables
+
+In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with `::`:
+
+``` ruby
+class Person
+  @age :: Int32
+
+  def initialize(@name)
+    @age = 0
+  end
+end
+```
+
+In this case, if we assign something that's not an `Int32` to `@age`, a compile-time error will be issued at the assignment location.
+
+Note that you still have to initialize the instance variables, either with a catch-all initializer or within an `initialize` method: there are no "default" values for types.

@@ -82,6 +82,8 @@ e.greet "everyone" # "Hi, everyone"
 e.greet 1 # "Hi, this is a number: 1"
 ```
 
+## super
+
 You can invoke a superclass' method using `super`. Without arguments and without parentheses, all of a method's arguments are forwarded to the parent call:
 
 ```ruby
@@ -98,3 +100,5 @@ class Employee
   end
 end
 ```
+
+Without arguments nor parenthesis, `super` receives the same arguments as the method's arguments. Otherwise, it receives the arguments you pass to it.

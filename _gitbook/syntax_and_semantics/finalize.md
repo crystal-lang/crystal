@@ -15,3 +15,5 @@ loop do
   Foo.new
 end
 ```
+
+**Note:** the `finalize` method will only be invoked once the object has been fully initialized via the `initialize` method. If an exception is raised inside the `initialize` method, `finalize` won't be invoked. If your class defines a finalizer, be sure to catch any exceptions that might be raised in the `initialize` methods and free resources.

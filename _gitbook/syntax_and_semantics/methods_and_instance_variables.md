@@ -48,6 +48,8 @@ class Person
 end
 ```
 
+## Redefining methods, and previous_def
+
 If you redefine a method, the last definition will take precedence.
 
 ``` ruby
@@ -68,24 +70,25 @@ person.become_older
 person.age #=> 2
 ```
 
-To further simply our program, we can use some [macros](macros.html):
+You can invoke the previously redefined method with `previous_def`:
 
 ``` ruby
 class Person
-  # This is the same as writing:
-  #
-  #   def name
-  #     @name
-  #   end
-  getter name
-  getter age
-
-  def initialize(@name)
-    @age = 0
-  end
-
   def become_older
     @age += 1
   end
 end
+
+class Person
+  def become_older
+    previous_def
+    @age += 2
+  end
+end
+
+person = Person.new "John"
+person.become_older
+person.age #=> 3
 ```
+
+Without arguments nor parenthesis, `previous_def` receives the same arguments as the method's arguments. Otherwise, it receives the arguments you pass to it.

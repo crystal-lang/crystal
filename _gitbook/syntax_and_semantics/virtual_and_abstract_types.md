@@ -1,6 +1,6 @@
 # Virtual and abstract types
 
-When a variable's type combines different types under the same hierarchy, its type becomes a **virtual type**. This applies to every class except for `Reference`. An example:
+When a variable's type combines different types under the same class hierarchy, its type becomes a **virtual type**. This applies to every class except for `Reference`. An example:
 
 ```ruby
 class Animal
@@ -47,6 +47,8 @@ The compiler will always do this for classes under the same hierarchy: it will f
 
 The real reason the compiler does this is to be able to compile programs faster by not creating all kinds of different similar unions, also making the generated code smaller in size. But, on the other hand, it makes sense: classes under the same hierarchy should behave in a similar way.
 
+Note that virtual types only apply to classes, never to structs.
+
 Lets make John's pet talk:
 
 ```ruby
@@ -74,4 +76,13 @@ Marking a class as abstract will also prevent us from creating an instance of it
 Animal.new # Error: can't instantiate abstract class Animal
 ```
 
-Note that virtual types only apply to classes, never to structs.
+To make it more explicit that an `Animal` must define a `talk` method, we can add it to `Animal` as an abstract method:
+
+```ruby
+abstract class Animal
+  # Makes this animal talk
+  abstract def talk
+end
+```
+
+Abstract methods can also be defined in modules.

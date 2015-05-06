@@ -56,3 +56,4 @@ class Person
 First, note the `self.new` notation. This means that the method belongs to the **class** `Person`, not to particular instances of that class. This is why we can do `Person.new`.
 
 Second, `allocate` is a low-level class method that creates an uninitialized object of the given type. It basically allocates the necessary memory for it. Then `initialize` is invoked on it and then you get the instance. You generally never invoke `allocate`, as it is unsafe, but that's the reason why `new` and `initialize` are related.
+

@@ -1,6 +1,6 @@
 # The Program
 
-The program is a global object in which you can define methods and file-local variables.
+The program is a global object in which you can define types, methods and file-local variables.
 
 ``` ruby
 # Defines a method in the program

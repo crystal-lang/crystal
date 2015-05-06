@@ -41,7 +41,7 @@ items = Items.new
 items.length #=> 3
 ```
 
-In the above example, it is as if we pasted the `length` method from the module into the `Items` class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are **prepended** to this list. When a method is not found in a type it is looked up in this list.
+In the above example, it is as if we pasted the `length` method from the module into the `Items` class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are **prepended** to this list. When a method is not found in a type it is looked up in this list. When you invoke `super`, the first type in this ancestors list is used.
 
 A `module` can include other modules, so when a method is not found in it it will be looked up in the included modules.
 
@@ -80,6 +80,8 @@ include SomeModule
 SomeType.new # OK, same as SomeModule::SomeType
 some_method  # OK, 1
 ```
+
+## extend self
 
 A common pattern for modules is `extend self`:
 

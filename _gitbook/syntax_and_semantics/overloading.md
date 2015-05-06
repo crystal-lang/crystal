@@ -29,7 +29,7 @@ Methods overload by several criteria:
 
 * The number of arguments
 * The type restrictions applied to arguments
-* Whether the method accepts a block or not
+* Whether the method accepts a [block](blocks_and_procs.html) or not
 
 For example, we can define four different `become_older` methods:
 
@@ -73,6 +73,18 @@ person.become_older do |current_age|
 end
 person.age #=> 28
 ```
+
+Note that in the case of the method that yields, the compiler figured this out because there's a `yield` expression. To make this more explicit, you can add a dummy `&block` argument at the end:
+
+```ruby
+class Person
+  def become_older(&block)
+    @age += yield @age
+  end
+end
+```
+
+In generated documentation the dummy `&block` method will always appear, regardless of you writing it or not.
 
 Given the same number of arguments, the compiler will try to sort them by leaving the less restrictive ones to the end:
 
