@@ -206,13 +206,16 @@ struct Int
   def to_s(base : Int, io : IO, upcase = false : Bool)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
-    if self == 0
-      io << "0"
+    if self == 0 || self == 1
+      io << self == 0 ? "0" : "1"
       return
     end
 
     str = StringIO.new
     num = self
+
+    letter_a = (upcase ? 'A' : 'a').ord - 10
+    zero = '0'.ord
 
     if num < 0
       str.write_byte '-'.ord.to_u8
@@ -222,12 +225,28 @@ struct Int
       init = 0
     end
 
+    # bit-shift - performance optimized for bases 2, 4, 8, and 16
+    if base % 2 == 0 && base <= 16
+      mask = base - 1
+      # shift = { 2 => 1, 4 => 2, 8 => 3, 16 => 4 }[base] # slow
+      shift = (base == 16) ? 4 : ((base == 2) ? 1 : (( base == 8 ) ? 3 : 2))
+      while num > 0
+        digit = num & mask
+        if digit >= 10
+          str.write_byte (letter_a + digit).to_u8
+        else
+          str.write_byte (zero + digit).to_u8
+        end
+        num = num >> shift
+      end
+    end
+
     while num > 0
       digit = num % base
       if digit >= 10
-        str.write_byte ((upcase ? 'A' : 'a').ord + digit - 10).to_u8
+        str.write_byte (letter_a + digit).to_u8
       else
-        str.write_byte ('0'.ord + digit).to_u8
+        str.write_byte (zero + digit).to_u8
       end
       num /= base
     end

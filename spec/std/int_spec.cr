@@ -62,7 +62,10 @@ describe "Int" do
     assert { -1234.to_s(16, upcase: true).should eq("-4D2") }
     assert { 1234.to_s(36, upcase: true).should eq("YA") }
     assert { -1234.to_s(36, upcase: true).should eq("-YA") }
+    assert { 0.to_s(2).should eq("0") }
     assert { 0.to_s(16).should eq("0") }
+    assert { 1.to_s(2).should eq("1") }
+    assert { 1.to_s(16).should eq("1") }
 
     it "raises on base 1" do
       expect_raises { 123.to_s(1) }
