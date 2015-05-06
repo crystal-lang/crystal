@@ -225,12 +225,18 @@ struct Int
       init = 0
     end
 
-    # bit-shifting, performance optimized for base 2
-    if base == 2
+    # bit-shifting, performance optimized for base 2 and base 16
+    if base == 2 || base == 16
+      mask = (base-1)
+      shift = (base == 2) ? 1 : 4
       while num > 0
-        digit = num & 1
-        str.write_byte (zero + digit).to_u8
-        num = num >> 1
+        digit = num & mask
+        if digit >= 10
+          str.write_byte (letter_a + digit).to_u8
+        else
+          str.write_byte (zero + digit).to_u8
+        end
+        num = num >> shift
       end
     end
 
