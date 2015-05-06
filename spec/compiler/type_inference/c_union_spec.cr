@@ -56,4 +56,28 @@ describe "Type inference: c union" do
       ),
       "empty unions are disallowed"
   end
+
+  it "errors if using void in union field type" do
+    assert_error %(
+      lib LibFoo
+        union Struct
+          x : Void
+        end
+      end
+      ),
+      "can't use Void as a union field type"
+  end
+
+  it "errors if using void via typedef in union field type" do
+    assert_error %(
+      lib LibFoo
+        type MyVoid = Void
+
+        union Struct
+          x : MyVoid
+        end
+      end
+      ),
+      "can't use Void as a union field type"
+  end
 end

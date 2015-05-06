@@ -2850,7 +2850,15 @@ module Crystal
 
       def visit(field : Arg)
         field.accept @type_inference
-        field_type = @type_inference.check_primitive_like field.restriction.not_nil!
+        restriction = field.restriction.not_nil!
+        field_type = @type_inference.check_primitive_like restriction
+        if field_type.remove_typedef.void?
+          if @struct_or_union.is_a?(CStructType)
+            restriction.raise "can't use Void as a struct field type"
+          else
+            restriction.raise "can't use Void as a union field type"
+          end
+        end
 
         if @struct_or_union.has_var?(field.name)
           field.raise "#{@struct_or_union.type_desc} #{@struct_or_union} already defines a field named '#{field.name}'"

@@ -268,4 +268,28 @@ describe "Type inference: struct" do
       ),
       "empty structs are disallowed"
   end
+
+  it "errors if using void in struct field type" do
+    assert_error %(
+      lib LibFoo
+        struct Struct
+          x : Void
+        end
+      end
+      ),
+      "can't use Void as a struct field type"
+  end
+
+  it "errors if using void via typedef in struct field type" do
+    assert_error %(
+      lib LibFoo
+        type MyVoid = Void
+
+        struct Struct
+          x : MyVoid
+        end
+      end
+      ),
+      "can't use Void as a struct field type"
+  end
 end
