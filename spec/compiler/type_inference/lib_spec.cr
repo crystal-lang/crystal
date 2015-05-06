@@ -371,6 +371,7 @@ it "errors if unknown named arg" do
         fun foo() : Bar*
 
         struct Bar
+          x : Int32
         end
       end
 
@@ -386,6 +387,7 @@ it "errors if unknown named arg" do
         end
 
         struct Foo
+          x : Int32
         end
       end
 

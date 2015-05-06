@@ -46,4 +46,14 @@ describe "Type inference: c union" do
       ),
       "can't set closure as C union member"
   end
+
+  it "errors on empty c union (#633)" do
+    assert_error %(
+      lib LibFoo
+        union Struct
+        end
+      end
+      ),
+      "empty unions are disallowed"
+  end
 end

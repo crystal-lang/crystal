@@ -258,4 +258,14 @@ describe "Type inference: struct" do
     foo_struct = result.program.types["LibFoo"].types["Struct"] as CStructType
     foo_struct.packed.should be_true
   end
+
+  it "errors on empty c struct (#633)" do
+    assert_error %(
+      lib LibFoo
+        struct Struct
+        end
+      end
+      ),
+      "empty structs are disallowed"
+  end
 end

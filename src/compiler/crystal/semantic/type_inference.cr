@@ -2898,6 +2898,8 @@ module Crystal
         end
       end
 
+      node.type = type
+
       type
     end
 

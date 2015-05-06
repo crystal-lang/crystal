@@ -601,6 +601,22 @@ module Crystal
       node
     end
 
+    def transform(node : StructDef)
+      type = node.type as CStructType
+      if type.vars.empty?
+        node.raise "empty structs are disallowed"
+      end
+      node
+    end
+
+    def transform(node : UnionDef)
+      type = node.type as CUnionType
+      if type.vars.empty?
+        node.raise "empty unions are disallowed"
+      end
+      node
+    end
+
     def rebind_node(node, dependency)
       node.unbind_from node.dependencies?
       if dependency
