@@ -33,7 +33,7 @@
 # '\1'   # code point 1
 # ```
 #
-# You can use a backslash followed by an u and four hexadecimal characters to denote a unicode codepoint written:
+# You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 #
 # ```text
 # '\u0041' # == 'A'

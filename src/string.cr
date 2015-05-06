@@ -9,6 +9,104 @@ lib LibC
   fun strtoull(str : UInt8*, endptr : UInt8**, base : Int32) : UInt64
 end
 
+# A String represents an immutable UTF-8 character strings.
+#
+# A String is typically created with a string literal, enclosing UTF-8 characters
+# in double quotes:
+#
+# ```
+# "hello world"
+# ```
+#
+# A backslash can be used to denote some characters inside the string:
+#
+# ```text
+# "\"" # double quote
+# "\\" # backslash
+# "\e" # escape
+# "\f" # form feed
+# "\n" # newline
+# "\r" # carriage return
+# "\t" # tab
+# "\v" # vertical tab
+# ```
+#
+# You can use a backslash followed by at most three digits to denote a code point written in octal:
+#
+# ```text
+# "\101" # == "A"
+# "\123" # == "S"
+# "\12"  # == "\n"
+# "\1"   # string with one character with code point 1
+# ```
+#
+# You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
+#
+# ```text
+# "\u0041" # == "A"
+# ```
+#
+# Or you can use curly braces and specify up to four hexadecimal numbers:
+#
+# ```text
+# "\u{41}" # == "A"
+# ```
+#
+# A string can span multiple lines:
+#
+# ```text
+# "hello
+#       world" # same as "hello      \nworld"
+# ```
+#
+# Note that in the above example trailing and leading spaces, as well as newlines,
+# end up in the resulting string. To avoid this, you can split a string into multiple lines
+# by joining multiple literals with a backslash:
+#
+# ```text
+# "hello " \
+# "world, " \
+# "no newlines" # same as "hello world, no newlines"
+# ```
+#
+# Alterantively, a backlash followed by a newline can be inserted inside the string literal:
+#
+# ```text
+# "hello \
+#      world, \
+#      no newlines" # same as "hello world, no newlines"
+# ```
+#
+# In this case, leading whitespace is not included in the resulting string.
+#
+# If you need to write a string that has many double quotes, parenthesis, or similar
+# characters, you can use alternative literals:
+#
+# ```text
+# # Supports double quotes and nested parenthesis
+# %(hello ("world")) # same as "hello (\"world\")"
+#
+# # Supports double quotes and nested brackets
+# %[hello ["world"]] # same as "hello [\"world\"]"
+#
+# # Supports double quotes and nested curlies
+# %{hello {"world"}} # same as "hello {\"world\"}"
+#
+# # Supports double quotes and nested angles
+# %<hello <"world">> # same as "hello <\"world\">"
+# ```
+#
+# To create a String with embedded expressions, you can use string interpolation:
+#
+# ```text
+# a = 1
+# b = 2
+# "sum = #{a + b}"        # "sum = 3"
+# ```
+#
+# This ends up invoking `Object#to_s(IO)` on each expression enclosed by `#{...}`.
+#
+# If you need to dynamically build a string, use `String#build` or `StringIO`.
 class String
   # :nodoc:
   TYPE_ID = 1
@@ -27,6 +125,9 @@ class String
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(slice) #=> "abcd"
   # ```
+  #
+  # Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
+  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(slice : Slice(UInt8))
     new(slice.pointer(slice.length), slice.length)
   end
@@ -45,6 +146,9 @@ class String
   # ptr = Pointer.malloc(5) { |i| i == 4 ? 0_u8 : ('a'.ord + i).to_u8 }
   # String.new(ptr) #=> "abcd"
   # ```
+  #
+  # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
+  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*)
     new(chars, LibC.strlen(chars))
   end
@@ -60,6 +164,9 @@ class String
   # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(ptr, 2) => "ab"
   # ```
+  #
+  # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
+  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(chars : UInt8*, bytesize, length = 0)
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
@@ -86,6 +193,9 @@ class String
   # end
   # str #=> "ab"
   # ```
+  #
+  # Note: if the buffer doesn't end up denoting a valid UTF-8 sequence, this method still succeeds.
+  # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(capacity)
     str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
     buffer = (str as String).cstr
@@ -96,8 +206,8 @@ class String
     str as String
   end
 
-  # Builds a String by creating a `StringIO` with the given initial capacity, yielding
-  # it to the block and finally getting a String out of it. The `StringIO` automatically
+  # Builds a String by creating a `String::Builder` with the given initial capacity, yielding
+  # it to the block and finally getting a String out of it. The `String::Builder` automatically
   # resizes as needed.
   #
   # ```
@@ -215,10 +325,34 @@ class String
     LibC.atof cstr
   end
 
+  # Returns the `Char` at the give index, or raises `IndexOutOfBounds` if out of bounds.
+  #
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # ```
+  # "hello"[0]  # 'h'
+  # "hello"[1]  # 'e'
+  # "hello"[-1] # 'o'
+  # "hello"[-2] # 'l'
+  # "hello"[5]  # raises IndexOutOfBounds
+  # ```
   def [](index : Int)
     at(index) { raise IndexOutOfBounds.new }
   end
 
+  # Returns a substring by using a Range's *begin* and *end*
+  # as character indices. Indices can be negative to start
+  # counting from the end of the string.
+  #
+  # This method never raises: at most, the whole string or the empty
+  # string will be returned.
+  #
+  # ```
+  # "hello"[0..2]  # "hel"
+  # "hello"[0...2] # "he"
+  # "hello"[1..-1]  # "ello"
+  # "hello"[1...-1]  # "ell"
+  # ```
   def [](range : Range(Int, Int))
     from = range.begin
     from += length if from < 0
