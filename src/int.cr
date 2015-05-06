@@ -225,10 +225,11 @@ struct Int
       init = 0
     end
 
-    # bit-shifting, performance optimized for base 2 and base 16
-    if base == 2 || base == 16
-      mask = (base-1)
-      shift = (base == 2) ? 1 : 4
+    # bit-shift - performance optimized for bases 2, 4, 8, and 16
+    if base % 2 == 0 && base <= 16
+      mask = base - 1
+      # shift = { 2 => 1, 4 => 2, 8 => 3, 16 => 4 }[base] # slow
+      shift = (base == 16) ? 4 : ((base == 2) ? 1 : (( base == 8 ) ? 3 : 2))
       while num > 0
         digit = num & mask
         if digit >= 10
