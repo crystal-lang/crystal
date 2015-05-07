@@ -1,15 +1,93 @@
+# An Iterator allows processing sequences lazily, as opposed to `Enumerable` which processes
+# sequences eagerly and produces an `Array` in most of its methods.
+#
+# As an example, let's compute the first three numbers in the range `1..10_000_000` that are even,
+# multiplied by three. One way to do this is:
+#
+# ```
+# (1..10_000_000).select(&.even?).map { |x| x * 3 }.take(3) #=> [6, 12, 18]
+# ```
+#
+# The above works, but creates many intermediate arrays: one for the *select* call,
+# one for the *map* call and one for the *take* call. A more efficient way is to invoke
+# `Range#each` without a block, which gives us an Iterator so we can process the operations
+# lazily:
+#
+# ```
+# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3) #=> #< Iterator(T)::Take...
+# ```
+#
+# Iterator redefines many of `Enumerable`'s method in a lazy way, returning iterators
+# instead of arrays.
+#
+# At the end of the call chain we get back a new iterator: we need to consume it, either
+# using `each` or `Enumerable#to_a`:
+#
+# ```
+# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3).to_a #=> [6, 12, 18]
+# ```
+#
+# To implement an Iterator you need to define a `next` method that must return the next
+# element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
+# (you can invoke `stop` inside an iterator as a shortcut).
+#
+# Additionally, an `Iterator` can implement `rewind`, which must rewind the iterator to
+# its initial state. This is needed to implement the `cycle` method.
+#
+# For example, this is an iterator that returns a sequence of N zeros:
+#
+# ```
+# class Zeros
+#   include Iterator(Int32)
+#
+#   def initialize(@length)
+#     @produced = 0
+#   end
+#
+#   def next
+#     if @produced < @length
+#       @produced += 1
+#       0
+#     else
+#       stop
+#     end
+#   end
+#
+#   def rewind
+#     @produced = 0
+#     self
+#   end
+# end
+#
+# zeros = Zeros.new(5)
+# zeros.to_a            #=> [0, 0, 0, 0, 0]
+#
+# zeros.rewind
+# zeros.take(3).to_a    #=> [0, 0, 0]
+# ```
+#
+# The standard library provides iterators for many classes, like `Array`, `Hash`, `Range`, `String` and `IO`.
+# Usually to get an iterator you invoke a method that would usually yield elements to a block,
+# but without passing a block: `Array#each`, `Array#each_index`, `Hash#each`, `String#each_char`,
+# `IO#each_line`, etc.
 module Iterator(T)
+  # The class that signals that there are no more elements in an iterator.
   class Stop
     INSTANCE = new
   end
 
+  # Shortcut for `Iterator::Stop::INSTANCE`, to signal that there are no more elements in an iterator.
   def stop
     Stop::INSTANCE
   end
 
   include Enumerable(T)
 
+  # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
+  # are no more elements.
   abstract def next
+
+  # Rewinds the iterator to its original state.
   abstract def rewind
 
   def map(&func : T -> U)
@@ -74,6 +152,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Map(I, T, U)
     include Iterator(U)
 
@@ -92,6 +171,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Select(I, T, B)
     include Iterator(T)
 
@@ -115,6 +195,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Reject(I, T, B)
     include Iterator(T)
 
@@ -138,6 +219,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   class Take(I, T)
     include Iterator(T)
 
@@ -164,6 +246,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   class Skip(I, T)
     include Iterator(T)
 
@@ -186,6 +269,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Zip(I, J, T, U)
     include Iterator({T, U})
 
@@ -209,6 +293,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Cycle(I, T)
     include Iterator(T)
 
@@ -231,6 +316,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   class WithIndex(I, T)
     include Iterator({T, Int32})
 
@@ -253,6 +339,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct WithObject(I, T, O)
     include Iterator({T, O})
 
@@ -272,6 +359,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Slice(I, T)
     include Iterator(Array(T))
 
@@ -302,6 +390,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct Uniq(I, T, U)
     include Iterator(T)
 
