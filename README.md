@@ -40,8 +40,6 @@ Community
 
 Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang) or join our IRC channel #crystal-lang at irc.freenode.net
 
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)
-
 Contributing
 ---------
 
