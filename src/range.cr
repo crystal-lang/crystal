@@ -152,7 +152,7 @@ struct Range(B, E)
   # (1..10).step(3).skip(1).to_a #=> [4, 7, 10]
   # ```
   def step(n = 1)
-    ItemIterator.new(self, n)
+    StepIterator.new(self, n)
   end
 
   # Returns true if this range excludes the *end* element.
