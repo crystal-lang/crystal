@@ -1697,6 +1697,7 @@ class String
     Slice.new(cstr + byte_offset, bytesize - byte_offset)
   end
 
+  # :nodoc:
   class CharIterator
     include Iterator(Char)
 

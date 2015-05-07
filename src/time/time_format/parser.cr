@@ -1,4 +1,5 @@
 struct TimeFormat
+  # :nodoc:
   struct Parser
     include Pattern
 

@@ -14,6 +14,7 @@ class OptionParser
     end
   end
 
+  # :nodoc:
   record Handler, flag, block
 
   def self.parse(args)
@@ -83,6 +84,7 @@ class OptionParser
     parse ARGV
   end
 
+  # :nodoc:
   struct ParseTask
     def initialize(@args, @flags, @handlers, @unknown_args)
       double_dash_index = @double_dash_index = @args.index("--")

@@ -1,4 +1,5 @@
 module Spec
+  # :nodoc:
   abstract class Formatter
     def push(context)
     end
@@ -16,6 +17,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class DotFormatter < Formatter
     def report(result)
       print! Spec.color(LETTERS[result.kind], result.kind)
@@ -26,6 +28,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class VerboseFormatter < Formatter
     def initialize
       @ident = 0
@@ -61,9 +64,11 @@ module Spec
 
   @@formatter = DotFormatter.new
 
+  # :nodoc:
   def self.formatter=(@@formatter)
   end
 
+  # :nodoc:
   def self.formatter
     @@formatter
   end

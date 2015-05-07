@@ -1,3 +1,4 @@
+# :nodoc:
 struct String::Formatter
   def initialize(string, @args, @io)
     @reader = CharReader.new(string)

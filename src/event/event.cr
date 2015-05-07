@@ -1,5 +1,6 @@
 require "./*"
 
+# :nodoc:
 module Event
   VERSION = String.new(LibEvent2.event_get_version)
 
@@ -7,6 +8,7 @@ module Event
     block
   end
 
+  # :nodoc:
   struct Event::Base
     def initialize
       @base = LibEvent2.event_base_new

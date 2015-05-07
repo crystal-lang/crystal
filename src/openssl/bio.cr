@@ -1,7 +1,7 @@
 require "./lib_crypto"
 
+# :nodoc:
 struct OpenSSL::BIO
-
   CRYSTAL_BIO = begin
     crystal_bio = LibCrypto::BioMethod.new
     crystal_bio.name = "Crystal BIO".cstr

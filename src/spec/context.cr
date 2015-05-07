@@ -1,9 +1,12 @@
 module Spec
+  # :nodoc:
   abstract class Context
   end
 
+  # :nodoc:
   record Result, kind, description, file, line, exception
 
+  # :nodoc:
   class RootContext < Context
     def initialize
       @results = {
@@ -145,6 +148,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class NestedContext < Context
     getter parent
     getter description

@@ -1,3 +1,4 @@
+# :nodoc:
 struct IO::FdSet
   NFDBITS = sizeof(Int32) * 8
 

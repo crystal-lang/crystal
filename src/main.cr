@@ -3,6 +3,7 @@ lib LibCrystalMain
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 
+# :nodoc:
 module AtExitHandlers
   @@handlers = nil
 

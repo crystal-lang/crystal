@@ -340,6 +340,7 @@ module IO
     ByteIterator.new(self)
   end
 
+  # :nodoc:
   struct LineIterator(I)
     include Iterator(String)
 
@@ -356,6 +357,7 @@ module IO
     end
   end
 
+  # :nodoc:
   struct CharIterator(I)
     include Iterator(Char)
 
@@ -372,6 +374,7 @@ module IO
     end
   end
 
+  # :nodoc:
   struct ByteIterator(I)
     include Iterator(UInt8)
 

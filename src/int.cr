@@ -267,6 +267,7 @@ struct Int
     yield ptr, count
   end
 
+  # :nodoc:
   class TimesIterator(T)
     include Iterator(T)
 

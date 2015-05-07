@@ -444,7 +444,7 @@ class Array(T)
   end
 
   def each
-    Iterator.new(self)
+    ArrayIterator.new(self)
   end
 
   def each_index
@@ -1023,8 +1023,9 @@ class Array(T)
     end
   end
 
-  class Iterator(T)
-    include ::Iterator(T)
+  # :nodoc:
+  class ArrayIterator(T)
+    include Iterator(T)
 
     def initialize(@array : Array(T), @index = 0)
     end
@@ -1041,8 +1042,9 @@ class Array(T)
     end
   end
 
+  # :nodoc:
   class IndexIterator(T)
-    include ::Iterator(T)
+    include Iterator(T)
 
     def initialize(@array : Array(T), @index = 0)
     end
@@ -1061,8 +1063,9 @@ class Array(T)
     end
   end
 
+  # :nodoc:
   class ReverseIterator(T)
-    include ::Iterator(T)
+    include Iterator(T)
 
     def initialize(@array : Array(T), @index = array.length - 1)
     end

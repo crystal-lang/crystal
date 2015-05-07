@@ -6,6 +6,7 @@ class Crypto::MD5
     context.hex
   end
 
+  # :nodoc:
   struct Context
     def initialize
       @i = StaticArray(UInt32, 2).new(0_u32)

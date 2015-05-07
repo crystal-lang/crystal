@@ -163,7 +163,7 @@ class Hash(K, V)
   end
 
   def each
-    Iterator(K, V).new(self, @first)
+    EntryIterator(K, V).new(self, @first)
   end
 
   def each_key
@@ -436,6 +436,7 @@ class Hash(K, V)
     raise "Hash table too big"
   end
 
+  # :nodoc:
   class Entry(K, V)
     getter :key
     property :value
@@ -453,6 +454,7 @@ class Hash(K, V)
     end
   end
 
+  # :nodoc:
   module BaseIterator
     def initialize(@hash, @current)
     end
@@ -472,33 +474,37 @@ class Hash(K, V)
     end
   end
 
-  class Iterator(K, V)
+  # :nodoc:
+  class EntryIterator(K, V)
     include BaseIterator
-    include ::Iterator({K, V})
+    include Iterator({K, V})
 
     def next
       base_next { |entry| {entry.key, entry.value} }
     end
   end
 
+  # :nodoc:
   class KeyIterator(K, V)
     include BaseIterator
-    include ::Iterator(K)
+    include Iterator(K)
 
     def next
       base_next &.key
     end
   end
 
+  # :nodoc:
   class ValueIterator(K, V)
     include BaseIterator
-    include ::Iterator(V)
+    include Iterator(V)
 
     def next
       base_next &.value
     end
   end
 
+  # :nodoc:
   HASH_PRIMES = [
     8 + 3,
     16 + 3,

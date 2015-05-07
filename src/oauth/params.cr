@@ -1,3 +1,4 @@
+# :nodoc:
 struct OAuth::Params
   def initialize
     @params = [] of {String, String}

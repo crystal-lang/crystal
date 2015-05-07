@@ -77,7 +77,7 @@ struct Slice(T)
   end
 
   def each
-    Iterator(T).new(self)
+    ItemIterator(T).new(self)
   end
 
   def pointer(length)
@@ -140,8 +140,9 @@ struct Slice(T)
     @pointer
   end
 
-  class Iterator(T)
-    include ::Iterator(T)
+  # :nodoc:
+  class ItemIterator(T)
+    include Iterator(T)
 
     def initialize(@slice : ::Slice(T), @index = 0)
     end

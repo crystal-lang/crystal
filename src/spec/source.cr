@@ -1,8 +1,10 @@
 module Spec
+  # :nodoc:
   def self.lines_cache
     @@lines_cache ||= {} of String => Array(String)
   end
 
+  # :nodoc:
   def self.read_line(file, line)
     return nil unless File.file?(file)
 
@@ -10,6 +12,7 @@ module Spec
     lines[line - 1]?
   end
 
+  # :nodoc:
   def self.relative_file(file)
     cwd = Dir.working_directory
     if file.starts_with?(cwd)

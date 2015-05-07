@@ -175,6 +175,7 @@ struct Number
     self.class.cast((x * y).round / y)
   end
 
+  # :nodoc:
   class StepIterator(T, L, B)
     include Iterator(T)
 

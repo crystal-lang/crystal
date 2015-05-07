@@ -135,7 +135,7 @@ class Dir
   end
 
   def each
-    Iterator.new(self)
+    EntryIterator.new(self)
   end
 
   # Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.
@@ -311,8 +311,9 @@ class Dir
     io << "#<Dir:" << @path << ">"
   end
 
-  struct Iterator
-    include ::Iterator(String)
+  # :nodoc:
+  struct EntryIterator
+    include Iterator(String)
 
     def initialize(@dir)
     end

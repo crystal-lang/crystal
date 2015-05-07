@@ -1,4 +1,5 @@
 module Spec
+  # :nodoc:
   class EqualExpectation(T)
     def initialize(@value : T)
     end
@@ -17,6 +18,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class BeExpectation(T)
     def initialize(@value : T)
     end
@@ -35,6 +37,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class BeTruthyExpectation
     def match(@value)
       !!@value
@@ -49,6 +52,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class BeFalseyExpectation
     def match(@value)
       !@value
@@ -63,6 +67,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class CloseExpectation
     def initialize(@expected, @delta)
     end
@@ -81,6 +86,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class BeAExpectation(T)
     def match(value)
       @target = value
@@ -96,6 +102,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class Be(T)
     def self.<(other)
       Be.new(other, :"<")
@@ -142,6 +149,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   class MatchExpectation(T)
     def initialize(@value : T)
     end
@@ -160,20 +168,14 @@ module Spec
     end
   end
 
-  # @private
-  # Provides the implementation for `contain`. Uses `#includes?` to
-  # determine if it matches. Not intended to be instantiated directly.
+  # :nodoc:
   class ContainExpectation(T)
-    # Creates ContainExpectation(T) instance
-    # @param expected - item that is expected to be contained in actual
     def initialize(@expected : T)
-      @actual = NullActual.new
     end
 
-    # Checks if expected item is contained in provided actual value.
-    # @param actual - value where item is expected to be contained
-    def match(@actual)
-      @actual.includes?(@expected)
+    def match(actual)
+      @actual = actual
+      actual.includes?(@expected)
     end
 
     def failure_message
@@ -182,12 +184,6 @@ module Spec
 
     def negative_failure_message
       "expected: value #{@actual.inspect}\nto not include: #{@expected.inspect}"
-    end
-
-    class NullActual
-      def includes?(value)
-        fail "actual can't be empty"
-      end
     end
   end
 end

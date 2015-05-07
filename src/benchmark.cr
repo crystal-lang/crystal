@@ -1,6 +1,7 @@
 module Benchmark
   extend self
 
+  # :nodoc:
   class Tms
     getter utime
     getter stime
@@ -21,6 +22,7 @@ module Benchmark
     end
   end
 
+  # :nodoc:
   class Report
     def initialize
       @reports = [] of {String, ->}

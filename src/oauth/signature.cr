@@ -1,3 +1,4 @@
+# :nodoc:
 struct OAuth::Signature
   def initialize(@consumer_key, @client_shared_secret, @oauth_token = nil, @token_shared_secret = nil, @extra_params = nil)
   end

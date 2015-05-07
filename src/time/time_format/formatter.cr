@@ -1,6 +1,7 @@
 require "./pattern"
 
 struct TimeFormat
+  # :nodoc:
   struct Formatter
     include Pattern
 
