@@ -444,7 +444,7 @@ class Array(T)
   end
 
   def each
-    ArrayIterator.new(self)
+    ItemIterator.new(self)
   end
 
   def each_index
@@ -1024,7 +1024,7 @@ class Array(T)
   end
 
   # :nodoc:
-  class ArrayIterator(T)
+  class ItemIterator(T)
     include Iterator(T)
 
     def initialize(@array : Array(T), @index = 0)
