@@ -1,5 +1,13 @@
 require "spec"
 
+private def to_s_with_io(num)
+  String.build { |str| num.to_s(str) }
+end
+
+private def to_s_with_io(num, base, upcase = false)
+  String.build { |str| num.to_s(base, str, upcase) }
+end
+
 describe "Int" do
   describe "**" do
     assert { (2 ** 2).should eq(4) }
@@ -74,6 +82,30 @@ describe "Int" do
     it "raises on base 37" do
       expect_raises { 123.to_s(37) }
     end
+
+    assert { to_s_with_io(12, 2).should eq("1100") }
+    assert { to_s_with_io(-12, 2).should eq("-1100") }
+    assert { to_s_with_io(-123456, 2).should eq("-11110001001000000") }
+    assert { to_s_with_io(1234, 16).should eq("4d2") }
+    assert { to_s_with_io(-1234, 16).should eq("-4d2") }
+    assert { to_s_with_io(1234, 36).should eq("ya") }
+    assert { to_s_with_io(-1234, 36).should eq("-ya") }
+    assert { to_s_with_io(1234, 16, upcase: true).should eq("4D2") }
+    assert { to_s_with_io(-1234, 16, upcase: true).should eq("-4D2") }
+    assert { to_s_with_io(1234, 36, upcase: true).should eq("YA") }
+    assert { to_s_with_io(-1234, 36, upcase: true).should eq("-YA") }
+    assert { to_s_with_io(0, 2).should eq("0") }
+    assert { to_s_with_io(0, 16).should eq("0") }
+    assert { to_s_with_io(1, 2).should eq("1") }
+    assert { to_s_with_io(1, 16).should eq("1") }
+
+    it "raises on base 1 with io" do
+      expect_raises { to_s_with_io(123, 1) }
+    end
+
+    it "raises on base 37 with io" do
+      expect_raises { to_s_with_io(123, 37) }
+    end
   end
 
   describe "bit" do
@@ -122,6 +154,9 @@ describe "Int" do
 
   describe "to_s" do
     it "does to_s for various int sizes" do
+      0.to_s.should eq("0")
+      1.to_s.should eq("1")
+
       127_i8.to_s.should eq("127")
       -128_i8.to_s.should eq("-128")
 
@@ -139,6 +174,29 @@ describe "Int" do
       4294967295_u32.to_s.should eq("4294967295")
 
       18446744073709551615_u64.to_s.should eq("18446744073709551615")
+    end
+
+    it "does to_s for various int sizes with IO" do
+      to_s_with_io(0).should eq("0")
+      to_s_with_io(1).should eq("1")
+
+      to_s_with_io(127_i8).should eq("127")
+      to_s_with_io(-128_i8).should eq("-128")
+
+      to_s_with_io(32767_i16).should eq("32767")
+      to_s_with_io(-32768_i16).should eq("-32768")
+
+      to_s_with_io(2147483647).should eq("2147483647")
+      to_s_with_io(-2147483648).should eq("-2147483648")
+
+      to_s_with_io(9223372036854775807_i64).should eq("9223372036854775807")
+      to_s_with_io(-9223372036854775808_i64).should eq("-9223372036854775808")
+
+      to_s_with_io(255_u8).should eq("255")
+      to_s_with_io(65535_u16).should eq("65535")
+      to_s_with_io(4294967295_u32).should eq("4294967295")
+
+      to_s_with_io(18446744073709551615_u64).should eq("18446744073709551615")
     end
   end
 

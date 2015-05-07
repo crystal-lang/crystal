@@ -197,103 +197,74 @@ struct Int
     self % other
   end
 
+  #:nodoc:
+  DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
+  #:nodoc:
+  DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+  def to_s
+    to_s(10)
+  end
+
+  def to_s(io : IO)
+    to_s(10, io)
+  end
+
   def to_s(base : Int, upcase = false : Bool)
-    String.build do |io|
-      to_s(base, io, upcase)
+    raise "Invalid base #{base}" unless 2 <= base <= 36
+
+    case self
+    when 0
+      return "0"
+    when 1
+      return "1"
+    end
+
+    internal_to_s(base, upcase) do |ptr, count|
+      String.new(ptr, count, count)
     end
   end
 
   def to_s(base : Int, io : IO, upcase = false : Bool)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
-    if self == 0 || self == 1
-      io << self == 0 ? "0" : "1"
+    case self
+    when 0
+      io.write_byte '0'.ord.to_u8
+      return
+    when 1
+      io.write_byte '1'.ord.to_u8
       return
     end
 
-    str = StringIO.new
+    internal_to_s(base, upcase) do |ptr, count|
+      io.write Slice.new(ptr, count)
+    end
+  end
+
+  private def internal_to_s(base, upcase = false)
+    chars :: UInt8[65]
+    ptr_end = chars.to_unsafe + 64
+    ptr = ptr_end
     num = self
 
-    letter_a = (upcase ? 'A' : 'a').ord - 10
-    zero = '0'.ord
+    neg = num < 0
 
-    if num < 0
-      str.write_byte '-'.ord.to_u8
-      num = num.abs
-      init = 1
-    else
-      init = 0
-    end
+    digits = (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE).to_unsafe
 
-    # bit-shift - performance optimized for bases 2, 4, 8, and 16
-    if base % 2 == 0 && base <= 16
-      mask = base - 1
-      # shift = { 2 => 1, 4 => 2, 8 => 3, 16 => 4 }[base] # slow
-      shift = (base == 16) ? 4 : ((base == 2) ? 1 : (( base == 8 ) ? 3 : 2))
-      while num > 0
-        digit = num & mask
-        if digit >= 10
-          str.write_byte (letter_a + digit).to_u8
-        else
-          str.write_byte (zero + digit).to_u8
-        end
-        num = num >> shift
-      end
-    end
-
-    while num > 0
-      digit = num % base
-      if digit >= 10
-        str.write_byte (letter_a + digit).to_u8
-      else
-        str.write_byte (zero + digit).to_u8
-      end
+    while num != 0
+      ptr -= 1
+      ptr.value = digits[num.remainder(base).abs]
       num /= base
     end
 
-    # Reverse buffer
-    buffer = str.buffer
-    init.upto(str.bytesize / 2 + init - 1) do |i|
-      buffer.swap(i, str.bytesize - i - 1 + init)
+    if neg
+      ptr -= 1
+      ptr.value = '-'.ord.to_u8
     end
 
-    io << str.to_s
-  end
-
-  macro generate_to_s(capacity)
-    def to_s
-      String.new({{capacity}}) do |buffer|
-        to_s PointerIO.new(pointerof(buffer))
-      end
-    end
-
-    def to_s(io : IO)
-      if self == 0
-        io.write_byte '0'.ord.to_u8
-        return 1, 1
-      end
-
-      chars :: UInt8[{{capacity}}]
-      position = {{capacity}} - 1
-      num = self
-      negative = num < 0
-
-      while num != 0
-        digit = num.remainder(10).abs
-        chars.buffer[position] = ('0'.ord + digit).to_u8
-        position -= 1
-        num /= 10
-      end
-
-      if negative
-        chars.buffer[position] = '-'.ord.to_u8
-        position -= 1
-      end
-
-      length = {{capacity}} - 1 - position
-      io.write(chars.to_slice + position + 1, length)
-      {length, length}
-    end
+    count = (ptr_end - ptr).to_i32
+    yield ptr, count
   end
 
   class TimesIterator(T)
@@ -330,8 +301,6 @@ struct Int8
   def self.cast(value)
     value.to_i8
   end
-
-  generate_to_s 5
 end
 
 struct Int16
@@ -345,8 +314,6 @@ struct Int16
   def self.cast(value)
     value.to_i16
   end
-
-  generate_to_s 7
 end
 
 struct Int32
@@ -360,8 +327,6 @@ struct Int32
   def self.cast(value)
     value.to_i32
   end
-
-  generate_to_s 12
 end
 
 struct Int64
@@ -375,8 +340,6 @@ struct Int64
   def self.cast(value)
     value.to_i64
   end
-
-  generate_to_s 22
 end
 
 struct UInt8
@@ -390,8 +353,6 @@ struct UInt8
   def self.cast(value)
     value.to_u8
   end
-
-  generate_to_s 5
 end
 
 struct UInt16
@@ -405,8 +366,6 @@ struct UInt16
   def self.cast(value)
     value.to_u16
   end
-
-  generate_to_s 7
 end
 
 struct UInt32
@@ -420,8 +379,6 @@ struct UInt32
   def self.cast(value)
     value.to_u32
   end
-
-  generate_to_s 12
 end
 
 struct UInt64
@@ -435,8 +392,6 @@ struct UInt64
   def self.cast(value)
     value.to_u64
   end
-
-  generate_to_s 22
 end
 
 alias SignedInt = Int8 | Int16 | Int32 | Int64
