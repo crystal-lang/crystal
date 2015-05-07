@@ -402,13 +402,15 @@ def read_line(delimiter = '\n' : Char)
   STDIN.read_line(delimiter)
 end
 
-def print(obj)
-  STDOUT.print obj
+def print(*objects : Object)
+  objects.each do |obj|
+    STDOUT.print obj
+  end
   nil
 end
 
-def print!(obj)
-  print obj
+def print!(*objects : Object)
+  print *objects
   STDOUT.flush
   nil
 end
@@ -431,8 +433,10 @@ def sprintf(format_string, args : Array | Tuple)
   end
 end
 
-def puts(obj)
-  STDOUT.puts obj
+def puts(*objects : Object)
+  objects.each do |obj|
+    STDOUT.puts obj
+  end
   nil
 end
 
