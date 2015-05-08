@@ -1044,7 +1044,7 @@ class Array(T)
 
   # :nodoc:
   class IndexIterator(T)
-    include Iterator(T)
+    include Iterator(Int32)
 
     def initialize(@array : Array(T), @index = 0)
     end
