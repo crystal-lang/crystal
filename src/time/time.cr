@@ -96,6 +96,10 @@ struct Time
     new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, kind)
   end
 
+  def self.from_ms(ms : Int, kind = Kind::Utc)
+    new(UnixEpoch + ms.to_i64 * TimeSpan::TicksPerMillisecond, kind)
+  end
+
   def +(other : TimeSpan)
     add_ticks other.ticks
   end
@@ -268,8 +272,14 @@ struct Time
   end
 
   # Returns the number of seconds since the Epoch
-  def to_i
+  def to_seconds
     (ticks - UnixEpoch) / TimeSpan::TicksPerSecond
+  end
+
+  alias_method to_i, to_seconds
+
+  def to_ms
+    (ticks - UnixEpoch) / TimeSpan::TicksPerMillisecond
   end
 
   def to_f
