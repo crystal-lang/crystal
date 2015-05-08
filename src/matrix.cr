@@ -298,6 +298,10 @@ class Matrix(T)
     end
   end
 
+  def each(which = :all : Symbol)
+    ItemIterator.new(self, directive: which)
+  end
+
   # Yields every element along with its row and column index.
   # See #each for the optional directives.
   def each_with_index(which = :all : Symbol)
@@ -329,6 +333,14 @@ class Matrix(T)
   # See #each for the optional directives.
   def each_index(which = :all : Symbol)
     each_with_index(which) { |e, r, c| yield r, c }
+  end
+
+  def each_index(which = :all : Symbol)
+    IndexIterator.new(self, directive: which)
+  end
+
+  def cycle(which = :all : Symbol)
+    each(which).cycle
   end
 
   # Returns a new matrix with the return values of the block.
@@ -370,12 +382,12 @@ class Matrix(T)
     nil
   end
 
-  # Returns an array with the elements of the row at the given index.
-  def row(index : Int)
-    raise IndexOutOfBounds.new if index >= @rows
-    index += @rows if index < 0
-    raise IndexOutOfBounds.new if index < 0
-    Array.new(@columns) { |i| at(index, i) }
+  # Returns an iterator for the elements of the row at the given index.
+  def row(row_index : Int)
+    raise IndexOutOfBounds.new if row_index >= @rows
+    row_index += @rows if row_index < 0
+    raise IndexOutOfBounds.new if row_index < 0
+    RowIterator.new(self, row_index)
   end
 
   # Yields elements of the row at the given index.
@@ -389,15 +401,15 @@ class Matrix(T)
 
   # Returns an array of arrays that correspond to the rows of the matrix.
   def rows
-    Array.new(@rows) { |i| row(i) }
+    Array.new(@rows) { |i| row(i).to_a }
   end
 
-  # Returns an array with the elements of the column at the given index.
-  def column(index : Int)
-    raise IndexOutOfBounds.new if index >= @columns
-    index += @columns if index < 0
-    raise IndexOutOfBounds.new if index < 0
-    Array.new(@rows) { |i| at(i, index) }
+  # Returns an iterator for the elements of the column at the given index.
+  def column(column_index : Int)
+    raise IndexOutOfBounds.new if column_index >= @columns
+    column_index += @columns if column_index < 0
+    raise IndexOutOfBounds.new if column_index < 0
+    ColumnIterator.new(self, 0, column_index)
   end
 
   # Yields elements of the column at the given index.
@@ -411,7 +423,7 @@ class Matrix(T)
 
   # Returns an array of arrays that correspond to the columns of the matrix.
   def columns
-    Array.new(@columns) { |i| column(i) }
+    Array.new(@columns) { |i| column(i).to_a }
   end
 
   # The number of columns.
@@ -859,5 +871,128 @@ class Matrix(T)
       io << ',' << ' ' unless t == @rows - 1
     end
     io << ']'
+  end
+
+  class ItemIterator(T)
+    include Iterator(T)
+
+    def initialize(@matrix : Matrix(T), @row = 0, @col = 0, @directive = :all)
+    end
+
+    def next
+      skip = case @directive
+      when :all          then false
+      when :diagonal     then @row != @col
+      when :off_diagonal then @row == @col
+      when :lower        then @row <  @col
+      when :strict_lower then @row <= @col
+      when :upper        then @row >  @col
+      when :strict_upper then @row >= @col
+      else raise ArgumentError.new
+      end
+
+      no_more_rows? = @row + 1 >= @matrix.row_count
+      no_more_cols? = @col + 1 >= @matrix.column_count
+
+      if no_more_rows? && no_more_cols?
+        value = @matrix.at(@row, @col) { return stop }
+        @col += 1
+      elsif !no_more_rows? && no_more_cols?
+        value = @matrix[@row, @col]
+        @col = 0
+        @row += 1
+      else
+        value = @matrix[@row, @col]
+        @col += 1
+      end
+
+      skip ? self.next : value
+    end
+
+    def rewind
+      @row, @col = 0, 0
+      self
+    end
+  end
+
+  # :nodoc:
+  class IndexIterator(T)
+    include Iterator({Int32, Int32})
+
+    def initialize(@matrix : Matrix(T), @row = 0, @col = 0, @directive = :all)
+    end
+
+    def next
+      skip = case @directive
+      when :all          then false
+      when :diagonal     then @row != @col
+      when :off_diagonal then @row == @col
+      when :lower        then @row <  @col
+      when :strict_lower then @row <= @col
+      when :upper        then @row >  @col
+      when :strict_upper then @row >= @col
+      else raise ArgumentError.new
+      end
+
+      value = {@row, @col}
+      no_more_rows? = @row + 1 >= @matrix.row_count
+      no_more_cols? = @col + 1 >= @matrix.column_count
+      if no_more_rows? && no_more_cols?
+        return stop if @col == @matrix.column_count
+        @col += 1
+      elsif !no_more_rows? && no_more_cols?
+        @col = 0
+        @row += 1
+      else
+        @col += 1
+      end
+
+      skip ? self.next : value
+    end
+
+    def rewind
+      @row, @col = 0, 0
+      self
+    end
+  end
+
+  # :nodoc:
+  class RowIterator(T)
+    include Iterator(T)
+
+    def initialize(@matrix : Matrix(T), @row = 0, @col = 0)
+    end
+
+    def next
+      return stop if @col >= @matrix.column_count
+      value = @matrix[@row, @col]
+      @col += 1
+      value
+    end
+
+    def rewind
+      @col = 0
+      self
+    end
+  end
+
+  # :nodoc:
+  class ColumnIterator(T)
+    include Iterator(T)
+
+    def initialize(@matrix : Matrix(T), @row = 0, @col = 0)
+    end
+
+    def next
+      return stop if @row >= @matrix.row_count
+      value = @matrix[@row, @col]
+      @row += 1
+      value
+    end
+
+    def rewind
+      @row = 0
+      self
+    end
   end
 end

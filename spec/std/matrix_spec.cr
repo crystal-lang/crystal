@@ -428,10 +428,10 @@ describe Matrix do
   end
 
   describe "row" do
-    it "returns an array with the row corresponding to the given index" do
+    it "returns an iterator for with the row corresponding to the given index" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       a = [4, 5, 6]
-      m.row(1).should eq(a)
+      m.row(1).to_a.should eq(a)
     end
   end
 
@@ -453,10 +453,10 @@ describe Matrix do
   end
 
   describe "column" do
-    it "returns an array with the column corresponding to the given index" do
+    it "returns an iterator for the column corresponding to the given index" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       a = [2, 5, 8]
-      m.column(1).should eq(a)
+      m.column(1).to_a.should eq(a)
     end
   end
 
@@ -722,6 +722,97 @@ describe Matrix do
       a = Matrix.column(:a, :b, :c, :d)
       b = Matrix.row(:a, :b, :c, :d)
       a.transpose.should eq(b)
+    end
+  end
+
+  describe "each iterator" do
+    it "does next" do
+      iter = Matrix.identity(3).each
+      {1, 0, 0, 0, 1, 0, 0, 0, 1}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+    end
+
+    it "cycles" do
+      Matrix.identity(3).cycle.take(10).join.should eq("1000100011")
+    end
+  end
+
+  describe "each_index iterator" do
+    it "does next" do
+      iter = Matrix.new(3, 2, &.itself).each_index
+      iter.next.should eq({0, 0})
+      iter.next.should eq({0, 1})
+      iter.next.should eq({1, 0})
+      iter.next.should eq({1, 1})
+      iter.next.should eq({2, 0})
+      iter.next.should eq({2, 1})
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq({0, 0})
+    end
+  end
+
+  describe "row iterator" do
+    it "does next" do
+      m = Matrix.identity(3)
+
+      iter = m.row(0)
+      {1, 0, 0}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter = m.row(1)
+      {0, 1, 0}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(0)
+
+      iter = m.row(2)
+      {0, 0, 1}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(0)
+
+      iter = m.row(-1)
+      {0, 0, 1}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(0)
+    end
+  end
+
+  describe "column iterator" do
+    it "does next" do
+      m = Matrix.identity(3)
+
+      iter = m.column(0)
+      {1, 0, 0}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter = m.column(1)
+      {0, 1, 0}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(0)
+
+      iter = m.column(2)
+      {0, 0, 1}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(0)
+
+      iter = m.column(-1)
+      {0, 0, 1}.each { |e| iter.next.should eq(e) }
+      iter.next.should be_a(Iterator::Stop)
+      iter.rewind
+      iter.next.should eq(0)
     end
   end
 end
