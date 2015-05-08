@@ -1833,11 +1833,11 @@ module Crystal
             else
               whitespace = false
             end
-          when '"'
+          when '\'', '"'
             if delimiter_state
-              delimiter_state = nil
+              delimiter_state = nil if delimiter_state.end == char
             else
-              delimiter_state = Token::DelimiterState.new(:string, '"', '"', 0)
+              delimiter_state = Token::DelimiterState.new(:string, char, char, 0)
             end
             whitespace = false
           when '%'

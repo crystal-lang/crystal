@@ -446,4 +446,15 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
   end
+
+  it "lexes macro with embedded char and sharp" do
+    lexer = Lexer.new(%(good '#' day end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%(good '#' day ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
 end
