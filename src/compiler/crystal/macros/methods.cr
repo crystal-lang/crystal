@@ -304,7 +304,7 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
       when "find"
         interpret_argless_method(method, args) do
-          raise "select expects a block" unless block
+          raise "find expects a block" unless block
 
           block_arg = block.args.first?
 
@@ -346,6 +346,8 @@ module Crystal
             interpreter.accept(block.body).truthy?
           end)
         end
+      when "shuffle"
+        ArrayLiteral.new(elements.shuffle)
       when "sort"
         ArrayLiteral.new(elements.sort { |x, y| x.interpret_compare(y) })
       when "uniq"
@@ -368,8 +370,6 @@ module Crystal
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
         end
-      when "shuffle"
-        ArrayLiteral.new(elements.shuffle)
       else
         super
       end
@@ -480,7 +480,7 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "body"
-        interpret_argless_method(method, args) { @body || Nop.new }
+        interpret_argless_method(method, args) { @body }
       when "args"
         interpret_argless_method(method, args) do
           ArrayLiteral.map(@args) { |arg| MacroId.new(arg.name) }
