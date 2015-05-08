@@ -1491,7 +1491,7 @@ module Crystal
       pieces = [] of ASTNode | String
       has_interpolation = false
 
-      delimiter_state, has_interpolation, modifiers = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, has_interpolation, options = consume_delimiter pieces, delimiter_state, has_interpolation
 
       if delimiter_state.kind == :string
         while true
@@ -1501,7 +1501,7 @@ module Crystal
           if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
-            delimiter_state, has_interpolation, modifiers = consume_delimiter pieces, delimiter_state, has_interpolation
+            delimiter_state, has_interpolation, options = consume_delimiter pieces, delimiter_state, has_interpolation
           else
             break
           end
@@ -1521,14 +1521,14 @@ module Crystal
       when :command
         result = Call.new(nil, "`", result)
       when :regex
-        result = RegexLiteral.new(result, modifiers)
+        result = RegexLiteral.new(result, options)
       end
 
       result
     end
 
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
-      modifiers = 0
+      options = Regex::Options::None
       while true
         case @token.type
         when :STRING
@@ -1538,7 +1538,7 @@ module Crystal
           delimiter_state = @token.delimiter_state
         when :DELIMITER_END
           if delimiter_state.kind == :regex
-            modifiers = consume_regex_modifiers
+            options = consume_regex_options
           end
           next_token
           break
@@ -1571,21 +1571,21 @@ module Crystal
         end
       end
 
-      {delimiter_state, has_interpolation, modifiers}
+      {delimiter_state, has_interpolation, options}
     end
 
-    def consume_regex_modifiers
-      modifiers = 0
+    def consume_regex_options
+      options = Regex::Options::None
       while true
         case current_char
         when 'i'
-          modifiers |= Regex::IGNORE_CASE
+          options |= Regex::Options::IGNORE_CASE
           next_char
         when 'm'
-          modifiers |= Regex::MULTILINE
+          options |= Regex::Options::MULTILINE
           next_char
         when 'x'
-          modifiers |= Regex::EXTENDED
+          options |= Regex::Options::EXTENDED
           next_char
         else
           if 'a' <= current_char.downcase <= 'z'
@@ -1594,7 +1594,7 @@ module Crystal
           break
         end
       end
-      modifiers
+      options
     end
 
     def parse_string_without_interpolation

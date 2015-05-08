@@ -153,7 +153,7 @@ module Crystal
           when RegexLiteral
             arg_value = arg.value
             if arg_value.is_a?(StringLiteral)
-              regex = Regex.new(arg_value.value, arg.modifiers)
+              regex = Regex.new(arg_value.value, arg.options)
             else
               raise "regex interpolations not yet allowed in macros"
             end
@@ -203,7 +203,7 @@ module Crystal
 
           regex_value = first.value
           if regex_value.is_a?(StringLiteral)
-            regex = Regex.new(regex_value.value, first.modifiers)
+            regex = Regex.new(regex_value.value, first.options)
           else
             raise "regex interpolations not yet allowed in macros"
           end

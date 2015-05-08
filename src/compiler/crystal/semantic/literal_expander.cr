@@ -1,7 +1,7 @@
 module Crystal
   class LiteralExpander
     def initialize(@program)
-      @regexes = [] of {String, Int32}
+      @regexes = [] of {String, Regex::Options}
     end
 
     # Convert an array literal to creating an Array and storing the values:
@@ -174,7 +174,7 @@ module Crystal
       when StringLiteral
         string = node_value.value
 
-        key = {string, node.modifiers}
+        key = {string, node.options}
         index = @regexes.index key
         unless index
           index = @regexes.length
@@ -185,11 +185,11 @@ module Crystal
         temp_name = @program.new_temp_var_name
         @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-        regex = Call.new(Path.global("Regex"), "new", StringLiteral.new(string), NumberLiteral.new(node.modifiers))
+        regex = Call.new(Path.global("Regex"), "new", StringLiteral.new(string), NumberLiteral.new(node.options.value))
         second_assign = Assign.new(Global.new(global_name), regex)
         If.new(first_assign, Var.new(temp_name), second_assign)
       else
-        Call.new(Path.global("Regex"), "new", node_value, NumberLiteral.new(node.modifiers))
+        Call.new(Path.global("Regex"), "new", node_value, NumberLiteral.new(node.options.value))
       end
     end
 

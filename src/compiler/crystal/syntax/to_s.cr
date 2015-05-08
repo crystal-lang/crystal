@@ -871,9 +871,9 @@ module Crystal
         visit_interpolation exp, &.gsub('/', "\\/")
       end
       @str << "/"
-      @str << "i" if (node.modifiers & Regex::IGNORE_CASE) != 0
-      @str << "m" if (node.modifiers & Regex::MULTILINE) != 0
-      @str << "x" if (node.modifiers & Regex::EXTENDED) != 0
+      @str << "i" if node.options.includes? Regex::Options::IGNORE_CASE
+      @str << "m" if node.options.includes? Regex::Options::MULTILINE
+      @str << "x" if node.options.includes? Regex::Options::EXTENDED
     end
 
     def visit(node : TupleLiteral)

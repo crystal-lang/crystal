@@ -4,7 +4,7 @@ class StringScanner
   end
 
   def scan(re)
-    match = re.match(@str, @offset, Regex::ANCHORED)
+    match = re.match(@str, @offset, Regex::Options::ANCHORED)
     if match
       @offset = match.end(0).to_i
       match[0]
