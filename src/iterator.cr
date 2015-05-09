@@ -123,6 +123,10 @@ module Iterator(T)
     Cycle(typeof(self), T).new(self)
   end
 
+  def cycle(n : Int)
+    CycleN(typeof(self), T, typeof(n)).new(self, n)
+  end
+
   def uniq
     uniq &.itself
   end
@@ -325,6 +329,34 @@ module Iterator(T)
 
     def rewind
       @iterator.rewind
+      self
+    end
+  end
+
+  # :nodoc:
+  class CycleN(I, T, N)
+    include Iterator(T)
+
+    def initialize(@iterator : Iterator(T), @n : N)
+      @count = 0
+    end
+
+    def next
+      value = @iterator.next
+      if value.is_a?(Stop)
+        @count += 1
+        return stop if @count >= @n
+
+        @iterator.rewind
+        @iterator.next
+      else
+        value
+      end
+    end
+
+    def rewind
+      @iterator.rewind
+      @count = 0
       self
     end
   end

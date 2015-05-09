@@ -98,6 +98,18 @@ describe Iterator do
       values = ary.each.cycle.to_a
       values.empty?.should be_true
     end
+
+    it "cycles N times" do
+      iter = (1..2).each.cycle(2)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+    end
   end
 
   describe "with_index" do
