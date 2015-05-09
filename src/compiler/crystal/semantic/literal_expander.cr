@@ -160,7 +160,7 @@ module Crystal
     #     if temp_var = $some_global
     #       temp_var
     #     else
-    #       $some_global = Regex.new("regex", flags)
+    #       $some_global = Regex.new("regex", Regex::Options.new(flags))
     #     end
     #
     # That is, cache the regex in a global variable.
@@ -185,7 +185,7 @@ module Crystal
         temp_name = @program.new_temp_var_name
         @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-        regex = Call.new(Path.global("Regex"), "new", StringLiteral.new(string), NumberLiteral.new(node.options.value))
+        regex = Call.new(Path.global("Regex"), "new", StringLiteral.new(string), Call.new(Path.global(["Regex", "Options"]), "new", NumberLiteral.new(node.options.value)))
         second_assign = Assign.new(Global.new(global_name), regex)
         If.new(first_assign, Var.new(temp_name), second_assign)
       else
