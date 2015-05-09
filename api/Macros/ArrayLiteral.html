@@ -31,10 +31,12 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -45,12 +47,351 @@
 
 
 
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28index%20%3A%20NumberLiteral%29%20%3A%20ASTNode-instance-method" class="signature"><strong>#[]</strong>(index : NumberLiteral) : ASTNode</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#%5B%5D%28index%20%3A%20Int%29-instance-method">Array#[]</a></code>, but returns <code><a href="../Macros/NilLiteral.html">NilLiteral</a></code> on out of bounds.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#all%3F%28%26block%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#all?</strong>(&block) : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Enumerable.html#all%3F-instance-method">Enumerable#all?</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#any%3F%28%26block%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#any?</strong>(&block) : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Enumerable.html#any%3F-instance-method">Enumerable#any?</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#argify%20%3A%20MacroId-instance-method" class="signature"><strong>#argify</strong> : MacroId</a>
+        
+          <div class="summary"><p>Returns a <code><a href="../Macros/MacroId.html">MacroId</a></code> with all of this array's elements joined by commas.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#empty?</strong> : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#empty%3F-instance-method">Array#empty?</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#find%28%26block%29%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method" class="signature"><strong>#find</strong>(&block) : ASTNode | NilLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Enumerable.html#find%28if_none%20%3D%20nil%2C%20%26block%29-instance-method">Enumerable#find</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#first%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method" class="signature"><strong>#first</strong> : ASTNode | NilLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#first-instance-method">Array#first</a></code>, but returns a NilLiteral if the array is empty.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#join%28separator%29%20%3A%20StringLiteral-instance-method" class="signature"><strong>#join</strong>(separator) : StringLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Enumerable.html#join%28separator%20%3D%20%22%22%29-instance-method">Enumerable#join</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#last%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method" class="signature"><strong>#last</strong> : ASTNode | NilLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#last%28%26block%29-instance-method">Array#last</a></code>, but returns a NilLiteral if the array is empty.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#length%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#length</strong> : NumberLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#length-instance-method">Array#length</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%28%26block%29%20%3A%20ArrayLiteral-instance-method" class="signature"><strong>#map</strong>(&block) : ArrayLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Enumerable.html#map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">Enumerable#map</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#select%28%26block%29%20%3A%20ArrayLiteral-instance-method" class="signature"><strong>#select</strong>(&block) : ArrayLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Enumerable.html#select%28%26block%20%3A%20T%20-%3E%20%29-instance-method">Enumerable#select</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shuffle%20%3A%20ArrayLiteral-instance-method" class="signature"><strong>#shuffle</strong> : ArrayLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#shuffle-instance-method">Array#shuffle</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sort%20%3A%20ArrayLiteral-instance-method" class="signature"><strong>#sort</strong> : ArrayLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#sort%28%26block%20%3A%20T%2C%20T%20-%3E%20Int32%29-instance-method">Array#sort</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#uniq%20%3A%20ArrayLiteral-instance-method" class="signature"><strong>#uniq</strong> : ArrayLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../Array.html#uniq%28%26block%20%3A%20T%20-%3E%20_%29-instance-method">Array#uniq</a></code></p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
 
 
 
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28index%20%3A%20NumberLiteral%29%20%3A%20ASTNode-instance-method">
+        
+        def <strong>[]</strong>(index : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/ASTNode.html">ASTNode</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#%5B%5D%28index%20%3A%20Int%29-instance-method">Array#[]</a></code>, but returns <code><a href="../Macros/NilLiteral.html">NilLiteral</a></code> on out of bounds.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L384" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="all%3F%28%26block%29%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>all?</strong>(&block) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Enumerable.html#all%3F-instance-method">Enumerable#all?</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L331" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="any%3F%28%26block%29%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>any?</strong>(&block) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Enumerable.html#any%3F-instance-method">Enumerable#any?</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L327" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="argify%20%3A%20MacroId-instance-method">
+        
+        def <strong>argify</strong> : <a href="../Macros/MacroId.html">MacroId</a>
+      </div>
+      
+        <div class="doc"><p>Returns a <code><a href="../Macros/MacroId.html">MacroId</a></code> with all of this array's elements joined
+by commas.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L336" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="empty%3F%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>empty?</strong> : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#empty%3F-instance-method">Array#empty?</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L340" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="find%28%26block%29%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method">
+        
+        def <strong>find</strong>(&block) : <a href="../Macros/ASTNode.html">ASTNode</a> | <a href="../Macros/NilLiteral.html">NilLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Enumerable.html#find%28if_none%20%3D%20nil%2C%20%26block%29-instance-method">Enumerable#find</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L344" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="first%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method">
+        
+        def <strong>first</strong> : <a href="../Macros/ASTNode.html">ASTNode</a> | <a href="../Macros/NilLiteral.html">NilLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#first-instance-method">Array#first</a></code>, but returns a NilLiteral if the array is empty.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L348" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%29%20%3A%20StringLiteral-instance-method">
+        
+        def <strong>join</strong>(separator) : <a href="../Macros/StringLiteral.html">StringLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Enumerable.html#join%28separator%20%3D%20%22%22%29-instance-method">Enumerable#join</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L352" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="last%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method">
+        
+        def <strong>last</strong> : <a href="../Macros/ASTNode.html">ASTNode</a> | <a href="../Macros/NilLiteral.html">NilLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#last%28%26block%29-instance-method">Array#last</a></code>, but returns a NilLiteral if the array is empty.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L356" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="length%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>length</strong> : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#length-instance-method">Array#length</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L360" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%28%26block%29%20%3A%20ArrayLiteral-instance-method">
+        
+        def <strong>map</strong>(&block) : <a href="../Macros/ArrayLiteral.html">ArrayLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Enumerable.html#map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method">Enumerable#map</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L364" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="select%28%26block%29%20%3A%20ArrayLiteral-instance-method">
+        
+        def <strong>select</strong>(&block) : <a href="../Macros/ArrayLiteral.html">ArrayLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Enumerable.html#select%28%26block%20%3A%20T%20-%3E%20%29-instance-method">Enumerable#select</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L368" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="shuffle%20%3A%20ArrayLiteral-instance-method">
+        
+        def <strong>shuffle</strong> : <a href="../Macros/ArrayLiteral.html">ArrayLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#shuffle-instance-method">Array#shuffle</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L372" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="sort%20%3A%20ArrayLiteral-instance-method">
+        
+        def <strong>sort</strong> : <a href="../Macros/ArrayLiteral.html">ArrayLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#sort%28%26block%20%3A%20T%2C%20T%20-%3E%20Int32%29-instance-method">Array#sort</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L376" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="uniq%20%3A%20ArrayLiteral-instance-method">
+        
+        def <strong>uniq</strong> : <a href="../Macros/ArrayLiteral.html">ArrayLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../Array.html#uniq%28%26block%20%3A%20T%20-%3E%20_%29-instance-method">Array#uniq</a></code></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L380" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
 
 
 

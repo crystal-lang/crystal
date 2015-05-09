@@ -11,6 +11,17 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The Macros module is a ficticious module used to document macros
+and macro methods.</p>
+
+<p>You can invoke a <strong>fixed subset</strong> of methods on AST nodes at compile-time. These methods
+are documented on the classes in this module. Additionaly, methods of the
+<code><a href="Macros.html">Macros</a></code> module are top-level methods that you can invoke, like <code><a href="Macros.html#puts%28expression%29%20%3A%20Nop-instance-method">#puts</a></code> and <code><a href="Macros.html#run%28filename%2C%20%2Aargs%29%20%3A%20MacroId-instance-method">#run</a></code>.</p>
+
+
+
 
 
 
@@ -27,7 +38,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -38,12 +49,204 @@
 
 
 
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%60%28command%29%20%3A%20MacroId-instance-method" class="signature"><strong>#`</strong>(command) : MacroId</a>
+        
+          <div class="summary"><p>Executes a system command and returns the output as a <code><a href="Macros/MacroId.html">MacroId</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#env%28name%29%20%3A%20StringLiteral%20%7C%20NilLiteral-instance-method" class="signature"><strong>#env</strong>(name) : StringLiteral | NilLiteral</a>
+        
+          <div class="summary"><p>Gets the value of an environment variable at compile-time, or <code>nil</code> if it doesn't exist.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#p%28expression%29%20%3A%20Nop-instance-method" class="signature"><strong>#p</strong>(expression) : Nop</a>
+        
+          <div class="summary"><p>Same as <code><a href="Macros.html#puts%28expression%29%20%3A%20Nop-instance-method">#puts</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#puts%28expression%29%20%3A%20Nop-instance-method" class="signature"><strong>#puts</strong>(expression) : Nop</a>
+        
+          <div class="summary"><p>Prints an AST node at compile-time.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raise%28message%29%20%3A%20NoReturn-instance-method" class="signature"><strong>#raise</strong>(message) : NoReturn</a>
+        
+          <div class="summary"><p>Gives a compile-time error with the given message.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#run%28filename%2C%20%2Aargs%29%20%3A%20MacroId-instance-method" class="signature"><strong>#run</strong>(filename, *args) : MacroId</a>
+        
+          <div class="summary"><p>Compiles and execute a Crystal program and returns its output as a <code><a href="Macros/MacroId.html">MacroId</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#system%28command%29%20%3A%20MacroId-instance-method" class="signature"><strong>#system</strong>(command) : MacroId</a>
+        
+          <div class="summary"><p>Executes a system command and returns the output as a <code><a href="Macros/MacroId.html">MacroId</a></code>.</p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
 
 
 
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%60%28command%29%20%3A%20MacroId-instance-method">
+        
+        def <strong>`</strong>(command) : <a href="Macros/MacroId.html">MacroId</a>
+      </div>
+      
+        <div class="doc"><p>Executes a system command and returns the output as a <code><a href="Macros/MacroId.html">MacroId</a></code>.
+Gives a compile-time error if the command failed to execute.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L22" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="env%28name%29%20%3A%20StringLiteral%20%7C%20NilLiteral-instance-method">
+        
+        def <strong>env</strong>(name) : <a href="Macros/StringLiteral.html">StringLiteral</a> | <a href="Macros/NilLiteral.html">NilLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Gets the value of an environment variable at compile-time, or <code>nil</code> if it doesn't exist.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L9" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="p%28expression%29%20%3A%20Nop-instance-method">
+        
+        def <strong>p</strong>(expression) : <a href="Macros/Nop.html">Nop</a>
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="Macros.html#puts%28expression%29%20%3A%20Nop-instance-method">#puts</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L17" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="puts%28expression%29%20%3A%20Nop-instance-method">
+        
+        def <strong>puts</strong>(expression) : <a href="Macros/Nop.html">Nop</a>
+      </div>
+      
+        <div class="doc"><p>Prints an AST node at compile-time. Useful for debugging macros.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="raise%28message%29%20%3A%20NoReturn-instance-method">
+        
+        def <strong>raise</strong>(message) : NoReturn
+      </div>
+      
+        <div class="doc"><p>Gives a compile-time error with the given message.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L30" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="run%28filename%2C%20%2Aargs%29%20%3A%20MacroId-instance-method">
+        
+        def <strong>run</strong>(filename, *args) : <a href="Macros/MacroId.html">MacroId</a>
+      </div>
+      
+        <div class="doc"><p>Compiles and execute a Crystal program and returns its output
+as a <code><a href="Macros/MacroId.html">MacroId</a></code>.</p>
+
+<p>The file denote by <em>filename</em> must be a valid Crystal program.
+This macro invocation passes <em>args</em> to the program as regular
+program arguments. The program must output a valid Crystal expression.
+This output is the result of this macro invocation, as a <code><a href="Macros/MacroId.html">MacroId</a></code>.</p>
+
+<p>The <code><a href="Macros.html#run%28filename%2C%20%2Aargs%29%20%3A%20MacroId-instance-method">#run</a></code> macro is useful when the subset of available macro methods
+are not enough for your purposes and you need something more powerful.
+With <code><a href="Macros.html#run%28filename%2C%20%2Aargs%29%20%3A%20MacroId-instance-method">#run</a></code> you can read files at compile time, connect to the internet
+or to a datbase.</p>
+
+<p>A simple example:</p>
+
+<pre><code><span class="c"># fetch.cr</span>
+<span class="k">require</span> <span class="s">"http/client"</span>
+
+puts <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="t">ARGV</span>[<span class="n">0</span>]).body</code></pre>
+
+<pre><code><span class="c"># main.cr</span>
+<span class="k">macro</span> invoke_fetch
+  {{ run(<span class="s">"./fetch"</span>, <span class="s">"http://example.com"</span>).stringify }}
+<span class="k">end</span>
+
+puts invoke_fetch</code></pre>
+
+<p>The above generates a program that will have the contents of <code>http://example.com</code>.
+A connection to <code>http://example.com</code> is never made at runtime.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L66" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="system%28command%29%20%3A%20MacroId-instance-method">
+        
+        def <strong>system</strong>(command) : <a href="Macros/MacroId.html">MacroId</a>
+      </div>
+      
+        <div class="doc"><p>Executes a system command and returns the output as a <code><a href="Macros/MacroId.html">MacroId</a></code>.
+Gives a compile-time error if the command failed to execute.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L26" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
 
 
 

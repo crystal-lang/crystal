@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.8" data-basepath=".." data-revision="Fri May 08 2015 13:10:43 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.8" data-basepath=".." data-revision="Fri May 08 2015 21:13:57 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1506,67 +1506,6 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="blocks-and-procs">Blocks and Procs</h1>
-<p>Methods can accept an implicit block of code that can be executed with the <code>yield</code> keyword.</p>
-<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
-  <span class="hljs-keyword">yield</span>
-  <span class="hljs-keyword">yield</span>
-<span class="hljs-keyword">end</span>
-
-twice <span class="hljs-keyword">do</span>
-  puts <span class="hljs-string">&quot;Hello!&quot;</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-comment"># Will print:</span>
-<span class="hljs-comment">#</span>
-<span class="hljs-comment"># Hello!</span>
-<span class="hljs-comment"># Hello!</span>
-</code></pre>
-<p>Each time you invoke <code>yield</code>, the block of code given to the method between the <code>do ... end</code> (or <code>{ .. }</code>) will be executed.</p>
-<p>The block of code has access to the local variables, and can modify them:</p>
-<pre><code class="lang-ruby">a = <span class="hljs-number">0</span>
-twice <span class="hljs-keyword">do</span>
-  a += <span class="hljs-number">1</span>
-<span class="hljs-keyword">end</span>
-puts a <span class="hljs-comment">#=&gt; 2</span>
-</code></pre>
-<p>In fact, invoking a block of code like this (with <code>yield</code>) is exactly the same as manually expanding the invocation (in terms of performance):</p>
-<pre><code class="lang-ruby">a = <span class="hljs-number">0</span>
-a += <span class="hljs-number">1</span>
-a += <span class="hljs-number">1</span>
-puts a <span class="hljs-comment">#=&gt; 2</span>
-</code></pre>
-<h2 id="block-arguments">Block arguments</h2>
-<p>A block can receive arguments, and these can be given a value by passing arguments to the <code>yield</code> keyword:</p>
-<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>one_and_three
-  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
-  <span class="hljs-keyword">yield</span> <span class="hljs-number">3</span>
-<span class="hljs-keyword">end</span>
-
-a = <span class="hljs-number">0</span>
-one_and_three <span class="hljs-keyword">do</span> |x|
-  a += x
-<span class="hljs-keyword">end</span>
-puts a <span class="hljs-comment">#=&gt; 4</span>
-</code></pre>
-<p>Again, this is exactly the same as writing this:</p>
-<pre><code class="lang-ruby">a = <span class="hljs-number">0</span>
-a += <span class="hljs-number">1</span>
-a += <span class="hljs-number">3</span>
-puts a <span class="hljs-comment">#=&gt; 4</span>
-</code></pre>
-<p>You can omit a block&apos;s variable if you don&apos;t need it:</p>
-<pre><code class="lang-ruby">a = <span class="hljs-number">0</span>
-one_and_three <span class="hljs-keyword">do</span>
- a += <span class="hljs-number">1</span>
-<span class="hljs-keyword">end</span>
-puts a
-</code></pre>
-<p>If you declare more block variables than the ones passed by <code>yield</code>, they will be <code>nil</code>:</p>
-<pre><code class="lang-ruby">one_and_three <span class="hljs-keyword">do</span> |x, y|
-  <span class="hljs-comment"># here y will always be nil</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<h2 id="block-and-yield-values">Block and yield values</h2>
 
                     
                     </section>

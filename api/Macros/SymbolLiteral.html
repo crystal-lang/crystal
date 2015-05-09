@@ -11,6 +11,10 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>A symbol literal.</p>
+
 
 
 
@@ -27,10 +31,12 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -41,12 +47,438 @@
 
 
 
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#+</strong>(other : StringLiteral | CharLiteral) : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#%2B%28other%20%3A%20self%29-instance-method">String#+</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%7E%28range%20%3A%20RegexLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#=~</strong>(range : RegexLiteral) : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#%3D%7E%28other%29-instance-method">String#=~</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28range%20%3A%20RangeLiteral%29%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#[]</strong>(range : RangeLiteral) : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#%5B%5D%28index%20%3A%20Int%29-instance-method">String#[]</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#capitalize%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#capitalize</strong> : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#capitalize-instance-method">String#capitalize</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chars%20%3A%20ArrayLiteral%28CharLiteral%29-instance-method" class="signature"><strong>#chars</strong> : ArrayLiteral(CharLiteral)</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#chars-instance-method">String#chars</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chomp%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#chomp</strong> : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#chomp-instance-method">String#chomp</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#downcase%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#downcase</strong> : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#downcase-instance-method">String#downcase</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#empty?</strong> : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#empty%3F-instance-method">String#empty?</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#ends_with%3F%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#ends_with?</strong>(other : StringLiteral | CharLiteral) : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#ends_with%3F%28char%20%3A%20Char%29-instance-method">String#ends_with?</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28regex%20%3A%20RegexLiteral%2C%20replacement%20%3A%20StringLiteral%29%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#gsub</strong>(regex : RegexLiteral, replacement : StringLiteral) : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#gsub%28%26block%20%3A%20Char%20-%3E%20_%29-instance-method">String#gsub</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#id%20%3A%20MacroId-instance-method" class="signature"><strong>#id</strong> : MacroId</a>
+        
+          <div class="summary"><p>Returns a <code><a href="../Macros/MacroId.html">MacroId</a></code> for this symbol's contents.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#length%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#length</strong> : NumberLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#length-instance-method">String#length</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#lines%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#lines</strong> : ArrayLiteral(StringLiteral)</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#lines-instance-method">String#lines</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#split</strong> : ArrayLiteral(StringLiteral)</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28node%20%3A%20ASTNode%29%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#split</strong>(node : ASTNode) : ArrayLiteral(StringLiteral)</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#starts_with%3F%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#starts_with?</strong>(other : StringLiteral | CharLiteral) : BoolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#starts_with%3F%28str%20%3A%20String%29-instance-method">String#starts_with?</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#strip%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#strip</strong> : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#strip-instance-method">String#strip</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tr%28from%20%3A%20StringLiteral%2C%20to%20%3A%20StringLiteral%29%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#tr</strong>(from : StringLiteral, to : StringLiteral) : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#tr%28from%20%3A%20String%2C%20to%20%3A%20String%29-instance-method">String#tr</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upcase%20%3A%20SymbolLiteral-instance-method" class="signature"><strong>#upcase</strong> : SymbolLiteral</a>
+        
+          <div class="summary"><p>Similar to <code><a href="../String.html#upcase-instance-method">String#upcase</a></code>.</p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
 
 
 
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>+</strong>(other : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/CharLiteral.html">CharLiteral</a>) : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#%2B%28other%20%3A%20self%29-instance-method">String#+</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L260" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%7E%28range%20%3A%20RegexLiteral%29%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>=~</strong>(range : <a href="../Macros/RegexLiteral.html">RegexLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#%3D%7E%28other%29-instance-method">String#=~</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L256" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5B%5D%28range%20%3A%20RangeLiteral%29%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>[]</strong>(range : <a href="../Macros/RangeLiteral.html">RangeLiteral</a>) : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#%5B%5D%28index%20%3A%20Int%29-instance-method">String#[]</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L252" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="capitalize%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>capitalize</strong> : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#capitalize-instance-method">String#capitalize</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L264" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chars%20%3A%20ArrayLiteral%28CharLiteral%29-instance-method">
+        
+        def <strong>chars</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/CharLiteral.html">CharLiteral</a>)
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#chars-instance-method">String#chars</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L268" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chomp%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>chomp</strong> : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#chomp-instance-method">String#chomp</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L272" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="downcase%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>downcase</strong> : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#downcase-instance-method">String#downcase</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L276" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="empty%3F%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>empty?</strong> : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#empty%3F-instance-method">String#empty?</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L280" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ends_with%3F%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>ends_with?</strong>(other : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/CharLiteral.html">CharLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#ends_with%3F%28char%20%3A%20Char%29-instance-method">String#ends_with?</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L284" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28regex%20%3A%20RegexLiteral%2C%20replacement%20%3A%20StringLiteral%29%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>gsub</strong>(regex : <a href="../Macros/RegexLiteral.html">RegexLiteral</a>, replacement : <a href="../Macros/StringLiteral.html">StringLiteral</a>) : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#gsub%28%26block%20%3A%20Char%20-%3E%20_%29-instance-method">String#gsub</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L288" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="id%20%3A%20MacroId-instance-method">
+        
+        def <strong>id</strong> : <a href="../Macros/MacroId.html">MacroId</a>
+      </div>
+      
+        <div class="doc"><p>Returns a <code><a href="../Macros/MacroId.html">MacroId</a></code> for this symbol's contents.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L248" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="length%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>length</strong> : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#length-instance-method">String#length</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L292" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="lines%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method">
+        
+        def <strong>lines</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/StringLiteral.html">StringLiteral</a>)
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#lines-instance-method">String#lines</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L296" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method">
+        
+        def <strong>split</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/StringLiteral.html">StringLiteral</a>)
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L300" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28node%20%3A%20ASTNode%29%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method">
+        
+        def <strong>split</strong>(node : <a href="../Macros/ASTNode.html">ASTNode</a>) : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/StringLiteral.html">StringLiteral</a>)
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20Regex%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L304" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="starts_with%3F%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>starts_with?</strong>(other : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/CharLiteral.html">CharLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#starts_with%3F%28str%20%3A%20String%29-instance-method">String#starts_with?</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L308" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="strip%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>strip</strong> : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#strip-instance-method">String#strip</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L312" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="tr%28from%20%3A%20StringLiteral%2C%20to%20%3A%20StringLiteral%29%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>tr</strong>(from : <a href="../Macros/StringLiteral.html">StringLiteral</a>, to : <a href="../Macros/StringLiteral.html">StringLiteral</a>) : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#tr%28from%20%3A%20String%2C%20to%20%3A%20String%29-instance-method">String#tr</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L316" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upcase%20%3A%20SymbolLiteral-instance-method">
+        
+        def <strong>upcase</strong> : <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="../String.html#upcase-instance-method">String#upcase</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L320" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
 
 
 

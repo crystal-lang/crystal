@@ -11,6 +11,10 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>Represents a type in the program, like <code><a href="../Int32.html">Int32</a></code> or <code><a href="../String.html">String</a></code>.</p>
+
 
 
 
@@ -27,10 +31,12 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -41,12 +47,177 @@
 
 
 
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#abstract%3F%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#abstract?</strong> : BoolLiteral</a>
+        
+          <div class="summary"><p>Returns true if this type is abstract.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_attribute%3F%28name%20%3A%20StringLiteral%20%7C%20SymbolLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#has_attribute?</strong>(name : StringLiteral | SymbolLiteral) : BoolLiteral</a>
+        
+          <div class="summary"><p>Returns true if this type has an attribute.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#instance_vars%20%3A%20ArrayLiteral%28MetaVar%29-instance-method" class="signature"><strong>#instance_vars</strong> : ArrayLiteral(MetaVar)</a>
+        
+          <div class="summary"><p>Returns the instance variables of this type.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#methods%20%3A%20Array%28Def%29-instance-method" class="signature"><strong>#methods</strong> : Array(Def)</a>
+        
+          <div class="summary"><p>Returns the instance methods defined by this type, without including inherited methods.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name%20%3A%20StringLiteral-instance-method" class="signature"><strong>#name</strong> : StringLiteral</a>
+        
+          <div class="summary"><p>Returns the fully qualified name of this type.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#subclasses%20%3A%20ArrayLiteral%28MacroId%29-instance-method" class="signature"><strong>#subclasses</strong> : ArrayLiteral(MacroId)</a>
+        
+          <div class="summary"><p>Returns the constants and types defined by this type.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#superclass%20%3A%20TypeNode%20%7C%20NilLiteral-instance-method" class="signature"><strong>#superclass</strong> : TypeNode | NilLiteral</a>
+        
+          <div class="summary"><p>Returns the instance variables of this type, if any.</p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
 
 
 
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="abstract%3F%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>abstract?</strong> : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns true if this type is abstract.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L912" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="has_attribute%3F%28name%20%3A%20StringLiteral%20%7C%20SymbolLiteral%29%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>has_attribute?</strong>(name : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/SymbolLiteral.html">SymbolLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns true if this type has an attribute. For example <code>@[Flags]</code>
+or <code>@[Packed]</code> (the name you pass to this method is "Flags" or "Packed"
+in these cases).</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L947" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="instance_vars%20%3A%20ArrayLiteral%28MetaVar%29-instance-method">
+        
+        def <strong>instance_vars</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/MetaVar.html">MetaVar</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the instance variables of this type.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L920" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="methods%20%3A%20Array%28Def%29-instance-method">
+        
+        def <strong>methods</strong> : <a href="../Array.html">Array</a>(<a href="../Macros/Def.html">Def</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the instance methods defined by this type, without including
+inherited methods.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L941" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="name%20%3A%20StringLiteral-instance-method">
+        
+        def <strong>name</strong> : <a href="../Macros/StringLiteral.html">StringLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns the fully qualified name of this type.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L916" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="subclasses%20%3A%20ArrayLiteral%28MacroId%29-instance-method">
+        
+        def <strong>subclasses</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/MacroId.html">MacroId</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the constants and types defined by this type.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L936" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="superclass%20%3A%20TypeNode%20%7C%20NilLiteral-instance-method">
+        
+        def <strong>superclass</strong> : <a href="../Macros/TypeNode.html">TypeNode</a> | <a href="../Macros/NilLiteral.html">NilLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns the instance variables of this type, if any.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L924" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
 
 
 
