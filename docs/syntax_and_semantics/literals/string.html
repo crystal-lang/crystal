@@ -1,0 +1,1790 @@
+<!DOCTYPE HTML>
+<html lang="en" >
+    
+    <head>
+        
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=11; IE=10; IE=9; IE=8; IE=7; IE=EDGE" />
+        <title>String | Crystal Programming Language</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 2.0.2">
+        
+        
+        <meta name="HandheldFriendly" content="true"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../gitbook/images/apple-touch-icon-precomposed-152.png">
+        <link rel="shortcut icon" href="../../gitbook/images/favicon.ico" type="image/x-icon">
+        
+    
+    
+    <link rel="next" href="../../syntax_and_semantics/literals/symbol.html" />
+    
+    
+    <link rel="prev" href="../../syntax_and_semantics/literals/char.html" />
+    
+
+        
+    </head>
+    <body>
+        
+        
+    <link rel="stylesheet" href="../../gitbook/style.css">
+    
+    
+
+        
+    <div class="book" data-level="3.2.6" data-basepath="../.." data-revision="Sat May 09 2015 12:52:11 GMT-0300 (ART)">
+    
+
+<div class="book-summary">
+    <div class="book-search">
+        <input type="text" placeholder="Type to search" class="form-control" />
+    </div>
+    <ul class="summary">
+        
+        
+        
+        
+
+        
+
+        
+    
+        <li class="chapter " data-level="0" data-path="index.html">
+            
+                
+                    <a href="../../index.html">
+                        <i class="fa fa-check"></i>
+                        
+                        Introduction
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1" data-path="installation/index.html">
+            
+                
+                    <a href="../../installation/index.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.</b>
+                        
+                        Installation
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1" data-path="installation/on_debian_and_ubuntu.html">
+            
+                
+                    <a href="../../installation/on_debian_and_ubuntu.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.1.</b>
+                        
+                        On Debian and Ubuntu
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="installation/on_redhat_and_centos.html">
+            
+                
+                    <a href="../../installation/on_redhat_and_centos.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.2.</b>
+                        
+                        On RedHat and CentOS
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation/on_mac_osx_using_homebrew.html">
+            
+                
+                    <a href="../../installation/on_mac_osx_using_homebrew.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.3.</b>
+                        
+                        On Mac OSX using Homebrew
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="installation/from_a_targz.html">
+            
+                
+                    <a href="../../installation/from_a_targz.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.4.</b>
+                        
+                        From a tar.gz
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="installation/from_source_repository.html">
+            
+                
+                    <a href="../../installation/from_source_repository.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>1.5.</b>
+                        
+                        From sources
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="2" data-path="overview/index.html">
+            
+                
+                    <a href="../../overview/index.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>2.</b>
+                        
+                        Overview and Examples
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="2.1" data-path="overview/hello_world.html">
+            
+                
+                    <a href="../../overview/hello_world.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>2.1.</b>
+                        
+                        Hello World!
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="overview/http_server.html">
+            
+                
+                    <a href="../../overview/http_server.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>2.2.</b>
+                        
+                        HTTP Server
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3" data-path="syntax_and_semantics/index.html">
+            
+                
+                    <a href="../../syntax_and_semantics/index.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.</b>
+                        
+                        Syntax and semantics
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.1" data-path="syntax_and_semantics/comments.html">
+            
+                
+                    <a href="../../syntax_and_semantics/comments.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.1.</b>
+                        
+                        Comments
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="syntax_and_semantics/literals.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.</b>
+                        
+                        Literals
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.2.1" data-path="syntax_and_semantics/literals/nil.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/nil.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.1.</b>
+                        
+                        Nil
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.2" data-path="syntax_and_semantics/literals/bool.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/bool.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.2.</b>
+                        
+                        Bool
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.3" data-path="syntax_and_semantics/literals/integers.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/integers.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.3.</b>
+                        
+                        Integers
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.4" data-path="syntax_and_semantics/literals/floats.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/floats.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.4.</b>
+                        
+                        Floats
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.5" data-path="syntax_and_semantics/literals/char.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/char.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.5.</b>
+                        
+                        Char
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter active" data-level="3.2.6" data-path="syntax_and_semantics/literals/string.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/string.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.6.</b>
+                        
+                        String
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.7" data-path="syntax_and_semantics/literals/symbol.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/symbol.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.7.</b>
+                        
+                        Symbol
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.8" data-path="syntax_and_semantics/literals/array.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/array.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.8.</b>
+                        
+                        Array
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.9" data-path="syntax_and_semantics/literals/hash.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/hash.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.9.</b>
+                        
+                        Hash
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.10" data-path="syntax_and_semantics/literals/range.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/range.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.10.</b>
+                        
+                        Range
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.11" data-path="syntax_and_semantics/literals/tuple.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/tuple.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.11.</b>
+                        
+                        Tuple
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.12" data-path="syntax_and_semantics/literals/proc.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/proc.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.12.</b>
+                        
+                        Proc
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="syntax_and_semantics/local_variables.html">
+            
+                
+                    <a href="../../syntax_and_semantics/local_variables.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.3.</b>
+                        
+                        Local variables
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.4" data-path="syntax_and_semantics/global_variables.html">
+            
+                
+                    <a href="../../syntax_and_semantics/global_variables.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.4.</b>
+                        
+                        Global variables
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.4.1" data-path="syntax_and_semantics/thread_local.html">
+            
+                
+                    <a href="../../syntax_and_semantics/thread_local.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.4.1.</b>
+                        
+                        Thread local
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5" data-path="syntax_and_semantics/assignment.html">
+            
+                
+                    <a href="../../syntax_and_semantics/assignment.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.5.</b>
+                        
+                        Assignment
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.5.1" data-path="syntax_and_semantics/multiple_assignment.html">
+            
+                
+                    <a href="../../syntax_and_semantics/multiple_assignment.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.5.1.</b>
+                        
+                        Multiple assignment
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6" data-path="syntax_and_semantics/control_expressions.html">
+            
+                
+                    <a href="../../syntax_and_semantics/control_expressions.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.</b>
+                        
+                        Control expressions
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.6.1" data-path="syntax_and_semantics/truthy_and_falsey_values.html">
+            
+                
+                    <a href="../../syntax_and_semantics/truthy_and_falsey_values.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.1.</b>
+                        
+                        Truthy and falsey values
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.2" data-path="syntax_and_semantics/if.html">
+            
+                
+                    <a href="../../syntax_and_semantics/if.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.</b>
+                        
+                        if
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.6.2.1" data-path="syntax_and_semantics/as_a_suffix.html">
+            
+                
+                    <a href="../../syntax_and_semantics/as_a_suffix.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.1.</b>
+                        
+                        As a suffix
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.2.2" data-path="syntax_and_semantics/as_an_expression.html">
+            
+                
+                    <a href="../../syntax_and_semantics/as_an_expression.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.2.</b>
+                        
+                        As an expression
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.2.3" data-path="syntax_and_semantics/ternary_if.html">
+            
+                
+                    <a href="../../syntax_and_semantics/ternary_if.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.3.</b>
+                        
+                        Ternary if
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.2.4" data-path="syntax_and_semantics/if_var.html">
+            
+                
+                    <a href="../../syntax_and_semantics/if_var.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.4.</b>
+                        
+                        if var
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.2.5" data-path="syntax_and_semantics/if_varis_a.html">
+            
+                
+                    <a href="../../syntax_and_semantics/if_varis_a.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.5.</b>
+                        
+                        if var.is_a?(...)
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.2.6" data-path="syntax_and_semantics/if_varresponds_to.html">
+            
+                
+                    <a href="../../syntax_and_semantics/if_varresponds_to.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.2.6.</b>
+                        
+                        if var.responds_to?(...)
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.3" data-path="syntax_and_semantics/unless.html">
+            
+                
+                    <a href="../../syntax_and_semantics/unless.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.3.</b>
+                        
+                        unless
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.4" data-path="syntax_and_semantics/case.html">
+            
+                
+                    <a href="../../syntax_and_semantics/case.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.4.</b>
+                        
+                        case
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.5" data-path="syntax_and_semantics/while.html">
+            
+                
+                    <a href="../../syntax_and_semantics/while.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.5.</b>
+                        
+                        while
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.6.5.1" data-path="syntax_and_semantics/break.html">
+            
+                
+                    <a href="../../syntax_and_semantics/break.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.5.1.</b>
+                        
+                        break
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.5.2" data-path="syntax_and_semantics/next.html">
+            
+                
+                    <a href="../../syntax_and_semantics/next.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.5.2.</b>
+                        
+                        next
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.6" data-path="syntax_and_semantics/until.html">
+            
+                
+                    <a href="../../syntax_and_semantics/until.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.6.</b>
+                        
+                        until
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.7" data-path="syntax_and_semantics/and.html">
+            
+                
+                    <a href="../../syntax_and_semantics/and.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.7.</b>
+                        
+                        &amp;&amp;
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.6.8" data-path="syntax_and_semantics/or.html">
+            
+                
+                    <a href="../../syntax_and_semantics/or.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.6.8.</b>
+                        
+                        ||
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7" data-path="syntax_and_semantics/types_and_methods.html">
+            
+                
+                    <a href="../../syntax_and_semantics/types_and_methods.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.</b>
+                        
+                        Types and methods
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.7.1" data-path="syntax_and_semantics/everything_is_an_object.html">
+            
+                
+                    <a href="../../syntax_and_semantics/everything_is_an_object.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.1.</b>
+                        
+                        Everything is an object
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.2" data-path="syntax_and_semantics/the_program.html">
+            
+                
+                    <a href="../../syntax_and_semantics/the_program.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.2.</b>
+                        
+                        The Program
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3" data-path="syntax_and_semantics/classes_and_methods.html">
+            
+                
+                    <a href="../../syntax_and_semantics/classes_and_methods.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.</b>
+                        
+                        Classes and methods
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.7.3.1" data-path="syntax_and_semantics/new,_initialize_and_allocate.html">
+            
+                
+                    <a href="../../syntax_and_semantics/new,_initialize_and_allocate.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.1.</b>
+                        
+                        new, initialize and allocate
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.2" data-path="syntax_and_semantics/methods_and_instance_variables.html">
+            
+                
+                    <a href="../../syntax_and_semantics/methods_and_instance_variables.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.2.</b>
+                        
+                        Methods and instance variables
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.3" data-path="syntax_and_semantics/instance_variables_type_inference.html">
+            
+                
+                    <a href="../../syntax_and_semantics/instance_variables_type_inference.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.3.</b>
+                        
+                        Instance variables type inference
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.4" data-path="syntax_and_semantics/overloading.html">
+            
+                
+                    <a href="../../syntax_and_semantics/overloading.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.4.</b>
+                        
+                        Overloading
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.5" data-path="syntax_and_semantics/default_and_named_arguments.html">
+            
+                
+                    <a href="../../syntax_and_semantics/default_and_named_arguments.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.5.</b>
+                        
+                        Default and named arguments
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.6" data-path="syntax_and_semantics/splats_and_tuples.html">
+            
+                
+                    <a href="../../syntax_and_semantics/splats_and_tuples.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.6.</b>
+                        
+                        Splats and tuples
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.7" data-path="syntax_and_semantics/type_restrictions.html">
+            
+                
+                    <a href="../../syntax_and_semantics/type_restrictions.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.7.</b>
+                        
+                        Type restrictions
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.8" data-path="syntax_and_semantics/visibility.html">
+            
+                
+                    <a href="../../syntax_and_semantics/visibility.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.8.</b>
+                        
+                        Visibility
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.9" data-path="syntax_and_semantics/inheritance.html">
+            
+                
+                    <a href="../../syntax_and_semantics/inheritance.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.9.</b>
+                        
+                        Inheritance
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.7.3.9.1" data-path="syntax_and_semantics/virtual_and_abstract_types.html">
+            
+                
+                    <a href="../../syntax_and_semantics/virtual_and_abstract_types.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.9.1.</b>
+                        
+                        Virtual and abstract types
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.10" data-path="syntax_and_semantics/finalize.html">
+            
+                
+                    <a href="../../syntax_and_semantics/finalize.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.10.</b>
+                        
+                        finalize
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.4" data-path="syntax_and_semantics/modules.html">
+            
+                
+                    <a href="../../syntax_and_semantics/modules.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.4.</b>
+                        
+                        Modules
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.5" data-path="syntax_and_semantics/generics.html">
+            
+                
+                    <a href="../../syntax_and_semantics/generics.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.5.</b>
+                        
+                        Generics
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.6" data-path="syntax_and_semantics/structs.html">
+            
+                
+                    <a href="../../syntax_and_semantics/structs.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.6.</b>
+                        
+                        Structs
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.7" data-path="syntax_and_semantics/constants.html">
+            
+                
+                    <a href="../../syntax_and_semantics/constants.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.7.</b>
+                        
+                        Constants
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.8" data-path="syntax_and_semantics/blocks_and_procs.html">
+            
+                
+                    <a href="../../syntax_and_semantics/blocks_and_procs.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.8.</b>
+                        
+                        Blocks and Procs
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.7.8.1" >
+            
+            <span><b>3.7.8.1.</b> Proc literal</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.8.2" >
+            
+            <span><b>3.7.8.2.</b> Proc pointer</span>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9" data-path="syntax_and_semantics/alias.html">
+            
+                
+                    <a href="../../syntax_and_semantics/alias.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.</b>
+                        
+                        alias
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.8" >
+            
+            <span><b>3.8.</b> Type reflection</span>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.8.1" data-path="syntax_and_semantics/is_a.html">
+            
+                
+                    <a href="../../syntax_and_semantics/is_a.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.8.1.</b>
+                        
+                        is_a?
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.8.2" >
+            
+            <span><b>3.8.2.</b> responds_to?</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.8.3" >
+            
+            <span><b>3.8.3.</b> as</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.8.4" >
+            
+            <span><b>3.8.4.</b> typeof</span>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.9" >
+            
+            <span><b>3.9.</b> Attributes</span>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.9.1" >
+            
+            <span><b>3.9.1.</b> @[ThreadLocal]</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.9.2" >
+            
+            <span><b>3.9.2.</b> @[Packed]</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.9.3" >
+            
+            <span><b>3.9.3.</b> @[AlwaysInline]</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.9.4" >
+            
+            <span><b>3.9.4.</b> @[NoInline]</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.9.5" >
+            
+            <span><b>3.9.5.</b> @[ReturnsTwice]</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.9.6" data-path="[raises].html">
+            
+            <span><b>3.9.6.</b> @[Raises]</span>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.10" data-path="syntax_and_semantics/requiring_files.html">
+            
+                
+                    <a href="../../syntax_and_semantics/requiring_files.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.10.</b>
+                        
+                        Requiring files
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.11" >
+            
+            <span><b>3.11.</b> Low-level primitives</span>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.11.1" >
+            
+            <span><b>3.11.1.</b> pointerof</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.11.2" >
+            
+            <span><b>3.11.2.</b> sizeof</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.11.3" >
+            
+            <span><b>3.11.3.</b> instance_sizeof</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.11.4" >
+            
+            <span><b>3.11.4.</b> declare var</span>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.12" >
+            
+            <span><b>3.12.</b> Exception handling</span>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.13" data-path="syntax_and_semantics/compile_time_flags.html">
+            
+                
+                    <a href="../../syntax_and_semantics/compile_time_flags.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.13.</b>
+                        
+                        Compile-time flags
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.13.1" data-path="syntax_and_semantics/cross-compilation.html">
+            
+                
+                    <a href="../../syntax_and_semantics/cross-compilation.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.13.1.</b>
+                        
+                        Cross-compilation
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.14" data-path="syntax_and_semantics/macros.html">
+            
+                
+                    <a href="../../syntax_and_semantics/macros.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.14.</b>
+                        
+                        Macros
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15" data-path="syntax_and_semantics/c_bindings/index.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/index.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.</b>
+                        
+                        C bindings
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.15.1" data-path="syntax_and_semantics/c_bindings/lib.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/lib.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.1.</b>
+                        
+                        lib
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.2" data-path="syntax_and_semantics/c_bindings/fun.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/fun.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.2.</b>
+                        
+                        fun
+                    </a>
+                
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.15.2.1" data-path="syntax_and_semantics/c_bindings/out.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/out.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.2.1.</b>
+                        
+                        out
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.2.2" data-path="syntax_and_semantics/c_bindings/to_unsafe.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/to_unsafe.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.2.2.</b>
+                        
+                        to_unsafe
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.3" data-path="syntax_and_semantics/c_bindings/struct.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/struct.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.3.</b>
+                        
+                        struct
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.4" data-path="syntax_and_semantics/c_bindings/union.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/union.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.4.</b>
+                        
+                        union
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.5" data-path="syntax_and_semantics/c_bindings/enum.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/enum.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.5.</b>
+                        
+                        enum
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.6" data-path="syntax_and_semantics/c_bindings/variables.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/variables.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.6.</b>
+                        
+                        Variables
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.7" data-path="syntax_and_semantics/c_bindings/constants.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/constants.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.7.</b>
+                        
+                        Constants
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.8" data-path="syntax_and_semantics/c_bindings/type.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/type.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.8.</b>
+                        
+                        type
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.9" data-path="syntax_and_semantics/c_bindings/alias.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/alias.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.9.</b>
+                        
+                        alias
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.15.10" data-path="syntax_and_semantics/c_bindings/callbacks.html">
+            
+                
+                    <a href="../../syntax_and_semantics/c_bindings/callbacks.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.15.10.</b>
+                        
+                        Callbacks
+                    </a>
+                
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+
+        
+        <li class="divider"></li>
+        <li>
+            <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+                Published with GitBook
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+    <div class="book-body">
+        <div class="body-inner">
+            <div class="book-header">
+    <!-- Actions Left -->
+    <a href="#" class="btn pull-left toggle-summary" aria-label="Table of Contents"><i class="fa fa-align-justify"></i></a>
+    <a href="#" class="btn pull-left toggle-search" aria-label="Search"><i class="fa fa-search"></i></a>
+    
+    <div id="font-settings-wrapper" class="dropdown pull-left">
+        <a href="#" class="btn toggle-dropdown" aria-label="Font Settings"><i class="fa fa-font"></i>
+        </a>
+        <div class="dropdown-menu font-settings">
+    <div class="dropdown-caret">
+        <span class="caret-outer"></span>
+        <span class="caret-inner"></span>
+    </div>
+
+    <div class="buttons">
+        <button type="button" id="reduce-font-size" class="button size-2">A</button>
+        <button type="button" id="enlarge-font-size" class="button size-2">A</button>
+    </div>
+
+    <div class="buttons font-family-list">
+        <button type="button" data-font="0" class="button">Serif</button>
+        <button type="button" data-font="1" class="button">Sans</button>
+    </div>
+
+    <div class="buttons color-theme-list">
+        <button type="button" id="color-theme-preview-0" class="button size-3" data-theme="0">White</button>
+        <button type="button" id="color-theme-preview-1" class="button size-3" data-theme="1">Sepia</button>
+        <button type="button" id="color-theme-preview-2" class="button size-3" data-theme="2">Night</button>
+    </div>
+</div>
+
+    </div>
+
+    <!-- Actions Right -->
+    
+    <div class="dropdown pull-right">
+        <a href="#" class="btn toggle-dropdown" aria-label="Share"><i class="fa fa-share-alt"></i>
+        </a>
+        <div class="dropdown-menu font-settings dropdown-left">
+            <div class="dropdown-caret">
+                <span class="caret-outer"></span>
+                <span class="caret-inner"></span>
+            </div>
+            <div class="buttons">
+                <button type="button" data-sharing="twitter" class="button">
+                    Share on Twitter
+                </button>
+                <button type="button" data-sharing="google-plus" class="button">
+                    Share on Google
+                </button>
+                <button type="button" data-sharing="facebook" class="button">
+                    Share on Facebook
+                </button>
+                <button type="button" data-sharing="weibo" class="button">
+                    Share on Weibo
+                </button>
+                <button type="button" data-sharing="instapaper" class="button">
+                    Share on Instapaper
+                </button>
+            </div>
+        </div>
+    </div>
+    
+
+    
+    <a href="#" target="_blank" class="btn pull-right google-plus-sharing-link sharing-link" data-sharing="google-plus" aria-label="Google"><i class="fa fa-google-plus"></i></a>
+    
+    
+    <a href="#" target="_blank" class="btn pull-right facebook-sharing-link sharing-link" data-sharing="facebook" aria-label="Facebook"><i class="fa fa-facebook"></i></a>
+    
+    
+    <a href="#" target="_blank" class="btn pull-right twitter-sharing-link sharing-link" data-sharing="twitter" aria-label="Twitter"><i class="fa fa-twitter"></i></a>
+    
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="../../" >Crystal Programming Language</a>
+    </h1>
+</div>
+
+            <div class="page-wrapper" tabindex="-1">
+                <div class="page-inner">
+                
+                
+                    <section class="normal" id="section-">
+                    
+                        <h1 id="string">String</h1>
+<p>A String represents an immutable sequence of UTF-8 characters.</p>
+<p>A String is typically created with a string literal, enclosing UTF-8 characters in double quotes:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;hello world&quot;</span>
+</code></pre>
+<p>A backslash can be used to denote some characters inside the string:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;\&quot;&quot;</span> <span class="hljs-comment"># double quote</span>
+<span class="hljs-string">&quot;\\&quot;</span> <span class="hljs-comment"># backslash</span>
+<span class="hljs-string">&quot;\e&quot;</span> <span class="hljs-comment"># escape</span>
+<span class="hljs-string">&quot;\f&quot;</span> <span class="hljs-comment"># form feed</span>
+<span class="hljs-string">&quot;\n&quot;</span> <span class="hljs-comment"># newline</span>
+<span class="hljs-string">&quot;\r&quot;</span> <span class="hljs-comment"># carriage return</span>
+<span class="hljs-string">&quot;\t&quot;</span> <span class="hljs-comment"># tab</span>
+<span class="hljs-string">&quot;\v&quot;</span> <span class="hljs-comment"># vertical tab</span>
+</code></pre>
+<p>You can use a backslash followed by at most three digits to denote a code point written in octal:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;\101&quot;</span> <span class="hljs-comment"># == &quot;A&quot;</span>
+<span class="hljs-string">&quot;\123&quot;</span> <span class="hljs-comment"># == &quot;S&quot;</span>
+<span class="hljs-string">&quot;\12&quot;</span>  <span class="hljs-comment"># == &quot;\n&quot;</span>
+<span class="hljs-string">&quot;\1&quot;</span>   <span class="hljs-comment"># string with one character with code point 1</span>
+</code></pre>
+<p>You can use a backslash followed by an <em>u</em> and four hexadecimal characters to denote a unicode codepoint written:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;\u0041&quot;</span> <span class="hljs-comment"># == &quot;A&quot;</span>
+</code></pre>
+<p>Or you can use curly braces and specify up to four hexadecimal numbers:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;\u{41}&quot;</span> <span class="hljs-comment"># == &quot;A&quot;</span>
+</code></pre>
+<p>A string can span multiple lines:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;hello
+      world&quot;</span> <span class="hljs-comment"># same as &quot;hello      \nworld&quot;</span>
+</code></pre>
+<p>Note that in the above example trailing and leading spaces, as well as newlines,
+end up in the resulting string. To avoid this, you can split a string into multiple lines
+by joining multiple literals with a backslash:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;hello &quot;</span> \
+<span class="hljs-string">&quot;world, &quot;</span> \
+<span class="hljs-string">&quot;no newlines&quot;</span> <span class="hljs-comment"># same as &quot;hello world, no newlines&quot;</span>
+</code></pre>
+<p>Alterantively, a backlash followed by a newline can be inserted inside the string literal:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;hello \
+     world, \
+     no newlines&quot;</span> <span class="hljs-comment"># same as &quot;hello world, no newlines&quot;</span>
+</code></pre>
+<p>In this case, leading whitespace is not included in the resulting string.</p>
+<p>If you need to write a string that has many double quotes, parenthesis, or similar
+characters, you can use alternative literals:</p>
+<pre><code class="lang-ruby"><span class="hljs-comment"># Supports double quotes and nested parenthesis</span>
+<span class="hljs-string">%(hello (&quot;world&quot;)</span>) <span class="hljs-comment"># same as &quot;hello (\&quot;world\&quot;)&quot;</span>
+
+<span class="hljs-comment"># Supports double quotes and nested brackets</span>
+<span class="hljs-string">%[hello [&quot;world&quot;]</span>] <span class="hljs-comment"># same as &quot;hello [\&quot;world\&quot;]&quot;</span>
+
+<span class="hljs-comment"># Supports double quotes and nested curlies</span>
+<span class="hljs-string">%{hello {&quot;world&quot;}</span>} <span class="hljs-comment"># same as &quot;hello {\&quot;world\&quot;}&quot;</span>
+
+<span class="hljs-comment"># Supports double quotes and nested angles</span>
+<span class="hljs-string">%&lt;hello &lt;&quot;world&quot;&gt;</span>&gt; <span class="hljs-comment"># same as &quot;hello &lt;\&quot;world\&quot;&gt;&quot;</span>
+</code></pre>
+<h2 id="interpolation">Interpolation</h2>
+<p>To create a String with embedded expressions, you can use string interpolation:</p>
+<pre><code class="lang-ruby">a = <span class="hljs-number">1</span>
+b = <span class="hljs-number">2</span>
+<span class="hljs-string">&quot;sum = <span class="hljs-subst">#{a + b}</span>&quot;</span>        <span class="hljs-comment"># &quot;sum = 3&quot;</span>
+</code></pre>
+<p>This ends up invoking <code>Object#to_s(IO)</code> on each expression enclosed by <code>#{...}</code>.</p>
+
+                    
+                    </section>
+                
+                
+                </div>
+            </div>
+        </div>
+
+        
+        <a href="../../syntax_and_semantics/literals/char.html" class="navigation navigation-prev " aria-label="Previous page: Char"><i class="fa fa-angle-left"></i></a>
+        
+        
+        <a href="../../syntax_and_semantics/literals/symbol.html" class="navigation navigation-next " aria-label="Next page: Symbol"><i class="fa fa-angle-right"></i></a>
+        
+    </div>
+</div>
+
+        
+<script src="../../gitbook/app.js"></script>
+
+<script>
+require(["gitbook"], function(gitbook) {
+    var config = {"fontSettings":{"theme":null,"family":"sans","size":2}};
+    gitbook.start(config);
+});
+</script>
+
+        
+    </body>
+    
+</html>
