@@ -95,7 +95,7 @@ struct Struct
   # p1.inspect          # "Point(@x=1, @y=2)"
   # ```
   macro def inspect(io : IO) : Nil
-    io << "{{@class_name.id}}("
+    io << "{{@type.name.id}}("
     {% for ivar, i in @instance_vars %}
       {% if i > 0 %}
         io << ", "

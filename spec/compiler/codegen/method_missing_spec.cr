@@ -71,7 +71,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
-          "{{@class_name.id}}{{name.id}}"
+          "{{@type.name.id}}{{name.id}}"
         end
       end
 
@@ -87,7 +87,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
-          "{{@class_name.id}}{{name.id}}"
+          "{{@type.name.id}}{{name.id}}"
         end
       end
 
@@ -211,7 +211,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -271,7 +271,7 @@ describe "Code gen: method_missing" do
     run("
       module Moo
         macro method_missing(name, args, block)
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 

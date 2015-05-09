@@ -566,7 +566,7 @@ describe "MacroExpander" do
     end
 
     it "executes name" do
-      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %("foo")
+      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
 
     it "executes id" do
@@ -594,7 +594,7 @@ describe "MacroExpander" do
 
   describe "type methods" do
     it "executes name" do
-      assert_macro("x", "{{x.name}}", %("String")) do |program|
+      assert_macro("x", "{{x.name}}", "String") do |program|
         [TypeNode.new(program.string)] of ASTNode
       end
     end

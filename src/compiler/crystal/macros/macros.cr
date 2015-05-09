@@ -636,8 +636,6 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@class_name"
-          return @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
           return @last = TypeNode.instance_vars(@scope)
         when "@length"

@@ -584,7 +584,7 @@ describe "Code gen: class" do
     run(%(
       class Class
         macro def name : String
-          {{ @class_name }}
+          {{ @type.name.stringify }}
         end
 
         def foo

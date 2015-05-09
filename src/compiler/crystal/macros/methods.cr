@@ -461,7 +461,7 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "name"
-        interpret_argless_method(method, args) { StringLiteral.new(@name) }
+        interpret_argless_method(method, args) { MacroId.new(@name) }
       when "type"
         interpret_argless_method(method, args) do
           if type = @type
@@ -576,7 +576,7 @@ module Crystal
       when "abstract?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract) }
       when "name"
-        interpret_argless_method(method, args) { StringLiteral.new(type.to_s) }
+        interpret_argless_method(method, args) { MacroId.new(type.to_s) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
       when "superclass"

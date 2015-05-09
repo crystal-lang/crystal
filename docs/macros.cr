@@ -443,7 +443,7 @@ module Macros
   # variable, together with type information.
   class MetaVar < ASTNode
     # Returns the name of this variable.
-    def name : StringLiteral
+    def name : MacroId
     end
 
     # Returns the type of this variable, if known, or `nil`.
@@ -913,7 +913,7 @@ module Macros
     end
 
     # Returns the fully qualified name of this type.
-    def name : StringLiteral
+    def name : MacroId
     end
 
     # Returns the instance variables of this type.

@@ -12,7 +12,7 @@ class Class
   end
 
   macro def name : String
-    {{ @class_name.ends_with?(":Class") ? @class_name[0..-7] : @class_name }}
+    {{ @type.name.ends_with?(":Class") ? @type.name[0..-7].id.stringify : @type.name.id.stringify }}
   end
 
   def to_s(io)

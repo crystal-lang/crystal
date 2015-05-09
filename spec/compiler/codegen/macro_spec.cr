@@ -205,14 +205,14 @@ describe "Code gen: macro" do
       )).to_string.should eq("y")
   end
 
-  it "expands def macro with @class_name" do
+  it "expands def macro with @type.name" do
     run(%(
       class Foo
         def initialize(@x)
         end
 
         macro def to_s : String
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -237,11 +237,11 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands def macro with @class_name with virtual" do
+  it "expands def macro with @type.name with virtual" do
     run(%(
       class Reference
         macro def to_s : String
-          {{ @class_name }}
+          {{ @type.name.stringify }}
         end
       end
 
@@ -255,11 +255,11 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar")
   end
 
-  it "expands def macro with @class_name with virtual (2)" do
+  it "expands def macro with @type.name with virtual (2)" do
     run(%(
       class Reference
         macro def to_s : String
-          {{ @class_name }}
+          {{ @type.name.stringify }}
         end
       end
 
@@ -277,7 +277,7 @@ describe "Code gen: macro" do
     run(%(
       class Foo
         macro def inspect : String
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -298,7 +298,7 @@ describe "Code gen: macro" do
     run(%(
       macro foo
         def bar
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -343,11 +343,11 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands @class_name in virtual metaclass (1)" do
+  it "expands @type.name in virtual metaclass (1)" do
     run(%(
       class Class
         macro def to_s : String
-          {{ @class_name }}
+          {{ @type.name.stringify }}
         end
       end
 
@@ -364,11 +364,11 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo:Class")
   end
 
-  it "expands @class_name in virtual metaclass (2)" do
+  it "expands @type.name in virtual metaclass (2)" do
     run(%(
       class Class
         macro def to_s : String
-          {{ @class_name }}
+          {{ @type.name.stringify }}
         end
       end
 
@@ -442,7 +442,7 @@ describe "Code gen: macro" do
 
       Foo.new(1, 2)
 
-      {{ Foo.instance_vars.last.name }}
+      {{ Foo.instance_vars.last.name.stringify }}
       )).to_string.should eq("y")
   end
 
@@ -554,7 +554,7 @@ describe "Code gen: macro" do
     run(%(
       class Foo
         macro def foo : String
-          {{@type.name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -592,7 +592,7 @@ describe "Code gen: macro" do
     run(%(
       class Foo
         macro def class_desc : String
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -776,7 +776,7 @@ describe "Code gen: macro" do
     run(%(
       class Object
         macro def class_name : String
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 
@@ -823,7 +823,7 @@ describe "Code gen: macro" do
         end
 
         macro def self.run : Nil
-          $x << {{@class_name}}
+          $x << {{@type.name.stringify}}
           nil
         end
       end
@@ -856,7 +856,7 @@ describe "Code gen: macro" do
         end
 
         macro def bar : String
-          {{@class_name}}
+          {{@type.name.stringify}}
         end
       end
 

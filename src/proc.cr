@@ -37,7 +37,7 @@ struct Proc
 
   def to_s(io)
     io << "#<"
-    io << {{@class_name}}
+    io << {{@type.name.id.stringify}}
     io << ":0x"
     pointer.address.to_s(16, io)
     if closure?

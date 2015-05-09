@@ -5,7 +5,7 @@ describe "Type inference: hooks" do
     assert_type("
       class Foo
         macro inherited
-          def self.{{@class_name.downcase.id}}
+          def self.{{@type.name.downcase.id}}
             1
           end
         end
@@ -22,7 +22,7 @@ describe "Type inference: hooks" do
     assert_type("
       module Foo
         macro included
-          def self.{{@class_name.downcase.id}}
+          def self.{{@type.name.downcase.id}}
             1
           end
         end
@@ -40,7 +40,7 @@ describe "Type inference: hooks" do
     assert_type("
       module Foo
         macro extended
-          def self.{{@class_name.downcase.id}}
+          def self.{{@type.name.downcase.id}}
             1
           end
         end
