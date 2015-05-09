@@ -270,4 +270,37 @@ describe "Int" do
     13.remainder(-4).should eq(1)
     -13.remainder(-4).should eq(-1)
   end
+
+  it "gets upto iterator" do
+    iter = 1.upto(3)
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq(3)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+  end
+
+  it "gets downto iterator" do
+    iter = 3.downto(1)
+    iter.next.should eq(3)
+    iter.next.should eq(2)
+    iter.next.should eq(1)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(3)
+  end
+
+  it "gets to iterator" do
+    iter = 1.to(3)
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq(3)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+  end
 end

@@ -173,6 +173,10 @@ struct Int
     self
   end
 
+  def upto(n)
+    UptoIterator(typeof(self), typeof(n)).new(self, n)
+  end
+
   def downto(n, &block : self -> )
     x = self
     while x >= n
@@ -180,6 +184,10 @@ struct Int
       x -= 1
     end
     self
+  end
+
+  def downto(n)
+    DowntoIterator(typeof(self), typeof(n)).new(self, n)
   end
 
   def to(n, &block : self -> )
@@ -191,6 +199,10 @@ struct Int
       yield self
     end
     self
+  end
+
+  def to(n)
+    self <= n ? upto(n) : downto(n)
   end
 
   def modulo(other)
@@ -286,6 +298,54 @@ struct Int
 
     def rewind
       @index = 0
+      self
+    end
+  end
+
+  # :nodoc:
+  class UptoIterator(T, N)
+    include Iterator(T)
+
+    def initialize(@from : T, @to : N)
+      @current = @from
+    end
+
+    def next
+      if @current > @to
+        stop
+      else
+        value = @current
+        @current += 1
+        value
+      end
+    end
+
+    def rewind
+      @current = @from
+      self
+    end
+  end
+
+  # :nodoc:
+  class DowntoIterator(T, N)
+    include Iterator(T)
+
+    def initialize(@from : T, @to : N)
+      @current = @from
+    end
+
+    def next
+      if @current < @to
+        stop
+      else
+        value = @current
+        @current -= 1
+        value
+      end
+    end
+
+    def rewind
+      @current = @from
       self
     end
   end
