@@ -636,8 +636,6 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@instance_vars"
-          return @last = TypeNode.instance_vars(@scope)
         when "@length"
           scope = @scope.try &.instance_type
           if scope.is_a?(TupleInstanceType)

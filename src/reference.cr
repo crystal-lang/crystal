@@ -52,7 +52,7 @@ class Reference
     object_id.to_s(16, io)
 
     executed = exec_recursive(:inspect) do
-      {% for ivar, i in @instance_vars %}
+      {% for ivar, i in @type.instance_vars %}
         {% if i > 0 %}
           io << ","
         {% end %}

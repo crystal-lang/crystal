@@ -145,14 +145,14 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands def macro with @instance_vars" do
+  it "expands def macro with @type.instance_vars" do
     run(%(
       class Foo
         def initialize(@x)
         end
 
         macro def to_s : String
-          {{ @instance_vars.first.stringify }}
+          {{ @type.instance_vars.first.stringify }}
         end
       end
 
@@ -161,11 +161,11 @@ describe "Code gen: macro" do
       )).to_string.should eq("x")
   end
 
-  it "expands def macro with @instance_vars with subclass" do
+  it "expands def macro with @type.instance_vars with subclass" do
     run(%(
       class Reference
         macro def to_s : String
-          {{ @instance_vars.last.stringify }}
+          {{ @type.instance_vars.last.stringify }}
         end
       end
 
@@ -183,11 +183,11 @@ describe "Code gen: macro" do
       )).to_string.should eq("y")
   end
 
-  it "expands def macro with @instance_vars with virtual" do
+  it "expands def macro with @type.instance_vars with virtual" do
     run(%(
       class Reference
         macro def to_s : String
-          {{ @instance_vars.last.stringify }}
+          {{ @type.instance_vars.last.stringify }}
         end
       end
 

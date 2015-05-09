@@ -194,7 +194,7 @@ describe "Type inference: macro" do
         end
 
         macro def ivars_length : Int32
-          {{@instance_vars.length}}
+          {{@type.instance_vars.length}}
         end
       end
 

@@ -64,7 +64,7 @@ struct Struct
   # p1 == p3            #=> false
   # ```
   macro def ==(other : self) : Bool
-    {% for ivar in @instance_vars %}
+    {% for ivar in @type.instance_vars %}
       return false unless @{{ivar.id}} == other.@{{ivar.id}}
     {% end %}
     true
@@ -75,7 +75,7 @@ struct Struct
   # See `Object#hash`
   macro def hash : Int32
     hash = 0
-    {% for ivar in @instance_vars %}
+    {% for ivar in @type.instance_vars %}
       hash = 31 * hash + @{{ivar.id}}.hash
     {% end %}
     hash
@@ -96,7 +96,7 @@ struct Struct
   # ```
   macro def inspect(io : IO) : Nil
     io << "{{@type.name.id}}("
-    {% for ivar, i in @instance_vars %}
+    {% for ivar, i in @type.instance_vars %}
       {% if i > 0 %}
         io << ", "
       {% end %}
