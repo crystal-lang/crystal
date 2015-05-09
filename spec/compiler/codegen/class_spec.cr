@@ -610,6 +610,6 @@ describe "Code gen: class" do
       class D < C; end
       ptr.value = D
       ptr.value.foo
-      )).to_string.should eq("D:Class")
+      )).to_string.should eq("D")
   end
 end

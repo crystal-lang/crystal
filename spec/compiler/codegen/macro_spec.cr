@@ -361,7 +361,7 @@ describe "Code gen: macro" do
       p.value = Bar
       p.value = Foo
       p.value.to_s
-      )).to_string.should eq("Foo:Class")
+      )).to_string.should eq("Foo")
   end
 
   it "expands @type.name in virtual metaclass (2)" do
@@ -382,7 +382,7 @@ describe "Code gen: macro" do
       p.value = Foo
       p.value = Bar
       p.value.to_s
-      )).to_string.should eq("Bar:Class")
+      )).to_string.should eq("Bar")
   end
 
   it "doesn't skip abstract classes when defining macro methods" do
@@ -815,7 +815,7 @@ describe "Code gen: macro" do
 
       run
       $x.join(", ")
-      )).to_string.should eq("Test:Class, RunnableTest:Class")
+      )).to_string.should eq("Test, RunnableTest")
   end
 
   it "correctly recomputes call (bug)" do
@@ -850,7 +850,7 @@ describe "Code gen: macro" do
 
       f2 = Baz.new || Foo.new
       f2.class.in_object
-      )).to_string.should eq("Baz:Class")
+      )).to_string.should eq("Baz")
   end
 
   it "doesn't override local variable when using macro variable" do

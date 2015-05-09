@@ -646,7 +646,7 @@ module Crystal
         when "@superclass"
           return @last = TypeNode.superclass(@scope)
         when "@type"
-          return @last = TypeNode.new(@scope)
+          return @last = TypeNode.new(@scope.instance_type)
         when "@constants"
           scope = @scope.try &.instance_type
           return @last = TypeNode.constants(scope)
