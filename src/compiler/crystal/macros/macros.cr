@@ -643,8 +643,6 @@ module Crystal
           if scope.is_a?(TupleInstanceType)
             return @last = NumberLiteral.new(scope.tuple_types.length)
           end
-        when "@superclass"
-          return @last = TypeNode.superclass(@scope)
         when "@type"
           return @last = TypeNode.new(@scope.instance_type)
         when "@constants"
