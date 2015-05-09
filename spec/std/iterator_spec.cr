@@ -162,6 +162,19 @@ describe Iterator do
     end
   end
 
+  describe "cons" do
+    it "conses" do
+      iter = (1..5).each.cons(3)
+      iter.next.should eq([1, 2, 3])
+      iter.next.should eq([2, 3, 4])
+      iter.next.should eq([3, 4, 5])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq([1, 2, 3])
+    end
+  end
+
   describe "uniq" do
     it "without block" do
       iter = (1..8).each.map { |x| x % 3 }.uniq
