@@ -4,8 +4,6 @@ struct XML::XPathContext
     @ctx.value.node = node.to_unsafe
   end
 
-  # TODO: remove this attribute after 0.6.1
-  @[Raises]
   def evaluate(search_path : String)
     xpath = LibXML.xmlXPathEvalExpression(search_path, self)
     case xpath.value.type

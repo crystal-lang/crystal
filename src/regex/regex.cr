@@ -16,6 +16,7 @@ class Regex
 
   getter source
 
+  # TODO: remove this constructor after 0.7.1
   def self.new(source, options : Int32)
     new source, Options.new(options)
   end

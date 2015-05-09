@@ -206,7 +206,10 @@ lib LibXML
 
   fun xmlXPathInit
   fun xmlXPathNewContext(doc : DocPtr) : XPathContext*
+
+  @[Raises]
   fun xmlXPathEvalExpression(str : UInt8*, ctx : XPathContext*) : XPathObject*
+
   fun xmlXPathRegisterNs(ctx : XPathContext*, prefix : UInt8*, uri : UInt8*) : Int32
   fun xmlXPathRegisterVariable(ctx : XPathContext*, name : UInt8*, value : XPathObject*) : Int32
   fun xmlXPathNewCString(val : UInt8*) : XPathObject*
