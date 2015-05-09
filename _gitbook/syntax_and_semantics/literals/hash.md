@@ -1,6 +1,6 @@
 # Hash
 
-A Hash representing a mapping of keys of a type `K` to values of a type `V`. It is typically created with an array literal:
+A Hash representing a mapping of keys of a type `K` to values of a type `V`. It is typically created with a hash literal:
 
 ```ruby
 {1 => 2, 3 => 4}     # Hash(Int32, Int32)

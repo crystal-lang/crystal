@@ -8,3 +8,5 @@ tuple[0]                  #=> 1       (Int32)
 tuple[1]                  #=> "hello" (String)
 tuple[2]                  #=> 'x'     (Char)
 ```
+
+To create an empty tuple use `Tuple.new`.
