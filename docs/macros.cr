@@ -785,7 +785,7 @@ module Macros
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a MacroId
-  # for the string's content. Similarly, invoking ID on a `Symbol`, `Call`, `Var` and `Path`
+  # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
   # return MacroIds for the node's content.
   #
   # This allows you to treat strings, symbols, variables and calls unifomly. For example:
