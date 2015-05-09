@@ -221,6 +221,20 @@ describe "Enumerable" do
     end
   end
 
+  describe "each_cons" do
+    it "returns running pairs" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+      array.should eq([[1, 2], [2, 3], [3, 4]])
+    end
+
+    it "returns running triples" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
+      array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+    end
+  end
+
   it "gets each_with_index iterator" do
     iter = [1, 2].each_with_index
     iter.next.should eq({1, 0})
