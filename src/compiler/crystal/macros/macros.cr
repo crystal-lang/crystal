@@ -647,11 +647,6 @@ module Crystal
           return @last = TypeNode.superclass(@scope)
         when "@type"
           return @last = TypeNode.new(@scope)
-        when "@enum_members"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(EnumType)
-            return @last = TypeNode.constants(scope)
-          end
         when "@constants"
           scope = @scope.try &.instance_type
           return @last = TypeNode.constants(scope)

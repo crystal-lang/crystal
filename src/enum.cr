@@ -7,7 +7,7 @@ struct Enum
         io << "None"
       else
         found = false
-        {% for member in @enum_members %}
+        {% for member in @constants %}
           {% if member.stringify != "All" %}
             if {{member}}.value != 0 && (value & {{member}}.value) == {{member}}.value
               io << ", " if found
@@ -29,7 +29,7 @@ struct Enum
       String.build { |io| to_s(io) }
     {% else %}
       case value
-      {% for member in @enum_members %}
+      {% for member in @constants %}
       when {{member}}.value
         {{member.stringify}}
       {% end %}
@@ -85,23 +85,23 @@ struct Enum
 
   macro def self.names : Array(String)
     {% if @enum_flags %}
-      {{ @enum_members.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
+      {{ @constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
-      {{ @enum_members.map &.stringify }}
+      {{ @constants.map &.stringify }}
     {% end %}
   end
 
   macro def self.values : Array(self)
     {% if @enum_flags %}
-      {{ @enum_members.select { |e| e.stringify != "None" && e.stringify != "All" } }}
+      {{ @constants.select { |e| e.stringify != "None" && e.stringify != "All" } }}
     {% else %}
-      {{ @enum_members }}
+      {{ @constants }}
     {% end %}
   end
 
   # macro def self.to_h : Hash(String, self)
   #   {
-  #     {% for member in @enum_members %}
+  #     {% for member in @constants %}
   #       {{member.stringify}} => {{member}},
   #     {% end %}
   #   }
@@ -118,7 +118,7 @@ struct Enum
 
   macro def self.parse?(string) : self ?
     case string.downcase
-    {% for member in @enum_members %}
+    {% for member in @constants %}
       when {{member.stringify.downcase}}
         {{member}}
     {% end %}
