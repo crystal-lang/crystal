@@ -95,6 +95,10 @@ module Iterator(T)
   # Rewinds the iterator to its original state.
   abstract def rewind
 
+  def each
+    self
+  end
+
   def map(&func : T -> U)
     Map(typeof(self), T, U).new(self, func)
   end
