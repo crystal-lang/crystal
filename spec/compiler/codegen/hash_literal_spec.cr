@@ -139,4 +139,17 @@ describe "Code gen: hash literal spec" do
       custom.keys * custom.values
       )).to_i.should eq(90)
   end
+
+  it "doesn't crash on hash literal with proc pointer (#646)" do
+    run(%(
+      require "prelude"
+
+      def blah
+        1
+      end
+
+      b = {"a" => ->blah}
+      b["a"].call
+      )).to_i.should eq(1)
+  end
 end

@@ -15,10 +15,6 @@ module Crystal
       @fixed = Set(typeof(object_id)).new
     end
 
-    def visit(node : ASTNode)
-      true
-    end
-
     def visit(node : Def)
       false
     end
@@ -71,6 +67,10 @@ module Crystal
           target_def.accept_children self
         end
       end
+    end
+
+    def visit(node : ASTNode)
+      true
     end
   end
 end
