@@ -71,6 +71,8 @@
 # but without passing a block: `Array#each`, `Array#each_index`, `Hash#each`, `String#each_char`,
 # `IO#each_line`, etc.
 module Iterator(T)
+  include Enumerable(T)
+
   # The class that signals that there are no more elements in an iterator.
   class Stop
     INSTANCE = new
@@ -78,10 +80,13 @@ module Iterator(T)
 
   # Shortcut for `Iterator::Stop::INSTANCE`, to signal that there are no more elements in an iterator.
   def stop
-    Stop::INSTANCE
+    Iterator.stop
   end
 
-  include Enumerable(T)
+  # ditto
+  def self.stop
+    Stop::INSTANCE
+  end
 
   # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
   # are no more elements.
@@ -142,6 +147,14 @@ module Iterator(T)
 
   def each_slice(n)
     slice(n)
+  end
+
+  def self.of(element : T)
+    Singleton(T).new(element)
+  end
+
+  def self.of(&block : -> T)
+    SingletonProc(T).new(block)
   end
 
   def each
@@ -417,6 +430,32 @@ module Iterator(T)
     def rewind
       @iterator.rewind
       @hash.clear
+    end
+  end
+
+  struct Singleton(T)
+    include Iterator(T)
+
+    def initialize(@element : T)
+    end
+
+    def next
+      @element
+    end
+
+    def rewind
+      self
+    end
+  end
+
+  struct SingletonProc(T)
+    include Iterator(T)
+
+    def initialize(@proc : -> T)
+    end
+
+    def next
+      @proc.call
     end
   end
 end

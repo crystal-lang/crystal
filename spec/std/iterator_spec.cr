@@ -174,6 +174,17 @@ describe Iterator do
     end
   end
 
+  it "creates singleton" do
+    iter = Iterator.of(42)
+    iter.take(3).to_a.should eq([42, 42, 42])
+  end
+
+  it "creates singleton from block" do
+    a = 0
+    iter = Iterator.of { a += 1 }
+    iter.take(3).to_a.should eq([1, 2, 3])
+  end
+
   it "combines many iterators" do
     (1..100).each
             .select { |x| 50 <= x < 60 }
