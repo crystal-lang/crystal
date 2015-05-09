@@ -127,4 +127,16 @@ describe "Tuple" do
   it "clones empty tuple" do
     Tuple.new.clone.should eq(Tuple.new)
   end
+
+  it "does iterator" do
+    iter = {1, 2, 3}.each
+
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq(3)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+  end
 end

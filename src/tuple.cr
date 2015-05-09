@@ -155,6 +155,15 @@ struct Tuple
     self
   end
 
+  # Returns an `Iterator` for the elements in this tuple.
+  #
+  # ```
+  # {1, 'a'}.each.cycle.take(3).to_a #=> [1, 'a', 1]
+  # ```
+  def each
+    ItemIterator(typeof((i = 0; self[i]))).new(self)
+  end
+
   # Returns `true` if this tuple has the same length as the other tuple
   # and their elements are equal to each other when  compared with `==`.
   #
@@ -298,5 +307,23 @@ struct Tuple
     io << "{"
     join ", ", io, &.inspect(io)
     io << "}"
+  end
+
+  class ItemIterator(T)
+    include Iterator(T)
+
+    def initialize(@tuple, @index = 0)
+    end
+
+    def next
+      value = @tuple.at(@index) { stop }
+      @index += 1
+      value
+    end
+
+    def rewind
+      @index = 0
+      self
+    end
   end
 end
