@@ -85,4 +85,19 @@ describe "Code gen: alias" do
       ))
     result.program.link_attributes
   end
+
+  it "doesn't crash on cast to as recursive alias (#639)" do
+    build(%(
+      class Foo(T)
+      end
+
+      alias Type = Int32 | Foo(Type)
+
+      Foo(Type).new
+
+      ptr = Pointer(Type).malloc(1_u64)
+      ptr.value = 1 as Type
+      ptr.value = 1
+      ))
+  end
 end

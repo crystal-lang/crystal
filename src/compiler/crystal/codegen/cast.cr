@@ -1,5 +1,8 @@
 class Crystal::CodeGenVisitor < Crystal::Visitor
   def assign(target_pointer, target_type, value_type, value)
+    target_type = target_type.remove_alias
+    value_type = value_type.remove_alias
+
     if target_type == value_type
       store to_rhs(value, target_type), target_pointer
     else
