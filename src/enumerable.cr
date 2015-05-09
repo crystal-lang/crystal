@@ -59,6 +59,18 @@ module Enumerable(T)
     each.slice(count)
   end
 
+  def each_cons(count : Int)
+    cons = Array(T).new(count)
+    each do |elem|
+      cons << elem
+      cons.shift if cons.size > count
+      if cons.size == count
+        yield cons.dup
+      end
+    end
+    nil
+  end
+
   def each_with_index(offset = 0)
     i = offset
     each do |elem|
