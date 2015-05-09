@@ -372,10 +372,6 @@ class Array(T)
     @length
   end
 
-  def cycle
-    each.cycle
-  end
-
   def delete(obj)
     delete_if { |e| e == obj }
   end

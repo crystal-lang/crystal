@@ -953,4 +953,31 @@ describe "Array" do
       iter.next.should eq(3)
     end
   end
+
+  describe "cycle" do
+    it "cycles" do
+      a = [] of Int32
+      [1, 2, 3].cycle do |x|
+        a << x
+        break if a.length == 9
+      end
+      a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    end
+
+    it "cycles N times" do
+      a = [] of Int32
+      [1, 2, 3].cycle(2) do |x|
+        a << x
+      end
+      a.should eq([1, 2, 3, 1, 2, 3])
+    end
+
+    it "cycles with iterator" do
+      [1, 2, 3].cycle.take(5).to_a.should eq([1, 2, 3, 1, 2])
+    end
+
+    it "cycles with N and iterator" do
+      [1, 2, 3].cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
+    end
+  end
 end

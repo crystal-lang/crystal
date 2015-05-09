@@ -42,6 +42,26 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
+  # Returns an `Iterator` that cycles through this enumerable's elements.
+  def cycle
+    each.cycle
+  end
+
+  # Returns an `Iterator` that cycles through this enumerable's elements *n* times.
+  def cycle(n)
+    each.cycle(n)
+  end
+
+  # Calls the given block for each element in this enumerable forever.
+  def cycle
+    loop { each { |x| yield x } }
+  end
+
+  # Calls the given block for each element in this enumerable *n* times.
+  def cycle(n)
+    n.times { each { |x| yield x } }
+  end
+
   def each_slice(count : Int)
     slice = Array(T).new(count)
     each do |elem|
