@@ -242,6 +242,8 @@ In the above example three variables were declared, associated to an index, and 
 
 When a macro is invoked you can access the current scope, or type, with a special instance variable: `@type`. The type of this variable is `TypeNode`, which gives you access to type information at compile time.
 
+Note that `@type` is always the *instance* type, even when the macro is invoked in a class method.
+
 ### Constants
 
 Macros can access constants. For example:
