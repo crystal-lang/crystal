@@ -573,4 +573,17 @@ describe "Code gen: fun" do
       ->LibFoo.bar
       ))
   end
+
+  it "codegens fun to implicit self in constant (#647)" do
+    run(%(
+      module Foo
+        def self.blah
+          1
+        end
+        H = ->{ blah }
+      end
+
+      Foo::H.call
+      )).to_i.should eq(1)
+  end
 end

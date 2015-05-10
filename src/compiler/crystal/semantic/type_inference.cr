@@ -3257,7 +3257,7 @@ module Crystal
     end
 
     def check_self_closured
-      if (context = @fun_literal_context) && context.is_a?(Def)
+      if @scope && (context = @fun_literal_context) && context.is_a?(Def)
         context.self_closured = true
 
         # Go up and mark fun literal defs as closured until the top
