@@ -157,6 +157,12 @@ module Iterator(T)
     slice(n)
   end
 
+  def cons(n)
+    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
+
+    Cons(typeof(self), T).new(self, n)
+  end
+
   def self.of(element : T)
     Singleton(T).new(element)
   end
@@ -435,6 +441,32 @@ module Iterator(T)
 
     def rewind
       @iterator.rewind
+      self
+    end
+  end
+
+  # :nodoc:
+  struct Cons(I, T)
+    include Iterator(Array(T))
+
+    def initialize(@iterator : Iterator(T), @n)
+      @values = Array(T).new(@n)
+    end
+
+    def next
+      loop do
+        elem = @iterator.next
+        return stop if elem.is_a?(Stop)
+        @values << elem
+        @values.shift if @values.size > @n
+        break if @values.size == @n
+      end
+      @values.dup
+    end
+
+    def rewind
+      @iterator.rewind
+      @values = Array(T).new(@n)
       self
     end
   end

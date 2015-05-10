@@ -233,6 +233,17 @@ describe "Enumerable" do
       [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
       array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     end
+
+    it "returns each_cons iterator" do
+      iter = [1, 2, 3, 4, 5].each_cons(3)
+      iter.next.should eq([1, 2, 3])
+      iter.next.should eq([2, 3, 4])
+      iter.next.should eq([3, 4, 5])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq([1, 2, 3])
+    end
   end
 
   it "gets each_with_index iterator" do

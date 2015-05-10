@@ -91,6 +91,10 @@ module Enumerable(T)
     nil
   end
 
+  def each_cons(count : Int)
+    each.cons(count)
+  end
+
   def each_with_index(offset = 0)
     i = offset
     each do |elem|
