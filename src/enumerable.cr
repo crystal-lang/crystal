@@ -1,4 +1,35 @@
+# The Enumerable mixin provides collection classes with several traversal, searching,
+# filtering and querying methods.
+#
+# Including types must provide an `each` method, which yields successive members of
+# the collection.
+#
+# For example:
+#
+# ```
+# class Three
+#   include Enumerable(Int32)
+#
+#   def each
+#     yield 1
+#     yield 2
+#     yield 3
+#   end
+# end
+#
+# three = Three.new
+# three.to_a                      #=> [1, 2, 3]
+# three.select &.odd?             #=> [1, 3]
+# three.all? { |x| x < 10 }       #=> true
+# ```
+#
+# Note that most search and filter methods traverse an Enumerable eagerly,
+# producing an `Array` as the result. For a lazy alternative refer to
+# the `Iterator` and `Iterable` modules.
 module Enumerable(T)
+  # Must yield this collection's elements to the block.
+  abstract def each(&block : T -> _)
+
   # Returns `true` if the passed block returns a value other than `false` or `nil` for all elements of the collection.
   #
   #     ["ant", "bear", "cat"].all? { |word| word.length >= 3 }  #=> true
@@ -78,16 +109,6 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
-  # Returns an `Iterator` that cycles through this enumerable's elements.
-  def cycle
-    each.cycle
-  end
-
-  # Returns an `Iterator` that cycles through this enumerable's elements *n* times.
-  def cycle(n)
-    each.cycle(n)
-  end
-
   # Calls the given block for each element in this enumerable forever.
   def cycle
     loop { each { |x| yield x } }
@@ -98,7 +119,7 @@ module Enumerable(T)
     n.times { each { |x| yield x } }
   end
 
-  # Iterates over the collection in slices of size <var>count</var>, and runs the block for each of those.
+  # Iterates over the collection in slices of size *count*, and runs the block for each of those.
   #
   #     [1, 2, 3, 4, 5].each_slice(2) do |slice|
   #       puts slice
@@ -124,12 +145,7 @@ module Enumerable(T)
     nil
   end
 
-  # Like the variant that expects a block, but returns an `Iterator` instead.
-  def each_slice(count : Int)
-    each.slice(count)
-  end
-
-  # Iterates over the collection yielding chunks of size <var>count</var>, but advancing one by one.
+  # Iterates over the collection yielding chunks of size *count*, but advancing one by one.
   #
   #     [1, 2, 3, 4, 5].each_cons(2) do |cons|
   #       puts cons
@@ -154,10 +170,6 @@ module Enumerable(T)
     nil
   end
 
-  def each_cons(count : Int)
-    each.cons(count)
-  end
-
   # Iterates over the collection, yielding both the elements and their index.
   #
   #     ["Alice", "Bob"].each_with_index do |user, i|
@@ -169,7 +181,7 @@ module Enumerable(T)
   #     User #0: Alice
   #     User #1: Bob
   #
-  # Accepts an optional <var>offset</var> parameter, which tells it to start counting from there. So, a more humand
+  # Accepts an optional *offset* parameter, which tells it to start counting from there. So, a more humand
   # friendly version of the previous snippet would be:
   #
   #     ["Alice", "Bob"].each_with_index(1) do |user, i|
@@ -189,12 +201,7 @@ module Enumerable(T)
     end
   end
 
-  # Like the variant that expects a block, but returns an `Iterator` instead.
-  def each_with_index(offset = 0)
-    each.with_index(offset)
-  end
-
-  # Iterates over the collection, passing each element and the initial object <var>obj</var>. Returns that object.
+  # Iterates over the collection, passing each element and the initial object *obj*. Returns that object.
   #
   #     ["Alice", "Bob"].each_with_object({} of String => Int32) do |user, lengths|
   #       lengths[user] = user.length
@@ -207,14 +214,9 @@ module Enumerable(T)
     obj
   end
 
-  # Like the variant that expects a block, but returns an `Iterator` instead.
-  def each_with_object(obj)
-    each.with_object(obj)
-  end
-
   # Returns the first element in the collection for which the passed block is `true`.
   #
-  # Accepts an optional parameter <var>if_none</var>, to set what gets returned if no element is found (defaults to `nil`).
+  # Accepts an optional parameter *if_none*, to set what gets returned if no element is found (defaults to `nil`).
   #
   #     [1, 2, 3, 4].find { |i| i > 2 }      #=> 3
   #     [1, 2, 3, 4].find { |i| i > 8 }      #=> nil
@@ -233,9 +235,9 @@ module Enumerable(T)
     raise EmptyEnumerable.new
   end
 
-  # Returns an array with the first <var>count</var> elements in the collection.
+  # Returns an array with the first *count* elements in the collection.
   #
-  # If <var>count</var> is bigger than the number of elements in the collection, returns as many as possible. This
+  # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
   # include the case of calling it over an empty collection, in which case it returns an empty array (unlike the variant
   # without a parameter).
   def first(count : Int)
@@ -260,7 +262,7 @@ module Enumerable(T)
     ary
   end
 
-  # Returns an array with all the elements in the collection that match the `RegExp` <var>pattern</var>.
+  # Returns an array with all the elements in the collection that match the `RegExp` *pattern*.
   #
   #     ["Alice", "Bob"].grep(/^A/)  #=> ["Alice"]
   #
@@ -286,7 +288,7 @@ module Enumerable(T)
     h
   end
 
-  # Returns `true` if the collection contains <var>obj</var>, `false` otherwise.
+  # Returns `true` if the collection contains *obj*, `false` otherwise.
   #
   #     [1, 2, 3].includes?(2)  #=> true
   #     [1, 2, 3].includes?(5)  #=> false
@@ -307,11 +309,11 @@ module Enumerable(T)
     nil
   end
 
-  # Returns the index of the object <var>obj</var> in the collection.
+  # Returns the index of the object *obj* in the collection.
   #
   #     ["Alice", "Bob"].index("Alice")  #=> 0
   #
-  # Returns `nil` if <var>obj</var> is not in the collection.
+  # Returns `nil` if *obj* is not in the collection.
   def index(obj)
     index { |e| e == obj }
   end
@@ -326,8 +328,8 @@ module Enumerable(T)
 
   # Combines all elements in the collection by applying a binary operation, specified by a block.
   #
-  # For each element in the collection the block is passed an accumulator value (<var>memo</var>) and the element. The
-  # result becomes the new value for <var>memo</var>. At the end of the iteration, the final value of <var>memo</var> is
+  # For each element in the collection the block is passed an accumulator value (*memo*) and the element. The
+  # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
   #
   #     [1, 2, 3, 4, 5].inject { |i, acc| i + acc }  #=> 15
@@ -352,7 +354,7 @@ module Enumerable(T)
     memo
   end
 
-  # Returns a `String` created by concatenating the elements in the collection, separated by <var>separator</var> (defaults to none).
+  # Returns a `String` created by concatenating the elements in the collection, separated by *separator* (defaults to none).
   #
   #     [1, 2, 3, 4, 5].join(", ")  #=> "1, 2, 3, 4, 5"
   #
@@ -363,7 +365,7 @@ module Enumerable(T)
   end
 
   # Returns a `String` created by concatenating the results of passing the elements in the collection to the passed
-  # block, separated by <var>separator</var> (defaults to none).
+  # block, separated by *separator* (defaults to none).
   #
   #     [1, 2, 3, 4, 5].join(", ") { |i| -i }  #=> "-1, -2, -3, -4, -5"
   #
@@ -375,7 +377,7 @@ module Enumerable(T)
     end
   end
 
-  # Prints to <var>io</var> all the elements in the collection, separated by <var>separator</var>.
+  # Prints to *io* all the elements in the collection, separated by *separator*.
   #
   #     [1, 2, 3, 4, 5].join(", ")
   #
@@ -389,7 +391,7 @@ module Enumerable(T)
     end
   end
 
-  # Prints to <var>io</var> the concatenation of the elements, with the possibility of controlling how the printing is
+  # Prints to *io* the concatenation of the elements, with the possibility of controlling how the printing is
   # done via a block.
   #
   #     [1, 2, 3, 4, 5].join(", ", STDOUT) { |i, io| io << "(#{i})" }
@@ -660,7 +662,7 @@ module Enumerable(T)
   #
   #     [1, 2, 3, 4, 5, 6].sum  #=> 21
   #
-  # An optional <var>initial</var> value can be passed.
+  # An optional *initial* value can be passed.
   #
   #     [1, 2, 3, 4, 5, 6].sum(100)  #=> 121
   #
@@ -676,9 +678,9 @@ module Enumerable(T)
     inject(initial) { |memo, e| memo + (yield e) }
   end
 
-  # Returns an array with the first <var>count</var> elements in the collection.
+  # Returns an array with the first *count* elements in the collection.
   #
-  # If <var>count</var> is bigger than the number of elements in the collection, returns as many as possible. This
+  # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
   # include the case of calling it over an empty collection, in which case it returns an empty array.
   def take(count : Int)
     ary = Array(T).new(count)

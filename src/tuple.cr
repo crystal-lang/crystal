@@ -60,6 +60,7 @@
 # ```
 struct Tuple
   include Enumerable(typeof((i = 0; self[i])))
+  include Iterable
   include Comparable(Tuple)
 
   # Creates a tuple that will contain the given arguments.

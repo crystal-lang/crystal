@@ -1,5 +1,6 @@
 class Set(T)
   include Enumerable
+  include Iterable
 
   def initialize
     @hash = Hash(T, Bool).new

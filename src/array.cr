@@ -45,6 +45,7 @@
 # ```
 class Array(T)
   include Enumerable
+  include Iterable
   include Comparable(Array)
 
   getter length

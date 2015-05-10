@@ -1,5 +1,6 @@
 class Matrix(T)
   include Enumerable(T)
+  include Iterable
 
   macro def_exception(name, message)
     class {{name.id}} < Exception

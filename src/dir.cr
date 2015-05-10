@@ -85,6 +85,7 @@ end
 # the parent directory (..), and the directory itself (.).
 class Dir
   include Enumerable(String)
+  include Iterable
 
   getter path
 

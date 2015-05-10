@@ -1,5 +1,6 @@
 struct Slice(T)
   include Enumerable(T)
+  include Iterable
 
   getter length
 
