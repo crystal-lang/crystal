@@ -26,7 +26,7 @@ Array(String)
 alias Int32OrString = Int32 | String
 ```
 
-The pipe (`|`) in types creates a union type. `Int32 | String` is read "Int32 or String". In regular code, `Int32 | String` means invoking the method `|` on `Int32|` with `String` as an argument.
+The pipe (`|`) in types creates a union type. `Int32 | String` is read "Int32 or String". In regular code, `Int32 | String` means invoking the method `|` on `Int32` with `String` as an argument.
 
 ## Nilable
 
