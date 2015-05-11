@@ -151,4 +151,19 @@ describe "Restrictions" do
       foo 1
       ), "undefined constant Foo::Bar"
   end
+
+  it "works with static array (#637)" do
+    assert_type(%(
+      def foo(x : UInt8[1])
+        1
+      end
+
+      def foo(x : UInt8[2])
+        'a'
+      end
+
+      x :: UInt8[2]
+      foo(x)
+      )) { char }
+  end
 end

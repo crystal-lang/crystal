@@ -339,8 +339,8 @@ module Crystal
       i = 0
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[i]
-        restricted = type_var.type.restrict other_type_var, context
-        return nil unless restricted == type_var.type
+        restricted = restrict_type_var(type_var, other_type_var, context)
+        return nil unless restricted
         i += 1
       end
 
@@ -352,11 +352,27 @@ module Crystal
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
-        restricted = type_var.type.restrict(other_type_var.type, context)
-        return super unless restricted == type_var.type
+        restricted = restrict_type_var(type_var, other_type_var, context)
+        return super unless restricted
       end
 
       self
+    end
+
+    def restrict_type_var(type_var, other_type_var, context)
+      unless type_var.is_a?(NumberLiteral)
+        type_var = type_var.type? || type_var
+      end
+
+      unless other_type_var.is_a?(NumberLiteral)
+        other_type_var = other_type_var.type? || other_type_var
+      end
+
+      if type_var.is_a?(ASTNode)
+        type_var.is_restriction_of?(other_type_var, context.owner)
+      else
+        type_var.restrict(other_type_var, context) == type_var
+      end
     end
   end
 
