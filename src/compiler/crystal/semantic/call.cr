@@ -564,7 +564,13 @@ class Crystal::Call
     if !macros && node_scope.metaclass? && node_scope.instance_type.module?
       macros = yield mod.object.metaclass
     end
+
     macros ||= yield mod
+
+    if !macros && (location = self.location) && (filename = location.filename).is_a?(String) && (file_module = mod.file_module(filename))
+      macros ||= yield file_module
+    end
+
     macros
   end
 

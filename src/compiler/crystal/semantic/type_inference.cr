@@ -2783,9 +2783,11 @@ module Crystal
       node.exp.visibility = node.modifier
       node.exp.accept self
 
-      # Can only apply visibility modifier to def or a macro call
+      # Can only apply visibility modifier to def, macro or a macro call
       case exp = node.exp
       when Def
+        return false
+      when Macro
         return false
       when Call
         if exp.expanded

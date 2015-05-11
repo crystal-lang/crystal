@@ -125,20 +125,39 @@ module Crystal
     end
 
     def add_def(node : Def)
-      return super unless node.visibility == :private
+      if file_module = check_private(node)
+        file_module.add_def node
+      else
+        super
+      end
+    end
 
-      location = node.location
-      return super unless location
-
-      filename = location.filename
-      return super unless filename.is_a?(String)
-
-      file_module = @file_modules[filename] ||= FileModule.new(self, self, filename)
-      file_module.add_def node
+    def add_macro(node : Macro)
+      if file_module = check_private(node)
+        file_module.add_macro node
+      else
+        super
+      end
     end
 
     def lookup_private_matches(filename, signature)
       @file_modules[filename]?.try &.lookup_matches(signature)
+    end
+
+    def file_module(filename)
+      @file_modules[filename]?
+    end
+
+    def check_private(node)
+      return nil unless node.visibility == :private
+
+      location = node.location
+      return nil unless location
+
+      filename = location.filename
+      return nil unless filename.is_a?(String)
+
+      @file_modules[filename] ||= FileModule.new(self, self, filename)
     end
 
     setter target_machine

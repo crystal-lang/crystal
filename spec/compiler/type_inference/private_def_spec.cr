@@ -69,4 +69,39 @@ describe "Type inference: private def" do
       foo
       )) { int32 }
   end
+
+  it "doesn't find private macro in another file" do
+    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+      compiler = Compiler.new
+      sources = [
+        Compiler::Source.new("foo.cr", %(
+                                          private macro foo
+                                            1
+                                          end
+                                        )),
+        Compiler::Source.new("bar.cr", %(
+                                          foo
+                                        )),
+      ]
+      compiler.no_build = true
+      compiler.prelude = "empty"
+      compiler.compile sources, "output"
+    end
+  end
+
+  it "finds private macro in same file" do
+    compiler = Compiler.new
+    sources = [
+      Compiler::Source.new("foo.cr", %(
+                                        private macro foo
+                                          1
+                                        end
+
+                                        foo
+                                      )),
+    ]
+    compiler.no_build = true
+    compiler.prelude = "empty"
+    compiler.compile sources, "output"
+  end
 end

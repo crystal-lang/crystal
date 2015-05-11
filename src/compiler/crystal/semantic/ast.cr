@@ -493,6 +493,10 @@ module Crystal
     property :visibility
   end
 
+  class Macro
+    property :visibility
+  end
+
   class Block
     property :visited
     property :scope
