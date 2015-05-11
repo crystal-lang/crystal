@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.14" data-basepath=".." data-revision="Sat May 09 2015 12:52:11 GMT-0300 (ART)">
+    <div class="book" data-level="3.14" data-basepath=".." data-revision="Mon May 11 2015 12:30:58 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1583,6 +1583,21 @@
             
         </li>
     
+        <li class="chapter " data-level="3.16" data-path="syntax_and_semantics/type_grammar.html">
+            
+                
+                    <a href="../syntax_and_semantics/type_grammar.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.16.</b>
+                        
+                        Type grammar
+                    </a>
+                
+            
+            
+        </li>
+    
 
             </ul>
             
@@ -1878,6 +1893,7 @@ fresh_vars_sample
 <p>In the above example three variables were declared, associated to an index, and then they were printed, refering to these variables with the same indices.</p>
 <h3 id="type-information">Type information</h3>
 <p>When a macro is invoked you can access the current scope, or type, with a special instance variable: <code>@type</code>. The type of this variable is <code>TypeNode</code>, which gives you access to type information at compile time.</p>
+<p>Note that <code>@type</code> is always the <em>instance</em> type, even when the macro is invoked in a class method.</p>
 <h3 id="constants">Constants</h3>
 <p>Macros can access constants. For example:</p>
 <pre><code class="lang-ruby"><span class="hljs-constant">VALUES</span> = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]

@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.3.7" data-basepath=".." data-revision="Sat May 09 2015 12:52:11 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.3.7" data-basepath=".." data-revision="Mon May 11 2015 12:30:58 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1583,6 +1583,21 @@
             
         </li>
     
+        <li class="chapter " data-level="3.16" data-path="syntax_and_semantics/type_grammar.html">
+            
+                
+                    <a href="../syntax_and_semantics/type_grammar.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.16.</b>
+                        
+                        Type grammar
+                    </a>
+                
+            
+            
+        </li>
+    
 
             </ul>
             
@@ -1722,6 +1737,7 @@ in foo.cr:2: undefined method &apos;+&apos; for Bool
     ^
 </code></pre><p>This is because when you invoke <code>add</code>, it is instantiated with the types of the arguments: every method invocation with a different type combination results in a different method instantiation.</p>
 <p>The only difference is that the first error message is a little more clear, but both definitions are safe in that you will get a compile time error anyway. So, in general, it&apos;s preferable not to specify type restrictions and almost only use them to define different method overloads. This results in more generic, reusable code. For example, if we define a class that has a <code>+</code> method but isn&apos;t a <code>Number</code>, we can use the <code>add</code> method that doesn&apos;t have type restrictions, but we can&apos;t use the <code>add</code> method that has restrictions.</p>
+<p>Refer to the <a href="type_grammar.html">type gammar</a> for the notation used in type restrictions.</p>
 <h2 id="self-restriction">self restriction</h2>
 <p>A special type restriction is <code>self</code>:</p>
 <pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>

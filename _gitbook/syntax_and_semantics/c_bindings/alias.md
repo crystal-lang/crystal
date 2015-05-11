@@ -33,3 +33,5 @@ lib C
   fun memcmp(p1 : Void*, p2 : Void*, size : C::SizeT) : Int32
 end
 ```
+
+Refer to the [type gammar](type_grammar.html) for the notation used in alias types.

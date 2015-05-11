@@ -33,3 +33,5 @@ X.callback ->(x) { x + y } # Error: can't send closure
 ```
 
 If the compiler can't detect this at compile-time, an exception will be thrown at runtime.
+
+Refer to the [type gammar](type_grammar.html) for the notation used in callbacks and procs types.

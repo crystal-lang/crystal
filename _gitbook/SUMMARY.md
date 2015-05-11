@@ -105,4 +105,5 @@
        * [type](syntax_and_semantics/c_bindings/type.md)
        * [alias](syntax_and_semantics/c_bindings/alias.md)
        * [Callbacks](syntax_and_semantics/c_bindings/callbacks.md)
+   * [Type grammar](syntax_and_semantics/type_grammar.md)
 

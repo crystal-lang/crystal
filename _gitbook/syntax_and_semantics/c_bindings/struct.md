@@ -77,3 +77,5 @@ tz = C::TimeZone.new
 change_it tz
 tz.minutes_west #=> 0
 ```
+
+Refer to the [type gammar](type_grammar.html) for the notation used in struct field types.

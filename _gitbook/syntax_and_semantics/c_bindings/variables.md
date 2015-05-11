@@ -24,3 +24,5 @@ lib C
   $errno : Int32
 end
 ```
+
+Refer to the [type gammar](type_grammar.html) for the notation used in external variables types.

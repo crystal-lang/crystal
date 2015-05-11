@@ -74,4 +74,6 @@ The valid types to use in C bindings are:
 * `Void`: the absence of a return value.
 * `NoReturn`: similar to `Void`, but the compiler understands that no code can be executed after that invocation.
 
+Refer to the [type gammar](type_grammar.html) for the notation used in fun types.
+
 **Note:** The C `char` type is `UInt8` in Crystal, so a `char*` or a `const char*` is `UInt8*`. The `Char` type in Crystal is a unicode codepoint so it is represented by four bytes, making it similar to an `Int32`, not to an `UInt8`.
