@@ -3,6 +3,10 @@ require "../types"
 
 module Crystal
   class ASTNode
+    def is_restriction_of?(other : Underscore, owner)
+      true
+    end
+
     def is_restriction_of?(other : ASTNode, owner)
       self == other
     end

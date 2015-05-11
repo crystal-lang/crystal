@@ -166,4 +166,15 @@ describe "Restrictions" do
       foo(x)
       )) { char }
   end
+
+  it "works with static array that uses underscore" do
+    assert_type(%(
+      def foo(x : UInt8[_])
+        'a'
+      end
+
+      x :: UInt8[2]
+      foo(x)
+      )) { char }
+  end
 end
