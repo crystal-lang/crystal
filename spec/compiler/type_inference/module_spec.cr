@@ -709,4 +709,21 @@ describe "Type inference: module" do
       D::B::C
       )) { types["A"].types["B"].types["C"].metaclass }
   end
+
+  it "correctly types type var in included module, with a restriction with a free var (bug)" do
+    assert_type(%(
+      module Moo(T)
+      end
+
+      class Foo(T)
+        include Moo(T)
+
+        def foo(x : Moo(U))
+          T
+        end
+      end
+
+      Foo(Int32).new.foo(Foo(Char).new)
+      )) { int32.metaclass }
+  end
 end

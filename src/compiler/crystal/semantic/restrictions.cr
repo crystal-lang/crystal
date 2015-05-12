@@ -419,7 +419,9 @@ module Crystal
           restricted = t.restrict other_type_var, context
           return nil unless restricted
 
-          context.set_free_var(module_type_var, restricted)
+          if other_type_var.is_a?(Path) && other_type_var.names.length == 1
+            context.set_free_var(other_type_var.names.first, restricted)
+          end
         end
       end
 
@@ -458,7 +460,9 @@ module Crystal
           restricted = t.restrict other_type_var, context
           return nil unless restricted
 
-          context.set_free_var(class_type_var, restricted)
+          if other_type_var.is_a?(Path) && other_type_var.names.length == 1
+            context.set_free_var(other_type_var.names.first, restricted)
+          end
         end
       end
 
