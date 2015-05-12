@@ -171,3 +171,20 @@ def run(code, filename = nil)
     Program.new.run(code, filename: filename)
   end
 end
+
+def test_c(c_code, crystal_code)
+  File.write("./temp_abi.c", c_code)
+
+  `#{Crystal::Compiler::CC} ./temp_abi.c -c -o ./temp_abi.o`.should be_truthy
+
+  yield run(%(
+    require "prelude"
+
+    @[Link(ldflags: "temp_abi.o")]
+    #{crystal_code}
+    ))
+ensure
+  File.delete("./temp_abi.c")
+  File.delete("./temp_abi.o")
+end
+
