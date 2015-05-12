@@ -1,6 +1,6 @@
 # Array
 
-An Array is a generic type containing elements of a type `T`. It is typically created with an array literal:
+An [Array](http://crystal-lang.org/api/Array.html) is a generic type containing elements of a type `T`. It is typically created with an array literal:
 
 ```ruby
 [1, 2, 3]         # Array(Int32)

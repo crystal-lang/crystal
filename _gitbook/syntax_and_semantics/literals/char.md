@@ -1,6 +1,6 @@
 # Char
 
-A Char represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
+A [Char](http://crystal-lang.org/api/Char.html) represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 It occupies 32 bits.
 
 It is created by enclosing an UTF-8 character in single quotes.

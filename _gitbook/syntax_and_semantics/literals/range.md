@@ -1,6 +1,6 @@
 # Range
 
-Ranges are typically constructed with a range literal:
+A [Range](http://crystal-lang.org/api/Range.html) is typically constructed with a range literal:
 
 ```ruby
 x..y  # an inclusive range, in mathematics: [x, y]

@@ -70,11 +70,11 @@
            * Proc literal
            * Proc pointer
        * [alias](syntax_and_semantics/alias.md)
-   * Type reflection
+   * [Type reflection](syntax_and_semantics/type_reflection.md)
        * [is_a?](syntax_and_semantics/is_a.md)
-       * responds_to?
-       * as
-       * typeof
+       * [responds_to?](syntax_and_semantics/responds_to.md)
+       * [as](syntax_and_semantics/as.md)
+       * [typeof](syntax_and_semantics/typeof.md)
    * Attributes
        * @[ThreadLocal]
        * @[Packed]
@@ -83,11 +83,11 @@
        * @[ReturnsTwice]
        * [@[Raises]]([raises])
    * [Requiring files](syntax_and_semantics/requiring_files.md)
-   * Low-level primitives
-       * pointerof
-       * sizeof
-       * instance_sizeof
-       * declare var
+   * [Low-level primitives](syntax_and_semantics/low_level_primitives.md)
+       * [pointerof](syntax_and_semantics/pointerof.md)
+       * [sizeof](syntax_and_semantics/sizeof.md)
+       * [instance_sizeof](syntax_and_semantics/instance_sizeof.md)
+       * [Uninitialized variable declaration](syntax_and_semantics/declare_var.md)
    * Exception handling
    * [Compile-time flags](syntax_and_semantics/compile_time_flags.md)
        * [Cross-compilation](syntax_and_semantics/cross-compilation.md)
@@ -109,4 +109,5 @@
        * [alias](syntax_and_semantics/c_bindings/alias.md)
        * [Callbacks](syntax_and_semantics/c_bindings/callbacks.md)
    * [Type grammar](syntax_and_semantics/type_grammar.md)
+   * [Unsafe code](syntax_and_semantics/unsafe.md)
 

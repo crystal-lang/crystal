@@ -1,6 +1,6 @@
 # Proc
 
-A `Proc` represents a function pointer with an optional context (the closure data). It is typically created with a proc literal:
+A [Proc](http://crystal-lang.org/api/Proc.html) represents a function pointer with an optional context (the closure data). It is typically created with a proc literal:
 
 ```ruby
 # A proc without arguments

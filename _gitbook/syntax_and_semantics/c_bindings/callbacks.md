@@ -11,7 +11,7 @@ lib X
 end
 ```
 
-Then you can pass a function like this:
+Then you can pass a function (a [Proc](http://crystal-lang.org/api/Proc.html)) like this:
 
 ```ruby
 f = ->(x : Int32) { x + 1 }
@@ -32,6 +32,6 @@ X.callback ->(x) { x + y } # Error: can't send closure
                            # to C function
 ```
 
-If the compiler can't detect this at compile-time, an exception will be thrown at runtime.
+If the compiler can't detect this at compile-time, an exception will be raised at runtime.
 
 Refer to the [type gammar](type_grammar.html) for the notation used in callbacks and procs types.

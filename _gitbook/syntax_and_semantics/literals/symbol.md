@@ -1,6 +1,6 @@
 # Symbol
 
-A symbol is a constant that is identified by a name without you having to give it a numeric value.
+A [Symbol](http://crystal-lang.org/api/Symbol.html) is a constant that is identified by a name without you having to give it a numeric value.
 
 ```ruby
 :hello

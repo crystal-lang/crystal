@@ -7,6 +7,10 @@ When:
 * [declaring variables](declare_var.html)
 * declaring [aliases](alias.html)
 * declaring [typedefs](type.html)
+* the argument of an [is_a?](is_a.html) pseudo-call
+* the argument of an [as](as.html) expression
+* the argument of a [sizeof](sizeof.html) expression
+* the argument of an [instance_sizeof](instance_sizeof.html) expression
 
 a convenient syntax is provided for some common types. These are specially useful when writing [C bindings](c_bindings/README.html), but can be used in any of the above locations.
 

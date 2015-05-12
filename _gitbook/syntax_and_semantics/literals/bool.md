@@ -1,6 +1,6 @@
 # Bool
 
-Bool has only two possible values: `true` and `false`. They are constructed using these literals:
+[Bool](http://crystal-lang.org/api/Bool.html) has only two possible values: `true` and `false`. They are constructed using these literals:
 
 
 ```ruby
