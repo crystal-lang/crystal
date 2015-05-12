@@ -68,15 +68,19 @@ describe Iterator do
   describe "zip" do
     it "does skip with Range iterator" do
       r1 = (1..3).each
-      r2 = (4..6).each
+      r2 = ('a'..'c').each
       iter = r1.zip(r2)
-      iter.next.should eq({1, 4})
-      iter.next.should eq({2, 5})
-      iter.next.should eq({3, 6})
+      iter.next.should eq({1, 'a'})
+      iter.next.should eq({2, 'b'})
+      iter.next.should eq({3, 'c'})
       iter.next.should be_a(Iterator::Stop)
 
       iter.rewind
-      iter.next.should eq({1, 4})
+      iter.next.should eq({1, 'a'})
+
+      # TODO: uncomment after 0.7.1
+      # iter.rewind
+      # iter.to_a.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
     end
   end
 
@@ -208,6 +212,22 @@ describe Iterator do
     a = 0
     iter = Iterator.of { a += 1 }
     iter.take(3).to_a.should eq([1, 2, 3])
+  end
+
+  it "chains" do
+    iter = (1..2).each.chain(('a'..'b').each)
+    iter.next.should eq(1)
+    iter.next.should eq(2)
+    iter.next.should eq('a')
+    iter.next.should eq('b')
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+
+    # TODO: uncomment after 0.7.1
+    # iter.rewind
+    # iter.to_a.should eq([1, 2, 'a', 'b'])
   end
 
   it "combines many iterators" do

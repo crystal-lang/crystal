@@ -163,6 +163,10 @@ module Iterator(T)
     Cons(typeof(self), T).new(self, n)
   end
 
+  def chain(other : Iterator(U))
+    Chain(typeof(self), typeof(other), T, U).new(self, other)
+  end
+
   def self.of(element : T)
     Singleton(T).new(element)
   end
@@ -501,6 +505,35 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
+  class Chain(I, J, T, U)
+    include Iterator(T | U)
+
+    def initialize(@iter1, @iter2)
+      @iter1_consumed = false
+    end
+
+    def next
+      if @iter1_consumed
+        @iter2.next
+      else
+        value = @iter1.next
+        if value.is_a?(Stop)
+          @iter1_consumed = true
+          value = @iter2.next
+        end
+        value
+      end
+    end
+
+    def rewind
+      @iter1.rewind
+      @iter2.rewind
+      @iter1_consumed = false
+    end
+  end
+
+  # :nodoc:
   struct Singleton(T)
     include Iterator(T)
 
@@ -516,6 +549,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct SingletonProc(T)
     include Iterator(T)
 
