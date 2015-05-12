@@ -1769,98 +1769,73 @@ module Crystal
       char = current_char
 
       until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (whitespace && !delimiter_state && char == 'e')
-        is_macro = false
-        is_abstract_def = false
-        if !delimiter_state && whitespace &&
-          (
-            (char == 'a' && next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace? && next_char == 'd' && next_char == 'e' && next_char == 'f' && (is_abstract_def = true)) ||
-            (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
-            (char == 'l' && next_char == 'i' && next_char == 'b') ||
-            (char == 'f' && next_char == 'u' && next_char == 'n') ||
-            (beginning_of_line && char == 'i' && next_char == 'f' &&
-              (char = peek_next_char) && (!ident_part_or_end?(char) ||
-                char == 'd' && next_char == 'e' && next_char == 'f')) ||
-            (char == 's' && next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't') ||
-            (char == 'c' && (char = next_char) &&
-              (char == 'a' && next_char == 's' && next_char == 'e') ||
-              (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's')) ||
-            (char == 'd' && (char = next_char) &&
-              ((char == 'o') ||
-               (char == 'e' && next_char == 'f'))) ||
-            (char == 'm' && (char = next_char) &&
-              (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && (is_macro = true)) ||
-              (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e')) ||
-            (char == 'u' && next_char == 'n' && (char = next_char) &&
-              (char == 'i' && next_char == 'o' && next_char == 'n') ||
-              (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's') ||
-              (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l')) ||
-            (beginning_of_line && char == 'w' && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e')) &&
-            !ident_part_or_end?(next_char)
-          char = current_char
-
-          if is_macro && char.whitespace?
-            old_pos = @reader.pos
-            if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char)
-              char = current_char
-            else
-              @reader.pos = old_pos
-            end
-          end
-
-          nest += 1 unless is_abstract_def
+        case char
+        when '\n'
+          @line_number += 1
+          @column_number = 0
           whitespace = true
-          beginning_of_line = false
-        elsif !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(next_char)
-          yields = true
-          char = current_char
-          whitespace = true
-          beginning_of_line = false
-        else
-          char = current_char
-          case char
-          when '\n'
-            @line_number += 1
-            @column_number = 0
-            whitespace = true
-            beginning_of_line = true
-          when '\\'
-            if delimiter_state
+          beginning_of_line = true
+        when '\\'
+          if delimiter_state
+            char = next_char
+            if char == '"'
               char = next_char
-              if char == '"'
-                char = next_char
-              end
-              whitespace = false
-            else
-              whitespace = false
-            end
-          when '\'', '"'
-            if delimiter_state
-              delimiter_state = nil if delimiter_state.end == char
-            else
-              delimiter_state = Token::DelimiterState.new(:string, char, char, 0)
             end
             whitespace = false
-          when '%'
-            if delimiter_state
-              whitespace = false
-              break if ident_start?(peek_next_char)
+          else
+            whitespace = false
+          end
+        when '\'', '"'
+          if delimiter_state
+            delimiter_state = nil if delimiter_state.end == char
+          else
+            delimiter_state = Token::DelimiterState.new(:string, char, char, 0)
+          end
+          whitespace = false
+        when '%'
+          if delimiter_state
+            whitespace = false
+            break if ident_start?(peek_next_char)
+          else
+            case char = peek_next_char
+            when '(', '[', '<', '{'
+              next_char
+              delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
             else
-              case char = peek_next_char
-              when '(', '[', '<', '{'
-                next_char
-                delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+              whitespace = false
+              break if ident_start?(char)
+            end
+          end
+        when '#'
+          if delimiter_state
+            whitespace = false
+          else
+            break
+          end
+        else
+          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(next_char)
+            yields = true
+            char = current_char
+            whitespace = true
+            beginning_of_line = false
+          elsif !delimiter_state && whitespace && (keyword = check_macro_opening_keyword(beginning_of_line))
+            char = current_char
+
+            if keyword == :macro && char.whitespace?
+              old_pos = @reader.pos
+              if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char)
+                char = current_char
               else
-                whitespace = false
-                break if ident_start?(char)
+                @reader.pos = old_pos
               end
             end
-          when '#'
-            if delimiter_state
-              whitespace = false
-            else
-              break
-            end
+
+            nest += 1 unless keyword == :abstract_def
+            whitespace = true
+            beginning_of_line = false
           else
+            char = current_char
+
             if delimiter_state
               case char
               when delimiter_state.nest
@@ -1884,8 +1859,8 @@ module Crystal
               end
             end
           end
-          char = next_char
         end
+        char = next_char
       end
 
       @token.type = :MACRO_LITERAL
@@ -1893,6 +1868,51 @@ module Crystal
       @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
 
       @token
+    end
+
+    def check_macro_opening_keyword(beginning_of_line)
+      case char = current_char
+      when 'a'
+        next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace? && next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :abstract_def
+      when 'b'
+        next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && !ident_part_or_end?(next_char) && :begin
+      when 'c'
+        (char = next_char) && (
+          (char == 'a' && next_char == 's' && next_char == 'e' && !ident_part_or_end?(next_char) && :case) ||
+          (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :class)
+        )
+      when 'd'
+        (char = next_char) &&
+                ((char == 'o' && !ident_part_or_end?(next_char) && :do) ||
+                 (char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :def))
+      when 'f'
+        next_char == 'u' && next_char == 'n' && !ident_part_or_end?(next_char) && :fun
+      when 'i'
+        beginning_of_line && next_char == 'f' &&
+          (char = next_char) && (
+            (!ident_part_or_end?(char) && :if) ||
+            (char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :ifdef)
+          )
+      when 'l'
+        next_char == 'i' && next_char == 'b' && !ident_part_or_end?(next_char) && :lib
+      when 'm'
+        (char = next_char) && (
+          (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && !ident_part_or_end?(next_char) && :macro) ||
+          (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :module)
+        )
+      when 's'
+        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :lib
+      when 'u'
+        next_char == 'n' && (char = next_char) && (
+          (char == 'i' && next_char == 'o' && next_char == 'n' && !ident_part_or_end?(next_char) && :union) ||
+          (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :unless) ||
+          (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && !ident_part_or_end?(next_char) && :until)
+        )
+      when 'w'
+        beginning_of_line && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :while
+      else
+        false
+      end
     end
 
     def consume_octal_escape(char)
