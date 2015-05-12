@@ -26,6 +26,12 @@ be valid Crystal code, meaning that you can't for example generate
 a `def` without a matching `end`, or a single `when` expression of a
 `case`, since both of them are not complete valid expressions.
 
+## Scope
+
+Macros declared at the top-level are visible anywhere. If a top-level macro is marked as `private` it is only accessible in that file.
+
+They can also be defined in classes and modules, and are only visible in those scopes. Macros are also looked-up in the ancestors chain (superclasses and included modules).
+
 ## Interpolation
 
 You use `{{...}}` to paste, or interpolate, an AST node, as in the above example.
@@ -178,66 +184,6 @@ end
 println 1, 2, 3 # outputs 123\n
 ```
 
-### Fresh variables
-
-Once macros generate code, they are parsed with a regular Crystal parser where local variables in the context of the macro invocations are assumed to be defined.
-
-This is better understood with an example:
-
-```ruby
-macro update_x
-  x = 1
-end
-
-x = 0
-update_x
-x #=> 1
-```
-
-This can sometimes be useful to avoid repetitive code by actually accessing and reading/writing local varaibles, but can also overwrite local variables by mistake. You can use fresh variables with `%name`:
-
-```ruby
-macro dont_update_x
-  %x = 1
-  puts %x
-end
-
-x = 0
-dont_update_x # outputs 1
-x #=> 0
-```
-
-Using `%x` in the above example we declare a variable whose name is guaranteed not to conflict with local varaibles in the current scope.
-
-Additionally, you can declare fresh variables related to some other AST node using `%var{key1, key2, ..., keyN}`. For example:
-
-```ruby
-macro fresh_vars_sample(*names)
-  # First declare vars
-  {% for name, index in names %}
-    print "Declaring: ", "%name{index}", '\n'
-    %name{index} = {{index}}
-  {% end %}
-
-  # Then print them
-  {% for name, index in names %}
-    print "%name{index}: ", %name{index}, '\n'
-  {% end %}
-end
-
-fresh_vars_sample
-
-# Sample output:
-# Declaring: __temp_255
-# Declaring: __temp_256
-# Declaring: __temp_257
-# __temp_255: 0
-# __temp_256: 1
-# __temp_257: 2
-```
-
-In the above example three variables were declared, associated to an index, and then they were printed, refering to these variables with the same indices.
-
 ### Type information
 
 When a macro is invoked you can access the current scope, or type, with a special instance variable: `@type`. The type of this variable is `TypeNode`, which gives you access to type information at compile time.
@@ -257,61 +203,3 @@ VALUES = [1, 2, 3]
 ```
 
 If the constant denotes a type, you get back a `TypeNode`.
-
-### Macro defs
-
-Macro defs allow you to define a method for a class hierarchy and have that method be evaluated at the end of the type-inference phase, as a macro, where type information is known, for each concrete subtype. For example:
-
-```ruby
-class Object
-  macro def instance_vars_names : Array(String)
-    {{ @type.instance_vars.map &.name }}
-  end
-end
-
-class Person
-  def initialize(@name, @age)
-  end
-end
-
-person = Person.new "John", 30
-person.instance_vars_names #=> ["name", "age"]
-```
-
-Note that in the case of macro defs you need to specify the return type.
-
-### Macro hooks
-
-Special macros exist that are invoked in some situations, as hooks:
-`inherited`, `included` and `method_missing`.
-* `inherited` will be invoked at compile-time when a subclass is defined. `@type` becomes the inherited type.
-* `included` will be invoked at compile-time when a module is included. `@type` becomes the including type.
-* `method_missing` will be invoked at compile-time when a method is not found.
-
-Example of `inherited`:
-
-```ruby
-class Parent
-  macro inherited
-    def {{@type.name.downcase.id}}
-      1
-    end
-  end
-end
-
-class Child1 < Parent
-end
-
-Child.new.child #=> 1
-```
-
-Example of `method_missing`:
-
-```ruby
-macro method_missing(name, args, block)
-  print "Got ", {{name.id.stringify}}, " with ", {{args.length}}, " arguments", '\n'
-end
-
-foo          # Prints: Got foo with 0 arguments
-bar 'a', 'b' # Prints: Got bar with 2 arguments
-```
