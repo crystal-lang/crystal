@@ -230,6 +230,25 @@ describe Iterator do
     # iter.to_a.should eq([1, 2, 'a', 'b'])
   end
 
+  it "taps" do
+    a = 0
+
+    iter = (1..3).each.tap { |x| a += x }
+    iter.next.should eq(1)
+    a.should eq(1)
+
+    iter.next.should eq(2)
+    a.should eq(3)
+
+    iter.next.should eq(3)
+    a.should eq(6)
+
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(1)
+  end
+
   it "combines many iterators" do
     (1..100).each
             .select { |x| 50 <= x < 60 }
