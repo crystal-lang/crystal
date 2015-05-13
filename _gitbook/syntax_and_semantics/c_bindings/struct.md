@@ -66,6 +66,14 @@ tz.minutes_west = 1
 tz.minutes_west #=> 1
 ```
 
+You can also initialize some fields with a syntax similar to [../default_and_named_arguments.html](named arguments):
+
+```ruby
+tz = C::TimeZone.new minutes_west: 1, dst_time: 2
+tz.minutes_west #=> 1
+tz.dst_time     #=> 2
+```
+
 A C struct is passed by value (as a copy) to functions and methods, and also passed by value when it is returned from a method:
 
 ```ruby

@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=11; IE=10; IE=9; IE=8; IE=7; IE=EDGE" />
-        <title>Thread local | Crystal Programming Language</title>
+        <title>Attributes | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.0.2">
@@ -20,10 +20,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/assignment.html" />
+    <link rel="next" href="../syntax_and_semantics/requiring_files.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/global_variables.html" />
+    <link rel="prev" href="../syntax_and_semantics/typeof.html" />
     
 
         
@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.4.1" data-basepath=".." data-revision="Wed May 13 2015 11:56:32 GMT-0300 (ART)">
+    <div class="book" data-level="3.9" data-basepath=".." data-revision="Wed May 13 2015 13:06:14 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -487,27 +487,6 @@
                     </a>
                 
             
-            
-            <ul class="articles">
-                
-    
-        <li class="chapter active" data-level="3.4.1" data-path="syntax_and_semantics/thread_local.html">
-            
-                
-                    <a href="../syntax_and_semantics/thread_local.html">
-                        <i class="fa fa-check"></i>
-                        
-                            <b>3.4.1.</b>
-                        
-                        Thread local
-                    </a>
-                
-            
-            
-        </li>
-    
-
-            </ul>
             
         </li>
     
@@ -1133,13 +1112,28 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.8" data-path="syntax_and_semantics/blocks_and_procs.html">
+        <li class="chapter " data-level="3.7.8" data-path="syntax_and_semantics/enum.html">
+            
+                
+                    <a href="../syntax_and_semantics/enum.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.8.</b>
+                        
+                        Enums
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9" data-path="syntax_and_semantics/blocks_and_procs.html">
             
                 
                     <a href="../syntax_and_semantics/blocks_and_procs.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.8.</b>
+                            <b>3.7.9.</b>
                         
                         Blocks and Procs
                     </a>
@@ -1149,16 +1143,16 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="3.7.8.1" >
+        <li class="chapter " data-level="3.7.9.1" >
             
-            <span><b>3.7.8.1.</b> Proc literal</span>
+            <span><b>3.7.9.1.</b> Proc literal</span>
             
             
         </li>
     
-        <li class="chapter " data-level="3.7.8.2" >
+        <li class="chapter " data-level="3.7.9.2" >
             
-            <span><b>3.7.8.2.</b> Proc pointer</span>
+            <span><b>3.7.9.2.</b> Proc pointer</span>
             
             
         </li>
@@ -1168,13 +1162,13 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.9" data-path="syntax_and_semantics/alias.html">
+        <li class="chapter " data-level="3.7.10" data-path="syntax_and_semantics/alias.html">
             
                 
                     <a href="../syntax_and_semantics/alias.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.9.</b>
+                            <b>3.7.10.</b>
                         
                         alias
                     </a>
@@ -1269,58 +1263,18 @@
             
         </li>
     
-        <li class="chapter " data-level="3.9" >
+        <li class="chapter active" data-level="3.9" data-path="syntax_and_semantics/attributes.html">
             
-            <span><b>3.9.</b> Attributes</span>
-            
-            
-            <ul class="articles">
                 
-    
-        <li class="chapter " data-level="3.9.1" >
+                    <a href="../syntax_and_semantics/attributes.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.9.</b>
+                        
+                        Attributes
+                    </a>
+                
             
-            <span><b>3.9.1.</b> @[ThreadLocal]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.2" >
-            
-            <span><b>3.9.2.</b> @[Packed]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.3" >
-            
-            <span><b>3.9.3.</b> @[AlwaysInline]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.4" >
-            
-            <span><b>3.9.4.</b> @[NoInline]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.5" >
-            
-            <span><b>3.9.5.</b> @[ReturnsTwice]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.6" data-path="[raises].html">
-            
-            <span><b>3.9.6.</b> @[Raises]</span>
-            
-            
-        </li>
-    
-
-            </ul>
             
         </li>
     
@@ -1874,11 +1828,56 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="thread-local">Thread local</h1>
-<p>You can mark a global variable as thread-local with the <code>@[ThreadLocal]</code> attribute:</p>
-<pre><code class="lang-ruby">@[<span class="hljs-constant">ThreadLocal</span>]
-<span class="hljs-variable">$year</span> = <span class="hljs-number">2014</span>
+                        <h1 id="attributes">Attributes</h1>
+<p>Some types and methods can be annotated with attributes. The attribute list is fixed, but eventually (maybe) there will be user-defined attributes.</p>
+<h2 id="link">Link</h2>
+<p>Tells the compiler how to link a C library. This is explained in the <a href="c_bindings/lib.html">lib</a> section.</p>
+<h2 id="threadlocal">ThreadLocal</h2>
+<p>The <code>@[ThreadLocal]</code> attribute can be applied to global varaibles and class variables. It makes them be thread local.</p>
+<pre><code class="lang-ruby"><span class="hljs-comment"># One for each thread</span>
+@[<span class="hljs-constant">ThreadLocal</span>]
+<span class="hljs-variable">$values</span> = [] of <span class="hljs-constant">Int32</span>
 </code></pre>
+<h2 id="packed">Packed</h2>
+<p>Allows marking a <a href="c_bindings/struct.html">C struct</a> as packed, which makes the alignment of the struct to be one byte, and that there is no padding between the elements. In non-packed structs, padding between field types is inserted according to the target system.</p>
+<h2 id="alwaysinline">AlwaysInline</h2>
+<p>Gives a hint to the compiler to always inline a method:</p>
+<pre><code class="lang-ruby">@[<span class="hljs-constant">AlwaysInline</span>]
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>foo
+  <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h2 id="noinline">NoInline</h2>
+<p>Tells the compiler to never inline a method call. This has no effect if the method yields.</p>
+<pre><code class="lang-ruby">@[<span class="hljs-constant">NoInline</span>]
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>foo
+  <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h2 id="returnstwice">ReturnsTwice</h2>
+<p>Marks a method or <a href="c_bindings/fun.html">lib fun</a> as returning twice. The C <code>setjmp</code> is an example of such a function.</p>
+<h2 id="raises">Raises</h2>
+<p>Marks a method or <a href="c_bindings/fun.html">lib fun</a> as potentially raising an exception. This is explained in the <a href="c_bindings/callbacks.html">callbacks</a> section.</p>
+<h2 id="callconvention">CallConvention</h2>
+<p>Indicates the call convention of a <a href="c_bindings/fun.html">lib fun</a>. For example:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">LibFoo</span>
+  @[<span class="hljs-constant">CallConvention</span>(<span class="hljs-string">&quot;X86_StdCall&quot;</span>)]
+  fun foo <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The list of valid call conventions is:</p>
+<ul>
+<li>C (the default)</li>
+<li>Fast</li>
+<li>Cold</li>
+<li>WebKit_JS</li>
+<li>AnyReg</li>
+<li>X86_StdCall</li>
+<li>X86_FastCall</li>
+</ul>
+<p>They are explained <a href="http://llvm.org/docs/LangRef.html#calling-conventions" target="_blank">here</a>.</p>
+<h2 id="flags">Flags</h2>
+<p>Marks an <a href="enum.html">enum</a> as a &quot;flags enum&quot;, which changes the behaviour of some of its methods, like <code>to_s</code>.</p>
 
                     
                     </section>
@@ -1889,10 +1888,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/global_variables.html" class="navigation navigation-prev " aria-label="Previous page: Global variables"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/typeof.html" class="navigation navigation-prev " aria-label="Previous page: typeof"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/assignment.html" class="navigation navigation-next " aria-label="Next page: Assignment"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/requiring_files.html" class="navigation navigation-next " aria-label="Next page: Requiring files"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

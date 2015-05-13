@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.15.10" data-basepath="../.." data-revision="Wed May 13 2015 11:56:32 GMT-0300 (ART)">
+    <div class="book" data-level="3.15.10" data-basepath="../.." data-revision="Wed May 13 2015 13:06:14 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -487,27 +487,6 @@
                     </a>
                 
             
-            
-            <ul class="articles">
-                
-    
-        <li class="chapter " data-level="3.4.1" data-path="syntax_and_semantics/thread_local.html">
-            
-                
-                    <a href="../../syntax_and_semantics/thread_local.html">
-                        <i class="fa fa-check"></i>
-                        
-                            <b>3.4.1.</b>
-                        
-                        Thread local
-                    </a>
-                
-            
-            
-        </li>
-    
-
-            </ul>
             
         </li>
     
@@ -1133,13 +1112,28 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.8" data-path="syntax_and_semantics/blocks_and_procs.html">
+        <li class="chapter " data-level="3.7.8" data-path="syntax_and_semantics/enum.html">
+            
+                
+                    <a href="../../syntax_and_semantics/enum.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.8.</b>
+                        
+                        Enums
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9" data-path="syntax_and_semantics/blocks_and_procs.html">
             
                 
                     <a href="../../syntax_and_semantics/blocks_and_procs.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.8.</b>
+                            <b>3.7.9.</b>
                         
                         Blocks and Procs
                     </a>
@@ -1149,16 +1143,16 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="3.7.8.1" >
+        <li class="chapter " data-level="3.7.9.1" >
             
-            <span><b>3.7.8.1.</b> Proc literal</span>
+            <span><b>3.7.9.1.</b> Proc literal</span>
             
             
         </li>
     
-        <li class="chapter " data-level="3.7.8.2" >
+        <li class="chapter " data-level="3.7.9.2" >
             
-            <span><b>3.7.8.2.</b> Proc pointer</span>
+            <span><b>3.7.9.2.</b> Proc pointer</span>
             
             
         </li>
@@ -1168,13 +1162,13 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.9" data-path="syntax_and_semantics/alias.html">
+        <li class="chapter " data-level="3.7.10" data-path="syntax_and_semantics/alias.html">
             
                 
                     <a href="../../syntax_and_semantics/alias.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.9.</b>
+                            <b>3.7.10.</b>
                         
                         alias
                     </a>
@@ -1269,58 +1263,18 @@
             
         </li>
     
-        <li class="chapter " data-level="3.9" >
+        <li class="chapter " data-level="3.9" data-path="syntax_and_semantics/attributes.html">
             
-            <span><b>3.9.</b> Attributes</span>
-            
-            
-            <ul class="articles">
                 
-    
-        <li class="chapter " data-level="3.9.1" >
+                    <a href="../../syntax_and_semantics/attributes.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.9.</b>
+                        
+                        Attributes
+                    </a>
+                
             
-            <span><b>3.9.1.</b> @[ThreadLocal]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.2" >
-            
-            <span><b>3.9.2.</b> @[Packed]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.3" >
-            
-            <span><b>3.9.3.</b> @[AlwaysInline]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.4" >
-            
-            <span><b>3.9.4.</b> @[NoInline]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.5" >
-            
-            <span><b>3.9.5.</b> @[ReturnsTwice]</span>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="3.9.6" data-path="[raises].html">
-            
-            <span><b>3.9.6.</b> @[Raises]</span>
-            
-            
-        </li>
-    
-
-            </ul>
             
         </li>
     
@@ -1897,6 +1851,27 @@
 </code></pre>
 <p>If the compiler can&apos;t detect this at compile-time, an exception will be raised at runtime.</p>
 <p>Refer to the <a href="type_grammar.html">type gammar</a> for the notation used in callbacks and procs types.</p>
+<h2 id="raises-attribute">Raises attribute</h2>
+<p>If a C function executes a user-provided callback that might raise, it must be annotated with the <code>@[Raises]</code> attribute.</p>
+<p>The compiler infers this attribute for a method if it invokes a method that is marked as <code>@[Raises]</code> or raises (recursively).</p>
+<p>However, some C functions accept callbacks to be executed by other C functions. For example, suppose a ficticious libraries:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">LibFoo</span>
+  fun store_callback(callback <span class="hljs-symbol">:</span> -&gt;)
+  fun execute_callback
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">LibFoo</span>.store_callback -&gt;{ raise <span class="hljs-string">&quot;OH NO!&quot;</span> }
+<span class="hljs-constant">LibFoo</span>.execute_callback
+</code></pre>
+<p>If the callback passed to <code>store_callback</code> raises, then <code>execute_callback</code> will raise. However, the compiler doesn&apos;t know that <code>execute_callback</code> can potentially raise because it is not marked as <code>@[Raises]</code> and the compiler has no way to figure this out. In these cases you have to manually mark such functions:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">LibFoo</span>
+  fun store_callback(callback <span class="hljs-symbol">:</span> -&gt;)
+
+  @[<span class="hljs-constant">Raises</span>]
+  fun execute_callback
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>If you don&apos;t mark them, <code>begin/rescue</code> blocks that surround this function calls won&apos;t work as expected.</p>
 
                     
                     </section>

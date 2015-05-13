@@ -28,7 +28,6 @@
        * [Proc](syntax_and_semantics/literals/proc.md)
    * [Local variables](syntax_and_semantics/local_variables.md)
    * [Global variables](syntax_and_semantics/global_variables.md)
-       * [Thread local](syntax_and_semantics/thread_local.md)
    * [Assignment](syntax_and_semantics/assignment.md)
        * [Multiple assignment](syntax_and_semantics/multiple_assignment.md)
    * [Control expressions](syntax_and_semantics/control_expressions.md)
@@ -68,6 +67,7 @@
        * [Generics](syntax_and_semantics/generics.md)
        * [Structs](syntax_and_semantics/structs.md)
        * [Constants](syntax_and_semantics/constants.md)
+       * [Enums](syntax_and_semantics/enum.md)
        * [Blocks and Procs](syntax_and_semantics/blocks_and_procs.md)
            * Proc literal
            * Proc pointer
@@ -77,13 +77,7 @@
        * [responds_to?](syntax_and_semantics/responds_to.md)
        * [as](syntax_and_semantics/as.md)
        * [typeof](syntax_and_semantics/typeof.md)
-   * Attributes
-       * @[ThreadLocal]
-       * @[Packed]
-       * @[AlwaysInline]
-       * @[NoInline]
-       * @[ReturnsTwice]
-       * [@[Raises]]([raises])
+   * [Attributes](syntax_and_semantics/attributes.md)
    * [Requiring files](syntax_and_semantics/requiring_files.md)
    * [Low-level primitives](syntax_and_semantics/low_level_primitives.md)
        * [pointerof](syntax_and_semantics/pointerof.md)
