@@ -33,7 +33,7 @@ Status
 Installing
 ----------
 
-[Follow these instructions](http://crystal-lang.org/docs/installation/README.html)
+[Follow these instructions](http://crystal-lang.org/docs/installation/index.html)
 
 Documentation
 ----------
