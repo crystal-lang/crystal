@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=11; IE=10; IE=9; IE=8; IE=7; IE=EDGE" />
-        <title>Classes and methods | Crystal Programming Language</title>
+        <title>Operators | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.0.2">
@@ -20,10 +20,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/new,_initialize_and_allocate.html" />
+    <link rel="next" href="../syntax_and_semantics/visibility.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/the_program.html" />
+    <link rel="prev" href="../syntax_and_semantics/type_restrictions.html" />
     
 
         
@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.3" data-basepath=".." data-revision="Wed May 13 2015 11:56:32 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.3.8" data-basepath=".." data-revision="Wed May 13 2015 11:56:32 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -866,7 +866,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="3.7.3" data-path="syntax_and_semantics/classes_and_methods.html">
+        <li class="chapter " data-level="3.7.3" data-path="syntax_and_semantics/classes_and_methods.html">
             
                 
                     <a href="../syntax_and_semantics/classes_and_methods.html">
@@ -987,7 +987,7 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.3.8" data-path="syntax_and_semantics/operators.html">
+        <li class="chapter active" data-level="3.7.3.8" data-path="syntax_and_semantics/operators.html">
             
                 
                     <a href="../syntax_and_semantics/operators.html">
@@ -1874,12 +1874,100 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="classes-and-methods">Classes and methods</h1>
-<p>A class is a blueprint from which individual objects are created. As an example, consider a <code>Person</code> class. You declare a class like this:</p>
-<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-<span class="hljs-keyword">end</span>
+                        <h1 id="operators">Operators</h1>
+<p>Operators like <code>+</code> and <code>-</code> are regular method calls. For example:</p>
+<pre><code class="lang-ruby">a + b
 </code></pre>
-<p>Class names, and every type name, begin with a capital letter in Crystal.</p>
+<p>is the same as:</p>
+<pre><code class="lang-ruby">a.+(b)
+</code></pre>
+<p>You can define an operator for a type like this:</p>
+<pre><code class="lang-ruby">struct <span class="hljs-constant">Vector2</span>
+  getter x, y
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@x</span>, <span class="hljs-variable">@y</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>+(other)
+    <span class="hljs-constant">Vector2</span>.new(x + other.x, y + other.y)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+v1 = <span class="hljs-constant">Vector2</span>.new(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+v2 = <span class="hljs-constant">Vector2</span>.new(<span class="hljs-number">3</span>, <span class="hljs-number">4</span>)
+v1 + v2               <span class="hljs-comment">#=&gt; Vector2(<span class="hljs-yardoctag">@x</span>=4, <span class="hljs-yardoctag">@y</span>=6)</span>
+</code></pre>
+<p>Next follows the full list of operators with their usual meaning.</p>
+<h2 id="unary-operators">Unary operators</h2>
+<pre><code class="lang-ruby">+   <span class="hljs-comment"># positive</span>
+-   <span class="hljs-comment"># negative</span>
+!   <span class="hljs-comment"># not</span>
+</code></pre>
+<p>These are defined without arguments. For example</p>
+<pre><code class="lang-ruby">struct <span class="hljs-constant">Vector2</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>-
+    <span class="hljs-constant">Vector2</span>.new(-x, -y)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+v1 = <span class="hljs-constant">Vector2</span>.new(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+-v1                    <span class="hljs-comment">#=&gt; Vector2(<span class="hljs-yardoctag">@x</span>=-1, <span class="hljs-yardoctag">@y</span>=-2)</span>
+</code></pre>
+<h2 id="binary-operators">Binary operators</h2>
+<pre><code class="lang-ruby">+   <span class="hljs-comment"># addition</span>
+-   <span class="hljs-comment"># subtraction</span>
+*   <span class="hljs-comment"># multiplication</span>
+/   <span class="hljs-comment"># division</span>
+%   <span class="hljs-comment"># modulo</span>
+!   <span class="hljs-comment"># negation</span>
+&amp;   <span class="hljs-comment"># bitwise and</span>
+|   <span class="hljs-comment"># bitwise or</span>
+^   <span class="hljs-comment"># bitwise xor</span>
+~   <span class="hljs-comment"># bitwise complement</span>
+**  <span class="hljs-comment"># exponentiation</span>
+&lt;&lt;  <span class="hljs-comment"># shift left, append</span>
+<span class="hljs-prompt">&gt;&gt;</span>  <span class="hljs-comment"># shift right</span>
+==  <span class="hljs-comment"># equals</span>
+!=  <span class="hljs-comment"># not equals</span>
+&lt;   <span class="hljs-comment"># less</span>
+&lt;=  <span class="hljs-comment"># less or equal</span>
+&gt;   <span class="hljs-comment"># greater</span>
+&gt;=  <span class="hljs-comment"># greater or equal</span>
+&lt;=&gt; <span class="hljs-comment"># comparison</span>
+=== <span class="hljs-comment"># case equality</span>
+</code></pre>
+<h2 id="indexing">Indexing</h2>
+<pre><code class="lang-ruby">[]  <span class="hljs-comment"># array index (raises on out of bounds)</span>
+[]? <span class="hljs-comment"># array index (nil on out of bounds)</span>
+[]= <span class="hljs-comment"># array index assignment</span>
+</code></pre>
+<p>For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyArray</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>[](index)
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>[](index1, index2, index3)
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>[]=(index, value)
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+array = <span class="hljs-constant">MyArray</span>.new
+
+array[<span class="hljs-number">1</span>]       <span class="hljs-comment"># invokes the first method</span>
+array[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>] <span class="hljs-comment"># invokes the second method</span>
+array[<span class="hljs-number">1</span>] = <span class="hljs-number">2</span>   <span class="hljs-comment"># invokes the third method</span>
+
+array.[](<span class="hljs-number">1</span>)       <span class="hljs-comment"># invokes the first method</span>
+array.[](<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>) <span class="hljs-comment"># invokes the second method</span>
+array.[]=(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)   <span class="hljs-comment"># invokes the third method</span>
+</code></pre>
+<h2 id="meaning">Meaning</h2>
+<p>One can assign any meaning to the operators, but the convention is to follow the above ones to avoid cryptic code, or code that behaves in an unexpected way.</p>
 
                     
                     </section>
@@ -1890,10 +1978,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/the_program.html" class="navigation navigation-prev " aria-label="Previous page: The Program"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" class="navigation navigation-prev " aria-label="Previous page: Type restrictions"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" class="navigation navigation-next " aria-label="Next page: new, initialize and allocate"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/visibility.html" class="navigation navigation-next " aria-label="Next page: Visibility"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

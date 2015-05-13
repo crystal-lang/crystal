@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.2.8" data-basepath="../.." data-revision="Tue May 12 2015 13:23:30 GMT-0300 (ART)">
+    <div class="book" data-level="3.2.8" data-basepath="../.." data-revision="Wed May 13 2015 11:56:32 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -410,13 +410,28 @@
             
         </li>
     
-        <li class="chapter " data-level="3.2.11" data-path="syntax_and_semantics/literals/tuple.html">
+        <li class="chapter " data-level="3.2.11" data-path="syntax_and_semantics/literals/regex.html">
+            
+                
+                    <a href="../../syntax_and_semantics/literals/regex.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.2.11.</b>
+                        
+                        Regex
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2.12" data-path="syntax_and_semantics/literals/tuple.html">
             
                 
                     <a href="../../syntax_and_semantics/literals/tuple.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.2.11.</b>
+                            <b>3.2.12.</b>
                         
                         Tuple
                     </a>
@@ -425,13 +440,13 @@
             
         </li>
     
-        <li class="chapter " data-level="3.2.12" data-path="syntax_and_semantics/literals/proc.html">
+        <li class="chapter " data-level="3.2.13" data-path="syntax_and_semantics/literals/proc.html">
             
                 
                     <a href="../../syntax_and_semantics/literals/proc.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.2.12.</b>
+                            <b>3.2.13.</b>
                         
                         Proc
                     </a>
@@ -972,13 +987,28 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.3.8" data-path="syntax_and_semantics/visibility.html">
+        <li class="chapter " data-level="3.7.3.8" data-path="syntax_and_semantics/operators.html">
+            
+                
+                    <a href="../../syntax_and_semantics/operators.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.3.8.</b>
+                        
+                        Operators
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.3.9" data-path="syntax_and_semantics/visibility.html">
             
                 
                     <a href="../../syntax_and_semantics/visibility.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.3.8.</b>
+                            <b>3.7.3.9.</b>
                         
                         Visibility
                     </a>
@@ -987,13 +1017,13 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.3.9" data-path="syntax_and_semantics/inheritance.html">
+        <li class="chapter " data-level="3.7.3.10" data-path="syntax_and_semantics/inheritance.html">
             
                 
                     <a href="../../syntax_and_semantics/inheritance.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.3.9.</b>
+                            <b>3.7.3.10.</b>
                         
                         Inheritance
                     </a>
@@ -1003,13 +1033,13 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="3.7.3.9.1" data-path="syntax_and_semantics/virtual_and_abstract_types.html">
+        <li class="chapter " data-level="3.7.3.10.1" data-path="syntax_and_semantics/virtual_and_abstract_types.html">
             
                 
                     <a href="../../syntax_and_semantics/virtual_and_abstract_types.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.3.9.1.</b>
+                            <b>3.7.3.10.1.</b>
                         
                         Virtual and abstract types
                     </a>
@@ -1023,13 +1053,13 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.3.10" data-path="syntax_and_semantics/finalize.html">
+        <li class="chapter " data-level="3.7.3.11" data-path="syntax_and_semantics/finalize.html">
             
                 
                     <a href="../../syntax_and_semantics/finalize.html">
                         <i class="fa fa-check"></i>
                         
-                            <b>3.7.3.10.</b>
+                            <b>3.7.3.11.</b>
                         
                         finalize
                     </a>
@@ -1853,6 +1883,14 @@
 <p>When creating an empty array you must always specify T:</p>
 <pre><code class="lang-ruby">[] of <span class="hljs-constant">Int32</span> <span class="hljs-comment"># same as Array(Int32).new</span>
 []          <span class="hljs-comment"># syntax error</span>
+</code></pre>
+<h2 id="array-of-string">Array of String</h2>
+<p>Arrays of strings can be created with a special syntax:</p>
+<pre><code class="lang-ruby"><span class="hljs-string">%w(one two three)</span> <span class="hljs-comment"># [&quot;one&quot;, &quot;two&quot;, &quot;three&quot;]</span>
+</code></pre>
+<h2 id="array-of-symbol">Array of Symbol</h2>
+<p>Arrays of symbols can be created with a special syntax:</p>
+<pre><code class="lang-ruby">%i(one two three) <span class="hljs-comment"># [:one, :two, :three]</span>
 </code></pre>
 <h2 id="array-like-types">Array-like types</h2>
 <p>You can use a special array literal syntax with other types too, as long as they define an argless <code>new</code> method and a <code>&lt;&lt;</code> method:</p>

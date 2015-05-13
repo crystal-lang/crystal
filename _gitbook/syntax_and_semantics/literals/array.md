@@ -16,6 +16,22 @@ When creating an empty array you must always specify T:
 []          # syntax error
 ```
 
+## Array of String
+
+Arrays of strings can be created with a special syntax:
+
+```ruby
+%w(one two three) # ["one", "two", "three"]
+```
+
+## Array of Symbol
+
+Arrays of symbols can be created with a special syntax:
+
+```ruby
+%i(one two three) # [:one, :two, :three]
+```
+
 ## Array-like types
 
 You can use a special array literal syntax with other types too, as long as they define an argless `new` method and a `<<` method:
