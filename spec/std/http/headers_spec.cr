@@ -99,4 +99,9 @@ describe HTTP::Headers do
     headers.get?("foo").should eq(["bar"])
     headers.get?("qux").should be_nil
   end
+
+  it "does to_s" do
+    headers = HTTP::Headers{"foo": "bar", "baz": ["a", "b"]}
+    headers.to_s.should eq(%(HTTP::Headers{"Foo" => "bar", "Baz" => ["a", "b"]}))
+  end
 end

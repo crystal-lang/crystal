@@ -121,8 +121,18 @@ struct HTTP::Headers
   end
 
   def to_s(io : IO)
-    io << "HTTP::Headers"
-    @hash.to_s(io)
+    io << "HTTP::Headers{"
+    @hash.each_with_index do |key, values, index|
+      io << ", " if index > 0
+      key.inspect(io)
+      io << " => "
+      if values.length == 1
+        values.first.inspect(io)
+      else
+        values.inspect(io)
+      end
+    end
+    io << "}"
   end
 
   def inspect(io : IO)
