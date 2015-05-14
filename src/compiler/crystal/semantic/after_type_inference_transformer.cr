@@ -44,17 +44,7 @@ module Crystal
       length = node.expressions.length
       node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
-        if new_exp
-          if new_exp.is_a?(Expressions)
-            exps.concat new_exp.expressions
-          else
-            exps << new_exp
-          end
-
-          if new_exp.no_returns?
-            break
-          end
-        end
+        break if collect(new_exp, exps)
       end
 
       if exps.empty?
@@ -66,6 +56,18 @@ module Crystal
       node.expressions = exps
       rebind_node node, exps.last
       node
+    end
+
+    def collect(exp, exps)
+      if exp.is_a?(Expressions)
+        exp.expressions.each do |subexp|
+          return true if collect(subexp, exps)
+        end
+      else
+        exps << exp
+        return true if exp.no_returns?
+      end
+      false
     end
 
     def transform(node : ExpandableNode)
