@@ -44,7 +44,11 @@ module Crystal
       length = node.expressions.length
       node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
-        break if collect(new_exp, exps)
+
+        # We collect the transformed expressions, recursively,
+        # by flattening them. We stop collecting when there's
+        # a NoReturn expression, next, break or return.
+        break if flatten_collect(new_exp, exps)
       end
 
       if exps.empty?
@@ -58,14 +62,16 @@ module Crystal
       node
     end
 
-    def collect(exp, exps)
+    def flatten_collect(exp, exps)
       if exp.is_a?(Expressions)
         exp.expressions.each do |subexp|
-          return true if collect(subexp, exps)
+          return true if flatten_collect(subexp, exps)
         end
       else
         exps << exp
-        return true if exp.no_returns?
+        if exp.is_a?(Break) || exp.is_a?(Next) || exp.is_a?(Return) || exp.no_returns?
+          return true
+        end
       end
       false
     end
@@ -241,7 +247,18 @@ module Crystal
               @transformed.add(target_def.object_id)
 
               node.bubbling_exception do
+                old_body = target_def.body
+                old_type = target_def.body.type?
                 target_def.body = target_def.body.transform(self)
+                new_type = target_def.body.type?
+
+                # It can happen that the body of the function changed, and as
+                # a result the type changed. In that case we need to rebind the
+                # def to the new body, unbinding it from the prevoius one.
+                if new_type != old_type
+                  target_def.unbind_from old_body
+                  target_def.bind_to target_def.body
+                end
               end
             end
           else
@@ -622,7 +639,11 @@ module Crystal
     def rebind_node(node, dependency)
       node.unbind_from node.dependencies?
       if dependency
-        node.bind_to dependency
+        if dependency.type?
+          node.bind_to dependency
+        else
+          node.set_type(nil)
+        end
       else
         node.bind_to @program.nil_var
       end

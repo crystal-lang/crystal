@@ -40,4 +40,15 @@ describe "Code gen: return" do
       foo(2).to_i
     ").to_i.should eq(1)
   end
+
+  it "codegens bug with return if true" do
+    run(%(
+      def bar
+        return if true
+        1
+      end
+
+      bar.is_a?(Nil)
+      )).to_b.should be_true
+  end
 end
