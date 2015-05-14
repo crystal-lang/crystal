@@ -239,18 +239,18 @@ class Crystal::Doc::Generator
     return unless  $?.success?
 
     remotes.lines.each do |line|
-      next unless line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_)+)/
+      if line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_)+)/
+        user, repo = $1, $2
+        rev = `git rev-parse HEAD`.chomp
 
-      user, repo = $1, $2
-      rev = `git rev-parse HEAD`.chomp
+        @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
 
-      @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
+        if user == "manastech" && repo == "crystal"
+          @is_crystal_repository = true
+        end
 
-      if user == "manastech" && repo == "crystal"
-        @is_crystal_repository = true
+        break
       end
-
-      break
     end
   end
 
