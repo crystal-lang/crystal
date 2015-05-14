@@ -11,7 +11,12 @@ lib LibPThread
     end
   end
 
-  type MutexAttr = Void*
+  ifdef darwin
+    type MutexAttr = UInt8[16]
+  else
+    type MutexAttr = UInt8[4]
+  end
+
   type Cond = Int64[6]
   type CondAttr = Void*
 
@@ -20,7 +25,7 @@ lib LibPThread
   fun join = pthread_join(thread : Thread, value : Void**) : Int32
   fun detach = pthread_detach(thread : Thread) : Int32
 
-  fun mutex_init = pthread_mutex_init(mutex : Mutex*, mutex_attr : MutexAttr) : Int32
+  fun mutex_init = pthread_mutex_init(mutex : Mutex*, mutex_attr : MutexAttr*) : Int32
   fun mutex_lock = pthread_mutex_lock(mutex : Mutex*) : Int32
   fun mutex_trylock = pthread_mutex_trylock(mutex : Mutex*) : Int32
   fun mutex_unlock = pthread_mutex_unlock(mutex : Mutex*) : Int32
