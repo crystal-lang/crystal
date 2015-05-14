@@ -25,8 +25,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
     call_args, has_out = prepare_call_args node, owner
 
-    return if node.args.any?(&.yields?) && block_breaks?
-
     if block = node.block
       if fun_literal = block.fun_literal
         codegen_call_with_block_as_fun_literal(node, fun_literal, owner, call_args)

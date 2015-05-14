@@ -1205,4 +1205,79 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(3)
   end
+
+  it "codegens block bug with conditional next and unconditional break (1)" do
+    run(%(
+      def foo
+        yield 1
+        yield 2
+        yield 3
+      end
+
+      a = 0
+      foo do |x|
+        a += x
+        next if true
+        break
+      end
+      a
+      )).to_i.should eq(6)
+  end
+
+  it "codegens block bug with conditional next and unconditional break (2)" do
+    run(%(
+      def foo
+        yield 1
+        yield 2
+        yield 3
+      end
+
+      a = 0
+      foo do |x|
+        a += x
+        next if 1 == 1
+        break
+      end
+      a
+      )).to_i.should eq(6)
+  end
+
+  it "codegens block bug with conditional next and unconditional break (3)" do
+    run(%(
+      $x = 0
+
+      def foo
+        a = 1234
+        a = yield 1
+        $x = a
+        a
+      end
+
+      foo do |x|
+        next x if 1 == 1
+        break 0
+      end
+      $x
+      )).to_i.should eq(1)
+  end
+
+  it "codegens block bug with conditional next and unconditional break (4)" do
+    run(%(
+      $x = 0
+
+      def foo
+        bar(yield 1)
+      end
+
+      def bar(x)
+        $x = x
+      end
+
+      foo do |x|
+        next x if 1 == 1
+        break 0
+      end
+      $x
+      )).to_i.should eq(1)
+  end
 end

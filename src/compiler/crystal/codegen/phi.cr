@@ -60,27 +60,25 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       if @exit_block
         position_at_end exit_block
       end
-      if node.returns? || node.no_returns?
+
+      if @count == 0
         unreachable
-      else
-        if @count == 0
-          unreachable
-        elsif @needs_value
-          phi_table = @phi_table.not_nil!
-          if phi_table.empty?
-            # All branches are void or no return
-            @codegen.last = llvm_nil
-          else
-            if @exit_block
-              @codegen.last = phi llvm_arg_type(@node.type), phi_table
-            else
-              @codegen.last = phi_table.values.first
-            end
-          end
-        else
+      elsif @needs_value
+        phi_table = @phi_table.not_nil!
+        if phi_table.empty?
+          # All branches are void or no return
           @codegen.last = llvm_nil
+        else
+          if @exit_block
+            @codegen.last = phi llvm_arg_type(@node.type), phi_table
+          else
+            @codegen.last = phi_table.values.first
+          end
         end
+      else
+        @codegen.last = llvm_nil
       end
+
       @codegen.last
     end
   end

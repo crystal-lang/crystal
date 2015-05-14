@@ -22,14 +22,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       @closure_skip_parent = false
     end
 
-    def block_returns?
-      (block = @block) && (block_context = @block_context) && (block.returns? || (block.yields? && block_context.block_returns?))
-    end
-
-    def block_breaks?
-      (block = @block) && (block_context = @block_context) && (block.breaks? || (block.yields? && block_context.block_breaks?))
-    end
-
     def reset_closure
       @closure_vars = nil
       @closure_type = nil
