@@ -392,6 +392,20 @@ module Crystal
       false
     end
 
+    def visit(node : Expressions)
+      old_needs_value = @needs_value
+      @needs_value = false
+
+      last_index = node.expressions.length - 1
+      node.expressions.each_with_index do |exp, i|
+        @needs_value = true if old_needs_value && i == last_index
+        accept exp
+      end
+
+      @needs_value = old_needs_value
+      false
+    end
+
     def visit(node : Return)
       node_type = accept_control_expression(node)
 
