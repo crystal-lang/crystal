@@ -69,8 +69,10 @@
        * [Constants](syntax_and_semantics/constants.md)
        * [Enums](syntax_and_semantics/enum.md)
        * [Blocks and Procs](syntax_and_semantics/blocks_and_procs.md)
-           * Proc literal
-           * Proc pointer
+           * [Capturing blocks](syntax_and_semantics/capturing_blocks.md)
+           * [Proc literal](syntax_and_semantics/proc_literal.md)
+           * [Block forwarding](syntax_and_semantics/block_forwarding.md)
+           * [Closures](syntax_and_semantics/closures.md)
        * [alias](syntax_and_semantics/alias.md)
    * [Type reflection](syntax_and_semantics/type_reflection.md)
        * [is_a?](syntax_and_semantics/is_a.md)

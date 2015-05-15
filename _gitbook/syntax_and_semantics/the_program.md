@@ -9,7 +9,19 @@ def add(x, y)
 end
 
 # Invokes the add method in the program
-add(1, 2)
+add(1, 2) #=> 3
+```
+
+A method's value is the value of its last expression, there's no need for explicit `return` expressions. Howver, explicit `return` are possible:
+
+```ruby
+def even?(num)
+  if num % 2 == 0
+    return true
+  end
+
+  return false
+end
 ```
 
 When invoking a method without a receiver, like `add(1, 2)`, if the method is not found in the current type or any of its ancestors then it will be searched in the program.

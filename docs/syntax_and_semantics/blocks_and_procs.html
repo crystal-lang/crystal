@@ -20,7 +20,7 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/alias.html" />
+    <link rel="next" href="../syntax_and_semantics/capturing_blocks.html" />
     
     
     <link rel="prev" href="../syntax_and_semantics/enum.html" />
@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.9" data-basepath=".." data-revision="Wed May 13 2015 13:10:36 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.9" data-basepath=".." data-revision="Fri May 15 2015 13:26:23 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1143,16 +1143,62 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="3.7.9.1" >
+        <li class="chapter " data-level="3.7.9.1" data-path="syntax_and_semantics/capturing_blocks.html">
             
-            <span><b>3.7.9.1.</b> Proc literal</span>
+                
+                    <a href="../syntax_and_semantics/capturing_blocks.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.1.</b>
+                        
+                        Capturing blocks
+                    </a>
+                
             
             
         </li>
     
-        <li class="chapter " data-level="3.7.9.2" >
+        <li class="chapter " data-level="3.7.9.2" data-path="syntax_and_semantics/proc_literal.html">
             
-            <span><b>3.7.9.2.</b> Proc pointer</span>
+                
+                    <a href="../syntax_and_semantics/proc_literal.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.2.</b>
+                        
+                        Proc literal
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9.3" data-path="syntax_and_semantics/block_forwarding.html">
+            
+                
+                    <a href="../syntax_and_semantics/block_forwarding.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.3.</b>
+                        
+                        Block forwarding
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9.4" data-path="syntax_and_semantics/closures.html">
+            
+                
+                    <a href="../syntax_and_semantics/closures.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.4.</b>
+                        
+                        Closures
+                    </a>
+                
             
             
         </li>
@@ -1829,6 +1875,256 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="blocks-and-procs">Blocks and Procs</h1>
+<p>Methods can accept a block of code that is executed
+with the <code>yield</code> keyword. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  <span class="hljs-keyword">yield</span>
+  <span class="hljs-keyword">yield</span>
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Hello!&quot;</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above program prints &quot;Hello!&quot; twice, once for each <code>yield</code>.</p>
+<p>To define a method that receives a block, simply use <code>yield</code> inside it and the compiler will know. You can make this more evident by declaring a dummy block argument, indicated as a last argument prefixed with ampersand (<code>&amp;</code>):</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice(&amp;block)
+  <span class="hljs-keyword">yield</span>
+  <span class="hljs-keyword">yield</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>To invoke a method and pass a block, you use <code>do ... end</code> or <code>{ ... }</code>. All of these are equivalent:</p>
+<pre><code class="lang-ruby">twice() <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Hello!&quot;</span>
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Hello!&quot;</span>
+<span class="hljs-keyword">end</span>
+
+twice { puts <span class="hljs-string">&quot;Hello!&quot;</span> }
+</code></pre>
+<h2 id="overloads">Overloads</h2>
+<p>Two methods, one that yields and another that doesn&apos;t, are considered different overloads, as explained in the <a href="overloading.html">overloading</a> section.</p>
+<h2 id="yield-arguments">Yield arguments</h2>
+<p>The <code>yield</code> expression is similar to a call and can receive arguments. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span> |i|
+  puts <span class="hljs-string">&quot;Got <span class="hljs-subst">#{i}</span>&quot;</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above prints &quot;Got 1&quot; and &quot;Got 2&quot;.</p>
+<p>A curly braces notation is also available:</p>
+<pre><code class="lang-ruby">twice { |i| puts <span class="hljs-string">&quot;Got <span class="hljs-subst">#{i}</span>&quot;</span> }
+</code></pre>
+<p>You can <code>yield</code> many values:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>many
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>
+<span class="hljs-keyword">end</span>
+
+many <span class="hljs-keyword">do</span> |x, y, z|
+  puts x + y + z
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output: 6</span>
+</code></pre>
+<p>A block can specify less than the arguments yielded:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>many
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>
+<span class="hljs-keyword">end</span>
+
+many <span class="hljs-keyword">do</span> |x, y|
+  puts x + y
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output: 3</span>
+</code></pre>
+<p>A block can also specify more than the arguments yielded, and these will be <code>nil</code>:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  <span class="hljs-keyword">yield</span>
+  <span class="hljs-keyword">yield</span>
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span> |i|
+  puts i.inspect
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above outputs &quot;nil&quot; twice.</p>
+<p>Each block variable has the type of every yield expression in that position. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>some
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>, <span class="hljs-string">&apos;a&apos;</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-keyword">true</span>, <span class="hljs-string">&quot;hello&quot;</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>
+
+some <span class="hljs-keyword">do</span> |first, second|
+  <span class="hljs-comment"># first is Int32 | Bool</span>
+  <span class="hljs-comment"># second is Char | String | Nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The block variable <code>second</code> also includes the <code>Nil</code> type because the last <code>yield</code> expression didn&apos;t include a second argument.</p>
+<h2 id="yield-value">yield value</h2>
+<p>The <code>yield</code> expression itself has a value: the last expression of the block. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  v1 = <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  puts v1
+
+  v2 = <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+  puts v2
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span> |i|
+  i + <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above prints &quot;2&quot; and &quot;3&quot;.</p>
+<p>A <code>yield</code> expression&apos;s value is mostly useful for transforming and filtering values. The best examples of this are <a href="http://crystal-lang.org/api/Enumerable.html#map%28%26block%20%3A%20T%20-%3E%20U%29-instance-method" target="_blank">Enumerable#map</a> and <a href="http://crystal-lang.org/api/Enumerable.html#select%28%26block%20%3A%20T%20-%3E%20%29-instance-method" target="_blank">Enumerable#select</a>:</p>
+<pre><code class="lang-ruby">ary = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
+ary.map { |x| x + <span class="hljs-number">1</span> }         <span class="hljs-comment">#=&gt; [2, 3, 4]</span>
+ary.select { |x| x % <span class="hljs-number">2</span> == <span class="hljs-number">1</span> } <span class="hljs-comment">#=&gt; [1, 3]</span>
+</code></pre>
+<p>A dummy transformation method:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>transform(value)
+  <span class="hljs-keyword">yield</span> value
+<span class="hljs-keyword">end</span>
+
+transform(<span class="hljs-number">1</span>) { |x| x + <span class="hljs-number">1</span> } <span class="hljs-comment">#=&gt; 2</span>
+</code></pre>
+<p>The result of the last expression is <code>2</code> because the last expression of the <code>transform</code> method is <code>yield</code>, whose value is the last expression of the block.</p>
+<h2 id="break">break</h2>
+<p>A <code>break</code> expression inside a block exits early from the method:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>thrice
+  puts <span class="hljs-string">&quot;Before 1&quot;</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  puts <span class="hljs-string">&quot;Before 2&quot;</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+  puts <span class="hljs-string">&quot;Before 3&quot;</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">3</span>
+  puts <span class="hljs-string">&quot;After 3&quot;</span>
+<span class="hljs-keyword">end</span>
+
+thrice <span class="hljs-keyword">do</span> |i|
+  <span class="hljs-keyword">if</span> i == <span class="hljs-number">2</span>
+    <span class="hljs-keyword">break</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above prints &quot;Before 1&quot; and &quot;Before 2&quot;. The <code>thrice</code> method didn&apos;t execute the <code>puts &quot;Before 3&quot;</code> expression because of the <code>break</code>.</p>
+<p><code>break</code> can also accept arguments: these become the method&apos;s return value. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>
+
+twice { |i| i + <span class="hljs-number">1</span> } <span class="hljs-comment">#=&gt; 3</span>
+twice { |i| <span class="hljs-keyword">break</span> <span class="hljs-string">&quot;hello&quot;</span> } <span class="hljs-comment">#=&gt; &quot;hello&quot;</span>
+</code></pre>
+<p>The first call&apos;s value is 3 because the last expression of the <code>twice</code> method is <code>yield</code>, which gets the value of the block. The second call&apos;s value is &quot;hello&quot; because a <code>break</code> was performed.</p>
+<p>If there are conditional breaks, the call&apos;s return value type will be a union of the type of the block&apos;s value and the type of the many <code>break</code>s:</p>
+<pre><code class="lang-ruby">value = twice <span class="hljs-keyword">do</span> |i|
+  <span class="hljs-keyword">if</span> i == <span class="hljs-number">1</span>
+    <span class="hljs-keyword">break</span> <span class="hljs-string">&quot;hello&quot;</span>
+  <span class="hljs-keyword">end</span>
+  i + <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+value <span class="hljs-comment">#:: Int32 | String</span>
+</code></pre>
+<p>If a <code>break</code> receives many arguments, they are automaticaly transformed to a <a href="http://crystal-lang.org/api/Tuple.html" target="_blank">Tuple</a>:</p>
+<pre><code class="lang-ruby">values = twice { <span class="hljs-keyword">break</span> <span class="hljs-number">1</span>, <span class="hljs-number">2</span> }
+values <span class="hljs-comment">#=&gt; {1, 2}</span>
+</code></pre>
+<p>If a <code>break</code> receives no arguments, it&apos;s the same as receiving a single <code>nil</code> argument:</p>
+<pre><code class="lang-ruby">value = twice { <span class="hljs-keyword">break</span> }
+value <span class="hljs-comment">#=&gt; nil</span>
+</code></pre>
+<h2 id="next">next</h2>
+<p>The <code>next</code> expression inside a block exists early from the block (not the method). For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span> |i|
+  <span class="hljs-keyword">if</span> i == <span class="hljs-number">1</span>
+    puts <span class="hljs-string">&quot;Skipping 1&quot;</span>
+    <span class="hljs-keyword">next</span>
+  <span class="hljs-keyword">end</span>
+
+  puts <span class="hljs-string">&quot;Got <span class="hljs-subst">#{i}</span>&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Ouptut:</span>
+<span class="hljs-comment"># Skipping 1</span>
+<span class="hljs-comment"># Got 2</span>
+</code></pre>
+<p>The <code>next</code> expression accepts arguments, and these give the value of the <code>yield</code> expression that invoked the block:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  v1 = <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  puts v1
+
+  v2 = <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+  puts v2
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span> |i|
+  <span class="hljs-keyword">if</span> i == <span class="hljs-number">1</span>
+    <span class="hljs-keyword">next</span> <span class="hljs-number">10</span>
+  <span class="hljs-keyword">end</span>
+
+  i + <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output</span>
+<span class="hljs-comment"># 10</span>
+<span class="hljs-comment"># 3</span>
+</code></pre>
+<p>If a <code>next</code> receives many arguments, they are automaticaly transformed to a <a href="http://crystal-lang.org/api/Tuple.html" target="_blank">Tuple</a>. If it receives no arguments it&apos;s the same as receiving a single <code>nil</code> argument.</p>
+<h2 id="performance">Performance</h2>
+<p>When using blocks with <code>yield</code>, the blocks are <strong>always</strong> inlined: no closures, calls or function pointers are involved. This means that this:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>
+
+twice <span class="hljs-keyword">do</span> |i|
+  puts <span class="hljs-string">&quot;Got: <span class="hljs-subst">#{i}</span>&quot;</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>is exactly the same as writing this:</p>
+<pre><code class="lang-ruby">i = <span class="hljs-number">1</span>
+puts <span class="hljs-string">&quot;Got: <span class="hljs-subst">#{i}</span>&quot;</span>
+i = <span class="hljs-number">2</span>
+puts <span class="hljs-string">&quot;Got: <span class="hljs-subst">#{i}</span>&quot;</span>
+</code></pre>
+<p>For example, the standard library includes a <code>times</code> method on integers, allowing you to write:</p>
+<pre><code class="lang-ruby"><span class="hljs-number">3</span>.times <span class="hljs-keyword">do</span> |i|
+  puts i
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This looks very fancy, but is it as fast as a C for loop? The answer is: yes!</p>
+<p>This is <code>Int#times</code> definition:</p>
+<pre><code class="lang-ruby">struct <span class="hljs-constant">Int</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>times
+    i = <span class="hljs-number">0</span>
+    <span class="hljs-keyword">while</span> i &lt; <span class="hljs-keyword">self</span>
+      <span class="hljs-keyword">yield</span> i
+      i += <span class="hljs-number">1</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Because a non-captured block is always inlined, the above method invocation is <strong>exactly the same</strong> as writing this:</p>
+<pre><code class="lang-ruby">i = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> i &lt; <span class="hljs-number">3</span>
+  puts i
+  i += <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Have no fear using blocks for readability or code reuse, it won&apos;t affect the resulting executable performance.</p>
 
                     
                     </section>
@@ -1842,7 +2138,7 @@
         <a href="../syntax_and_semantics/enum.html" class="navigation navigation-prev " aria-label="Previous page: Enums"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/alias.html" class="navigation navigation-next " aria-label="Next page: alias"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/capturing_blocks.html" class="navigation navigation-next " aria-label="Next page: Capturing blocks"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

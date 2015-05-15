@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.2" data-basepath=".." data-revision="Wed May 13 2015 13:10:36 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.2" data-basepath=".." data-revision="Fri May 15 2015 13:26:23 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1143,16 +1143,62 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="3.7.9.1" >
+        <li class="chapter " data-level="3.7.9.1" data-path="syntax_and_semantics/capturing_blocks.html">
             
-            <span><b>3.7.9.1.</b> Proc literal</span>
+                
+                    <a href="../syntax_and_semantics/capturing_blocks.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.1.</b>
+                        
+                        Capturing blocks
+                    </a>
+                
             
             
         </li>
     
-        <li class="chapter " data-level="3.7.9.2" >
+        <li class="chapter " data-level="3.7.9.2" data-path="syntax_and_semantics/proc_literal.html">
             
-            <span><b>3.7.9.2.</b> Proc pointer</span>
+                
+                    <a href="../syntax_and_semantics/proc_literal.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.2.</b>
+                        
+                        Proc literal
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9.3" data-path="syntax_and_semantics/block_forwarding.html">
+            
+                
+                    <a href="../syntax_and_semantics/block_forwarding.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.3.</b>
+                        
+                        Block forwarding
+                    </a>
+                
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.7.9.4" data-path="syntax_and_semantics/closures.html">
+            
+                
+                    <a href="../syntax_and_semantics/closures.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.7.9.4.</b>
+                        
+                        Closures
+                    </a>
+                
             
             
         </li>
@@ -1836,7 +1882,16 @@
 <span class="hljs-keyword">end</span>
 
 <span class="hljs-comment"># Invokes the add method in the program</span>
-add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) <span class="hljs-comment">#=&gt; 3</span>
+</code></pre>
+<p>A method&apos;s value is the value of its last expression, there&apos;s no need for explicit <code>return</code> expressions. Howver, explicit <code>return</code> are possible:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>even?(num)
+  <span class="hljs-keyword">if</span> num % <span class="hljs-number">2</span> == <span class="hljs-number">0</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>
+<span class="hljs-keyword">end</span>
 </code></pre>
 <p>When invoking a method without a receiver, like <code>add(1, 2)</code>, if the method is not found in the current type or any of its ancestors then it will be searched in the program.</p>
 <pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>add(x, y)
