@@ -9,8 +9,8 @@ struct BigInt < Int
     LibGMP.init(out @mpz)
   end
 
-  def initialize(str : String)
-    LibGMP.init_set_str(out @mpz, str, 10)
+  def initialize(str : String, base = 10)
+    LibGMP.init_set_str(out @mpz, str, base)
   end
 
   def initialize(num : SignedInt)
@@ -288,7 +288,7 @@ struct Int
 end
 
 class String
-  def to_big_i
-    BigInt.new(self)
+  def to_big_i(base = 10)
+    BigInt.new(self, base)
   end
 end
