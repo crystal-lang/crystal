@@ -1417,7 +1417,11 @@ module Crystal
       run_instance_vars_initializers(real_type, type.generic_class, type_ptr)
     end
 
-    def run_instance_vars_initializers(real_type, type : ClassType, type_ptr)
+    def run_instance_vars_initializers(real_type, type : InheritedGenericClass, type_ptr)
+      run_instance_vars_initializers real_type, type.extended_class, type_ptr
+    end
+
+    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, type_ptr)
       end

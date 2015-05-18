@@ -117,4 +117,22 @@ describe "Code gen: generic class type" do
       SomeType(Char).new.x
       )).to_i.should eq(1)
   end
+
+  it "allows initializing instance variable in inherited generic type" do
+    run(%(
+      class Foo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        @y = 2
+      end
+
+      Bar(Char).new.x
+      )).to_i.should eq(1)
+  end
 end

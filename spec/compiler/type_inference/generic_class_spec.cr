@@ -430,4 +430,22 @@ describe "Type inference: generic class" do
       SomeType(Char).new.x
       )) { int32 }
   end
+
+  it "allows initializing instance variable in inherited generic type" do
+    assert_type(%(
+      class Foo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        @y = 2
+      end
+
+      Bar(Char).new.x
+      )) { int32 }
+  end
 end
