@@ -1,12 +1,8 @@
 lib LibC
-  fun atoi(str : UInt8*) : Int32
-  fun atoll(str : UInt8*) : Int64
   fun atof(str : UInt8*) : Float64
   fun strtof(str : UInt8*, endp : UInt8**) : Float32
   fun strlen(s : UInt8*) : Int32
   fun snprintf(str : UInt8*, n : Int32, format : UInt8*, ...) : Int32
-  fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
-  fun strtoull(str : UInt8*, endptr : UInt8**, base : Int32) : UInt64
 end
 
 # A String represents an immutable sequence of UTF-8 characters.
@@ -233,69 +229,291 @@ class String
     @bytesize
   end
 
-  # Returns the result of interpreting leading characters of this string
-  # as a decimal number. Extraneous characters past the end of a valid number are ignored.
-  # If there is not a valid number at the start of this string, 0 is returned.
-  # This method never raises an exception.
+  # Returns the result of interpreting leading characters in this string as an
+  # integer base *base* (between 2 and 36).
+  # Leading whitespace is skipped. Extraneous characters past the
+  # end of a valid number are ignored. Underscores for clarity are allowed.
+  #
+  # If there is not a valid number at the start of this string,
+  # or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.
   #
   # ```
   # "12345".to_i             #=> 12345
+  # "12_345".to_i            #=> 12345
   # "99 red balloons".to_i   #=> 99
   # "0a".to_i                #=> 0
-  # "hello".to_i             #=> 0
-  # ```
-  def to_i
-    LibC.atoi cstr
-  end
-
-  # Returns the result of interpreting leading characters in this string as an integer base *base*
-  # (between 2 and 36). Extraneous characters past the end of a valid number are ignored.
-  # If there is not a valid number at the start of str, 0 is returned.
-  # This method never raises an exception when base is valid.
-  #
-  # ```
+  # "hello".to_i             #=> raises
   # "0a".to_i(16)            #=> 10
   # "1100101".to_i(2)        #=> 101
   # "1100101".to_i(8)        #=> 294977
   # "1100101".to_i(10)       #=> 1100101
-  # "1100101".to_i(16)       #=> 17826049
+  # "1100101".to_i(base: 16) #=> 17826049
   # ```
-  def to_i(base)
+  def to_i(base = 10)
+    to_i32(base)
+  end
+
+  # Same as `#to_i`, but returns `nil` if there is not a valid number at the start
+  # of this string, or if the resulting integer doesn't fit an Int32.
+  #
+  # ```
+  # "12345".to_i?            #=> 12345
+  # "99 red balloons".to_i?  #=> 99
+  # "0a".to_i?               #=> 0
+  # "hello".to_i?            #=> nil
+  # ```
+  def to_i?(base = 10)
+    to_i32?(base)
+  end
+
+  # Same as `#to_i`, but returns the block's value if there is not a valid number at the start
+  # of this string, or if the resulting integer doesn't fit an Int32.
+  #
+  # ```
+  # "12345".to_i { 0 }       #=> 12345
+  # "hello".to_i { 0 }       #=> 0
+  # ```
+  def to_i(base = 10, &block)
+    to_i32(base) { yield }
+  end
+
+  # Same as `#to_i` but returns an Int8.
+  def to_i8(base = 10) : Int8
+    to_i8(base) { raise ArgumentError.new("invalid Int8: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an Int8 or nil.
+  def to_i8?(base = 10) : Int8?
+    to_i8(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an Int8 or the block's value.
+  def to_i8(base = 10, &block)
+    gen_to_i 8, 127, 128
+  end
+
+  # Same as `#to_i` but returns an UInt8.
+  def to_u8(base = 10) : UInt8
+    to_u8(base) { raise ArgumentError.new("invalid UInt8: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an UInt8 or nil.
+  def to_u8?(base = 10) : UInt8?
+    to_u8(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an UInt8 or the block's value.
+  def to_u8(base = 10, &block)
+    gen_to_u 8, 255
+  end
+
+  # Same as `#to_i` but returns an Int16.
+  def to_i16(base = 10) : Int16
+    to_i16(base) { raise ArgumentError.new("invalid Int16: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an Int16 or nil.
+  def to_i16?(base = 10) : Int16?
+    to_i16(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an Int16 or the block's value.
+  def to_i16(base = 10, &block)
+    gen_to_i 16, 32767, 32768
+  end
+
+  # Same as `#to_i` but returns an UInt16.
+  def to_u16(base = 10) : UInt16
+    to_u16(base) { raise ArgumentError.new("invalid UInt16: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an UInt16 or nil.
+  def to_u16?(base = 10) : UInt16?
+    to_u16(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an UInt16 or the block's value.
+  def to_u16(base = 10, &block)
+    gen_to_u 16, 65535
+  end
+
+  # Same as `#to_i`.
+  def to_i32(base = 10) : Int32
+    to_i32(base) { raise ArgumentError.new("invalid Int32: #{self}") }
+  end
+
+  # Same as `#to_i`.
+  def to_i32?(base = 10) : Int32?
+    to_i32(base) { nil }
+  end
+
+  # Same as `#to_i`.
+  def to_i32(base = 10, &block)
+    gen_to_i 32, 2147483647, 2147483648
+  end
+
+  # Same as `#to_i` but returns an UInt32.
+  def to_u32(base = 10) : UInt32
+    to_u32(base) { raise ArgumentError.new("invalid UInt32: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an UInt32 or nil.
+  def to_u32?(base = 10) : UInt32?
+    to_u32(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an UInt32 or the block's value.
+  def to_u32(base = 10, &block)
+    gen_to_u 32, 4294967295
+  end
+
+  # Same as `#to_i` but returns an Int64.
+  def to_i64(base = 10) : Int64
+    to_i64(base) { raise ArgumentError.new("invalid Int64: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an Int64 or nil.
+  def to_i64?(base = 10) : Int64?
+    to_i64(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an Int64 or the block's value.
+  def to_i64(base = 10, &block)
+    gen_to_i 64, 9223372036854775807, 9223372036854775808
+  end
+
+  # Same as `#to_i` but returns an UInt64.
+  def to_u64(base = 10) : UInt64
+    to_u64(base) { raise ArgumentError.new("invalid UInt64: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an UInt64 or nil.
+  def to_u64?(base = 10) : UInt64?
+    to_u64(base) { nil }
+  end
+
+  # Same as `#to_i` but returns an UInt64 or the block's value.
+  def to_u64(base = 10, &block)
+    gen_to_u 64
+  end
+
+  # :nodoc:
+  CHAR_TO_DIGIT = begin
+    table = StaticArray(Int8, 256).new(-1_i8)
+    10_i8.times do |i|
+      table.to_unsafe[48 + i] = i
+    end
+    26_i8.times do |i|
+      table.to_unsafe[65 + i] = i + 10
+      table.to_unsafe[97 + i] = i + 10
+    end
+    table
+  end
+
+  # :nodoc:
+  record ToU64Info, value, negative, invalid
+
+  # :nodoc:
+  macro gen_to_i(method, max_positive, max_negative)
+    info = to_u64_info(base)
+    return yield if info.invalid
+
+    if info.negative
+      return yield if info.value > {{max_negative}}
+      -info.value.to_i{{method}}
+    else
+      return yield if info.value > {{max_positive}}
+      info.value.to_i{{method}}
+    end
+  end
+
+  # :nodoc
+  macro gen_to_u(method, max = nil)
+    info = to_u64_info(base)
+    return yield if info.invalid
+
+    if info.negative
+      return yield
+    else
+      {% if max %}
+        return yield if info.value > {{max}}
+      {% end %}
+      info.value.to_u{{method}}
+    end
+  end
+
+  private def to_u64_info(base)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
-    LibC.strtol(cstr, nil, base)
-  end
+    ptr = cstr
 
-  def to_i8
-    to_i.to_i8
-  end
+    # Skip leading whitespace
+    while ptr.value.chr.whitespace?
+      ptr += 1
+    end
 
-  def to_i16
-    to_i.to_i16
-  end
+    negative = false
+    found_digit = false
+    mul_overflow = ~0_u64 / base
 
-  def to_i32
-    to_i
-  end
+    # Check + and -
+    case ptr.value.chr
+    when '+'
+      ptr += 1
+    when '-'
+      negative = true
+      ptr += 1
+    end
 
-  def to_i64
-    LibC.atoll cstr
-  end
+    # Skip leading zeros
+    if ptr.value.chr == '0'
+      found_digit = true
 
-  def to_u8
-    to_i.to_u8
-  end
+      while ptr.value.chr == '0'
+        ptr += 1
+      end
+    end
 
-  def to_u16
-    to_i.to_u16
-  end
+    value = 0_u64
+    last_is_underscore = true
+    invalid = false
 
-  def to_u32
-    to_i64.to_u32
-  end
+    digits = CHAR_TO_DIGIT.to_unsafe
+    while ptr.value != 0
+      if ptr.value.chr == '_'
+        break if last_is_underscore
+        last_is_underscore = true
+        ptr += 1
+        next
+      end
 
-  def to_u64
-    LibC.strtoull(cstr, nil, 10)
+      last_is_underscore = false
+      digit = digits[ptr.value]
+      if digit == -1 || digit >= base
+        break
+      end
+
+      if value > mul_overflow
+        invalid = true
+        break
+      end
+
+      value *= base
+
+      old = value
+      value += digit
+      if value < old
+        invalid = true
+        break
+      end
+
+      found_digit = true
+      ptr += 1
+    end
+
+    invalid = true unless found_digit
+
+    ToU64Info.new value, negative, invalid
   end
 
   # Returns the result of interpreting leading characters in this string as a floating point number (`Float64`).
