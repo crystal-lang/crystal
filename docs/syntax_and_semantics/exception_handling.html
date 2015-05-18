@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=11; IE=10; IE=9; IE=8; IE=7; IE=EDGE" />
-        <title>From a tar.gz | Crystal Programming Language</title>
+        <title>Exception handling | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.0.2">
@@ -20,10 +20,10 @@
         
     
     
-    <link rel="next" href="../installation/from_source_repository.html" />
+    <link rel="next" href="../syntax_and_semantics/compile_time_flags.html" />
     
     
-    <link rel="prev" href="../installation/on_mac_osx_using_homebrew.html" />
+    <link rel="prev" href="../syntax_and_semantics/declare_var.html" />
     
 
         
@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="1.4" data-basepath=".." data-revision="Mon May 18 2015 12:05:04 GMT-0300 (ART)">
+    <div class="book" data-level="3.12" data-basepath=".." data-revision="Mon May 18 2015 12:05:04 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -127,7 +127,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="1.4" data-path="installation/from_a_targz.html">
+        <li class="chapter " data-level="1.4" data-path="installation/from_a_targz.html">
             
                 
                     <a href="../installation/from_a_targz.html">
@@ -1420,7 +1420,7 @@
             
         </li>
     
-        <li class="chapter " data-level="3.12" data-path="syntax_and_semantics/exception_handling.html">
+        <li class="chapter active" data-level="3.12" data-path="syntax_and_semantics/exception_handling.html">
             
                 
                     <a href="../syntax_and_semantics/exception_handling.html">
@@ -1882,13 +1882,171 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="from-a-tar-gz">From a tar.gz</h1>
-<p>If for any reason you can&apos;t or don&apos;t want to use one of the previous installation methods, you can still download Crystal in a standalone .tar.gz file with everything you need to get started.</p>
-<p>The latest files can be found on the Releases page at GitHub: <a href="https://github.com/manastech/crystal/releases" target="_blank">https://github.com/manastech/crystal/releases</a></p>
-<p>Download the file for your platform and uncompress it. Inside it you will have a <code>bin/crystal</code> executable.</p>
-<p>To make it simpler to use, you can create a symbolic link available in the path:</p>
-<p><code>ln -s [full path to bin/crystal] /usr/local/bin/crystal</code></p>
-<p>Then you can invoke the compiler by just typing <code>crystal</code>.</p>
+                        <h1 id="exception-handling">Exception handling</h1>
+<p>Crystal&apos;s way to do error handling is by raising and rescuing exceptions.</p>
+<h2 id="raising-exception">Raising exception</h2>
+<p>You raise exceptions by invoking a top-level <code>raise</code> method. Unlke other keywords, <code>raise</code> is a regular method with two overloads: <a href="http://crystal-lang.org/api/toplevel.html#raise%28message%20%3A%20String%29-class-method" target="_blank">one accepting a String</a> and another <a href="http://crystal-lang.org/api/toplevel.html#raise%28ex%20%3A%20Exception%29-class-method" target="_blank">accepting an Exception instance</a>:</p>
+<pre><code class="lang-ruby">raise <span class="hljs-string">&quot;OH NO!&quot;</span>
+raise <span class="hljs-constant">Exception</span>.new(<span class="hljs-string">&quot;Some error&quot;</span>)
+</code></pre>
+<p>The String version just creates a new <a href="http://crystal-lang.org/api/Exception.html" target="_blank">Exception</a> instance with that message.</p>
+<p>Only <code>Exception</code> instances or subclasses can be raised.</p>
+<h2 id="defining-custom-exceptions">Defining custom exceptions</h2>
+<p>To define a custom exception type, just subclass from <a href="http://crystal-lang.org/api/Exception.html" target="_blank">Exception</a>:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyException</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Exception</span></span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyOtherException</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Exception</span></span></span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>You can, as always, define a constructor for your exception or just use the default one.</p>
+<h2 id="rescuing-exceptions">Rescuing exceptions</h2>
+<p>To rescue any exception use a <code>begin ... rescue ... end</code> expression:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  raise <span class="hljs-string">&quot;OH NO!&quot;</span>
+<span class="hljs-keyword">rescue</span>
+  puts <span class="hljs-string">&quot;Rescued!&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output: Rescued!</span>
+</code></pre>
+<p>To access the rescued exception you can specify a variable in the <code>rescue</code> clause:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  raise <span class="hljs-string">&quot;OH NO!&quot;</span>
+<span class="hljs-keyword">rescue</span> ex
+  puts ex.message
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output: OH NO!</span>
+</code></pre>
+<p>To rescue just one type of exception (or any of its subclasses):</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  raise <span class="hljs-constant">MyException</span>.new(<span class="hljs-string">&quot;OH NO!&quot;</span>)
+<span class="hljs-keyword">rescue</span> <span class="hljs-constant">MyException</span>
+  puts <span class="hljs-string">&quot;Rescued MyException&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output: Rescued MyException</span>
+</code></pre>
+<p>And to access it, use a syntax similar to type restrictions:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  raise <span class="hljs-constant">MyException</span>.new(<span class="hljs-string">&quot;OH NO!&quot;</span>)
+<span class="hljs-keyword">rescue</span> ex <span class="hljs-symbol">:</span> <span class="hljs-constant">MyException</span>
+  puts <span class="hljs-string">&quot;Rescued MyException: <span class="hljs-subst">#{ex.message}</span>&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Output: Rescued MyException: OH NO!</span>
+</code></pre>
+<p>Multiple <code>rescue</code> clauses can be specified:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">rescue</span> ex1 <span class="hljs-symbol">:</span> <span class="hljs-constant">MyException</span>
+  <span class="hljs-comment"># only MyException...</span>
+<span class="hljs-keyword">rescue</span> ex2 <span class="hljs-symbol">:</span> <span class="hljs-constant">MyOtherException</span>
+  <span class="hljs-comment"># only MyOtherException...</span>
+<span class="hljs-keyword">rescue</span>
+  <span class="hljs-comment"># any other kind of exceptions</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h2 id="ensure">ensure</h2>
+<p>An <code>ensure</code> clause is executed at the end of a <code>begin ... end</code> or <code>begin ... rescue ... end</code> expression regardless of whether an exception was raised or not:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  something_dangerous
+<span class="hljs-keyword">ensure</span>
+  puts <span class="hljs-string">&quot;Cleanup...&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Will print &quot;Cleanup...&quot; after invoking something_dangerous,</span>
+<span class="hljs-comment"># regardless of whether it raised or not</span>
+</code></pre>
+<p>Or:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  something_dangerous
+<span class="hljs-keyword">rescue</span>
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">ensure</span>
+  <span class="hljs-comment"># this will always be executed</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p><code>ensure</code> clauses are usually used for clean up, freeing resources, etc.</p>
+<h2 id="else">else</h2>
+<p>An <code>else</code> clause is executed only if no exceptions were rescued:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  something_dangerous
+<span class="hljs-keyword">rescue</span>
+  <span class="hljs-comment"># execute this if an exception is raised</span>
+<span class="hljs-keyword">else</span>
+  <span class="hljs-comment"># execute this if an exception isn&apos;t raised</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>An <code>else</code> clause can only be specified if at least one <code>rescue</code> clause is specified.</p>
+<h2 id="short-syntax-form">Short syntax form</h2>
+<p>Exception handling has a short syntax form: assume a method definition is an implicit <code>begin ... end</code> expression, then specify <code>rescue</code>, <code>ensure</code> and <code>else</code> clauses:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method
+  something_dangerous
+<span class="hljs-keyword">rescue</span>
+  <span class="hljs-comment"># execute if an exception is raised</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># The above is the same as:</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method
+  <span class="hljs-keyword">begin</span>
+    something_dangerous
+  <span class="hljs-keyword">rescue</span>
+    <span class="hljs-comment"># execute if an exception is raised</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>An example with <code>ensure</code>:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method
+  something_dangerous
+<span class="hljs-keyword">ensure</span>
+  <span class="hljs-comment"># always execute this</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># The above is the same as:</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method
+  <span class="hljs-keyword">begin</span>
+    something_dangerous
+  <span class="hljs-keyword">ensure</span>
+    <span class="hljs-comment"># always execute this</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h2 id="type-inference">Type inference</h2>
+<p>Variables declared inside the <code>begin</code> part of an exception handler also get the <code>Nil</code> type when considered inside a <code>rescue</code> or <code>ensure</code> body. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  a = something_dangerous_that_returns_Int32
+<span class="hljs-keyword">ensure</span>
+  puts a + <span class="hljs-number">1</span> <span class="hljs-comment"># error, undefined method &apos;+&apos; for Nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above happens even if <code>something_dangerous_that_returns_Int32</code> never raises, or if <code>a</code> was assigned a value and then a method that potentially raises is executed:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  a = <span class="hljs-number">1</span>
+  something_dangerous
+<span class="hljs-keyword">ensure</span>
+  puts a + <span class="hljs-number">1</span> <span class="hljs-comment"># error, undefined method &apos;+&apos; for Nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Although it is obvious that <code>a</code> will always be assigned a value, the compiler will still think <code>a</code> might never had a chance to be initialized. Even though this logic might improve in the future, right now it forces you to keep your exception handlers to their necessary minimum, making the code&apos;s intention more clear:</p>
+<pre><code class="lang-ruby"><span class="hljs-comment"># Clearer than the above: `a` doesn&apos;t need</span>
+<span class="hljs-comment"># to be in the exception handling code.</span>
+a = <span class="hljs-number">1</span>
+<span class="hljs-keyword">begin</span>
+  something_dangerous
+<span class="hljs-keyword">ensure</span>
+  puts a + <span class="hljs-number">1</span> <span class="hljs-comment"># works</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h2 id="alternative-ways-to-do-error-handling">Alternative ways to do error handling</h2>
+<p>Although exceptions are available as one of the mechanisms for handling errors, they are not your only choice. Raising an exception involves allocating memory and executing an exception handler is generally slow.</p>
+<p>The standard library usually provides a couple of methods to accomplish something: one raises, one returns <code>nil</code>. For example:</p>
+<pre><code class="lang-ruby">array = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
+array[<span class="hljs-number">4</span>]  <span class="hljs-comment"># raises because of IndexOutOfBounds</span>
+array[<span class="hljs-number">4</span>]? <span class="hljs-comment"># returns nil because of index out of bounds</span>
+</code></pre>
+<p>The usual convention is to provide an alternative &quot;question&quot; method to signal that this variant of the method returns <code>nil</code> instead of raising. This lets the user choose whether she wants to deal with exceptions or with <code>nil</code>. Note, however, that this is not avaialble for every method out there, as exceptions are still the preferred way because they don&apos;t pollute the code with error handling logic.</p>
 
                     
                     </section>
@@ -1899,10 +2057,10 @@
         </div>
 
         
-        <a href="../installation/on_mac_osx_using_homebrew.html" class="navigation navigation-prev " aria-label="Previous page: On Mac OSX using Homebrew"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/declare_var.html" class="navigation navigation-prev " aria-label="Previous page: Uninitialized variable declaration"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../installation/from_source_repository.html" class="navigation navigation-next " aria-label="Next page: From sources"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/compile_time_flags.html" class="navigation navigation-next " aria-label="Next page: Compile-time flags"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

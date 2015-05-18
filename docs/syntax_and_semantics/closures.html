@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.9.4" data-basepath=".." data-revision="Fri May 15 2015 13:26:23 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.9.4" data-basepath=".." data-revision="Mon May 18 2015 12:05:04 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1420,9 +1420,17 @@
             
         </li>
     
-        <li class="chapter " data-level="3.12" >
+        <li class="chapter " data-level="3.12" data-path="syntax_and_semantics/exception_handling.html">
             
-            <span><b>3.12.</b> Exception handling</span>
+                
+                    <a href="../syntax_and_semantics/exception_handling.html">
+                        <i class="fa fa-check"></i>
+                        
+                            <b>3.12.</b>
+                        
+                        Exception handling
+                    </a>
+                
             
             
         </li>
@@ -1905,7 +1913,7 @@ foo <span class="hljs-keyword">do</span>
 <span class="hljs-keyword">end</span>
 x <span class="hljs-comment"># :: Int32 | String</span>
 </code></pre>
-<p>The compiler knows that after the block, <code>x</code> can be Int32 or String (it could not that it will always be String because the method always yields, this will maybe improve in the future).</p>
+<p>The compiler knows that after the block, <code>x</code> can be Int32 or String (it could know that it will always be String because the method always yields, this will maybe improve in the future).</p>
 <p>If <code>x</code> is assigned something else after the block, the compiler knows the type changed:</p>
 <pre><code class="lang-ruby">x = <span class="hljs-number">1</span>
 foo <span class="hljs-keyword">do</span>

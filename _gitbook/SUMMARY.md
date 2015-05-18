@@ -86,7 +86,7 @@
        * [sizeof](syntax_and_semantics/sizeof.md)
        * [instance_sizeof](syntax_and_semantics/instance_sizeof.md)
        * [Uninitialized variable declaration](syntax_and_semantics/declare_var.md)
-   * Exception handling
+   * [Exception handling](syntax_and_semantics/exception_handling.md)
    * [Compile-time flags](syntax_and_semantics/compile_time_flags.md)
        * [Cross-compilation](syntax_and_semantics/cross-compilation.md)
    * [Macros](syntax_and_semantics/macros.md)
