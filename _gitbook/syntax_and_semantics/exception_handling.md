@@ -89,7 +89,19 @@ rescue ex1 : MyException
 rescue ex2 : MyOtherException
   # only MyOtherException...
 rescue
-  # any other kind of exceptions
+  # any other kind of exception
+end
+```
+
+You can also rescue multiple exception types at once by specifying a union type:
+
+```ruby
+begin
+  # ...
+rescue ex : MyException | MyOtherException
+  # only MyException or MyOtherException
+rescue
+  # any other kind of exception
 end
 ```
 

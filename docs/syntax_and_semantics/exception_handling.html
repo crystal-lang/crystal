@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.12" data-basepath=".." data-revision="Mon May 18 2015 12:05:04 GMT-0300 (ART)">
+    <div class="book" data-level="3.12" data-basepath=".." data-revision="Mon May 18 2015 12:54:39 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1945,7 +1945,16 @@ raise <span class="hljs-constant">Exception</span>.new(<span class="hljs-string"
 <span class="hljs-keyword">rescue</span> ex2 <span class="hljs-symbol">:</span> <span class="hljs-constant">MyOtherException</span>
   <span class="hljs-comment"># only MyOtherException...</span>
 <span class="hljs-keyword">rescue</span>
-  <span class="hljs-comment"># any other kind of exceptions</span>
+  <span class="hljs-comment"># any other kind of exception</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>You can also rescue multiple exception types at once by specifying a union type:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">rescue</span> ex <span class="hljs-symbol">:</span> <span class="hljs-constant">MyException</span> | <span class="hljs-constant">MyOtherException</span>
+  <span class="hljs-comment"># only MyException or MyOtherException</span>
+<span class="hljs-keyword">rescue</span>
+  <span class="hljs-comment"># any other kind of exception</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
 <h2 id="ensure">ensure</h2>
@@ -2040,7 +2049,7 @@ a = <span class="hljs-number">1</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
 <h2 id="alternative-ways-to-do-error-handling">Alternative ways to do error handling</h2>
-<p>Although exceptions are available as one of the mechanisms for handling errors, they are not your only choice. Raising an exception involves allocating memory and executing an exception handler is generally slow.</p>
+<p>Although exceptions are available as one of the mechanisms for handling errors, they are not your only choice. Raising an exception involves allocating memory, and executing an exception handler is generally slow.</p>
 <p>The standard library usually provides a couple of methods to accomplish something: one raises, one returns <code>nil</code>. For example:</p>
 <pre><code class="lang-ruby">array = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
 array[<span class="hljs-number">4</span>]  <span class="hljs-comment"># raises because of IndexOutOfBounds</span>
