@@ -98,4 +98,27 @@ describe "Code gen: lib" do
       LibC.foo
       ))
   end
+
+  it "can use tuple as fun return" do
+    test_c(
+      %(
+        struct s {
+          int x;
+          int y;
+        };
+
+        struct s foo() {
+          struct s a = {1, 2};
+          return a;
+        }
+      ),
+      %(
+        lib LibFoo
+          fun foo : {Int32, Int32}
+        end
+
+        tuple = LibFoo.foo
+        tuple[0] + tuple[1]
+      ), &.to_i.should eq(3))
+  end
 end

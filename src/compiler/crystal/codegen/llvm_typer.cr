@@ -339,6 +339,10 @@ module Crystal
       llvm_struct_type(type)
     end
 
+    def llvm_c_type(type : TupleInstanceType)
+      llvm_struct_type(type)
+    end
+
     def llvm_c_type(type)
       llvm_arg_type(type)
     end

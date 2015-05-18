@@ -1729,6 +1729,10 @@ module Crystal
       type_vars["T"]
     end
 
+    def primitive_like?
+      true
+    end
+
     def reference_like?
       false
     end

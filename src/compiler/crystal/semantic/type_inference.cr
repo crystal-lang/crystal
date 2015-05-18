@@ -3080,7 +3080,7 @@ module Crystal
 
       unless type.primitive_like?
         msg = String.build do |msg|
-          msg << "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
+          msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations"
           msg << " (did you mean Int32?)" if type == @mod.int
           msg << " (did you mean Float32?)" if type == @mod.float
         end
