@@ -416,4 +416,18 @@ describe "Type inference: generic class" do
       Foo(Int32).new.foo
       )) { int32.metaclass }
   end
+
+  it "allows initializing instance variable (#665)" do
+    assert_type(%(
+      class SomeType(T)
+        @x = 0
+
+        def x
+          @x
+        end
+      end
+
+      SomeType(Char).new.x
+      )) { int32 }
+  end
 end

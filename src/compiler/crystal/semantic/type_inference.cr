@@ -406,7 +406,12 @@ module Crystal
           value.accept ivar_visitor
 
           current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
-          var = current_type.lookup_instance_var(target.name, true)
+          if current_type.is_a?(GenericType)
+            node.type = @mod.nil
+            return
+          else
+            var = current_type.lookup_instance_var(target.name, true)
+          end
         end
       end
 

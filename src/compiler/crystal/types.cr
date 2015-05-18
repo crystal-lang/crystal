@@ -1319,6 +1319,14 @@ module Crystal
       end
 
       instance = self.new_generic_instance(program, self, instance_type_vars)
+      instance_vars_initializers.try &.each do |initializer|
+        visitor = TypeVisitor.new(program, vars: initializer.meta_vars, meta_vars: initializer.meta_vars)
+        value = initializer.value.clone
+        value.accept visitor
+        instance_var = instance.lookup_instance_var(initializer.name)
+        instance_var.bind_to(value)
+      end
+
       generic_types[type_vars] = instance
       initialize_instance instance
 

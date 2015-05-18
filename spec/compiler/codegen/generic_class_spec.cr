@@ -103,4 +103,18 @@ describe "Code gen: generic class type" do
       Foo(Int32).new.x + 1
       )).to_i.should eq(2)
   end
+
+  it "allows initializing instance variable (#665)" do
+    run(%(
+      class SomeType(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      SomeType(Char).new.x
+      )).to_i.should eq(1)
+  end
 end

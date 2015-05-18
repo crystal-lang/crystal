@@ -652,6 +652,9 @@ module Crystal
         return false
       end
 
+      # This means it's an instance variable initialize of a generic type
+      return unless target.type?
+
       request_value do
         accept value
       end
@@ -1397,7 +1400,7 @@ module Crystal
       end
       memset @last, int8(0), struct_type.size
       type_ptr = @last
-      run_instance_vars_initializers(type, type_ptr)
+      run_instance_vars_initializers(type, type, type_ptr)
       @last = type_ptr
     end
 
@@ -1410,18 +1413,20 @@ module Crystal
       struct_type
     end
 
-    def run_instance_vars_initializers(type, type_ptr)
-      return unless type.is_a?(ClassType)
+    def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
+      run_instance_vars_initializers(real_type, type.generic_class, type_ptr)
+    end
 
+    def run_instance_vars_initializers(real_type, type : ClassType, type_ptr)
       if superclass = type.superclass
-        run_instance_vars_initializers(superclass, type_ptr)
+        run_instance_vars_initializers(real_type, superclass, type_ptr)
       end
 
       initializers = type.instance_vars_initializers
       return unless initializers
 
       initializers.each do |init|
-        ivar = type.lookup_instance_var(init.name)
+        ivar = real_type.lookup_instance_var(init.name)
         value = init.value
 
         # Don't need to initialize false
@@ -1440,10 +1445,14 @@ module Crystal
 
           value.accept self
 
-          ivar_ptr = instance_var_ptr type, init.name, type_ptr
+          ivar_ptr = instance_var_ptr real_type, init.name, type_ptr
           assign ivar_ptr, ivar.type, value.type, @last
         end
       end
+    end
+
+    def run_instance_vars_initializers(real_type, type : Type, type_ptr)
+      # Nothing to do
     end
 
     def malloc(type)
