@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.2.9" data-basepath="../.." data-revision="Tue May 19 2015 10:16:59 GMT-0300 (ART)">
+    <div class="book" data-level="3.2.9" data-basepath="../.." data-revision="Tue May 19 2015 11:50:35 GMT-0700 (PDT)">
     
 
 <div class="book-summary">
@@ -1917,7 +1917,7 @@
 <pre><code class="lang-ruby">{<span class="hljs-number">1</span> =&gt; <span class="hljs-number">2</span>, <span class="hljs-number">3</span> =&gt; <span class="hljs-number">4</span>}     <span class="hljs-comment"># Hash(Int32, Int32)</span>
 {<span class="hljs-number">1</span> =&gt; <span class="hljs-number">2</span>, <span class="hljs-string">&apos;a&apos;</span> =&gt; <span class="hljs-number">3</span>}   <span class="hljs-comment"># Hash(Int32 | Char, Int32)</span>
 </code></pre>
-<p>A Hash can have mixed types, both for the keys and values, meaning <code>K</code>/<code>V</code> will be union types, but these are determined when the hash is created, either by specifying <code>K</code> and <code>V</code> or by using a hash literal. In the later case, <code>K</code> will be set to the union of the hash literal keys, and <code>V</code> will be set to the union of the hash literal values.</p>
+<p>A Hash can have mixed types, both for the keys and values, meaning <code>K</code>/<code>V</code> will be union types, but these are determined when the hash is created, either by specifying <code>K</code> and <code>V</code> or by using a hash literal. In the latter case, <code>K</code> will be set to the union of the hash literal keys, and <code>V</code> will be set to the union of the hash literal values.</p>
 <p>When creating an empty hash you must always specify <code>K</code> and <code>V</code>:</p>
 <pre><code class="lang-ruby">{} of <span class="hljs-constant">Int32</span> =&gt; <span class="hljs-constant">Int32</span> <span class="hljs-comment"># same as Hash(Int32, Int32).new</span>
 {}                   <span class="hljs-comment"># syntax error</span>
