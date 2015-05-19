@@ -17,6 +17,10 @@ class OpenSSL::SSL::Socket
     LibSSL.ssl_free(@ssl)
   end
 
+  def set_cipher_list(ciphers)
+    LibSSL.ssl_set_cipher_list(@ssl, ciphers)
+  end
+
   def read(slice : Slice(UInt8), count)
     LibSSL.ssl_read(@ssl, slice.pointer(count), count)
   end

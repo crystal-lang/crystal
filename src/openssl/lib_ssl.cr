@@ -6,6 +6,13 @@ lib LibSSL
   type SSLContext = Void*
   type SSL = Void*
 
+  OP_NO_SSLv2 = 16777216
+  OP_NO_SSLv3 = 33554432
+  OP_NO_TLSv1 = 67108864
+  OP_NO_TLSv1_1 = 268435456
+  OP_NO_TLSv1_2 = 134217728
+  SSL_CTRL_OPTIONS = 32
+
   enum SSLFileType
     PEM = 1
     ASN1 = 2
@@ -38,5 +45,8 @@ lib LibSSL
   fun ssl_free = SSL_free(handle : SSL)
   fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int32
   fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int32
+  fun ssl_ctx_set_options = SSL_CTX_ctrl(context : SSLContext, command : Int32, long_arg : Int32, pointer_arg : Void*) : Int32
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  fun ssl_set_cipher_list = SSL_set_cipher_list(handle : SSL, text : UInt8*) : Int32
+
 end
