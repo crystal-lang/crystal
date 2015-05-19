@@ -63,8 +63,8 @@ struct Enum
     self.class.new(value ^ other.value)
   end
 
-  def ~(other : self)
-    self.class.new(value ~ other.value)
+  def ~
+    self.class.new(~value)
   end
 
   def <=>(other : self)
