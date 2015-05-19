@@ -75,6 +75,7 @@ module Crystal
         parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
         parser.visibility = node.visibility
         parser.def_nest = 1 if inside_def
+        parser.wants_doc = @program.wants_doc?
         generated_node = yield parser
         if yields = expanded_macro.yields
           generated_node = generated_node.transform(YieldsTransformer.new(yields))

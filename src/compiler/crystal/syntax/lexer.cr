@@ -1662,6 +1662,7 @@ module Crystal
       whitespace = macro_state.whitespace
       delimiter_state = macro_state.delimiter_state
       beginning_of_line = macro_state.beginning_of_line
+      comment = macro_state.comment
       yields = false
 
       if skip_whitespace
@@ -1687,28 +1688,13 @@ module Crystal
         return @token
       end
 
-      if !delimiter_state && current_char == '#'
-        while true
-          case next_char
-          when '\n'
-            break
-          when '\0'
-            raise "unterminated macro"
-          end
-        end
-        start = current_pos
-        @token.line_number += 1
-        beginning_of_line = true
-        whitespace = true
-      end
-
       if current_char == '\\' && peek_next_char == '{'
         beginning_of_line = false
         next_char
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "{"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
         return @token
       end
 
@@ -1718,16 +1704,38 @@ module Crystal
           beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
           return @token
         when '%'
           beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
           return @token
         end
       end
+
+      if comment || (!delimiter_state && current_char == '#')
+        comment = true
+        while true
+          case next_char
+          when '\n'
+            comment = false
+            beginning_of_line = true
+            whitespace = true
+            break
+          when '{'
+            break
+          when '\0'
+            raise "unterminated macro"
+          end
+        end
+        @token.type = :MACRO_LITERAL
+        @token.value = string_range(start)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        return @token
+      end
+
 
       if current_char == '%' && ident_start?(peek_next_char)
         char = next_char
@@ -1737,7 +1745,7 @@ module Crystal
         end
         @token.type = :MACRO_VAR
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
         return @token
       end
 
@@ -1865,7 +1873,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
 
       @token
     end

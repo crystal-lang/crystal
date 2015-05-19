@@ -13,9 +13,9 @@ module Crystal
     property passed_backslash_newline
     property doc_buffer
 
-    record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields) do
+    record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields, comment) do
       def self.default
-        MacroState.new(true, 0, nil, true, false)
+        MacroState.new(true, 0, nil, true, false, false)
       end
     end
 
