@@ -4,7 +4,7 @@ class OpenSSL::SSL::Context
   end
 
   def initialize
-    @handle = LibSSL.ssl_ctx_new(LibSSL.sslv23_method)
+    @handle = LibSSL.ssl_ctx_new(LibSSL.ssl_v3_server_method)
   end
 
   def finalize
