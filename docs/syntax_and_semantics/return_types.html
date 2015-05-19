@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=11; IE=10; IE=9; IE=8; IE=7; IE=EDGE" />
-        <title>Everything is an object | Crystal Programming Language</title>
+        <title>Return types | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.0.2">
@@ -20,10 +20,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/the_program.html" />
+    <link rel="next" href="../syntax_and_semantics/operators.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/types_and_methods.html" />
+    <link rel="prev" href="../syntax_and_semantics/type_restrictions.html" />
     
 
         
@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.1" data-basepath=".." data-revision="Tue May 19 2015 10:16:59 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.3.8" data-basepath=".." data-revision="Tue May 19 2015 10:16:59 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -815,7 +815,7 @@
             <ul class="articles">
                 
     
-        <li class="chapter active" data-level="3.7.1" data-path="syntax_and_semantics/everything_is_an_object.html">
+        <li class="chapter " data-level="3.7.1" data-path="syntax_and_semantics/everything_is_an_object.html">
             
                 
                     <a href="../syntax_and_semantics/everything_is_an_object.html">
@@ -966,7 +966,7 @@
             
         </li>
     
-        <li class="chapter " data-level="3.7.3.8" data-path="syntax_and_semantics/return_types.html">
+        <li class="chapter active" data-level="3.7.3.8" data-path="syntax_and_semantics/return_types.html">
             
                 
                     <a href="../syntax_and_semantics/return_types.html">
@@ -1912,14 +1912,18 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="everything-is-an-object">Everything is an object</h1>
-<p>In Crystal everything is an object. The definition of an object boils down to these points:</p>
-<ul>
-<li>It has a type</li>
-<li>It can respond to some methods</li>
-</ul>
-<p>This is everything you can know about an object: its type and whether it responds to some method.</p>
-<p>An object&apos;s internal state, if any, can only be queried by invoking methods.</p>
+                        <h1 id="return-types">Return types</h1>
+<p>A method&apos;s return type is always inferred by the compiler. However, you might want to specify it for two reasons:</p>
+<ol>
+<li>To make sure that the method returns the type that you want</li>
+<li>To make it appear in documentation comments</li>
+</ol>
+<p>For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>some_method <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>
+  <span class="hljs-string">&quot;hello&quot;</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The return type follows the <a href="type_grammar.html">type grammar</a>.</p>
 
                     
                     </section>
@@ -1930,10 +1934,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/types_and_methods.html" class="navigation navigation-prev " aria-label="Previous page: Types and methods"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" class="navigation navigation-prev " aria-label="Previous page: Type restrictions"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/the_program.html" class="navigation navigation-next " aria-label="Next page: The Program"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/operators.html" class="navigation navigation-next " aria-label="Next page: Operators"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

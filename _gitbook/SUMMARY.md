@@ -58,6 +58,7 @@
            * [Default and named arguments](syntax_and_semantics/default_and_named_arguments.md)
            * [Splats and tuples](syntax_and_semantics/splats_and_tuples.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
+           * [Return types](syntax_and_semantics/return_types.md)
            * [Operators](syntax_and_semantics/operators.md)
            * [Visibility](syntax_and_semantics/visibility.md)
            * [Inheritance](syntax_and_semantics/inheritance.md)
