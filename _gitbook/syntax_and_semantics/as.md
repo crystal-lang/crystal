@@ -52,3 +52,61 @@ str as Pointer(Int32)           #:: Pointer(Int32)
 ```
 
 No runtime checks are performed in these cases because, again, pointers are involved. The need for this cast is even more rare than the previous one, but allows to implement some core types (like String) in Crystal itself, and it also allows passing a Reference type to C functions by casting it to a void pointer.
+
+## Usage for casting to a bigger type
+
+The `as` expression can be used to cast an expression to a "bigger" type. For example:
+
+```ruby
+a = 1
+b = a as Int32 | Float64
+b #:: Int32 | Float64
+```
+
+The above might not seem to be useful, but it is when, for example, mapping an array of elements:
+
+```ruby
+ary = [1, 2, 3]
+
+# We want to create an array 1, 2, 3 of Int32 | Float64
+ary2 = ary.map { |x| x as Int32 | Float64 }
+
+ary2 #:: Array(Int32 | Float64)
+ary2 << 1.5 # OK
+```
+
+The `Array#map` method uses the block's type as the generic type for the Array. Without the `as` expression, the inferred type would have been `Int32` and we wouldn't have been able to add a `Float64` into it.
+
+## Usage for when the compiler can't infer the type of a block
+
+Sometimes the compiler can't infer the type of a block. For example:
+
+```ruby
+class Person
+  def initialize(@name)
+  end
+
+  def name
+    @name
+  end
+end
+
+a = [] of Person
+x = a.map { |f| f.name } # Error: can't infer block return type
+```
+
+The compiler needs the block's type for the generic type of the Array created by `Array#map`, but since `Person` was never instantiated, the compiler doesn't know the type of `@name`. In this cases you can help the compiler by using an `as` expression:
+
+```ruby
+a = [] of Person
+x = a.map { |f| f.name as String } # OK
+```
+
+This error isn't very frequent, and is usually gone if a `Person` is instantiated before the map call:
+
+```ruby
+Person.new "John"
+
+a = [] of Person
+x = a.map { |f| f.name as String } # OK
+```
