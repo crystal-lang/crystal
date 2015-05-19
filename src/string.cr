@@ -231,26 +231,40 @@ class String
 
   # Returns the result of interpreting leading characters in this string as an
   # integer base *base* (between 2 and 36).
-  # Leading whitespace is skipped. Extraneous characters past the
-  # end of a valid number are ignored. Underscores for clarity are allowed.
   #
   # If there is not a valid number at the start of this string,
   # or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.
   #
+  # Options:
+  # * **whitespace**: if true, leading and trailing whitespaces are allowed
+  # * **underscore**: if true, underscores in numbers are allowed
+  # * **prefix**: if true, the prefixes "0x", "0" and "0b" override the base
+  # * **strict**: if true, extraneous characters past the end of the number are disallowed
+  #
   # ```
-  # "12345".to_i             #=> 12345
-  # "12_345".to_i            #=> 12345
-  # "99 red balloons".to_i   #=> 99
-  # "0a".to_i                #=> 0
-  # "hello".to_i             #=> raises
-  # "0a".to_i(16)            #=> 10
-  # "1100101".to_i(2)        #=> 101
-  # "1100101".to_i(8)        #=> 294977
-  # "1100101".to_i(10)       #=> 1100101
-  # "1100101".to_i(base: 16) #=> 17826049
+  # "12345".to_i                             #=> 12345
+  # "0a".to_i                                #=> 0
+  # "hello".to_i                             #=> raises
+  # "0a".to_i(16)                            #=> 10
+  # "1100101".to_i(2)                        #=> 101
+  # "1100101".to_i(8)                        #=> 294977
+  # "1100101".to_i(10)                       #=> 1100101
+  # "1100101".to_i(base: 16)                 #=> 17826049
+  #
+  # "12_345".to_i                            #=> raises
+  # "12_345".to_i(underscore: true)          #=> 12345
+  #
+  # "  12345  ".to_i                         #=> 12345
+  # "  12345  ".to_i(whitepsace: false)      #=> raises
+  #
+  # "0x123abc".to_i                          #=> raises
+  # "0x123abc".to_i(prefix: true)            #=> 1194684
+  #
+  # "99 red balloons".to_i                   #=> raises
+  # "99 red balloons".to_i(strict: false)    #=> 99
   # ```
-  def to_i(base = 10)
-    to_i32(base)
+  def to_i(base = 10, whitespace = true, underscore = false, prefix = false, strict = true)
+    to_i32(base, whitespace, underscore, prefix, strict)
   end
 
   # Same as `#to_i`, but returns `nil` if there is not a valid number at the start
@@ -262,8 +276,8 @@ class String
   # "0a".to_i?               #=> 0
   # "hello".to_i?            #=> nil
   # ```
-  def to_i?(base = 10)
-    to_i32?(base)
+  def to_i?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true)
+    to_i32?(base, whitespace, underscore, prefix, strict)
   end
 
   # Same as `#to_i`, but returns the block's value if there is not a valid number at the start
@@ -273,128 +287,128 @@ class String
   # "12345".to_i { 0 }       #=> 12345
   # "hello".to_i { 0 }       #=> 0
   # ```
-  def to_i(base = 10, &block)
-    to_i32(base) { yield }
+  def to_i(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    to_i32(base, whitespace, underscore, prefix, strict) { yield }
   end
 
   # Same as `#to_i` but returns an Int8.
-  def to_i8(base = 10) : Int8
-    to_i8(base) { raise ArgumentError.new("invalid Int8: #{self}") }
+  def to_i8(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8
+    to_i8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int8: #{self}") }
   end
 
   # Same as `#to_i` but returns an Int8 or nil.
-  def to_i8?(base = 10) : Int8?
-    to_i8(base) { nil }
+  def to_i8?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8?
+    to_i8(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an Int8 or the block's value.
-  def to_i8(base = 10, &block)
-    gen_to_i 8, 127, 128
+  def to_i8(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ i8, 127, 128
   end
 
   # Same as `#to_i` but returns an UInt8.
-  def to_u8(base = 10) : UInt8
-    to_u8(base) { raise ArgumentError.new("invalid UInt8: #{self}") }
+  def to_u8(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8
+    to_u8(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt8: #{self}") }
   end
 
   # Same as `#to_i` but returns an UInt8 or nil.
-  def to_u8?(base = 10) : UInt8?
-    to_u8(base) { nil }
+  def to_u8?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8?
+    to_u8(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an UInt8 or the block's value.
-  def to_u8(base = 10, &block)
-    gen_to_u 8, 255
+  def to_u8(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ u8, 255
   end
 
   # Same as `#to_i` but returns an Int16.
-  def to_i16(base = 10) : Int16
-    to_i16(base) { raise ArgumentError.new("invalid Int16: #{self}") }
+  def to_i16(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16
+    to_i16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int16: #{self}") }
   end
 
   # Same as `#to_i` but returns an Int16 or nil.
-  def to_i16?(base = 10) : Int16?
-    to_i16(base) { nil }
+  def to_i16?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16?
+    to_i16(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an Int16 or the block's value.
-  def to_i16(base = 10, &block)
-    gen_to_i 16, 32767, 32768
+  def to_i16(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ i16, 32767, 32768
   end
 
   # Same as `#to_i` but returns an UInt16.
-  def to_u16(base = 10) : UInt16
-    to_u16(base) { raise ArgumentError.new("invalid UInt16: #{self}") }
+  def to_u16(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16
+    to_u16(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt16: #{self}") }
   end
 
   # Same as `#to_i` but returns an UInt16 or nil.
-  def to_u16?(base = 10) : UInt16?
-    to_u16(base) { nil }
+  def to_u16?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16?
+    to_u16(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an UInt16 or the block's value.
-  def to_u16(base = 10, &block)
-    gen_to_u 16, 65535
+  def to_u16(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ u16, 65535
   end
 
   # Same as `#to_i`.
-  def to_i32(base = 10) : Int32
-    to_i32(base) { raise ArgumentError.new("invalid Int32: #{self}") }
+  def to_i32(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int32
+    to_i32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int32: #{self}") }
   end
 
   # Same as `#to_i`.
-  def to_i32?(base = 10) : Int32?
-    to_i32(base) { nil }
+  def to_i32?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int32?
+    to_i32(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i`.
-  def to_i32(base = 10, &block)
-    gen_to_i 32, 2147483647, 2147483648
+  def to_i32(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ i32, 2147483647, 2147483648
   end
 
   # Same as `#to_i` but returns an UInt32.
-  def to_u32(base = 10) : UInt32
-    to_u32(base) { raise ArgumentError.new("invalid UInt32: #{self}") }
+  def to_u32(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32
+    to_u32(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt32: #{self}") }
   end
 
   # Same as `#to_i` but returns an UInt32 or nil.
-  def to_u32?(base = 10) : UInt32?
-    to_u32(base) { nil }
+  def to_u32?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32?
+    to_u32(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an UInt32 or the block's value.
-  def to_u32(base = 10, &block)
-    gen_to_u 32, 4294967295
+  def to_u32(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ u32, 4294967295
   end
 
   # Same as `#to_i` but returns an Int64.
-  def to_i64(base = 10) : Int64
-    to_i64(base) { raise ArgumentError.new("invalid Int64: #{self}") }
+  def to_i64(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64
+    to_i64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid Int64: #{self}") }
   end
 
   # Same as `#to_i` but returns an Int64 or nil.
-  def to_i64?(base = 10) : Int64?
-    to_i64(base) { nil }
+  def to_i64?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64?
+    to_i64(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an Int64 or the block's value.
-  def to_i64(base = 10, &block)
-    gen_to_i 64, 9223372036854775807, 9223372036854775808
+  def to_i64(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ i64, 9223372036854775807, 9223372036854775808
   end
 
   # Same as `#to_i` but returns an UInt64.
-  def to_u64(base = 10) : UInt64
-    to_u64(base) { raise ArgumentError.new("invalid UInt64: #{self}") }
+  def to_u64(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64
+    to_u64(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("invalid UInt64: #{self}") }
   end
 
   # Same as `#to_i` but returns an UInt64 or nil.
-  def to_u64?(base = 10) : UInt64?
-    to_u64(base) { nil }
+  def to_u64?(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64?
+    to_u64(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an UInt64 or the block's value.
-  def to_u64(base = 10, &block)
-    gen_to_u 64
+  def to_u64(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
+    gen_to_ u64
   end
 
   # :nodoc:
@@ -413,43 +427,36 @@ class String
   # :nodoc:
   record ToU64Info, value, negative, invalid
 
-  # :nodoc:
-  macro gen_to_i(method, max_positive, max_negative)
-    info = to_u64_info(base)
-    return yield if info.invalid
-
-    if info.negative
-      return yield if info.value > {{max_negative}}
-      -info.value.to_i{{method}}
-    else
-      return yield if info.value > {{max_positive}}
-      info.value.to_i{{method}}
-    end
-  end
-
   # :nodoc
-  macro gen_to_u(method, max = nil)
-    info = to_u64_info(base)
+  macro gen_to_(method, max_positive = nil, max_negative = nil)
+    info = to_u64_info(base, whitespace, underscore, prefix, strict)
     return yield if info.invalid
 
     if info.negative
-      return yield
-    else
-      {% if max %}
-        return yield if info.value > {{max}}
+      {% if max_negative %}
+        return yield if info.value > {{max_negative}}
+        -info.value.to_{{method}}
+      {% else %}
+        return yield
       {% end %}
-      info.value.to_u{{method}}
+    else
+      {% if max_positive %}
+        return yield if info.value > {{max_positive}}
+      {% end %}
+      info.value.to_{{method}}
     end
   end
 
-  private def to_u64_info(base)
+  private def to_u64_info(base, whitespace, underscore, prefix, strict)
     raise "Invalid base #{base}" unless 2 <= base <= 36
 
     ptr = cstr
 
     # Skip leading whitespace
-    while ptr.value.chr.whitespace?
-      ptr += 1
+    if whitespace
+      while ptr.value.chr.whitespace?
+        ptr += 1
+      end
     end
 
     negative = false
@@ -465,12 +472,24 @@ class String
       ptr += 1
     end
 
-    # Skip leading zeros
+    # Check leading zero
     if ptr.value.chr == '0'
-      found_digit = true
+      ptr += 1
 
-      while ptr.value.chr == '0'
-        ptr += 1
+      if prefix
+        case ptr.value.chr
+        when 'b'
+          base = 2
+          ptr += 1
+        when 'x'
+          base = 16
+          ptr += 1
+        else
+          base = 8
+        end
+        found_digit = false
+      else
+        found_digit = true
       end
     end
 
@@ -480,7 +499,7 @@ class String
 
     digits = CHAR_TO_DIGIT.to_unsafe
     while ptr.value != 0
-      if ptr.value.chr == '_'
+      if ptr.value.chr == '_' && underscore
         break if last_is_underscore
         last_is_underscore = true
         ptr += 1
@@ -511,7 +530,21 @@ class String
       ptr += 1
     end
 
-    invalid = true unless found_digit
+    if found_digit
+      unless ptr.value == 0
+        if whitespace
+          while ptr.value.chr.whitespace?
+            ptr += 1
+          end
+        end
+
+        if strict && ptr.value != 0
+          invalid = true
+        end
+      end
+    else
+      invalid = true
+    end
 
     ToU64Info.new value, negative, invalid
   end

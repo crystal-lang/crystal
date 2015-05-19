@@ -96,12 +96,27 @@ describe "String" do
     assert { "1234".to_i.should eq(1234) }
     assert { "   +1234   ".to_i.should eq(1234) }
     assert { "   -1234   ".to_i.should eq(-1234) }
-    assert { "   -00001234hello".to_i.should eq(-1234) }
-    assert { "1_234".to_i.should eq(1234) }
-    assert { "1__234".to_i.should eq(1) }
+    assert { "   +1234   ".to_i.should eq(1234) }
+    assert { "   -00001234".to_i.should eq(-1234) }
+    assert { "1_234".to_i(underscore: true).should eq(1234) }
     assert { "1101".to_i(base: 2).should eq(13) }
     assert { "12ab".to_i(16).should eq(4779) }
+    assert { "0x123abc".to_i(prefix: true).should eq(1194684) }
+    assert { "0b1101".to_i(prefix: true).should eq(13) }
+    assert { "0b001101".to_i(prefix: true).should eq(13) }
+    assert { "0123".to_i(prefix: true).should eq(83) }
+    assert { "123hello".to_i(strict: false).should eq(123) }
+    assert { "99 red balloons".to_i(strict: false).should eq(99) }
+    assert { "   99 red balloons".to_i(strict: false).should eq(99) }
     assert { expect_raises(ArgumentError) { "hello".to_i } }
+    assert { expect_raises(ArgumentError) { "1__234".to_i } }
+    assert { expect_raises(ArgumentError) { "1_234".to_i } }
+    assert { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
+    assert { expect_raises(ArgumentError) { "0x123".to_i } }
+    assert { expect_raises(ArgumentError) { "0b123".to_i } }
+    assert { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
+    assert { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
+    assert { expect_raises(ArgumentError) { "123hello".to_i } }
 
     describe "to_i8" do
       assert { "127".to_i8.should eq(127) }
