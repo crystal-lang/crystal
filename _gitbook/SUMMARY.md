@@ -62,6 +62,7 @@
            * [Visibility](syntax_and_semantics/visibility.md)
            * [Inheritance](syntax_and_semantics/inheritance.md)
                * [Virtual and abstract types](syntax_and_semantics/virtual_and_abstract_types.md)
+           * [Class variables](syntax_and_semantics/class_variables.md)
            * [finalize](syntax_and_semantics/finalize.md)
        * [Modules](syntax_and_semantics/modules.md)
        * [Generics](syntax_and_semantics/generics.md)
