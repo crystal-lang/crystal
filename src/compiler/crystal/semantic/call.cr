@@ -756,9 +756,12 @@ class Crystal::Call
   end
 
   private def void_return_type?(match_context, output)
-    return false unless output.is_a?(Path)
-
-    type = match_context.type_lookup.lookup_type(output)
+    if output.is_a?(Path)
+      type = match_context.type_lookup.lookup_type(output)
+    else
+      type = output
+    end
+    
     type.is_a?(Type) && type.void?
   end
 
