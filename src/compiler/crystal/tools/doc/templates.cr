@@ -33,6 +33,10 @@ module Crystal::Doc
     ecr_file "#{__DIR__}/html/index.html"
   end
 
+  struct JsTypeTemplate
+    ecr_file "#{__DIR__}/html/js/type.js"
+  end
+
   struct StyleTemplate
     ecr_file "#{__DIR__}/html/css/style.css"
   end

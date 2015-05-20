@@ -48,8 +48,11 @@ class Crystal::Doc::Generator
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
+    Dir.mkdir_p "#{@dir}/js"
+
     write_template "#{@dir}/index.html", IndexTemplate.new
     write_template "#{@dir}/css/style.css", StyleTemplate.new
+    write_template "#{@dir}/js/type.js", JsTypeTemplate.new
   end
 
   def generate_list(types)
