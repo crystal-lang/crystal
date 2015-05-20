@@ -38,6 +38,32 @@ describe "BufferedIO" do
     str.to_s.should eq("Hello\n")
   end
 
+  it "does puts with big string" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    s = "*" * 20_000
+    io << "hello"
+    io << s
+    io.flush
+    str.to_s.should eq("hello#{s}")
+  end
+
+  it "does puts many times" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    10_000.times { io << "hello" }
+    io.flush
+    str.to_s.should eq("hello" * 10_000)
+  end
+
+  it "writes bytes" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    10_000.times { io.write_byte 'a'.ord.to_u8 }
+    io.flush
+    str.to_s.should eq("a" * 10_000)
+  end
+
   it "does read" do
     io = BufferedIO.new(StringIO.new("hello world"))
     io.read(5).should eq("hello")

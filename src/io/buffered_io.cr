@@ -1,10 +1,14 @@
 class BufferedIO(T)
   include IO
 
+  BUFFER_SIZE = 8192
+
   def initialize(@io : T)
-    @buffer :: UInt8[16384]
+    @buffer :: UInt8[BUFFER_SIZE]
     @buffer_rem = @buffer.to_slice[0, 0]
-    @out_buffer = StringIO.new
+
+    @out_buffer :: UInt8[BUFFER_SIZE]
+    @out_count = 0
   end
 
   def self.new(io)
@@ -113,12 +117,32 @@ class BufferedIO(T)
   end
 
   def write(slice : Slice(UInt8), count)
-    @out_buffer.write slice, count
+    if count >= BUFFER_SIZE
+      flush
+      @io.write(slice, count)
+      return
+    end
+
+    if count > BUFFER_SIZE - @out_count
+      flush
+    end
+
+    slice.copy_to(@out_buffer.to_unsafe + @out_count, count)
+    @out_count += count
+  end
+
+  def write_byte(byte : UInt8)
+    if @out_count >= BUFFER_SIZE
+      flush
+    end
+    @out_buffer.to_unsafe[@out_count] = byte
+    @out_count += 1
   end
 
   def flush
-    @io << @out_buffer
-    @out_buffer.clear
+    @io.write(@out_buffer.to_slice, @out_count)
+    @io.flush
+    @out_count = 0
   end
 
   def fd
@@ -131,7 +155,6 @@ class BufferedIO(T)
 
   def rewind
     @io.rewind
-    @out_buffer.rewind
     @buffer_rem = @buffer.to_slice[0, 0]
   end
 
