@@ -121,4 +121,36 @@ describe "Code gen: lib" do
         tuple[0] + tuple[1]
       ), &.to_i.should eq(3))
   end
+
+  it "get fun field from struct (#672)" do
+    run(%(
+      require "prelude"
+
+      lib M
+        struct Type
+          func : (Type*) -> Int32
+        end
+      end
+
+      p = Pointer(M::Type).malloc(1)
+      p.value.func = -> (t: M::Type*) { 10 }
+      p.value.func.call(p)
+      )).to_i.should eq(10)
+  end
+
+  it "get fun field from union (#672)" do
+    run(%(
+      require "prelude"
+
+      lib M
+        union Type
+          func : (Type*) -> Int32
+        end
+      end
+
+      p = Pointer(M::Type).malloc(1)
+      p.value.func = -> (t: M::Type*) { 10 }
+      p.value.func.call(p)
+      )).to_i.should eq(10)
+  end
 end

@@ -217,21 +217,25 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : CUnionType)
-      max_size = 0
-      max_type = nil
-      type.vars.each do |name, var|
-        var_type = var.type
-        unless var_type.void?
-          llvm_type = llvm_embedded_c_type(var_type)
-          size = size_of(llvm_type)
-          if size > max_size
-            max_size = size
-            max_type = llvm_type
+      LLVM::Type.struct(type.llvm_name) do |a_struct|
+        @struct_cache[type] = a_struct
+
+        max_size = 0
+        max_type = nil
+        type.vars.each do |name, var|
+          var_type = var.type
+          unless var_type.void?
+            llvm_type = llvm_embedded_c_type(var_type)
+            size = size_of(llvm_type)
+            if size > max_size
+              max_size = size
+              max_type = llvm_type
+            end
           end
         end
-      end
 
-      LLVM::Type.struct([max_type.not_nil!] of LLVM::Type, type.llvm_name)
+        [max_type.not_nil!] of LLVM::Type
+      end
     end
 
     def create_llvm_struct_type(type : InstanceVarContainer)

@@ -312,7 +312,9 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_primitive_struct_get(node, target_def, call_args)
     type = context.type as CStructType
-    to_lhs struct_field_ptr(type, target_def.name, call_args[0]), node.type
+    value = to_lhs struct_field_ptr(type, target_def.name, call_args[0]), node.type
+    value = check_c_fun node.type, value
+    value
   end
 
   def struct_field_ptr(type, field_name, pointer)
@@ -325,13 +327,15 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_union_set(node, target_def, call_args)
-    set_aggregate_field(node, target_def, call_args) do
+    set_aggregate_field(node, target_def, call_args, true) do
       union_field_ptr(node, call_args[0])
     end
   end
 
   def codegen_primitive_union_get(node, target_def, call_args)
-    to_lhs union_field_ptr(node, call_args[0]), node.type
+    value = to_lhs union_field_ptr(node, call_args[0]), node.type
+    value = check_c_fun node.type, value
+    value
   end
 
   def set_aggregate_field(node, target_def, call_args, check_c_fun = false)
@@ -350,7 +354,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def union_field_ptr(node, pointer)
     ptr = aggregate_index pointer, 0
-    cast_to_pointer ptr, node.type
+    node_type = node.type
+    if node_type.is_a?(FunInstanceType)
+      bit_cast ptr, @llvm_typer.fun_type(node_type).pointer
+    else
+      cast_to_pointer ptr, node.type
+    end
   end
 
   def codegen_primitive_external_var_set(node, target_def, call_args)
@@ -366,9 +375,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
     store @last, var
 
-    if node.type.fun?
-      @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM::VoidPointer.null)
-    end
+    @last = check_c_fun node.type, @last
 
     @last
   end
@@ -384,9 +391,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       @last = load var
     end
 
-    if node.type.fun?
-      @last = make_fun(node.type, bit_cast(@last, LLVM::VoidPointer), LLVM::VoidPointer.null)
-    end
+    @last = check_c_fun node.type, @last
 
     @last
   end
@@ -517,5 +522,13 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     index = (node as TupleIndexer).index
     ptr = aggregate_index call_args[0], index
     to_lhs ptr, type.tuple_types[index]
+  end
+
+  def check_c_fun(type, value)
+    if type.fun?
+      make_fun(type, bit_cast(value, LLVM::VoidPointer), LLVM::VoidPointer.null)
+    else
+      value
+    end
   end
 end
