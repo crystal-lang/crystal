@@ -28,7 +28,7 @@ If the right-hand side contains just one expression, it is considered an indexed
 name, age, source = "Crystal,1,github".split(",")
 
 # The above is the same as this:
-temp = "Crystal,1".split(",")
+temp = "Crystal,1,github".split(",")
 name   = temp[0]
 age    = temp[1]
 source = temp[2]
