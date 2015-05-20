@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.8" data-basepath=".." data-revision="Tue May 19 2015 10:16:59 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.8" data-basepath=".." data-revision="Wed May 20 2015 15:47:34 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1913,6 +1913,108 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="enums">Enums</h1>
+<p>An enum is a set of integer values, where each value has an associated name. For example:</p>
+<pre><code class="lang-ruby">enum <span class="hljs-constant">Color</span>
+  <span class="hljs-constant">Red</span>
+  <span class="hljs-constant">Green</span>
+  <span class="hljs-constant">Blue</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>An enum is defined with the <code>enum</code> keyword, followed by its name. The enum&apos;s body contains the values. Values start with the value <code>0</code> and are incremented by one. The default value can be overwritten:</p>
+<pre><code class="lang-ruby">enum <span class="hljs-constant">Color</span>
+  <span class="hljs-constant">Red</span>         <span class="hljs-comment"># 0</span>
+  <span class="hljs-constant">Green</span>       <span class="hljs-comment"># 1</span>
+  <span class="hljs-constant">Blue</span>   = <span class="hljs-number">5</span>  <span class="hljs-comment"># overwritten to 5</span>
+  <span class="hljs-constant">Yellow</span>      <span class="hljs-comment"># 6 (5 + 1)</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Each constant in the enum has the type of the enum:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">Color::Red</span> <span class="hljs-comment">#:: Color</span>
+</code></pre>
+<p>To get the underlying value you invoke <code>value</code> on it:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">Color::Green</span>.value <span class="hljs-comment">#=&gt; 1</span>
+</code></pre>
+<p>The type of the value is <code>Int32</code> by default but can be changed:</p>
+<pre><code class="lang-ruby">enum <span class="hljs-constant">Color</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">UInt8</span>
+  <span class="hljs-constant">Red</span>
+  <span class="hljs-constant">Green</span>
+  <span class="hljs-constant">Blue</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Color::Red</span>.value <span class="hljs-comment">#:: UInt8</span>
+</code></pre>
+<p>Only integer types are allowed as the underlying type.</p>
+<p>All enums inherit from <a href="http://crystal-lang.org/api/Enum.html" target="_blank">Enum</a>.</p>
+<h2 id="flags-enums">Flags enums</h2>
+<p>An enum can be marked with the <code>@[Flags]</code> attribute. This changes the default values:</p>
+<pre><code class="lang-ruby">@[<span class="hljs-constant">Flags</span>]
+enum <span class="hljs-constant">IOMode</span>
+  <span class="hljs-constant">Read</span> <span class="hljs-comment"># 1</span>
+  <span class="hljs-constant">Write</span>  <span class="hljs-comment"># 2</span>
+  <span class="hljs-constant">Async</span> <span class="hljs-comment"># 4</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The <code>@[Flags]</code> attribute makes the first constant&apos;s value be <code>1</code>, and successive constants are multiplied by <code>2</code>.</p>
+<p>Implicit constants, <code>None</code> and <code>All</code>, are automatically added to these enums, where <code>None</code> has the value <code>0</code> and <code>All</code> has the &quot;or&quot;ed value of all constants.</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">IOMode::None</span>.value <span class="hljs-comment">#=&gt; 0</span>
+<span class="hljs-constant">IOMode::All</span>.value  <span class="hljs-comment">#=&gt; 7</span>
+</code></pre>
+<p>Additionally, some <code>Enum</code> methods check the <code>@[Flags]</code> method. For example:</p>
+<pre><code class="lang-ruby">puts(<span class="hljs-constant">Color::Red</span>)                    <span class="hljs-comment"># prints &quot;Red&quot;</span>
+puts(<span class="hljs-constant">IOMode::Write</span> | <span class="hljs-constant">IOMode::Async</span>) <span class="hljs-comment"># prints &quot;Write, Async&quot;</span>
+</code></pre>
+<h2 id="enums-from-integers">Enums from integers</h2>
+<p>An enum can be created from an integer:</p>
+<pre><code class="lang-ruby">puts <span class="hljs-constant">Color</span>.new(<span class="hljs-number">1</span>) <span class="hljs-comment">#=&gt; prints &quot;Green&quot;</span>
+</code></pre>
+<p>Values that don&apos;t correspond to an enum&apos;s constants are allowed: the value will still be of type <code>Color</code>, but when printed you will get the underlying value:</p>
+<pre><code class="lang-ruby">puts <span class="hljs-constant">Color</span>.new(<span class="hljs-number">10</span>) <span class="hljs-comment">#=&gt; prints &quot;10&quot;</span>
+</code></pre>
+<p>This method is mainly intended to convert integers from C to enums in Crystal.</p>
+<h2 id="methods">Methods</h2>
+<p>Just like a class or a struct, you can define methods for enums:</p>
+<pre><code class="lang-ruby">enum <span class="hljs-constant">Color</span>
+  <span class="hljs-constant">Red</span>
+  <span class="hljs-constant">Green</span>
+  <span class="hljs-constant">Blue</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>red?
+    <span class="hljs-keyword">self</span> == <span class="hljs-constant">Color::Red</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Color::Red</span>.red?  <span class="hljs-comment">#=&gt; true</span>
+<span class="hljs-constant">Color::Blue</span>.red? <span class="hljs-comment">#=&gt; false</span>
+</code></pre>
+<p>Class variables are allowed, but instance variables not.</p>
+<h2 id="usage">Usage</h2>
+<p>Enums are a type-safe alternative to <a href="http://crystal-lang.org/api/Symbol.html" target="_blank">Symbol</a>. For example, an API&apos;s method can specify a <a href="type_restrictions.html">type restriction</a> using an enum type:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>paint(color <span class="hljs-symbol">:</span> <span class="hljs-constant">Color</span>)
+  <span class="hljs-keyword">case</span> color
+  <span class="hljs-keyword">when</span> <span class="hljs-constant">Color::Red</span>
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">else</span>
+    <span class="hljs-comment"># Unusual, but still can happen</span>
+    raise <span class="hljs-string">&quot;unknown color: <span class="hljs-subst">#{color}</span>&quot;</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+paint <span class="hljs-constant">Color::Red</span>
+</code></pre>
+<p>The above could also be implemented with a Symbol:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>paint(color <span class="hljs-symbol">:</span> <span class="hljs-constant">Symbol</span>)
+  <span class="hljs-keyword">case</span> color
+  <span class="hljs-keyword">when</span> <span class="hljs-symbol">:red</span>
+    <span class="hljs-comment"># ...</span>
+  <span class="hljs-keyword">else</span>
+    raise <span class="hljs-string">&quot;unknown color: <span class="hljs-subst">#{color}</span>&quot;</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+paint <span class="hljs-symbol">:red</span>
+</code></pre>
+<p>However, if the programmer makes a typo, say <code>:reed</code>, the error will only be caught at runtime, but writing <code>Color::Reed</code> will result in a compile-time error.</p>
+<p>The recommended thing to do is to use enums whenever possible, only use symbols for the internal implementation of an API, and avoid symbols for public APIs. But you are free to do what you want.</p>
 
                     
                     </section>
