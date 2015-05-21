@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.7.5" data-basepath=".." data-revision="Wed May 20 2015 15:47:34 GMT-0300 (ART)">
+    <div class="book" data-level="3.7.5" data-basepath=".." data-revision="Thu May 21 2015 12:35:16 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1913,6 +1913,167 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="generics">Generics</h1>
+<p>Instance variables&apos; types are inferred from the values assigned to them, like it was explained in <a href="instance_variables_type_inference.html">instance varaibles type inference</a>:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value
+    <span class="hljs-variable">@value</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>For example, if we take the above code and add this:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
+</code></pre>
+<p>and then check what the compiler inferred with <code>crystal hierarchy file.cr</code>, we get:</p>
+<pre><code>+- class MyBox
+       @value : Int32
+</code></pre><p>If we create more boxes with more types:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-keyword">nil</span>)
+<span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>)
+<span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
+</code></pre>
+<p>we get:</p>
+<pre><code>+- class MyBox
+       @value : (Nil | String | Int32)
+</code></pre><p>The above makes it impossible to deal with a single box of a fixed type:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
+
+box = <span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>)
+box.value.length <span class="hljs-comment"># Error: undefined method &apos;length&apos; for Int32</span>
+</code></pre>
+<p>In cases like this where we want each instance to have a unique type for <code>@value</code>. This is in general necessary when dealing with a collection of objects. Imagine if all arrays and hashes had their types mixed, it would be pretty annoying to deal with them.</p>
+<p>You can make a class generic based on one or more type variables. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value
+    <span class="hljs-variable">@value</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Then you instantiate it like this:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>)
+
+box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">String</span>).new(<span class="hljs-string">&quot;hello&quot;</span>)
+box.value.length <span class="hljs-comment">#=&gt; 5</span>
+</code></pre>
+<p>The above now works, because <code>MyBox</code> is now not a single type, but a family of types identified with a <code>T</code> type: <code>MyBox(Int32)</code> is a different type than <code>MyBox(String)</code>, and their <code>@value</code> variable is not shared. If we run the <code>hierarchy</code> command again, we get:</p>
+<pre><code>+- generic class MyBox(T)
+   |
+   +- generic class MyBox(String)
+   |      @value : String
+   |
+   +- generic class MyBox(Int32)
+          @value : Int32
+</code></pre><p>However, there&apos;s a tiny flaw in the above code. This is allowed:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-string">&quot;hello&quot;</span>)
+</code></pre>
+<p>This is because there&apos;s nothing relating the <code>T</code> in the type with the instance variable <code>@value</code>. The fix is easy, we can use a <a href="type_restrictions.html">type restriction</a>:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value
+    <span class="hljs-variable">@value</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>)       <span class="hljs-comment"># OK</span>
+<span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-string">&quot;hello&quot;</span>) <span class="hljs-comment"># Error</span>
+</code></pre>
+<p>The above works because when we do <code>MyBox(Int32)</code>, <code>T</code> becomes <code>Int32</code>, and when we invoke the constructor, the value passed to it must match <code>T</code>, which is <code>Int32</code>.</p>
+<p>In a way, there&apos;s still nothing relating <code>T</code> with <code>@value</code>. However, the only way to create a <code>MyBox(T)</code> instance is by passing a <code>T</code> value, that becomes <code>@value</code>&apos;s type, and that&apos;s what makes it all work.</p>
+<p>But check this:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value=(new_value)
+    <span class="hljs-variable">@value</span> = new_value
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value
+    <span class="hljs-variable">@value</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>) <span class="hljs-comment"># OK</span>
+box.value = <span class="hljs-string">&quot;hello&quot;</span>       <span class="hljs-comment"># OK</span>
+</code></pre>
+<p>The above is perfectly valid, because there&apos;s no type restriction in the <code>value=</code> method, and so we have just &quot;broken&quot; our class. Again, the solution is to use a type restriction:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value=(new_value <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
+    <span class="hljs-variable">@value</span> = new_value
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>value
+    <span class="hljs-variable">@value</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>) <span class="hljs-comment"># OK</span>
+box.value = <span class="hljs-string">&quot;hello&quot;</span>       <span class="hljs-comment"># Error</span>
+</code></pre>
+<p>More then one type arguments are allowed:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyDictionary</span>(<span class="hljs-title">K</span>, <span class="hljs-title">V</span>)</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Only single letter names are allowed as names of type arguments.</p>
+<h2 id="type-variables-inference">Type variables inference</h2>
+<p>Type restrictions in a generic type&apos;s constructor are free variables when type arguments were not specified, and then are used to infer them. For example:</p>
+<pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)       <span class="hljs-comment">#:: MyBox(Int32)</span>
+<span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>) <span class="hljs-comment">#:: MyBox(String)</span>
+</code></pre>
+<p>In the above code we didn&apos;t have to specify the type arguments of <code>MyBox</code>, the compiler inferred them following this process:</p>
+<ul>
+<li><code>MyBox.new(value)</code> delegates to <code>initialize(@value : T)</code></li>
+<li><code>T</code> doesn&apos;t exist, so it&apos;s used as a free var</li>
+<li>Because <code>MyBox</code> is actually <code>MyBox(T)</code>, and <code>T</code> is both a free variable and a type argument, <code>T</code> becomes the type of the passed value</li>
+</ul>
+<p>In this way generic types are less tedious to work with.</p>
+<h2 id="other-uses-for-generic-types">Other uses for generic types</h2>
+<p>Although generic types are usually associated with containers, they can also be used to improve execution performance at the cost of a larger executable size. The main trick is to use a generic type to avoid runtime method dispatch. For example there&apos;s the standard library&apos;s <code>BufferedIO(T)</code>:</p>
+<pre><code class="lang-ruby">file = <span class="hljs-constant">File</span>.open(<span class="hljs-string">&quot;myfile.txt&quot;</span>)
+io = <span class="hljs-constant">BufferedIO</span>.new(file) <span class="hljs-comment">#:: BufferedIO(File)</span>
+io.gets
+</code></pre>
+<p>That <code>io</code> variable is a specified <code>BufferedIO(File)</code> instance, so invoking <code>gets</code> on it will end up invoking <code>File#gets</code>. If <code>BufferedIO</code> wasn&apos;t generic, that <code>gets</code> call would make a dispatch over all the <code>IO</code> types that were used to create buffered IOs. It being generic avoids this dispatch and gives better opportunities for the optimizer to inline stuff. However, each instantiation of <code>BufferedIO</code> will repeat almost the same code, but this is usually not as important as execution performance. Furthermore, many method calls will be inlined.</p>
+<h2 id="generic-structs-and-modules">Generic structs and modules</h2>
+<p>Structs and modules can be generic too. When a module is generic you include it like this:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Moo</span>(<span class="hljs-title">T</span>)</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>t
+    <span class="hljs-constant">T</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span>(<span class="hljs-title">U</span>)</span>
+  <span class="hljs-keyword">include</span> <span class="hljs-constant">Moo</span>(<span class="hljs-constant">U</span>)
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">U</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+foo = <span class="hljs-constant">Foo</span>.new(<span class="hljs-number">1</span>)
+foo.t <span class="hljs-comment"># Int32</span>
+</code></pre>
+<p>Note that in the above example <code>T</code> becomes <code>Int32</code> because <code>Foo.new(1)</code> makes <code>U</code> become <code>Int32</code>, which in turn makes <code>T</code> become <code>Int32</code> via the inclusion of the generic module.</p>
+<h2 id="generic-types-inheritance">Generic types inheritance</h2>
+<p>Generic classes and structs can be inherited. When inheriting you can specify an instance of the generic type, or delegate type varaibles:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Parent</span>(<span class="hljs-title">T</span>)</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Int32Child</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Parent</span></span>(<span class="hljs-title">Int32</span>)</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">GenericChild</span>(<span class="hljs-title">T</span>) <span class="hljs-inheritance">&lt; <span class="hljs-parent">Parent</span></span>(<span class="hljs-title">T</span>)</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
 
                     
                     </section>
