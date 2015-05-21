@@ -520,4 +520,11 @@ describe "Code gen: def" do
       c.some(c)
       )).to_b.should be_true
   end
+
+  it "doesn't crash on private def as last expression" do
+    build(%(
+      private def foo
+      end
+      ))
+  end
 end

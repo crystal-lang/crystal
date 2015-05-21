@@ -2800,6 +2800,7 @@ module Crystal
     def visit(node : VisibilityModifier)
       node.exp.visibility = node.modifier
       node.exp.accept self
+      node.type = @mod.nil
 
       # Can only apply visibility modifier to def, macro or a macro call
       case exp = node.exp
