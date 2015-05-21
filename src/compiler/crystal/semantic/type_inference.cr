@@ -1904,7 +1904,7 @@ module Crystal
             end
 
             if default_value = member.default_value
-              counter = interpret_enum_value(default_value)
+              counter = interpret_enum_value(default_value, enum_base_type)
             end
             all_value |= counter
             const_value = NumberLiteral.new(counter, enum_base_type.kind)
@@ -1951,16 +1951,27 @@ module Crystal
       false
     end
 
-    def interpret_enum_value(node : NumberLiteral)
+    def interpret_enum_value(node : NumberLiteral, target_type)
       case node.kind
-      when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
-        node.value.to_i
+      when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64, :i64
+        case target_type.kind
+        when :i8 then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
+        when :u8 then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
+        when :i16 then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"
+        when :u16 then node.value.to_u16? || node.raise "invalid UInt16: #{node.value}"
+        when :i32 then node.value.to_i32? || node.raise "invalid Int32: #{node.value}"
+        when :u32 then node.value.to_u32? || node.raise "invalid UInt32: #{node.value}"
+        when :i64 then node.value.to_i64? || node.raise "invalid Int64: #{node.value}"
+        when :u64 then node.value.to_u64? || node.raise "invalid UInt64: #{node.value}"
+        else
+          node.raise "enum type must be an integer, not #{target_type.kind}"
+        end
       else
         node.raise "constant value must be an integer, not #{node.kind}"
       end
     end
 
-    def interpret_enum_value(node : Call)
+    def interpret_enum_value(node : Call, target_type)
       obj = node.obj
       unless obj
         node.raise "invalid constant value"
@@ -1969,8 +1980,8 @@ module Crystal
         node.raise "invalid constant value"
       end
 
-      left = interpret_enum_value(obj)
-      right = interpret_enum_value(node.args.first)
+      left = interpret_enum_value(obj, target_type)
+      right = interpret_enum_value(node.args.first, target_type)
 
       case node.name
       when "+"  then left + right
@@ -1987,17 +1998,17 @@ module Crystal
       end
     end
 
-    def interpret_enum_value(node : Path)
+    def interpret_enum_value(node : Path, target_type)
       type = resolve_ident(node)
       case type
       when Const
-        interpret_enum_value(type.value)
+        interpret_enum_value(type.value, target_type)
       else
         node.raise "invalid constant value"
       end
     end
 
-    def interpret_enum_value(node : ASTNode)
+    def interpret_enum_value(node : ASTNode, target_type)
       node.raise "invalid constant value"
     end
 

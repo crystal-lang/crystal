@@ -229,4 +229,13 @@ describe "Type inference: enum" do
       ),
       "private method 'foo' called for Foo"
   end
+
+  it "errors if enum value is too big for type (#678)" do
+    assert_error %(
+      enum Foo
+        A = 2147486719
+      end
+      ),
+      "invalid Int32: 2147486719"
+  end
 end

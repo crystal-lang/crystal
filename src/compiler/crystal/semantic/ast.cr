@@ -369,7 +369,7 @@ module Crystal
               # Try to interpret the value
               visitor = target_const.visitor
               if visitor
-                numeric_value = visitor.interpret_enum_value(value)
+                numeric_value = visitor.interpret_enum_value(value, node_type.program.int32)
                 type_var = NumberLiteral.new(numeric_value, :i32)
                 type_var.set_type_from(node_type.program.int32, from)
               else
