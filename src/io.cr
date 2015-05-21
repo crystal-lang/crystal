@@ -148,12 +148,12 @@ module IO
   def flush
   end
 
-  def self.pipe
+  def self.pipe(read_blocking=false, write_blocking=false)
     if LibC.pipe(out pipe_fds) != 0
       raise Errno.new("Could not create pipe")
     end
 
-    {FileDescriptorIO.new(pipe_fds[0]), FileDescriptorIO.new(pipe_fds[1])}
+    {FileDescriptorIO.new(pipe_fds[0], read_blocking), FileDescriptorIO.new(pipe_fds[1], write_blocking)}
   end
 
   def self.pipe

@@ -12,11 +12,11 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
   argv << Pointer(UInt8).null
 
   if output
-    process_output, fork_output = IO.pipe
+    process_output, fork_output = IO.pipe(write_blocking: true)
   end
 
   if input
-    fork_input, process_input = IO.pipe
+    fork_input, process_input = IO.pipe(read_blocking: true)
   end
 
   pid = fork do
