@@ -99,6 +99,18 @@ describe UnbufferedChannel do
     ch.close
     expect_raises(ChannelClosed) { ch.send 123 }
   end
+
+  it "can receive? when closed" do
+    ch = UnbufferedChannel(Int32).new
+    ch.close
+    ch.receive?.should be_nil
+  end
+
+  it "can receive? when not empty" do
+    ch = UnbufferedChannel(Int32).new
+    spawn { ch.send 123 }
+    ch.receive?.should eq(123)
+  end
 end
 
 describe BufferedChannel do
@@ -188,5 +200,17 @@ describe BufferedChannel do
     ch = BufferedChannel(Int32).new
     ch.close
     expect_raises(ChannelClosed) { ch.send 123 }
+  end
+
+  it "can receive? when closed" do
+    ch = BufferedChannel(Int32).new
+    ch.close
+    ch.receive?.should be_nil
+  end
+
+  it "can receive? when not empty" do
+    ch = BufferedChannel(Int32).new
+    spawn { ch.send 123 }
+    ch.receive?.should eq(123)
   end
 end

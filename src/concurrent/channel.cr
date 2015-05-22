@@ -31,6 +31,14 @@ abstract class Channel(T)
     @closed
   end
 
+  def receive
+    receive_impl { raise ChannelClosed.new }
+  end
+
+  def receive?
+    receive_impl { return nil }
+  end
+
   def self.select(*channels)
     loop do
       ready_channel = channels.find &.ready?
@@ -75,9 +83,9 @@ class BufferedChannel(T) < Channel(T)
     @receivers.clear
   end
 
-  def receive
+  private def receive_impl
     while empty?
-      raise_if_closed
+      yield if @closed
       @receivers << Fiber.current
       Scheduler.reschedule
     end
@@ -128,9 +136,9 @@ class UnbufferedChannel(T) < Channel(T)
     end
   end
 
-  def receive
+  private def receive_impl
     until @has_value
-      raise_if_closed
+      yield if @closed
       @receivers << Fiber.current
       if sender = @senders.pop?
         sender.resume
@@ -139,7 +147,7 @@ class UnbufferedChannel(T) < Channel(T)
       end
     end
 
-    raise_if_closed
+    yield if @closed
 
     @value.tap do
       @has_value = false
