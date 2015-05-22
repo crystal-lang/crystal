@@ -40,9 +40,9 @@ module Screen
       input = io.read 1
       if input == "\e"
         next_two_bytes = io.read_nonblock(2) rescue nil
-        third_byte = io.read_nonblock(1) rescue nil
+        # third_byte = io.read_nonblock(1) rescue nil
         input += next_two_bytes if next_two_bytes
-        input += third_byte if third_byte
+        # input += third_byte if third_byte
       end
 
       case input
@@ -155,7 +155,7 @@ class Drawer
 
   def cell_line fill, cell
     content = @current_row.at(cell) { "empty" }
-    tile_value = (content == "empty" ? 0 : content).to_i
+    tile_value = (content == "empty" ? 0 : (content.to_i? || 0)).to_i
     content = "" if !@content_line || content == "empty"
 
     fill_size = INNER_CELL_WIDTH / 2

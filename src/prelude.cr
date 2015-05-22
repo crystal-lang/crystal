@@ -1,3 +1,9 @@
+def loop
+  while true
+    yield
+  end
+end
+
 require "intrinsics"
 require "libc"
 require "macros"
@@ -47,11 +53,5 @@ require "random"
 require "regex"
 require "raise"
 require "errno"
-require "main"
 require "concurrent"
-
-def loop
-  while true
-    yield
-  end
-end
+require "main"

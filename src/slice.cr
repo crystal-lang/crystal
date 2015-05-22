@@ -116,6 +116,19 @@ struct Slice(T)
     end
   end
 
+  def rindex(value)
+    rindex { |elem| elem == value }
+  end
+
+  def rindex
+    (length - 1).downto(0) do |i|
+      if yield @pointer[i]
+        return i
+      end
+    end
+    nil
+  end
+
   private def to_hex(c)
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end

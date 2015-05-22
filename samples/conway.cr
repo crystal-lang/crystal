@@ -92,7 +92,7 @@ INITIAL_MAP = [
 
 map = ConwayMap.new INITIAL_MAP
 
-Thread.new { gets; exit }
+spawn { gets; exit }
 
 1.upto(DEFAULT_COUNT) do |i|
   puts map

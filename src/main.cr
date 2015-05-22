@@ -38,6 +38,10 @@ def abort(message, status = 1)
   exit status
 end
 
+STDIN = BufferedIO.new(FileDescriptorIO.new(0))
+STDOUT = AutoflushBufferedIO.new(FileDescriptorIO.new(1))
+STDERR = BufferedIO.new(FileDescriptorIO.new(2))
+
 macro redefine_main(name = main)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     GC.init

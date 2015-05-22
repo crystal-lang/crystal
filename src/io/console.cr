@@ -170,7 +170,7 @@ lib LibTermios
   fun tcsetattr(fd : Int32, optional_actions : OptionalActions, termios_p : LibTermios::Struct*) : Int32
 end
 
-struct CFileIO
+module IO
   def cooked
     preserving_tc_mode("can't set IO#cooked") do |mode|
       cooked_from_tc_mode!

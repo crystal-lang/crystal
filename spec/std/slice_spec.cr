@@ -118,4 +118,10 @@ describe "Slice" do
     ary = slice.to_a
     ary.should eq([0, 1, 2])
   end
+
+  it "does rindex" do
+    slice = "foobar".to_slice
+    slice.rindex('o'.ord.to_u8).should eq(2)
+    slice.rindex('z'.ord.to_u8).should be_nil
+  end
 end
