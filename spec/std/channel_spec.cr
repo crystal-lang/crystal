@@ -59,6 +59,15 @@ describe UnbufferedChannel do
     spawn { ch1.send 123 }
     Channel.select(ch1, ch2).should eq(ch1)
   end
+
+  it "can send an receive nil" do
+    ch = UnbufferedChannel(Nil).new
+    spawn { ch.send nil }
+    Scheduler.yield
+    ch.ready?.should be_true
+    ch.receive.should be_nil
+    ch.ready?.should be_false
+  end
 end
 
 describe BufferedChannel do
@@ -108,5 +117,14 @@ describe BufferedChannel do
     ch2 = BufferedChannel(Int32).new
     spawn { ch1.send 123 }
     Channel.select(ch1, ch2).should eq(ch1)
+  end
+
+  it "can send an receive nil" do
+    ch = BufferedChannel(Nil).new
+    spawn { ch.send nil }
+    Scheduler.yield
+    ch.ready?.should be_true
+    ch.receive.should be_nil
+    ch.ready?.should be_false
   end
 end

@@ -72,18 +72,25 @@ class BufferedChannel(T) < Channel(T)
   end
 
   def ready?
-    @queue.any?
+    !empty?
   end
 end
 
 class UnbufferedChannel(T) < Channel(T)
+  def initialize
+    @has_value = false
+    @value :: T
+    super
+  end
+
   def send(value : T)
-    while @value
+    while @has_value
       @senders << Fiber.current
       Scheduler.reschedule
     end
 
     @value = value
+    @has_value = true
     @sender = Fiber.current
 
     if receiver = @receivers.pop?
@@ -94,7 +101,7 @@ class UnbufferedChannel(T) < Channel(T)
   end
 
   def receive
-    while @value.nil?
+    until @has_value
       @receivers << Fiber.current
       if sender = @senders.pop?
         sender.resume
@@ -103,13 +110,13 @@ class UnbufferedChannel(T) < Channel(T)
       end
     end
 
-    @value.not_nil!.tap do
-      @value = nil
+    @value.tap do
+      @has_value = false
       Scheduler.enqueue @sender.not_nil!
     end
   end
 
   def ready?
-    !@value.nil?
+    @has_value
   end
 end
