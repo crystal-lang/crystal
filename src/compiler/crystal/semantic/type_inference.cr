@@ -796,8 +796,6 @@ module Crystal
         return false
       end
 
-      check_super_in_initialize node
-
       obj = node.obj
       args = node.args
       block_arg = node.block_arg
@@ -823,6 +821,8 @@ module Crystal
       args.each &.add_input_observer(node)
       block_arg.try &.add_input_observer node
       named_args.try &.each &.value.add_input_observer(node)
+
+      check_super_in_initialize node
 
       # If the call has a block we need to create a copy of the variables
       # and bind them to the current variables. Then, when visiting
@@ -881,9 +881,16 @@ module Crystal
 
         while superclass
           superclass.instance_vars_in_initialize.try &.each do |name|
-            meta_var = MetaVar.new(name)
-            meta_var.bind_to scope.lookup_instance_var(name)
-            @vars[name] = meta_var
+            instance_var = scope.lookup_instance_var(name)
+
+            # But variables that were already used are nilable
+            if @used_ivars_in_calls_in_initialize.try &.has_key?(name)
+              instance_var.bind_to @mod.nil_var
+            else
+              meta_var = MetaVar.new(name)
+              meta_var.bind_to instance_var
+              @vars[name] = meta_var
+            end
           end
 
           superclass = superclass.superclass

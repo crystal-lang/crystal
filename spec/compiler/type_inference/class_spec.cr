@@ -801,4 +801,25 @@ describe "Type inference: class" do
       ),
       "no overload matches"
   end
+
+  it "correctly types #680" do
+    assert_type(%(
+      class Foo
+        def initialize(@method)
+        end
+
+        def method
+          @method
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          super(method)
+        end
+      end
+
+      Bar.new.method
+      )) { |mod| mod.nil }
+  end
 end
