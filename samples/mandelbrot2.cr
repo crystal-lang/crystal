@@ -1,7 +1,7 @@
 require "complex"
 
 def mandelbrot(a)
-  Array.new(100, a).inject(a) { |z, c| z*z + c }
+  Iterator.of(a).take(100).inject(a) { |z, c| z*z + c }
 end
 
 (1.0).step(-1, -0.05) do |y|
