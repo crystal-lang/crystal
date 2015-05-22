@@ -111,10 +111,17 @@ module Crystal
       return if instance_vars.empty?
 
       instance_vars = instance_vars.values
+      typed_instance_vars = instance_vars.select &.type?
 
       max_name_length = instance_vars.max_of &.name.length
-      max_type_length = instance_vars.max_of &.type.to_s.length
-      max_bytes_length = instance_vars.max_of { |var| @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(var.type)).to_s.length }
+
+      if typed_instance_vars.empty?
+        max_type_length = 0
+        max_bytes_length = 0
+      else
+        max_type_length = typed_instance_vars.max_of &.type.to_s.length
+        max_bytes_length = typed_instance_vars.max_of { |var| @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(var.type)).to_s.length }
+      end
 
       instance_vars.each do |ivar|
         print_indent
@@ -127,11 +134,15 @@ module Crystal
         with_color.light_gray.push(STDOUT) do
           print ivar.name.ljust(max_name_length)
           print " : "
-          print ivar.type.to_s.ljust(max_type_length)
-          size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
-          print " ("
-          print size.to_s.rjust(max_bytes_length)
-          print " bytes)"
+          if ivar_type = ivar.type?
+            print ivar_type.to_s.ljust(max_type_length)
+            size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
+            print " ("
+            print size.to_s.rjust(max_bytes_length)
+            print " bytes)"
+          else
+            print "MISSING".colorize.red.bright
+          end
         end
         puts
       end
