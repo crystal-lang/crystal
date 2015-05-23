@@ -1,3 +1,24 @@
+## Next
+
+* Improved performance of Regex
+* Fixed lexing of octal characters and strings (thanks @rhysd)
+* Time.parse can return UTC times (thanks @will)
+* Handle dashes in `crystal init` (thanks @niftyn8)
+* Generic type varaibles can now only be single letters (T, U, A, B, etc.)
+* Support `%x` and `%X` in `sprintf` (thanks @yyyc514)
+* Optimized `Int#to_s` (thanks @yyyc514)
+* Added `upcase` option to `Int#to_s`, and use downcase by default.
+* Improved `String#to_i` and fixed the many variants (`to_i8`, `to_u64`, etc.)
+* Added `Time.at` (thanks @jeromegn)
+* Added `Int#upto`, `Int#downto`, `Int#to` iterators.
+* Added `Iterator#cons` and `Enumerable#each_cons` (thanks @porras)
+* Added `Iterator.of`, `Iterator#chain` and `Iterator#tap`.
+* Allow top-level `private macro` (similar to top-level `private def`)
+* Optimized `BufferedIO` writing performance and memory usage.
+* Added `Channel#close`, `Channel#closed?`, `Channel#receive?` and allow them to send/receive nil values (thanks @datanoise).
+* Fixed `Process#run` after introducing non-blocking IO (thanks @will)
+* Lots of bug fixes.
+
 ## 0.7.1 (2015-04-30)
 
 * Fixed [#597](https://github.com/manastech/crystal/issues/597).
