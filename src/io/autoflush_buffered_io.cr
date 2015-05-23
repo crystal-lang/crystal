@@ -2,7 +2,7 @@ require "./buffered_io"
 
 class AutoflushBufferedIO(T) < BufferedIO(T)
   def write(slice : Slice(UInt8), count)
-    index = slice.rindex('\n'.ord.to_u8)
+    index = slice[0, count.to_i32].rindex('\n'.ord.to_u8)
     if index
       flush
       index += 1
