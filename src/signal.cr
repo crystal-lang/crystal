@@ -60,4 +60,6 @@ module Signal
   protected def handler(num)
     @@handlers.not_nil![num]?.try &.call(num)
   end
+
+  trap(PIPE, IGNORE)
 end

@@ -163,7 +163,6 @@ OptionParser.parse! do |opts|
 end
 
 Signal.trap(Signal::INT) { Spec.abort! }
-Signal.trap(Signal::PIPE, Signal::IGNORE)
 
 redefine_main do |main|
   time = Time.now
