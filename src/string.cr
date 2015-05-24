@@ -1522,7 +1522,9 @@ class String
       offset = byte_index + 1
     end
 
-    yield String.new(unsafe_byte_slice(offset))
+    unless offset == bytesize
+      yield String.new(unsafe_byte_slice(offset))
+    end
   end
 
   def each_line
@@ -2008,7 +2010,11 @@ class String
         value = String.new(@string.unsafe_byte_slice(@offset, byte_index + 1 - @offset))
         @offset = byte_index + 1
       else
-        value = String.new(@string.unsafe_byte_slice(@offset))
+        if @offset == @string.bytesize
+          value = stop
+        else
+          value = String.new(@string.unsafe_byte_slice(@offset))
+        end
         @end = true
       end
 

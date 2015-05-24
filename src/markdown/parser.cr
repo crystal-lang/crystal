@@ -1,6 +1,6 @@
 class Markdown::Parser
   def initialize(text, @renderer)
-    @lines = text.lines
+    @lines = text.lines.map &.chomp
     @line = 0
   end
 

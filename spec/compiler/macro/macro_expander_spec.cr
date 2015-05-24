@@ -275,7 +275,7 @@ describe "MacroExpander" do
     end
 
     it "executes lines" do
-      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
+      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1\\n", "2\\n", "3"])
     end
 
     it "executes length" do

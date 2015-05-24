@@ -1055,22 +1055,22 @@ describe "String" do
 
   it "gets lines" do
     "foo".lines.should eq(["foo"])
-    "foo\nbar\nbaz".lines.should eq(["foo\n", "bar\n", "baz"])
+    "foo\nbar\nbaz\n".lines.should eq(["foo\n", "bar\n", "baz\n"])
   end
 
   it "gets each_line" do
     lines = [] of String
-    "foo\n\nbar\nbaz".each_line do |line|
+    "foo\n\nbar\nbaz\n".each_line do |line|
       lines << line
     end
-    lines.should eq(["foo\n", "\n", "bar\n", "baz"])
+    lines.should eq(["foo\n", "\n", "bar\n", "baz\n"])
   end
 
   it "gets each_line iterator" do
-    iter = "foo\nbar\nbaz".each_line
+    iter = "foo\nbar\nbaz\n".each_line
     iter.next.should eq("foo\n")
     iter.next.should eq("bar\n")
-    iter.next.should eq("baz")
+    iter.next.should eq("baz\n")
     iter.next.should be_a(Iterator::Stop)
 
     iter.rewind
