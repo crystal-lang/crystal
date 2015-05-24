@@ -66,10 +66,8 @@ struct TimeFormat
     def week_of_year
       dow_format = TimeFormat.new("%w")
 
-      date = time
-
-      day_of_year = TimeFormat.new("%j").format(date).to_i
-      day_of_week = dow_format.format(date).to_i
+      day_of_year = TimeFormat.new("%j").format(time).to_i
+      day_of_week = dow_format.format(time).to_i
       day_of_week_jan1 = dow_format.format(Time.new(time.year, 1, 1)).to_i
 
       week_num = ((day_of_year + 6) / 7)
