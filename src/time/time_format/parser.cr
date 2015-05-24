@@ -175,7 +175,7 @@ struct TimeFormat
       consume_number
     end
 
-    def day_of_year
+    def week_of_year
       consume_number
     end
 

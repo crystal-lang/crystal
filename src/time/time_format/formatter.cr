@@ -63,7 +63,7 @@ struct TimeFormat
       pad2 time.day, ' '
     end
 
-    def day_of_year
+    def week_of_year
       dow_format = TimeFormat.new("%w")
 
       date = time

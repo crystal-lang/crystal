@@ -63,7 +63,7 @@ struct TimeFormat
           when 'w'
             day_of_week_sunday_0_6
           when 'W'
-            day_of_year
+            week_of_year
           when 'X'
             twenty_four_hour_time_with_seconds
           when 'y'
