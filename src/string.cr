@@ -1525,6 +1525,10 @@ class String
     yield String.new(unsafe_byte_slice(offset))
   end
 
+  def each_line
+    LineIterator.new(self)
+  end
+
   def underscore
     first = true
     last_is_downcase = false
@@ -1982,6 +1986,37 @@ class String
 
     def rewind
       @reader.pos = 0
+      @end = false
+      self
+    end
+  end
+
+  # :nodoc:
+  class LineIterator
+    include Iterator(String)
+
+    def initialize(@string)
+      @offset = 0
+      @end = false
+    end
+
+    def next
+      return stop if @end
+
+      byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
+      if byte_index
+        value = String.new(@string.unsafe_byte_slice(@offset, byte_index + 1 - @offset))
+        @offset = byte_index + 1
+      else
+        value = String.new(@string.unsafe_byte_slice(@offset))
+        @end = true
+      end
+
+      value
+    end
+
+    def rewind
+      @offset = 0
       @end = false
       self
     end

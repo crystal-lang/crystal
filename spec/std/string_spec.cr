@@ -1065,4 +1065,15 @@ describe "String" do
     end
     lines.should eq(["foo\n", "\n", "bar\n", "baz"])
   end
+
+  it "gets each_line iterator" do
+    iter = "foo\nbar\nbaz".each_line
+    iter.next.should eq("foo\n")
+    iter.next.should eq("bar\n")
+    iter.next.should eq("baz")
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq("foo\n")
+  end
 end
