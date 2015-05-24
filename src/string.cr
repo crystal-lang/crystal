@@ -1507,7 +1507,22 @@ class String
   end
 
   def lines
-    split '\n'
+    lines = [] of String
+    each_line do |line|
+      lines << line
+    end
+    lines
+  end
+
+  def each_line
+    offset = 0
+
+    while byte_index = byte_index('\n'.ord.to_u8, offset)
+      yield String.new(unsafe_byte_slice(offset, byte_index + 1 - offset))
+      offset = byte_index + 1
+    end
+
+    yield String.new(unsafe_byte_slice(offset))
   end
 
   def underscore

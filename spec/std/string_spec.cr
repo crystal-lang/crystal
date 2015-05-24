@@ -1054,6 +1054,15 @@ describe "String" do
   end
 
   it "gets lines" do
-    "foo\nbar\nbaz".lines.should eq(%w(foo bar baz))
+    "foo".lines.should eq(["foo"])
+    "foo\nbar\nbaz".lines.should eq(["foo\n", "bar\n", "baz"])
+  end
+
+  it "gets each_line" do
+    lines = [] of String
+    "foo\n\nbar\nbaz".each_line do |line|
+      lines << line
+    end
+    lines.should eq(["foo\n", "\n", "bar\n", "baz"])
   end
 end
