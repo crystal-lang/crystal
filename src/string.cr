@@ -1507,7 +1507,7 @@ class String
   end
 
   def lines
-    split "\n"
+    split '\n'
   end
 
   def underscore

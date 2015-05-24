@@ -1052,4 +1052,8 @@ describe "String" do
   it "cycles bytes" do
     "abc".each_byte.cycle.take(8).join.should eq("9798999798999798")
   end
+
+  it "gets lines" do
+    "foo\nbar\nbaz".lines.should eq(%w(foo bar baz))
+  end
 end
