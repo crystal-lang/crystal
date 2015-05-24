@@ -900,4 +900,19 @@ describe "Block inference" do
       ),
       "can't declare class inside block"
   end
+
+  it "doesn't assign block variable type to last value (#694)" do
+    assert_type(%(
+      def foo
+        yield 1
+      end
+
+      z = 1
+      foo do |x|
+        z = x
+        x = "a"
+      end
+      z
+      )) { int32 }
+  end
 end

@@ -637,10 +637,11 @@ module Crystal
       node.args.each do |arg|
         meta_var = new_meta_var(arg.name, context: node)
         meta_var.bind_to(arg)
-
-        # TODO: check if we need a second meta-var
-        before_block_vars[arg.name] = meta_var
         meta_vars[arg.name] = meta_var
+
+        before_block_var = new_meta_var(arg.name, context: node)
+        before_block_var.bind_to(arg)
+        before_block_vars[arg.name] = before_block_var
       end
 
       @block_nest += 1
