@@ -89,38 +89,121 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when ">"
-        compare_to(args.first) { |me, other| me > other }
+        bool_bin_op(method, args) { |me, other| me > other }
       when ">="
-        compare_to(args.first) { |me, other| me >= other }
+        bool_bin_op(method, args) { |me, other| me >= other }
       when "<"
-        compare_to(args.first) { |me, other| me < other }
+        bool_bin_op(method, args) { |me, other| me < other }
       when "<="
-        compare_to(args.first) { |me, other| me <= other }
+        bool_bin_op(method, args) { |me, other| me <= other }
       when "<=>"
-        other = args.first
-        unless other.is_a?(NumberLiteral)
-          raise "can't compare number to #{other}"
+        num_bin_op(method, args) { |me, other| me <=> other }
+      when "+"
+        if args.empty?
+          self
+        else
+          num_bin_op(method, args) { |me, other| me + other }
         end
-        NumberLiteral.new(to_number <=> other.to_number)
+      when "-"
+        if args.empty?
+          num = to_number
+          if num.is_a?(UnsignedInt)
+            raise "undefined method '-' for unsigned integer literal: #{self}"
+          else
+            NumberLiteral.new(-num)
+          end
+        else
+          num_bin_op(method, args) { |me, other| me - other }
+        end
+      when "*"
+        num_bin_op(method, args) { |me, other| me * other }
+      when "/"
+        num_bin_op(method, args) { |me, other| me / other }
+      when "**"
+        num_bin_op(method, args) { |me, other| me ** other }
+      when "%"
+        int_bin_op(method, args) { |me, other| me % other }
+      when "&"
+        int_bin_op(method, args) { |me, other| me & other }
+      when "|"
+        int_bin_op(method, args) { |me, other| me | other }
+      when "^"
+        int_bin_op(method, args) { |me, other| me ^ other }
+      when "<<"
+        int_bin_op(method, args) { |me, other| me << other }
+      when ">>"
+        int_bin_op(method, args) { |me, other| me >> other }
+      when "~"
+        if args.empty?
+          num = to_number
+          if num.is_a?(Int)
+            NumberLiteral.new(~num)
+          else
+            raise "undefined method '~' for float literal: #{self}"
+          end
+        else
+          raise "wrong number of arguments for NumberLiteral#~ (#{args.length} for 0)"
+        end
       else
         super
       end
-    end
-
-    def compare_to(other)
-      unless other.is_a?(NumberLiteral)
-        raise "can't compare number to #{other}"
-      end
-
-      BoolLiteral.new(yield to_number, other.to_number)
     end
 
     def interpret_compare(other : NumberLiteral)
       to_number <=> other.to_number
     end
 
+    def bool_bin_op(op, args)
+      BoolLiteral.new(bin_op(op, args) { |me, other| yield me, other })
+    end
+
+    def num_bin_op(op, args)
+      NumberLiteral.new(bin_op(op, args) { |me, other| yield me, other })
+    end
+
+    def int_bin_op(op, args)
+      if @kind == :f32 || @kind == :f64
+        raise "undefined method '#{op}' for float literal: #{self}"
+      end
+
+      NumberLiteral.new(bin_op(op, args) { |me, other|
+        other_kind = (args.first as NumberLiteral).kind
+        if other_kind == :f32 || other_kind == :f64
+          raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
+        end
+
+        yield me.to_i, other.to_i
+      })
+    end
+
+    def bin_op(op, args)
+      if args.length != 1
+        raise "wrong number of arguments for NumberLiteral##{op} (#{args.length} for 1)"
+      end
+
+      other = args.first
+      unless other.is_a?(NumberLiteral)
+        raise "can't #{op} with #{other}"
+      end
+
+      yield(to_number, other.to_number)
+    end
+
     def to_number
-      @value.to_f64
+      case @kind
+      when :i8 then @value.to_i8
+      when :i16 then @value.to_i16
+      when :i32 then @value.to_i32
+      when :i64 then @value.to_i64
+      when :u8 then @value.to_u8
+      when :u16 then @value.to_u16
+      when :u32 then @value.to_u32
+      when :u64 then @value.to_u64
+      when :f32 then @value.to_f32
+      when :f64 then @value.to_f64
+      else
+        raise "Unknown kind: #{@kind}"
+      end
     end
   end
 

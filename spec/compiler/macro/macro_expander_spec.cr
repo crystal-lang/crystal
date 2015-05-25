@@ -239,6 +239,66 @@ describe "MacroExpander" do
     it "executes <=>" do
       assert_macro "", "{{1 <=> -1}}", [] of ASTNode, "1"
     end
+
+    it "executes +" do
+      assert_macro "", "{{1 + 2}}", [] of ASTNode, "3"
+    end
+
+    it "executes -" do
+      assert_macro "", "{{1 - 2}}", [] of ASTNode, "-1"
+    end
+
+    it "executes *" do
+      assert_macro "", "{{2 * 3}}", [] of ASTNode, "6"
+    end
+
+    it "executes /" do
+      assert_macro "", "{{5 / 3}}", [] of ASTNode, "1"
+    end
+
+    it "executes %" do
+      assert_macro "", "{{5 % 3}}", [] of ASTNode, "2"
+    end
+
+    it "executes &" do
+      assert_macro "", "{{5 & 3}}", [] of ASTNode, "1"
+    end
+
+    it "executes |" do
+      assert_macro "", "{{5 | 3}}", [] of ASTNode, "7"
+    end
+
+    it "executes ^" do
+      assert_macro "", "{{5 ^ 3}}", [] of ASTNode, "6"
+    end
+
+    it "executes **" do
+      assert_macro "", "{{2 ** 3}}", [] of ASTNode, "8"
+    end
+
+    it "executes <<" do
+      assert_macro "", "{{1 << 2}}", [] of ASTNode, "4"
+    end
+
+    it "executes >>" do
+      assert_macro "", "{{4 >> 2}}", [] of ASTNode, "1"
+    end
+
+    it "executes + with float" do
+      assert_macro "", "{{1.5 + 2.6}}", [] of ASTNode, "4.1"
+    end
+
+    it "executes unary +" do
+      assert_macro "", "{{+3}}", [] of ASTNode, "+3"
+    end
+
+    it "executes unary -" do
+      assert_macro "", "{{-(3)}}", [] of ASTNode, "-3"
+    end
+
+    it "executes unary ~" do
+      assert_macro "", "{{~1}}", [] of ASTNode, "-2"
+    end
   end
 
   describe "string methods" do

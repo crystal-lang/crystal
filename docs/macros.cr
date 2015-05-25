@@ -154,6 +154,62 @@ module Macros
     # ditto
     def <=>(other : NumberLiteral) : NumberLiteral
     end
+
+    # Same as Number#+
+    def +(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#-
+    def -(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#*
+    def *(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#/
+    def /(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#%
+    def %(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#&
+    def &(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#|
+    def |(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#^
+    def ^(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#**
+    def **(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#<<
+    def <<(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#>>
+    def >>(other : NumberLiteral) : NumberLiteral
+    end
+
+    # Same as Number#+
+    def + : NumberLiteral
+    end
+
+    # Same as Number#-
+    def - : NumberLiteral
+    end
+
+    # Same as Number#~
+    def ~ : NumberLiteral
+    end
   end
 
   # A char literal.
