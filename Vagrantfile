@@ -2,29 +2,23 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.define "precise32" do |c|
-    c.vm.box = "precise32"
-    c.vm.box_url = "http://files.vagrantup.com/precise32.box"
+  %w(precise64 trusty64).each do |box|
+    config.vm.define(box) { |c| c.vm.box = "ubuntu/#{box}" }
   end
-
-  config.vm.define "precise64" do |c|
-    c.vm.box = "precise64"
-    c.vm.box_url = "http://files.vagrantup.com/precise64.box"
-  end
-
-  config.vm.define("trusty32") { |c| c.vm.box = "ubuntu/trusty32" }
-  config.vm.define("trusty64") { |c| c.vm.box = "ubuntu/trusty64" }
 
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--memory", 4096]
   end
 
-  config.vm.provision :shell, :privileged => false, :inline => %(
-    sudo apt-get update
-    sudo apt-get install -y build-essential git libpcre3-dev libunwind7-dev libgc-dev curl llvm-3.3-dev clang-3.3 libyaml-dev libgmp3-dev libpcl1-dev
+  config.vm.provision :shell, inline: %(
+    curl -s http://dist.crystal-lang.org/apt/setup.sh | bash
+    apt-get install -y crystal git libgmp3-dev zlib1g-dev libedit-dev libxml2-dev libssl-dev libyaml-dev libreadline-dev
+    curl -s http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-x86_64.tar.gz | tar xz -C /opt
+    echo 'export LIBRARY_PATH="/opt/crystal/embedded/lib"' > /etc/profile.d/crystal.sh
+    echo 'export PATH="$PATH:/opt/llvm-3.5.0-1/bin"' >> /etc/profile.d/crystal.sh
+  )
 
+  config.vm.provision :shell, privileged: false, inline: %(
     git clone /vagrant crystal
-    cd crystal
-    bin/crystal --setup
   )
 end
