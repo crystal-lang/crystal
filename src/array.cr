@@ -285,6 +285,16 @@ class Array(T)
     end
   end
 
+  # Returns a tuple populated with the elements at the given indexes.
+  # Raises if any index is invalid.
+  #
+  # ```
+  # ["a", "b", "c", "d"].values_at(0, 2) #=> {"a", "c"}
+  # ```
+  def values_at(*indexes : Int)
+    indexes.map {|index| self[index] }
+  end
+
   def buffer
     @buffer
   end
