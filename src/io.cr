@@ -340,6 +340,16 @@ module IO
     ByteIterator.new(self)
   end
 
+  def self.copy(src, dst)
+    buffer :: UInt8[1024]
+    count = 0
+    while (len = src.read(buffer.to_slice).to_i32) > 0
+      dst.write(buffer.to_slice, len)
+      count += len
+    end
+    len < 0 ? len : count
+  end
+
   # :nodoc:
   struct LineIterator(I)
     include Iterator(String)

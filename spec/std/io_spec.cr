@@ -68,4 +68,11 @@ describe "IO" do
     end
   end
 
+  it "copies" do
+    string = "abあぼ"
+    src = StringIO.new(string)
+    dst = StringIO.new
+    IO.copy(src, dst).should eq(string.bytesize)
+    dst.to_s.should eq(string)
+  end
 end
