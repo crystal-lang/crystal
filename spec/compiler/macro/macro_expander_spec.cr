@@ -670,6 +670,18 @@ describe "MacroExpander" do
         [TypeNode.new(program.string)] of ASTNode
       end
     end
+
+    it "executes length of tuple" do
+      assert_macro("x", "{{x.length}}", "2") do |program|
+        [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar))] of ASTNode
+      end
+    end
+
+    it "executes length of tuple metaclass" do
+      assert_macro("x", "{{x.length}}", "2") do |program|
+        [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar).metaclass)] of ASTNode
+      end
+    end
   end
 
   describe "declare var methods" do

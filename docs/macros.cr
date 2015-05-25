@@ -1002,5 +1002,10 @@ module Macros
     # in these cases).
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
+
+    # Returns the number of elements in this tuple type or tuple metaclass type.
+    # Gives a compile error if this is not one of those types.
+    def length : NumberLiteral
+    end
   end
 end

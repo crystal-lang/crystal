@@ -684,6 +684,15 @@ module Crystal
           end
           BoolLiteral.new(type.has_attribute?(value))
         end
+      when "length"
+        interpret_argless_method(method, args) do
+          type = type.instance_type
+          if type.is_a?(TupleInstanceType)
+            NumberLiteral.new(type.tuple_types.length)
+          else
+            raise "undefined method 'length' for TypeNode of type #{type} (must be a tuple type)"
+          end
+        end
       else
         super
       end
