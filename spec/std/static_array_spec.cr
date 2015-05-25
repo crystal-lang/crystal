@@ -45,6 +45,18 @@ describe "StaticArray" do
     a[2].should eq(2)
   end
 
+  describe "values_at" do
+    it "returns the given indexes" do
+      StaticArray(Int32, 4).new { |i| i + 1 }.values_at(1, 0, 2).should eq({2, 1, 3})
+    end
+
+    it "raises when passed an invalid index" do
+      expect_raises IndexOutOfBounds do
+        StaticArray(Int32, 1).new { |i| i + 1 }.values_at(10)
+      end
+    end
+  end
+
   it "does to_s" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.to_s.should eq("[1, 2, 3]")

@@ -41,6 +41,17 @@ struct StaticArray(T, N)
     buffer[index] = value
   end
 
+  # Returns a tuple populated with the elements at the given indexes.
+  # Raises if any index is invalid.
+  #
+  # ```
+  # a = StaticArray(Int32, 4).new { |i| i + 1 }
+  # a.values_at(0, 2) #=> {1, 3}
+  # ```
+  def values_at(*indexes : Int)
+    indexes.map {|index| self[index] }
+  end
+
   def update(index : Int)
     index = check_index_out_of_bounds index
     buffer[index] = yield buffer[index]

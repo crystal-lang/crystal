@@ -47,6 +47,22 @@ describe "Tuple" do
     a.at(2) { 3 }.should eq(3)
   end
 
+  describe "values_at" do
+    it "returns the given indexes" do
+      {"a", "b", "c", "d"}.values_at(1, 0, 2).should eq({"b", "a", "c"})
+    end
+
+    it "raises when passed an invalid index" do
+      expect_raises IndexOutOfBounds do
+        {"a"}.values_at(10)
+      end
+    end
+
+    it "works with mixed types" do
+      {1, "a", 1.0, :a}.values_at(0, 1, 2, 3).should eq({1, "a", 1.0, :a})
+    end
+  end
+
   it "does ==" do
     a = {1, 2}
     b = {3, 4}
