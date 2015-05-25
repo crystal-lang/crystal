@@ -98,6 +98,16 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
+  # Returns a tuple populated with the elements at the given indexes.
+  # Raises if any index is invalid.
+  #
+  # ```
+  # {"a": 1, "b": 2, "c": 3, "d": 4}.values_at("a", "c") #=> {1, 3}
+  # ```
+  def values_at(*indexes : K)
+    indexes.map {|index| self[index] }
+  end
+
   def delete(key)
     index = bucket_index(key)
     entry = @buckets[index]

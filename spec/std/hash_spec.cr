@@ -131,6 +131,23 @@ describe "Hash" do
     end
   end
 
+  describe "values_at" do
+    it "returns the given keys" do
+      {"a": 1, "b": 2, "c": 3, "d": 4}.values_at("b", "a", "c").should eq({2, 1, 3})
+    end
+
+    it "raises when passed an invalid key" do
+      expect_raises MissingKey do
+        {"a": 1}.values_at("b")
+      end
+    end
+
+    it "works with mixed types" do
+      {1 => :a, "a" => 1, 1.0 => "a", :a => 1.0}.values_at(1, "a", 1.0, :a).should eq({:a, 1, "a", 1.0})
+    end
+  end
+
+
   describe "has_key?" do
     it "doesn't have key" do
       a = {1 => 2}
