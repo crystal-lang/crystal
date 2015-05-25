@@ -39,6 +39,7 @@ Next follows the full list of operators with their usual meaning.
 +   # positive
 -   # negative
 !   # not
+~   # bitwise complement
 ```
 
 These are defined without arguments. For example
@@ -66,7 +67,6 @@ v1 = Vector2.new(1, 2)
 &   # bitwise and
 |   # bitwise or
 ^   # bitwise xor
-~   # bitwise complement
 **  # exponentiation
 <<  # shift left, append
 >>  # shift right
