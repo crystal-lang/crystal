@@ -139,4 +139,23 @@ describe "Tuple" do
     iter.rewind
     iter.next.should eq(1)
   end
+
+  it "does map" do
+    tuple = {1, 2.5, "a"}
+    tuple2 = tuple.map &.to_s
+    tuple2.should be_a(Tuple)
+    tuple2.should eq({"1", "2.5", "a"})
+  end
+
+  it "gets first element" do
+    tuple = {1, 2.5}
+    tuple.first.should eq(1)
+    typeof(tuple.first).should eq(Int32)
+  end
+
+  it "gets last element" do
+    tuple = {1, 2.5, "a"}
+    tuple.last.should eq("a")
+    # typeof(tuple.last).should eq(String)
+  end
 end

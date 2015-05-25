@@ -1111,12 +1111,18 @@ class String
   # "aaabbbcccddd".squeeze("b-d") #=> "aaabcd"
   # "a       bbb".squeeze #=> "a b"
   # ```
-  def squeeze(*sets)
-    if sets.empty?
-      squeeze { true }
-    else
-      squeeze {|char| char.in_set?(*sets) }
-    end
+  def squeeze(*sets : String)
+    squeeze {|char| char.in_set?(*sets) }
+  end
+
+  # Returns a new string, that has all characters removed,
+  # that were the same as the previous one.
+  #
+  # ```
+  # "a       bbb".squeeze #=> "a b"
+  # ```
+  def squeeze
+    squeeze { true }
   end
 
   def empty?
