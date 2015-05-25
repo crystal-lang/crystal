@@ -21,6 +21,14 @@ describe "Type inference: tuples" do
     assert_type("{1, 'a'}[1]") { char }
   end
 
+  it "types tuple metaclass [0]" do
+    assert_type("{1, 'a'}.class[0]") { int32.metaclass }
+  end
+
+  it "types tuple metaclass [1]" do
+    assert_type("{1, 'a'}.class[1]") { char.metaclass }
+  end
+
   it "gives error when indexing out of range" do
     assert_error "{1, 'a'}[2]",
       "index out of bounds for tuple {Int32, Char}"
@@ -40,7 +48,11 @@ describe "Type inference: tuples" do
 
       x = {1, 1.5, 'a'}
       x.types
-      ") { tuple_of [int32.metaclass, float64.metaclass, char.metaclass] }
+      ") do
+        meta = tuple_of([int32, float64, char]).metaclass
+        meta.metaclass?.should be_true
+        meta
+      end
   end
 
   it "errors on recursive splat expansion (#218)" do

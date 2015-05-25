@@ -455,16 +455,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
   end
 
-  def codegen_primitive_class_with_type(type : TupleInstanceType, value)
-    metaclass_type = type.metaclass as TupleInstanceType
-    allocate_tuple(metaclass_type) do |tuple_type, i|
-      elem_type = metaclass_type.tuple_types[i]
-      ptr = aggregate_index value, i
-      ptr = to_lhs ptr, elem_type
-      {tuple_type, codegen_primitive_class_with_type(elem_type, ptr)}
-    end
-  end
-
   def codegen_primitive_class_with_type(type : Type, value)
     type_id(type)
   end
@@ -518,10 +508,16 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
-    type = context.type as TupleInstanceType
-    index = (node as TupleIndexer).index
-    ptr = aggregate_index call_args[0], index
-    to_lhs ptr, type.tuple_types[index]
+    type = context.type
+    if type.is_a?(TupleInstanceType)
+      index = (node as TupleIndexer).index
+      ptr = aggregate_index call_args[0], index
+      to_lhs ptr, type.tuple_types[index]
+    else
+      type = (type.instance_type as TupleInstanceType)
+      index = (node as TupleIndexer).index
+      type_id((type.tuple_types[index] as Type).metaclass)
+    end
   end
 
   def check_c_fun(type, value)

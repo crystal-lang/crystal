@@ -1735,14 +1735,23 @@ module Crystal
     getter tuple_types
 
     def initialize(program, @tuple_types)
-      @tuple_indexers = {} of Int32 => Def
       var = Var.new("T", self)
       var.bind_to var
       super(program, program.tuple, {"T" => var} of String => ASTNode)
     end
 
     def tuple_indexer(index)
-      @tuple_indexers[index] ||= begin
+      indexers = @tuple_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
+    def tuple_metaclass_indexer(index)
+      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
+    private def tuple_indexer(indexers, index)
+      indexers[index] ||= begin
         indexer = Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
         indexer.owner = self
         indexer
@@ -1767,14 +1776,6 @@ module Crystal
 
     def allocated
       true
-    end
-
-    def instance_type
-      program.tuple.instantiate tuple_types.map(&.instance_type)
-    end
-
-    def metaclass
-      program.tuple.instantiate tuple_types.map(&.metaclass)
     end
 
     def has_in_type_vars?(type)

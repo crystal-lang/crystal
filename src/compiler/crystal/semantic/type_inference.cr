@@ -2801,7 +2801,12 @@ module Crystal
     end
 
     def visit(node : TupleIndexer)
-      node.type = (scope as TupleInstanceType).tuple_types[node.index] as Type
+      scope = @scope
+      if scope.is_a?(TupleInstanceType)
+        node.type = scope.tuple_types[node.index] as Type
+      elsif scope
+        node.type = ((scope.instance_type as TupleInstanceType).tuple_types[node.index] as Type).metaclass
+      end
       false
     end
 
