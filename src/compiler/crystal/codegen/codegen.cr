@@ -794,7 +794,7 @@ module Crystal
       last_value = @last
 
       obj_type = node.obj.type
-      to_type = node.to.type.instance_type
+      to_type = node.to.type
 
       if to_type.pointer?
         if obj_type.nil_type?

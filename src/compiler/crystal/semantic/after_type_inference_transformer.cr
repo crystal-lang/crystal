@@ -530,7 +530,7 @@ module Crystal
       obj_type = node.obj.type?
       return node unless obj_type
 
-      to_type = node.to.type.instance_type
+      to_type = node.to.type
 
       if to_type.pointer?
         if obj_type.pointer? || obj_type.reference_like?

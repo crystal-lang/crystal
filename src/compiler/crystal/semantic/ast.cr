@@ -279,7 +279,7 @@ module Crystal
     end
 
     def update(from = nil)
-      to_type = to.type.instance_type
+      to_type = to.type
 
       obj_type = obj.type?
 

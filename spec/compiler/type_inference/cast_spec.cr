@@ -214,4 +214,10 @@ describe "Type inference: cast" do
       ),
       "can't cast Foo to Bar"
   end
+
+  it "can cast to metaclass (bug)" do
+    assert_type(%(
+      Int32 as Int32.class
+      )) { int32.metaclass }
+  end
 end

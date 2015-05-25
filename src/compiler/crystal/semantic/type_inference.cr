@@ -1357,7 +1357,13 @@ module Crystal
       nil
     end
 
-    def end_visit(node : Cast)
+    def visit(node : Cast)
+      node.obj.accept self
+
+      @in_type_args += 1
+      node.to.accept self
+      @in_type_args -= 1
+
       obj_type = node.obj.type?
       if obj_type.is_a?(PointerInstanceType)
         to_type = node.to.type.instance_type
@@ -1368,6 +1374,8 @@ module Crystal
 
       node.obj.add_observer node
       node.update
+
+      false
     end
 
     def visit(node : ClassDef)
