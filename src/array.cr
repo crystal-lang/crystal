@@ -672,7 +672,7 @@ class Array(T)
     self
   end
 
-  def push(*values)
+  def push(*values : T)
     values.each do |value|
       self << value
     end
