@@ -1,4 +1,4 @@
-## Next
+## 0.7.2 (2015-05-26)
 
 * Improved performance of Regex
 * Fixed lexing of octal characters and strings (thanks @rhysd)
@@ -17,6 +17,8 @@
 * Optimized `BufferedIO` writing performance and memory usage.
 * Added `Channel#close`, `Channel#closed?`, `Channel#receive?` and allow them to send/receive nil values (thanks @datanoise).
 * Fixed `Process#run` after introducing non-blocking IO (thanks @will)
+* `Tuple#map` now returns a `Tuple` (previously it returned an `Array`)
+* `Tuple#class` now returns a proper `Class` (previously it returned a `Tuple` of classes)
 * Lots of bug fixes.
 
 ## 0.7.1 (2015-04-30)
