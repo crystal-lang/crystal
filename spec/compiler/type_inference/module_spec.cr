@@ -113,55 +113,6 @@ describe "Type inference: module" do
       "Foo(T) is a generic module"
   end
 
-  it "includes generic module implicitly" do
-    assert_type("
-      module Foo(T)
-        def foo(x : T)
-          x
-        end
-      end
-
-      class Bar(U)
-        include Foo
-      end
-
-      Bar(Int32).new.foo(1)
-      ") { int32 }
-  end
-
-  it "includes generic module implicitly 2" do
-    assert_type("
-      module Foo(T)
-        def foo(x : T)
-          x
-        end
-      end
-
-      class Bar(T)
-        include Foo
-      end
-
-      Bar(Int32).new.foo(1)
-      ") { int32 }
-  end
-
-  it "includes generic module implicitly and errors on call" do
-    assert_error "
-      module Foo(T)
-        def foo(x : T)
-          x
-        end
-      end
-
-      class Bar(U)
-        include Foo
-      end
-
-      Bar(Int32).new.foo(1.5)
-      ",
-      "no overload matches"
-  end
-
   it "includes generic module explicitly" do
     assert_type("
       module Foo(T)

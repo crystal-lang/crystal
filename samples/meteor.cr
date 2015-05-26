@@ -4,7 +4,7 @@ alias Masks = Array(Array(Array(UInt64)))
 alias Point = Tuple(Int32, Int32)
 
 class MyIterator(T)
-  include Enumerable
+  include Enumerable(T)
 
   def initialize(@data : T, &@block : T -> T)
   end

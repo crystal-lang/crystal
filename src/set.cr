@@ -1,5 +1,5 @@
 class Set(T)
-  include Enumerable
+  include Enumerable(T)
   include Iterable
 
   def initialize

@@ -2859,20 +2859,7 @@ module Crystal
         module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
       else
         if type.is_a?(GenericModuleType)
-          if current_type.is_a?(GenericType)
-            current_type_type_vars_length = current_type.type_vars.length
-            if current_type_type_vars_length != type.type_vars.length
-              node_name.raise "#{type} wrong number of type vars for #{type} (#{current_type_type_vars_length} for #{current_type.type_vars.length})"
-            end
-
-            mapping = {} of String => ASTNode
-            type.type_vars.zip(current_type.type_vars) do |type_var, current_type_var|
-              mapping[type_var] = Path.new(current_type_var)
-            end
-            module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
-          else
-            node_name.raise "#{type} is a generic module"
-          end
+          node_name.raise "#{type} is a generic module"
         else
           module_to_include = type
         end
