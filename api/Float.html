@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -10,6 +14,37 @@
   <h1>abstract struct Float</h1>
 
 
+
+  <h2>Overview</h2>
+
+  <p>Float is the base type of all floating point numbers.</p>
+
+<p>There are two floating point types, <code><a href="Float32.html">Float32</a></code> and <code><a href="Float64.html">Float64</a></code>,
+which correspond to the <a href="http://en.wikipedia.org/wiki/Single_precision_floating-point_format" target="_blank">binary32</a>
+and <a href="http://en.wikipedia.org/wiki/Double_precision_floating-point_format" target="_blank">binary64</a>
+types defined by IEEE.</p>
+
+<p>A floating point literal is an optional <code>+</code> or <code>-</code> sign, followed by
+a sequence of numbers or underscores, followed by a dot,
+followed by numbers or underscores, followed by an optional exponent suffix,
+followed by an optional type suffix. If no suffix is present, the literal's type is <code><a href="Float64.html">Float64</a></code>.</p>
+
+<pre><code>1.0      # Float64
+1.0_f32  # Float32
+1_f32    # Float32
+
+1e10     # Float64
+1.5e10   # Float64
+1.5e-7   # Float64
+
++1.3     # Float64
+-0.5     # Float64</code></pre>
+
+<p>The underscore <code>_</code> before the suffix is optional.</p>
+
+<p>Underscores can be used to make some numbers more readable:</p>
+
+<pre><code>1_000_000.111_111 # better than 1000000.111111</code></pre>
 
 
 
@@ -34,20 +69,22 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/float.cr">float.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/float.cr">float.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/time/time_span.cr">time/time_span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time_span.cr">time/time_span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/to_json.cr">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/json/to_json.cr">json/to_json.cr</a>
     
     <br/>
   
@@ -130,7 +167,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/time/time_span.cr#L284" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time_span.cr#L284" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -143,7 +180,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/float.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/float.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -156,7 +193,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/float.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/float.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -169,7 +206,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/time/time_span.cr#L288" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time_span.cr#L288" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -182,7 +219,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/float.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/float.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -195,7 +232,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/time/time_span.cr#L300" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time_span.cr#L300" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -208,7 +245,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/time/time_span.cr#L292" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time_span.cr#L292" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -221,7 +258,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/float.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/float.cr#L34" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -234,7 +271,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/time/time_span.cr#L296" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time_span.cr#L296" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -247,7 +284,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/json/to_json.cr#L127" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/json/to_json.cr#L127" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

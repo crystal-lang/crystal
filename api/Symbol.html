@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -10,6 +14,20 @@
   <h1>struct Symbol</h1>
 
 
+
+  <h2>Overview</h2>
+
+  <p>A symbol is a constant that is identified by a name without you having to give
+it a numeric value.</p>
+
+<pre><code><span class="n">:hello</span>
+<span class="n">:welcome</span>
+<span class="n">:"symbol with spaces"</span></code></pre>
+
+<p>Internally a symbol is represented as an <code><a href="Int32.html">Int32</a></code>, so it's very efficient.</p>
+
+<p>You can't dynamically create symbols: when you compile your program each symbol
+gets assigned a unique number.</p>
 
 
 
@@ -32,10 +50,12 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/symbol.cr">symbol.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/symbol.cr">symbol.cr</a>
     
     <br/>
   
@@ -124,7 +144,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/symbol.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/symbol.cr#L37" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -154,7 +174,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/symbol.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/symbol.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -191,7 +211,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/symbol.cr#L8" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/symbol.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -216,7 +236,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/symbol.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/symbol.cr#L32" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

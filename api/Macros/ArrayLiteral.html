@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
 </head>
 <body>
 
@@ -36,7 +40,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -53,7 +57,7 @@
       <li class="entry-summary">
         <a href="#%5B%5D%28index%20%3A%20NumberLiteral%29%20%3A%20ASTNode-instance-method" class="signature"><strong>#[]</strong>(index : NumberLiteral) : ASTNode</a>
         
-          <div class="summary"><p>Similar to <code><a href="../Array.html#%5B%5D%28index%20%3A%20Int%29-instance-method">Array#[]</a></code>, but returns <code><a href="../Macros/NilLiteral.html">NilLiteral</a></code> on out of bounds.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../Array.html#%5B%5D%28range%20%3A%20Range%29-instance-method">Array#[]</a></code>, but returns <code><a href="../Macros/NilLiteral.html">NilLiteral</a></code> on out of bounds.</p></div>
         
       </li>
     
@@ -109,7 +113,7 @@
       <li class="entry-summary">
         <a href="#last%20%3A%20ASTNode%20%7C%20NilLiteral-instance-method" class="signature"><strong>#last</strong> : ASTNode | NilLiteral</a>
         
-          <div class="summary"><p>Similar to <code><a href="../Array.html#last%28%26block%29-instance-method">Array#last</a></code>, but returns a NilLiteral if the array is empty.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../Array.html#last-instance-method">Array#last</a></code>, but returns a NilLiteral if the array is empty.</p></div>
         
       </li>
     
@@ -172,11 +176,11 @@
         def <strong>[]</strong>(index : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/ASTNode.html">ASTNode</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../Array.html#%5B%5D%28index%20%3A%20Int%29-instance-method">Array#[]</a></code>, but returns <code><a href="../Macros/NilLiteral.html">NilLiteral</a></code> on out of bounds.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../Array.html#%5B%5D%28range%20%3A%20Range%29-instance-method">Array#[]</a></code>, but returns <code><a href="../Macros/NilLiteral.html">NilLiteral</a></code> on out of bounds.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L384" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L440" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -191,7 +195,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L331" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L387" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -206,7 +210,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L327" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L383" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -222,7 +226,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L336" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L392" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -237,7 +241,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L340" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L396" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -252,7 +256,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L344" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L400" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -267,7 +271,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L348" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L404" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -282,7 +286,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L352" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L408" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -293,11 +297,11 @@ by commas.</p></div>
         def <strong>last</strong> : <a href="../Macros/ASTNode.html">ASTNode</a> | <a href="../Macros/NilLiteral.html">NilLiteral</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../Array.html#last%28%26block%29-instance-method">Array#last</a></code>, but returns a NilLiteral if the array is empty.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../Array.html#last-instance-method">Array#last</a></code>, but returns a NilLiteral if the array is empty.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L356" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L412" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -312,7 +316,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L360" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L416" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -327,7 +331,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L364" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L420" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -342,7 +346,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L368" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L424" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -357,7 +361,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L372" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L428" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -372,7 +376,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L376" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L432" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -387,7 +391,7 @@ by commas.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L380" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L436" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

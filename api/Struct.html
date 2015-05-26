@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -69,8 +73,6 @@ names instead of indices.</p>
 
   <h2>Direct Known Subclasses</h2>
   
-    <a href="CFileIO.html">CFileIO</a>,
-  
     <a href="CGI/FormBuilder.html">CGI::FormBuilder</a>,
   
     <a href="CharReader.html">CharReader</a>,
@@ -79,7 +81,7 @@ names instead of indices.</p>
   
     <a href="Complex.html">Complex</a>,
   
-    <a href="Crypto/MD5/Context.html">Crypto::MD5::Context</a>,
+    Crypto::MD5::Context,
   
     <a href="CSV/Builder/Row.html">CSV::Builder::Row</a>,
   
@@ -87,9 +89,9 @@ names instead of indices.</p>
   
     <a href="Curses/Window.html">Curses::Window</a>,
   
-    <a href="Dir/Iterator.html">Dir::Iterator</a>,
+    Dir::EntryIterator,
   
-    <a href="Event/Base.html">Event::Base</a>,
+    Event::Base,
   
     <a href="HTML/Builder.html">HTML::Builder</a>,
   
@@ -97,35 +99,43 @@ names instead of indices.</p>
   
     <a href="HTTP/WebSocket/PacketInfo.html">HTTP::WebSocket::PacketInfo</a>,
   
-    <a href="IO/ByteIterator.html">IO::ByteIterator(I)</a>,
+    IO::ByteIterator(I),
   
-    <a href="IO/CharIterator.html">IO::CharIterator(I)</a>,
+    IO::CharIterator(I),
   
-    <a href="IO/FdSet.html">IO::FdSet</a>,
+    IO::FdSet,
   
-    <a href="IO/LineIterator.html">IO::LineIterator(I)</a>,
+    IO::LineIterator(I),
   
-    <a href="Iterator/Cycle.html">Iterator::Cycle(I, T)</a>,
+    Iterator::Cons(I, T),
   
-    <a href="Iterator/Map.html">Iterator::Map(I, T, U)</a>,
+    Iterator::Cycle(I, T),
   
-    <a href="Iterator/Reject.html">Iterator::Reject(I, T, B)</a>,
+    Iterator::Map(I, T, U),
   
-    <a href="Iterator/Select.html">Iterator::Select(I, T, B)</a>,
+    Iterator::Reject(I, T, B),
   
-    <a href="Iterator/Slice.html">Iterator::Slice(I, T)</a>,
+    Iterator::Select(I, T, B),
   
-    <a href="Iterator/Uniq.html">Iterator::Uniq(I, T, U)</a>,
+    Iterator::Singleton(T),
   
-    <a href="Iterator/WithObject.html">Iterator::WithObject(I, T, O)</a>,
+    Iterator::SingletonProc(T),
   
-    <a href="Iterator/Zip.html">Iterator::Zip(I1, I2, T1, T2)</a>,
+    Iterator::Slice(I, T),
+  
+    Iterator::Tap(I, T),
+  
+    Iterator::Uniq(I, T, U),
+  
+    Iterator::WithObject(I, T, O),
+  
+    Iterator::Zip(I, J, T, U),
   
     <a href="JSON/ArrayBuilder.html">JSON::ArrayBuilder(T)</a>,
   
     <a href="JSON/ObjectBuilder.html">JSON::ObjectBuilder(T)</a>,
   
-    <a href="LEBReader.html">LEBReader</a>,
+    LEBReader,
   
     <a href="LLVM/ABI/ArgType.html">LLVM::ABI::ArgType</a>,
   
@@ -175,17 +185,17 @@ names instead of indices.</p>
   
     <a href="MonthSpan.html">MonthSpan</a>,
   
-    <a href="OAuth/AuthorizationHeader.html">OAuth::AuthorizationHeader</a>,
+    OAuth::AuthorizationHeader,
   
-    <a href="OAuth/Params.html">OAuth::Params</a>,
+    OAuth::Params,
   
-    <a href="OAuth/Signature.html">OAuth::Signature</a>,
+    OAuth::Signature,
   
-    <a href="OpenSSL/BIO.html">OpenSSL::BIO</a>,
+    OpenSSL::BIO,
   
-    <a href="OptionParser/Handler.html">OptionParser::Handler</a>,
+    OptionParser::Handler,
   
-    <a href="OptionParser/ParseTask.html">OptionParser::ParseTask</a>,
+    OptionParser::ParseTask,
   
     <a href="PointerAppender.html">PointerAppender(T)</a>,
   
@@ -201,19 +211,21 @@ names instead of indices.</p>
   
     <a href="Socket/Addr.html">Socket::Addr</a>,
   
-    <a href="Spec/Result.html">Spec::Result</a>,
+    Spec::Result,
   
-    <a href="String/Formatter.html">String::Formatter</a>,
+    String::Formatter,
   
     <a href="String/Formatter/Flags.html">String::Formatter::Flags</a>,
+  
+    String::ToU64Info,
   
     <a href="Time.html">Time</a>,
   
     <a href="TimeFormat.html">TimeFormat</a>,
   
-    <a href="TimeFormat/Formatter.html">TimeFormat::Formatter</a>,
+    TimeFormat::Formatter,
   
-    <a href="TimeFormat/Parser.html">TimeFormat::Parser</a>,
+    TimeFormat::Parser,
   
     <a href="TimeSpan.html">TimeSpan</a>,
   
@@ -233,10 +245,12 @@ names instead of indices.</p>
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr">struct.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/struct.cr">struct.cr</a>
     
     <br/>
   
@@ -316,7 +330,7 @@ p1 <span class="o">==</span> p3            <span class="c">#=> false</span></cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L66" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/struct.cr#L66" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -333,7 +347,7 @@ p1 <span class="o">==</span> p3            <span class="c">#=> false</span></cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/struct.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -358,7 +372,7 @@ p1.inspect          <span class="c"># "Point(@x=1, @y=2)"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L97" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/struct.cr#L97" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -373,7 +387,7 @@ p1.inspect          <span class="c"># "Point(@x=1, @y=2)"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/struct.cr#L111" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/struct.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

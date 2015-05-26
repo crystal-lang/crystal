@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -43,15 +47,15 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Array.html">Array(T)</a>,
   
-    <a href="Array/IndexIterator.html">Array::IndexIterator(T)</a>,
+    Array::IndexIterator(T),
   
-    <a href="Array/Iterator.html">Array::Iterator(T)</a>,
+    Array::ItemIterator(T),
   
-    <a href="Array/ReverseIterator.html">Array::ReverseIterator(T)</a>,
+    Array::ReverseIterator(T),
   
-    <a href="Benchmark/Report.html">Benchmark::Report</a>,
+    Benchmark::Report,
   
-    <a href="Benchmark/Tms.html">Benchmark::Tms</a>,
+    Benchmark::Tms,
   
     <a href="BitArray.html">BitArray</a>,
   
@@ -95,13 +99,13 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Hash.html">Hash(K, V)</a>,
   
-    <a href="Hash/Entry.html">Hash::Entry(K, V)</a>,
+    Hash::Entry(K, V),
   
-    <a href="Hash/Iterator.html">Hash::Iterator(K, V)</a>,
+    Hash::EntryIterator(K, V),
   
-    <a href="Hash/KeyIterator.html">Hash::KeyIterator(K, V)</a>,
+    Hash::KeyIterator(K, V),
   
-    <a href="Hash/ValueIterator.html">Hash::ValueIterator(K, V)</a>,
+    Hash::ValueIterator(K, V),
   
     <a href="HTTP/Client.html">HTTP::Client</a>,
   
@@ -119,15 +123,23 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="IniFile.html">IniFile</a>,
   
-    <a href="Int/TimesIterator.html">Int::TimesIterator(T)</a>,
+    Int::DowntoIterator(T, N),
   
-    <a href="Iterator/Skip.html">Iterator::Skip(I, T)</a>,
+    Int::TimesIterator(T),
+  
+    Int::UptoIterator(T, N),
+  
+    Iterator::Chain(I, J, T, U),
+  
+    Iterator::CycleN(I, T, N),
+  
+    Iterator::Skip(I, T),
   
     <a href="Iterator/Stop.html">Iterator::Stop</a>,
   
-    <a href="Iterator/Take.html">Iterator::Take(I, T)</a>,
+    Iterator::Take(I, T),
   
-    <a href="Iterator/WithIndex.html">Iterator::WithIndex(I, T)</a>,
+    Iterator::WithIndex(I, T),
   
     <a href="JSON/Lexer.html">JSON::Lexer</a>,
   
@@ -159,9 +171,17 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Matrix.html">Matrix(T)</a>,
   
+    Matrix::ColumnIterator(T),
+  
+    Matrix::IndexIterator(T),
+  
+    <a href="Matrix/ItemIterator.html">Matrix::ItemIterator(T)</a>,
+  
+    Matrix::RowIterator(T),
+  
     <a href="Mutex.html">Mutex</a>,
   
-    <a href="Number/StepIterator.html">Number::StepIterator(T, L, B)</a>,
+    Number::StepIterator(T, L, B),
   
     <a href="OAuth2/AccessToken.html">OAuth2::AccessToken</a>,
   
@@ -191,7 +211,9 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Random/MT19937.html">Random::MT19937</a>,
   
-    <a href="Range/Iterator.html">Range::Iterator(B, E)</a>,
+    Range::ItemIterator(B, E),
+  
+    Range::StepIterator(B, E),
   
     <a href="Regex.html">Regex</a>,
   
@@ -199,37 +221,37 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Set.html">Set(T)</a>,
   
-    <a href="Slice/Iterator.html">Slice::Iterator(T)</a>,
+    Slice::ItemIterator(T),
   
-    <a href="Spec/Be.html">Spec::Be(T)</a>,
+    Spec::Be(T),
   
-    <a href="Spec/BeAExpectation.html">Spec::BeAExpectation(T)</a>,
+    Spec::BeAExpectation(T),
   
-    <a href="Spec/BeExpectation.html">Spec::BeExpectation(T)</a>,
+    Spec::BeExpectation(T),
   
-    <a href="Spec/BeFalseyExpectation.html">Spec::BeFalseyExpectation</a>,
+    Spec::BeFalseyExpectation,
   
-    <a href="Spec/BeTruthyExpectation.html">Spec::BeTruthyExpectation</a>,
+    Spec::BeTruthyExpectation,
   
-    <a href="Spec/CloseExpectation.html">Spec::CloseExpectation</a>,
+    Spec::CloseExpectation,
   
-    <a href="Spec/ContainExpectation.html">Spec::ContainExpectation(T)</a>,
+    Spec::ContainExpectation(T),
   
-    <a href="Spec/ContainExpectation/NullActual.html">Spec::ContainExpectation::NullActual</a>,
+    Spec::Context,
   
-    <a href="Spec/Context.html">Spec::Context</a>,
+    Spec::EqualExpectation(T),
   
-    <a href="Spec/EqualExpectation.html">Spec::EqualExpectation(T)</a>,
+    Spec::Formatter,
   
-    <a href="Spec/Formatter.html">Spec::Formatter</a>,
-  
-    <a href="Spec/MatchExpectation.html">Spec::MatchExpectation(T)</a>,
+    Spec::MatchExpectation(T),
   
     <a href="String.html">String</a>,
   
     <a href="String/Builder.html">String::Builder</a>,
   
-    <a href="String/CharIterator.html">String::CharIterator</a>,
+    String::CharIterator,
+  
+    String::LineIterator,
   
     <a href="StringIO.html">StringIO</a>,
   
@@ -239,6 +261,8 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Thread.html">Thread(T, R)</a>,
   
+    <a href="Tuple/ItemIterator.html">Tuple::ItemIterator(T)</a>,
+  
     <a href="URI.html">URI</a>,
   
     <a href="YAML/Parser.html">YAML::Parser</a>
@@ -247,10 +271,12 @@ the instance is no longer referred by any other entity in the program.</p>
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr">reference.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr">reference.cr</a>
     
     <br/>
   
@@ -351,7 +377,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L41" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L41" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -366,7 +392,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -381,7 +407,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -396,7 +422,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -409,7 +435,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -424,7 +450,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L36" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -458,7 +484,7 @@ ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true<
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -474,7 +500,7 @@ true if this reference's <code><a href="Reference.html#object_id-instance-method
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -487,7 +513,7 @@ true if this reference's <code><a href="Reference.html#object_id-instance-method
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/reference.cr#L70" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/reference.cr#L69" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

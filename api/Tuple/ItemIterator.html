@@ -3,11 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
 </head>
 <body>
 
 
-  <h1>struct Iterator::Select(I, T, B)</h1>
+  <h1>class Tuple::ItemIterator(T)</h1>
 
 
 
@@ -16,7 +20,7 @@
 
 
   <h2>Superclass hierarchy</h2>
-  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Value.html">Value</a></div><div style="padding-left: 40px"><a href="../Struct.html">Struct</a></div><div style="padding-left: 60px"><a href="../Iterator/Select.html">Iterator::Select(I, T, B)</a></div>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../Tuple/ItemIterator.html">Tuple::ItemIterator(T)</a></div>
 
 
 
@@ -32,10 +36,12 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr">iterator.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr">tuple.cr</a>
     
     <br/>
   
@@ -48,7 +54,7 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#new%28iter%20%3A%20Iterator%28T%29%2C%20func%20%3A%20T%20-%3E%20B%29-class-method" class="signature"><strong>.new</strong>(iter : Iterator(T), func : T -> B)</a>
+        <a href="#new%28tuple%2C%20index%20%3D%200%29-class-method" class="signature"><strong>.new</strong>(tuple, index = 0)</a>
         
       </li>
     
@@ -79,14 +85,14 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28iter%20%3A%20Iterator%28T%29%2C%20func%20%3A%20T%20-%3E%20B%29-class-method">
+      <div class="signature" id="new%28tuple%2C%20index%20%3D%200%29-class-method">
         
-        def self.<strong>new</strong>(iter : <a href="../Iterator.html">Iterator</a>(T), func : T -> B)
+        def self.<strong>new</strong>(tuple, index = <span class="n">0</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L103" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L365" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -104,7 +110,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L106" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -117,7 +123,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L117" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L374" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

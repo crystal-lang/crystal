@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -10,6 +14,73 @@
   <h1>module Iterator(T)</h1>
 
 
+
+  <h2>Overview</h2>
+
+  <p>An Iterator allows processing sequences lazily, as opposed to <code><a href="Enumerable.html">Enumerable</a></code> which processes
+sequences eagerly and produces an <code><a href="Array.html">Array</a></code> in most of its methods.</p>
+
+<p>As an example, let's compute the first three numbers in the range <code>1..10_000_000</code> that are even,
+multiplied by three. One way to do this is:</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10000000</span>).select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c">#=> [6, 12, 18]</span></code></pre>
+
+<p>The above works, but creates many intermediate arrays: one for the <em>select</em> call,
+one for the <em>map</em> call and one for the <em>take</em> call. A more efficient way is to invoke
+<code><a href="Range.html#each-instance-method">Range#each</a></code> without a block, which gives us an Iterator so we can process the operations
+lazily:</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10000000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c">#=> #< Iterator(T)::Take...</span></code></pre>
+
+<p>Iterator redefines many of <code><a href="Enumerable.html">Enumerable</a></code>'s method in a lazy way, returning iterators
+instead of arrays.</p>
+
+<p>At the end of the call chain we get back a new iterator: we need to consume it, either
+using <code><a href="Iterator.html#each-instance-method">#each</a></code> or <code><a href="Enumerable.html#to_a-instance-method">Enumerable#to_a</a></code>:</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10000000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>).to_a <span class="c">#=> [6, 12, 18]</span></code></pre>
+
+<p>To implement an Iterator you need to define a <code><a href="Iterator.html#next-instance-method">#next</a></code> method that must return the next
+element in the sequence or <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code>, which signals the end of the sequence
+(you can invoke <code><a href="Iterator.html#stop-instance-method">#stop</a></code> inside an iterator as a shortcut).</p>
+
+<p>Additionally, an <code><a href="Iterator.html">Iterator</a></code> can implement <code><a href="Iterator.html#rewind-instance-method">#rewind</a></code>, which must rewind the iterator to
+its initial state. This is needed to implement the <code><a href="Iterator.html#cycle-instance-method">#cycle</a></code> method.</p>
+
+<p>For example, this is an iterator that returns a sequence of N zeros:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Zeros</span>
+  <span class="k">include</span> <span class="t">Iterator</span>(<span class="t">Int32</span>)
+
+  <span class="k">def</span> <span class="m">initialize</span>(@length)
+    @produced <span class="o">=</span> <span class="n">0</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">next</span>
+    <span class="k">if</span> @produced <span class="o"><</span> @length
+      @produced += <span class="n">1</span>
+      <span class="n">0</span>
+    <span class="k">else</span>
+      stop
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">rewind</span>
+    @produced <span class="o">=</span> <span class="n">0</span>
+    <span class="k">self</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+zeros <span class="o">=</span> <span class="t">Zeros</span>.<span class="k">new</span>(<span class="n">5</span>)
+zeros.to_a            <span class="c">#=> [0, 0, 0, 0, 0]</span>
+
+zeros.rewind
+zeros.take(<span class="n">3</span>).to_a    <span class="c">#=> [0, 0, 0]</span></code></pre>
+
+<p>The standard library provides iterators for many classes, like <code><a href="Array.html">Array</a></code>, <code><a href="Hash.html">Hash</a></code>, <code><a href="Range.html">Range</a></code>, <code><a href="String.html">String</a></code> and <code><a href="IO.html">IO</a></code>.
+Usually to get an iterator you invoke a method that would usually yield elements to a block,
+but without passing a block: <code><a href="Array.html#each%28%26block%29-instance-method">Array#each</a></code>, <code><a href="Array.html#each_index%28%26block%29-instance-method">Array#each_index</a></code>, <code><a href="Hash.html#each%28%26block%29-instance-method">Hash#each</a></code>, <code><a href="String.html#each_char%28%26block%29-instance-method">String#each_char</a></code>,
+<code><a href="IO.html#each_line%28%26block%29-instance-method">IO#each_line</a></code>, etc.</p>
 
 
 
@@ -28,11 +99,20 @@
 
 
 
+  <h2>Direct including types</h2>
+  
+    <a href="Matrix/ItemIterator.html">Matrix::ItemIterator(T)</a>,
+  
+    <a href="Tuple/ItemIterator.html">Tuple::ItemIterator(T)</a>
+  
+
+
+
 
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr">iterator.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr">iterator.cr</a>
     
     <br/>
   
@@ -41,13 +121,55 @@
 
 
 
+  <h2>Class Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#of%28%26block%20%3A%20-%3E%20T%29-class-method" class="signature"><strong>.of</strong>(&block : -> T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#of%28element%20%3A%20T%29-class-method" class="signature"><strong>.of</strong>(element : T)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#stop-class-method" class="signature"><strong>.stop</strong></a>
+        
+          <div class="summary"><p>Shortcut for <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code>, to signal that there are no more elements in an iterator.</p></div>
+        
+      </li>
+    
+  </ul>
+
 
 
   <h2>Instance Method Summary</h2>
   <ul>
     
       <li class="entry-summary">
+        <a href="#chain%28other%20%3A%20Iterator%28U%29%29-instance-method" class="signature"><strong>#chain</strong>(other : Iterator(U))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cons%28n%29-instance-method" class="signature"><strong>#cons</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cycle%28n%20%3A%20Int%29-instance-method" class="signature"><strong>#cycle</strong>(n : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
         
       </li>
     
@@ -69,6 +191,8 @@
       <li class="entry-summary">
         <a href="#next-instance-method" class="signature"><strong>#next</strong></a>
         
+          <div class="summary"><p>Returns the next element in this iterator, or <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code> if there are no more elements.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -78,6 +202,8 @@
     
       <li class="entry-summary">
         <a href="#rewind-instance-method" class="signature"><strong>#rewind</strong></a>
+        
+          <div class="summary"><p>Rewinds the iterator to its original state.</p></div>
         
       </li>
     
@@ -99,6 +225,8 @@
       <li class="entry-summary">
         <a href="#stop-instance-method" class="signature"><strong>#stop</strong></a>
         
+          <div class="summary"><p>Shortcut for <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code>, to signal that there are no more elements in an iterator.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -107,7 +235,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#uniq-instance-method" class="signature"><strong>#uniq</strong></a>
+        <a href="#tap%28%26block%20%3A%20T%20-%3E%20%29-instance-method" class="signature"><strong>#tap</strong>(&block : T -> )</a>
         
       </li>
     
@@ -117,14 +245,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#with_index%28offset%29-instance-method" class="signature"><strong>#with_index</strong>(offset)</a>
+        <a href="#uniq-instance-method" class="signature"><strong>#uniq</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#with_index-instance-method" class="signature"><strong>#with_index</strong></a>
-        
-          <div class="summary"><p>TODO: use default argument "offset" after 0.6.1, a bug prevents using it</p></div>
+        <a href="#with_index%28offset%20%3D%200%29-instance-method" class="signature"><strong>#with_index</strong>(offset = 0)</a>
         
       </li>
     
@@ -145,9 +271,92 @@
 
 
 
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="of%28%26block%20%3A%20-%3E%20T%29-class-method">
+        
+        def self.<strong>of</strong>(&block :  -> T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L178" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="of%28element%20%3A%20T%29-class-method">
+        
+        def self.<strong>of</strong>(element : T)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L174" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="stop-class-method">
+        
+        def self.<strong>stop</strong>
+      </div>
+      
+        <div class="doc"><p>Shortcut for <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code>, to signal that there are no more elements in an iterator.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L87" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
 
 
   <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="chain%28other%20%3A%20Iterator%28U%29%29-instance-method">
+        
+        def <strong>chain</strong>(other : <a href="Iterator.html">Iterator</a>(U))
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L166" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cons%28n%29-instance-method">
+        
+        def <strong>cons</strong>(n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L160" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cycle%28n%20%3A%20Int%29-instance-method">
+        
+        def <strong>cycle</strong>(n : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L130" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
   
     <div class="entry-detail">
       <div class="signature" id="cycle-instance-method">
@@ -157,7 +366,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L39" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L126" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each-instance-method">
+        
+        def <strong>each</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -170,7 +392,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L74" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L182" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -183,7 +405,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L70" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L156" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -196,7 +418,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L102" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -207,9 +429,12 @@
         def <strong>next</strong>
       </div>
       
+        <div class="doc"><p>Returns the next element in this iterator, or <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code> if there
+are no more elements.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L12" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L93" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -222,7 +447,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L110" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -233,9 +458,11 @@
         def <strong>rewind</strong>
       </div>
       
+        <div class="doc"><p>Rewinds the iterator to its original state.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L96" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -248,7 +475,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L106" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -261,7 +488,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L118" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -274,7 +501,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L64" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L150" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -285,9 +512,11 @@
         def <strong>stop</strong>
       </div>
       
+        <div class="doc"><p>Shortcut for <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code>, to signal that there are no more elements in an iterator.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L82" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -300,20 +529,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L27" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L114" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="uniq-instance-method">
+      <div class="signature" id="tap%28%26block%20%3A%20T%20-%3E%20%29-instance-method">
         
-        def <strong>uniq</strong>
+        def <strong>tap</strong>(&block : T -> )
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L170" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -326,35 +555,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L47" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L138" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="with_index%28offset%29-instance-method">
+      <div class="signature" id="uniq-instance-method">
         
-        def <strong>with_index</strong>(offset)
+        def <strong>uniq</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L134" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="with_index-instance-method">
+      <div class="signature" id="with_index%28offset%20%3D%200%29-instance-method">
         
-        def <strong>with_index</strong>
+        def <strong>with_index</strong>(offset = <span class="n">0</span>)
       </div>
-      
-        <div class="doc"><p>TODO: use default argument "offset" after 0.6.1, a bug prevents using it</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L52" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L142" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -367,7 +594,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L60" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L146" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -380,7 +607,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/iterator.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterator.cr#L122" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

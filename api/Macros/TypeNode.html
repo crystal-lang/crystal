@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
 </head>
 <body>
 
@@ -36,7 +40,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -72,6 +76,13 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#length%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#length</strong> : NumberLiteral</a>
+        
+          <div class="summary"><p>Returns the number of elements in this tuple type or tuple metaclass type.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#methods%20%3A%20Array%28Def%29-instance-method" class="signature"><strong>#methods</strong> : Array(Def)</a>
         
           <div class="summary"><p>Returns the instance methods defined by this type, without including inherited methods.</p></div>
@@ -79,7 +90,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#name%20%3A%20StringLiteral-instance-method" class="signature"><strong>#name</strong> : StringLiteral</a>
+        <a href="#name%20%3A%20MacroId-instance-method" class="signature"><strong>#name</strong> : MacroId</a>
         
           <div class="summary"><p>Returns the fully qualified name of this type.</p></div>
         
@@ -120,7 +131,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L912" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L968" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -137,7 +148,7 @@ in these cases).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L947" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L1003" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -152,7 +163,23 @@ in these cases).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L920" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L976" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="length%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>length</strong> : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns the number of elements in this tuple type or tuple metaclass type.
+Gives a compile error if this is not one of those types.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L1008" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -168,22 +195,22 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L941" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L997" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="name%20%3A%20StringLiteral-instance-method">
+      <div class="signature" id="name%20%3A%20MacroId-instance-method">
         
-        def <strong>name</strong> : <a href="../Macros/StringLiteral.html">StringLiteral</a>
+        def <strong>name</strong> : <a href="../Macros/MacroId.html">MacroId</a>
       </div>
       
         <div class="doc"><p>Returns the fully qualified name of this type.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L916" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L972" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -198,7 +225,7 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L936" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L992" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -213,7 +240,7 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L924" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L980" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

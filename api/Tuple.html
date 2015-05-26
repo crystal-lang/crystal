@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -79,8 +83,12 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
   
     <a href="Comparable.html">Comparable(Tuple)</a>,
   
-    <a href="Enumerable.html">Enumerable(typeof(...))</a>
+    <a href="Enumerable.html">Enumerable(typeof(...))</a>,
   
+    <a href="Iterable.html">Iterable</a>
+  
+
+
 
 
 
@@ -92,7 +100,7 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr">tuple.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr">tuple.cr</a>
     
     <br/>
   
@@ -161,16 +169,16 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
       </li>
     
       <li class="entry-summary">
-        <a href="#at%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#at</strong>(index : Int, &block)</a>
+        <a href="#at%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#at</strong>(index : Int)</a>
         
-          <div class="summary"><p>Returns the element at the given index or the value returned by the block if out of bounds.</p></div>
+          <div class="summary"><p>Returns the element at the given index or raises IndexOutOfBounds if out of bounds.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#at%28index%20%3A%20Int%29-instance-method" class="signature"><strong>#at</strong>(index : Int)</a>
+        <a href="#at%28index%20%3A%20Int%2C%20%26block%29-instance-method" class="signature"><strong>#at</strong>(index : Int, &block)</a>
         
-          <div class="summary"><p>Returns the element at the given index or raises IndexOutOfBounds if out of bounds.</p></div>
+          <div class="summary"><p>Returns the element at the given index or the value returned by the block if out of bounds.</p></div>
         
       </li>
     
@@ -189,6 +197,13 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
       </li>
     
       <li class="entry-summary">
+        <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
+        
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the elements in this tuple.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
           <div class="summary"><p>Yields each of the elements in this tuple.</p></div>
@@ -199,6 +214,13 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
         <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
         
           <div class="summary"><p>Returns true if this tuple is empty.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#first-instance-method" class="signature"><strong>#first</strong></a>
+        
+          <div class="summary"><p>Returns the first element of this tuple.</p></div>
         
       </li>
     
@@ -217,9 +239,23 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
       </li>
     
       <li class="entry-summary">
+        <a href="#last-instance-method" class="signature"><strong>#last</strong></a>
+        
+          <div class="summary"><p>Returns the last element of this tuple.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#length-instance-method" class="signature"><strong>#length</strong></a>
         
           <div class="summary"><p>Returns the number of elements in this tuple.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#map%28%26block%29-instance-method" class="signature"><strong>#map</strong>(&block)</a>
+        
+          <div class="summary"><p>Returns a new tuple where elements are mapped by the given block.</p></div>
         
       </li>
     
@@ -241,6 +277,13 @@ tuple                              <span class="c">#=> {1, "hello", 'x'} (Tuple(
         <a href="#types-instance-method" class="signature"><strong>#types</strong></a>
         
           <div class="summary"><p>Returns a tuple containing the types of this tuple.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#values_at%28%2Aindexes%20%3A%20Int%29-instance-method" class="signature"><strong>#values_at</strong>(*indexes : Int)</a>
+        
+          <div class="summary"><p>Returns a tuple populated with the elements at the given indexes.</p></div>
         
       </li>
     
@@ -271,7 +314,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L77" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -289,7 +332,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       
         <div class="doc"><p>Implements the comparison operator.</p>
 
-<p>Each object in each tuple is compared (using the <=> operator).</p>
+<p>Each object in each tuple is compared (using the &lt;=> operator).</p>
 
 <p>Tuples are compared in an "element-wise" manner; the first element of this tuple is
 compared with the first one of <code>other</code> using the <code><a href="Tuple.html#%3C%3D%3E%28other%20%3A%20self%29-instance-method">#<=></a></code> operator, then each of the second elements,
@@ -308,7 +351,7 @@ and the value of each element is equal to the value of the corresponding element
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L207" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L227" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -321,7 +364,7 @@ and the value of each element is equal to the value of the corresponding element
       
         <div class="doc"><p>Implements the comparison operator.</p>
 
-<p>Each object in each tuple is compared (using the <=> operator).</p>
+<p>Each object in each tuple is compared (using the &lt;=> operator).</p>
 
 <p>Tuples are compared in an "element-wise" manner; the first element of this tuple is
 compared with the first one of <code>other</code> using the <code><a href="Tuple.html#%3C%3D%3E%28other%20%3A%20self%29-instance-method">#<=></a></code> operator, then each of the second elements,
@@ -340,7 +383,7 @@ and the value of each element is equal to the value of the corresponding element
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L216" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L236" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -363,7 +406,7 @@ t1 <span class="o">==</span> t3            <span class="c">#=> false</span></cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L169" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L189" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -386,7 +429,7 @@ t1 <span class="o">==</span> t3            <span class="c">#=> false</span></cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L177" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L197" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -412,7 +455,7 @@ tuple[i]                  <span class="c">#=> runtime error: IndexOutOfBounds</s
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L94" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -431,7 +474,26 @@ tuple[<span class="n">3</span>]                  <span class="c">#=> nil</span><
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L106" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="at%28index%20%3A%20Int%29-instance-method">
+        
+        def <strong>at</strong>(index : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the element at the given index or raises IndexOutOfBounds if out of bounds.</p>
+
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+tuple[<span class="n">0</span>]                  <span class="c">#=> 1</span>
+tuple[<span class="n">3</span>]                  <span class="c">#=> raises IndexOutOfBounds</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L117" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -451,26 +513,7 @@ tuple.at(<span class="n">3</span>) { <span class="n">10</span> }        <span cl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L128" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="at%28index%20%3A%20Int%29-instance-method">
-        
-        def <strong>at</strong>(index : <a href="Int.html">Int</a>)
-      </div>
-      
-        <div class="doc"><p>Returns the element at the given index or raises IndexOutOfBounds if out of bounds.</p>
-
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
-tuple[<span class="n">0</span>]                  <span class="c">#=> 1</span>
-tuple[<span class="n">3</span>]                  <span class="c">#=> raises IndexOutOfBounds</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L116" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L129" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -485,7 +528,7 @@ tuple[<span class="n">3</span>]                  <span class="c">#=> raises Inde
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L242" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L262" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -500,7 +543,24 @@ tuple[<span class="n">3</span>]                  <span class="c">#=> raises Inde
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L237" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L257" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each-instance-method">
+        
+        def <strong>each</strong>
+      </div>
+      
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the elements in this tuple.</p>
+
+<pre><code>{<span class="n">1</span>, <span class="s">'a'</span>}.each.cycle.take(<span class="n">3</span>).to_a <span class="c">#=> [1, 'a', 1]</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L174" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -526,7 +586,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L162" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -544,7 +604,26 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L258" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L278" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="first-instance-method">
+        
+        def <strong>first</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the first element of this tuple. Doesn't compile
+if the tuple is empty.</p>
+
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>}
+tuple.first <span class="c">#=> 1</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L346" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -561,7 +640,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L228" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L248" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -576,7 +655,27 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L287" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L307" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="last-instance-method">
+        
+        def <strong>last</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the last element of this tuple. Raises if this
+tuple is empty (this will change to a compile error
+in the future).</p>
+
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>}
+tuple.last <span class="c">#=> 2.5</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L358" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -593,7 +692,25 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L272" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L292" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="map%28%26block%29-instance-method">
+        
+        def <strong>map</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Returns a new tuple where elements are mapped by the given block.</p>
+
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>, <span class="s">"a"</span>}
+tuple.map <span class="o">&</span>.to_s <span class="c">#=> {"1", "2.5", "a"}</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L329" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -608,7 +725,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L263" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L283" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -626,7 +743,7 @@ tuple.to_s           <span class="c">#=> "{1, \"hello\"}"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L297" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L317" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -644,7 +761,25 @@ tuple.types               <span class="c">#=> {Int32, String, Char}</span></code
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/tuple.cr#L282" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L302" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="values_at%28%2Aindexes%20%3A%20Int%29-instance-method">
+        
+        def <strong>values_at</strong>(*indexes : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Returns a tuple populated with the elements at the given indexes.
+Raises if any index is invalid.</p>
+
+<pre><code>{<span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span>, <span class="s">"d"</span>}.values_at(<span class="n">0</span>, <span class="n">2</span>) <span class="c">#=> {"a", "c"}</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/tuple.cr#L142" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

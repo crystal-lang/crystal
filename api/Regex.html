@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -27,52 +31,17 @@
 
 
 
+
+
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr">regex/regex.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr">regex/regex.cr</a>
     
     <br/>
   
 
 
-
-  
-    <h2>Constant Summary</h2>
-  
-  <ul>
-    
-      <li class="entry-const">
-        <strong>ANCHORED</strong> = <code><span class="n">16</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>EXTENDED</strong> = <code><span class="n">8</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>IGNORE_CASE</strong> = <code><span class="n">1</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>MULTILINE</strong> = <code><span class="n">4</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>NO_UTF8_CHECK</strong> = <code><span class="n">8192</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>UTF_8</strong> = <code><span class="n">2048</span></code>
-        
-      </li>
-    
-  </ul>
 
 
 
@@ -85,7 +54,14 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28source%2C%20modifiers%20%3D%200%29-class-method" class="signature"><strong>.new</strong>(source, modifiers = 0)</a>
+        <a href="#new%28source%2C%20options%20%3A%20Int32%29-class-method" class="signature"><strong>.new</strong>(source, options : Int32)</a>
+        
+          <div class="summary"><p>TODO: remove this constructor after 0.7.1</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28source%2C%20options%20%3D%20Options%3A%3ANone%20%3A%20Options%29-class-method" class="signature"><strong>.new</strong>(source, options = Options::None : Options)</a>
         
       </li>
     
@@ -107,12 +83,17 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#match%28str%2C%20pos%20%3D%200%2C%20options%20%3D%200%29-instance-method" class="signature"><strong>#match</strong>(str, pos = 0, options = 0)</a>
+        <a href="#match%28str%2C%20pos%20%3D%200%2C%20options%20%3D%20Regex%3A%3AOptions%3A%3ANone%29-instance-method" class="signature"><strong>#match</strong>(str, pos = 0, options = Regex::Options::None)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#match_at_byte_index%28str%2C%20byte_index%20%3D%200%2C%20options%20%3D%200%29-instance-method" class="signature"><strong>#match_at_byte_index</strong>(str, byte_index = 0, options = 0)</a>
+        <a href="#match_at_byte_index%28str%2C%20byte_index%20%3D%200%2C%20options%20%3D%20Regex%3A%3AOptions%3A%3ANone%29-instance-method" class="signature"><strong>#match_at_byte_index</strong>(str, byte_index = 0, options = Regex::Options::None)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#options-instance-method" class="signature"><strong>#options</strong></a>
         
       </li>
     
@@ -143,20 +124,35 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L58" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28source%2C%20modifiers%20%3D%200%29-class-method">
+      <div class="signature" id="new%28source%2C%20options%20%3A%20Int32%29-class-method">
         
-        def self.<strong>new</strong>(source, modifiers = <span class="n">0</span>)
+        def self.<strong>new</strong>(source, options : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"><p>TODO: remove this constructor after 0.7.1</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L20" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="new%28source%2C%20options%20%3D%20Options%3A%3ANone%20%3A%20Options%29-class-method">
+        
+        def self.<strong>new</strong>(source, options = <span class="t">Options</span><span class="t">::</span><span class="t">None</span> : Options)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L24" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -174,7 +170,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L42" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L59" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -187,33 +183,46 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L74" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="match%28str%2C%20pos%20%3D%200%2C%20options%20%3D%200%29-instance-method">
+      <div class="signature" id="match%28str%2C%20pos%20%3D%200%2C%20options%20%3D%20Regex%3A%3AOptions%3A%3ANone%29-instance-method">
         
-        def <strong>match</strong>(str, pos = <span class="n">0</span>, options = <span class="n">0</span>)
+        def <strong>match</strong>(str, pos = <span class="n">0</span>, options = <span class="t">Regex</span><span class="t">::</span><span class="t">Options</span><span class="t">::</span><span class="t">None</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="match_at_byte_index%28str%2C%20byte_index%20%3D%200%2C%20options%20%3D%200%29-instance-method">
+      <div class="signature" id="match_at_byte_index%28str%2C%20byte_index%20%3D%200%2C%20options%20%3D%20Regex%3A%3AOptions%3A%3ANone%29-instance-method">
         
-        def <strong>match_at_byte_index</strong>(str, byte_index = <span class="n">0</span>, options = <span class="n">0</span>)
+        def <strong>match_at_byte_index</strong>(str, byte_index = <span class="n">0</span>, options = <span class="t">Regex</span><span class="t">::</span><span class="t">Options</span><span class="t">::</span><span class="t">None</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L46" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="options-instance-method">
+        
+        def <strong>options</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L32" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -226,7 +235,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L11" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -239,7 +248,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/regex/regex.cr#L48" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/regex/regex.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

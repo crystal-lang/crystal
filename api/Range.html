@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
 </head>
 <body>
 
@@ -10,6 +14,54 @@
   <h1>struct Range(B, E)</h1>
 
 
+
+  <h2>Overview</h2>
+
+  <p>A Range represents an interval: a set of values with a beginning and an end.</p>
+
+<p>Ranges may be constructed using the usual <code><a href="Range.html#new%28begin%20%3A%20B%2C%20end%20%3A%20E%2C%20exclusive%20%3D%20false%20%3A%20Bool%29-class-method">.new</a></code> method or with literals:</p>
+
+<pre><code>x..y  <span class="c"># an inclusive range, in mathematics: [x, y]</span>
+x...y <span class="c"># an exclusive range, in mathematics: [x, y)</span></code></pre>
+
+<p>An easy way to remember which one is inclusive and which one is exclusive it
+to think of the extra dot as if it pushes <em>y</em> further away, thus leaving it outside of the range.</p>
+
+<p>Ranges typically involve integers, but can be created using arbitrary objects as long as they define <code>succ</code>, to get
+the next element in the range, and <code><</code> and <code>==</code>, to know when the range reached the end:</p>
+
+<pre><code><span class="c"># Represents a string of 'x's.</span>
+<span class="k">struct</span> <span class="t">Xs</span>
+  <span class="k">include</span> <span class="t">Comparable</span>(<span class="t">Xs</span>)
+
+  getter length
+
+  <span class="k">def</span> <span class="m">initialize</span>(@length)
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">succ</span>
+    <span class="t">Xs</span>.<span class="k">new</span>(@length <span class="o">+</span> <span class="n">1</span>)
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="o"><=></span>(other)
+    @length <span class="o"><=></span> other.length
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">inspect</span>(io)
+    @length.times { io <span class="o"><<</span> <span class="s">'x'</span> }
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="m">to_s</span>(io)
+    io <span class="o"><<</span> @length <span class="o"><<</span> <span class="s">' '</span>
+    inspect(io)
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+
+<p>An example of using <code>Xs</code> to construct a range:</p>
+
+<pre><code>r <span class="o">=</span> <span class="t">Xs</span>.<span class="k">new</span>(<span class="n">3</span>)..<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">6</span>)   <span class="c">#=> xxx..xxxxxx</span>
+r.to_a                     <span class="c">#=> [xxx, xxxx, xxxxx, xxxxxx]</span>
+r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">5</span>))     <span class="c">#=> true</span></code></pre>
 
 
 
@@ -22,8 +74,12 @@
 
   <h2>Included Modules</h2>
   
-    <a href="Enumerable.html">Enumerable(B)</a>
+    <a href="Enumerable.html">Enumerable(B)</a>,
   
+    <a href="Iterable.html">Iterable</a>
+  
+
+
 
 
 
@@ -35,7 +91,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr">range.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr">range.cr</a>
     
     <br/>
   
@@ -48,7 +104,9 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#new%28begin%20%3A%20B%2C%20end%20%3A%20E%2C%20exclusive%20%3A%20Bool%29-class-method" class="signature"><strong>.new</strong>(begin : B, end : E, exclusive : Bool)</a>
+        <a href="#new%28begin%20%3A%20B%2C%20end%20%3A%20E%2C%20exclusive%20%3D%20false%20%3A%20Bool%29-class-method" class="signature"><strong>.new</strong>(begin : B, end : E, exclusive = false : Bool)</a>
+        
+          <div class="summary"><p>Constructs a range using the given begining and end.</p></div>
         
       </li>
     
@@ -62,60 +120,77 @@
       <li class="entry-summary">
         <a href="#%3D%3D%3D%28value%29-instance-method" class="signature"><strong>#===</strong>(value)</a>
         
+          <div class="summary"><p>Same as <code><a href="Range.html#includes%3F%28value%29-instance-method">#includes?</a></code>, useful for the <code>case</code> expression.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#begin-instance-method" class="signature"><strong>#begin</strong></a>
+        
+          <div class="summary"><p>Returns the object that defines the beginning of this range.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#covers%3F%28value%29-instance-method" class="signature"><strong>#covers?</strong>(value)</a>
         
+          <div class="summary"><p>Same as <code><a href="Range.html#includes%3F%28value%29-instance-method">#includes?</a></code></p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
+        
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that cycles over the values of this range.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
         
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over the elements of this range.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        
+          <div class="summary"><p>Iterates over the elements of this range, passing each in turn to the block.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#end-instance-method" class="signature"><strong>#end</strong></a>
         
+          <div class="summary"><p>Returns the object that defines the end of the range.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#excludes_end%3F-instance-method" class="signature"><strong>#excludes_end?</strong></a>
+        
+          <div class="summary"><p>Returns true if this range excludes the <em>end</em> element.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#includes%3F%28value%29-instance-method" class="signature"><strong>#includes?</strong>(value)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+          <div class="summary"><p>Returns true if this range includes the given value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#step%28n%20%3D%201%2C%20%26block%29-instance-method" class="signature"><strong>#step</strong>(n = 1, &block)</a>
         
+          <div class="summary"><p>Iterates over this range, passing each nth element to the block.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        <a href="#step%28n%20%3D%201%29-instance-method" class="signature"><strong>#step</strong>(n = 1)</a>
+        
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that returns each nth element in this range.</p></div>
         
       </li>
     
@@ -129,14 +204,19 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28begin%20%3A%20B%2C%20end%20%3A%20E%2C%20exclusive%20%3A%20Bool%29-class-method">
+      <div class="signature" id="new%28begin%20%3A%20B%2C%20end%20%3A%20E%2C%20exclusive%20%3D%20false%20%3A%20Bool%29-class-method">
         
-        def self.<strong>new</strong>(begin : B, end : E, exclusive : <a href="Bool.html">Bool</a>)
+        def self.<strong>new</strong>(begin : B, end : E, exclusive = <span class="n">false</span> : <a href="Bool.html">Bool</a>)
       </div>
+      
+        <div class="doc"><p>Constructs a range using the given begining and end.</p>
+
+<pre><code><span class="t">Range</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">10</span>)                  <span class="c">#=> 1..10</span>
+<span class="t">Range</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">10</span>, exclusive: <span class="n">true</span>) <span class="c">#=> 1...10</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L7" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -152,9 +232,23 @@
         def <strong>===</strong>(value)
       </div>
       
+        <div class="doc"><p>Same as <code><a href="Range.html#includes%3F%28value%29-instance-method">#includes?</a></code>, useful for the <code>case</code> expression.</p>
+
+<pre><code><span class="k">case</span> <span class="n">79</span>
+<span class="k">when</span> <span class="n">1</span>..<span class="n">50</span>   <span class="k">then</span>   puts <span class="s">"low"</span>
+<span class="k">when</span> <span class="n">51</span>..<span class="n">75</span>  <span class="k">then</span>   puts <span class="s">"medium"</span>
+<span class="k">when</span> <span class="n">76</span>..<span class="n">100</span> <span class="k">then</span>   puts <span class="s">"high"</span>
+<span class="k">end</span></code></pre>
+
+<p>Produces:</p>
+
+<pre><code>high</code></pre>
+
+<p>See <code><a href="Object.html#%3D%3D%3D%28other%29-instance-method">Object#===</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L54" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L209" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -165,9 +259,14 @@
         def <strong>begin</strong>
       </div>
       
+        <div class="doc"><p>Returns the object that defines the beginning of this range.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).<span class="k">begin</span>  <span class="c">#=> 1</span>
+(<span class="n">1</span>...<span class="n">10</span>).<span class="k">begin</span> <span class="c">#=> 1</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L62" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -178,9 +277,11 @@
         def <strong>covers?</strong>(value)
       </div>
       
+        <div class="doc"><p>Same as <code><a href="Range.html#includes%3F%28value%29-instance-method">#includes?</a></code></p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L188" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -191,9 +292,13 @@
         def <strong>cycle</strong>
       </div>
       
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that cycles over the values of this range.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">3</span>).cycle.take(<span class="n">5</span>).to_a <span class="c">#=> [1, 2, 3, 1, 3]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L86" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -204,9 +309,13 @@
         def <strong>each</strong>
       </div>
       
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over the elements of this range.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">3</span>).each.skip(<span class="n">1</span>).to_a <span class="c">#=> [2, 3]</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -217,9 +326,14 @@
         def <strong>each</strong>(&block)
       </div>
       
+        <div class="doc"><p>Iterates over the elements of this range, passing each in turn to the block.</p>
+
+<pre><code>(<span class="n">10</span>..<span class="n">15</span>).each {<span class="o">|</span>n<span class="o">|</span> print n, <span class="s">' '</span> }
+<span class="c"># prints: 10 11 12 13 14 15</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L96" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -230,9 +344,14 @@
         def <strong>end</strong>
       </div>
       
+        <div class="doc"><p>Returns the object that defines the end of the range.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).<span class="k">end</span>  <span class="c">#=> 10</span>
+(<span class="n">1</span>...<span class="n">10</span>).<span class="k">end</span> <span class="c">#=> 10</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L70" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -243,9 +362,14 @@
         def <strong>excludes_end?</strong>
       </div>
       
+        <div class="doc"><p>Returns true if this range excludes the <em>end</em> element.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).excludes_end?  <span class="c">#=> false</span>
+(<span class="n">1</span>...<span class="n">10</span>).excludes_end? <span class="c">#=> true</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L38" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L165" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -256,22 +380,18 @@
         def <strong>includes?</strong>(value)
       </div>
       
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L42" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="inspect%28io%29-instance-method">
-        
-        def <strong>inspect</strong>(io)
-      </div>
+        <div class="doc"><p>Returns true if this range includes the given value.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">4</span>)   <span class="c">#=> true</span>
+(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">10</span>)  <span class="c">#=> true</span>
+(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">11</span>)  <span class="c">#=> false</span>
+
+(<span class="n">1</span>...<span class="n">10</span>).includes?(<span class="n">9</span>)  <span class="c">#=> true</span>
+(<span class="n">1</span>...<span class="n">10</span>).includes?(<span class="n">10</span>) <span class="c">#=> false</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L64" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L179" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -282,22 +402,48 @@
         def <strong>step</strong>(n = <span class="n">1</span>, &block)
       </div>
       
+        <div class="doc"><p>Iterates over this range, passing each nth element to the block.</p>
+
+<pre><code>range <span class="o">=</span> <span class="t">Xs</span>.<span class="k">new</span>(<span class="n">1</span>)..<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">10</span>)
+range.step(<span class="n">2</span>) {<span class="o">|</span>x<span class="o">|</span> puts x}
+puts
+range.step(<span class="n">3</span>) {<span class="o">|</span>x<span class="o">|</span> puts x}</code></pre>
+
+<p>Produces:</p>
+
+<pre><code>1 x
+3 xxx
+5 xxxxx
+7 xxxxxxx
+9 xxxxxxxxx
+
+1 x
+4 xxxx
+7 xxxxxxx
+10 xxxxxxxxxx</code></pre>
+
+<p>See <code><a href="Range.html">Range</a></code>'s overview for the definition of <code>Xs</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L28" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L140" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+      <div class="signature" id="step%28n%20%3D%201%29-instance-method">
         
-        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+        def <strong>step</strong>(n = <span class="n">1</span>)
       </div>
+      
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that returns each nth element in this range.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).step(<span class="n">3</span>).skip(<span class="n">1</span>).to_a <span class="c">#=> [4, 7, 10]</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/0df531ede12efc4417519f8baf355a9d0e649f03/src/range.cr#L58" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/range.cr#L155" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

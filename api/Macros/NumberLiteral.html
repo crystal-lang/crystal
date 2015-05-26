@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
 </head>
 <body>
 
@@ -36,7 +40,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -51,9 +55,79 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#%25%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#%</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#%</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#&</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#&</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#*</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#*</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%2A%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#**</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#**</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#+</strong> : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#+</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#+</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#+</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#-</strong> : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#-</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#-</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#-</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#/</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#/</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%3C%28other%20%3A%20NumberLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#<</strong>(other : NumberLiteral) : BoolLiteral</a>
         
           <div class="summary"><p>Compares this node's value to another node's value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#<<</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#&lt;&lt;</p></div>
         
       </li>
     
@@ -85,6 +159,34 @@
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#>></strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#>></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#^</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#^</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#|</strong>(other : NumberLiteral) : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#|</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7E%20%3A%20NumberLiteral-instance-method" class="signature"><strong>#~</strong> : NumberLiteral</a>
+        
+          <div class="summary"><p>Same as Number#~</p></div>
+        
+      </li>
+    
   </ul>
 
 
@@ -97,6 +199,141 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="%25%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>%</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#%</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L175" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%26%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>&</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#&</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L179" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>*</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#*</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L167" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%2A%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>**</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#**</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L191" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>+</strong> : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#+</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L203" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2B%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>+</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#+</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L159" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>-</strong> : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#-</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L207" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="-%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>-</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#-</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L163" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>/</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#/</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L171" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="%3C%28other%20%3A%20NumberLiteral%29%20%3A%20BoolLiteral-instance-method">
         
         def <strong><</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
@@ -106,7 +343,22 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L139" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L139" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong><<</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#&lt;&lt;</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L195" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -121,7 +373,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L143" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L143" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -136,7 +388,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L155" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L155" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -151,7 +403,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L147" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L147" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -166,7 +418,67 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/1b0beb2a20fb751a50033724c32dd929cc8b40a6/docs/macros.cr#L151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L151" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>>></strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#>></p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L199" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>^</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#^</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L187" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20NumberLiteral%29%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>|</strong>(other : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>) : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#|</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L183" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7E%20%3A%20NumberLiteral-instance-method">
+        
+        def <strong>~</strong> : <a href="../Macros/NumberLiteral.html">NumberLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Same as Number#~</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/docs/macros.cr#L211" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

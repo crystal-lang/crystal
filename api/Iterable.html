@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "index.html"
+  </script>
+  <script type="text/javascript" src="js/type.js"></script>
+</head>
+<body>
+
+
+  <h1>module Iterable</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>The Iterable mixin provides convenince methods to collection classes
+that provide an <code><a href="Iterable.html#each-instance-method">#each</a></code> method that returns an <code><a href="Iterator.html">Iterator</a></code> over the collection.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Direct including types</h2>
+  
+    <a href="Array.html">Array(T)</a>,
+  
+    <a href="Dir.html">Dir</a>,
+  
+    <a href="Matrix.html">Matrix(T)</a>,
+  
+    <a href="Range.html">Range(B, E)</a>,
+  
+    <a href="Set.html">Set(T)</a>,
+  
+    <a href="Slice.html">Slice(T)</a>,
+  
+    <a href="Tuple.html">Tuple(T*)</a>
+  
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr">iterable.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
+        
+          <div class="summary"><p>Same as <code>each.cycle</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cycle%28n%29-instance-method" class="signature"><strong>#cycle</strong>(n)</a>
+        
+          <div class="summary"><p>Same as <code>each.cycle(n)</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
+        
+          <div class="summary"><p>Must return an <code><a href="Iterator.html">Iterator</a></code> over the elements in this collection.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_cons%28count%20%3A%20Int%29-instance-method" class="signature"><strong>#each_cons</strong>(count : Int)</a>
+        
+          <div class="summary"><p>Same as <code>each.cons(count)</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_slice%28count%20%3A%20Int%29-instance-method" class="signature"><strong>#each_slice</strong>(count : Int)</a>
+        
+          <div class="summary"><p>Same as <code>each.slice(count)</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_with_index%28offset%20%3D%200%29-instance-method" class="signature"><strong>#each_with_index</strong>(offset = 0)</a>
+        
+          <div class="summary"><p>Same as <code>each.with_index(offset)</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_with_object%28obj%29-instance-method" class="signature"><strong>#each_with_object</strong>(obj)</a>
+        
+          <div class="summary"><p>Same as <code>each.with_object(obj)</code>.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cycle-instance-method">
+        
+        def <strong>cycle</strong>
+      </div>
+      
+        <div class="doc"><p>Same as <code>each.cycle</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L8" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cycle%28n%29-instance-method">
+        
+        def <strong>cycle</strong>(n)
+      </div>
+      
+        <div class="doc"><p>Same as <code>each.cycle(n)</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L13" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each-instance-method">
+        abstract 
+        def <strong>each</strong>
+      </div>
+      
+        <div class="doc"><p>Must return an <code><a href="Iterator.html">Iterator</a></code> over the elements in this collection.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L5" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_cons%28count%20%3A%20Int%29-instance-method">
+        
+        def <strong>each_cons</strong>(count : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Same as <code>each.cons(count)</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L23" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_slice%28count%20%3A%20Int%29-instance-method">
+        
+        def <strong>each_slice</strong>(count : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Same as <code>each.slice(count)</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L18" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_with_index%28offset%20%3D%200%29-instance-method">
+        
+        def <strong>each_with_index</strong>(offset = <span class="n">0</span>)
+      </div>
+      
+        <div class="doc"><p>Same as <code>each.with_index(offset)</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L28" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each_with_object%28obj%29-instance-method">
+        
+        def <strong>each_with_object</strong>(obj)
+      </div>
+      
+        <div class="doc"><p>Same as <code>each.with_object(obj)</code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/iterable.cr#L33" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>
