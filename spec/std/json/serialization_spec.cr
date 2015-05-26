@@ -51,6 +51,12 @@ describe "JSON serialization" do
       end
       elements.should eq([1, 2, 3])
     end
+
+    it "does for tuple" do
+      tuple = Tuple(Int32, String).from_json(%([1, "hello"]))
+      tuple.should eq({1, "hello"})
+      tuple.should be_a(Tuple(Int32, String))
+    end
   end
 
   describe "to_json" do
@@ -101,6 +107,10 @@ describe "JSON serialization" do
 
     it "does for Hash with non-string keys" do
       {foo: 1, bar: 2}.to_json.should eq(%({"foo":1,"bar":2}))
+    end
+
+    it "does for Tuple" do
+      {1, "hello"}.to_json.should eq(%([1,"hello"]))
     end
   end
 

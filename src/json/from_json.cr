@@ -78,6 +78,19 @@ def Hash.new(pull : JSON::PullParser)
   hash
 end
 
+def Tuple.new(pull : JSON::PullParser)
+  {% if true %}
+    pull.read_begin_array
+    value = Tuple.new(
+      {% for i in 0 ... @length %}
+        (self[{{i}}].new(pull)),
+      {% end %}
+    )
+    pull.read_end_array
+    value
+ {% end %}
+end
+
 struct TimeFormat
   def from_json(pull : JSON::PullParser)
     string = pull.read_string

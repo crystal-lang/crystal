@@ -193,6 +193,16 @@ class Hash
   end
 end
 
+struct Tuple
+  def to_json(io)
+    io.json_array do |array|
+      {% for i in 0 ... @length %}
+        array << self[{{i}}]
+      {% end %}
+    end
+  end
+end
+
 struct TimeFormat
   def to_json(value : Time, io : IO)
     format(value).to_json(io)
