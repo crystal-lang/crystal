@@ -28,6 +28,10 @@ struct HTML::Builder
     end
   {% end %}
 
+  def doctype
+    @str << "<!DOCTYPE html>"
+  end
+
   def br
     @str << "<br/>"
   end

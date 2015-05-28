@@ -5,6 +5,7 @@ describe "HTML" do
   describe "Builder" do
     it "builds html" do
       str = HTML::Builder.new.build do
+        doctype
         html do
           head do
             title { text "Crystal Programming Language" }
@@ -17,7 +18,7 @@ describe "HTML" do
           end
         end
       end
-      str.should eq %(<html><head><title>Crystal Programming Language</title></head><body><a href="http://crystal-lang.org">Crystal rocks!</a><form method="POST"><input name="name"></input></form></body></html>)
+      str.should eq %(<!DOCTYPE html><html><head><title>Crystal Programming Language</title></head><body><a href="http://crystal-lang.org">Crystal rocks!</a><form method="POST"><input name="name"></input></form></body></html>)
     end
 
     it "escapes attribute values" do
