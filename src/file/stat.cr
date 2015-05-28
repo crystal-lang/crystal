@@ -84,7 +84,7 @@ lib LibC
 end
 
 class File
-  class Stat
+  struct Stat
     def initialize(filename : String)
       if LibC.stat(filename, out @stat) != 0
         raise Errno.new("Unable to get stat for '#{filename}'")
@@ -146,8 +146,25 @@ class File
       @stat.st_uid
     end
 
-    def inspect
-      "<File::Stat dev=%d ino=%s mode=%0s nlink=%s uid=%d gid=%d rdev=%d size=%d blksize=%d blocks=%d atime=%d mtime=%d ctime=%d>" % [dev, ino, mode, nlink, uid, gid, rdev, size, blksize, blocks, atime, mtime, ctime]
+    def inspect(io)
+      io << "#<File::Stat"
+      io << " dev=0x"
+      dev.to_s(16, io)
+      io << ", ino=" << ino
+      io << ", mode=0"
+      mode.to_s(8, io)
+      io << ", nlink=" << nlink
+      io << ", uid=" << uid
+      io << ", gid=" << gid
+      io << ", rdev=0x"
+      rdev.to_s(16, io)
+      io << ", size=" << size
+      io << ", blksize=" << blksize
+      io << ", blocks=" << blocks
+      io << ", atime=" << atime
+      io << ", mtime=" << mtime
+      io << ", ctime=" << ctime
+      io << ">"
     end
 
     def blockdev?
