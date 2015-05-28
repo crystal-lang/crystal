@@ -159,7 +159,7 @@ describe "Tuple" do
   it "does map" do
     tuple = {1, 2.5, "a"}
     tuple2 = tuple.map &.to_s
-    tuple2.should be_a(Tuple)
+    tuple2.is_a?(Tuple).should be_true
     tuple2.should eq({"1", "2.5", "a"})
   end
 

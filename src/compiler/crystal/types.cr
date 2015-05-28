@@ -805,6 +805,7 @@ module Crystal
     property :instance_vars_in_initialize
     getter :allocated
     getter :instance_vars_initializers
+    property? :allowed_in_generics
 
     def initialize(program, container, name, @superclass, add_subclass = true)
       super(program, container, name)
@@ -818,6 +819,7 @@ module Crystal
       @struct = false
       @allocated = false
       @owned_instance_vars = Set(String).new
+      @allowed_in_generics = true
       parents.push superclass if superclass
       force_add_subclass if add_subclass
     end
@@ -1184,18 +1186,6 @@ module Crystal
     end
   end
 
-  class ObjectType < NonGenericClassType
-    def allowed_in_generics?
-      false
-    end
-  end
-
-  class ReferenceType < NonGenericClassType
-    def allowed_in_generics?
-      false
-    end
-  end
-
   abstract class EmptyType < Type
     getter :program
 
@@ -1244,39 +1234,6 @@ module Crystal
 
     def to_s(io)
       io << "Void"
-    end
-  end
-
-  class AbstractValueType < NonGenericClassType
-    def initialize(program, container, name, superclass, add_subclass = true)
-      super
-      @struct = true
-      @abstract = true
-      @allocated = true
-    end
-
-    def value?
-      true
-    end
-
-    def passed_by_value?
-      true
-    end
-
-    def allowed_in_generics?
-      false
-    end
-
-    def including_types
-      program.union_of all_subclasses
-    end
-
-    def cover
-      all_subclasses.select { |c| !c.abstract }
-    end
-
-    def cover_length
-      cover.length
     end
   end
 

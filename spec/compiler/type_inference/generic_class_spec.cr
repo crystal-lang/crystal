@@ -371,12 +371,12 @@ describe "Type inference: generic class" do
       "wrong number of type vars for Foo(T) (0 for 1)"
   end
 
-  %w(Object  Value  Reference  Number  Int  Float).each do |type|
+  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
     it "errors if using #{type} in a generic type" do
       assert_error %(
         Pointer(#{type})
         ),
-        "can't use #{type} as generic type argument yet, use a more specific type"
+        "as generic type argument yet, use a more specific type"
     end
   end
 

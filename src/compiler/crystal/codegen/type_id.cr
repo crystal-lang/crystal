@@ -50,7 +50,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     type_id(type)
   end
 
-  def type_id(value, type : NonGenericModuleType | GenericClassType | AbstractValueType)
+  def type_id(value, type : NonGenericModuleType | GenericClassType)
     type_id(value, type.including_types.not_nil!)
   end
 

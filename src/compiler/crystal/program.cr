@@ -37,14 +37,18 @@ module Crystal
       @wants_doc = false
       @color = true
 
-      @types["Object"] = object = @object = ObjectType.new self, self, "Object", nil
+      @types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
+      object.allowed_in_generics = false
       object.abstract = true
 
-      @types["Reference"] = reference = @reference = ReferenceType.new self, self, "Reference", object
-      @types["Value"] = value = @value = AbstractValueType.new self, self, "Value", object
-      value.abstract = true
+      @types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
+      reference.allowed_in_generics = false
 
-      @types["Number"] = number = @number = AbstractValueType.new self, self, "Number", value
+      @types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
+      abstract_value_type(value)
+
+      @types["Number"] = number = @number = NonGenericClassType.new self, self, "Number", value
+      abstract_value_type(number)
 
       @types["NoReturn"] = @no_return = NoReturnType.new self
       @types["Void"] = @void = VoidType.new self
@@ -52,7 +56,8 @@ module Crystal
       @types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
       @types["Char"] = @char = CharType.new self, self, "Char", value, 4
 
-      @types["Int"] = @int = AbstractValueType.new self, self, "Int", number
+      @types["Int"] = int = @int = NonGenericClassType.new self, self, "Int", number
+      abstract_value_type(int)
 
       @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int, 1, 1, :i8
       @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int, 1, 2, :u8
@@ -63,7 +68,8 @@ module Crystal
       @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
       @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
 
-      @types["Float"] = float = @float = AbstractValueType.new self, self, "Float", number
+      @types["Float"] = float = @float = NonGenericClassType.new self, self, "Float", number
+      abstract_value_type(float)
 
       @types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, 4, 9
       @types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
@@ -71,14 +77,17 @@ module Crystal
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
       @types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
+      pointer.allowed_in_generics = false
 
-      @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
+      @types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
+      tuple.allowed_in_generics = false
 
       @types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", Path.new("T"))
       static_array.instance_vars_in_initialize = Set.new(["@buffer"])
       static_array.allocated = true
+      static_array.allowed_in_generics = false
 
       @types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
@@ -93,6 +102,7 @@ module Crystal
       object.force_metaclass klass
       klass.force_metaclass klass
       klass.allocated = true
+      klass.allowed_in_generics = false
 
       @types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
       @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
@@ -100,13 +110,16 @@ module Crystal
       @types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       struct_t.abstract = true
       struct_t.struct = true
+      struct_t.allowed_in_generics = false
 
       @types["Enum"] = enum_t = @enum = NonGenericClassType.new self, self, "Enum", value
       enum_t.abstract = true
       enum_t.struct = true
+      enum_t.allowed_in_generics = false
 
       @types["Proc"] = proc = @proc = FunType.new self, self, "Proc", value, ["T"]
       proc.variadic = true
+      proc.allowed_in_generics = false
 
       @types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
@@ -321,6 +334,13 @@ module Crystal
 
     def colorize(obj)
       obj.colorize.toggle(@color)
+    end
+
+    private def abstract_value_type(type)
+      type.abstract = true
+      type.struct = true
+      type.allocated = true
+      type.allowed_in_generics = false
     end
 
     def to_s(io)
