@@ -123,17 +123,7 @@ class File
     end
 
     def mode
-      number = @stat.st_mode
-      omode  = 0
-      m      = 1
-
-      while number != 0
-        omode  += (number % 8).to_i * m
-        m      *= 10
-        number /= 8
-      end
-
-      omode
+      @stat.st_mode
     end
 
     def mtime
