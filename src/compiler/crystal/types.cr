@@ -606,8 +606,8 @@ module Crystal
       when "extended"
         return add_hook :extended, a_def
       when "method_missing"
-        if a_def.args.length != 3
-          raise TypeException.new "macro 'method_missing' expects 3 arguments: name, args, block"
+        if a_def.args.length != 3 && a_def.args.length != 1
+          raise TypeException.new "macro 'method_missing' expects 1 or 3 arguments: (call) or (name, args, block)"
         end
       end
 

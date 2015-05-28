@@ -316,4 +316,53 @@ describe "Code gen: method_missing" do
       foo.bar(1).to_i
       )).to_i.should eq(1)
   end
+
+  it "does method_missing macro without args (with call)" do
+    run("
+      class Foo
+        def foo_something
+          1
+        end
+
+        macro method_missing(call)
+          {{call.name.id}}_something
+        end
+      end
+
+      Foo.new.foo
+      ").to_i.should eq(1)
+  end
+
+  it "does method_missing macro with args (with call)" do
+    run(%(
+      class Foo
+        macro method_missing(call)
+          {{call.args.join(" + ").id}}
+        end
+      end
+
+      Foo.new.foo(1, 2, 3)
+      )).to_i.should eq(6)
+  end
+
+  it "forwards" do
+    run(%(
+      class Wrapped
+        def foo(x, y, z)
+          x + y + z
+        end
+      end
+
+      class Foo
+        def initialize(@wrapped)
+        end
+
+        macro method_missing(call)
+          @wrapped.{{call}}
+        end
+      end
+
+      Foo.new(Wrapped.new).foo(1, 2, 3)
+      )).to_i.should eq(6)
+  end
 end

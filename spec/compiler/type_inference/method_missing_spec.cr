@@ -26,7 +26,7 @@ describe "Type inference: method_missing" do
         macro method_missing(name, args)
         end
       end
-      ), "macro 'method_missing' expects 3 arguments: name, args, block"
+      ), "macro 'method_missing' expects 1 or 3 arguments: (call) or (name, args, block)"
   end
 
   it "does method missing for generic type" do

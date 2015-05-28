@@ -8,6 +8,9 @@ module Crystal
 
     def lookup_method_missing
       # method_missing is actually stored in the metaclass
+      method_missing = metaclass.lookup_macro("method_missing", 1, nil)
+      return method_missing if method_missing
+
       method_missing = metaclass.lookup_macro("method_missing", 3, nil)
       return method_missing if method_missing
 
@@ -62,7 +65,13 @@ module Crystal
 
       a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
 
-      fake_call = Call.new(nil, "method_missing", [name_node, args_node, block_node] of ASTNode)
+      if method_missing.args.length == 1
+        call = Call.new(nil, signature.name, args: args_nodes, block: block_node.is_a?(Block) ? block_node : nil)
+        fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
+      else
+        fake_call = Call.new(nil, "method_missing", [name_node, args_node, block_node] of ASTNode)
+      end
+
       expanded_macro = program.expand_macro self, method_missing, fake_call
       generated_nodes = program.parse_macro_source(expanded_macro, method_missing, method_missing, args_nodes_names) do |parser|
         parser.parse_to_def(a_def)
