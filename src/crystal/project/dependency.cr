@@ -1,6 +1,8 @@
 abstract class Crystal::Dependency
   abstract def install
   property locked_version
+
+  @name :: String
   property name
 
   def initialize(@name)
