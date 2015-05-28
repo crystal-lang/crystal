@@ -15,15 +15,15 @@ def sleep(seconds : Int | Float)
 end
 
 macro spawn
-  fiber = Fiber.new do
+  %fiber = Fiber.new do
     begin
       {{ yield }}
-    rescue ex
-      puts "Unhandled exception: #{ex}"
+    rescue %ex
+      puts "Unhandled exception: #{ %ex }"
     end
   end
 
-  Scheduler.enqueue fiber
+  Scheduler.enqueue %fiber
 end
 
 # TODO: this doesn't work if a Call has a block or named arguments... yet
@@ -50,21 +50,21 @@ macro spawn(exp)
 end
 
 macro parallel(*jobs)
-  __channel = Channel(Bool).new
+  %channel = Channel(Bool).new
 
   {% for job, i in jobs %}
-    __ret_{{i}} = nil
+    %ret{i} = nil
     spawn do
-      __ret_{{i}} = {{job}}
-      __channel.send true
+      %ret{i} = {{job}}
+      %channel.send true
     end
   {% end %}
 
-  {{ jobs.length }}.times { __channel.receive }
+  {{ jobs.length }}.times { %channel.receive }
 
   {
     {% for job, i in jobs %}
-      __ret_{{i}}.not_nil!,
+      %ret{i}.not_nil!,
     {% end %}
   }
 end

@@ -239,14 +239,14 @@ macro be_a(type)
 end
 
 macro expect_raises
-  raised = false
+  %raised = false
   begin
     {{yield}}
   rescue
-    raised = true
+    %raised = true
   end
 
-  fail "expected to raise" unless raised
+  fail "expected to raise" unless %raised
 end
 
 macro expect_raises(klass)
@@ -261,17 +261,17 @@ macro expect_raises(klass, message)
   begin
     {{yield}}
     fail "expected to raise {{klass.id}}"
-  rescue _ex_ : {{klass.id}}
-    _msg_ = {{message}}
-    _ex_to_s_ = _ex_.to_s
-    case _msg_
+  rescue %ex : {{klass.id}}
+    %msg = {{message}}
+    %ex_to_s = %ex.to_s
+    case %msg
     when Regex
-      unless (_ex_to_s_ =~ _msg_)
-        fail "expected {{klass.id}}'s message to match #{_msg_}, but was #{_ex_to_s_.inspect}"
+      unless (%ex_to_s =~ %msg)
+        fail "expected {{klass.id}}'s message to match #{ %msg }, but was #{ %ex_to_s.inspect }"
       end
     when String
-      unless _ex_to_s_.includes?(_msg_)
-        fail "expected {{klass.id}}'s message to include #{_msg_.inspect}, but was #{_ex_to_s_.inspect}"
+      unless %ex_to_s.includes?(%msg)
+        fail "expected {{klass.id}}'s message to include #{ %msg.inspect }, but was #{ %ex_to_s.inspect }"
       end
     end
   end
