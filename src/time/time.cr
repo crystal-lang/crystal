@@ -61,7 +61,7 @@ struct Time
   protected property encoded
 
   def initialize
-    initialize Time.local_ticks
+    initialize Time.local_ticks, kind: Kind::Local
   end
 
   def initialize(ticks : Int, kind = Kind::Unspecified)
@@ -276,6 +276,22 @@ struct Time
     (ticks - UnixEpoch) / TimeSpan::TicksPerSecond.to_f
   end
 
+  def to_utc
+    if utc?
+      self
+    else
+      Time.new(Time.compute_utc_ticks(ticks), Kind::Utc)
+    end
+  end
+
+  def to_local
+    if local?
+      self
+    else
+      Time.new(Time.compute_local_ticks(ticks), Kind::Local)
+    end
+  end
+
   macro def_at(name)
     def at_{{name.id}}
       year, month, day, day_year = year_month_day_day_year
@@ -419,6 +435,18 @@ struct Time
   def self.utc_ticks
     compute_ticks do |ticks, tp, tzp|
       ticks
+    end
+  end
+
+  protected def self.compute_utc_ticks(ticks)
+    compute_ticks do |t, tp, tzp|
+      ticks + tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute
+    end
+  end
+
+  protected def self.compute_local_ticks(ticks)
+    compute_ticks do |t, tp, tzp|
+      ticks - tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute
     end
   end
 

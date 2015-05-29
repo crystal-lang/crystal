@@ -507,4 +507,6 @@ describe Time do
   typeof(1.minute.ago.year)
   typeof(1.month.from_now.year)
   typeof(1.month.ago.year)
+  typeof(Time.now.to_utc)
+  typeof(Time.now.to_local)
 end
