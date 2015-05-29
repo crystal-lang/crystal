@@ -30,6 +30,7 @@ end
 
 def exit(status = 0)
   AtExitHandlers.run
+  STDOUT.flush
   Process.exit(status)
 end
 
@@ -55,6 +56,7 @@ macro redefine_main(name = main)
     1
   ensure
     AtExitHandlers.run
+    STDOUT.flush
   end
 end
 
