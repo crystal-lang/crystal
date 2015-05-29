@@ -39,9 +39,9 @@ def abort(message, status = 1)
   exit status
 end
 
-STDIN = BufferedIO.new(FileDescriptorIO.new(0, blocking: LibC.isatty(0) == 0))
-STDOUT = AutoflushBufferedIO.new(FileDescriptorIO.new(1, blocking: LibC.isatty(1) == 0))
-STDERR = FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0)
+STDIN = BufferedIO.new(FileDescriptorIO.new(0, blocking: LibC.isatty(0) == 0, edge_triggerable: ifdef darwin; false; else; true; end))
+STDOUT = AutoflushBufferedIO.new(FileDescriptorIO.new(1, blocking: LibC.isatty(1) == 0, edge_triggerable: ifdef darwin; false; else; true; end))
+STDERR = FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0, edge_triggerable: ifdef darwin; false; else; true; end)
 
 macro redefine_main(name = main)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32

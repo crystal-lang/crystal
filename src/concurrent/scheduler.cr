@@ -35,6 +35,32 @@ class Scheduler
     event
   end
 
+  def self.create_fd_write_event(io : FileDescriptorIO)
+    flags = LibEvent2::EventFlags::Write
+    event = LibEvent2.event_new(@@eb, io.fd, flags, LibEvent2::Callback.new do |s, flags, data|
+      fd_io = data as FileDescriptorIO
+      if flags.includes?(LibEvent2::EventFlags::Write)
+        fd_io.resume_write
+      end
+    end, io as Void*)
+
+    LibEvent2.event_add(event, nil)
+    event
+  end
+
+  def self.create_fd_read_event(io : FileDescriptorIO)
+    flags = LibEvent2::EventFlags::Read
+    event = LibEvent2.event_new(@@eb, io.fd, flags, LibEvent2::Callback.new do |s, flags, data|
+      fd_io = data as FileDescriptorIO
+      if flags.includes?(LibEvent2::EventFlags::Read)
+        fd_io.resume_read
+      end
+    end, io as Void*)
+
+    LibEvent2.event_add(event, nil)
+    event
+  end
+
   def self.destroy_fd_events(event)
     LibEvent2.event_free(event)
   end

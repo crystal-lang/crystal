@@ -8,11 +8,13 @@ class FileDescriptorIO
   private getter! readers
   private getter! writers
 
-  def initialize(@fd, blocking = false)
+  def initialize(@fd, blocking = false, @edge_triggerable = true)
     unless blocking
       before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
       LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
-      @event = Scheduler.create_fd_events(self)
+      if @edge_triggerable
+        @event = Scheduler.create_fd_events(self)
+      end
       @readers = [] of Fiber
       @writers = [] of Fiber
     end
@@ -25,7 +27,13 @@ class FileDescriptorIO
       if bytes_read == -1
         if LibC.errno == Errno::EAGAIN
           readers << Fiber.current
-          Scheduler.reschedule
+          if @edge_triggerable
+            Scheduler.reschedule
+          else
+            event = Scheduler.create_fd_read_event(self)
+            Scheduler.reschedule
+            Scheduler.destroy_fd_events(event)
+          end
         else
           raise Errno.new "Error reading file"
         end
@@ -54,7 +62,13 @@ class FileDescriptorIO
       if bytes_written == -1
         if LibC.errno == Errno::EAGAIN
           writers << Fiber.current
-          Scheduler.reschedule
+          if @edge_triggerable
+            Scheduler.reschedule
+          else
+            event = Scheduler.create_fd_write_event(self)
+            Scheduler.reschedule
+            Scheduler.destroy_fd_events(event)
+          end
           next
         else
           raise Errno.new "Error writing file"
