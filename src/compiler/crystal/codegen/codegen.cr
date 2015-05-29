@@ -437,6 +437,8 @@ module Crystal
       method_type = context.return_type.not_nil!
       if method_type.void?
         ret
+      elsif method_type.no_return?
+        unreachable
       else
         value = upcast(@last, method_type, type)
         ret to_rhs(value, method_type)

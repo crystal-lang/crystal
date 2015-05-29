@@ -752,20 +752,28 @@ module Crystal
 
     def including_types
       if including_types = @including_types
-        all_types = Array(Type).new(types.length)
+        all_types = Array(Type).new(including_types.length)
         including_types.each do |including_type|
-          if including_type.is_a?(GenericType)
-            including_type.generic_types.each_value do |generic_type|
-              all_types << generic_type
-            end
-          else
-            all_types << including_type.virtual_type
-          end
+          add_to_including_types(including_type, all_types)
         end
         program.union_of(all_types)
       else
         nil
       end
+    end
+
+    def add_to_including_types(type : GenericType, all_types)
+      type.generic_types.each_value do |generic_type|
+        all_types << generic_type unless all_types.includes?(generic_type)
+      end
+      type.subclasses.each do |subclass|
+        add_to_including_types subclass, all_types
+      end
+    end
+
+    def add_to_including_types(type, all_types)
+      virtual_type = type.virtual_type
+      all_types << virtual_type unless all_types.includes?(virtual_type)
     end
 
     def raw_including_types
@@ -1284,13 +1292,16 @@ module Crystal
       instance.after_initialize
 
       # Notify modules that an instance was added
-      parents.try &.each do |parent|
-        if parent.is_a?(NonGenericModuleType)
-          parent.notify_subclass_added
-        end
-      end
+      notify_parent_modules_subclass_added(self)
 
       instance
+    end
+
+    def notify_parent_modules_subclass_added(type)
+      type.parents.try &.each do |parent|
+        parent.notify_subclass_added if parent.is_a?(NonGenericModuleType)
+        notify_parent_modules_subclass_added parent
+      end
     end
 
     def run_instance_vars_initializers(real_type, type : GenericClassType | ClassType, instance)

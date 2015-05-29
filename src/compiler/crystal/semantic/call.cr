@@ -159,13 +159,13 @@ class Crystal::Call
   end
 
   def lookup_matches_in(owner : NonGenericModuleType, arg_types)
+    attach_subclass_observer owner
+
     including_types = owner.including_types
     if including_types
-      attach_subclass_observer owner
-
       lookup_matches_in(including_types, arg_types)
     else
-      raise "no type includes #{owner}"
+      [] of Def
     end
   end
 

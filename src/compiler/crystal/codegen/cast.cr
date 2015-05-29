@@ -341,7 +341,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def upcast_distinct(value, to_type : NonGenericModuleType | GenericClassType, from_type : Type)
-    upcast_distinct value, to_type.including_types.not_nil!, from_type
+    upcast value, to_type.including_types.not_nil!, from_type
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)

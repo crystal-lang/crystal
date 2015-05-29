@@ -226,4 +226,32 @@ describe "Code gen: module" do
       foo.call(Bar.new)
       ))
   end
+
+  it "codegens proc of a module that was never included" do
+    build(%(
+      module Moo
+      end
+
+      ->(x : Moo) { x.foo }
+      1
+      ))
+  end
+
+  it "codegens proc of module when generic type includes it" do
+    run(%(
+      module Moo
+      end
+
+      class Foo(T)
+        include Moo
+
+        def foo
+          3
+        end
+      end
+
+      z = ->(x : Moo) { x.foo }
+      z.call(Foo(Int32).new)
+      )).to_i.should eq(3)
+  end
 end

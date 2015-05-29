@@ -677,4 +677,42 @@ describe "Type inference: module" do
       Foo(Int32).new.foo(Foo(Char).new)
       )) { int32.metaclass }
   end
+
+  it "types proc of module after type changes" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Foo(T)
+        include Moo
+
+        def foo
+          3
+        end
+      end
+
+      z = ->(x : Moo) { x.foo }
+      z.call(Foo(Int32).new)
+      )) { int32 }
+  end
+
+  it "types proc of module with inherited generic class" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Foo(T)
+        include Moo
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+          'a'
+        end
+      end
+
+      z = ->(x : Moo) { x.foo }
+      z.call(Bar(Int32).new)
+      )) { char }
+  end
 end
