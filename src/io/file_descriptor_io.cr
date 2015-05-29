@@ -1,9 +1,9 @@
 class FileDescriptorIO
   include IO
 
-  SEEK_SET = LibC::SEEK_SET
-  SEEK_CUR = LibC::SEEK_CUR
-  SEEK_END = LibC::SEEK_END
+  SEEK_SET = 0
+  SEEK_CUR = 1
+  SEEK_END = 2
 
   private getter! readers
   private getter! writers

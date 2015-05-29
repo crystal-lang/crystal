@@ -1,3 +1,14 @@
+lib LibC
+  fun access(filename : UInt8*, how : Int32) : Int32
+  fun unlink(filename : UInt8*) : Int32
+  fun rename(oldname : UInt8*, newname : UInt8*) : Int32
+
+  F_OK = 0
+  X_OK = 1 << 0
+  W_OK = 1 << 1
+  R_OK = 1 << 2
+end
+
 class File < FileDescriptorIO
   # The file/directory separator character. '/' in unix, '\\' in windows.
   SEPARATOR = ifdef windows; '\\'; else; '/'; end
