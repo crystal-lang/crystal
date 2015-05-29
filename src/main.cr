@@ -40,7 +40,7 @@ end
 
 STDIN = BufferedIO.new(FileDescriptorIO.new(0, blocking: LibC.isatty(0) == 0))
 STDOUT = AutoflushBufferedIO.new(FileDescriptorIO.new(1, blocking: LibC.isatty(1) == 0))
-STDERR = BufferedIO.new(FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0))
+STDERR = FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0)
 
 macro redefine_main(name = main)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
