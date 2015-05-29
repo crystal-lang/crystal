@@ -31,4 +31,20 @@ describe "Global inference" do
   it "infers type of write global variable when not previously assigned" do
     assert_type("def foo; $foo = 1; end; foo; $foo") { |mod| union_of(mod.nil, int32) }
   end
+
+  it "types constant depending on global (related to #708)" do
+    assert_type(%(
+      A = foo
+
+      def foo
+        if a = $foo
+          a
+        else
+          $foo = 1
+        end
+      end
+
+      A
+      )) { int32 }
+  end
 end
