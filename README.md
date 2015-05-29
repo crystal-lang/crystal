@@ -35,6 +35,11 @@ Installing
 
 [Follow these instructions](http://crystal-lang.org/docs/installation/index.html)
 
+Try it online
+-------------
+
+[play.crystal-lang.org](http://play.crystal-lang.org/)
+
 Documentation
 ----------
 
