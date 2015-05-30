@@ -23,11 +23,7 @@ class Thread(T, R)
   end
 
   def alive?
-    if LibPThread.try_kill(@th, 0) == 0
-      return true
-    else
-      return false
-    end
+    LibPThread.kill(@th, 0) == 0
   end
 
   def join
