@@ -22,6 +22,14 @@ class Thread(T, R)
     LibPThread.detach(@th) unless @detached
   end
 
+  def alive?
+    if LibPThread.try_kill(@th, 0) == 0
+      return false
+    else
+      return true
+    end
+  end
+
   def join
     if LibPThread.join(@th, out _ret) != 0
       raise Errno.new("pthread_join")
