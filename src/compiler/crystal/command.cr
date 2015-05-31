@@ -93,7 +93,7 @@ USAGE
   end
 
   private def self.build(options)
-    config = create_compiler "run", options
+    config = create_compiler "build", options
     config.compile
   end
 
