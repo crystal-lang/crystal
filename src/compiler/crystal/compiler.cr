@@ -214,7 +214,8 @@ module Crystal
       end
 
       timing("Codegen (clang)") do
-        system "#{CC} -o #{output_filename} #{object_names.join " "} #{@link_flags} #{lib_flags}"
+        quoted_object_names = object_names.map { |name| %("#{name}") }.join " "
+        system "#{CC} -o #{output_filename} #{quoted_object_names} #{@link_flags} #{lib_flags}"
       end
     end
 
