@@ -137,9 +137,9 @@ class Crystal::Browser
           }
         </style>
       </head>
-      <body>
+      <body><code>
         #{yield}
-      </body>
+      <code></body>
     </html>
     )
   end
@@ -168,6 +168,10 @@ class Crystal::Browser
     end
 
     def visit(node : ModuleDef)
+      false
+    end
+
+    def visit(node : Attribute)
       false
     end
 
