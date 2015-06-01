@@ -1438,6 +1438,13 @@ module Crystal
         deduce_integer_kind string_value, name_length, negative, start
       end
 
+      first_byte = @reader.string.byte_at(start)
+      if first_byte == '+'.ord
+        string_value = "+#{string_value}"
+      elsif first_byte == '-'.ord && num == 0
+        string_value = "-0"
+      end
+
       @token.type = :NUMBER
       @token.value = string_value
     end

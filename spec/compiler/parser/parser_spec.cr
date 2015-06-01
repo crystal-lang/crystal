@@ -195,6 +195,7 @@ describe "Parser" do
   it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Expressions.new([Call.new(3.int32, "+", 4.int32)] of ASTNode))
   it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
   it_parses "1 + /foo/", Call.new(1.int32, "+", regex("foo"))
+  it_parses "1+0", Call.new(1.int32, "+", 0.int32)
   it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new(Expressions.new(["a".var] of ASTNode), "/", "b".call)]
