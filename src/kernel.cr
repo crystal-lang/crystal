@@ -19,11 +19,19 @@ def gets(delimiter : Char)
   STDIN.gets(delimiter)
 end
 
+def gets(delimiter : String)
+  STDIN.gets(delimiter)
+end
+
 def read_line
   STDIN.read_line
 end
 
 def read_line(delimiter : Char)
+  STDIN.read_line(delimiter)
+end
+
+def read_line(delimiter : String)
   STDIN.read_line(delimiter)
 end
 

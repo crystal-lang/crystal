@@ -43,6 +43,14 @@ class String::Builder
     count
   end
 
+  def buffer
+    @buffer + String::HEADER_SIZE
+  end
+
+  def empty?
+    @bytesize == 0
+  end
+
   def to_s
     raise "can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true

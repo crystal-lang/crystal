@@ -282,11 +282,51 @@ module IO
     buffer.to_s
   end
 
+  def gets(delimiter : String)
+    # Empty string: read all
+    if delimiter.empty?
+      return read
+    end
+
+    # One byte: use gets(Char)
+    if delimiter.bytesize == 1
+      return gets(delimiter.unsafe_byte_at(0).chr)
+    end
+
+    # One char: use gets(Char)
+    if delimiter.length == 1
+      return gets(delimiter[0])
+    end
+
+    # The 'hard' case: we read until we match the last byte,
+    # and then compare backwards
+    last_byte = delimiter.byte_at(delimiter.bytesize - 1)
+    total_bytes = 0
+
+    buffer = String::Builder.new
+    while true
+      unless byte = read_byte
+        return buffer.empty? ? nil : buffer.to_s
+      end
+      buffer.write_byte(byte)
+      total_bytes += 1
+
+      break if (byte == last_byte) &&
+               (buffer.bytesize >= delimiter.bytesize) &&
+               (buffer.buffer + total_bytes - delimiter.bytesize).memcmp(delimiter.to_unsafe, delimiter.bytesize) == 0
+    end
+    buffer.to_s
+  end
+
   def read_line
     read_line '\n'
   end
 
   def read_line(delimiter : Char)
+    gets(delimiter) || raise EOFError.new
+  end
+
+  def read_line(delimiter : String)
     gets(delimiter) || raise EOFError.new
   end
 

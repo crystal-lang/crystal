@@ -76,6 +76,25 @@ describe "StringIO" do
     io.gets('r').should eq(nil)
   end
 
+  it "gets with string as delimiter" do
+    io = StringIO.new("hello world")
+    io.gets("lo").should eq("hello")
+    io.gets("rl").should eq(" worl")
+    io.gets("foo").should eq("d")
+  end
+
+  it "gets with empty string as delimiter" do
+    io = StringIO.new("hello\nworld\n")
+    io.gets("").should eq("hello\nworld\n")
+  end
+
+  it "gets with single byte string as delimiter" do
+    io = StringIO.new("hello\nworld\nbye")
+    io.gets("\n").should eq("hello\n")
+    io.gets("\n").should eq("world\n")
+    io.gets("\n").should eq("bye")
+  end
+
   it "reads all remaining content" do
     io = StringIO.new("foo\nbar\nbaz\n")
     io.gets.should eq("foo\n")
