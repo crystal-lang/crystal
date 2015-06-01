@@ -794,6 +794,38 @@ class String
     end
   end
 
+  def chomp(char : Char)
+    if ends_with?(char)
+      count = 0
+      char.each_byte do |byte|
+        count += 1
+      end
+      String.new(unsafe_byte_slice(0, bytesize - count))
+    else
+      self
+    end
+  end
+
+  def chomp(string : String)
+    if string.empty?
+      return self if empty?
+
+      pos = bytesize - 1
+      while pos > 0 && cstr[pos] == '\n'.ord
+        if pos > 1 && cstr[pos - 1] == '\r'.ord
+          pos -= 2
+        else
+          pos -= 1
+        end
+      end
+      String.new(unsafe_byte_slice(0, pos + 1))
+    elsif ends_with?(string)
+      String.new(unsafe_byte_slice(0, bytesize - string.bytesize))
+    else
+      self
+    end
+  end
+
   def strip
     excess_right = 0
     while cstr[bytesize - 1 - excess_right].chr.whitespace?

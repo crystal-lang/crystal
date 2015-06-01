@@ -307,6 +307,18 @@ describe "String" do
     assert { "かたな\r\n".chomp.should eq("かたな") }
     assert { "hello\n\n".chomp.should eq("hello\n") }
     assert { "hello\r\n\n".chomp.should eq("hello\r\n") }
+
+    assert { "hello".chomp('a').should eq("hello") }
+    assert { "hello".chomp('o').should eq("hell") }
+    assert { "かたな".chomp('な').should eq("かた") }
+
+    assert { "hello".chomp("good").should eq("hello") }
+    assert { "hello".chomp("llo").should eq("he") }
+    assert { "かたな".chomp("たな").should eq("か") }
+
+    assert { "hello\n\n\n\n".chomp("").should eq("hello") }
+    assert { "hello\r\n\r\n".chomp("").should eq("hello") }
+    assert { "hello\r\n\r\r\n".chomp("").should eq("hello\r\n\r") }
   end
 
   describe "strip" do
