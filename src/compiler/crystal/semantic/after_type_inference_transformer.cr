@@ -335,6 +335,10 @@ module Crystal
 
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
+        if arg.is_a?(Call) && (expanded = arg.expanded)
+          arg = expanded
+        end
+
         case arg
         when FunLiteral
           if arg.def.closure

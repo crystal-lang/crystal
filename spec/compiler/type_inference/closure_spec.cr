@@ -488,4 +488,18 @@ describe "Type inference: closure" do
       foo { |x| x + 1 }
       )) { fun_of(int32, int32) }
   end
+
+  it "says can't send closure to C with new notation" do
+    assert_error %(
+      lib LibC
+        fun foo(x : ->)
+      end
+
+      a = 1
+      LibC.foo Proc(Void).new do
+        a
+      end
+      ),
+      "can't send closure to C function (closured vars: a)"
+  end
 end
