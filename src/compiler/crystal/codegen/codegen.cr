@@ -1100,7 +1100,7 @@ module Crystal
         codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, raise_fun.params.first.type)], true, @mod.no_return)
       end
 
-      if node_ensure
+      if node_ensure && !@builder.end
         old_last = @last
         accept node_ensure
         @last = old_last

@@ -675,4 +675,26 @@ describe "Code gen: exception" do
       ex.not_nil!.message
       )).to_string.should eq("OH NO")
   end
+
+  it "doesn't codegen duplicated ensure if unreachable (#709)" do
+    build(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          exit if 1 == 2
+        end
+      end
+
+      begin
+        begin
+          while true
+          end
+        ensure
+          Foo.new.object_id
+        end
+      ensure
+      end
+      ))
+  end
 end
