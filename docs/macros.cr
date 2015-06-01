@@ -5,6 +5,12 @@
 # are documented on the classes in this module. Additionaly, methods of the
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Macros
+  # Outputs the current macro's buffer to the standard output. Useful for debugging
+  # a macro to see what's being generated. Use it like `{{debug()}}`, the parenthesis
+  # are mandatory.
+  def debug : Nop
+  end
+
   # Gets the value of an environment variable at compile-time, or `nil` if it doesn't exist.
   def env(name) : StringLiteral | NilLiteral
   end

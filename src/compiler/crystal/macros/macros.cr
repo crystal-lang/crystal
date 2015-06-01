@@ -514,6 +514,8 @@ module Crystal
 
       def execute_special_call(node)
         case node.name
+        when "debug"
+          execute_debug
         when "env"
           execute_env(node)
         when "puts", "p"
@@ -529,6 +531,11 @@ module Crystal
         else
           node.raise "unknown special macro call: '#{node.name}'"
         end
+      end
+
+      def execute_debug
+        puts @str
+        @last = Nop.new
       end
 
       def execute_env(node)
