@@ -143,7 +143,7 @@ module Crystal
           unless exp.nop?
             append_indent
             exp.accept self
-            @str << newline
+            newline
           end
         end
       end
@@ -166,12 +166,12 @@ module Crystal
       @str << keyword(prefix)
       @str << " "
       node.cond.accept self
-      @str << newline
+      newline
       accept_with_indent(node.then)
       unless node.else.nop?
         append_indent
         @str << keyword("else")
-        @str << newline
+        newline
         accept_with_indent(node.else)
       end
       append_indent
@@ -203,7 +203,7 @@ module Crystal
         @str << " < "
         superclass.accept self
       end
-      @str << newline
+      newline
       accept_with_indent(node.body)
 
       append_indent
@@ -223,7 +223,7 @@ module Crystal
         end
         @str << ")"
       end
-      @str << newline
+      newline
       accept_with_indent(node.body)
 
       append_indent
@@ -461,7 +461,7 @@ module Crystal
 
       if value.is_a?(Expressions)
         @str << keyword("begin")
-        @str << newline
+        newline
         accept_with_indent(value)
         append_indent
         @str << keyword("end")
@@ -497,7 +497,7 @@ module Crystal
       if node.run_once
         if node.body.is_a?(Expressions)
           @str << keyword("begin")
-          @str << newline
+          newline
           accept_with_indent(node.body)
           append_indent
           @str << keyword("end")
@@ -515,7 +515,7 @@ module Crystal
         @str << keyword(name)
         @str << " "
         node.cond.accept self
-        @str << newline
+        newline
         accept_with_indent(node.body)
         append_indent
         @str << keyword("end")
@@ -549,7 +549,7 @@ module Crystal
       end
       @str << " "
       @str << keyword("do")
-      @str << newline
+      newline
       accept_with_indent(node.def.body)
       append_indent
       @str << keyword("end")
@@ -603,7 +603,7 @@ module Crystal
         @str << " : "
         return_type.accept self
       end
-      @str << newline
+      newline
 
       unless node.abstract
         accept_with_indent(node.body)
@@ -630,13 +630,13 @@ module Crystal
         end
         @str << ")"
       end
-      @str << newline
+      newline
 
       @inside_macro = true
       accept_with_indent node.body
       @inside_macro = false
 
-      @str << newline
+      newline
       append_indent
       @str << keyword("end")
       false
@@ -724,7 +724,7 @@ module Crystal
       end
       if type = node.type?
         @str << " : "
-        type.to_s(@str)
+        TypeNode.new(type).accept(self)
       elsif restriction = node.restriction
         @str << " : "
         restriction.accept self
@@ -905,7 +905,7 @@ module Crystal
         @str << "|"
       end
 
-      @str << newline
+      newline
       accept_with_indent(node.body)
 
       append_indent
@@ -979,7 +979,7 @@ module Crystal
       @str << keyword("lib")
       @str << " "
       @str << node.name
-      @str << newline
+      newline
       accept_with_indent(node.body)
       append_indent
       @str << keyword("end")
@@ -1014,9 +1014,9 @@ module Crystal
         node_return_type.accept self
       end
       if body = node.body
-        @str << newline
+        newline
         accept_with_indent body
-        @str << newline
+        newline
         append_indent
         @str << keyword("end")
       end
@@ -1044,7 +1044,7 @@ module Crystal
       @str << keyword(name)
       @str << " "
       @str << node.name.to_s
-      @str << newline
+      newline
       @inside_struct_or_union = true
       accept_with_indent node.body
       @inside_struct_or_union = false
@@ -1061,12 +1061,12 @@ module Crystal
         @str << " < "
         base_type.accept self
       end
-      @str << newline
+      newline
       with_indent do
         node.members.each do |member|
           append_indent
           member.accept self
-          @str << newline
+          newline
         end
       end
       append_indent
@@ -1148,14 +1148,14 @@ module Crystal
         @str << " "
         cond.accept self
       end
-      @str << newline
+      newline
       node.whens.each do |wh|
         wh.accept self
       end
       if node_else = node.else
         append_indent
         @str << keyword("else")
-        @str << newline
+        newline
         accept_with_indent node_else
       end
       append_indent
@@ -1171,7 +1171,7 @@ module Crystal
         @str << ", " if i > 0
         cond.accept self
       end
-      @str << newline
+      newline
       accept_with_indent node.body
       false
     end
@@ -1182,7 +1182,7 @@ module Crystal
 
     def visit(node : ExceptionHandler)
       @str << keyword("begin")
-      @str << newline
+      newline
 
       accept_with_indent node.body
 
@@ -1194,14 +1194,14 @@ module Crystal
       if node_else = node.else
         append_indent
         @str << keyword("else")
-        @str << newline
+        newline
         accept_with_indent node_else
       end
 
       if node_ensure = node.ensure
         append_indent
         @str << keyword("ensure")
-        @str << newline
+        newline
         accept_with_indent node_ensure
       end
 
@@ -1226,7 +1226,7 @@ module Crystal
           type.accept self
         end
       end
-      @str << newline
+      newline
       accept_with_indent node.body
       false
     end
@@ -1282,7 +1282,7 @@ module Crystal
     end
 
     def newline
-      "\n"
+      @str << "\n"
     end
 
     def indent_string
@@ -1315,7 +1315,7 @@ module Crystal
         append_indent
         node.accept self
       end
-      @str << newline
+      newline
     end
 
     def to_s

@@ -32,7 +32,7 @@ class Crystal::Browser
   end
 
   def handle(path)
-    object_id = path[1 .. -1].to_u64
+    object_id = path[1 .. -1].to_u64 { 0_u64 }
     case object_id
     when 0
       render_html @node
@@ -60,6 +60,9 @@ class Crystal::Browser
         end
         str << "<span class=\"def-name\">#{node.name}</span>"
         str << "</h2>"
+        if node_type = node.type?
+          node.return_type = TypeNode.new(node_type)
+        end
         str << to_html(node)
       end
     end
@@ -95,49 +98,42 @@ class Crystal::Browser
   end
 
   def render_html
-    "
+    %(
     <html>
       <head>
         <style>
-          @import url('http://fonts.googleapis.com/css?family=Open+Sans:400,700,300');
-          @import url('http://fonts.googleapis.com/css?family=Cousine:400,700');
           body {
-            font-weight: bold;
-            font-family: 'Cousine', sans-serif;
-            background-color: #E5E5E5;
+            font-family: "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            font-size: 14px;
           }
           .singleton {
-            color: #7644E4;
+            color: #0086b3;
           }
           .symbol {
-            color: #7644E4;
+            color: #0086b3;
           }
           .keyword {
-            color: #C7285E;
+            color: #a71d5d;
           }
           .def-name {
-            color: #41822D;
-          }
-          .instance-var {
-            color: #5F868F;
-          }
-          .class-var {
-            color: #5F868F;
+            color: #795da3;
           }
           .char {
-            color: #728B14;
+            color: #183691;
           }
           .string {
-            color: #728B14;
+            color: #183691;
           }
           .regex {
-            color: #728B14;
+            color: #183691;
           }
           .path {
-            color: #5F868F;
+            color: #0086b3;
           }
           .comment {
-            color: #8C8C8C;
+            color: #969896;
           }
         </style>
       </head>
@@ -145,7 +141,7 @@ class Crystal::Browser
         #{yield}
       </body>
     </html>
-    "
+    )
   end
 
   def to_html(node)
@@ -161,6 +157,18 @@ class Crystal::Browser
   class ToHtmlVisitor < ToSVisitor
     def initialize(@browser)
       super(StringIO.new)
+    end
+
+    def visit(node : LibDef)
+      false
+    end
+
+    def visit(node : ClassDef)
+      false
+    end
+
+    def visit(node : ModuleDef)
+      false
     end
 
     def visit(node : NumberLiteral)
@@ -230,6 +238,13 @@ class Crystal::Browser
       false
     end
 
+    def visit(node : TypeNode)
+      @str << "<span class=\"path\">"
+      node.type.to_s(@str)
+      @str << "</span>"
+      false
+    end
+
     def visit(node : Primitive)
       @str << "<span class=\"comment\"># primitive: #{node.name}</span>"
     end
@@ -252,17 +267,17 @@ class Crystal::Browser
 
     def decorate_instance_var(node, str)
       if type = node.type?
-        "<a title=\"#{type}\" class=\"instance-var\">#{str}</a>"
+        "<a title=\"#{type}\">#{str}</a>"
       else
-        span_with_class str, "instance-var"
+        str
       end
     end
 
     def decorate_class_var(node, str)
       if type = node.type?
-        "<a title=\"#{type}\" class=\"class-var\">#{str}</a>"
+        "<a title=\"#{type}\">#{str}</a>"
       else
-        span_with_class str, "class-var"
+        str
       end
     end
 
@@ -302,7 +317,9 @@ class Crystal::Browser
     end
 
     def newline
-      "<br/>"
+      str = @str
+      return if str.is_a?(StringIO) && str.empty?
+      str << "<br/>"
     end
 
     def indent_string
