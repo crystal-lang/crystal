@@ -142,8 +142,9 @@ module Crystal
         node.expressions.each do |exp|
           unless exp.nop?
             append_indent
-            exp.accept self
-            newline
+            unless exp.accept(self) == false
+              newline
+            end
           end
         end
       end
