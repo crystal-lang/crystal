@@ -13,10 +13,6 @@ module Crystal
       @target_dir = "libs/#{@name}"
     end
 
-    def target_dir
-      "libs/#{name}"
-    end
-
     def install
       unless Dir.exists?(@target_dir)
         exec "ln -sf ../#{@path}/src #{@target_dir}"
