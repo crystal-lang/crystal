@@ -1,9 +1,3 @@
-def loop
-  while true
-    yield
-  end
-end
-
 require "intrinsics"
 require "libc"
 require "macros"
@@ -44,7 +38,6 @@ require "box"
 require "math/math"
 require "process"
 require "io"
-require "argv"
 require "env"
 require "file"
 require "dir"
@@ -55,4 +48,5 @@ require "raise"
 require "errno"
 require "concurrent"
 require "signal"
+require "kernel"
 require "main"
