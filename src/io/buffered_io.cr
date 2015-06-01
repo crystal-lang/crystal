@@ -18,7 +18,7 @@ class BufferedIO(T)
     io
   end
 
-  def gets(delimiter = '\n' : Char)
+  def gets(delimiter : Char)
     if delimiter.ord >= 128
       return super
     end

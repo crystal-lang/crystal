@@ -265,8 +265,12 @@ module IO
     end
   end
 
-  def gets(delimiter = '\n' : Char)
-    buffer = StringIO.new
+  def gets
+    gets '\n'
+  end
+
+  def gets(delimiter : Char)
+    buffer = String::Builder.new
     while true
       unless ch = read_char
         return buffer.empty? ? nil : buffer.to_s
@@ -278,7 +282,11 @@ module IO
     buffer.to_s
   end
 
-  def read_line(delimiter = '\n' : Char)
+  def read_line
+    read_line '\n'
+  end
+
+  def read_line(delimiter : Char)
     gets(delimiter) || raise EOFError.new
   end
 

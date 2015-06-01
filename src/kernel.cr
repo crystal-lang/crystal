@@ -11,11 +11,19 @@ def loop
   end
 end
 
-def gets(delimiter = '\n' : Char)
+def gets
+  STDIN.gets
+end
+
+def gets(delimiter : Char)
   STDIN.gets(delimiter)
 end
 
-def read_line(delimiter = '\n' : Char)
+def read_line
+  STDIN.read_line
+end
+
+def read_line(delimiter : Char)
   STDIN.read_line(delimiter)
 end
 
