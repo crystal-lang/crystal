@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.8.3" data-basepath=".." data-revision="Wed May 20 2015 15:47:34 GMT-0300 (ART)">
+    <div class="book" data-level="3.8.3" data-basepath=".." data-revision="Tue Jun 02 2015 10:56:08 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1934,7 +1934,7 @@ a_as_int.abs          <span class="hljs-comment"># works, compiler knows that a_
 <h2 id="converting-between-pointer-types">Converting between pointer types</h2>
 <p>The <code>as</code> expression also allows to cast between pointer types:</p>
 <pre><code class="lang-ruby">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">1</span>)
-ptr as <span class="hljs-constant">Int8</span>                    <span class="hljs-comment">#:: Pointer(Int8)</span>
+ptr as <span class="hljs-constant">Int8</span>*                    <span class="hljs-comment">#:: Pointer(Int8)</span>
 </code></pre>
 <p>In this case, no runtime checks are done: pointers are unsafe and this type of casting is usually only needed in C bindings and low-level code.</p>
 <h2 id="converting-between-pointer-types-and-other-types">Converting between pointer types and other types</h2>
@@ -1942,7 +1942,7 @@ ptr as <span class="hljs-constant">Int8</span>                    <span class="h
 <pre><code class="lang-ruby">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">UInt8</span>).malloc(<span class="hljs-number">10</span>)
 str = ptr as <span class="hljs-constant">String</span>             <span class="hljs-comment">#:: String</span>
 
-str as <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>)           <span class="hljs-comment">#:: Pointer(Int32)</span>
+str as <span class="hljs-constant">Int32</span>*                   <span class="hljs-comment">#:: Pointer(Int32)</span>
 </code></pre>
 <p>No runtime checks are performed in these cases because, again, pointers are involved. The need for this cast is even more rare than the previous one, but allows to implement some core types (like String) in Crystal itself, and it also allows passing a Reference type to C functions by casting it to a void pointer.</p>
 <h2 id="usage-for-casting-to-a-bigger-type">Usage for casting to a bigger type</h2>

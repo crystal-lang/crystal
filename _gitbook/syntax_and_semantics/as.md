@@ -35,7 +35,7 @@ The `as` expression also allows to cast between pointer types:
 
 ```ruby
 ptr = Pointer(Int32).malloc(1)
-ptr as Int8                    #:: Pointer(Int8)
+ptr as Int8*                    #:: Pointer(Int8)
 ```
 
 In this case, no runtime checks are done: pointers are unsafe and this type of casting is usually only needed in C bindings and low-level code.
@@ -48,7 +48,7 @@ Conversion between pointer types and Reference types is also possible:
 ptr = Pointer(UInt8).malloc(10)
 str = ptr as String             #:: String
 
-str as Pointer(Int32)           #:: Pointer(Int32)
+str as Int32*                   #:: Pointer(Int32)
 ```
 
 No runtime checks are performed in these cases because, again, pointers are involved. The need for this cast is even more rare than the previous one, but allows to implement some core types (like String) in Crystal itself, and it also allows passing a Reference type to C functions by casting it to a void pointer.
