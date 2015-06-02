@@ -502,6 +502,11 @@ describe Time do
     end
   end
 
+  it "compares different kinds" do
+    time = Time.now
+    (time.to_utc <=> time).should eq(0)
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

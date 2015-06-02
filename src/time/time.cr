@@ -221,7 +221,13 @@ struct Time
   end
 
   def <=>(other : self)
-    ticks <=> other.ticks
+    if utc? && other.local?
+      self <=> other.to_utc
+    elsif local? && other.utc?
+      to_utc <=> other
+    else
+      ticks <=> other.ticks
+    end
   end
 
   def hash
