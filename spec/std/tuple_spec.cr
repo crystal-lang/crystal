@@ -172,6 +172,6 @@ describe "Tuple" do
   it "gets last element" do
     tuple = {1, 2.5, "a"}
     tuple.last.should eq("a")
-    # typeof(tuple.last).should eq(String)
+    typeof(tuple.last).should eq(String)
   end
 end
