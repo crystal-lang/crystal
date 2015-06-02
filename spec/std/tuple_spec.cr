@@ -169,9 +169,23 @@ describe "Tuple" do
     typeof(tuple.first).should eq(Int32)
   end
 
+  it "gets first? element" do
+    tuple = {1, 2.5}
+    tuple.first?.should eq(1)
+
+    Tuple.new.first?.should be_nil
+  end
+
   it "gets last element" do
     tuple = {1, 2.5, "a"}
     tuple.last.should eq("a")
     typeof(tuple.last).should eq(String)
+  end
+
+  it "gets last? element" do
+    tuple = {1, 2.5, "a"}
+    tuple.last?.should eq("a")
+
+    Tuple.new.last?.should be_nil
   end
 end

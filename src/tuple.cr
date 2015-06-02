@@ -347,16 +347,52 @@ struct Tuple
     self[0]
   end
 
-  # Returns the last element of this tuple. Raises if this
-  # tuple is empty (this will change to a compile error
-  # in the future).
+  # Returns the first element of this tuple, or nil if this
+  # is the empty tuple.
+  # ```
+  # tuple = {1, 2.5}
+  # tuple.first? #=> 1
+  #
+  # empty = Tuple.new
+  # empty.first? #=> nil
+  # ```
+  def first?
+    {% if @length == 0 %}
+      nil
+    {% else %}
+      self[0]
+    {% end %}
+  end
+
+  # Returns the last element of this tuple. Doesn't compile
+  # if the tuple is empty.
   #
   # ```
   # tuple = {1, 2.5}
   # tuple.last #=> 2.5
   # ```
   def last
-    self[length - 1]
+    {% if true %}
+      self[{{@length - 1}}]
+    {% end %}
+  end
+
+  # Returns the last element of this tuple, or nil if this
+  # is the empty tuple.
+  #
+  # ```
+  # tuple = {1, 2.5}
+  # tuple.last? #=> 2.5
+  #
+  # empty = Tuple.new
+  # empty.last? #=> nil
+  # ```
+  def last?
+    {% if @length == 0 %}
+      nil
+    {% else %}
+      self[{{@length - 1}}]
+    {% end %}
   end
 
   class ItemIterator(T)
