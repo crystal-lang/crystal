@@ -822,4 +822,48 @@ describe "Type inference: class" do
       Bar.new.method
       )) { |mod| mod.nil }
   end
+
+  it "can invoke method on abstract type without subclasses nor instances" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo
+      end
+
+      a = [] of Foo
+      a.each &.foo
+      1
+      )) { int32 }
+  end
+
+  it "can invoke method on abstract generic type without subclasses nor instances" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo(T)
+      end
+
+      a = [] of Foo(Int32)
+      a.each &.foo
+      1
+      )) { int32 }
+  end
+
+  it "can invoke method on abstract generic type with subclasses but no instances" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+        def foo
+        end
+      end
+
+      a = [] of Foo(Int32)
+      a.each &.foo
+      1
+      )) { int32 }
+  end
 end

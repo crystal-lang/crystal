@@ -1502,6 +1502,7 @@ module Crystal
       self
     end
 
+    delegate leaf?, @generic_class
     delegate depth, @generic_class
     delegate defs, @generic_class
     delegate superclass, @generic_class
