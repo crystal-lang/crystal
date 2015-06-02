@@ -312,7 +312,12 @@ module Crystal
     end
 
     def lookup_class_var(node, bind_to_nil_if_non_existent = true)
-      class_var_owner = (@scope || current_type).class_var_owner as ClassVarContainer
+      scope = (@scope || current_type).class_var_owner
+      if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
+        node.raise "can't use class variable with generic types, only with generic types instances"
+      end
+
+      class_var_owner = scope as ClassVarContainer
 
       bind_to_nil = bind_to_nil_if_non_existent && !class_var_owner.has_class_var?(node.name)
 

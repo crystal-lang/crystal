@@ -139,4 +139,47 @@ describe "Type inference: class var" do
       Int64.foo
       ") { int32 }
   end
+
+  it "types class var in generic instance type (#726)" do
+    assert_type(%(
+      class Foo(T)
+        def self.bar
+          @@bar ||= 'a'
+        end
+      end
+
+      Foo(Int32).bar
+      )) { char }
+  end
+
+  it "errors if using class var in generic type without instance" do
+    assert_error %(
+      class Foo(T)
+        def self.bar
+          @@bar
+        end
+      end
+
+      Foo.bar
+      ),
+      "can't use class variable with generic types, only with generic types instances"
+  end
+
+  it "errors if using class var in generic type without instance (2)" do
+    assert_error %(
+      class Foo(T)
+        @@bar = 1
+      end
+      ),
+      "can't use class variable with generic types, only with generic types instances"
+  end
+
+  it "errors if using class var in generic module without instance (2)" do
+    assert_error %(
+      module Foo(T)
+        @@bar = 1
+      end
+      ),
+      "can't use class variable with generic types, only with generic types instances"
+  end
 end

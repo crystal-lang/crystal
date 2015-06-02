@@ -2267,6 +2267,10 @@ module Crystal
       true
     end
 
+    def class_var_owner
+      instance_type
+    end
+
     def to_s(io)
       instance_type.to_s(io)
       io << ":Class"
