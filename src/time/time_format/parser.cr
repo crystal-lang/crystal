@@ -175,6 +175,10 @@ struct TimeFormat
       consume_number
     end
 
+    def week_of_year
+      consume_number
+    end
+
     def char(char)
       if current_char == char
         next_char

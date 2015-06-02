@@ -63,6 +63,19 @@ struct TimeFormat
       pad2 time.day, ' '
     end
 
+    def week_of_year
+      dow_format = TimeFormat.new("%w")
+
+      day_of_year = TimeFormat.new("%j").format(time).to_i
+      day_of_week = dow_format.format(time).to_i
+      day_of_week_jan1 = dow_format.format(Time.new(time.year, 1, 1)).to_i
+
+      week_num = ((day_of_year + 6) / 7)
+      week_num += 1 if day_of_week < day_of_week_jan1
+
+      io << week_num
+    end
+
     def day_name
       io << get_day_name
     end

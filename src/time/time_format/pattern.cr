@@ -62,6 +62,8 @@ struct TimeFormat
             day_of_week_monday_1_7
           when 'w'
             day_of_week_sunday_0_6
+          when 'W'
+            week_of_year
           when 'X'
             twenty_four_hour_time_with_seconds
           when 'y'
