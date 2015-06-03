@@ -13,8 +13,10 @@ macro record(name, *fields)
   end
 end
 
-macro pp(exp)
-  ::puts "#{ {{exp.stringify}} } = #{ ({{exp}}).inspect }"
+macro pp(*exps)
+  {% for exp in exps %}
+    ::puts "#{ {{exp.stringify}} } = #{ ({{exp}}).inspect }"
+  {% end %}
 end
 
 macro assert_responds_to(var, method)
