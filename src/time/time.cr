@@ -258,6 +258,7 @@ struct Time
   def inspect(io : IO)
     TimeFormat.new("%F %T").format(self, io)
     io << " UTC" if utc?
+    TimeFormat.new(" %z").format(self, io) if local?
     io
   end
 
@@ -269,8 +270,8 @@ struct Time
     TimeFormat.new(format).format(self, io)
   end
 
-  def self.parse(time, pattern, kind=Time::Kind::Unspecified)
-    TimeFormat.new(pattern).parse(time, kind)
+  def self.parse(time, pattern, kind = Time::Kind::Unspecified)
+    TimeFormat.new(pattern, kind).parse(time)
   end
 
   # Returns the number of seconds since the Epoch
@@ -442,6 +443,17 @@ struct Time
     compute_ticks do |ticks, tp, tzp|
       ticks
     end
+  end
+
+  # Returns the local time offset in minutes relative to GMT.
+  #
+  # ```
+  # # Assume in Argentina, where it's GMT-3
+  # Time.local_offset_in_minutes #=> -180
+  # ```
+  def self.local_offset_in_minutes
+    LibC.gettimeofday(nil, out tzp)
+    -tzp.tz_minuteswest.to_i32
   end
 
   protected def self.compute_utc_ticks(ticks)

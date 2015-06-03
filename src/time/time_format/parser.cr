@@ -17,7 +17,19 @@ struct TimeFormat
 
     def time(kind = Time::Kind::Unspecified)
       @hour += 12 if @pm
-      Time.new @year, @month, @day, @hour, @minute, @second, @millisecond, kind
+
+      time_kind = @kind || kind
+      time = Time.new @year, @month, @day, @hour, @minute, @second, @millisecond, time_kind
+
+      if offset_in_minutes = @offset_in_minutes
+        time -= offset_in_minutes.minutes if offset_in_minutes != 0
+
+        if (offset_in_minutes != 0) || (kind == Time::Kind::Local && !time.local?)
+          time = time.to_local
+        end
+      end
+
+      time
     end
 
     def year
@@ -173,6 +185,65 @@ struct TimeFormat
 
     def day_of_week_sunday_0_6
       consume_number
+    end
+
+    def time_zone
+      case char = current_char
+      when 'Z'
+        @offset_in_minutes = 0
+        @kind = Time::Kind::Utc
+        next_char
+      when 'U'
+        if next_char == 'T' && next_char == 'C'
+          @offset_in_minutes = 0
+          @kind = Time::Kind::Utc
+          next_char
+        else
+          raise "invalid timezone"
+        end
+      when '-', '+'
+        sign = char == '-' ? -1 : 1
+
+        char = next_char
+        raise "invalid timezone" unless char.digit?
+        hours = char.to_i
+
+        char = next_char
+        raise "invalid timezone" unless char.digit?
+        hours = 10*hours + char.to_i
+
+        char = next_char
+        char = next_char if char == ':'
+        raise "invalid timezone" unless char.digit?
+        minutes = char.to_i
+
+        char = next_char
+        raise "invalid timezone" unless char.digit?
+        minutes = 10*minutes + char.to_i
+
+        @offset_in_minutes = sign * (60*hours + minutes)
+        @kind = Time::Kind::Utc
+        char = next_char
+
+        if @reader.has_next?
+          pos = @reader.pos
+          if char == ':' && next_char.digit? && @reader.has_next? && next_char.digit?
+            next_char
+          elsif char.digit? && next_char.digit?
+            next_char
+          else
+            @reader.pos = pos
+          end
+        end
+      end
+    end
+
+    def time_zone_colon
+      time_zone
+    end
+
+    def time_zone_colon_with_seconds
+      time_zone
     end
 
     def char(char)

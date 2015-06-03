@@ -261,9 +261,12 @@ describe Time do
     t.to_s("%y").should eq("14")
     t.to_s("%m").should eq("01")
     t.to_s("%_m").should eq(" 1")
+    t.to_s("%_%_m2").should eq("%_ 12")
     t.to_s("%-m").should eq("1")
+    t.to_s("%-%-m2").should eq("%-12")
     t.to_s("%B").should eq("January")
     t.to_s("%^B").should eq("JANUARY")
+    t.to_s("%^%^B2").should eq("%^JANUARY2")
     t.to_s("%b").should eq("Jan")
     t.to_s("%^b").should eq("JAN")
     t.to_s("%h").should eq("Jan")
@@ -294,8 +297,11 @@ describe Time do
     t.to_s("%S").to_s.should eq("05")
     t.to_s("%L").to_s.should eq("006")
 
+    Time.utc_now.to_s("%z").should eq("+0000")
+    Time.utc_now.to_s("%:z").should eq("+00:00")
+    Time.utc_now.to_s("%::z").should eq("+00:00:00")
+
     # TODO %N
-    # TODO %z
     # TODO %Z
 
     t.to_s("%A").to_s.should eq("Thursday")
@@ -375,7 +381,6 @@ describe Time do
     Time.parse("123", "%L").millisecond.should eq(123)
 
     # TODO %N
-    # TODO %z
     # TODO %Z
 
     # TODO %G
@@ -402,6 +407,30 @@ describe Time do
 
     Time.parse("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
     Time.parse("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
+
+    time = Time.parse("2014-10-31 10:11:12 Z hi", "%F %T %z hi")
+    time.utc?.should be_true
+    time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
+
+    time = Time.parse("2014-10-31 10:11:12 UTC hi", "%F %T %z hi")
+    time.utc?.should be_true
+    time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
+
+    time = Time.parse("2014-10-31 10:11:12 -06:00 hi", "%F %T %z hi")
+    time.local?.should be_true
+    time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
+
+    time = Time.parse("2014-10-31 10:11:12 +05:00 hi", "%F %T %z hi")
+    time.local?.should be_true
+    time.to_utc.to_s.should eq("2014-10-31 05:11:12 UTC")
+
+    time = Time.parse("2014-10-31 10:11:12 -06:00:00 hi", "%F %T %z hi")
+    time.local?.should be_true
+    time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
+
+    time = Time.parse("2014-10-31 10:11:12 -060000 hi", "%F %T %z hi")
+    time.local?.should be_true
+    time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
   it "can parse in UTC" do

@@ -6,10 +6,10 @@ struct TimeFormat
 
   getter pattern
 
-  def initialize(@pattern : String)
+  def initialize(@pattern : String, @kind = Time::Kind::Unspecified)
   end
 
-  def parse(string, kind = Time::Kind::Unspecified)
+  def parse(string, kind = @kind)
     parser = Parser.new(string)
     parser.visit(pattern)
     parser.time(kind)

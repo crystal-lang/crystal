@@ -129,6 +129,53 @@ struct TimeFormat
       io << time.day_of_week.value
     end
 
+    def time_zone
+      case time.kind
+      when Time::Kind::Utc, Time::Kind::Unspecified
+        io << "+0000"
+      when Time::Kind::Local
+        negative, hours, minutes = local_time_zone_info
+        io << (negative ? "-" : "+")
+        io << "0" if hours < 10
+        io << hours
+        io << "0" if minutes < 10
+        io << minutes
+      end
+    end
+
+    def time_zone_colon
+      case time.kind
+      when Time::Kind::Utc, Time::Kind::Unspecified
+        io << "+00:00"
+      when Time::Kind::Local
+        negative, hours, minutes = local_time_zone_info
+        io << (negative ? "-" : "+")
+        io << "0" if hours < 10
+        io << hours
+        io << ":"
+        io << "0" if minutes < 10
+        io << minutes
+      end
+    end
+
+    def time_zone_colon_with_seconds
+      time_zone_colon
+      io << ":00"
+    end
+
+    def local_time_zone_info
+      minutes = Time.local_offset_in_minutes
+      if minutes < 0
+        minutes = -minutes
+        negative = true
+      else
+        negative = false
+      end
+      hours = minutes / 60
+      minutes = minutes % 60
+      {negative, hours, minutes}
+    end
+
     def char(char)
       io << char
     end
