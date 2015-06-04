@@ -203,6 +203,13 @@ module IO
     write_byte '\n'.ord.to_u8
   end
 
+  def puts(*objects)
+    objects.each do |obj|
+      puts obj
+    end
+    nil
+  end
+
   def printf(format_string, *args)
     printf format_string, args
   end
