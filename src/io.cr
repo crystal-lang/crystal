@@ -186,6 +186,13 @@ module IO
     self << obj
   end
 
+  def print(*objects : _)
+    objects.each do |obj|
+      print obj
+    end
+    nil
+  end
+
   # Writes the given string to this IO followed by a newline character
   # unless the string already ends with one.
   def puts(string : String)
@@ -203,7 +210,7 @@ module IO
     write_byte '\n'.ord.to_u8
   end
 
-  def puts(*objects)
+  def puts(*objects : _)
     objects.each do |obj|
       puts obj
     end

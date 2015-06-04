@@ -36,10 +36,7 @@ def read_line(delimiter : String)
 end
 
 def print(*objects : _)
-  objects.each do |obj|
-    STDOUT.print obj
-  end
-  nil
+  STDOUT.print *objects
 end
 
 def print!(*objects : _)
@@ -66,16 +63,8 @@ def sprintf(format_string, args : Array | Tuple)
   end
 end
 
-def puts(*objects : _)
-  objects.each do |obj|
-    STDOUT.puts obj
-  end
-  nil
-end
-
-def puts
-  STDOUT.puts
-  nil
+def puts(*objects)
+  STDOUT.puts *objects
 end
 
 def p(obj)

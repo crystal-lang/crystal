@@ -71,6 +71,12 @@ describe "StringIO" do
     io.to_s.should eq("foo")
   end
 
+  it "prints several arguments" do
+    io = StringIO.new
+    io.print "foo", "bar", "baz"
+    io.to_s.should eq("foobarbaz")
+  end
+
   it "reads single line content" do
     io = StringIO.new("foo")
     io.gets.should eq("foo")
