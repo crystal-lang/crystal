@@ -50,6 +50,17 @@ describe "StringIO" do
     io.to_s.should eq("foo\n")
   end
 
+  it "puts several arguments" do
+    io = StringIO.new
+    io.puts(1, "aaa", "\n")
+    lines = io.each_line
+
+    lines.next.should eq("1\n")
+    lines.next.should eq("aaa\n")
+    lines.next.should eq("\n")
+    chars.next.should be_a(Iterator::Stop)
+  end
+
   it "print" do
     io = StringIO.new
     io.print "foo"
