@@ -44,9 +44,15 @@ module Process
     ret
   end
 
-  def self.kill(pid : Int32, signal : Int32)
-    if ret = LibC.kill(pid, signal) < 0
-      raise Errno.new(ret)
+  def self.kill(pid : Int, signal : Signal)
+    ret = LibC.kill(pid.to_i32, signal.value)
+    raise Errno.new(ret) if ret < 0
+    0
+  end
+
+  def self.kill(signal : Signal, *pids : Int)
+    pids.each do |pid|
+      kill pid, signal
     end
     0
   end

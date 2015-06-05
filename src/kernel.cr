@@ -108,3 +108,5 @@ def abort(message, status = 1)
   puts message
   exit status
 end
+
+Signal::PIPE.ignore

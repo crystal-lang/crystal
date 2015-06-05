@@ -2,9 +2,7 @@ lib LibC
   fun signal(sig : Int32, handler : Int32 ->)
 end
 
-module Signal
-  extend self
-
+enum Signal
   EXIT   =  0
   HUP    =  1
   INT    =  2
@@ -40,26 +38,27 @@ module Signal
   USR1   = 30
   USR2   = 31
 
-  DEFAULT = Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
-  IGNORE  = Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
-
-  def trap(signal, block : Int32 ->)
-    trap signal, &block
+  def trap(block : Int32 ->)
+    trap &block
   end
 
-  def trap(signal, &block : Int32 ->)
+  def trap(&block : Int32 ->)
     if block.closure?
       handlers = @@handlers ||= {} of Int32 => Int32 ->
-      handlers[signal] = block
-      LibC.signal signal, ->handler(Int32)
+      handlers[value] = block
+      LibC.signal value, ->(num) do
+        @@handlers.not_nil![num]?.try &.call(num)
+      end
     else
-      LibC.signal signal, block
+      LibC.signal value, block
     end
   end
 
-  protected def handler(num)
-    @@handlers.not_nil![num]?.try &.call(num)
+  def reset
+    trap Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
   end
 
-  trap(PIPE, IGNORE)
+  def ignore
+    trap Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
+  end
 end
