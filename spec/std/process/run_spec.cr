@@ -57,4 +57,14 @@ describe "Process.run" do
     Process.kill(pid.to_i, 9).should eq(0)
   end
 
+  it "gets the pgid of a process id" do
+    pid = fork do
+      sleep 1
+    end
+    begin
+      Process.getpgid(pid.to_i).should eq(0)
+    rescue
+    end
+  end
+
 end
