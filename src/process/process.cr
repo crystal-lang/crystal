@@ -1,7 +1,8 @@
 lib LibC
   @[ReturnsTwice]
   fun fork : Int32
-
+  fun getpgid(pid : Int32) : Int32
+  fun kill(pid : Int32, signal : Int32) : Int32
   fun getpid : Int32
   fun getppid : Int32
   fun exit(status : Int32) : NoReturn
@@ -35,6 +36,18 @@ module Process
 
   def self.pid
     LibC.getpid()
+  end
+
+  def self.getpgid(pid : Int32)
+    if LibC.getpgid(pid) == 0
+      return 0
+    else
+      raise "ESRCH"
+    end
+  end
+
+  def self.kill(pid : Int32, signal : Int32)
+    LibC.kill(pid, signal)
   end
 
   def self.ppid
