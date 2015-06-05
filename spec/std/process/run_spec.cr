@@ -61,10 +61,7 @@ describe "Process.run" do
     pid = fork do
       sleep 1
     end
-    begin
-      Process.getpgid(pid.to_i).should eq(0)
-    rescue
-    end
+    (0..65535).should contain Process.getpgid(pid.to_i)
   end
 
 end
