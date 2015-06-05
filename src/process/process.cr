@@ -38,17 +38,16 @@ module Process
     LibC.getpid()
   end
 
-  def self.getpgid(pid : Int32)
-    gpid = LibC.getpgid(pid)
-    if gpid.is_a?(Int32) && gpid >= 0
-      return gpid
-    else
-      raise Exception.new("ESRCH")
-    end
+  def getpgid(pid : Int32)
+    ret = LibC.getpgid(pid)
+    raise Errno.new(ret) if ret <= 0
+    ret
   end
 
-  def self.kill(pid : Int32, signal : Int32)
-    LibC.kill(pid, signal)
+  def kill(pid : Int32, signal : Int32)
+    if ret = LibC.kill(pid, signal) <= 0
+      raise Errno.new(ret)
+    end
   end
 
   def self.ppid
