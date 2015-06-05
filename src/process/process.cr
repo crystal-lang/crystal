@@ -38,16 +38,17 @@ module Process
     LibC.getpid()
   end
 
-  def getpgid(pid : Int32)
+  def self.getpgid(pid : Int32)
     ret = LibC.getpgid(pid)
-    raise Errno.new(ret) if ret <= 0
+    raise Errno.new(ret) if ret < 0
     ret
   end
 
-  def kill(pid : Int32, signal : Int32)
-    if ret = LibC.kill(pid, signal) <= 0
+  def self.kill(pid : Int32, signal : Int32)
+    if ret = LibC.kill(pid, signal) < 0
       raise Errno.new(ret)
     end
+    0
   end
 
   def self.ppid
