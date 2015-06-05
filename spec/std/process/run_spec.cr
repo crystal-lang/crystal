@@ -54,7 +54,7 @@ describe "Process.run" do
     pid = fork do
       sleep 1
     end
-    Process.kill(pid.to_i, 9).should eq(0)
+    Process.kill(pid.to_i, Signal::KILL).should eq(0)
   end
 
   it "gets the pgid of a process id" do
