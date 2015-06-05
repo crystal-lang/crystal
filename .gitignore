@@ -9,3 +9,4 @@ coverage/
 /Makefile.local
 all_spec
 /tmp
+/doc/
