@@ -49,4 +49,19 @@ describe "Process.run" do
     Process.run("/bin/cat", input: "hello", output: io).output.should be_nil
     io.to_s.should eq("hello")
   end
+
+  it "kills a process" do
+    pid = fork do
+      sleep 1
+    end
+    Process.kill(pid.to_i, Signal::KILL).should eq(0)
+  end
+
+  it "gets the pgid of a process id" do
+    pid = fork do
+      sleep 1
+    end
+    (0..65535).should contain Process.getpgid(pid.to_i)
+  end
+
 end
