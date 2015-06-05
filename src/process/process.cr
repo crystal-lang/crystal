@@ -40,10 +40,10 @@ module Process
 
   def self.getpgid(pid : Int32)
     gpid = LibC.getpgid(pid)
-    if gpid.is_a?(Int32) && gpid.to_i >= 0
+    if gpid.is_a?(Int32) && gpid >= 0
       return gpid
     else
-      raise "ESRCH"
+      raise Exception.new("ESRCH")
     end
   end
 
