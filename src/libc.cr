@@ -1,29 +1,32 @@
 lib LibC
+  ifdef x86_64
+    alias SizeT = UInt64
+    alias SSizeT = Int64
+  else
+    alias SizeT = UInt32
+    alias SSizeT = Int32
+  end
+
+  #ifdef windows
+  #alias LongT = Int32
+  #else
+  alias LongT = SSizeT
+  #end
+
+  alias PtrDiffT = SSizeT
+
+  alias TimeT = Int64
+
   ifdef darwin
     alias ModeT = UInt16
   elsif linux
     alias ModeT = UInt32
   end
 
-  ifdef x86_64
-    alias IntT = Int64
-    alias UIntT = UInt64
-    alias LongT = Int64
-  else
-    alias IntT = Int32
-    alias UIntT = UInt32
-    alias LongT = Int32
-  end
-
-  alias PtrDiffT = IntT
-  alias SizeT = UIntT
-  alias SSizeT = IntT
-  alias TimeT = IntT
-
-  fun malloc(size : UInt32) : Void*
-  fun realloc(ptr : Void*, size : UInt32) : Void*
+  fun malloc(size : SizeT) : Void*
+  fun realloc(ptr : Void*, size : SizeT) : Void*
   fun free(ptr : Void*)
-  fun time(t : Int64) : Int64
+  fun time(t : TimeT*) : TimeT
   fun free(ptr : Void*)
-  fun memcmp(p1 : Void*, p2 : Void*, size : LibC::SizeT) : Int32
+  fun memcmp(p1 : Void*, p2 : Void*, size : SizeT) : Int32
 end
