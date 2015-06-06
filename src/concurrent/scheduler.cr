@@ -26,7 +26,8 @@ class Scheduler
       fd_io = data as FileDescriptorIO
       if flags.includes?(LibEvent2::EventFlags::Read)
         fd_io.resume_read
-      elsif flags.includes?(LibEvent2::EventFlags::Write)
+      end
+      if flags.includes?(LibEvent2::EventFlags::Write)
         fd_io.resume_write
       end
     end, io as Void*)
