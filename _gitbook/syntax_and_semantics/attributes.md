@@ -8,7 +8,7 @@ Tells the compiler how to link a C library. This is explained in the [lib](c_bin
 
 ## ThreadLocal
 
-The `@[ThreadLocal]` attribute can be applied to global varaibles and class variables. It makes them be thread local.
+The `@[ThreadLocal]` attribute can be applied to global variables and class variables. It makes them be thread local.
 
 ```ruby
 # One for each thread
