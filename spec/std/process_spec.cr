@@ -55,7 +55,7 @@ describe Process do
   describe "kill" do
     it "kills a process" do
       pid = fork { loop {} }
-      Process.kill(pid, Signal::KILL).should eq(0)
+      Process.kill(Signal::KILL, pid).should eq(0)
     end
 
     it "kills many process" do
@@ -68,6 +68,6 @@ describe Process do
   it "gets the pgid of a process id" do
     pid = fork { loop {} }
     Process.getpgid(pid).should be_a(Int32)
-    Process.kill(pid, Signal::KILL)
+    Process.kill(Signal::KILL, pid)
   end
 end
