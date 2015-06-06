@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="3.2.6" data-basepath="../.." data-revision="Wed May 20 2015 15:47:34 GMT-0300 (ART)">
+    <div class="book" data-level="3.2.6" data-basepath="../.." data-revision="Sat Jun 06 2015 15:19:12 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1936,8 +1936,9 @@
 <p>You can use a backslash followed by an <em>u</em> and four hexadecimal characters to denote a unicode codepoint written:</p>
 <pre><code class="lang-ruby"><span class="hljs-string">&quot;\u0041&quot;</span> <span class="hljs-comment"># == &quot;A&quot;</span>
 </code></pre>
-<p>Or you can use curly braces and specify up to four hexadecimal numbers:</p>
-<pre><code class="lang-ruby"><span class="hljs-string">&quot;\u{41}&quot;</span> <span class="hljs-comment"># == &quot;A&quot;</span>
+<p>Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):</p>
+<pre><code class="lang-ruby"><span class="hljs-string">&quot;\u{41}&quot;</span>    <span class="hljs-comment"># == &quot;A&quot;</span>
+<span class="hljs-string">&quot;\u{1F52E}&quot;</span> <span class="hljs-comment"># == &quot;&#x1F52E;&quot;</span>
 </code></pre>
 <p>A string can span multiple lines:</p>
 <pre><code class="lang-ruby"><span class="hljs-string">&quot;hello
