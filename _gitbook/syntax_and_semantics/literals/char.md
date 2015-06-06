@@ -41,8 +41,9 @@ You can use a backslash followed by an *u* and four hexadecimal characters to de
 '\u0041' # == 'A'
 ```
 
-Or you can use curly braces and specify up to four hexadecimal numbers:
+Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):
 
 ```ruby
-'\u{41}' # == 'A'
+'\u{41}'    # == 'A'
+'\u{1F52E}' # == '🔮'
 ```
