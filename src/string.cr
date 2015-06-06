@@ -42,7 +42,7 @@ end
 # "\u0041" # == "A"
 # ```
 #
-# Or you can use curly braces and specify up to four hexadecimal numbers:
+# Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):
 #
 # ```text
 # "\u{41}" # == "A"
