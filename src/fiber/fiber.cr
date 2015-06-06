@@ -19,7 +19,7 @@ class Fiber
   protected property :prev_fiber
 
   def initialize(&@proc)
-    @stack = @@stack_pool.pop? || LibC.malloc(STACK_SIZE.to_u32)
+    @stack = @@stack_pool.pop? || LibC.malloc(LibC::SizeT.cast(STACK_SIZE))
     @stack_top = @stack_bottom = @stack + STACK_SIZE
     @cr = LibPcl.co_create(->(fiber) { (fiber as Fiber).run }, self as Void*, @stack, STACK_SIZE)
     LibPcl.co_set_data(@cr, self as Void*)
