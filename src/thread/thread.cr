@@ -1,6 +1,10 @@
 require "./*"
 
+# :nodoc:
 class Thread(T, R)
+  # Don't use this class, it is used internally by the event scheduler.
+  # Use spawn and channels instead.
+
   def self.new(&func : -> R)
     Thread(Nil, R).new(nil) { func.call }
   end
