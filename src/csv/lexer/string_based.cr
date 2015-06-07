@@ -1,3 +1,4 @@
+# :nodoc:
 class CSV::Lexer::StringBased < CSV::Lexer
   def initialize(string)
     super()

@@ -1,3 +1,4 @@
+# :nodoc:
 class ECR::Lexer
   class Token
     property :type

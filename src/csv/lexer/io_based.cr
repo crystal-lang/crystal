@@ -1,3 +1,4 @@
+# :nodoc:
 class CSV::Lexer::IOBased < CSV::Lexer
   def initialize(io)
     super()
