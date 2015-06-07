@@ -86,4 +86,14 @@ describe CSV do
     end
     sum.should eq(10)
   end
+
+  it "gets row iterator" do
+    iter = CSV.each_row("1,2\n3,4\n")
+    iter.next.should eq(["1", "2"])
+    iter.next.should eq(["3", "4"])
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(["1", "2"])
+  end
 end

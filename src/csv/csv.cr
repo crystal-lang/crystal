@@ -20,6 +20,10 @@ module CSV
     end
   end
 
+  def self.each_row(string_or_io)
+    Parser.new(string_or_io).each_row
+  end
+
   def self.build
     String.build do |io|
       build(io) { |builder| yield builder }

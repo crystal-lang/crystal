@@ -16,6 +16,10 @@ class CSV::Parser
     end
   end
 
+  def each_row
+    RowIterator.new(self)
+  end
+
   def next_row
     token = @lexer.next_token
     if token.kind == :eof
@@ -32,6 +36,26 @@ class CSV::Parser
         @max_row_length = row.length if row.length > @max_row_length
         return row
       end
+    end
+  end
+
+  def rewind
+    @lexer.rewind
+  end
+
+  # :nodoc:
+  struct RowIterator
+    include Iterator(Array(String))
+
+    def initialize(@parser)
+    end
+
+    def next
+      @parser.next_row || stop
+    end
+
+    def rewind
+      @parser.rewind
     end
   end
 end
