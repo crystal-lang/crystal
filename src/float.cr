@@ -62,6 +62,14 @@ struct Float32
     0.0_f32 - self
   end
 
+  def %(other)
+    if other == 0.0
+      raise DivisionByZero.new
+    else
+      LibM.remainder_f64(self, other)
+    end
+  end
+
   def ceil
     LibM.ceil_f32(self)
   end
@@ -116,6 +124,14 @@ struct Float64
 
   def -
     0.0 - self
+  end
+
+  def %(other)
+    if other == 0.0
+      raise DivisionByZero.new
+    else
+      LibM.remainder_f64(self, other)
+    end
   end
 
   def ceil

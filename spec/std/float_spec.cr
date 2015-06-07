@@ -12,6 +12,16 @@ describe "Float" do
     assert { (2.5_f64 ** 2.5).should eq(9.882117688026186_f64) }
   end
 
+  describe "%" do
+    it "raises when mods by zero" do
+      expect_raises(DivisionByZero) { 1.2 % 0.0 }
+    end
+
+    assert { (2.5 % 2.0).should eq(0.5) }
+    assert { (4.0 % 2.0).should eq(0.0) }
+    assert { (2.0 % 4.0).should eq(2.0) }
+  end
+
   describe "round" do
     assert { 2.5.round.should eq(3) }
     assert { 2.4.round.should eq(2) }
