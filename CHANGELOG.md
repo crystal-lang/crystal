@@ -1,3 +1,20 @@
+## 0.7.3 (2015-06-07)
+
+* Added `Tuple.from_json` and `Tuple.to_json`
+* The `method_missing` macro now accepts a 1 argument variant that is a Call node. The 3 arguments variant will be deprecated.
+* Flush STDOUT at program exit (fixes `print` not showing any output)
+* Added `Time#to_utc` and `Time#to_local` (thanks @datanoise)
+* Time comparison is now correct when comparing local vs. utc times
+* Support timezone offsets in Time parsing and formatting
+* Added `IO#gets(delimiter : String)`
+* Added `String#chomp(Char)` and `String#chomp(String)`
+* Allow invoking `debug()` inside a macro to see what's being generated.
+* `IO#puts` and `IO#print` now receive a splat (thanks @rhysd)
+* Added `Process.kill` and `Process.getpgid` (thanks @barachy)
+* `Signal` is now an enum. Use it like `Signal::INT.trap { ... }` instead of `Signal.trap(Signal::INT) { ... }`
+* Added `CSV.each_row` (both in block and iterator forms)
+* Important fixes to non-blocking IO logic.
+
 ## 0.7.2 (2015-05-26)
 
 * Improved performance of Regex
