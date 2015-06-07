@@ -31,6 +31,10 @@
 # 1_000_000.111_111 # better than 1000000.111111
 # ```
 struct Float
+  def %(other)
+    modulo(other)
+  end
+
   def nan?
     !(self == self)
   end
@@ -49,6 +53,27 @@ struct Float
 
   def fdiv(other)
     self / other
+  end
+
+  def modulo(other)
+    if other == 0.0
+      raise DivisionByZero.new
+    else
+      self - other * self.fdiv(other).floor
+    end
+  end
+
+  def remainder(other)
+    if other == 0.0
+      raise DivisionByZero.new
+    else
+      mod = self % other
+      return 0.0 if mod == 0.0
+      return mod if self > 0 && other > 0
+      return mod if self < 0 && other < 0
+
+      mod - other
+    end
   end
 end
 
