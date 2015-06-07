@@ -2,6 +2,47 @@ require "colorize"
 require "option_parser"
 require "signal"
 
+# crystal's builtin testing library inspired by ruby's rspec.
+#
+# A basic spec looks like this:
+#
+# ```
+# require "spec"
+#
+# describe "sample specs" do
+#   describe "addition" do
+#     it "correctly adds one and one" do
+#       (1 + 1).should eq 2
+#     end
+#   end
+#
+#   describe "empty" do
+#     it "is empty" do
+#       ([] of Int32).empty?.should be_true
+#     end
+#   end
+# end
+# ```
+#
+# Specs live in the `spec` directory of a project by convention. You can compile
+# and run the specs of a project by running:
+#
+# ```
+# crystal spec
+# ```
+#
+# You can also just compile and run individual files by providing a path to a
+# spec file:
+#
+# ```
+# crystal spec spec/my/test/file_spec.cr
+# ```
+#
+# You can also run individual specs by optionally providing a line:
+#
+# ```
+# crystal spec spec/my/test/file_spec.cr:14
+# ```
 module Spec
   COLORS = {
     success: :green,
