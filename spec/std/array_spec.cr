@@ -282,7 +282,6 @@ describe "Array" do
   describe "empty" do
     it "is empty" do
       ([] of Int32).empty?.should be_true
-      [1].empty?.should be_false
     end
 
     it "is not empty" do
