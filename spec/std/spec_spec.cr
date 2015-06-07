@@ -77,7 +77,7 @@ describe "Spec matchers" do
     end
   end
 
-  context "should work as describe" do
+  context "should work like describe" do
     it "is true" do
       true.should be_truthy
     end
