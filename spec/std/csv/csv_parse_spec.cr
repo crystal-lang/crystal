@@ -78,4 +78,12 @@ describe CSV do
     parser.next_row.should eq(%w(good bye))
     parser.next_row.should be_nil
   end
+
+  it "does CSV.each_row" do
+    sum = 0
+    CSV.each_row("1,2\n3,4\n") do |row|
+      sum += row.map(&.to_i).sum
+    end
+    sum.should eq(10)
+  end
 end

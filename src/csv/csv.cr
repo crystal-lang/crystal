@@ -14,6 +14,12 @@ module CSV
     Parser.new(string_or_io).parse
   end
 
+  def self.each_row(string_or_io)
+    Parser.new(string_or_io).each_row do |row|
+      yield row
+    end
+  end
+
   def self.build
     String.build do |io|
       build(io) { |builder| yield builder }
