@@ -1,20 +1,11 @@
 {% highlight ruby %}
-# Compute prime numbers up to 100 with the Sieve of Eratosthenes
-max = 100
+# A very basic HTTP server
+require "http/server"
 
-sieve = Array.new(max + 1, true)
-sieve[0] = false
-sieve[1] = false
-
-(2...max).each do |i|
-  if sieve[i]
-    (2 * i).step(max, i) do |j|
-      sieve[j] = false
-    end
-  end
+server = HTTP::Server.new(8080) do |request|
+  HTTP::Response.ok "text/plain", "Hello world!"
 end
 
-sieve.each_with_index do |prime, number|
-  puts number if prime
-end
+puts "Listening on http://0.0.0.0:8080"
+server.listen
 {% endhighlight %}
