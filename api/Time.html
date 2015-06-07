@@ -41,7 +41,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr">time/time.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr">time/time.cr</a>
     
     <br/>
   
@@ -132,6 +132,13 @@
     
       <li class="entry-summary">
         <a href="#leap_year%3F%28year%29-class-method" class="signature"><strong>.leap_year?</strong>(year)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#local_offset_in_minutes-class-method" class="signature"><strong>.local_offset_in_minutes</strong></a>
+        
+          <div class="summary"><p>Returns the local time offset in minutes relative to GMT.</p></div>
         
       </li>
     
@@ -425,12 +432,22 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#to_local-instance-method" class="signature"><strong>#to_local</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#to_s%28format%20%3A%20String%2C%20io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(format : String, io : IO)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28format%20%3A%20String%29-instance-method" class="signature"><strong>#to_s</strong>(format : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_utc-instance-method" class="signature"><strong>#to_utc</strong></a>
         
       </li>
     
@@ -481,7 +498,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L95" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -494,7 +511,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L231" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L237" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -507,7 +524,25 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L244" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L250" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="local_offset_in_minutes-class-method">
+        
+        def self.<strong>local_offset_in_minutes</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the local time offset in minutes relative to GMT.</p>
+
+<pre><code><span class="c"># Assume in Argentina, where it's GMT-3</span>
+<span class="t">Time</span>.local_offset_in_minutes <span class="c">#=> -180</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L454" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -520,7 +555,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L413" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L436" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -533,7 +568,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L91" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L91" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -546,7 +581,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L154" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L154" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -559,7 +594,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L266" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L273" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -572,7 +607,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L158" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L158" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -585,7 +620,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L419" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L442" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -598,7 +633,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -611,7 +646,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L67" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L67" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -624,7 +659,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L63" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L63" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -642,7 +677,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L107" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -655,7 +690,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L99" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -668,7 +703,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L146" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L146" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -681,7 +716,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L150" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L150" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -694,7 +729,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L103" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L103" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -707,7 +742,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L111" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -720,7 +755,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L223" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L223" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -733,7 +768,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L137" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L137" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -746,7 +781,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L290" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L313" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -759,7 +794,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L291" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L314" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -772,7 +807,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L292" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L315" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -785,7 +820,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L289" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L312" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -798,7 +833,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L288" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L311" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -811,7 +846,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L287" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L310" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -824,7 +859,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L294" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L317" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -837,7 +872,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L286" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L309" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -850,7 +885,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L340" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L363" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -863,7 +898,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L341" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L364" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -876,7 +911,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L342" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L365" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -889,7 +924,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L329" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L352" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -902,7 +937,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L315" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L338" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -915,7 +950,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L305" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L328" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -928,7 +963,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L331" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L354" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -941,7 +976,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L303" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L326" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -954,7 +989,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L343" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L366" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -967,7 +1002,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L166" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L166" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -980,7 +1015,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L178" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L178" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -993,7 +1028,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L202" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L202" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1006,7 +1041,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L207" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L207" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1019,7 +1054,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1032,7 +1067,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L227" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L233" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1045,7 +1080,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L182" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L182" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1058,7 +1093,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L252" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L258" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1071,7 +1106,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L211" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L211" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1084,7 +1119,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L219" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L219" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1097,7 +1132,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L194" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L194" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1110,7 +1145,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L186" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L186" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1123,7 +1158,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1136,7 +1171,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L174" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L174" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1149,7 +1184,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1162,7 +1197,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L190" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L190" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1175,7 +1210,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1188,7 +1223,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1201,7 +1236,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L162" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L162" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1214,7 +1249,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L198" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L198" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1227,7 +1262,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L275" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L282" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1242,7 +1277,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L271" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L278" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_local-instance-method">
+        
+        def <strong>to_local</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L294" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1255,7 +1303,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L262" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L269" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1268,7 +1316,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L258" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L265" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_utc-instance-method">
+        
+        def <strong>to_utc</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L286" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1281,7 +1342,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1294,7 +1355,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L215" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L215" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1307,7 +1368,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L368" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1320,7 +1381,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L170" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L170" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1338,7 +1399,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/time/time.cr#L279" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/time/time.cr#L302" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

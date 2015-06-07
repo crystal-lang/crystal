@@ -11,7 +11,7 @@
 <body>
 
 
-  <h1>module Signal</h1>
+  <h1>enum Signal</h1>
 
 
 
@@ -22,11 +22,6 @@
 
 
 
-
-  <h2>Extended Modules</h2>
-  
-    <a href="Signal.html">Signal</a>
-  
 
 
 
@@ -38,7 +33,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/signal.cr">signal.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/signal.cr">signal.cr</a>
     
     <br/>
   
@@ -46,12 +41,82 @@
 
 
   
-    <h2>Constant Summary</h2>
+    <h2>Enum Members</h2>
   
   <ul>
     
       <li class="entry-const">
+        <strong>EXIT</strong> = <code><span class="n">0</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>HUP</strong> = <code><span class="n">1</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>INT</strong> = <code><span class="n">2</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>QUIT</strong> = <code><span class="n">3</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>ILL</strong> = <code><span class="n">4</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TRAP</strong> = <code><span class="n">5</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>IOT</strong> = <code><span class="n">6</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
         <strong>ABRT</strong> = <code><span class="n">6</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>EMT</strong> = <code><span class="n">7</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>FPE</strong> = <code><span class="n">8</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>KILL</strong> = <code><span class="n">9</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>BUS</strong> = <code><span class="n">10</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SEGV</strong> = <code><span class="n">11</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>SYS</strong> = <code><span class="n">12</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PIPE</strong> = <code><span class="n">13</span></code>
         
       </li>
     
@@ -61,7 +126,27 @@
       </li>
     
       <li class="entry-const">
-        <strong>BUS</strong> = <code><span class="n">10</span></code>
+        <strong>TERM</strong> = <code><span class="n">15</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>URG</strong> = <code><span class="n">16</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>STOP</strong> = <code><span class="n">17</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>TSTP</strong> = <code><span class="n">18</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>CONT</strong> = <code><span class="n">19</span></code>
         
       </li>
     
@@ -76,116 +161,6 @@
       </li>
     
       <li class="entry-const">
-        <strong>CONT</strong> = <code><span class="n">19</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>DEFAULT</strong> = <code><span class="t">Proc</span>(<span class="t">Int32</span>, <span class="t">Void</span>).<span class="k">new</span>(<span class="t">Pointer</span>(<span class="t">Void</span>).<span class="k">new</span>(<span class="n">0</span>), <span class="t">Pointer</span>(<span class="t">Void</span>).null)</code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>EMT</strong> = <code><span class="n">7</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>EXIT</strong> = <code><span class="n">0</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>FPE</strong> = <code><span class="n">8</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>HUP</strong> = <code><span class="n">1</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>IGNORE</strong> = <code><span class="t">Proc</span>(<span class="t">Int32</span>, <span class="t">Void</span>).<span class="k">new</span>(<span class="t">Pointer</span>(<span class="t">Void</span>).<span class="k">new</span>(<span class="n">1</span>), <span class="t">Pointer</span>(<span class="t">Void</span>).null)</code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>ILL</strong> = <code><span class="n">4</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>INFO</strong> = <code><span class="n">29</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>INT</strong> = <code><span class="n">2</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>IO</strong> = <code><span class="n">23</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>IOT</strong> = <code><span class="n">6</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>KILL</strong> = <code><span class="n">9</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>PIPE</strong> = <code><span class="n">13</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>PROF</strong> = <code><span class="n">27</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>QUIT</strong> = <code><span class="n">3</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>SEGV</strong> = <code><span class="n">11</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>STOP</strong> = <code><span class="n">17</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>SYS</strong> = <code><span class="n">12</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>TERM</strong> = <code><span class="n">15</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>TRAP</strong> = <code><span class="n">5</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>TSTP</strong> = <code><span class="n">18</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
         <strong>TTIN</strong> = <code><span class="n">21</span></code>
         
       </li>
@@ -196,27 +171,7 @@
       </li>
     
       <li class="entry-const">
-        <strong>URG</strong> = <code><span class="n">16</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>USR1</strong> = <code><span class="n">30</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>USR2</strong> = <code><span class="n">31</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>VTLARM</strong> = <code><span class="n">26</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>WINCH</strong> = <code><span class="n">28</span></code>
+        <strong>IO</strong> = <code><span class="n">23</span></code>
         
       </li>
     
@@ -230,6 +185,36 @@
         
       </li>
     
+      <li class="entry-const">
+        <strong>VTLARM</strong> = <code><span class="n">26</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>PROF</strong> = <code><span class="n">27</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>WINCH</strong> = <code><span class="n">28</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>INFO</strong> = <code><span class="n">29</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>USR1</strong> = <code><span class="n">30</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>USR2</strong> = <code><span class="n">31</span></code>
+        
+      </li>
+    
   </ul>
 
 
@@ -240,12 +225,7 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#trap%28signal%2C%20%26block%20%3A%20Int32%20-%3E%20%29-instance-method" class="signature"><strong>#trap</strong>(signal, &block : Int32 -> )</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#trap%28signal%2C%20block%20%3A%20Int32%20-%3E%20%29-instance-method" class="signature"><strong>#trap</strong>(signal, block : Int32 -> )</a>
+        <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
         
       </li>
     
@@ -261,27 +241,13 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="trap%28signal%2C%20%26block%20%3A%20Int32%20-%3E%20%29-instance-method">
+      <div class="signature" id="value-instance-method">
         
-        def <strong>trap</strong>(signal, &block : <a href="Int32.html">Int32</a> -> )
+        def <strong>value</strong>
       </div>
       
+        <div class="doc"></div>
       
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/signal.cr#L50" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="trap%28signal%2C%20block%20%3A%20Int32%20-%3E%20%29-instance-method">
-        
-        def <strong>trap</strong>(signal, block : <a href="Int32.html">Int32</a> -> )
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/3034ebb10de72cb49ecb3907ee8361dce461c99c/src/signal.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
