@@ -188,8 +188,9 @@ describe "Lexer" do
   it_lexes_number :u64, ["0xFFFF_u64", "65535"]
 
   it_lexes_i32 [["0123", "83"], ["-0123", "-83"], ["+0123", "+83"]]
+  it_lexes_i32 [["0o123", "83"], ["-0o123", "-83"], ["+0o123", "+83"]]
   it_lexes_f64 [["0.5", "0.5"], ["+0.5", "+0.5"], ["-0.5", "-0.5"]]
-  it_lexes_i64 [["0123_i64", "83"], ["0x1_i64", "1"], ["0b1_i64", "1"]]
+  it_lexes_i64 [["0123_i64", "83"], ["0o123_i64", "83"], ["0x1_i64", "1"], ["0b1_i64", "1"]]
 
   it_lexes_i64 ["2147483648", "-2147483649", "-9223372036854775808"]
   it_lexes_i64 [["2147483648.foo", "2147483648"]]
@@ -263,6 +264,7 @@ describe "Lexer" do
 
   assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"
   assert_syntax_error "0200_i8", "128 doesn't fit in an Int8"
+  assert_syntax_error "0o200_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "0b10000000_i8", "128 doesn't fit in an Int8"
 
   it "lexes not instance var" do
