@@ -43,10 +43,10 @@
 # 0b1101 # == 13
 # ```
 #
-# Octal numbers start with a zero:
+# Octal numbers start with `0o`:
 #
 # ```text
-# 0123 # == 83
+# 0o123 # == 83
 # ```
 #
 # Hexadecimal numbers start with `0x`:

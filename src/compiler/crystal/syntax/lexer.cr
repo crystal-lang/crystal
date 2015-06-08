@@ -1316,6 +1316,9 @@ module Crystal
       case peek_next_char
       when 'x'
         scan_hex_number(start, negative)
+      when 'o'
+        next_char
+        scan_octal_number(start, negative)
       when 'b'
         scan_bin_number(start, negative)
       when '.'
