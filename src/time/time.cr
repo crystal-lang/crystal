@@ -1,5 +1,3 @@
-require "./**"
-
 lib LibC
   struct TimeSpec
     tv_sec  : LibC::TimeT
@@ -475,3 +473,6 @@ struct Time
     yield ticks, tp, tzp
   end
 end
+
+require "./**"
+
