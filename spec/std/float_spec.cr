@@ -12,6 +12,42 @@ describe "Float" do
     assert { (2.5_f64 ** 2.5).should eq(9.882117688026186_f64) }
   end
 
+  describe "%" do
+    it "uses modulo behavior, not remainder behavior" do
+      assert { ((-11.5) % 4.0).should eq(0.5) }
+    end
+  end
+
+  describe "modulo" do
+    it "raises when mods by zero" do
+      expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
+    end
+
+    assert { (13.0.modulo 4.0).should eq(1.0) }
+    assert { (13.0.modulo -4.0).should eq(-3.0) }
+    assert { (-13.0.modulo 4.0).should eq(3.0) }
+    assert { (-13.0.modulo -4.0).should eq(-1.0) }
+    assert { (11.5.modulo 4.0).should eq(3.5) }
+    assert { (11.5.modulo -4.0).should eq(-0.5) }
+    assert { (-11.5.modulo 4.0).should eq(0.5) }
+    assert { (-11.5.modulo -4.0).should eq(-3.5) }
+  end
+
+  describe "remainder" do
+    it "raises when mods by zero" do
+      expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
+    end
+
+    assert { (13.0.remainder 4.0).should eq(1.0) }
+    assert { (13.0.remainder -4.0).should eq(1.0) }
+    assert { (-13.0.remainder 4.0).should eq(-1.0) }
+    assert { (-13.0.remainder -4.0).should eq(-1.0) }
+    assert { (11.5.remainder 4.0).should eq(3.5) }
+    assert { (11.5.remainder -4.0).should eq(3.5) }
+    assert { (-11.5.remainder 4.0).should eq(-3.5) }
+    assert { (-11.5.remainder -4.0).should eq(-3.5) }
+  end
+
   describe "round" do
     assert { 2.5.round.should eq(3) }
     assert { 2.4.round.should eq(2) }
