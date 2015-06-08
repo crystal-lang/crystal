@@ -159,6 +159,19 @@ describe "SimpleHash" do
     end
   end
 
+  describe "size" do
+    it "is the same as #length" do
+      a = SimpleHash(Int32, Int32).new
+      a.size.should eq(a.length)
+
+      a = SimpleHash {1 => 2}
+      a.size.should eq(a.length)
+
+      a = SimpleHash {1 => 2, 3 => 4, 5 => 6, 7 => 8}
+      a.size.should eq(a.length)
+    end
+  end
+
   describe "to_s" do
     it "returns a string representation" do
       a = SimpleHash(Int32, Int32).new

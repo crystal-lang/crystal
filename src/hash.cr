@@ -301,6 +301,10 @@ class Hash(K, V)
     end
   end
 
+  def size
+    @length
+  end
+
   def clear
     @buckets_length.times do |i|
       @buckets[i] = nil
