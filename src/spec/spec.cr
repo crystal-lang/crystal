@@ -2,7 +2,7 @@ require "colorize"
 require "option_parser"
 require "signal"
 
-# crystal's builtin testing library inspired by ruby's rspec.
+# Crystal's builtin testing library inspired by ruby's rspec.
 #
 # A basic spec looks like this:
 #
@@ -24,21 +24,21 @@ require "signal"
 # end
 # ```
 #
-# Specs live in the `spec` directory of a project by convention. You can compile
+# By convention, specs live in the `spec` directory of a project. You can compile
 # and run the specs of a project by running:
 #
 # ```
 # crystal spec
 # ```
 #
-# You can also just compile and run individual files by providing a path to a
-# spec file:
+# Also, you can compile and run individual spec files by providing their path:
 #
 # ```
 # crystal spec spec/my/test/file_spec.cr
 # ```
 #
-# You can also run individual specs by optionally providing a line:
+# In addition, you can also run individual specs by optionally providing a line
+# number:
 #
 # ```
 # crystal spec spec/my/test/file_spec.cr:14
