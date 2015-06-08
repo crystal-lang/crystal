@@ -120,4 +120,21 @@ describe "Code gen: declare var" do
       bar.x + bar.y
       )).to_i.should eq(3)
   end
+
+  it "works inside while/begin/rescue (bug inside #759)" do
+    run(%(
+      require "prelude"
+
+      a = 3
+      while 1
+        begin
+          buf :: Int32
+          buf + 1
+          break if a == 3
+        rescue
+        end
+      end
+      a
+      )).to_i.should eq(3)
+  end
 end

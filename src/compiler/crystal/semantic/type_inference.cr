@@ -181,6 +181,8 @@ module Crystal
 
         @vars[var.name] = meta_var
         @meta_vars[var.name] = meta_var
+
+        check_exception_handler_vars(var.name, node)
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
@@ -210,6 +212,15 @@ module Crystal
       end
 
       false
+    end
+
+    def check_exception_handler_vars(var_name, node)
+      # If inside a begin part of an exception handler, bind this type to
+      # the variable that will be used in the rescue/else blocks.
+      if exception_handler_vars = @exception_handler_vars
+        var = (exception_handler_vars[var_name] ||= MetaVar.new(var_name))
+        var.bind_to(node)
+      end
     end
 
     def visit(node : Out)
@@ -378,12 +389,7 @@ module Crystal
 
       @vars[var_name] = simple_var
 
-      # If inside a begin part of an exception handler, bind this type to
-      # the variable that will be used in the rescue/else blocks.
-      if exception_handler_vars = @exception_handler_vars
-        var = (exception_handler_vars[var_name] ||= MetaVar.new(var_name))
-        var.bind_to(value)
-      end
+      check_exception_handler_vars var_name, value
 
       if needs_type_filters?
         @type_filters = TypeFilters.and(TypeFilters.truthy(target), value_type_filters)
