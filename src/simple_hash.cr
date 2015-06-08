@@ -95,6 +95,10 @@ struct SimpleHash(K, V)
     @values.length
   end
 
+  def size
+    length
+  end
+
   def object_id
     @values.object_id
   end

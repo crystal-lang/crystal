@@ -205,6 +205,19 @@ describe "Hash" do
     end
   end
 
+  describe "size" do
+    it "is the same as length" do
+      a = {} of Int32 => Int32
+      a.size.should eq(a.length)
+
+      a = {1 => 2}
+      a.size.should eq(a.length)
+
+      a = {1 => 2, 3 => 4, 5 => 6, 7 => 8}
+      a.size.should eq(a.length)
+    end
+  end
+
   it "maps" do
     hash = {1 => 2, 3 => 4}
     array = hash.map { |k, v| k + v }
