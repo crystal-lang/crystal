@@ -1317,7 +1317,6 @@ module Crystal
       when 'x'
         scan_hex_number(start, negative)
       when 'o'
-        next_char
         scan_octal_number(start, negative)
       when 'b'
         scan_bin_number(start, negative)
@@ -1359,7 +1358,11 @@ module Crystal
           scan_number(start)
         end
       else
-        scan_octal_number(start, negative)
+        if next_char.digit?
+          raise "octal constants should be prefixed with 0o"
+        else
+          finish_scan_prefixed_number 0_u64, false, start
+        end
       end
     end
 
@@ -1384,6 +1387,8 @@ module Crystal
     end
 
     def scan_octal_number(start, negative)
+      next_char
+
       num = 0_u64
 
       while true

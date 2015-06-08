@@ -15,7 +15,7 @@ describe "Dir" do
 
   it "tests mkdir and rmdir with a new path" do
     path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
-    Dir.mkdir(path, 0700).should eq(0)
+    Dir.mkdir(path, 0o700).should eq(0)
     Dir.exists?(path).should be_true
     Dir.rmdir(path).should eq(0)
     Dir.exists?(path).should be_false
@@ -23,7 +23,7 @@ describe "Dir" do
 
   it "tests mkdir with an existing path" do
     expect_raises Errno do
-      Dir.mkdir(__DIR__, 0700)
+      Dir.mkdir(__DIR__, 0o700)
     end
   end
 
