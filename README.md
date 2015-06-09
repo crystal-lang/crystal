@@ -51,7 +51,7 @@ Both in progress:
 Community
 ---------
 
-Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang) or join our IRC channel #crystal-lang at irc.freenode.net
+Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang), join our IRC channel #crystal-lang at irc.freenode.net, or ask on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag.
 
 Contributing
 ---------
