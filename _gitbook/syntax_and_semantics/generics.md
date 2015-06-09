@@ -1,6 +1,6 @@
 # Generics
 
-Instance variables' types are inferred from the values assigned to them, like it was explained in [instance varaibles type inference](instance_variables_type_inference.html):
+Instance variables' types are inferred from the values assigned to them, like it was explained in [instance variables type inference](instance_variables_type_inference.html):
 
 ```ruby
 class MyBox

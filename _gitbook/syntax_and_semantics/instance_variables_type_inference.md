@@ -28,7 +28,7 @@ one.name #=> 1
 one.name + 2 #=> 3
 ```
 
-If you compile the previous programs with `--hierarchy`, the compiler will show you a hierarchy graph with the types it inferred. In the first case:
+If you compile the previous programs with the `hierarchy` command, the compiler will show you a hierarchy graph with the types it inferred. In the first case:
 
 ```
 - class Object
@@ -59,7 +59,7 @@ john = Person.new "John"
 one = Person.new 1
 ```
 
-Inovking the compiler with `--hierarchy` we get:
+Invoking the compiler with the `hierarchy` command we get:
 
 ```
 - class Object

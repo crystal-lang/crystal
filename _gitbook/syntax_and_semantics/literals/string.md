@@ -60,7 +60,7 @@ by joining multiple literals with a backslash:
 "no newlines" # same as "hello world, no newlines"
 ```
 
-Alterantively, a backlash followed by a newline can be inserted inside the string literal:
+Alternatively, a backlash followed by a newline can be inserted inside the string literal:
 
 ```ruby
 "hello \
