@@ -1501,6 +1501,7 @@ class String
     end
 
     ary = Array(String).new
+    count = 0
     match_offset = 0
     slice_offset = 0
     last_slice_offset = 0
@@ -1517,6 +1518,11 @@ class String
       else
         ary.push byte_slice(slice_offset, slice_length)
       end
+      count += 1
+
+      1.upto(match.length) do |i|
+        ary.push match[i]
+      end
 
       last_slice_offset = slice_offset
 
@@ -1527,7 +1533,7 @@ class String
         match_offset = index + match_bytesize
         slice_offset = match_offset
       end
-      break if limit && ary.length + 1 == limit
+      break if limit && count + 1 == limit
       break if slice_offset > bytesize
     end
 

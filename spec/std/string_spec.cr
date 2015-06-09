@@ -469,7 +469,7 @@ describe "String" do
 
     describe "by regex" do
       assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
-      assert { "foo\n\tbar\n\t\n\tbaz".split(/(\n\t)+/).should eq(["foo", "bar", "baz"]) }
+      assert { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
       assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
       assert { "foo,bar,baz,qux".split(/,/, 1).should eq(["foo,bar,baz,qux"]) }
       assert { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
@@ -481,9 +481,9 @@ describe "String" do
       assert { "hello".split(/\w+/).empty?.should be_true }
       assert { "foo".split(/o/).should eq(["f"]) }
 
-      it "works with complex regex" do
-        r = %r([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))
-        "hello".split(r).should eq(["", "hello"])
+      it "keeps groups" do
+        s = "split on the word on okay?"
+        s.split(/(on)/).should eq(["split ", "on", " the word ", "on", " okay?"])
       end
     end
   end
