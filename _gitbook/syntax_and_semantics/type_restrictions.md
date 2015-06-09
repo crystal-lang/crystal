@@ -72,7 +72,7 @@ In the previous example `self` is the same as writing `Person`. But, in general,
 
 As a side note, since `Person` inherits `Reference` the second definition of `==` is not needed, since it's already defined in `Reference`.
 
-Note that `self` always represents a match against and instance type, even in class methods:
+Note that `self` always represents a match against an instance type, even in class methods:
 
 ``` ruby
 class Person

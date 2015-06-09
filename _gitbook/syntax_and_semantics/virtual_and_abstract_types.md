@@ -29,7 +29,7 @@ john = Person.new "John", Dog.new
 peter = Person.new "Peter", Cat.new
 ```
 
-If you compile the above program with `--hierarchy` you will see this for `Person`:
+If you compile the above program with the `hierarchy` command you will see this for `Person`:
 
 ```
 - class Object

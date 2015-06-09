@@ -94,4 +94,4 @@ require "./one"
 greet # undefined local variable or method 'greet'
 ```
 
-This allows you to define helper methods in a file that will only be konwn in that file.
+This allows you to define helper methods in a file that will only be known in that file.

@@ -216,7 +216,7 @@ end
 value #:: Int32 | String
 ```
 
-If a `break` receives many arguments, they are automaticaly transformed to a [Tuple](http://crystal-lang.org/api/Tuple.html):
+If a `break` receives many arguments, they are automatically transformed to a [Tuple](http://crystal-lang.org/api/Tuple.html):
 
 ```ruby
 values = twice { break 1, 2 }
@@ -232,7 +232,7 @@ value #=> nil
 
 ## next
 
-The `next` expression inside a block exists early from the block (not the method). For example:
+The `next` expression inside a block exits early from the block (not the method). For example:
 
 ```ruby
 def twice
