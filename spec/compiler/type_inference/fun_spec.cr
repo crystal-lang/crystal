@@ -719,4 +719,49 @@ describe "Type inference: fun" do
       ->LibFoo.foo
       )) { fun_of(int32, float64) }
   end
+
+  it "allows passing union including module to proc" do
+    assert_type(%(
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar
+        include Moo
+      end
+
+      proc = ->(x : Moo) { x.moo }
+
+      foo = Foo.new || Bar.new
+      proc.call(foo)
+      )) { int32 }
+  end
+
+  it "allows passing virtual type including module to proc" do
+    assert_type(%(
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar < Foo
+      end
+
+      proc = ->(x : Moo) { x.moo }
+
+      foo = Foo.new || Bar.new
+      proc.call(foo)
+      )) { int32 }
+  end
 end

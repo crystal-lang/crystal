@@ -2310,6 +2310,10 @@ module Crystal
       union_types.any? &.includes_type?(other_type)
     end
 
+    def covariant?(other_type)
+      union_types.all? &.covariant? other_type
+    end
+
     def cover
       cover = [] of Type
       union_types.each do |union_type|
@@ -2541,6 +2545,7 @@ module Crystal
     delegate allocated, base_type
     delegate is_subclass_of?, base_type
     delegate implements?, base_type
+    delegate covariant?, base_type
 
     def has_instance_var_in_initialize?(name)
       if base_type.abstract
