@@ -55,4 +55,4 @@ change_it value
 value.some_int #=> 0
 ```
 
-Refer to the [type gammar](type_grammar.html) for the notation used in union field types.
+Refer to the [type grammar](type_grammar.html) for the notation used in union field types.

@@ -14,7 +14,7 @@ update_x
 x #=> 1
 ```
 
-This can sometimes be useful to avoid repetitive code by actually accessing and reading/writing local varaibles, but can also overwrite local variables by mistake. You can use fresh variables with `%name`:
+This can sometimes be useful to avoid repetitive code by actually accessing and reading/writing local variables, but can also overwrite local variables by mistake. You can use fresh variables with `%name`:
 
 ```ruby
 macro dont_update_x
@@ -56,4 +56,4 @@ fresh_vars_sample
 # __temp_257: 2
 ```
 
-In the above example three variables were declared, associated to an index, and then they were printed, refering to these variables with the same indices.
+In the above example three variables were declared, associated to an index, and then they were printed, referring to these variables with the same indices.

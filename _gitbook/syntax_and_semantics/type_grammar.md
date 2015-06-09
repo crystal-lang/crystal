@@ -13,7 +13,7 @@ When:
 * the argument of an [instance_sizeof](instance_sizeof.html) expression
 * a method's [return type](return_types.html)
 
-a convenient syntax is provided for some common types. These are specially useful when writing [C bindings](c_bindings/README.html), but can be used in any of the above locations.
+a convenient syntax is provided for some common types. These are especially useful when writing [C bindings](c_bindings/README.html), but can be used in any of the above locations.
 
 ## Paths and generics
 
@@ -39,7 +39,7 @@ The pipe (`|`) in types creates a union type. `Int32 | String` is read "Int32 or
 alias Int32OrNil = Int32?
 ```
 
-it the same as:
+is the same as:
 
 ```ruby
 alias Int32OrNil = Int32 | ::Nil
@@ -111,7 +111,7 @@ To specify multiple arguments:
 alias Int32AndCharToString = Int32, Char -> String
 ```
 
-For nested procs (and any type, in general), you can use parenthesis:
+For nested procs (and any type, in general), you can use parentheses:
 
 ```ruby
 alias ComplexProc = (Int32 -> Int32) -> String
