@@ -1481,6 +1481,7 @@ module Crystal
         return node_and_next_token StringLiteral.new(@token.value.to_s)
       end
 
+      location = @token.location
       delimiter_state = @token.delimiter_state
 
       check :DELIMITER_START
@@ -1521,6 +1522,10 @@ module Crystal
       when :command
         result = Call.new(nil, "`", result)
       when :regex
+        if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
+          raise "invalid regex: #{regex_error}", location
+        end
+
         result = RegexLiteral.new(result, options)
       end
 

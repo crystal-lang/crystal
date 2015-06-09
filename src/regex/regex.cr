@@ -90,4 +90,20 @@ class Regex
       end
     end
   end
+
+  # Determines Regex's source validity. If it is, `nil` is returned.
+  # If it's not, a String containing the error message is returned.
+  #
+  # ```
+  # Regex.error("(foo|bar)") #=> nil
+  # Regex.error("(foo|bar") #=> "missing ) at 8"
+  # ```
+  def self.error?(source)
+    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
+    if re
+      nil
+    else
+      "#{String.new(errptr)} at #{erroffset}"
+    end
+  end
 end
