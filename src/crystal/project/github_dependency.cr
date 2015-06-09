@@ -6,7 +6,7 @@ module Crystal
     getter target_dir
 
     def initialize(repo, name = nil : String?, ssh = false, branch = nil : String?)
-      unless repo =~ /^([^\/]*)\/([^\/]*)$/
+      unless repo =~ /(\A[^\s\/]+)\/([^\s\/]+\z)/
         raise ProjectError.new("Invalid GitHub repository definition: #{repo}")
       end
 
