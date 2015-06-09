@@ -22,7 +22,7 @@ all_spec: $(O)/all_spec
 
 $(O)/all_spec: $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build -o $@ spec/all_spec.cr
+	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
 
 $(O)/crystal: $(SOURCES)
 	@mkdir -p $(O)
