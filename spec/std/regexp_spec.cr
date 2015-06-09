@@ -103,4 +103,8 @@ describe "Regex" do
   it "escapes" do
     Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello").should eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
   end
+
+  it "doesn't crash when PCRE tries to free some memory (#771)" do
+    expect_raises(ArgumentError) { Regex.new("foo)") }
+  end
 end

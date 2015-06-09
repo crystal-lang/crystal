@@ -12,6 +12,8 @@ lib LibPCRE
   INFO_CAPTURECOUNT = 2
 
   $pcre_malloc : (UInt32 -> Void*)
+  $pcre_free : (Void* ->)
 end
 
 LibPCRE.pcre_malloc = ->GC.malloc(UInt32)
+LibPCRE.pcre_free = ->GC.free(Void*)
