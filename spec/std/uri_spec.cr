@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
 
-private def assert_uri(string, scheme = nil, host = nil, port = nil, path = nil, query = nil)
+private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil)
   it "parse #{string}" do
     uri = URI.parse(string)
     uri.scheme.should eq(scheme)
