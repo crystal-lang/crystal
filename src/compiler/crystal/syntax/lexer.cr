@@ -155,6 +155,14 @@ module Crystal
 
                 here_end = current_pos
                 is_here  = false
+                while true
+                  char = peek_next_char
+                  if char != ' '
+                    break
+                  else
+                    next_char
+                  end
+                end
                 here.each_char do |c|
                   char = next_char
                   unless char == c

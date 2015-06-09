@@ -147,7 +147,7 @@ describe "Lexer string" do
   end
 
   it "lexes heredoc" do
-    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE\nHERESY"
+    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERESY"
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE")
     tester = LexerObjects::Strings.new(lexer)
 
@@ -163,17 +163,25 @@ describe "Lexer string" do
     tester.should_have_reached_eof
   end
 
+  it "lexes heredoc with spaces before close tag" do
+    lexer = Lexer.new("<<-XML\nfoo\n   XML")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.next_token_should_be(:STRING, "foo")
+    tester.should_have_reached_eof
+  end
+
   it "assigns correct location after heredoc (#346)" do
-    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE"
+    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK."
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE\n1")
     tester = LexerObjects::Strings.new(lexer)
 
     tester.next_token_should_be(:STRING, string)
     tester.token_should_be_at(line: 1, column: 1)
     tester.next_token_should_be(:NEWLINE)
-    tester.token_should_be_at(line: 6, column: 5)
+    tester.token_should_be_at(line: 5, column: 5)
     tester.next_token_should_be(:NUMBER)
-    tester.token_should_be_at(line: 7, column: 1)
+    tester.token_should_be_at(line: 6, column: 1)
     tester.should_have_reached_eof
   end
 
