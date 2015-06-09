@@ -1388,7 +1388,13 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          args << parse_fun_literal_arg
+          location = @token.location
+          arg = parse_fun_literal_arg
+          if args.any? &.name.==(arg.name)
+            raise "duplicated argument name: #{arg.name}", location
+          end
+
+          args << arg
         end
         next_token_skip_space_or_newline
       end

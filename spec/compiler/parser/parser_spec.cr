@@ -1090,6 +1090,7 @@ describe "Parser" do
   assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
   assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12
   assert_syntax_error "class Foo(T, T); end", "duplicated type var name: T", 1, 14
+  assert_syntax_error "->(x : Int32, x : Int32) {}", "duplicated argument name: x", 1, 15
 
   assert_syntax_error "Set {1, 2, 3} of Int32"
   assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
