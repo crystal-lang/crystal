@@ -45,7 +45,7 @@ class Regex
 
   def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None)
     ovector_size = (@captures + 1) * 3
-    ovector = Pointer(Int32).malloc(ovector_size * 4)
+    ovector = Pointer(Int32).malloc(ovector_size)
     ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK).value, ovector, ovector_size)
     if ret > 0
       match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
