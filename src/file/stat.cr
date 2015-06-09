@@ -199,7 +199,6 @@ class File
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISVTX
     end
 
-    # TODO: is @stat's time always UTC?
     private def time(value)
       Time.new value, Time::Kind::Utc
     end

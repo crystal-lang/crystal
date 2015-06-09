@@ -16,11 +16,6 @@ class Regex
 
   getter source
 
-  # TODO: remove this constructor after 0.7.1
-  def self.new(source, options : Int32)
-    new source, Options.new(options)
-  end
-
   def initialize(@source, @options = Options::None : Options)
     @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?

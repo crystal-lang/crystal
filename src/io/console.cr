@@ -241,7 +241,7 @@ module IO
       String.new(length) do |buffer|
         read_length = read Slice.new(buffer, length)
         if read_length == 0
-          raise "read_nonblock: read nothing"
+          raise EOFError.new "read_nonblock: read nothing"
         elsif LibC.errno == LibC::EWOULDBLOCK
           raise Errno.new "exception in read_nonblock"
         else

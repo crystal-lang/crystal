@@ -78,9 +78,8 @@ describe Iterator do
       iter.rewind
       iter.next.should eq({1, 'a'})
 
-      # TODO: uncomment after 0.7.1
-      # iter.rewind
-      # iter.to_a.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      iter.rewind
+      iter.to_a.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
     end
   end
 
@@ -225,9 +224,8 @@ describe Iterator do
     iter.rewind
     iter.next.should eq(1)
 
-    # TODO: uncomment after 0.7.1
-    # iter.rewind
-    # iter.to_a.should eq([1, 2, 'a', 'b'])
+    iter.rewind
+    iter.to_a.should eq([1, 2, 'a', 'b'])
   end
 
   it "taps" do

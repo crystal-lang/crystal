@@ -28,8 +28,7 @@ class OpenSSL::SSL::Socket
   def close
     begin
       while LibSSL.ssl_shutdown(@ssl) == 0; end
-    # TODO: only rescue IOError
-    rescue
+    rescue IO::Error
     end
   end
 
