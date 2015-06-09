@@ -66,7 +66,7 @@ tz.minutes_west = 1
 tz.minutes_west #=> 1
 ```
 
-You can also initialize some fields with a syntax similar to [../default_and_named_arguments.html](named arguments):
+You can also initialize some fields with a syntax similar to [named arguments](../default_and_named_arguments.html):
 
 ```ruby
 tz = C::TimeZone.new minutes_west: 1, dst_time: 2
@@ -86,4 +86,4 @@ change_it tz
 tz.minutes_west #=> 0
 ```
 
-Refer to the [type gammar](type_grammar.html) for the notation used in struct field types.
+Refer to the [type grammar](type_grammar.html) for the notation used in struct field types.

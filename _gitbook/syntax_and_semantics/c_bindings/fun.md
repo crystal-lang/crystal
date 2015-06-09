@@ -39,7 +39,7 @@ You can bind to variadic functions:
 
 ```ruby
 lib X
-  fun varaidic(value : Int32, ...) : Int32
+  fun variadic(value : Int32, ...) : Int32
 end
 
 X.variadic(1, 2, 3, 4)

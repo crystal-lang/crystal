@@ -34,7 +34,7 @@ X.callback ->(x) { x + y } # Error: can't send closure
 
 If the compiler can't detect this at compile-time, an exception will be raised at runtime.
 
-Refer to the [type gammar](type_grammar.html) for the notation used in callbacks and procs types.
+Refer to the [type grammar](type_grammar.html) for the notation used in callbacks and procs types.
 
 ## Raises attribute
 
@@ -42,7 +42,7 @@ If a C function executes a user-provided callback that might raise, it must be a
 
 The compiler infers this attribute for a method if it invokes a method that is marked as `@[Raises]` or raises (recursively).
 
-However, some C functions accept callbacks to be executed by other C functions. For example, suppose a ficticious libraries:
+However, some C functions accept callbacks to be executed by other C functions. For example, suppose a ficticious library:
 
 ```ruby
 lib LibFoo
@@ -65,4 +65,4 @@ lib LibFoo
 end
 ```
 
-If you don't mark them, `begin/rescue` blocks that surround this function calls won't work as expected.
+If you don't mark them, `begin/rescue` blocks that surround this function's calls won't work as expected.
