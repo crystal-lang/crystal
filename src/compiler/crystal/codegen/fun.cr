@@ -50,6 +50,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     with_cloned_context do |old_context|
       context.type = self_type
       context.vars = LLVMVars.new
+      context.block_context = nil
 
       @llvm_mod = fun_module
 

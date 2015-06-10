@@ -595,15 +595,11 @@ module Crystal
     end
   end
 
-  class Arg
-    def special_var?
-      @name.starts_with? '$'
+  {% for name in %w(Arg Var MetaVar) %}
+    class {{name.id}}
+      def special_var?
+        @name.starts_with? '$'
+      end
     end
-  end
-
-  class Var
-    def special_var?
-      @name.starts_with? '$'
-    end
-  end
+  {% end %}
 end

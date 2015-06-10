@@ -100,4 +100,84 @@ describe "Codegen: special vars" do
       block.call(Foo.new("foo-bar"))
       )).to_string.should eq("bar")
   end
+
+  it "codegens in block" do
+    run(%(
+      require "prelude"
+
+      class Object; def not_nil!; self; end; end
+
+      def foo
+        $~ = "hey"
+        yield
+      end
+
+      a = nil
+      foo do
+        a = $~
+      end
+      a.not_nil!
+      )).to_string.should eq("hey")
+  end
+
+  it "codegens in block with nested block" do
+    run(%(
+      require "prelude"
+
+      class Object; def not_nil!; self; end; end
+
+      def bar
+        yield
+      end
+
+      def foo
+        bar do
+          $~ = "hey"
+          yield
+        end
+      end
+
+      a = nil
+      foo do
+        a = $~
+      end
+      a.not_nil!
+      )).to_string.should eq("hey")
+  end
+
+  it "codegens after block" do
+    run(%(
+      require "prelude"
+
+      class Object; def not_nil!; self; end; end
+
+      def foo
+        $~ = "hey"
+        yield
+      end
+
+      a = nil
+      foo {}
+      $~
+      )).to_string.should eq("hey")
+  end
+
+  it "codegens after block 2" do
+    run(%(
+      class Object; def not_nil!; self; end; end
+
+      def baz
+        $~ = "bye"
+      end
+
+      def foo
+        baz
+        yield
+        $~
+      end
+
+      foo do
+      end
+      )).to_string.should eq("bye")
+  end
 end

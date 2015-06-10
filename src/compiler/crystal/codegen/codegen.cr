@@ -682,6 +682,10 @@ module Crystal
               # Can't assign void
               return if target.type.void?
 
+              # If assigning to a special variable in a method that yields,
+              # assign to that variable too.
+              check_assign_to_special_var_in_block(target, value)
+
               var = context.vars[target.name]?
               if var
                 target_type = var.type
@@ -697,6 +701,13 @@ module Crystal
       emit_debug_metadata node, store_instruction if @debug
 
       false
+    end
+
+    def check_assign_to_special_var_in_block(target, value)
+      if (block_context = context.block_context?) && target.special_var?
+        var = block_context.vars[target.name]
+        assign var.pointer, var.type, value.type, @last
+      end
     end
 
     def get_global(node, name, type)

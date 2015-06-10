@@ -945,7 +945,7 @@ class String
   # ```
   # "hello".gsub(/./) {|s| s[0].ord.to_s + ' '} #=> #=> "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &block : String, MatchData -> _)
+  def gsub(pattern : Regex)
     byte_offset = 0
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match

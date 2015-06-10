@@ -57,4 +57,78 @@ describe "Type inference: special vars" do
         "'#{name}' can't be assigned at the top level"
     end
   end
+
+  it "infers when assigning inside block" do
+    assert_type(%(
+      class Object; def not_nil!; self; end; end
+
+      def bar
+        yield
+      end
+
+      def foo
+        bar do
+          $~ = "hello"
+        end
+      end
+
+      foo
+      $~
+      )) { nilable string }
+  end
+
+  it "infers in block" do
+    assert_type(%(
+      class Object; def not_nil!; self; end; end
+
+      def foo
+        $~ = "hey"
+        yield
+      end
+
+      a = nil
+      foo do
+        a = $~
+      end
+      a
+      )) { nilable string }
+  end
+
+  it "infers in block with nested block" do
+    assert_type(%(
+      class Object; def not_nil!; self; end; end
+
+      def bar
+        yield
+      end
+
+      def foo
+        bar do
+          $~ = "hey"
+          yield
+        end
+      end
+
+      a = nil
+      foo do
+        a = $~
+      end
+      a
+      )) { nilable string }
+  end
+
+  it "infers after block" do
+    assert_type(%(
+      class Object; def not_nil!; self; end; end
+
+      def foo
+        $~ = "hey"
+        yield
+      end
+
+      foo do
+      end
+      $~
+      )) { nilable string }
+  end
 end
