@@ -110,6 +110,7 @@ def it(description, file = __FILE__, line = __LINE__)
 
   Spec.formatter.before_example description
 
+  Spec::RootContext.before.try &.call()
   begin
     Spec.run_before_each_hooks
     yield
@@ -123,6 +124,7 @@ def it(description, file = __FILE__, line = __LINE__)
   ensure
     Spec.run_after_each_hooks
   end
+  Spec::RootContext.after.try &.call()
 end
 
 def pending(description, file = __FILE__, line = __LINE__, &block)
@@ -140,6 +142,14 @@ end
 
 def fail(msg, file = __FILE__, line = __LINE__)
   raise Spec::AssertionFailed.new(msg, file, line)
+end
+
+def before(&block : ->)
+  Spec::RootContext.before = block
+end
+
+def after(&block : ->)
+  Spec::RootContext.after = block
 end
 
 OptionParser.parse! do |opts|

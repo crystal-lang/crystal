@@ -146,6 +146,20 @@ module Spec
     def matches?(pattern, line)
       false
     end
+
+    def self.before
+      @@before
+    end
+    def self.before=(before)
+      @@before = before
+    end
+
+    def self.after
+      @@after
+    end
+    def self.after=(after)
+      @@after = after
+    end
   end
 
   # :nodoc:
