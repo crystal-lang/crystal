@@ -19,6 +19,7 @@ abstract class JSON::Lexer
     @buffer = StringIO.new
     @string_pool = StringPool.new
     @skip = false
+    @expects_object_key = false
   end
 
   private abstract def consume_string
