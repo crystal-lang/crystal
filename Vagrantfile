@@ -2,12 +2,13 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  %w(precise64 trusty64).each do |box|
+  %w(precise64 trusty64 vivid64).each do |box|
     config.vm.define(box) { |c| c.vm.box = "ubuntu/#{box}" }
   end
 
   config.vm.provider "virtualbox" do |vb|
-    vb.customize ["modifyvm", :id, "--memory", 4096]
+    vb.memory = 4096
+    vb.cpus = 2
   end
 
   config.vm.provision :shell, inline: %(
