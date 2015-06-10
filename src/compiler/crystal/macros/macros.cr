@@ -172,9 +172,15 @@ module Crystal
           offset = 0
         else
           splat_length = call_args_length - (macro_args_length - 1)
+          splat_length = 0 if splat_length < 0
           offset = splat_index + splat_length
           splat_arg = a_macro.args[splat_index]
-          vars[splat_arg.name] = ArrayLiteral.new(call.args[splat_index, splat_length])
+          splat_elements = if splat_index < call.args.length
+                             call.args[splat_index, splat_length]
+                           else
+                             [] of ASTNode
+                           end
+          vars[splat_arg.name] = ArrayLiteral.new(splat_elements)
         end
 
         # Args after the splat argument

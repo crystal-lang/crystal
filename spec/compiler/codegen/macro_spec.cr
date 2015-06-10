@@ -944,4 +944,34 @@ describe "Code gen: macro" do
       Foo.new.bar
       )).to_i.should eq(3)
   end
+
+  it "expands macro with default arg and splat (#784)" do
+    run(%(
+      macro some_macro(a=5, *args)
+        {{a.stringify}}
+      end
+
+      some_macro
+      )).to_string.should eq("5")
+  end
+
+  it "expands macro with default arg and splat (2) (#784)" do
+    run(%(
+      macro some_macro(a=5, *args)
+        {{a.stringify}}
+      end
+
+      some_macro 1, 2, 3, 4
+      )).to_string.should eq("1")
+  end
+
+  it "expands macro with default arg and splat (3) (#784)" do
+    run(%(
+      macro some_macro(a=5, *args)
+        {{args.length}}
+      end
+
+      some_macro 1, 2, 3, 4
+      )).to_i.should eq(3)
+  end
 end
