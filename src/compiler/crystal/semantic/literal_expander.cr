@@ -185,12 +185,20 @@ module Crystal
         temp_name = @program.new_temp_var_name
         @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-        regex = Call.new(Path.global("Regex"), "new", StringLiteral.new(string), Call.new(Path.global(["Regex", "Options"]), "new", NumberLiteral.new(node.options.value)))
+        regex = regex_new_call(node, StringLiteral.new(string))
         second_assign = Assign.new(Global.new(global_name), regex)
         If.new(first_assign, Var.new(temp_name), second_assign)
       else
-        Call.new(Path.global("Regex"), "new", node_value, NumberLiteral.new(node.options.value))
+        regex_new_call(node, node_value)
       end
+    end
+
+    private def regex_new_call(node, value)
+      Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
+    end
+
+    private def regex_options(node)
+      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value).at(node)).at(node)
     end
 
     def expand(node)

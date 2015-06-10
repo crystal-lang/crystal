@@ -24,6 +24,11 @@ class Regex
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
+  # TODO: remove this constructor after 0.7.3
+  def self.new(source, options : Int32)
+    new source, Options.new(options)
+  end
+
   def options
     @options
   end
