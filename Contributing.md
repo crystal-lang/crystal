@@ -26,7 +26,7 @@ the docs execute `make doc`.
 1. Fork it ( https://github.com/manastech/crystal/fork )
 2. Clone it
 
-Once in the cloned directory, and once you [installed Crystal](http://crystal-lang.org/docs/installation/README.html),
+Once in the cloned directory, and once you [installed Crystal](http://crystal-lang.org/docs/installation/index.html),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
 as the standard library. Otherwise the barebones `crystal` executable uses the standard library that comes in
 your installation.
@@ -39,7 +39,7 @@ Then push your changes and create a pull request.
 ## Contributing to the compiler itself
 
 If you want to add/change something in the compiler,
-the first thing you will need to do is to [install the compiler](http://crystal-lang.org/docs/installation/README.html).
+the first thing you will need to do is to [install the compiler](http://crystal-lang.org/docs/installation/index.html).
 
 Once you have a compiler up and running, and that executing `crystal` on the command line prints its usage,
 it's time to setup your environment to compile Crystal itself, which is written in Crystal. Check out
