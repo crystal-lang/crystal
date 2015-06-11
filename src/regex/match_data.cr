@@ -57,13 +57,16 @@ class MatchData
   end
 
   def to_s(io : IO)
+    name_table = @regex.name_table
+
     io << "#<MatchData "
     self[0].inspect(io)
     if length > 0
       io << " "
       length.times do |i|
         io << " " if i > 0
-        io << (i + 1) << ":"
+        io << name_table.fetch(i + 1) { i + 1 }
+        io << ":"
         self[i + 1].inspect(io)
       end
     end

@@ -98,6 +98,7 @@ describe "Regex" do
     /foo/imx.to_s.should eq("/foo/imx")
 
     /f(o)(x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
+    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" lettero:"o" letterx:"x">))
     /fox/.match("the fox").to_s.should eq(%(#<MatchData "fox">))
     /f(o)(x)/.match("the fox").inspect.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
     /fox/.match("the fox").inspect.should eq(%(#<MatchData "fox">))
