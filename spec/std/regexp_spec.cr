@@ -26,6 +26,17 @@ describe "Regex" do
     expect_raises(IndexOutOfBounds) { $1 }
   end
 
+  describe "name_table" do
+    it "is a map of capture group number to name" do
+      table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
+      table[1].should eq("date")
+      table[2].should eq("year")
+      table[3]?.should be_nil
+      table[4].should eq("month")
+      table[5].should eq("day")
+    end
+  end
+
   describe "MatchData#[]" do
     it "raises if outside match range with []" do
       "foo" =~ /foo/
