@@ -950,19 +950,29 @@ class String
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
 
+    last_byte_offset = 0
+
     String.build(bytesize) do |buffer|
       while match
         index = match.byte_begin(0)
 
-        buffer.write unsafe_byte_slice(byte_offset, index - byte_offset)
+        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
         str = match[0]
         buffer << yield str, match
-        byte_offset = index + str.bytesize
+
+        if str.bytesize == 0
+          byte_offset = index + 1
+          last_byte_offset = index
+        else
+          byte_offset = index + str.bytesize
+          last_byte_offset = byte_offset
+        end
+
         match = pattern.match_at_byte_index(self, byte_offset)
       end
 
-      if byte_offset < bytesize
-        buffer.write unsafe_byte_slice(byte_offset)
+      if last_byte_offset < bytesize
+        buffer.write unsafe_byte_slice(last_byte_offset)
       end
     end
   end
@@ -1014,15 +1024,26 @@ class String
     index = self.byte_index(string, byte_offset)
     return self unless index
 
+    last_byte_offset = 0
+
     String.build(bytesize) do |buffer|
       while index
-        buffer.write unsafe_byte_slice(byte_offset, index - byte_offset)
+        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
         buffer << yield string
-        byte_offset = index + string.bytesize
+
+        if string.bytesize == 0
+          byte_offset = index + 1
+          last_byte_offset = index
+        else
+          byte_offset = index + string.bytesize
+          last_byte_offset = byte_offset
+        end
+
         index = self.byte_index(string, byte_offset)
       end
-      if byte_offset < bytesize
-        buffer.write unsafe_byte_slice(byte_offset)
+
+      if last_byte_offset < bytesize
+        buffer.write unsafe_byte_slice(last_byte_offset)
       end
     end
   end

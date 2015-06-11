@@ -610,6 +610,14 @@ describe "String" do
     "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
   end
 
+  it "gsubs with empty string" do
+    "foo".gsub("", "x").should eq("xfxoxox")
+  end
+
+  it "gsubs with empty regex" do
+    "foo".gsub(//, "x").should eq("xfxoxox")
+  end
+
   it "gsubs with string and string" do
     "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
   end
