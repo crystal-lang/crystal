@@ -16,7 +16,11 @@ class Regex
 
   getter source
 
-  def initialize(@source, @options = Options::None : Options)
+  def initialize(source, @options = Options::None : Options)
+    # PCRE's pattern must have their null characters escaped
+    source = source.gsub('\u{0}', "\\0")
+    @source = source
+
     @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)

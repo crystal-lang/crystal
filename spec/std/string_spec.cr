@@ -618,6 +618,11 @@ describe "String" do
     "foo".gsub(//, "x").should eq("xfxoxox")
   end
 
+  it "gsubs null character" do
+    null = "\u{0}"
+    "f\u{0}\u{0}".gsub(/#{null}/, "o").should eq("foo")
+  end
+
   it "gsubs with string and string" do
     "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
   end
