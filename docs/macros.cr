@@ -1013,5 +1013,18 @@ module Macros
     # Gives a compile error if this is not one of those types.
     def length : NumberLiteral
     end
+
+    # Returns true if this type is a union type, false otherwise.
+    #
+    # See also: `union_types`.
+    def union? : BoolLiteral
+    end
+
+    # Returns the types comforming a union type, if this is a union type.
+    # Gives a compile error otherwise.
+    #
+    # See also: `union?`.
+    def union_types : ArrayLiteral(TypeNode)
+    end
   end
 end
