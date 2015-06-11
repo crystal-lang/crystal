@@ -658,6 +658,10 @@ module Crystal
       case method
       when "abstract?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract) }
+      when "union?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
+      when "union_types"
+        interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
         interpret_argless_method(method, args) { MacroId.new(type.to_s) }
       when "instance_vars"
@@ -735,6 +739,11 @@ module Crystal
 
     def self.all_subclasses(type)
       ArrayLiteral.map(type.all_subclasses) { |subtype| TypeNode.new(subtype) }
+    end
+
+    def self.union_types(type)
+      raise "undefined method 'union_types' for TypeNode of type #{type} (must be a union type)" unless type.is_a?(UnionType)
+      ArrayLiteral.map(type.union_types) { |uniontype| TypeNode.new(uniontype) }
     end
 
     def self.constants(type)

@@ -562,6 +562,41 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo")
   end
 
+  it "can refer to union (1)" do
+    run(%(
+      {{Int32.union?}}
+    )).to_b.should be_false
+  end
+
+  it "can refer to union (2)" do
+    run(%(
+      class Foo
+        def initialize
+          @x = 1; @x = 1.1
+        end
+        def foo
+          {{ @type.instance_vars.first.type.union? }}
+        end
+      end
+      Foo.new.foo
+    )).to_b.should be_true
+  end
+
+  it "can iterate union types" do
+    run(%(
+      require "prelude"
+      class Foo
+        def initialize
+          @x = 1; @x = 1.1
+        end
+        def foo
+          {{ @type.instance_vars.first.type.union_types.map &.name }}.join("-")
+        end
+      end
+      Foo.new.foo
+    )).to_string.should eq("Int32-Float64")
+  end
+
   it "receives &block" do
     run(%(
       macro foo(&block)
