@@ -29,6 +29,7 @@ class MatchData
 
     start = @ovector[n * 2]
     finish = @ovector[n * 2 + 1]
+    return if start < 0
     @string.byte_slice(start, finish - start)
   end
 
@@ -39,9 +40,9 @@ class MatchData
   end
 
   def []?(group_name : String)
-    ret = LibPCRE.get_named_substring(@code, @string, @ovector, @length + 1, group_name, out value)
+    ret = LibPCRE.get_stringnumber(@code, group_name)
     return if ret < 0
-    String.new(value)
+    self[ret]?
   end
 
   def [](group_name : String)
@@ -67,7 +68,7 @@ class MatchData
         io << " " if i > 0
         io << name_table.fetch(i + 1) { i + 1 }
         io << ":"
-        self[i + 1].inspect(io)
+        self[i + 1]?.inspect(io)
       end
     end
     io << ">"

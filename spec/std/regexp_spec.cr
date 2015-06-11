@@ -49,9 +49,16 @@ describe "Regex" do
       $~["g2"].should eq("ba")
     end
 
-    it "capture empty group" do
-      ("foo" =~ /(?<g1>.*)foo/).should eq(0)
+    it "captures empty group" do
+      ("foo" =~ /(?<g1>z?)foo/).should eq(0)
+      $~[1].should eq("")
       $~["g1"].should eq("")
+    end
+
+    it "raises exception on optional empty group" do
+      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
+      expect_raises(Exception) { $~[1] }
+      expect_raises(Exception) { $~["g1"] }
     end
 
     it "raises exception when named group doesn't exist" do
@@ -73,8 +80,15 @@ describe "Regex" do
     end
 
     it "capture empty group" do
-      ("foo" =~ /(?<g1>.*)foo/).should eq(0)
+      ("foo" =~ /(?<g1>z?)foo/).should eq(0)
+      $~[1]?.should eq("")
       $~["g1"]?.should eq("")
+    end
+
+    it "capture optional empty group" do
+      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
+      $~[1]?.should be_nil
+      $~["g1"]?.should be_nil
     end
 
     it "returns nil exception when named group doesn't exist" do
@@ -101,6 +115,7 @@ describe "Regex" do
     /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" lettero:"o" letterx:"x">))
     /fox/.match("the fox").to_s.should eq(%(#<MatchData "fox">))
     /f(o)(x)/.match("the fox").inspect.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
+    /f(o)(x)?/.match("the fort").inspect.should eq(%(#<MatchData "fo" 1:"o" 2:nil>))
     /fox/.match("the fox").inspect.should eq(%(#<MatchData "fox">))
   end
 
