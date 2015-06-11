@@ -23,13 +23,31 @@ class Object
         case _key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
-            _{{key.id}} =
+            {% unless value[:root] %} _{{key.id}} = {% end %}
             {% if value[:nilable] == true %} _pull.read_null_or { {% end %}
+
+            {% if value[:root] %}
+              _pull.read_object do |_nested_key|
+                case _nested_key
+                when  {{value[:root]}}
+                  _{{key.id}} =
+            {% end %}
 
             {% if value[:converter] %}
               {{value[:converter]}}.from_json(_pull)
             {% else %}
               {{value[:type]}}.new(_pull)
+            {% end %}
+
+            {% if value[:root] %}
+                else
+                  {% if strict %}
+                    raise JSON::ParseException.new("unknown json attribute: #{_nested_key}", 0, 0)
+                  {% else %}
+                    _pull.skip
+                  {% end %}
+                end
+              end
             {% end %}
 
             {% if value[:nilable] == true %} } {% end %}
@@ -66,6 +84,10 @@ class Object
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
+              {% if value[:root] %}
+                io.json_object do |json|
+                  json.field({{value[:root]}}) do
+              {% end %}
               {% if value[:converter] %}
                 if _{{key.id}}
                   {{ value[:converter] }}.to_json(_{{key.id}}, io)
@@ -74,6 +96,10 @@ class Object
                 end
               {% else %}
                 _{{key.id}}.to_json(io)
+              {% end %}
+              {% if value[:root] %}
+                  end
+                end
               {% end %}
             end
 

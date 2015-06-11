@@ -69,6 +69,12 @@ class JSONWithAny
   json_mapping({name: String, any: JSON::Any})
 end
 
+class JSONResult
+  json_mapping({
+    result: {type: Array(JSONPerson), root: "heroes"}
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -171,5 +177,13 @@ describe "JSON mapping" do
     json.name.should eq("Hi")
     json.any.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
     json.to_json.should eq(%({"name":"Hi","any":[{"x":1},2,"hey",true,false,1.5,null]}))
+  end
+
+  it "parses with root key" do
+    json = %({"result":{"heroes":[{"name":"Batman"}]}})
+    result = JSONResult.from_json(json)
+    result.result.should be_a(Array(JSONPerson))
+    result.result.first.name.should eq "Batman"
+    result.to_json.should eq(json)
   end
 end
