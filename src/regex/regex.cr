@@ -33,6 +33,28 @@ class Regex
     new source, Options.new(options)
   end
 
+  def name_table
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT,     out name_count)
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
+    table_pointer = Pointer(UInt8).null
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer) as Pointer(Int32))
+    name_table = table_pointer.to_slice(name_entry_size*name_count)
+
+    lookup = Hash(UInt16,String).new
+
+    name_count.times do |i|
+      capture_offset = i * name_entry_size
+      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset+1].to_u16
+
+      name_offset = capture_offset + 2
+      name = String.new( (name_table + name_offset).pointer(name_entry_size-3) )
+
+      lookup[capture_number] = name
+    end
+
+    lookup
+  end
+
   def options
     @options
   end
