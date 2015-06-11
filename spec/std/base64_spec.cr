@@ -65,6 +65,40 @@ describe "Base64" do
     end
   end
 
+  describe "decode cases" do
+    it "decode \r\n" do
+      Base64.decode64("aGFo\r\nYWjiipnik6fiipk=\r\n").should eq("hahah⊙ⓧ⊙")
+      Base64.decode64("aGFo\r\nYWjiipnik6fiipk=\r\n\r\n").should eq("hahah⊙ⓧ⊙")
+    end
+
+    it "decode \n in multiple places" do
+      Base64.decode64("aGFoYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode64("aGFo\nYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode64("aGFo\nYWji\nipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode64("aGFo\nYWji\nipni\nk6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode64("aGFo\nYWji\nipni\nk6fi\nipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode64("aGFo\nYWji\nipni\nk6fi\nipk=\n").should eq("hahah⊙ⓧ⊙")
+    end
+
+    it "raise error when \n in incorrect place" do
+      expect_raises Base64::Error do
+        Base64.decode64("aG\nFoYWjiipnik6fiipk=")
+      end
+    end
+
+    it "raise error when incorrect symbol" do
+      expect_raises Base64::Error do
+        Base64.decode64("()")
+      end
+    end
+
+    it "raise error when incorrect length" do
+      expect_raises Base64::Error do
+        Base64.decode64("a")
+      end
+    end
+  end
+
   describe "scrict" do
     it "encode" do
       Base64.strict_encode64("Now is the time for all good coders\nto learn Crystal").should eq(
