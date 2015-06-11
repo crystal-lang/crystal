@@ -1,11 +1,14 @@
 module Base64
   extend self
 
+  class Error < Exception; end
+
   CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
   LINE_SIZE = 60
   PAD = '='.ord.to_u8
   NL = '\n'.ord.to_u8
+  NR = '\r'.ord.to_u8
 
   class Error < Exception; end
 
@@ -68,13 +71,13 @@ module Base64
   end
 
   private def encode_size(str_size, new_lines = false)
-    size = (str_size * 4 / 3.0).to_i + 6
+    size = (str_size * 4 / 3.0).to_i + 4
     size += size / LINE_SIZE if new_lines
     size
   end
 
   private def decode_size(str_size)
-    (str_size * 3 / 4.0).to_i + 6
+    (str_size * 3 / 4.0).to_i + 4
   end
 
   private def to_base64(data, chars, pad = false)
@@ -110,34 +113,47 @@ module Base64
   end
 
   private def from_base64(data)
-    buf = 0
-    mod = 0
+    len = data.length
     dt = DECODE_TABLE.buffer
-    data.each do |byte|
-      dec = dt[byte]
-      if dec < 0
-        next if dec == -2
-        break if dec == -3
-        raise Error.new("Invalid character '#{byte.chr}'")
-      end
-      buf = (buf | dec) << 6
-      mod += 1
-      if mod == 4
-        mod = 0
-        yield (buf >> 22).to_u8
-        yield (buf >> 14).to_u8
-        yield (buf >> 6).to_u8
+    cstr = data.pointer(len)
+    while (sym = cstr[len - 1]) && (sym == NL || sym == NR || sym == PAD) && (len > 0)
+      len -= 1
+    end
+    endcstr = cstr + len - 4
+
+    while cstr <= endcstr
+      a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
+
+      yield (a << 2 | b >> 4).to_u8
+      yield (b << 4 | c >> 2).to_u8
+      yield (c << 6 | d).to_u8
+
+      while (cstr.value == NL || cstr.value == NR) && cstr <= endcstr
+        cstr += 1
       end
     end
 
+    mod = (endcstr - cstr) % 4
     if mod == 2
-      yield (buf >> 10).to_u8
+      a, b = next_decoded_value, next_decoded_value
+      yield (a << 2 | b >> 4).to_u8
     elsif mod == 3
-      yield (buf >> 16).to_u8
-      yield (buf >> 8).to_u8
+      a, b, c = next_decoded_value, next_decoded_value, next_decoded_value
+      yield (a << 2 | b >> 4).to_u8
+      yield (b << 4 | c >> 2).to_u8
     elsif mod != 0
       raise Error.new("Wrong length")
     end
+  end
+
+  private macro next_decoded_value
+    sym = cstr.value
+    res = dt[sym]
+    cstr += 1
+    if res < 0
+      raise Error.new("Unexpected symbol '#{sym.chr}'")
+    end
+    res
   end
 
   DECODE_TABLE = Array(Int8).new(256) do |i|
@@ -147,8 +163,6 @@ module Base64
     when '0'..'9'   then (i + 0x04).to_i8
     when '+', '-'   then 0x3E_i8
     when '/', '_'   then 0x3F_i8
-    when '\n', '\r' then -2_i8
-    when '='        then -3_i8
     else                 -1_i8
     end
   end
