@@ -39,11 +39,12 @@ class URI
   def self.parse(string : String)
     case string
     when /\A(?<scheme>.*):\/\/(?<host>[^:\/\?]*)(:(?<port>\d*))?(?<path>\/[^?]*)?(\?(?<qs>.*))?\Z/
-      scheme = $1
-      host = $2
-      port = $4.empty? ? nil : $4.to_i
-      path = $5.empty? ? nil : $5
-      query = $7.empty? ? nil : $7
+      m = $~
+      scheme = m[1]
+      host = m[2]
+      port = m[4]?.try(&.to_i)
+      path = m[5]?
+      query = m[7]?
     else
       if question_index = string.index '?'
         path = string[0 ... question_index]
