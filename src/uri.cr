@@ -1,3 +1,4 @@
+require "cgi"
 class URI
   # URI defined in RFC3986
   RFC3986_URI = /\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%\h\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:\h{1,4}:){6}(?<ls32>\h{1,4}:\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:\h{1,4}:){5}\g<ls32>|\h{1,4}?::(?:\h{1,4}:){4}\g<ls32>|(?:(?:\h{1,4}:)?\h{1,4})?::(?:\h{1,4}:){3}\g<ls32>|(?:(?:\h{1,4}:){,2}\h{1,4})?::(?:\h{1,4}:){2}\g<ls32>|(?:(?:\h{1,4}:){,3}\h{1,4})?::\h{1,4}:\g<ls32>|(?:(?:\h{1,4}:){,4}\h{1,4})?::\g<ls32>|(?:(?:\h{1,4}:){,5}\h{1,4})?::\h{1,4}|(?:(?:\h{1,4}:){,6}\h{1,4})?::)|(?<IPvFuture>v\h+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%\h\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
@@ -8,8 +9,11 @@ class URI
   property port
   property path
   property query
+  property user
+  property password
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil)
+    self.userinfo = userinfo if userinfo
   end
 
   def full_path
@@ -23,6 +27,10 @@ class URI
     if scheme = @scheme
       io << scheme
       io << "://"
+    end
+    if ui = userinfo
+      io << ui
+      io << "@"
     end
     if host = @host
       io << host
@@ -65,6 +73,20 @@ class URI
       raise "bad URI(is not URI?): #{string}"
     end
 
-    URI.new scheme, host, port, path, query
+    URI.new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo
+  end
+
+  def userinfo=(ui)
+    split = ui.split(":")
+    self.user = split[0]
+    self.password = split[1]?
+  end
+
+  def userinfo
+    if user && password
+      {user, password}.map{|s| CGI.escape(s.not_nil!)}.join(":")
+    elsif user
+      CGI.escape(user.not_nil!)
+    end
   end
 end
