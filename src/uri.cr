@@ -12,8 +12,9 @@ class URI
   property user
   property password
   property fragment
+  property opaque
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil, @fragment = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil, @fragment = nil, @opaque = nil)
     self.userinfo = userinfo if userinfo
   end
 
@@ -27,7 +28,12 @@ class URI
   def to_s(io : IO)
     if scheme
       io << scheme
-      io << "://"
+      io << ':'
+      io << "//" unless opaque
+    end
+    if opaque
+      io << opaque
+      return
     end
     if ui = userinfo
       io << ui
@@ -78,7 +84,7 @@ class URI
       raise "bad URI(is not URI?): #{string}"
     end
 
-    URI.new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment
+    URI.new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
   end
 
   def userinfo=(ui)

@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
 
-private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil, user = nil, password = nil, fragment = nil)
+private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil, user = nil, password = nil, fragment = nil, opaque = nil)
   it "parse #{string}" do
     uri = URI.parse(string)
     uri.scheme.should eq(scheme)
@@ -12,6 +12,7 @@ private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", 
     uri.user.should eq(user)
     uri.password.should eq(password)
     uri.fragment.should eq(fragment)
+    uri.opaque.should eq(opaque)
   end
 end
 
@@ -28,6 +29,7 @@ describe "URI" do
   assert_uri("http://www.foo-bar.com", scheme: "http", host: "www.foo-bar.com")
   assert_uri("/foo", path: "/foo")
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
+  assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
 
   assert { URI.parse("http://www.google.com/foo").full_path.should eq("/foo") }
   assert { URI.parse("http://www.google.com").full_path.should eq("/") }
@@ -50,6 +52,7 @@ describe "URI" do
     assert { URI.new("http", "www.google.com", 1234).to_s.should eq("http://www.google.com:1234") }
     assert { URI.new("http", "www.google.com", 80, "/hello").to_s.should eq("http://www.google.com/hello") }
     assert { URI.new("http", "www.google.com", 80, "/hello", "a=1").to_s.should eq("http://www.google.com/hello?a=1") }
+    assert { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
   end
 end
 
