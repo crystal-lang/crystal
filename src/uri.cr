@@ -11,8 +11,9 @@ class URI
   property query
   property user
   property password
+  property fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil, @fragment = nil)
     self.userinfo = userinfo if userinfo
   end
 
@@ -46,6 +47,10 @@ class URI
       io << '?'
       io << query
     end
+    if fragment
+      io << '#'
+      io << fragment
+    end
   end
 
   def self.parse(string : String)
@@ -73,7 +78,7 @@ class URI
       raise "bad URI(is not URI?): #{string}"
     end
 
-    URI.new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo
+    URI.new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment
   end
 
   def userinfo=(ui)

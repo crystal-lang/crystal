@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
 
-private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil, user = nil, password = nil)
+private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil, user = nil, password = nil, fragment = nil)
   it "parse #{string}" do
     uri = URI.parse(string)
     uri.scheme.should eq(scheme)
@@ -11,6 +11,7 @@ private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", 
     uri.query.should eq(query)
     uri.user.should eq(user)
     uri.password.should eq(password)
+    uri.fragment.should eq(fragment)
   end
 end
 
@@ -23,6 +24,7 @@ describe "URI" do
   assert_uri("https://www.google.com", scheme: "https", host: "www.google.com")
   assert_uri("https://alice:pa55w0rd@www.google.com", scheme: "https", host: "www.google.com", user: "alice", password: "pa55w0rd")
   assert_uri("https://alice@www.google.com", scheme: "https", host: "www.google.com", user: "alice", password: nil)
+  assert_uri("https://www.google.com/#top", scheme: "https", host: "www.google.com", path: "/", fragment: "top")
   assert_uri("http://www.foo-bar.com", scheme: "http", host: "www.foo-bar.com")
   assert_uri("/foo", path: "/foo")
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
@@ -44,6 +46,7 @@ describe "URI" do
       u.to_s.should eq("http://alice:s3cr3t@www.google.com")
     end
     assert { URI.new("http", "www.google.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.google.com") }
+    assert { URI.new("http", "www.google.com", fragment: "top").to_s.should eq("http://www.google.com#top") }
     assert { URI.new("http", "www.google.com", 1234).to_s.should eq("http://www.google.com:1234") }
     assert { URI.new("http", "www.google.com", 80, "/hello").to_s.should eq("http://www.google.com/hello") }
     assert { URI.new("http", "www.google.com", 80, "/hello", "a=1").to_s.should eq("http://www.google.com/hello?a=1") }
