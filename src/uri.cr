@@ -25,18 +25,18 @@ class URI
   end
 
   def to_s(io : IO)
-    if scheme = @scheme
+    if scheme
       io << scheme
       io << "://"
     end
     if ui = userinfo
       io << ui
-      io << "@"
+      io << '@'
     end
-    if host = @host
+    if host
       io << host
     end
-    if (port = @port) && !((scheme == "http" && port == 80) || (scheme == "https" && port == 443))
+    if port && !((scheme == "http" && port == 80) || (scheme == "https" && port == 443))
       io << ':'
       io << port
     end
