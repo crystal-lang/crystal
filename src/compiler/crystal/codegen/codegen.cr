@@ -953,7 +953,11 @@ module Crystal
         if @last.constant?
           global.initializer = @last
           global.global_constant = true
-          const.initializer = @last if const.value.type.is_a?(PrimitiveType)
+
+          const_type = const.value.type
+          if const_type.is_a?(PrimitiveType) || const_type.is_a?(EnumType)
+            const.initializer = @last
+          end
         else
           if const.value.type.passed_by_value?
             global.initializer = llvm_type(const.value.type).undef
