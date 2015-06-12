@@ -22,6 +22,7 @@ module Crystal
       @calls_super = false
       @calls_initialize = false
       @uses_block_arg = false
+      @assigns_special_var = false
       @def_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
@@ -276,6 +277,8 @@ module Crystal
               needs_new_scope = true
             when InstanceVar
               needs_new_scope = @def_nest == 0
+            when Var
+              @assigns_special_var = true if atomic.special_var?
             else
               needs_new_scope = false
             end
@@ -1941,6 +1944,7 @@ module Crystal
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
       a_def.uses_block_arg = @uses_block_arg
+      a_def.assigns_special_var = @assigns_special_var
 
       result
     end
@@ -1958,11 +1962,13 @@ module Crystal
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
       a_def.uses_block_arg = @uses_block_arg
+      a_def.assigns_special_var = @assigns_special_var
       a_def.doc = doc
       @instance_vars = nil
       @calls_super = false
       @calls_initialize = false
       @uses_block_arg = false
+      @assigns_special_var = false
       @block_arg_name = nil
       a_def
     end
@@ -1972,6 +1978,7 @@ module Crystal
       @calls_initialize = false
       @uses_block_arg = false
       @block_arg_name = nil
+      @assigns_special_var = false
       @instance_vars = Set(String).new
     end
 

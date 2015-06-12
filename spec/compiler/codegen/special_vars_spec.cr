@@ -180,4 +180,17 @@ describe "Codegen: special vars" do
       end
       )).to_string.should eq("bye")
   end
+
+  it "codegens with default argument" do
+    run(%(
+      class Object; def not_nil!; self; end; end
+
+      def baz(x = 1)
+        $~ = "bye"
+      end
+
+      baz
+      $~
+      )).to_string.should eq("bye")
+  end
 end

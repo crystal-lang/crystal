@@ -854,6 +854,7 @@ module Crystal
     property :calls_super
     property :calls_initialize
     property :uses_block_arg
+    property :assigns_special_var
     property :name_column_number
     property :abstract
     property :attributes
@@ -865,6 +866,7 @@ module Crystal
       @calls_super = false
       @calls_initialize = false
       @uses_block_arg = false
+      @assigns_special_var = false
       @raises = false
       @name_column_number = 0
     end
@@ -902,6 +904,7 @@ module Crystal
       a_def.calls_super = calls_super
       a_def.calls_initialize = calls_initialize
       a_def.uses_block_arg = uses_block_arg
+      a_def.assigns_special_var = assigns_special_var
       a_def.name_column_number = name_column_number
       a_def.previous = previous
       a_def.raises = raises

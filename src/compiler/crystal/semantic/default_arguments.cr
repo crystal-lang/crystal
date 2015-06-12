@@ -34,7 +34,7 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || splat_index || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
+    retain_body = yields || splat_index || assigns_special_var || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
     splat_index = splat_index() || -1
 
