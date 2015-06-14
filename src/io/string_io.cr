@@ -53,6 +53,10 @@ class StringIO
     String.new @buffer, @bytesize
   end
 
+  def to_slice
+    Slice.new(@buffer, @bytesize)
+  end
+
   def to_s(io)
     io.write Slice.new(@buffer, @bytesize)
   end

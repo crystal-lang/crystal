@@ -210,4 +210,14 @@ describe "StringIO" do
     str.printf "Hello %d", [123]
     str.to_s.should eq("Hello 123")
   end
+
+  it "can be converted to slice" do
+    str = StringIO.new
+    str.write_byte 0_u8
+    str.write_byte 1_u8
+    slice = str.to_slice
+    slice.length.should eq(2)
+    slice[0].should eq(0_u8)
+    slice[1].should eq(1_u8)
+  end
 end
