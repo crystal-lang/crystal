@@ -597,6 +597,17 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32-Float64")
   end
 
+  it "can access type parameters" do
+    run(%(
+      class Foo(T)
+        def foo
+          {{ @type.type_params.first.name.stringify }}
+        end
+      end
+      Foo(Int32).new.foo
+    )).to_string.should eq("Int32")
+  end
+
   it "receives &block" do
     run(%(
       macro foo(&block)

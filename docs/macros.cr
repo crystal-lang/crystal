@@ -1026,5 +1026,10 @@ module Macros
     # See also: `union?`.
     def union_types : ArrayLiteral(TypeNode)
     end
+
+    # Returns the type parameters of the generic type. If the type is not
+    # generic, an empty array is returned.
+    def type_params : ArrayLiteral(TypeNode)
+    end
   end
 end
