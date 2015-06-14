@@ -2,6 +2,69 @@ require "colorize"
 require "option_parser"
 require "signal"
 
+# Crystal's builtin testing library.
+#
+# A basic spec looks like this:
+#
+# ```
+# require "spec"
+#
+# describe "Array" do
+#   describe "#length" do
+#     it "correctly reports the number of elements in the Array" do
+#       [1, 2, 3].length.should eq 3
+#     end
+#   end
+#
+#   describe "#empty?" do
+#     it "is empty when no elements are in the array" do
+#       ([] of Int32).empty?.should be_true
+#     end
+#
+#     it "is not empty if there are elements in the array" do
+#       [1].empty?.should be_false
+#     end
+#   end
+#
+#   # lots of more specs
+#
+# end
+# ```
+#
+# With `describe` and a descriptive string test files are structured.
+# There commonly is one top level `describe` that defines which greater unit,
+# such as a class, is tested in this spec file. Further `describe` calls can
+# be nested within to specify smaller units under test like individual methods.
+# It can also be used to set up a certain context - think empty Array versus
+# Array with elements. There is also the `context` method that behaves just like
+# `describe` but has a lightly different meaning to the reader.
+#
+# Concrete test cases are defined with `it` within a `describe` block. A
+# descriptive string is supplied to `it` describing what that test case
+# tests specifically.
+#
+# Specs then use the `should` method to verify that the expected value is
+# returned, see the example above for details.
+#
+# By convention, specs live in the `spec` directory of a project. You can compile
+# and run the specs of a project by running:
+#
+# ```
+# crystal spec
+# ```
+#
+# Also, you can compile and run individual spec files by providing their path:
+#
+# ```
+# crystal spec spec/my/test/file_spec.cr
+# ```
+#
+# In addition, you can also run individual specs by optionally providing a line
+# number:
+#
+# ```
+# crystal spec spec/my/test/file_spec.cr:14
+# ```
 module Spec
   # :nodoc:
   COLORS = {
