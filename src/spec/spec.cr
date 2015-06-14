@@ -2,7 +2,7 @@ require "colorize"
 require "option_parser"
 require "signal"
 
-# Crystal's builtin testing library inspired by ruby's rspec.
+# Crystal's builtin testing library.
 #
 # A basic spec looks like this:
 #
