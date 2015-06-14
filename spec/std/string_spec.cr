@@ -32,12 +32,82 @@ describe "String" do
       "há日本語"[1 .. 3].should eq("á日本")
     end
 
+    it "gets when index is last and count is zero" do
+      "foo"[3, 0].should eq("")
+    end
+
+    it "gets when index is last and count is positive" do
+      "foo"[3, 10].should eq("")
+    end
+
+    it "gets when index is last and count is negative at last" do
+      expect_raises(ArgumentError) do
+        "foo"[3, -1]
+      end
+    end
+
+    assert { "foo"[3 .. -10].should eq("") }
+
+    it "gets when index is last and count is negative at last with utf-8" do
+      expect_raises(ArgumentError) do
+        "há日本語"[5, -1]
+      end
+    end
+
+    it "gets when index is last and count is zero in utf-8" do
+      "há日本語"[5, 0].should eq("")
+    end
+
+    it "gets when index is last and count is positive in utf-8" do
+      "há日本語"[5, 10].should eq("")
+    end
+
+    it "raises index out of bound on index out of range with range" do
+      expect_raises(IndexOutOfBounds) do
+        "foo"[4 .. 1]
+      end
+    end
+
+    it "raises index out of bound on index out of range with range and utf-8" do
+      expect_raises(IndexOutOfBounds) do
+        "há日本語"[6 .. 1]
+      end
+    end
+
     it "gets with exclusive with start and count" do
       "há日本語"[1, 3].should eq("á日本")
     end
 
     it "gets with exclusive with start and count to end" do
       "há日本語"[1, 4].should eq("á日本語")
+    end
+
+    it "gets with start and count with negative start" do
+      "こんいちは"[-3, 2].should eq("いち")
+    end
+
+    it "raises if index out of bounds" do
+      expect_raises(IndexOutOfBounds) do
+        "foo"[4, 1]
+      end
+    end
+
+    it "raises if index out of bounds with utf-8" do
+      expect_raises(IndexOutOfBounds) do
+        "こんいちは"[6, 1]
+      end
+    end
+
+    it "raises if count is negative" do
+      expect_raises(ArgumentError) do
+        "foo"[1, -1]
+      end
+    end
+
+    it "raises if count is negative with utf-8" do
+      expect_raises(ArgumentError) do
+        "こんいちは"[3, -1]
+      end
     end
 
     it "gets with single char" do
@@ -76,11 +146,21 @@ describe "String" do
     end
 
     it "gets byte_slice with negative count" do
-      "hello".byte_slice(1, -10).should eq("")
+      expect_raises(ArgumentError) do
+        "hello".byte_slice(1, -10)
+      end
+    end
+
+    it "gets byte_slice with negative count at last" do
+      expect_raises(ArgumentError) do
+        "hello".byte_slice(5, -1)
+      end
     end
 
     it "gets byte_slice with start out of bounds" do
-      "hello".byte_slice(10, 3).should eq("")
+      expect_raises(IndexOutOfBounds) do
+        "hello".byte_slice(10, 3)
+      end
     end
 
     it "gets byte_slice with large count" do

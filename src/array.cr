@@ -249,17 +249,19 @@ class Array(T)
     to += length if to < 0
     to -= 1 if range.excludes_end?
     length = to - from + 1
-    length <= 0 ? Array(T).new : self[from, length]
+    length = 0 if length < 0
+    self[from, length]
   end
 
   def [](start : Int, count : Int)
-    raise ArgumentError.new "negative count: #{count}" if count < 0
-
-    if (start == 0 && length == 0) || (start == length)
+    if (start == 0 && length == 0) || (start == length && count >= 0)
       return Array(T).new
     end
 
-    start = check_index_out_of_bounds start
+    start += length if start < 0
+    raise IndexOutOfBounds.new unless 0 <= start <= length
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
     count = Math.min(count, length - start)
 
     if count == 0

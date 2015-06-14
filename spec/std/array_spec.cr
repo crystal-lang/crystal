@@ -92,6 +92,18 @@ describe "Array" do
       [1, 2, 3, 4, 5, 6][-4, 2].should eq([3, 4])
     end
 
+    it "raises on index out of bounds with range" do
+      expect_raises IndexOutOfBounds do
+        [1, 2, 3][4, 0]
+      end
+    end
+
+    it "raises on negative count" do
+      expect_raises ArgumentError do
+        [1, 2, 3][3, -1]
+      end
+    end
+
     it "raises on index out of bounds" do
       expect_raises IndexOutOfBounds do
         [1, 2, 3][-4, 2]

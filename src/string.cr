@@ -595,8 +595,7 @@ class String
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
   #
-  # This method never raises: at most, the whole string or the empty
-  # string will be returned.
+  # Raises `IndexOutOfBounds` if the range's start is not in range.
   #
   # ```
   # "hello"[0..2]  # "hel"
@@ -611,38 +610,62 @@ class String
     to += length if to < 0
     to -= 1 if range.excludes_end?
     length = to - from + 1
+    length = 0 if length < 0
     self[from, length]
   end
 
+  # Returns a substring starting from the `start` character
+  # of length `count`.
+  #
+  # The `start` argument can be negative to start counting
+  # from the end of the string.
+  #
+  # Raises `IndexOutOfBounds` if `start` isn't in range.
+  #
+  # Raises `ArgumentError` if `count` is negative.
   def [](start : Int, count : Int)
     if single_byte_optimizable?
       return byte_slice(start, count)
     end
 
-    return "" if count <= 0
+    start += length if start < 0
 
     start_pos = nil
     end_pos = nil
 
     reader = CharReader.new(self)
-    reader.each_with_index do |char, i|
+    i = 0
+
+    reader.each_with_index do |char|
       if i == start
         start_pos = reader.pos
-      elsif i == start + count
+      elsif count >= 0 && i == start + count
         end_pos = reader.pos
+        i += 1
+        break
       end
+      i += 1
     end
 
     end_pos ||= reader.pos
 
     if start_pos
+      raise ArgumentError.new "negative count" if count < 0
+      return "" if count == 0
+
       count = end_pos - start_pos
       String.new(count) do |buffer|
         buffer.copy_from(cstr + start_pos, count)
         {count, 0}
       end
+    elsif start == i
+      if count >= 0
+        return ""
+      else
+        raise ArgumentError.new "negative count"
+      end
     else
-      ""
+      raise IndexOutOfBounds.new
     end
   end
 
@@ -697,20 +720,28 @@ class String
   end
 
   def byte_slice(start : Int, count : Int)
-    return "" if count <= 0
-
     start += bytesize if start < 0
-    count = bytesize - start if start + count > bytesize
     single_byte_optimizable = single_byte_optimizable?
 
     if 0 <= start < bytesize
+      raise ArgumentError.new "negative count" if count < 0
+
+      count = bytesize - start if start + count > bytesize
+      return "" if count == 0
+
       String.new(count) do |buffer|
         buffer.copy_from(cstr + start, count)
         slice_length = single_byte_optimizable ? count : 0
         {count, slice_length}
       end
+    elsif start == bytesize
+      if count >= 0
+        return ""
+      else
+        raise ArgumentError.new "negative count"
+      end
     else
-      ""
+      raise IndexOutOfBounds.new
     end
   end
 

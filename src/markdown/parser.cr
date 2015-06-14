@@ -108,7 +108,7 @@ class Markdown::Parser
 
       break unless has_code_spaces? line
 
-      @renderer.text line.byte_slice(4)
+      @renderer.text line.byte_slice(Math.min(line.bytesize, 4))
       @line += 1
 
       if @line == @lines.length
