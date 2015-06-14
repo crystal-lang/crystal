@@ -119,4 +119,9 @@ describe "Regex" do
   it "doesn't crash when PCRE tries to free some memory (#771)" do
     expect_raises(ArgumentError) { Regex.new("foo)") }
   end
+
+  it "compare to other instances" do
+    Regex.new("foo").should eq(Regex.new("foo"))
+    Regex.new("foo").should_not eq(Regex.new("bar"))
+  end
 end

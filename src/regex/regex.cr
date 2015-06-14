@@ -101,6 +101,10 @@ class Regex
     to_s io
   end
 
+  def ==(other : Regex)
+    source == other.source && options == other.options
+  end
+
   def self.escape(str)
     String.build do |result|
       str.each_byte do |byte|
