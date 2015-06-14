@@ -46,7 +46,7 @@ The reason for this is that performance without full optimizations is still pret
 
 ## Creating a project or library
 
-Use the `init` command to create a Crystal project with the directory structure used by default.
+Use the `init` command to create a Crystal project with the standard directory structure.
 
 ```
 $ crystal init lib MyCoolLib
