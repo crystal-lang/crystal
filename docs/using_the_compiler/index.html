@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=11; IE=10; IE=9; IE=8; IE=7; IE=EDGE" />
-        <title>next | Crystal Programming Language</title>
+        <title>Using the compiler | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.0.2">
@@ -20,10 +20,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/until.html" />
+    <link rel="next" href="../overview/index.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/break.html" />
+    <link rel="prev" href="../installation/from_source_repository.html" />
     
 
         
@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.6.5.2" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="2" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -162,7 +162,7 @@
             
         </li>
     
-        <li class="chapter " data-level="2" data-path="using_the_compiler/index.html">
+        <li class="chapter active" data-level="2" data-path="using_the_compiler/index.html">
             
                 
                     <a href="../using_the_compiler/index.html">
@@ -744,7 +744,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.6.5.2" data-path="syntax_and_semantics/next.html">
+        <li class="chapter " data-level="4.6.5.2" data-path="syntax_and_semantics/next.html">
             
                 
                     <a href="../syntax_and_semantics/next.html">
@@ -1927,19 +1927,79 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="next">next</h1>
-<p>You can use <code>next</code> to try to execute the next iteration of a <code>while</code> loop. After executing <code>next</code>, the <code>while</code>&apos;s condition is checked and, if <em>truthy</em>, the body will be executed.</p>
-<pre><code class="lang-ruby">a = <span class="hljs-number">1</span>
-<span class="hljs-keyword">while</span> a &lt; <span class="hljs-number">5</span>
-  a += <span class="hljs-number">1</span>
-  <span class="hljs-keyword">if</span> a == <span class="hljs-number">3</span>
-    <span class="hljs-keyword">next</span>
-  <span class="hljs-keyword">end</span>
-  puts a
-<span class="hljs-keyword">end</span>
-<span class="hljs-comment"># The above prints the numbers 2, 4 and 5</span>
-</code></pre>
+                        <h1 id="using-the-compiler">Using the compiler</h1>
+<p>Once you <a href="../installation/index.html">install</a> the compiler you will have a <code>crystal</code> binary at your disposal.</p>
+<p>In the next sections a dollar sign (<code>$</code>) denotes the command line.</p>
+<h2 id="compiling-and-running-at-once">Compiling and running at once</h2>
+<p>To compile and run a program in a single shot you can invoke <code>crystal</code> with a single filename:</p>
+<pre><code>$ crystal some_program.cr
+</code></pre><p>Crystal files end with the <code>.cr</code> extension.</p>
+<p>Alternative you can use the <code>run</code> command:</p>
+<pre><code>$ crystal run some_program.cr
+</code></pre><h2 id="creating-an-executable">Creating an executable</h2>
+<p>To create an executable use the <code>build</code> command:</p>
+<pre><code>$ crystal build some_program.cr
+</code></pre><p>This will create a <code>some_program</code> file that you can execute:</p>
+<pre><code>$ ./some_program
+</code></pre><p><strong>Note:</strong> By default the generated executables <strong>are not fully optimized</strong>. To turn optimizations on, use the <code>--release</code> flag:</p>
+<pre><code>$ crystal build some_program.cr --release
+</code></pre><p>Make sure to always use <code>--release</code> for production-ready executables and when performing benchmarks.</p>
+<p>The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the <code>crystal</code> command almost as if it were an interpreter.</p>
+<h2 id="creating-a-project-or-library">Creating a project or library</h2>
+<p>Use the <code>init</code> command to create a Crystal project with the directory structure used by default.</p>
+<pre><code>$ crystal init lib MyCoolLib
+      create  MyCoolLib/.gitignore
+      create  MyCoolLib/LICENSE
+      create  MyCoolLib/README.md
+      create  MyCoolLib/.travis.yml
+      create  MyCoolLib/Projectfile
+      create  MyCoolLib/src/MyCoolLib.cr
+      create  MyCoolLib/src/MyCoolLib/version.cr
+      create  MyCoolLib/spec/spec_helper.cr
+      create  MyCoolLib/spec/MyCoolLib_spec.cr
+Initialized empty Git repository in ~/MyCoolLib/.git/
+</code></pre><h2 id="other-commands-and-options">Other commands and options</h2>
+<p>To see the full set of commands, invoke <code>crystal</code> without arguments.</p>
+<pre><code>$ crystal
+Usage: crystal [command] [switches] [program file] [--] [arguments]
 
+Command:
+    init                     generate new crystal project
+    build                    compile program file
+    browser                  open an http server to browse program file
+    deps                     install project dependencies
+    docs                     generate documentation
+    eval                     eval code
+    hierarchy                show type hierarchy
+    run (default)            compile and run program file
+    spec                     compile and run specs (in spec directory)
+    types                    show type of main variables
+    --help                   show this help
+    --version                show version
+</code></pre><p>To see the available options for a particuar command, use <code>--help</code> after a command:</p>
+<pre><code>$ crystal build --help
+Usage: crystal build [options] [programfile] [--] [arguments]
+
+Options:
+    --cross-compile flags            cross-compile
+    -d, --debug                      Add symbolic debug info
+    -D FLAG, --define FLAG           Define a compile-time flag
+    --emit [asm|llvm-bc|llvm-ir|obj] Comma separated list of types of output for the compiler to emit
+    -h, --help                       Show this message
+    --ll                             Dump ll to .crystal directory
+    --link-flags FLAGS               Additional flags to pass to the linker
+    --mcpu CPU                       Target specific cpu type
+    --no-color                       Disable colored output
+    --no-build                       Disable build output
+    -o                               Output filename
+    --prelude                        Use given file as prelude
+    --release                        Compile in release mode
+    -s, --stats                      Enable statistics output
+    --single-module                  Generate a single LLVM module
+    --threads                        Maximum number of threads to use
+    --target TRIPLE                  Target triple
+    --verbose                        Display executed commands
+</code></pre>
                     
                     </section>
                 
@@ -1949,10 +2009,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/break.html" class="navigation navigation-prev " aria-label="Previous page: break"><i class="fa fa-angle-left"></i></a>
+        <a href="../installation/from_source_repository.html" class="navigation navigation-prev " aria-label="Previous page: From sources"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/until.html" class="navigation navigation-next " aria-label="Next page: until"><i class="fa fa-angle-right"></i></a>
+        <a href="../overview/index.html" class="navigation navigation-next " aria-label="Next page: Overview and Examples"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
