@@ -3,6 +3,7 @@ require "option_parser"
 require "signal"
 
 module Spec
+  # :nodoc:
   COLORS = {
     success: :green,
     fail: :red,
@@ -10,6 +11,7 @@ module Spec
     pending: :yellow,
   }
 
+  # :nodoc:
   LETTERS = {
     success: '.',
     fail: 'F',
@@ -17,10 +19,12 @@ module Spec
     pending: '*',
   }
 
+  # :nodoc:
   def self.color(str, status)
     str.colorize(COLORS[status])
   end
 
+  # :nodoc:
   class AssertionFailed < Exception
     getter file
     getter line
@@ -32,25 +36,30 @@ module Spec
 
   @@aborted = false
 
+  # :nodoc:
   def self.abort!
     @@aborted = true
   end
 
+  # :nodoc:
   def self.aborted?
     @@aborted
   end
 
   @@pattern = nil
 
+  # :nodoc:
   def self.pattern=(pattern)
     @@pattern = Regex.new(Regex.escape(pattern))
   end
 
   @@line = nil
 
+  # :nodoc:
   def self.line=(@@line)
   end
 
+  # :nodoc:
   def self.matches?(description, file, line)
     spec_pattern = @@pattern
     spec_line = @@line
@@ -66,9 +75,11 @@ module Spec
 
   @@fail_fast = false
 
+  # :nodoc:
   def self.fail_fast=(@@fail_fast)
   end
 
+  # :nodoc:
   def self.fail_fast?
     @@fail_fast
   end
@@ -83,64 +94,18 @@ module Spec
     after_each << block
   end
 
+  # :nodoc:
   def self.run_before_each_hooks
     @@before_each.try &.each &.call
   end
 
+  # :nodoc:
   def self.run_after_each_hooks
     @@after_each.try &.each &.call
   end
 end
 
 require "./*"
-
-def describe(description, file = __FILE__, line = __LINE__)
-  Spec::RootContext.describe(description.to_s, file, line) do |context|
-    yield
-  end
-end
-
-def context(description, file = __FILE__, line = __LINE__)
-  describe(description.to_s, file, line) { |ctx| yield ctx }
-end
-
-def it(description, file = __FILE__, line = __LINE__)
-  return if Spec.aborted?
-  return unless Spec.matches?(description, file, line)
-
-  Spec.formatter.before_example description
-
-  begin
-    Spec.run_before_each_hooks
-    yield
-    Spec::RootContext.report(:success, description, file, line)
-  rescue ex : Spec::AssertionFailed
-    Spec::RootContext.report(:fail, description, file, line, ex)
-    Spec.abort! if Spec.fail_fast?
-  rescue ex
-    Spec::RootContext.report(:error, description, file, line, ex)
-    Spec.abort! if Spec.fail_fast?
-  ensure
-    Spec.run_after_each_hooks
-  end
-end
-
-def pending(description, file = __FILE__, line = __LINE__, &block)
-  return if Spec.aborted?
-  return unless Spec.matches?(description, file, line)
-
-  Spec.formatter.before_example description
-
-  Spec::RootContext.report(:pending, description, file, line)
-end
-
-def assert(file = __FILE__, line = __LINE__)
-  it("assert", file, line) { yield }
-end
-
-def fail(msg, file = __FILE__, line = __LINE__)
-  raise Spec::AssertionFailed.new(msg, file, line)
-end
 
 OptionParser.parse! do |opts|
   opts.banner = "crystal spec runner"

@@ -186,96 +186,100 @@ module Spec
       "expected: value #{@actual.inspect}\nto not include: #{@expected.inspect}"
     end
   end
-end
 
-def eq(value)
-  Spec::EqualExpectation.new value
-end
+  module Expectations
+    def eq(value)
+      Spec::EqualExpectation.new value
+    end
 
-def be(value)
-  Spec::BeExpectation.new value
-end
+    def be(value)
+      Spec::BeExpectation.new value
+    end
 
-def be_true
-  eq true
-end
+    def be_true
+      eq true
+    end
 
-def be_false
-  eq false
-end
+    def be_false
+      eq false
+    end
 
-def be_truthy
-  Spec::BeTruthyExpectation.new
-end
+    def be_truthy
+      Spec::BeTruthyExpectation.new
+    end
 
-def be_falsey
-  Spec::BeFalseyExpectation.new
-end
+    def be_falsey
+      Spec::BeFalseyExpectation.new
+    end
 
-def be_nil
-  eq nil
-end
+    def be_nil
+      eq nil
+    end
 
-def be_close(expected, delta)
-  Spec::CloseExpectation.new(expected, delta)
-end
+    def be_close(expected, delta)
+      Spec::CloseExpectation.new(expected, delta)
+    end
 
-def be
-  Spec::Be
-end
+    def be
+      Spec::Be
+    end
 
-def match(value)
- Spec::MatchExpectation.new(value)
-end
+    def match(value)
+     Spec::MatchExpectation.new(value)
+    end
 
-# Passes if actual includes expected. Works on collections and String.
-# @param expected - item expected to be contained in actual
-def contain(expected)
-  Spec::ContainExpectation.new(expected)
-end
+    # Passes if actual includes expected. Works on collections and String.
+    # @param expected - item expected to be contained in actual
+    def contain(expected)
+      Spec::ContainExpectation.new(expected)
+    end
 
-macro be_a(type)
-  Spec::BeAExpectation({{type}}).new
-end
+    macro be_a(type)
+      Spec::BeAExpectation({{type}}).new
+    end
 
-macro expect_raises
-  %raised = false
-  begin
-    {{yield}}
-  rescue
-    %raised = true
-  end
-
-  fail "expected to raise" unless %raised
-end
-
-macro expect_raises(klass)
-  begin
-    {{yield}}
-    fail "expected to raise {{klass.id}}"
-  rescue {{klass.id}}
-  end
-end
-
-macro expect_raises(klass, message)
-  begin
-    {{yield}}
-    fail "expected to raise {{klass.id}}"
-  rescue %ex : {{klass.id}}
-    %msg = {{message}}
-    %ex_to_s = %ex.to_s
-    case %msg
-    when Regex
-      unless (%ex_to_s =~ %msg)
-        fail "expected {{klass.id}}'s message to match #{ %msg }, but was #{ %ex_to_s.inspect }"
+    macro expect_raises
+      %raised = false
+      begin
+        {{yield}}
+      rescue
+        %raised = true
       end
-    when String
-      unless %ex_to_s.includes?(%msg)
-        fail "expected {{klass.id}}'s message to include #{ %msg.inspect }, but was #{ %ex_to_s.inspect }"
+
+      fail "expected to raise" unless %raised
+    end
+
+    macro expect_raises(klass)
+      begin
+        {{yield}}
+        fail "expected to raise {{klass.id}}"
+      rescue {{klass.id}}
+      end
+    end
+
+    macro expect_raises(klass, message)
+      begin
+        {{yield}}
+        fail "expected to raise {{klass.id}}"
+      rescue %ex : {{klass.id}}
+        %msg = {{message}}
+        %ex_to_s = %ex.to_s
+        case %msg
+        when Regex
+          unless (%ex_to_s =~ %msg)
+            fail "expected {{klass.id}}'s message to match #{ %msg }, but was #{ %ex_to_s.inspect }"
+          end
+        when String
+          unless %ex_to_s.includes?(%msg)
+            fail "expected {{klass.id}}'s message to include #{ %msg.inspect }, but was #{ %ex_to_s.inspect }"
+          end
+        end
       end
     end
   end
 end
+
+include Spec::Expectations
 
 class Object
   def should(expectation, file = __FILE__, line = __LINE__)
