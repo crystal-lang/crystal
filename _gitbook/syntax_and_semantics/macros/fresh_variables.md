@@ -45,7 +45,7 @@ macro fresh_vars_sample(*names)
   {% end %}
 end
 
-fresh_vars_sample
+fresh_vars_sample a, b, c
 
 # Sample output:
 # Declaring: __temp_255
