@@ -25,7 +25,7 @@ install: |
       ;;
 
     osx)
-      brew install gmp libevent crystal
+      brew install gmp libevent crystal-lang
       curl "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-darwin-x86_64.tar.gz" | tar xz -C /tmp
       export LIBRARY_PATH=/usr/local/opt/crystal/embedded/lib
       ;;
