@@ -49,6 +49,17 @@ class StringIO
     self
   end
 
+  def close
+    # Do nothing
+    # TODO: maybe we do want to allow closing a StringIO,
+    # although we would have to make a check every time
+    # we read/write...
+  end
+
+  def closed?
+    false
+  end
+
   def to_s
     String.new @buffer, @bytesize
   end

@@ -140,13 +140,22 @@ class BufferedIO(T)
   end
 
   def flush
-    @io.write(@out_buffer.to_slice, @out_count)
+    @io.write(@out_buffer.to_slice, @out_count) if @out_count > 0
     @io.flush
     @out_count = 0
   end
 
   def fd
     @io.fd
+  end
+
+  def close
+    flush if @out_count > 0
+    @io.close
+  end
+
+  def closed?
+    @io.closed?
   end
 
   def to_fd_io
