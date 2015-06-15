@@ -3,7 +3,7 @@ class Set(T)
   include Iterable
 
   def initialize
-    @hash = Hash(T, Bool).new
+    @hash = Hash(T, Nil).new
   end
 
   def self.new(array : Array(T))
@@ -19,7 +19,7 @@ class Set(T)
   end
 
   def add(object : T)
-    @hash[object] = true
+    @hash[object] = nil
   end
 
   def merge(elems)
