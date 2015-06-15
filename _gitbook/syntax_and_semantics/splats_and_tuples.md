@@ -1,6 +1,6 @@
 # Splats and tuples
 
-A method can receive a variable number of arguments by using a splat, which can appear only once and in any position:
+A method can receive a variable number of arguments by using a *splat* (`*`), which can appear only once and in any position:
 
 ```ruby
 def sum(*elements)
