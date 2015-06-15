@@ -2,7 +2,7 @@
 
 The classic "hello world" program looks like this in Crystal:
 
-``` ruby
+```ruby
 puts "Hello world!"
 ```
 

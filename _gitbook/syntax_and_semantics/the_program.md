@@ -2,7 +2,7 @@
 
 The program is a global object in which you can define types, methods and file-local variables.
 
-``` ruby
+```ruby
 # Defines a method in the program
 def add(x, y)
   x + y
@@ -67,7 +67,7 @@ end
 
 Variables declared in a program are not visible inside methods:
 
-``` ruby
+```ruby
 x = 1
 
 def add(y)

@@ -2,7 +2,7 @@
 
 If a variable is the condition of an `if`, inside the `then` branch the variable will be considered as not having the `Nil` type:
 
-``` ruby
+```ruby
 a = some_condition ? nil : 3
 # a is Int32 or Nil
 
@@ -15,7 +15,7 @@ end
 
 This also applies when a variable is assigned in an `if`'s condition:
 
-``` ruby
+```ruby
 if a = some_expression
   # here a is not nil
 end
@@ -23,7 +23,7 @@ end
 
 This logic also applies if there are ands (`&&`) in the condition:
 
-``` ruby
+```ruby
 if a && b
   # here both a and b are guaranteed not to be Nil
 end
@@ -35,7 +35,7 @@ Of course, reassigning a variable inside the `then` branch makes that variable h
 
 The above logic **doesn’t** work with instance variables, class variables or global variables:
 
-``` ruby
+```ruby
 if @a
   # here @a can be nil
 end
@@ -45,7 +45,7 @@ This is because any method call could potentially affect that instance variable,
 
 To do something with `@a` only when it is not `nil` you have two options:
 
-``` ruby
+```ruby
 # First option: assign it to a variable
 if a = @a
   # here a can't be nil

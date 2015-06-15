@@ -2,7 +2,7 @@
 
 An `unless` evaluates the then branch if its condition is *falsey*, and evaluates the `else branch`, if there’s any, otherwise. That is, it behaves in the opposite way of an `if`:
 
-``` ruby
+```ruby
 unless some_condition
   then_expression
 else

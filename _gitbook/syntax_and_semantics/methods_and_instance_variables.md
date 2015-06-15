@@ -2,7 +2,7 @@
 
 We can simplify our constructor by using a shorter syntax for assigning a method argument to an instance variable:
 
-``` ruby
+```ruby
 class Person
   def initialize(@name)
     @age = 0
@@ -12,7 +12,7 @@ end
 
 Right now, we can't do much with a person: create it with a name, ask for its name and for its age, which will always be zero. So lets add a method that makes a person become older:
 
-``` ruby
+```ruby
 class Person
   def become_older
     @age += 1
@@ -34,7 +34,7 @@ Method names begin with a lowercase letter and, as a convention, only use lowerc
 
 As a side note, we can define `become_older` inside the original `Person` definition, or in a separate definition: Crystal combines all definitions into a single class. The following works just fine:
 
-``` ruby
+```ruby
 class Person
   def initialize(@name)
     @age = 0
@@ -52,7 +52,7 @@ end
 
 If you redefine a method, the last definition will take precedence.
 
-``` ruby
+```ruby
 class Person
   def become_older
     @age += 1
@@ -72,7 +72,7 @@ person.age #=> 2
 
 You can invoke the previously redefined method with `previous_def`:
 
-``` ruby
+```ruby
 class Person
   def become_older
     @age += 1

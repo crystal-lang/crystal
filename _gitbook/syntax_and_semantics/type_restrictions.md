@@ -2,7 +2,7 @@
 
 Type restrictions are type annotations put to method arguments to restrict the types accepted by that method.
 
-``` ruby
+```ruby
 def add(x : Number, y : Number)
   x + y
 end
@@ -16,7 +16,7 @@ add true, false
 
 Note that if we had defined `add` without type restrictions, we would also have gotten a compile time error:
 
-``` ruby
+```ruby
 def add(x, y)
   x + y
 end
@@ -48,7 +48,7 @@ Refer to the [type grammar](type_grammar.html) for the notation used in type res
 
 A special type restriction is `self`:
 
-``` ruby
+```ruby
 class Person
   def ==(other : self)
     other.name == name
@@ -74,7 +74,7 @@ As a side note, since `Person` inherits `Reference` the second definition of `==
 
 Note that `self` always represents a match against an instance type, even in class methods:
 
-``` ruby
+```ruby
 class Person
   def self.compare(p1 : self, p2 : self)
     p1.name == p2.name
@@ -93,7 +93,7 @@ You can use `self.class` to restrict to the Person type. The next section talks 
 
 Using, for example, `Int32` as a type restriction makes the method only accept instances of `Int32`:
 
-``` ruby
+```ruby
 def foo(x : Int32)
 end
 
@@ -103,7 +103,7 @@ foo "hello" # Error
 
 If you want a method to only accept the type Int32 (not instances of it), you use `.class`:
 
-``` ruby
+```ruby
 def foo(x : Int32.class)
 end
 

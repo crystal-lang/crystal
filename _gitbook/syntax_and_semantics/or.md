@@ -4,7 +4,7 @@ An `||` (or) evaluates its left hand side. If it's *falsey*, it evaluates its ri
 
 You can think an `||` as syntax sugar of an `if`:
 
-``` ruby
+```ruby
 some_exp1 || some_exp2
 
 # The above is the same as:
