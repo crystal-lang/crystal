@@ -5,7 +5,7 @@ Macro defs allow you to define a method for a class hierarchy and have that meth
 ```ruby
 class Object
   macro def instance_vars_names : Array(String)
-    {{ @type.instance_vars.map &.name }}
+    {{ @type.instance_vars.map &.name.stringify }}
   end
 end
 
