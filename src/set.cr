@@ -14,13 +14,10 @@ class Set(T)
     set
   end
 
-  def <<(object : T)
-    add object
-  end
-
   def add(object : T)
     @hash[object] = true
   end
+  alias_method "<<", add
 
   def merge(elems)
     elems.each { |elem| self << elem }
