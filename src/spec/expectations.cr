@@ -277,20 +277,24 @@ module Spec
       end
     end
   end
+
+  module ObjectExtensions
+    def should(expectation, file = __FILE__, line = __LINE__)
+      unless expectation.match self
+        fail(expectation.failure_message, file, line)
+      end
+    end
+
+    def should_not(expectation, file = __FILE__, line = __LINE__)
+      if expectation.match self
+        fail(expectation.negative_failure_message, file, line)
+      end
+    end
+  end
 end
 
 include Spec::Expectations
 
 class Object
-  def should(expectation, file = __FILE__, line = __LINE__)
-    unless expectation.match self
-      fail(expectation.failure_message, file, line)
-    end
-  end
-
-  def should_not(expectation, file = __FILE__, line = __LINE__)
-    if expectation.match self
-      fail(expectation.negative_failure_message, file, line)
-    end
-  end
+  include Spec::ObjectExtensions
 end
