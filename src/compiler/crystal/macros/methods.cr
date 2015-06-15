@@ -706,8 +706,18 @@ module Crystal
 
     def self.type_params(type)
       if type.is_a?(GenericClassInstanceType)
-        ArrayLiteral.map(type.type_vars.values) do |type_var|
-          TypeNode.new(type_var.type)
+        if type.is_a?(TupleInstanceType)
+          ArrayLiteral.map(type.tuple_types) do |tuple_type|
+            TypeNode.new(tuple_type)
+          end
+        else
+          ArrayLiteral.map(type.type_vars.values) do |type_var|
+            if type_var.is_a?(Var)
+              TypeNode.new(type_var.type)
+            else
+              type_var
+            end
+          end
         end
       else
         ArrayLiteral.new

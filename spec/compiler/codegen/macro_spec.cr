@@ -608,6 +608,28 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
+  it "can acccess type parameters that are not types" do
+    run(%(
+      class Foo(T)
+        def foo
+          {{ @type.type_params.first.is_a?(NumberLiteral) }}
+        end
+      end
+      Foo(1).new.foo
+    )).to_b.should eq(true)
+  end
+
+  it "can acccess type parameters of a tuple" do
+    run(%(
+      struct Tuple
+        def foo
+          {{ @type.type_params.first.name.stringify }}
+        end
+      end
+      {1, 2, 3}.foo
+    )).to_string.should eq("Int32")
+  end
+
   it "receives &block" do
     run(%(
       macro foo(&block)
