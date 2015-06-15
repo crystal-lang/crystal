@@ -147,9 +147,9 @@ Macro iterations can be used outside a macro definition:
   end
 {% end %}
 
-foo #=> 1
-bar #=> 2
-baz #=> 3
+foo #=> 0
+bar #=> 1
+baz #=> 2
 ```
 
 ## Variadic arguments and splatting
