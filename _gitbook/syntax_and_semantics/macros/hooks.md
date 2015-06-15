@@ -17,7 +17,7 @@ class Parent
   end
 end
 
-class Child1 < Parent
+class Child < Parent
 end
 
 Child.new.child #=> 1
