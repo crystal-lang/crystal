@@ -12,7 +12,7 @@ end
 add(1, 2) #=> 3
 ```
 
-A method's value is the value of its last expression, there's no need for explicit `return` expressions. Howver, explicit `return` are possible:
+A method's value is the value of its last expression, there's no need for explicit `return` expressions. However, explicit `return` are possible:
 
 ```ruby
 def even?(num)
