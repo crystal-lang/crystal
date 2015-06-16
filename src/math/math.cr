@@ -1,4 +1,5 @@
 require "./libm"
+require "./stats"
 
 module Math
   extend self
