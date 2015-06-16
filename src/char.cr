@@ -3,7 +3,7 @@
 #
 # It is created by enclosing an UTF-8 character in single quotes.
 #
-# ```text
+# ```
 # 'a'
 # 'z'
 # '0'
@@ -13,7 +13,7 @@
 #
 # You can use a backslash to denote some characters:
 #
-# ```text
+# ```
 # '\'' # single quote
 # '\\' # backslash
 # '\e' # escape

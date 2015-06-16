@@ -16,7 +16,7 @@ end
 #
 # A backslash can be used to denote some characters inside the string:
 #
-# ```text
+# ```
 # "\"" # double quote
 # "\\" # backslash
 # "\e" # escape
@@ -94,7 +94,7 @@ end
 #
 # To create a String with embedded expressions, you can use string interpolation:
 #
-# ```text
+# ```
 # a = 1
 # b = 2
 # "sum = #{a + b}"        # "sum = 3"

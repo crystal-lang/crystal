@@ -31,7 +31,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     # Check method reference (without #, but must be the whole text)
     if text =~ /\A((?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?)(\(.+?\))?\Z/
       name = $1
-      args = $2
+      args = $~.not_nil![2]? || ""
 
       method = lookup_method @type, name, args
       if method
@@ -52,7 +52,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       /x do |match_text, match|
 
       # Type#method(...)
-      unless match[1].empty?
+      if match[1]?
         sharp_index = match_text.index('#').not_nil!
         type_name = match_text[0 ... sharp_index]
 
@@ -76,7 +76,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       end
 
       # Type
-      unless match[2].empty?
+      if match[2]?
         another_type = @type.lookup_type(match_text.split("::"))
         if another_type && another_type.must_be_included?
           next type_link another_type, match_text
@@ -84,7 +84,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
       end
 
       # #method(...)
-      unless match[3].empty?
+      if match[3]?
         paren_index = match_text.index('(')
 
         if paren_index

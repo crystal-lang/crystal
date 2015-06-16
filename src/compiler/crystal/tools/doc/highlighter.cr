@@ -109,7 +109,7 @@ module Crystal::Doc::Highlighter
       when :EOF
         break
       else
-        io << token
+        token.value.to_s.inspect_unquoted(io)
       end
     end
   end
