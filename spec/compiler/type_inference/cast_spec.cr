@@ -220,4 +220,13 @@ describe "Type inference: cast" do
       Int32 as Int32.class
       )) { int32.metaclass }
   end
+
+  # Later we might want casting something to Object to have a meaning
+  # similar to casting to Void*, but for now it's useless.
+  it "disallows casting to Object (#815)" do
+    assert_error %(
+      nil as Object
+      ),
+      "useless cast"
+  end
 end

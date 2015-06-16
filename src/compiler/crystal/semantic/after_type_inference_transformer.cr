@@ -537,6 +537,10 @@ module Crystal
 
       to_type = node.to.type
 
+      if to_type == @program.object
+        node.raise "useless cast"
+      end
+
       if to_type.pointer?
         if obj_type.pointer? || obj_type.reference_like?
           return node
