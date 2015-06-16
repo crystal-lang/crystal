@@ -498,6 +498,10 @@ describe "Parser" do
   it_parses "puts a while true", While.new(true.bool, Call.new(nil, "puts", "a".call), run_once: true)
   it_parses "puts ::foo", Call.new(nil, "puts", Call.new(nil, "foo", global: true))
 
+  it_parses "puts __FILE__", Call.new(nil, "puts", "/foo/bar/baz.cr".string)
+  it_parses "puts __DIR__", Call.new(nil, "puts", "/foo/bar".string)
+  it_parses "puts __LINE__", Call.new(nil, "puts", 1.int32)
+
   { {"break", Break}, {"return", Return}, {"next", Next} }.each do |tuple|
     keyword, klass = tuple
     it_parses "#{keyword}", klass.new
