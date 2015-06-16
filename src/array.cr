@@ -229,10 +229,40 @@ class Array(T)
     push(value)
   end
 
+  # Returns the element at the given index.
+  #
+  # Negative indices can be used to start counting from the end of the array.
+  # Raises `IndexOutOfBounds` if trying to access an element outside the array's range.
+  #
+  # ```
+  # ary = ['a', 'b', 'c']
+  # ary[0]  #=> 'a'
+  # ary[2]  #=> 'c'
+  # ary[-1] #=> 'c'
+  # ary[-2] #=> 'b'
+  #
+  # ary[3]  # raises IndexOutOfBounds
+  # ary[-4] # raises IndexOutOfBounds
+  # ```
   def [](index : Int)
     at(index)
   end
 
+  # Returns the element at the given index.
+  #
+  # Negative indices can be used to start counting from the end of the array.
+  # Returns `nil` if trying to access an element outside the array's range.
+  #
+  # ```
+  # ary = ['a', 'b', 'c']
+  # ary[0]?  #=> 'a'
+  # ary[2]?  #=> 'c'
+  # ary[-1]? #=> 'c'
+  # ary[-2]? #=> 'b'
+  #
+  # ary[3]?  # nil
+  # ary[-4]? # nil
+  # ```
   def []?(index : Int)
     at(index) { nil }
   end
