@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.7.2" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.7.2" data-basepath=".." data-revision="Tue Jun 16 2015 14:23:39 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1946,7 +1946,7 @@ add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) <spa
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>When invoking a method without a receiver, like <code>add(1, 2)</code>, if the method is not found in the current type or any of its ancestors then it will be searched in the program.</p>
+<p>When invoking a method without a receiver, like <code>add(1, 2)</code>, it will be searched in the program if not found in the current type or any of its ancestors.</p>
 <pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>add(x, y)
   x + y
 <span class="hljs-keyword">end</span>
@@ -1990,7 +1990,7 @@ add(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) <spa
 
 add(<span class="hljs-number">2</span>)
 </code></pre>
-<p>Parenthesis in method invocations are optional:</p>
+<p>Parentheses in method invocations are optional:</p>
 <pre><code class="lang-ruby">add <span class="hljs-number">1</span>, <span class="hljs-number">2</span> <span class="hljs-comment"># same as add(1, 2)</span>
 </code></pre>
 
