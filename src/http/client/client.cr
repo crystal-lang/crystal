@@ -60,7 +60,7 @@ class HTTP::Client
   end
 
   def exec(request : HTTP::Request)
-    request.headers["User-agent"] ||= "Crystal language"
+    request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     HTTP::Response.from_io(socket)
   end
