@@ -763,6 +763,13 @@ describe "String" do
     "\u{81}".dump.should eq("\"\\u{81}\"")
   end
 
+  it "dumps unquoted" do
+    "a".dump_unquoted.should eq("a")
+    "\\".dump_unquoted.should eq("\\\\")
+    "á".dump_unquoted.should eq("\\u{e1}")
+    "\u{81}".dump_unquoted.should eq("\\u{81}")
+  end
+
   it "inspects" do
     "a".inspect.should eq("\"a\"")
     "\\".inspect.should eq("\"\\\\\"")
@@ -777,6 +784,13 @@ describe "String" do
     "\#{".inspect.should eq("\"\\\#{\"")
     "á".inspect.should eq("\"á\"")
     "\u{81}".inspect.should eq("\"\\u{81}\"")
+  end
+
+  it "inspects unquoted" do
+    "a".inspect_unquoted.should eq("a")
+    "\\".inspect_unquoted.should eq("\\\\")
+    "á".inspect_unquoted.should eq("á")
+    "\u{81}".inspect_unquoted.should eq("\\u{81}")
   end
 
   it "does *" do

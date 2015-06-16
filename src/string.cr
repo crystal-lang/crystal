@@ -1886,13 +1886,19 @@ class String
 
   def inspect(io)
     dump_or_inspect(io) do |char|
-      if char.control?
-        io << "\\u{"
-        char.ord.to_s(16, io)
-        io << "}"
-      else
-        io << char
-      end
+      inspect_char(char, io)
+    end
+  end
+
+  def inspect_unquoted
+    String.build do |io|
+      inspect_unquoted(io)
+    end
+  end
+
+  def inspect_unquoted(io)
+    dump_or_inspect_unquoted(io) do |char|
+      inspect_char(char, io)
     end
   end
 
@@ -1904,18 +1910,31 @@ class String
 
   def dump(io)
     dump_or_inspect(io) do |char|
-      if char.control? || char.ord >= 0x80
-        io << "\\u{"
-        char.ord.to_s(16, io)
-        io << "}"
-      else
-        io << char
-      end
+      dump_char(char, io)
+    end
+  end
+
+  def dump_unquoted
+    String.build do |io|
+      dump_unquoted(io)
+    end
+  end
+
+  def dump_unquoted(io)
+    dump_or_inspect_unquoted(io) do |char|
+      dump_char(char, io)
     end
   end
 
   private def dump_or_inspect(io)
     io << "\""
+    dump_or_inspect_unquoted(io) do |char|
+      yield char
+    end
+    io << "\""
+  end
+
+  private def dump_or_inspect_unquoted(io)
     reader = CharReader.new(self)
     while reader.has_next?
       current_char = reader.current_char
@@ -1944,7 +1963,26 @@ class String
       end
       reader.next_char
     end
-    io << "\""
+  end
+
+  private def inspect_char(char, io)
+    if char.control?
+      io << "\\u{"
+      char.ord.to_s(16, io)
+      io << "}"
+    else
+      io << char
+    end
+  end
+
+  private def dump_char(char, io)
+    if char.control? || char.ord >= 0x80
+      io << "\\u{"
+      char.ord.to_s(16, io)
+      io << "}"
+    else
+      io << char
+    end
   end
 
   def starts_with?(str : String)
