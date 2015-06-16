@@ -2,7 +2,7 @@
 
 We can define a `become_older` method that accepts a number indicating the years to grow:
 
-``` ruby
+```ruby
 class Person
   def become_older
     @age += 1
@@ -33,7 +33,7 @@ Methods overload by several criteria:
 
 For example, we can define four different `become_older` methods:
 
-``` ruby
+```ruby
 class Person
   # Increases age by one
   def become_older
@@ -88,7 +88,7 @@ In generated documentation the dummy `&block` method will always appear, regardl
 
 Given the same number of arguments, the compiler will try to sort them by leaving the less restrictive ones to the end:
 
-``` ruby
+```ruby
 class Person
   # First, this method is defined
   def become_older(age)

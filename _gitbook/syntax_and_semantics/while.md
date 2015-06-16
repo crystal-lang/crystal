@@ -2,7 +2,7 @@
 
 A `while` executes its body as long as its condition is *truthy*.
 
-``` ruby
+```ruby
 while some_condition
   do_this
 end
@@ -12,13 +12,13 @@ In the above form, the condition is first tested and, if *truthy*, the body is e
 
 To execute the body at least once and then continue executing it while the condition is *truthy*, write the while as a suffix:
 
-``` ruby
+```ruby
 do_this while some_condition
 ```
 
 If you need to execute multiple expressions, group them between `begin` and `end`:
 
-``` ruby
+```ruby
 begin
   do_this
   do_that
@@ -31,7 +31,7 @@ Similar to an `if`, if a `while`'s condition is a variable, the variable is guar
 
 The type of a variable after a `while` depends on the type it had before the `while` and the type it had before leaving the `while`'s body:
 
-``` ruby
+```ruby
 a = 1
 while some_condition
   # a :: Int32 | String

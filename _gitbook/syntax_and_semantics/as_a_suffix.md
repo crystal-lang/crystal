@@ -2,7 +2,7 @@
 
 An `if` can be written as an expression’s suffix:
 
-``` ruby
+```ruby
 a = 2 if some_condition
 
 # The above is the same as:

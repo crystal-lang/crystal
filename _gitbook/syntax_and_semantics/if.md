@@ -2,7 +2,7 @@
 
 An `if` evaluates the `then` branch if its condition is *truthy*, and evaluates the `else` branch, if there’s any, otherwise.
 
-``` ruby
+```ruby
 a = 1
 if a > 0
   a = 10
@@ -20,7 +20,7 @@ b #=> 20
 
 To write a chain of if-else-if you use `elsif`:
 
-``` ruby
+```ruby
 if some_condition
   do_something
 elsif some_other_condition
@@ -32,7 +32,7 @@ end
 
 After an `if`, a variable’s type depends on the type of the expressions used in both branches.
 
-``` ruby
+```ruby
 a = 1
 if some_condition
   a = "hello"
@@ -64,7 +64,7 @@ Note that if a variable is declared inside one of the branches but not in the ot
 
 Inside an `if`'s branch the type of a variable is the one it got assigned in that branch, or the one that it had before the branch if it was not reassigned:
 
-``` ruby
+```ruby
 a = 1
 if some_condition
   a = "hello"
@@ -78,7 +78,7 @@ That is, a variable’s type is the type of the last expression(s) assigned to i
 
 If one of the branches never reaches past the end of an `if`, like in the case of a `return`, `next`, `break` or `raise`, that type is not considered at the end of the `if`:
 
-``` ruby
+```ruby
 if some_condition
   e = 1
 else

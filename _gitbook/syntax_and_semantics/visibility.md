@@ -6,7 +6,7 @@ Methods can be marked as `private` or `protected`.
 
 A `private` method can only be invoked without a receiver, that is, without something before the dot:
 
-``` ruby
+```ruby
 class Person
   private def say(message)
     puts message
@@ -24,7 +24,7 @@ end
 
 Note that `private` methods are visible by subclasses:
 
-``` ruby
+```ruby
 class Employee < Person
   def say_bye
     say "bye" # OK
@@ -64,7 +64,7 @@ one_more.say "hello" # Error, one_more is a Person
 
 A `protected` class method can be invoked from an instance method and the other way around:
 
-``` ruby
+```ruby
 class Person
   protected def self.say(message)
     puts message
