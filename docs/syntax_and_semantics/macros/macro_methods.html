@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.14.1" data-basepath="../.." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.14.1" data-basepath="../.." data-revision="Tue Jun 16 2015 14:25:53 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1931,7 +1931,7 @@
 <p>Macro defs allow you to define a method for a class hierarchy and have that method be evaluated at the end of the type-inference phase, as a macro, where type information is known, for each concrete subtype. For example:</p>
 <pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Object</span></span>
   macro <span class="hljs-function"><span class="hljs-keyword">def</span> </span>instance_vars_names <span class="hljs-symbol">:</span> <span class="hljs-constant">Array</span>(<span class="hljs-constant">String</span>)
-    {{ <span class="hljs-variable">@type</span>.instance_vars.map &amp;.name }}
+    {{ <span class="hljs-variable">@type</span>.instance_vars.map &amp;.name.stringify }}
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
