@@ -34,6 +34,9 @@ your installation.
 Next, make changes to the standard library, making sure you also provide corresponding specs. To run all specs
 you can do `make spec` or `bin/crystal spec/all_spec.cr`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
 
+Note: at this point you might get long compile error that include "library not found for: ...". This means
+you are [missing some libraries](https://github.com/manastech/crystal/wiki/All-required-libraries).
+
 Then push your changes and create a pull request.
 
 ## Contributing to the compiler itself
