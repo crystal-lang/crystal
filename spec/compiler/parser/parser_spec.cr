@@ -502,6 +502,8 @@ describe "Parser" do
   it_parses "puts __DIR__", Call.new(nil, "puts", "/foo/bar".string)
   it_parses "puts __LINE__", Call.new(nil, "puts", 1.int32)
 
+  it_parses "x = 2; foo do bar x end", [Assign.new("x".var, 2.int32), Call.new(nil, "foo", block: Block.new(body: Call.new(nil, "bar", "x".var)))] of ASTNode
+
   { {"break", Break}, {"return", Return}, {"next", Next} }.each do |tuple|
     keyword, klass = tuple
     it_parses "#{keyword}", klass.new
