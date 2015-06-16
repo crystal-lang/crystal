@@ -118,6 +118,8 @@ class HTTP::Client
     host = uri.host.not_nil!
     port = uri.port
     path = uri.full_path
+    user = uri.user
+    password = uri.password
     ssl = false
 
     case uri.scheme
@@ -130,6 +132,9 @@ class HTTP::Client
     end
 
     HTTP::Client.new(host, port, ssl) do |client|
+      if user && password
+        client.basic_auth(user, password)
+      end
       yield client, path
     end
   end
