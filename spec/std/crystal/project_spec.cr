@@ -15,6 +15,17 @@ module Crystal
         project.dependencies[0].should be_a(GitHubDependency)
       end
 
+      it "adds Git dependency" do
+        project = Project.new
+        project.eval do
+          deps do
+            git "https://example.com/owner/repo.git"
+          end
+        end
+        project.dependencies.length.should eq(1)
+        project.dependencies[0].should be_a(GitDependency)
+      end
+
       it "adds local dependencies" do
         project = Project.new
         project.eval do

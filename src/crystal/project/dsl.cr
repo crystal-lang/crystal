@@ -14,6 +14,10 @@ struct Crystal::Project::DSL
       @project.dependencies << GitHubDependency.new(repository, name, ssh, branch)
     end
 
+    def git(repository, name = nil : String, branch = nil : String)
+      @project.dependencies << GitDependency.new(repository, name, branch)
+    end
+
     def path(path, name = nil : String)
       @project.dependencies << PathDependency.new(path, name)
     end
