@@ -857,6 +857,33 @@ class String
     end
   end
 
+  # Returns a new String with the last character removed.
+  # If the string ends with `\r\n`, both characters are removed.
+  # Applying chop to an empty string returns an empty string.
+  #
+  # ```
+  # "string\r\n".chop   #=> "string"
+  # "string\n\r".chop   #=> "string\n"
+  # "string\n".chop     #=> "string"
+  # "string".chop       #=> "strin"
+  # "x".chop.chop       #=> ""
+  # ```
+  #
+  # See also: `#chomp`
+  def chop
+    return "" if bytesize <= 1
+
+    if bytesize >= 2 && cstr[bytesize - 1] == '\n'.ord && cstr[bytesize - 2] == '\r'.ord
+      return byte_slice(0, bytesize - 2)
+    end
+
+    if cstr[bytesize - 1] < 128 || single_byte_optimizable?
+      return byte_slice(0, bytesize - 1)
+    end
+
+    self[0, length - 1]
+  end
+
   def strip
     excess_right = 0
     while cstr[bytesize - 1 - excess_right].chr.whitespace?

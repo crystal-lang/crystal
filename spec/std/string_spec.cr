@@ -401,6 +401,17 @@ describe "String" do
     assert { "hello\r\n\r\r\n".chomp("").should eq("hello\r\n\r") }
   end
 
+  describe "chop" do
+    assert { "foo".chop.should eq("fo") }
+    assert { "foo\n".chop.should eq("foo") }
+    assert { "foo\r".chop.should eq("foo") }
+    assert { "foo\r\n".chop.should eq("foo") }
+    assert { "\r\n".chop.should eq("") }
+    assert { "かたな".chop.should eq("かた") }
+    assert { "かたな\n".chop.should eq("かたな") }
+    assert { "かたな\r\n".chop.should eq("かたな") }
+  end
+
   describe "strip" do
     assert { "  hello  \n\t\f\v\r".strip.should eq("hello") }
     assert { "hello".strip.should eq("hello") }
