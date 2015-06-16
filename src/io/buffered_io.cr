@@ -109,11 +109,31 @@ class BufferedIO(T)
   end
 
   def read(slice : Slice(UInt8), count)
-    fill_buffer if @buffer_rem.empty?
-    count = Math.min(count, @buffer_rem.length)
-    slice.copy_from(@buffer_rem.pointer(count), count)
-    @buffer_rem += count
-    count
+    total_read = 0
+
+    while count > 0
+      if @buffer_rem.empty?
+        # If we are asked to read more than the buffer's size,
+        # read directly into the slice.
+        if count >= BUFFER_SIZE
+          to_read = @io.read(slice, count).to_i
+          total_read += to_read
+          break
+        else
+          fill_buffer
+          break if @buffer_rem.empty?
+        end
+      end
+
+      to_read = Math.min(count, @buffer_rem.length)
+      slice.copy_from(@buffer_rem.pointer(to_read), to_read)
+      @buffer_rem += to_read
+      count -= to_read
+      slice += to_read
+      total_read += to_read
+    end
+
+    total_read
   end
 
   def write(slice : Slice(UInt8), count)

@@ -105,4 +105,25 @@ describe "BufferedIO" do
     io.rewind
     io.gets.should eq("hello\n")
   end
+
+  it "reads more than the buffer's internal capacity" do
+    s = String.build do |str|
+      900.times do
+        10.times do |i|
+          str << ('a'.ord + i).chr
+        end
+      end
+    end
+    io = BufferedIO.new(StringIO.new(s))
+
+    slice = Slice(UInt8).new(9000)
+    count = io.read(slice, 9000)
+    count.should eq(9000)
+
+    900.times do
+      10.times do |i|
+        slice[i].should eq('a'.ord + i)
+      end
+    end
+  end
 end
