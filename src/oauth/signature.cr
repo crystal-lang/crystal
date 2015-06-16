@@ -52,7 +52,9 @@ struct OAuth::Signature
         str << ':'
         str << port
       end
-      CGI.escape (request.uri.path || "/"), str
+      uri_path = request.uri.path || "/"
+      uri_path = "/" if uri_path.empty?
+      CGI.escape(uri_path, str)
       str << '&'
       str << params
     end
