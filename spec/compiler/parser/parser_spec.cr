@@ -754,6 +754,7 @@ describe "Parser" do
   it_parses "$~", Call.new("$~".var, "not_nil!")
   it_parses "$~.foo", Call.new(Call.new("$~".var, "not_nil!"), "foo")
   it_parses "$1", Call.new(Call.new("$~".var, "not_nil!"), "[]", 1.int32)
+  it_parses "$1?", Call.new(Call.new("$~".var, "not_nil!"), "[]?", 1.int32)
   it_parses "foo $1", Call.new(nil, "foo", Call.new(Call.new("$~".var, "not_nil!"), "[]", 1.int32))
   it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 

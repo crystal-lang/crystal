@@ -808,12 +808,18 @@ module Crystal
           node_and_next_token Call.new(var, "not_nil!").at(location)
         end
       when :GLOBAL_MATCH_DATA_INDEX
-        value = @token.value
-        if value == 0
+        value = @token.value.to_s
+        if value == "0"
           node_and_next_token Path.global("PROGRAM_NAME")
         else
+          if value.ends_with? '?'
+            method = "[]?"
+            value = value.chop
+          else
+            method = "[]"
+          end
           location = @token.location
-          node_and_next_token Call.new(Call.new(Var.new("$~").at(location), "not_nil!").at(location), "[]", NumberLiteral.new(value as Int32))
+          node_and_next_token Call.new(Call.new(Var.new("$~").at(location), "not_nil!").at(location), method, NumberLiteral.new(value.to_i))
         end
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)

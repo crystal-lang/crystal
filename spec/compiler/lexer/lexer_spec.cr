@@ -114,7 +114,7 @@ end
 
 private def it_lexes_global_match_data_index(globals)
   globals.each do |global|
-    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.length - 1].to_i
+    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.length - 1]
   end
 end
 
@@ -234,7 +234,7 @@ describe "Lexer" do
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
                     ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":==="]
-  it_lexes_global_match_data_index ["$1", "$10"]
+  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
 
   it_lexes "$~", :"$~"
   it_lexes "$?", :"$?"

@@ -586,13 +586,18 @@ module Crystal
           next_char
           @token.type = :"$?"
         when .digit?
-          number = current_char - '0'
-          while (char = next_char).digit?
-            number *= 10
-            number += char - '0'
+          start = current_pos
+          char = next_char
+          if char == '0'
+            char = next_char
+          else
+            while char.digit?
+              char = next_char
+            end
+            char = next_char if char == '?'
           end
           @token.type = :GLOBAL_MATCH_DATA_INDEX
-          @token.value = number
+          @token.value = string_range(start)
         else
           if ident_start?(current_char)
             while ident_part?(next_char)
