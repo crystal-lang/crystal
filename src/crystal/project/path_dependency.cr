@@ -27,7 +27,8 @@ module Crystal
     end
 
     def current_version
-      exec("([ -d \"#{@path}/.git\" ] && git -C #{@path} rev-parse HEAD) || echo -n 'local'")
+      ref = `git -C #{@path} rev-parse HEAD 2>/dev/null`.chomp
+      ref == "" || ref == "HEAD" ? "local" : ref
     end
 
     private def exec(cmd)
