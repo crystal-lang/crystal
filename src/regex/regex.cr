@@ -88,6 +88,12 @@ class Regex
     !match.nil?
   end
 
+  def =~(other : String)
+    match = self.match(other)
+    $~ = match
+    match.try &.begin(0)
+  end
+
   def to_s(io : IO)
     io << "/"
     io << source

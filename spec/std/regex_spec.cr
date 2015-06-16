@@ -21,6 +21,11 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
+  it "does =~" do
+    (/foo/ =~ "bar foo baz").should eq(4)
+    $~.length.should eq(0)
+  end
+
   it "raises if outside match range with []" do
     "foo" =~ /foo/
     expect_raises(IndexOutOfBounds) { $1 }
