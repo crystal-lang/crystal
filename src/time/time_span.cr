@@ -129,7 +129,9 @@ struct TimeSpan
     ticks.to_f / TicksPerSecond
   end
 
-  alias_method to_f, total_seconds
+  def to_f
+    total_seconds
+  end
 
   def to_i
     ticks / TicksPerSecond
