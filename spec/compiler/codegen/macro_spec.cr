@@ -1042,4 +1042,19 @@ describe "Code gen: macro" do
       some_macro 1, 2, 3, 4
       )).to_i.should eq(3)
   end
+
+  it "checks if macro expansion returns (#821)" do
+    run(%(
+      macro pass
+        return 123
+      end
+
+      def me
+        pass
+        nil
+      end
+
+      me
+      )).to_i.should eq(123)
+  end
 end

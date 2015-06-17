@@ -78,7 +78,7 @@ module Crystal
 
     def transform(node : ExpandableNode)
       if expanded = node.expanded
-        node.expanded = expanded.transform(self)
+        return expanded.transform(self)
       end
       node
     end
@@ -134,6 +134,8 @@ module Crystal
                                         which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
           end
         end
+
+        target_const.value = target_const.value.transform self
       end
 
       super
@@ -167,8 +169,7 @@ module Crystal
 
     def transform(node : Call)
       if expanded = node.expanded
-        node.expanded = expanded.transform self
-        return node
+        return expanded.transform self
       end
 
       node = super
@@ -335,10 +336,6 @@ module Crystal
 
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
-        if arg.is_a?(Call) && (expanded = arg.expanded)
-          arg = expanded
-        end
-
         case arg
         when FunLiteral
           if arg.def.closure

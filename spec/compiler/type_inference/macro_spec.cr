@@ -2,10 +2,13 @@ require "../../spec_helper"
 
 describe "Type inference: macro" do
   it "types macro" do
-    input = parse "macro foo; 1; end; foo"
-    result = infer_type input
-    node = result.node as Expressions
-    (node.last as Call).expanded.should eq(parse "1")
+    assert_type(%(
+      macro foo
+        1
+      end
+
+      foo
+      )) { int32 }
   end
 
   it "errors if macro uses undefined variable" do
@@ -394,5 +397,20 @@ describe "Type inference: macro" do
 
       foo ? 3 : 4
       )) { int32 }
+  end
+
+  it "checks if macro expansion returns (#821)" do
+    assert_type(%(
+      macro pass
+        return :pass
+      end
+
+      def me
+        pass
+        nil
+      end
+
+      me
+      )) { symbol }
   end
 end

@@ -1,10 +1,5 @@
 class Crystal::CodeGenVisitor < Crystal::Visitor
   def visit(node : Call)
-    if expanded = node.expanded
-      accept expanded
-      return false
-    end
-
     target_defs = node.target_defs
     unless target_defs
       node.raise "Bug: no target defs"

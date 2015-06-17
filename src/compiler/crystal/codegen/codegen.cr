@@ -261,11 +261,6 @@ module Crystal
       false
     end
 
-    def visit(node : ExpandableNode)
-      node.expanded.try &.accept self
-      false
-    end
-
     def visit(node : Nop)
       @last = llvm_nil
     end
