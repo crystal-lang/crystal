@@ -3,8 +3,13 @@ class BitArray
 
   getter length
 
-  def initialize(@length)
-    @bits = Pointer(UInt32).malloc((length / 32.0).ceil.to_i)
+  def initialize(@length, initial = false : Bool)
+    malloc_size = (length / 32.0).ceil.to_i
+    if initial
+      @bits = Pointer(UInt32).malloc(malloc_size, UInt32::MAX)
+    else
+      @bits = Pointer(UInt32).malloc(malloc_size)
+    end
   end
 
   def [](index)

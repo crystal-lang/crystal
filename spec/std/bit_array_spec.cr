@@ -61,4 +61,9 @@ describe "BitArray" do
     ary[4] = true
     ary.to_s.should eq("BitArray[10101000]")
   end
+
+  it "initializes with true by default" do
+    ary = BitArray.new(64, true)
+    ary.length.times { |i| ary[i].should be_true }
+  end
 end
