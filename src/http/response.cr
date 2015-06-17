@@ -11,7 +11,7 @@ class HTTP::Response
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
     if (body = @body)
-      @headers["Content-Length"] = body.bytesize.to_s
+      @headers["Content-length"] = body.bytesize.to_s
     end
   end
 
@@ -24,19 +24,19 @@ class HTTP::Response
   end
 
   def self.not_found
-    new(404, "Not Found", Headers{"Content-Type": "text/plain"})
+    new(404, "Not Found", Headers{"Content-type": "text/plain"})
   end
 
   def self.ok(content_type, body)
-    new(200, body, Headers{"Content-Type": content_type})
+    new(200, body, Headers{"Content-type": content_type})
   end
 
   def self.error(content_type, body)
-    new(500, body, Headers{"Content-Type": content_type})
+    new(500, body, Headers{"Content-type": content_type})
   end
 
   def self.unauthorized
-    new(401, "Unauthorized", Headers{"Content-Type": "text/plain"})
+    new(401, "Unauthorized", Headers{"Content-type": "text/plain"})
   end
 
   def to_io(io)
@@ -47,10 +47,9 @@ class HTTP::Response
   def self.from_io(io)
     line = io.gets
     if line
-      status_line = line
-      status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*?)\r?\n\Z/
-
-      http_version, status_code, status_message = $1, $2.to_i, $3
+      http_version, status_code, status_message = line.split(3)
+      status_code = status_code.to_i
+      status_message = status_message.chomp
 
       HTTP.parse_headers_and_body(io) do |headers, body|
         return new status_code, body, headers, status_message, http_version

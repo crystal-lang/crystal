@@ -45,7 +45,7 @@ class HTTP::Client
 
   def post_form(path, form : String, headers = nil)
     headers ||= HTTP::Headers.new
-    headers["Content-Type"] = "application/x-www-form-urlencoded"
+    headers["Content-type"] = "application/x-www-form-urlencoded"
     post path, headers, form
   end
 

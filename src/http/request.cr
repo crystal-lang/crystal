@@ -10,9 +10,9 @@ class HTTP::Request
 
   def initialize(@method : String, @path, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
     if body = @body
-      @headers["Content-Length"] = body.bytesize.to_s
+      @headers["Content-length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
-      @headers["Content-Length"] = "0"
+      @headers["Content-length"] = "0"
     end
   end
 
@@ -44,9 +44,8 @@ class HTTP::Request
   def self.from_io(io)
     request_line = io.gets
     return unless request_line
-    request_line =~ /\A(\w+)\s([^\s]+)\s(HTTP\/\d\.\d)\r?\n\Z/
-    method, path, http_version = $1, $2, $3
 
+    method, path, http_version = request_line.split
     HTTP.parse_headers_and_body(io) do |headers, body|
       return new method, path, headers, body, http_version
     end
