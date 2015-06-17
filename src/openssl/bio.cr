@@ -22,7 +22,8 @@ struct OpenSSL::BIO
 
       case cmd
       when LibCrypto::CTRL_FLUSH
-        io.flush if io.responds_to?(:flush); 1
+        io.flush
+        1
       when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP
         0
       else
