@@ -70,6 +70,8 @@ class Regex
   end
 
   def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None)
+    return ($~ = nil) if byte_index > str.bytesize
+
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size)
     ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK).value, ovector, ovector_size)
