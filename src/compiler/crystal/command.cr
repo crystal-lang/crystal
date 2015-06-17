@@ -1,4 +1,9 @@
-require "compiler/crystal/tools/init"
+module Crystal
+  def self.tempfile(basename)
+    Dir.mkdir_p ".crystal"
+    ".crystal/crystal-run-#{basename}.tmp"
+  end
+end
 
 module Crystal::Command
   USAGE = <<-USAGE
@@ -138,9 +143,7 @@ USAGE
       return
     end
 
-    tempfile = Tempfile.new "crystal-run-#{config.output_filename}"
-    output_filename = tempfile.path
-    tempfile.close
+    output_filename = tempfile(config.output_filename)
 
     result = config.compile output_filename
     execute output_filename, config.arguments unless config.compiler.no_build?
@@ -234,10 +237,7 @@ USAGE
   end
 
   private def self.tempfile(basename)
-    tempfile = Tempfile.new "crystal-run-#{basename}"
-    output_filename = tempfile.path
-    tempfile.close
-    output_filename
+    Crystal.tempfile(basename)
   end
 
   record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output do

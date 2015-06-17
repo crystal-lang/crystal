@@ -1,5 +1,3 @@
-require "tempfile"
-
 module Crystal
   class Program
     def push_def_macro(a_def)
@@ -133,18 +131,17 @@ module Crystal
     def compile(filename)
       source = File.read(filename)
 
-      tempfile = Tempfile.new "crystal-run"
-      tempfile.close
-
       compiler = Compiler.new
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
       compiler.release = true
 
-      compiler.compile Compiler::Source.new(filename, source), tempfile.path
+      safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
+      tempfile_path = Crystal.tempfile("macro-run-#{safe_filename}")
+      compiler.compile Compiler::Source.new(filename, source), tempfile_path
 
-      tempfile.path
+      tempfile_path
     end
 
     class MacroVisitor < Visitor

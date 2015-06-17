@@ -3,7 +3,6 @@ require "file_utils"
 require "socket"
 require "http/common"
 require "colorize"
-require "tempfile"
 require "crypto/md5"
 
 module Crystal
