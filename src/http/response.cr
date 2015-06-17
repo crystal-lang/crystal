@@ -45,13 +45,16 @@ class HTTP::Response
   end
 
   def self.from_io(io)
-    status_line = io.gets.not_nil!
-    status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*?)\r?\n\Z/
+    line = io.gets
+    if line
+      status_line = line
+      status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*?)\r?\n\Z/
 
-    http_version, status_code, status_message = $1, $2.to_i, $3
+      http_version, status_code, status_message = $1, $2.to_i, $3
 
-    HTTP.parse_headers_and_body(io) do |headers, body|
-      return new status_code, body, headers, status_message, http_version
+      HTTP.parse_headers_and_body(io) do |headers, body|
+        return new status_code, body, headers, status_message, http_version
+      end
     end
 
     raise "unexpected end of http response"
