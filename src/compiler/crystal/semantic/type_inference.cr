@@ -2646,6 +2646,10 @@ module Crystal
     end
 
     def visit(node : TypeOf)
+      # A typeof shouldn't change the type of variables:
+      # so we keep the ones before it and restore them at the end
+      old_vars = @vars.dup
+
       node.in_type_args = @in_type_args > 0
 
       old_in_type_args = @in_type_args
@@ -2658,6 +2662,8 @@ module Crystal
       @in_type_args = old_in_type_args
 
       node.bind_to node.expressions
+
+      @vars = old_vars
 
       false
     end
