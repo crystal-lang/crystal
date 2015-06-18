@@ -111,3 +111,11 @@ def abort(message, status = 1)
 end
 
 Signal::PIPE.ignore
+
+# Background loop to cleanup unused fiber stacks
+spawn do
+  loop do
+    sleep 5
+    Fiber.stack_pool_collect
+  end
+end
