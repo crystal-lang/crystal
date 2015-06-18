@@ -8,12 +8,8 @@ module BufferedIOMixin
   # initialize method:
   #
   # def initialize
-  #   @in_buffer :: UInt8[BUFFER_SIZE]
-  #   @in_buffer_rem = @in_buffer.to_slice[0, 0]
-
-  #   @out_buffer :: UInt8[BUFFER_SIZE]
+  #   @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
   #   @out_count = 0
-  #
   #   @sync = false
   #   @flush_on_newline = false
   # end
@@ -162,7 +158,7 @@ module BufferedIOMixin
       flush
     end
 
-    slice.copy_to(@out_buffer.to_unsafe + @out_count, count)
+    slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
   end
 
@@ -177,7 +173,7 @@ module BufferedIOMixin
     if @out_count >= BUFFER_SIZE
       flush
     end
-    @out_buffer.to_unsafe[@out_count] = byte
+    out_buffer[@out_count] = byte
     @out_count += 1
   end
 
@@ -199,7 +195,7 @@ module BufferedIOMixin
   end
 
   def flush
-    unbuffered_write(@out_buffer.to_slice, @out_count) if @out_count > 0
+    unbuffered_write(Slice.new(out_buffer, BUFFER_SIZE), @out_count) if @out_count > 0
     unbuffered_flush
     @out_count = 0
   end
@@ -211,11 +207,20 @@ module BufferedIOMixin
 
   def rewind
     unbuffered_rewind
-    @in_buffer_rem = @in_buffer.to_slice[0, 0]
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
   end
 
   private def fill_buffer
-    length = unbuffered_read(@in_buffer.to_slice, @in_buffer.length).to_i
-    @in_buffer_rem = @in_buffer.to_slice[0, length]
+    in_buffer = in_buffer()
+    length = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE), BUFFER_SIZE).to_i
+    @in_buffer_rem = Slice.new(in_buffer, length)
+  end
+
+  private def in_buffer
+    @in_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
+  end
+
+  private def out_buffer
+    @out_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
   end
 end

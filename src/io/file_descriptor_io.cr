@@ -11,16 +11,14 @@ class FileDescriptorIO
   property? flush_on_newline
   property? sync
 
-  def initialize(@fd, blocking = false, @edge_triggerable = true)
-    @in_buffer :: UInt8[BUFFER_SIZE]
-    @in_buffer_rem = @in_buffer.to_slice[0, 0]
-
-    @out_buffer :: UInt8[BUFFER_SIZE]
-    @out_count = 0
-
-    @closed = false
+  def initialize(fd, blocking = false, edge_triggerable = true)
+    @edge_triggerable = !!edge_triggerable
     @flush_on_newline = false
     @sync = false
+    @closed = false
+    @fd = fd
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    @out_count = 0
 
     unless blocking
       before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)

@@ -4,12 +4,8 @@ class BufferedIO(T)
   include BufferedIOMixin
 
   def initialize(@io : T)
-    @in_buffer :: UInt8[BUFFER_SIZE]
-    @in_buffer_rem = @in_buffer.to_slice[0, 0]
-
-    @out_buffer :: UInt8[BUFFER_SIZE]
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
     @out_count = 0
-
     @flush_on_newline = false
     @sync = false
   end
