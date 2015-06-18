@@ -214,8 +214,7 @@ class File < FileDescriptorIO
 
   def self.each_line(filename)
     File.open(filename, "r") do |file|
-      buffered_io = BufferedIO.new(file)
-      buffered_io.each_line do |line|
+      file.each_line do |line|
         yield line
       end
     end

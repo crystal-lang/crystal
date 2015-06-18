@@ -67,6 +67,6 @@ class IO::ARGF
 
   private def read_next_argv
     path = @path = @argv.shift
-    @current_io = BufferedIO.new(File.open(path))
+    @current_io = File.open(path)
   end
 end

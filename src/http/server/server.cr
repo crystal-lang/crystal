@@ -57,7 +57,6 @@ class HTTP::Server
   private def handle_client(sock)
     io = sock
     io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
-    io = BufferedIO.new(io)
 
     begin
       until @wants_close

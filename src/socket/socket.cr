@@ -35,6 +35,11 @@ class Socket < FileDescriptorIO
     end
   end
 
+  def initialize(fd, blocking = false, edge_triggerable = true)
+    super(fd, blocking, edge_triggerable)
+    self.sync = true
+  end
+
   def afamily(family)
     LibC::AF_UNSPEC.class.cast(family)
   end

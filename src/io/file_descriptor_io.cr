@@ -1,5 +1,5 @@
 class FileDescriptorIO
-  include IO
+  include BufferedIOMixin
 
   SEEK_SET = 0
   SEEK_CUR = 1
@@ -8,7 +8,20 @@ class FileDescriptorIO
   private getter! readers
   private getter! writers
 
+  property? flush_on_newline
+  property? sync
+
   def initialize(@fd, blocking = false, @edge_triggerable = true)
+    @in_buffer :: UInt8[BUFFER_SIZE]
+    @in_buffer_rem = @in_buffer.to_slice[0, 0]
+
+    @out_buffer :: UInt8[BUFFER_SIZE]
+    @out_count = 0
+
+    @closed = false
+    @flush_on_newline = false
+    @sync = false
+
     unless blocking
       before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
       LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
@@ -18,10 +31,59 @@ class FileDescriptorIO
       @readers = [] of Fiber
       @writers = [] of Fiber
     end
-    @closed = false
   end
 
-  def read(slice : Slice(UInt8), count)
+  def resume_read
+    if reader = readers.pop?
+      reader.resume
+    end
+  end
+
+  def resume_write
+    if writer = writers.pop?
+      writer.resume
+    end
+  end
+
+  # TODO: probably flush buffer
+  def seek(amount, whence = SEEK_SET)
+    LibC.lseek(@fd, LibC::SizeT.cast(amount), whence)
+  end
+
+  def tell
+    LibC.lseek(@fd, LibC::SizeT.zero, LibC::SEEK_CUR)
+  end
+
+  def stat
+    if LibC.fstat(@fd, out stat) != 0
+      raise Errno.new("Unable to get stat")
+    end
+    File::Stat.new(stat)
+  end
+
+  def fd
+    @fd
+  end
+
+  def finalize
+    return if closed?
+
+    close rescue nil
+  end
+
+  def closed?
+    @closed
+  end
+
+  def tty?
+    LibC.isatty(fd) == 1
+  end
+
+  def to_fd_io
+    self
+  end
+
+  private def unbuffered_read(slice : Slice(UInt8), count)
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_read == -1
@@ -43,19 +105,7 @@ class FileDescriptorIO
     end
   end
 
-  def resume_read
-    if reader = readers.pop?
-      reader.resume
-    end
-  end
-
-  def resume_write
-    if writer = writers.pop?
-      writer.resume
-    end
-  end
-
-  def write(slice : Slice(UInt8), count)
+  private def unbuffered_write(slice : Slice(UInt8), count)
     total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
@@ -80,31 +130,12 @@ class FileDescriptorIO
     end
   end
 
-  def seek(amount, whence = SEEK_SET)
-    LibC.lseek(@fd, LibC::SizeT.cast(amount), whence)
-  end
-
-  def rewind
+  private def unbuffered_rewind
     seek(0, SEEK_SET)
     self
   end
 
-  def tell
-    LibC.lseek(@fd, LibC::SizeT.zero, LibC::SEEK_CUR)
-  end
-
-  def stat
-    if LibC.fstat(@fd, out stat) != 0
-      raise Errno.new("Unable to get stat")
-    end
-    File::Stat.new(stat)
-  end
-
-  def fd
-    @fd
-  end
-
-  def close
+  private def unbuffered_close
     if closed?
       raise IO::Error.new "closed stream"
     end
@@ -120,21 +151,7 @@ class FileDescriptorIO
     end
   end
 
-  def finalize
-    return if closed?
-
-    close rescue nil
-  end
-
-  def closed?
-    @closed
-  end
-
-  def tty?
-    LibC.isatty(fd) == 1
-  end
-
-  def to_fd_io
-    self
+  private def unbuffered_flush
+    # Nothing
   end
 end

@@ -82,9 +82,7 @@ class Crystal::Doc::Generator
 
   def write_template(filename, template)
     File.open(filename, "w") do |file|
-      BufferedIO.new(file) do |io|
-        template.to_s io
-      end
+      template.to_s file
     end
   end
 

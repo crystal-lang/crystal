@@ -126,4 +126,40 @@ describe "BufferedIO" do
       end
     end
   end
+
+  it "flushes on \n" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    io.flush_on_newline = true
+
+    io << "hello\nworld"
+    str.to_s.should eq("hello\n")
+    io.flush
+    str.to_s.should eq("hello\nworld")
+  end
+
+  it "doesn't write past count" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    io.flush_on_newline = true
+
+    slice = Slice.new(10) { |i| i == 9 ? '\n'.ord.to_u8 : ('a'.ord + i).to_u8 }
+    io.write slice, 4
+    io.flush
+    str.to_s.should eq("abcd")
+  end
+
+  it "syncs" do
+    str = StringIO.new
+
+    io = BufferedIO.new(str)
+    io.sync?.should be_false
+
+    io.sync = true
+    io.sync?.should be_true
+
+    io.write_byte 1_u8
+
+    str.read_byte.should eq(1_u8)
+  end
 end

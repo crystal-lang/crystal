@@ -153,14 +153,19 @@ module IO
       raise Errno.new("Could not create pipe")
     end
 
-    {FileDescriptorIO.new(pipe_fds[0], read_blocking), FileDescriptorIO.new(pipe_fds[1], write_blocking)}
+    r = FileDescriptorIO.new(pipe_fds[0], read_blocking)
+    w = FileDescriptorIO.new(pipe_fds[1], write_blocking)
+    w.sync = true
+
+    {r, w}
   end
 
-  def self.pipe
-    r, w = IO.pipe
+  def self.pipe(read_blocking=false, write_blocking=false)
+    r, w = IO.pipe(read_blocking, write_blocking)
     begin
       yield r, w
     ensure
+      w.flush
       r.close
       w.close
     end

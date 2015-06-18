@@ -6,7 +6,7 @@ def do_work(in_filenames, output_filename, ignore_case)
   if in_filenames.empty?
     in_files = [STDIN]
   else
-    in_files = in_filenames.map { |name| BufferedIO.new(File.open(name, "r")) }
+    in_files = in_filenames.map { |name| File.open(name, "r") }
   end
 
   if output_filename

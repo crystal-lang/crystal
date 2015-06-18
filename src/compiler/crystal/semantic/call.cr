@@ -500,8 +500,13 @@ class Crystal::Call
       parents = lookup.base_type.parents
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index(lookup).not_nil!
-      parents = ancestors[index_of_ancestor + 1 .. -1]
+      index_of_ancestor = ancestors.index(lookup)
+      if index_of_ancestor
+        parents = ancestors[index_of_ancestor + 1 .. -1]
+      else
+        # TODO: this fixes a bug, but check why this point is reached (check the wordcount.cr sample)
+        parents = lookup.ancestors
+      end
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
