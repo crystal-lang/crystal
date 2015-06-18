@@ -220,6 +220,10 @@ class File < FileDescriptorIO
     end
   end
 
+  def each_line
+    IO::LineIterator.new(BufferedIO.new(self))
+  end
+
   def self.read_lines(filename)
     lines = [] of String
     each_line(filename) do |line|
