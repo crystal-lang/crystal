@@ -607,7 +607,10 @@ class Crystal::Call
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_fun.inputs
         yield_vars = inputs.map_with_index do |input, i|
-          Var.new("var#{i}", ident_lookup.lookup_node_type(input).virtual_type)
+          arg_type = ident_lookup.lookup_node_type(input)
+          TypeVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+
+          Var.new("var#{i}", arg_type.virtual_type)
         end
       end
       block_arg_fun_output = block_arg_fun.output

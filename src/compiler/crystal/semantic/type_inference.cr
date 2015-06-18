@@ -726,7 +726,9 @@ module Crystal
         # when converting a block to a fun literal
         if restriction = arg.restriction
           restriction.accept self
-          arg.type = restriction.type.instance_type.virtual_type
+          arg_type = restriction.type.instance_type
+          TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
+          arg.type = arg_type.virtual_type
         elsif !arg.type?
           arg.raise "function argument '#{arg.name}' must have a type"
         end
@@ -758,6 +760,13 @@ module Crystal
       node.def.body.accept block_visitor
 
       false
+    end
+
+    def self.check_type_allowed_as_proc_argument(node, type)
+      return if type.allowed_in_generics?
+
+      type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+      node.raise "can't use #{type} as a Proc argument type yet, use a more specific type"
     end
 
     def visit(node : FunPointer)

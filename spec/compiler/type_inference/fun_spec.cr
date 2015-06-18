@@ -764,4 +764,23 @@ describe "Type inference: fun" do
       proc.call(foo)
       )) { int32 }
   end
+
+  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
+    it "disallows #{type} in procs" do
+      assert_error %(
+        ->(x : #{type}) { }
+        ),
+        "as a Proc argument type"
+    end
+
+    it "disallows #{type} in captured block" do
+      assert_error %(
+        def foo(&block : #{type} ->)
+        end
+
+        foo {}
+        ),
+        "as a Proc argument type"
+    end
+  end
 end
