@@ -156,15 +156,13 @@ def run(code, filename = nil)
     call = Call.new(nil, "print!", Var.new("__tempvar"))
     code = Expressions.new([assign, call]).to_s
 
-    tempfile = Tempfile.new("crystal-spec-output")
-    output_filename = tempfile.path
-    tempfile.close
+    output_filename = Crystal.tempfile("crystal-spec-output")
 
     compiler = Compiler.new
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
-    tempfile.delete
+    File.delete(output_filename)
 
     SpecRunOutput.new(output)
   else
