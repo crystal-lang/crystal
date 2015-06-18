@@ -718,6 +718,8 @@ module Crystal
     end
 
     def visit(node : FunLiteral)
+      return false if node.type?
+
       fun_vars = @vars.dup
       meta_vars = @meta_vars.dup
 

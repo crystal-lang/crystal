@@ -586,4 +586,14 @@ describe "Code gen: fun" do
       Foo::H.call
       )).to_i.should eq(1)
   end
+
+  it "passes proc as &-> to method that yields" do
+    run(%(
+      def foo
+        yield
+      end
+
+      foo &->{ 123 }
+      )).to_i.should eq(123)
+  end
 end
