@@ -193,4 +193,21 @@ describe "Codegen: special vars" do
       $~
       )).to_string.should eq("bye")
   end
+
+  it "preserves special vars in macro expansion with call with default arguments (#824)" do
+    run(%(
+      class Object; def not_nil!; self; end; end
+
+      def bar(x = 0)
+        $~ = "yes"
+      end
+
+      macro foo
+        bar
+        $~
+      end
+
+      foo
+      )).to_string.should eq("yes")
+  end
 end
