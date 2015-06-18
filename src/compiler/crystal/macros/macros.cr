@@ -740,5 +740,20 @@ module Crystal
     def transform(node : Call)
       @yields[node.name]? || super
     end
+
+    def transform(node : MacroLiteral)
+      # For the very rare case where a macro generates a macro,
+      # the macro's body won't be an AST node (won't be parsed).
+      # So, we use gsub to replace the yield values.
+      value = node.value
+
+      @yields.each do |name, node|
+        value = value.gsub(name) { node.to_s }
+      end
+
+      node.value = value
+
+      node
+    end
   end
 end

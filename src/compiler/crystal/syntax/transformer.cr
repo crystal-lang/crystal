@@ -152,6 +152,8 @@ module Crystal
         node.block_arg = block_arg.transform(self)
       end
 
+      node.body = node.body.transform(self)
+
       node
     end
 

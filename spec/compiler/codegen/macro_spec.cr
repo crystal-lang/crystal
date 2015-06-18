@@ -1057,4 +1057,20 @@ describe "Code gen: macro" do
       me
       )).to_i.should eq(123)
   end
+
+  it "passes #826" do
+    run(%(
+      macro foo
+        macro bar
+          {{yield}}
+        end
+      end
+
+      foo do
+        123
+      end
+
+      bar
+      )).to_i.should eq(123)
+  end
 end
