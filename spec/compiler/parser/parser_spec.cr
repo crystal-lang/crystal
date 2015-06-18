@@ -1135,4 +1135,5 @@ describe "Parser" do
   assert_syntax_error "module Foo(Something); end", "type variables can only be single letters"
 
   assert_syntax_error "/foo)/", "invalid regex"
+  assert_syntax_error "def =\nend"
 end
