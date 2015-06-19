@@ -345,4 +345,12 @@ describe "Code gen: pointer" do
       Foo.a.x
       )).to_i.should eq(2)
   end
+
+  it "does pointerof global variable" do
+    run(%(
+      $a = 1
+      pointerof($a).value = 2
+      $a
+      )).to_i.should eq(2)
+  end
 end

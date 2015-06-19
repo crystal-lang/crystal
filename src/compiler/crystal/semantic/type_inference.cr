@@ -257,6 +257,11 @@ module Crystal
     end
 
     def visit(node : Global)
+      visit_global node
+      false
+    end
+
+    def visit_global(node)
       var = mod.global_vars[node.name]?
       unless var
         var = Var.new(node.name)
@@ -264,6 +269,7 @@ module Crystal
         mod.global_vars[node.name] = var
       end
       node.bind_to var
+      var
     end
 
     def visit(node : InstanceVar)
@@ -292,11 +298,18 @@ module Crystal
     end
 
     def visit(node : ClassVar)
+      visit_class_var node
+      false
+    end
+
+    def visit_class_var(node)
       class_var = lookup_class_var(node)
       check_valid_attributes class_var, ValidClassVarAttributes, "class variable"
 
       node.attributes = class_var.attributes
       node.bind_to class_var
+
+      class_var
     end
 
     def lookup_instance_var(node)
@@ -2633,8 +2646,9 @@ module Crystal
             when InstanceVar
               lookup_instance_var node_exp
             when ClassVar
-              node_exp.accept self
-              lookup_class_var node_exp
+              visit_class_var node_exp
+            when Global
+              visit_global node_exp
             when Path
               node_exp.accept self
               if const = node_exp.target_const
