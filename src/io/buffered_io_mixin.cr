@@ -175,6 +175,10 @@ module BufferedIOMixin
     end
     out_buffer[@out_count] = byte
     @out_count += 1
+
+    if flush_on_newline? && byte == '\n'.ord
+      flush
+    end
   end
 
   def flush_on_newline=(flush_on_newline)
