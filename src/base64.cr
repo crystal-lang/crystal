@@ -116,21 +116,23 @@ module Base64
     len = data.length
     dt = DECODE_TABLE.buffer
     cstr = data.pointer(len)
-    while (sym = cstr[len - 1]) && (sym == NL || sym == NR || sym == PAD) && (len > 0)
+    while (len > 0) && (sym = cstr[len - 1]) && (sym == NL || sym == NR || sym == PAD)
       len -= 1
     end
     endcstr = cstr + len - 4
 
-    while cstr <= endcstr
+    while true
+      break if cstr > endcstr
+      while cstr.value == NL || cstr.value == NR
+        cstr += 1
+      end
+
+      break if cstr > endcstr
       a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
 
       yield (a << 2 | b >> 4).to_u8
       yield (b << 4 | c >> 2).to_u8
       yield (c << 6 | d).to_u8
-
-      while (cstr.value == NL || cstr.value == NR) && cstr <= endcstr
-        cstr += 1
-      end
     end
 
     mod = (endcstr - cstr) % 4
