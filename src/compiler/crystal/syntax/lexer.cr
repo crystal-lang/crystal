@@ -542,7 +542,7 @@ module Crystal
           @token.value = char1
         end
         if next_char != '\''
-          raise "unterminated char literal", line, column
+          raise "unterminated char literal, use double quotes for strings", line, column
         end
         next_char
       when '"', '`'
