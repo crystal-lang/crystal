@@ -2632,6 +2632,9 @@ module Crystal
               meta_var
             when InstanceVar
               lookup_instance_var node_exp
+            when ClassVar
+              node_exp.accept self
+              lookup_class_var node_exp
             when Path
               node_exp.accept self
               if const = node_exp.target_const

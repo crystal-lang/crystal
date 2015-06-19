@@ -298,4 +298,51 @@ describe "Code gen: pointer" do
       LibFoo.foo.value = 1
       ))
   end
+
+  it "does pointerof class variable" do
+    run(%(
+      class Foo
+        @@a = 1
+
+        def self.a_ptr
+          pointerof(@@a)
+        end
+
+        def self.a
+          @@a
+        end
+      end
+
+      Foo.a_ptr.value = 2
+      Foo.a
+      )).to_i.should eq(2)
+  end
+
+  it "does pointerof class variable with class" do
+    run(%(
+      class Bar
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        @@a = Bar.new(1)
+
+        def self.a_ptr
+          pointerof(@@a)
+        end
+
+        def self.a
+          @@a
+        end
+      end
+
+      Foo.a_ptr.value = Bar.new(2)
+      Foo.a.x
+      )).to_i.should eq(2)
+  end
 end
