@@ -1,12 +1,8 @@
 # A Performance Benchmarking Library
 # Overview
 #
-# The Benchmark module provides methods for benchmarking Ruby code, giving
+# The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time taken for each task.
-#
-#
-# The Benchmark module provides methods to measure and report the time
-# used to execute Ruby code.
 #
 # * Measure the time to construct the string given by the expression
 # ```
@@ -14,7 +10,7 @@
 # ```
 # 
 # ```
-# require 'benchmark'
+# require "benchmark"
 #
 # puts Benchmark.measure { "a"*1_000_000_000 }
 # ```
@@ -30,12 +26,12 @@
 # * Do some experiments sequentially using the #bm method:
 #
 # ```
-# require 'benchmark'
+# require "benchmark"
 #
 # n = 5000000
 # Benchmark.bm do |x|
-#  x.report("times") { n.times do ; a = "1"; end }
-#  x.report("upto") { 1.upto(n) do ; a = "1"; end }
+#  x.report("times:") { n.times do ; a = "1"; end }
+#  x.report("upto:") { 1.upto(n) do ; a = "1"; end }
 # end
 # ```
 # 
