@@ -101,6 +101,15 @@ class Fiber
     end
   end
 
+  protected def push_gc_roots
+    # Push the used section of the stack
+    LibGC.push_all @stack_top, @stack_bottom
+
+    # PCL stores context (setjmp or ucontext) in the first bytes of the given stack
+    ptr = @cr as Void*
+    LibGC.push_all ptr, ptr + 64
+  end
+
   @@prev_push_other_roots = LibGC.get_push_other_roots
 
   # This will push all fibers stacks whenever the GC wants to collect some memory
@@ -109,7 +118,7 @@ class Fiber
 
     fiber = @@first_fiber
     while fiber
-      LibGC.push_all fiber.stack_top, fiber.stack_bottom
+      fiber.push_gc_roots
       fiber = fiber.next_fiber
     end
   end
