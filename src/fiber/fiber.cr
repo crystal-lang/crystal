@@ -1,5 +1,3 @@
-require "./lib_pcl"
-
 @[NoInline]
 fun get_stack_top : Void*
   dummy :: Int32
@@ -21,8 +19,14 @@ class Fiber
   def initialize(&@proc)
     @stack = Fiber.allocate_stack
     @stack_top = @stack_bottom = @stack + STACK_SIZE
-    @cr = LibPcl.co_create(->(fiber) { (fiber as Fiber).run }, self as Void*, @stack, STACK_SIZE)
-    LibPcl.co_set_data(@cr, self as Void*)
+    fiber_main = ->(f : Void*) { (f as Fiber).run }
+
+    stack_ptr = @stack + STACK_SIZE - sizeof(UInt64)
+    stack_ptr = Pointer(UInt64).new(stack_ptr.address & ~0x0f_u64)
+    @stack_top = (stack_ptr - 7) as Void*
+
+    stack_ptr[0] = fiber_main.pointer.address
+    stack_ptr[-1] = self.object_id.to_u64
 
     @prev_fiber = nil
     if last_fiber = @@last_fiber
@@ -34,12 +38,10 @@ class Fiber
   end
 
   def initialize
-    @cr = LibPcl.co_current
     @proc = ->{}
     @stack = Pointer(Void).null
     @stack_top = get_stack_top
     @stack_bottom = LibGC.stackbottom
-    LibPcl.co_set_data(@cr, self as Void*)
 
     @@first_fiber = @@last_fiber = self
   end
@@ -88,12 +90,36 @@ class Fiber
     Scheduler.reschedule
   end
 
-  @[NoInline]
-  def resume
-    Fiber.current.stack_top = get_stack_top
+  protected def stack_top_ptr
+    pointerof(@stack_top)
+  end
 
-    LibGC.stackbottom = @stack_bottom
-    LibPcl.co_call(@cr)
+  @[NoInline]
+  protected def self.switch_stacks(current, to)
+    asm (%(
+      pushq %rdi
+      pushq %rbx
+      pushq %rbp
+      pushq %r12
+      pushq %r13
+      pushq %r14
+      pushq %r15
+      movq %rsp, ($0)
+      movq $1, %rsp
+      popq %r15
+      popq %r14
+      popq %r13
+      popq %r12
+      popq %rbp
+      popq %rbx
+      popq %rdi)
+    :: "r"(current), "r"(to))
+  end
+
+  def resume
+    current, @@current = @@current, self
+    LibGC.stackbottom = @@current.stack_bottom
+    Fiber.switch_stacks(current.stack_top_ptr, @stack_top)
   end
 
   def sleep(time)
@@ -114,41 +140,36 @@ class Fiber
     Fiber.current.yield
   end
 
-  def self.current
-    if current_data = LibPcl.co_get_data(LibPcl.co_current)
-      current_data as Fiber
-    else
-      raise "Could not get the current fiber"
-    end
-  end
-
   protected def push_gc_roots
     # Push the used section of the stack
     LibGC.push_all_eager @stack_top, @stack_bottom
-
-    # PCL stores context (setjmp or ucontext) in the first bytes of the given stack
-    ptr = @cr as Void*
-    # HACK: the size of the context varies on each platform
-    LibGC.push_all_eager ptr, ptr + 1024
   end
 
-  @@prev_push_other_roots = LibGC.get_push_other_roots
-
-  # This will push all fibers stacks whenever the GC wants to collect some memory
-  LibGC.set_push_other_roots ->do
-    @@prev_push_other_roots.call
-
-    fiber = @@first_fiber
-    while fiber
-      fiber.push_gc_roots
-      fiber = fiber.next_fiber
-    end
-  end
-
-  LibPcl.co_thread_init
   @@root = new
 
   def self.root
     @@root
   end
+
+  @[ThreadLocal]
+  @@current = root
+
+  def self.current
+    @@current
+  end
+
+  @@prev_push_other_roots = LibGC.get_push_other_roots
+
+  # This will push all fibers stacks whenever the GC wants to collect some memory
+  LibGC.set_push_other_roots -> do
+    @@prev_push_other_roots.call
+
+    fiber = @@first_fiber
+    while fiber
+      fiber.push_gc_roots unless fiber == @@current
+      fiber = fiber.next_fiber
+    end
+  end
+
+
 end
