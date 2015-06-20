@@ -84,19 +84,19 @@ module Base64
     bytes = chars.cstr
     len = data.length
     cstr = data.pointer(len)
-    i = 0
-    while i < len - len % 3
-      n = (cstr[i].to_u32 << 16) | (cstr[i + 1].to_u32 << 8) | (cstr[i + 2].to_u32)
-      yield bytes[(n >> 18) & 63]
-      yield bytes[(n >> 12) & 63]
-      yield bytes[(n >> 6) & 63]
-      yield bytes[(n) & 63]
-      i += 3
+    endcstr = cstr + len - len % 3
+    while cstr < endcstr
+      n = Intrinsics.bswap32((cstr as UInt32*).value)
+      yield bytes[(n >> 26) & 63]
+      yield bytes[(n >> 20) & 63]
+      yield bytes[(n >> 14) & 63]
+      yield bytes[(n >> 8) & 63]
+      cstr += 3
     end
 
     pd = len % 3
     if pd == 1
-      n = (cstr[i].to_u32 << 16)
+      n = (cstr.value.to_u32 << 16)
       yield bytes[(n >> 18) & 63]
       yield bytes[(n >> 12) & 63]
       if pad
@@ -104,7 +104,7 @@ module Base64
         yield PAD
       end
     elsif pd == 2
-      n = (cstr[i].to_u32 << 16) | (cstr[i + 1].to_u32 << 8)
+      n = (cstr.value.to_u32 << 16) | ((cstr + 1).value.to_u32 << 8)
       yield bytes[(n >> 18) & 63]
       yield bytes[(n >> 12) & 63]
       yield bytes[(n >> 6) & 63]
@@ -116,21 +116,23 @@ module Base64
     len = data.length
     dt = DECODE_TABLE.buffer
     cstr = data.pointer(len)
-    while (sym = cstr[len - 1]) && (sym == NL || sym == NR || sym == PAD) && (len > 0)
+    while (len > 0) && (sym = cstr[len - 1]) && (sym == NL || sym == NR || sym == PAD)
       len -= 1
     end
     endcstr = cstr + len - 4
 
-    while cstr <= endcstr
+    while true
+      break if cstr > endcstr
+      while cstr.value == NL || cstr.value == NR
+        cstr += 1
+      end
+
+      break if cstr > endcstr
       a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
 
       yield (a << 2 | b >> 4).to_u8
       yield (b << 4 | c >> 2).to_u8
       yield (c << 6 | d).to_u8
-
-      while (cstr.value == NL || cstr.value == NR) && cstr <= endcstr
-        cstr += 1
-      end
     end
 
     mod = (endcstr - cstr) % 4
