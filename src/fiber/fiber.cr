@@ -107,7 +107,8 @@ class Fiber
 
     # PCL stores context (setjmp or ucontext) in the first bytes of the given stack
     ptr = @cr as Void*
-    LibGC.push_all_eager ptr, ptr + 64
+    # HACK: the size of the context varies on each platform
+    LibGC.push_all_eager ptr, ptr + 1024
   end
 
   @@prev_push_other_roots = LibGC.get_push_other_roots
