@@ -96,6 +96,10 @@ class Regex
     match.try &.begin(0)
   end
 
+  def =~(other)
+    nil
+  end
+
   def to_s(io : IO)
     io << "/"
     io << source

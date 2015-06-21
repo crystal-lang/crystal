@@ -1261,7 +1261,7 @@ class String
   end
 
   def =~(other)
-    other =~ self
+    nil
   end
 
   def +(other : self)
