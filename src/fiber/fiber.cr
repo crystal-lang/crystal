@@ -103,11 +103,11 @@ class Fiber
 
   protected def push_gc_roots
     # Push the used section of the stack
-    LibGC.push_all @stack_top, @stack_bottom
+    LibGC.push_all_eager @stack_top, @stack_bottom
 
     # PCL stores context (setjmp or ucontext) in the first bytes of the given stack
     ptr = @cr as Void*
-    LibGC.push_all ptr, ptr + 64
+    LibGC.push_all_eager ptr, ptr + 64
   end
 
   @@prev_push_other_roots = LibGC.get_push_other_roots

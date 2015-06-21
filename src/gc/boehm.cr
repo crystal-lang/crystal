@@ -27,7 +27,7 @@ lib LibGC
   fun set_push_other_roots = GC_set_push_other_roots(proc : ->)
   fun get_push_other_roots = GC_get_push_other_roots : ->
 
-  fun push_all = GC_push_all(bottom : Void*, top : Void*)
+  fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
   $stackbottom = GC_stackbottom : Void*
 end
