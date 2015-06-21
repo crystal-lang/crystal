@@ -62,6 +62,7 @@ class HTTP::Client
   def exec(request : HTTP::Request)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
+    socket.flush
     HTTP::Response.from_io(socket)
   end
 
@@ -87,6 +88,7 @@ class HTTP::Client
 
   private def socket
     socket = @socket ||= TCPSocket.new @host, @port
+    socket.sync = false
     if @ssl
       @ssl_socket ||= OpenSSL::SSL::Socket.new(socket)
     else
