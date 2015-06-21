@@ -14,6 +14,7 @@ struct OpenSSL::BIO
 
     crystal_bio.bread = -> (bio : LibCrypto::Bio*, buffer : UInt8*, len : Int32) do
       io = Box(IO).unbox(bio.value.ptr)
+      io.flush
       io.read(Slice.new(buffer, len)).to_i
     end
 
