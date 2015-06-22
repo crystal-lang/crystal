@@ -2031,8 +2031,12 @@ module Crystal
     property text
     property output
     property inputs
+    property clobbers
+    property volatile
+    property alignstack
+    property intel
 
-    def initialize(@text, @output = nil, @inputs = nil)
+    def initialize(@text, @output = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
     end
 
     def accept_children(visitor)
@@ -2041,10 +2045,10 @@ module Crystal
     end
 
     def clone_without_location
-      Asm.new(@text, @output.clone, @inputs.clone)
+      Asm.new(@text, @output.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
     end
 
-    def_equals_and_hash text, output, inputs
+    def_equals_and_hash text, output, inputs, clobbers, volatile, alignstack, intel
   end
 
   class AsmOperand < ASTNode

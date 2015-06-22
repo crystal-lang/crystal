@@ -3528,6 +3528,10 @@ module Crystal
       text = parse_string_without_interpolation { "interpolation not allowed in asm" }
       skip_space_or_newline
 
+      volatile = false
+      alignstack = false
+      intel = false
+
       unless @token.type == :")"
         if @token.type == :"::"
           # No output operands
@@ -3553,12 +3557,22 @@ module Crystal
           end
         end
 
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+          clobbers = parse_asm_clobbers
+        end
+
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+          volatile, alignstack, intel = parse_asm_options
+        end
+
         check :")"
       end
 
       next_token_skip_space
 
-      Asm.new(text, output, inputs)
+      Asm.new(text, output, inputs, clobbers, volatile, alignstack, intel)
     end
 
     def parse_asm_operands
@@ -3581,6 +3595,46 @@ module Crystal
       check :")"
       next_token_skip_space_or_newline
       AsmOperand.new(text, exp)
+    end
+
+    def parse_asm_clobbers
+      clobbers = [] of String
+      while true
+        clobbers << parse_string_without_interpolation { "interpolation not allowed in asm clobber" }
+        skip_space_or_newline
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+        break unless @token.type == :DELIMITER_START
+      end
+      clobbers
+    end
+
+    def parse_asm_options
+      volatile = false
+      alignstack = false
+      intel = false
+      while true
+        location = @token.location
+        option = parse_string_without_interpolation { "interpolation not allowed in asm clobber" }
+        skip_space_or_newline
+        case option
+        when "volatile"
+          volatile = true
+        when "alignstack"
+          alignstack = true
+        when "intel"
+          intel = true
+        else
+          raise "unkown asm option: #{option}", location
+        end
+
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+        break unless @token.type == :DELIMITER_START
+      end
+      {volatile, alignstack, intel}
     end
 
     def parse_yield_with_scope

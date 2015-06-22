@@ -1297,7 +1297,31 @@ module Crystal
           input.accept self
         end
       end
-      @str << " :: "
+      if clobbers = node.clobbers
+        @str << " : "
+        clobbers.each_with_index do |clobber, i|
+          @str << ", " if i > 0
+          clobber.inspect(@str)
+        end
+      end
+      if node.volatile || node.alignstack || node.intel
+        @str << " : "
+        comma = false
+        if node.volatile
+          @str << %("volatile")
+          comma = true
+        end
+        if node.alignstack
+          @str << ", " if comma
+          @str << %("alignstack")
+          comma = true
+        end
+        if node.intel
+          @str << ", " if comma
+          @str << %("intel")
+          comma = true
+        end
+      end
       false
     end
 

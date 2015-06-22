@@ -16,9 +16,9 @@ class Crystal::CodeGenVisitor
     input_values = [] of LLVM::Value
 
     if inputs = node.inputs
-      constraints << "," if output
+      constraints << "," unless constraints.empty?
 
-      inputs.try &.each_with_index do |input, i|
+      inputs.each_with_index do |input, i|
         input.exp.accept self
         input_types << llvm_type(input.exp.type)
         input_values << @last
@@ -27,10 +27,21 @@ class Crystal::CodeGenVisitor
       end
     end
 
+    if clobbers = node.clobbers
+      constraints << "," unless constraints.empty?
+
+      clobbers.each_with_index do |clobber, i|
+        constraints << "," if i > 0
+        constraints << "~{"
+        constraints << clobber
+        constraints << '}'
+      end
+    end
+
     fun_type = LLVM::Type.function(input_types, output_type)
     constraints = constraints.to_s
 
-    value = LLVM.const_inline_asm(fun_type, node.text, constraints)
+    value = LLVM.const_inline_asm(fun_type, node.text, constraints, node.volatile, node.alignstack)
     asm_value = call value, input_values
 
     if ptrof
