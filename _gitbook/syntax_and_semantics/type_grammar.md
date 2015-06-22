@@ -13,7 +13,7 @@ When:
 * the argument of an [instance_sizeof](instance_sizeof.html) expression
 * a method's [return type](return_types.html)
 
-a convenient syntax is provided for some common types. These are especially useful when writing [C bindings](c_bindings/README.html), but can be used in any of the above locations.
+a convenient syntax is provided for some common types. These are especially useful when writing [C bindings](c_bindings/index.html), but can be used in any of the above locations.
 
 ## Paths and generics
 
