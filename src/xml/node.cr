@@ -199,6 +199,11 @@ struct XML::Node
   end
 
   def namespace
+    case type
+    when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
+      return nil
+    end
+
     ns = @node.value.ns
     ns ? Namespace.new(document, ns) : nil
   end

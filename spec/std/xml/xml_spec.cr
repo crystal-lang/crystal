@@ -14,6 +14,7 @@ describe XML do
     doc.document.should eq(doc)
     doc.name.should eq("document")
     doc.attributes.empty?.should be_true
+    doc.namespace.should be_nil
 
     people = doc.root.not_nil!
     people.name.should eq("people")
