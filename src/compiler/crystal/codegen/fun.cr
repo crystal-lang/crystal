@@ -1,4 +1,6 @@
-class Crystal::CodeGenVisitor < Crystal::Visitor
+require "./codegen"
+
+class Crystal::CodeGenVisitor
   def target_def_fun(target_def, self_type)
     mangled_name = target_def.mangled_name(self_type)
     self_type_mod = type_module(self_type)

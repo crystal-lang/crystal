@@ -1,7 +1,9 @@
+require "./codegen"
+
 module Crystal
   LLVMDebugVersion = (12 << 16)
 
-  class CodeGenVisitor < Visitor
+  class CodeGenVisitor
     def add_compile_unit_metadata(mod, file)
       return unless @subprograms[mod]?
       LibLLVM.add_named_metadata_operand mod, "llvm.dbg.cu", metadata([

@@ -1,4 +1,6 @@
-class Crystal::CodeGenVisitor < Crystal::Visitor
+require "./codegen"
+
+class Crystal::CodeGenVisitor
   def visit(node : Call)
     target_defs = node.target_defs
     unless target_defs

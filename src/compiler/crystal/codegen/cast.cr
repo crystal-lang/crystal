@@ -1,4 +1,6 @@
-class Crystal::CodeGenVisitor < Crystal::Visitor
+require "./codegen"
+
+class Crystal::CodeGenVisitor
   def assign(target_pointer, target_type, value_type, value)
     target_type = target_type.remove_alias
     value_type = value_type.remove_alias

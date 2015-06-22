@@ -1,4 +1,6 @@
-class Crystal::CodeGenVisitor < Crystal::Visitor
+require "./codegen"
+
+class Crystal::CodeGenVisitor
   def type_id(value, type : NilableType)
     builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
   end

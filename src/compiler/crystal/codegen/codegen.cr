@@ -3,7 +3,7 @@ require "../syntax/parser"
 require "../syntax/visitor"
 require "../semantic/type_inference"
 require "../program"
-require "./*"
+require "./llvm_builder_helper"
 
 LLVM.init_x86
 
@@ -1591,3 +1591,5 @@ module Crystal
     end
   end
 end
+
+require "./*"
