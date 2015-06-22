@@ -620,7 +620,12 @@ module Crystal
             return check_ident_or_keyword(:alias, start)
           end
         when 's'
-          return check_ident_or_keyword(:as, start)
+          if peek_next_char == 'm'
+            next_char
+            return check_ident_or_keyword(:asm, start)
+          else
+            return check_ident_or_keyword(:as, start)
+          end
         end
         scan_ident(start)
       when 'b'

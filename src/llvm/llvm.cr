@@ -11,6 +11,7 @@ module LLVM
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc
     LibLLVM.initialize_x86_asm_printer
+    LibLLVM.initialize_x86_asm_parser
     # LibLLVM.link_in_jit
     LibLLVM.link_in_mc_jit
   end
@@ -73,6 +74,10 @@ module LLVM
   def self.to_io(chars, io)
     io.write Slice.new(chars, LibC.strlen(chars))
     LibLLVM.dispose_message(chars)
+  end
+
+  def self.const_inline_asm(type, asm_string, constraints, has_side_effects = false, is_align_stack = false)
+    Value.new LibLLVM.const_inline_asm(type, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
   end
 
   Void = Type.new LibLLVM.void_type

@@ -570,6 +570,17 @@ module Crystal
       node
     end
 
+    def transform(node : Asm)
+      node.output = node.output.try &.transform(self)
+      node.inputs = node.inputs.try &.each &.transform(self)
+      node
+    end
+
+    def transform(node : AsmOperand)
+      node.exp = node.exp.transform self
+      node
+    end
+
     def transform_many(exps)
       exps.map! { |exp| exp.transform(self) } if exps
     end

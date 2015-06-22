@@ -1281,6 +1281,34 @@ module Crystal
       @str << node.name
     end
 
+    def visit(node : Asm)
+      node.text.inspect(@str)
+      @str << " :"
+      if output = node.output
+        @str << " "
+        output.accept self
+        @str << " "
+      end
+      @str << ":"
+      if inputs = node.inputs
+        @str << " "
+        inputs.each_with_index do |input, i|
+          @str << ", " if i > 0
+          input.accept self
+        end
+      end
+      @str << " :: "
+      false
+    end
+
+    def visit(node : AsmOperand)
+      node.constraint.inspect(@str)
+      @str << '('
+      node.exp.accept self
+      @str << ')'
+      false
+    end
+
     def newline
       @str << "\n"
     end

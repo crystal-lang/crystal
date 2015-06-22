@@ -602,4 +602,8 @@ module Crystal
       end
     end
   {% end %}
+
+  class Asm
+    property ptrof
+  end
 end

@@ -2027,6 +2027,44 @@ module Crystal
     def_equals_and_hash name
   end
 
+  class Asm < ASTNode
+    property text
+    property output
+    property inputs
+
+    def initialize(@text, @output = nil, @inputs = nil)
+    end
+
+    def accept_children(visitor)
+      @output.try &.accept visitor
+      @inputs.try &.each &.accept visitor
+    end
+
+    def clone_without_location
+      Asm.new(@text, @output.clone, @inputs.clone)
+    end
+
+    def_equals_and_hash text, output, inputs
+  end
+
+  class AsmOperand < ASTNode
+    property constraint
+    property exp
+
+    def initialize(@constraint, @exp)
+    end
+
+    def accept_children(visitor)
+      @exp.accept visitor
+    end
+
+    def clone_without_location
+      AsmOperand.new(@constraint, @exp)
+    end
+
+    def_equals_and_hash constraint, exp
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name

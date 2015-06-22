@@ -2897,6 +2897,21 @@ module Crystal
       node.raise "can't apply visibility modifier"
     end
 
+    def visit(node : Asm)
+      if output = node.output
+        ptrof = PointerOf.new(output.exp).at(output.exp)
+        ptrof.accept self
+        node.ptrof = ptrof
+      end
+
+      if inputs = node.inputs
+        inputs.each &.exp.accept self
+      end
+
+      node.type = @mod.void
+      false
+    end
+
     def include_in(current_type, node, kind)
       node_name = node.name
       type = lookup_path_type(node_name)

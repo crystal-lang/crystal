@@ -940,6 +940,8 @@ module Crystal
           parse_visibility_modifier :private
         when :protected
           parse_visibility_modifier :protected
+        when :asm
+          parse_asm
         else
           set_visibility parse_var_or_call
         end
@@ -3517,6 +3519,68 @@ module Crystal
       modifier.doc = doc
       exp.doc = doc
       modifier
+    end
+
+    def parse_asm
+      next_token_skip_space
+      check :"("
+      next_token_skip_space_or_newline
+      text = parse_string_without_interpolation { "interpolation not allowed in asm" }
+      skip_space_or_newline
+
+      unless @token.type == :")"
+        if @token.type == :"::"
+          # No output operands
+          next_token_skip_space_or_newline
+
+          if @token.type == :DELIMITER_START
+            inputs = parse_asm_operands
+          end
+        else
+          check :":"
+          next_token_skip_space_or_newline
+
+          if @token.type == :DELIMITER_START
+            output = parse_asm_operand
+          end
+
+          if @token.type == :":"
+            next_token_skip_space_or_newline
+
+            if @token.type == :DELIMITER_START
+              inputs = parse_asm_operands
+            end
+          end
+        end
+
+        check :")"
+      end
+
+      next_token_skip_space
+
+      Asm.new(text, output, inputs)
+    end
+
+    def parse_asm_operands
+      operands = [] of AsmOperand
+      while true
+        operands << parse_asm_operand
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+        break unless @token.type == :DELIMITER_START
+      end
+      operands
+    end
+
+    def parse_asm_operand
+      text = parse_string_without_interpolation { "interpolation not allowed in constraint" }
+      check :"("
+      next_token_skip_space_or_newline
+      exp = parse_expression
+      check :")"
+      next_token_skip_space_or_newline
+      AsmOperand.new(text, exp)
     end
 
     def parse_yield_with_scope

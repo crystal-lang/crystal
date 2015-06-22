@@ -1030,6 +1030,15 @@ describe "Parser" do
   it_parses "a.b / 2", Call.new(Call.new("a".call, "b"), "/", 2.int32)
   it_parses "a/b", Call.new("a".call, "/", "b".call)
 
+  it_parses %(asm("nop" \n)), Asm.new("nop")
+  it_parses %(asm("nop" : : )), Asm.new("nop")
+  it_parses %(asm("nop" ::)), Asm.new("nop")
+  it_parses %(asm("nop" : "a"(0))), Asm.new("nop", AsmOperand.new("a", 0.int32))
+  it_parses %(asm("nop" : "a"(0) : "b"(1))), Asm.new("nop", AsmOperand.new("a", 0.int32), [AsmOperand.new("b", 1.int32)])
+  it_parses %(asm("nop" : "a"(0) : "b"(1), "c"(2))), Asm.new("nop", AsmOperand.new("a", 0.int32), [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)])
+  it_parses %(asm("nop" :: "b"(1), "c"(2))), Asm.new("nop", inputs: [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)])
+  it_parses %(asm(\n"nop"\n:\n"a"(0)\n:\n"b"(1),\n"c"(2)\n)), Asm.new("nop", AsmOperand.new("a", 0.int32), [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)])
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"
   end

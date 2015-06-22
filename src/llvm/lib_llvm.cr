@@ -141,6 +141,7 @@ lib LibLLVM
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
   fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
+  fun initialize_x86_asm_parser = LLVMInitializeX86AsmParser
   fun initialize_x86_target = LLVMInitializeX86Target
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
@@ -236,4 +237,5 @@ lib LibLLVM
   fun abi_size_of_type = LLVMABISizeOfType(td : TargetDataRef, ty : TypeRef) : UInt64
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
+  fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
 end
