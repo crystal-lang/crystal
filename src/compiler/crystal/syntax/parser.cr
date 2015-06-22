@@ -3557,14 +3557,19 @@ module Crystal
           end
         end
 
-        if @token.type == :":"
-          next_token_skip_space_or_newline
-          clobbers = parse_asm_clobbers
-        end
-
-        if @token.type == :":"
+        if @token.type == :"::"
           next_token_skip_space_or_newline
           volatile, alignstack, intel = parse_asm_options
+        else
+          if @token.type == :":"
+            next_token_skip_space_or_newline
+            clobbers = parse_asm_clobbers
+          end
+
+          if @token.type == :":"
+            next_token_skip_space_or_newline
+            volatile, alignstack, intel = parse_asm_options
+          end
         end
 
         check :")"
