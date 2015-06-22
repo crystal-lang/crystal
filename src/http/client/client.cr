@@ -62,7 +62,6 @@ class HTTP::Client
   def exec(request : HTTP::Request)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
-    socket.flush
     HTTP::Response.from_io(socket)
   end
 

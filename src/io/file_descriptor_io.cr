@@ -17,7 +17,7 @@ class FileDescriptorIO
     @sync = false
     @closed = false
     @fd = fd
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    @in_remaining = Slice.new(Pointer(UInt8).null, 0)
     @out_count = 0
 
     unless blocking
@@ -43,8 +43,8 @@ class FileDescriptorIO
     end
   end
 
-  # TODO: probably flush buffer
   def seek(amount, whence = SEEK_SET)
+    flush
     LibC.lseek(@fd, LibC::SizeT.cast(amount), whence)
   end
 

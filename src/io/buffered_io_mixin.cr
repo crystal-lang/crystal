@@ -8,11 +8,17 @@ module BufferedIOMixin
   # initialize method:
   #
   # def initialize
-  #   @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+  #   @in_remaining = Slice.new(Pointer(UInt8).null, 0)
   #   @out_count = 0
   #   @sync = false
   #   @flush_on_newline = false
   # end
+
+  abstract def unbuffered_read(slice : Slice(UInt8), count)
+  abstract def unbuffered_write(slice : Slice(UInt8), count)
+  abstract def unbuffered_flush
+  abstract def unbuffered_close
+  abstract def unbuffered_rewind
 
   def gets(delimiter : Char)
     if delimiter.ord >= 128
@@ -25,27 +31,27 @@ module BufferedIOMixin
     # is already in the buffer. In that case it's much faster to create
     # a String from a slice of the buffer instead of appending to a
     # StringIO, which happens in the other case.
-    fill_buffer if @in_buffer_rem.empty?
-    if @in_buffer_rem.empty?
+    fill_buffer if @in_remaining.empty?
+    if @in_remaining.empty?
       return nil
     end
 
-    endl = @in_buffer_rem.index(delimiter_byte)
+    endl = @in_remaining.index(delimiter_byte)
     if endl
-      string = String.new(@in_buffer_rem[0, endl + 1])
-      @in_buffer_rem += (endl + 1)
+      string = String.new(@in_remaining[0, endl + 1])
+      @in_remaining += (endl + 1)
       return string
     end
 
     # We didn't find the delimiter, so we append to a StringIO until we find it.
     String.build do |buffer|
       loop do
-        buffer.write @in_buffer_rem
-        @in_buffer_rem += @in_buffer_rem.length
+        buffer.write @in_remaining
+        @in_remaining += @in_remaining.length
 
-        fill_buffer if @in_buffer_rem.empty?
+        fill_buffer if @in_remaining.empty?
 
-        if @in_buffer_rem.empty?
+        if @in_remaining.empty?
           if buffer.bytesize == 0
             return nil
           else
@@ -53,10 +59,10 @@ module BufferedIOMixin
           end
         end
 
-        endl = @in_buffer_rem.index(delimiter_byte)
+        endl = @in_remaining.index(delimiter_byte)
         if endl
-          buffer.write @in_buffer_rem, endl + 1
-          @in_buffer_rem += (endl + 1)
+          buffer.write @in_remaining, endl + 1
+          @in_remaining += (endl + 1)
           break
         end
       end
@@ -64,40 +70,40 @@ module BufferedIOMixin
   end
 
   def read_byte
-    fill_buffer if @in_buffer_rem.empty?
-    if @in_buffer_rem.empty?
+    fill_buffer if @in_remaining.empty?
+    if @in_remaining.empty?
       nil
     else
-      b = @in_buffer_rem[0]
-      @in_buffer_rem += 1
+      b = @in_remaining[0]
+      @in_remaining += 1
       b
     end
   end
 
   def read_char
-    return super unless @in_buffer_rem.length >= 4
+    return super unless @in_remaining.length >= 4
 
-    first = @in_buffer_rem[0].to_u32
+    first = @in_remaining[0].to_u32
     if first < 0x80
-      @in_buffer_rem += 1
+      @in_remaining += 1
       return first.chr
     end
 
-    second = (@in_buffer_rem[1] & 0x3f).to_u32
+    second = (@in_remaining[1] & 0x3f).to_u32
     if first < 0xe0
-      @in_buffer_rem += 2
+      @in_remaining += 2
       return ((first & 0x1f) << 6 | second).chr
     end
 
-    third = (@in_buffer_rem[2] & 0x3f).to_u32
+    third = (@in_remaining[2] & 0x3f).to_u32
     if first < 0xf0
-      @in_buffer_rem += 3
+      @in_remaining += 3
       return ((first & 0x0f) << 12 | (second << 6) | third).chr
     end
 
-    fourth = (@in_buffer_rem[3] & 0x3f).to_u32
+    fourth = (@in_remaining[3] & 0x3f).to_u32
     if first < 0xf8
-      @in_buffer_rem += 4
+      @in_remaining += 4
       return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr
     end
 
@@ -108,7 +114,7 @@ module BufferedIOMixin
     total_read = 0
 
     while count > 0
-      if @in_buffer_rem.empty?
+      if @in_remaining.empty?
         # If we are asked to read more than the buffer's size,
         # read directly into the slice.
         if count >= BUFFER_SIZE
@@ -117,13 +123,13 @@ module BufferedIOMixin
           break
         else
           fill_buffer
-          break if @in_buffer_rem.empty?
+          break if @in_remaining.empty?
         end
       end
 
-      to_read = Math.min(count, @in_buffer_rem.length)
-      slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
-      @in_buffer_rem += to_read
+      to_read = Math.min(count, @in_remaining.length)
+      slice.copy_from(@in_remaining.pointer(to_read), to_read)
+      @in_remaining += to_read
       count -= to_read
       slice += to_read
       total_read += to_read
@@ -136,6 +142,8 @@ module BufferedIOMixin
     if sync?
       return unbuffered_write(slice, count).to_i
     end
+
+    reset_in_remaining
 
     if flush_on_newline?
       index = slice[0, count.to_i32].rindex('\n'.ord.to_u8)
@@ -158,7 +166,7 @@ module BufferedIOMixin
       flush
     end
 
-    slice.copy_to(out_buffer + @out_count, count)
+    slice.copy_to(io_buffer + @out_count, count)
     @out_count += count
   end
 
@@ -170,10 +178,12 @@ module BufferedIOMixin
       return
     end
 
+    reset_in_remaining
+
     if @out_count >= BUFFER_SIZE
       flush
     end
-    out_buffer[@out_count] = byte
+    io_buffer[@out_count] = byte
     @out_count += 1
 
     if flush_on_newline? && byte == '\n'.ord
@@ -199,7 +209,7 @@ module BufferedIOMixin
   end
 
   def flush
-    unbuffered_write(Slice.new(out_buffer, BUFFER_SIZE), @out_count) if @out_count > 0
+    unbuffered_write(Slice.new(io_buffer, BUFFER_SIZE), @out_count) if @out_count > 0
     unbuffered_flush
     @out_count = 0
   end
@@ -211,20 +221,23 @@ module BufferedIOMixin
 
   def rewind
     unbuffered_rewind
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    reset_in_remaining
+    @out_count = 0
   end
 
   private def fill_buffer
-    in_buffer = in_buffer()
-    length = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE), BUFFER_SIZE).to_i
-    @in_buffer_rem = Slice.new(in_buffer, length)
+    flush
+    io_buffer = io_buffer()
+    length = unbuffered_read(Slice.new(io_buffer, BUFFER_SIZE), BUFFER_SIZE).to_i
+    reset_in_remaining
+    @in_remaining = Slice.new(io_buffer, length)
   end
 
-  private def in_buffer
-    @in_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
+  private def io_buffer
+    @io_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
   end
 
-  private def out_buffer
-    @out_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
+  private def reset_in_remaining
+    @in_remaining = Slice.new(Pointer(UInt8).null, 0)
   end
 end
