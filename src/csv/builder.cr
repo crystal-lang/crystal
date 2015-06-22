@@ -22,22 +22,30 @@ class CSV::Builder
   end
 
   def cell
-    @io << "," unless @first_cell_in_row
-    yield @io
-    @first_cell_in_row = false
+    append_cell do
+      yield @io
+    end
   end
 
   def quote_cell(value)
-    @io << '"'
-    value.each_byte do |byte|
-      case byte
-      when '"'.ord
-        @io << %("")
-      else
-        @io.write_byte byte
+    append_cell do
+      @io << '"'
+      value.each_byte do |byte|
+        case byte
+        when '"'.ord
+          @io << %("")
+        else
+          @io.write_byte byte
+        end
       end
+      @io << '"'
     end
-    @io << '"'
+  end
+
+  private def append_cell
+    @io << "," unless @first_cell_in_row
+    yield
+    @first_cell_in_row = false
   end
 
   struct Row

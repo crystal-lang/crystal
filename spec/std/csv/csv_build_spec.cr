@@ -95,5 +95,15 @@ describe CSV do
       end
       string.should eq("1,2,3,4,5\n")
     end
+
+    it "builds with commas" do
+      string = CSV.build do |csv|
+        csv.row do |row|
+          row << " , "
+          row << " , "
+        end
+      end
+      string.should eq(%(" , "," , "\n))
+    end
   end
 end
