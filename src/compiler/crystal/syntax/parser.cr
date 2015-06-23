@@ -158,7 +158,7 @@ module Crystal
     end
 
     def to_lhs(exp)
-      if exp.is_a?(Path) && @def_vars.length > 1
+      if exp.is_a?(Path) && inside_def?
         raise "dynamic constant assignment"
       end
 
@@ -259,7 +259,7 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            if atomic.is_a?(Path) && @def_vars.length > 1
+            if atomic.is_a?(Path) && inside_def?
               raise "dynamic constant assignment"
             end
 
@@ -2002,7 +2002,6 @@ module Crystal
       end
 
       push_def
-      @def_nest += 1
 
       check DefOrMacroCheck1
 
@@ -2077,7 +2076,6 @@ module Crystal
         body = parse_macro_body(name_line_number, name_column_number)
       end
 
-      @def_nest -= 1
       pop_def
 
       node = Macro.new name, args, body, block_arg, splat_index

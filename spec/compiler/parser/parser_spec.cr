@@ -1148,4 +1148,6 @@ describe "Parser" do
 
   assert_syntax_error "/foo)/", "invalid regex"
   assert_syntax_error "def =\nend"
+  assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment"
 end
+

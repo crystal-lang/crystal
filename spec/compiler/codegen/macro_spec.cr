@@ -1073,4 +1073,33 @@ describe "Code gen: macro" do
       bar
       )).to_i.should eq(123)
   end
+
+  it "declares constant in macro (#838)" do
+    run(%(
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        X = 123
+      end
+
+      X
+      )).to_i.should eq(123)
+  end
+
+  it "errors if dynamic constant assignment after macro expansion" do
+    assert_error %(
+      macro foo
+        X = 123
+      end
+
+      def bar
+        foo
+      end
+
+      bar
+      ),
+      "dynamic constant assignment"
+  end
 end
