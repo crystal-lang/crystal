@@ -32,6 +32,7 @@ install: |
   esac
   export PATH=/tmp/llvm-3.5.0-1/bin:$PATH
   export CRYSTAL_CONFIG_VERSION=ci
+  export CRYSTAL_CACHE_DIR=/tmp/crystal
 script:
   - make crystal spec
   - find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-build

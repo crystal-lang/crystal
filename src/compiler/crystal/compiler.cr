@@ -143,7 +143,7 @@ module Crystal
       if @cross_compile_flags
         output_dir = "."
       else
-        output_dir = ".crystal/#{sources.first.filename}"
+        output_dir = File.join(Config.cache_dir, sources.first.filename)
       end
 
       Dir.mkdir_p(output_dir)
