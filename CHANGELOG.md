@@ -19,7 +19,7 @@
 * Added `String#chop`
 * Fixed `crystal deps` behaviour with empty git repositories (thanks @tkrajcar)
 * Optimized `HTTP::Headers` and `HTTP::Request` parsing.
-* `FileDescriptorIO` (superclass of `File` and `Socket`) has now buffering capabilities (use `sync=` and `sync?` to turn on/off)
+* `FileDescriptorIO` (superclass of `File` and `Socket`) has now buffering capabilities (use `sync=` and `sync?` to turn on/off). That means there's no need to use `BufferedIO` for these classes anymore.
 * Allow `pointerof` with class and global variables, and also `foo.@bar` access
 * Optimized fibers performance.
 * Added inline assembly support.
