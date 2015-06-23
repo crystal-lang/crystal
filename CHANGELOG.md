@@ -1,3 +1,30 @@
+## Next
+
+* Added Float module and remainder (thanks @wmoxam)
+* Show elapsed time in HTTP::LogHandler (thanks @zamith for the suggestion)
+* Added `0o` as a prefix for octal numbers (thanks @asb)
+* Allow spaces before the closing tag of a heredoc (thanks @zamith)
+* `String#split(Regex)` now includes captures in the results
+* Added `union?`, `union_types` and `type_params` in macro methods
+* Improved `MatchData#to_s` to show named groups (thanks @will)
+* Optimized Base64 encode/decode (thanks @kostya)
+* Added basic docs for spec (thanks @PragTob)
+* Added docs for Benchmark (thanks @daneb)
+* Added `ARGF`
+* Non-matching regex captures now return `nil` instead of an empty string (thanks @will)
+* Added `$1?`, `$2?`, etc., as a nilable alternative to `$1`, `$2`, etc.
+* Added user, password, fragment and opaque to URI (thanks @will)
+* `HTTP::Client.exec` now honors user/password info from URI
+* Set default user agent in `HTTP::Client`
+* Added `String#chop`
+* Fixed `crystal deps` behaviour with empty git repositories (thanks @tkrajcar)
+* Optimized `HTTP::Headers` and `HTTP::Request` parsing.
+* `FileDescriptorIO` (superclass of `File` and `Socket`) has now buffering capabilities (use `sync=` and `sync?` to turn on/off)
+* Allow `pointerof` with class and global variables
+* Optimized fibers performance.
+* Added inline assembly support.
+* The `.crystal` cache dir is now configurable with an ENV variable (thanks @jhass)
+
 ## 0.7.3 (2015-06-07)
 
 * Added `Tuple.from_json` and `Tuple.to_json`
