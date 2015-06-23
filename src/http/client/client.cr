@@ -117,6 +117,10 @@ class HTTP::Client
 
   private def self.exec(url)
     uri = URI.parse(url)
+    unless uri.scheme
+      raise ArgumentError.new %(Request URI must have schema. Possibly add "http://" to the request URI?)
+    end
+
     host = uri.host.not_nil!
     port = uri.port
     path = uri.full_path
