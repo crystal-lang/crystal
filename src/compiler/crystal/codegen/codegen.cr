@@ -336,6 +336,9 @@ module Crystal
                 accept(node_exp)
                 global_name = node_exp.target_const.not_nil!.llvm_name
                 @llvm_mod.globals[global_name]
+              when ReadInstanceVar
+                node_exp.obj.accept self
+                instance_var_ptr (node_exp.obj.type), node_exp.name, @last
               else
                 raise "Bug: #{node}"
               end

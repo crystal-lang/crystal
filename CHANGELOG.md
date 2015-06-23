@@ -20,7 +20,7 @@
 * Fixed `crystal deps` behaviour with empty git repositories (thanks @tkrajcar)
 * Optimized `HTTP::Headers` and `HTTP::Request` parsing.
 * `FileDescriptorIO` (superclass of `File` and `Socket`) has now buffering capabilities (use `sync=` and `sync?` to turn on/off)
-* Allow `pointerof` with class and global variables
+* Allow `pointerof` with class and global variables, and also `foo.@bar` access
 * Optimized fibers performance.
 * Added inline assembly support.
 * The `.crystal` cache dir is now configurable with an ENV variable (thanks @jhass)

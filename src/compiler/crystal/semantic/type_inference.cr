@@ -283,7 +283,14 @@ module Crystal
       end
     end
 
-    def end_visit(node : ReadInstanceVar)
+    def visit(node : ReadInstanceVar)
+      visit_read_instance_var node
+      false
+    end
+
+    def visit_read_instance_var(node)
+      node.obj.accept self
+
       obj_type = node.obj.type
       unless obj_type.is_a?(InstanceVarContainer)
         node.raise "#{obj_type} doesn't have instance vars"
@@ -295,6 +302,8 @@ module Crystal
       end
 
       node.bind_to ivar
+
+      ivar
     end
 
     def visit(node : ClassVar)
@@ -2656,6 +2665,8 @@ module Crystal
               else
                 node_exp.raise "can't take address of #{node_exp}"
               end
+            when ReadInstanceVar
+              visit_read_instance_var node_exp
             else
               node_exp.raise "can't take address of #{node_exp}"
             end

@@ -353,4 +353,22 @@ describe "Code gen: pointer" do
       $a
       )).to_i.should eq(2)
   end
+
+  it "does pointerof read variable" do
+    run(%(
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      pointerof(foo.@x).value = 123
+      foo.x
+      )).to_i.should eq(123)
+  end
 end
