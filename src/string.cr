@@ -2068,7 +2068,6 @@ class String
 
     while i < bytesize
       c = cstr[i]
-      break if c == 0
 
       if c < 0x80
         i += 1
