@@ -40,7 +40,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr">docs/macros.cr</a>
     
     <br/>
   
@@ -110,6 +110,27 @@
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#type_params%20%3A%20ArrayLiteral%28TypeNode%29-instance-method" class="signature"><strong>#type_params</strong> : ArrayLiteral(TypeNode)</a>
+        
+          <div class="summary"><p>Returns the type parameters of the generic type.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#union%3F%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#union?</strong> : BoolLiteral</a>
+        
+          <div class="summary"><p>Returns true if this type is a union type, false otherwise.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#union_types%20%3A%20ArrayLiteral%28TypeNode%29-instance-method" class="signature"><strong>#union_types</strong> : ArrayLiteral(TypeNode)</a>
+        
+          <div class="summary"><p>Returns the types comforming a union type, if this is a union type.</p></div>
+        
+      </li>
+    
   </ul>
 
 
@@ -131,7 +152,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L974" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L974" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -148,7 +169,7 @@ in these cases).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L1009" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L1009" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -163,7 +184,7 @@ in these cases).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L982" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L982" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -179,7 +200,7 @@ Gives a compile error if this is not one of those types.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L1014" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L1014" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -195,7 +216,7 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L1003" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L1003" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -210,7 +231,7 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L978" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L978" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -225,7 +246,7 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L998" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L998" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -240,7 +261,58 @@ inherited methods.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/docs/macros.cr#L986" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L986" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="type_params%20%3A%20ArrayLiteral%28TypeNode%29-instance-method">
+        
+        def <strong>type_params</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/TypeNode.html">TypeNode</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the type parameters of the generic type. If the type is not
+generic, an empty array is returned.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L1032" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="union%3F%20%3A%20BoolLiteral-instance-method">
+        
+        def <strong>union?</strong> : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns true if this type is a union type, false otherwise.</p>
+
+<p>See also: <code><a href="../Macros/TypeNode.html#union_types%20%3A%20ArrayLiteral%28TypeNode%29-instance-method">#union_types</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L1020" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="union_types%20%3A%20ArrayLiteral%28TypeNode%29-instance-method">
+        
+        def <strong>union_types</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/TypeNode.html">TypeNode</a>)
+      </div>
+      
+        <div class="doc"><p>Returns the types comforming a union type, if this is a union type.
+Gives a compile error otherwise.</p>
+
+<p>See also: <code><a href="../Macros/TypeNode.html#union%3F%20%3A%20BoolLiteral-instance-method">#union?</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L1027" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

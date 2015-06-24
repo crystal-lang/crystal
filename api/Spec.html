@@ -15,6 +15,64 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>Crystal's builtin testing library.</p>
+
+<p>A basic spec looks like this:</p>
+
+<pre><code><span class="k">require</span> <span class="s">"spec"</span>
+
+describe <span class="s">"Array"</span> <span class="k">do</span>
+  describe <span class="s">"#length"</span> <span class="k">do</span>
+    it <span class="s">"correctly reports the number of elements in the Array"</span> <span class="k">do</span>
+      [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>].length.should eq <span class="n">3</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  describe <span class="s">"#empty?"</span> <span class="k">do</span>
+    it <span class="s">"is empty when no elements are in the array"</span> <span class="k">do</span>
+      (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).empty?.should be_true
+    <span class="k">end</span>
+
+    it <span class="s">"is not empty if there are elements in the array"</span> <span class="k">do</span>
+      [<span class="n">1</span>].empty?.should be_false
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c"># lots of more specs</span>
+
+<span class="k">end</span></code></pre>
+
+<p>With <code>describe</code> and a descriptive string test files are structured.
+There commonly is one top level <code>describe</code> that defines which greater unit,
+such as a class, is tested in this spec file. Further <code>describe</code> calls can
+be nested within to specify smaller units under test like individual methods.
+It can also be used to set up a certain context - think empty Array versus
+Array with elements. There is also the <code>context</code> method that behaves just like
+<code>describe</code> but has a lightly different meaning to the reader.</p>
+
+<p>Concrete test cases are defined with <code>it</code> within a <code>describe</code> block. A
+descriptive string is supplied to <code>it</code> describing what that test case
+tests specifically.</p>
+
+<p>Specs then use the <code>should</code> method to verify that the expected value is
+returned, see the example above for details.</p>
+
+<p>By convention, specs live in the <code>spec</code> directory of a project. You can compile
+and run the specs of a project by running:</p>
+
+<pre><code>crystal spec</code></pre>
+
+<p>Also, you can compile and run individual spec files by providing their path:</p>
+
+<pre><code>crystal spec spec<span class="s">/my/</span>test<span class="s">/file_spec.cr</code></pre>
+
+<p>In addition, you can also run individual specs by optionally providing a line
+number:</p>
+
+<pre><code>crystal spec spec<span class="s">/my/</span>test<span class="s">/file_spec.cr:14</code></pre>
+
 
 
 
@@ -33,64 +91,37 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/context.cr">spec/context.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/context.cr">spec/context.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/expectations.cr">spec/expectations.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/expectations.cr">spec/expectations.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/formatter.cr">spec/formatter.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/formatter.cr">spec/formatter.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/source.cr">spec/source.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/source.cr">spec/source.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr">spec/spec.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/spec.cr">spec/spec.cr</a>
     
     <br/>
   
 
 
-
-  
-    <h2>Constant Summary</h2>
-  
-  <ul>
-    
-      <li class="entry-const">
-        <strong>COLORS</strong> = <code>{<span class="n">:success</span> => <span class="n">:green</span>, <span class="n">:fail</span> => <span class="n">:red</span>, <span class="n">:error</span> => <span class="n">:red</span>, <span class="n">:pending</span> => <span class="n">:yellow</span>}</code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>LETTERS</strong> = <code>{<span class="n">:success</span> => <span class="s">'.'</span>, <span class="n">:fail</span> => <span class="s">'F'</span>, <span class="n">:error</span> => <span class="s">'E'</span>, <span class="n">:pending</span> => <span class="s">'*'</span>}</code>
-        
-      </li>
-    
-  </ul>
 
 
 
   <h2>Class Method Summary</h2>
   <ul>
-    
-      <li class="entry-summary">
-        <a href="#abort%21-class-method" class="signature"><strong>.abort!</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#aborted%3F-class-method" class="signature"><strong>.aborted?</strong></a>
-        
-      </li>
     
       <li class="entry-summary">
         <a href="#after_each%28%26block%20%3A%20-%3E%20%29-class-method" class="signature"><strong>.after_each</strong>(&block : -> )</a>
@@ -99,46 +130,6 @@
     
       <li class="entry-summary">
         <a href="#before_each%28%26block%20%3A%20-%3E%20%29-class-method" class="signature"><strong>.before_each</strong>(&block : -> )</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#color%28str%2C%20status%29-class-method" class="signature"><strong>.color</strong>(str, status)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#fail_fast%3D%28fail_fast%29-class-method" class="signature"><strong>.fail_fast=</strong>(fail_fast)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#fail_fast%3F-class-method" class="signature"><strong>.fail_fast?</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#line%3D%28line%29-class-method" class="signature"><strong>.line=</strong>(line)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#matches%3F%28description%2C%20file%2C%20line%29-class-method" class="signature"><strong>.matches?</strong>(description, file, line)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#pattern%3D%28pattern%29-class-method" class="signature"><strong>.pattern=</strong>(pattern)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#run_after_each_hooks-class-method" class="signature"><strong>.run_after_each_hooks</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#run_before_each_hooks-class-method" class="signature"><strong>.run_before_each_hooks</strong></a>
         
       </li>
     
@@ -154,32 +145,6 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="abort%21-class-method">
-        
-        def self.<strong>abort!</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L35" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="aborted%3F-class-method">
-        
-        def self.<strong>aborted?</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L39" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
       <div class="signature" id="after_each%28%26block%20%3A%20-%3E%20%29-class-method">
         
         def self.<strong>after_each</strong>(&block :  -> )
@@ -187,7 +152,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L81" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/spec.cr#L155" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -200,111 +165,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L76" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="color%28str%2C%20status%29-class-method">
-        
-        def self.<strong>color</strong>(str, status)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L20" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="fail_fast%3D%28fail_fast%29-class-method">
-        
-        def self.<strong>fail_fast=</strong>(fail_fast)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L69" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="fail_fast%3F-class-method">
-        
-        def self.<strong>fail_fast?</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L72" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="line%3D%28line%29-class-method">
-        
-        def self.<strong>line=</strong>(line)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L51" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="matches%3F%28description%2C%20file%2C%20line%29-class-method">
-        
-        def self.<strong>matches?</strong>(description, file, line)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L54" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="pattern%3D%28pattern%29-class-method">
-        
-        def self.<strong>pattern=</strong>(pattern)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L45" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="run_after_each_hooks-class-method">
-        
-        def self.<strong>run_after_each_hooks</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L90" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="run_before_each_hooks-class-method">
-        
-        def self.<strong>run_before_each_hooks</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/spec/spec.cr#L86" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/spec/spec.cr#L150" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

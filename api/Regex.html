@@ -36,7 +36,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr">regex/regex.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr">regex/regex.cr</a>
     
     <br/>
   
@@ -49,6 +49,13 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#error%3F%28source%29-class-method" class="signature"><strong>.error?</strong>(source)</a>
+        
+          <div class="summary"><p>Determines Regex's source validity.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#escape%28str%29-class-method" class="signature"><strong>.escape</strong>(str)</a>
         
       </li>
@@ -56,7 +63,7 @@
       <li class="entry-summary">
         <a href="#new%28source%2C%20options%20%3A%20Int32%29-class-method" class="signature"><strong>.new</strong>(source, options : Int32)</a>
         
-          <div class="summary"><p>TODO: remove this constructor after 0.7.1</p></div>
+          <div class="summary"><p>TODO: remove this constructor after 0.7.3</p></div>
         
       </li>
     
@@ -73,7 +80,22 @@
   <ul>
     
       <li class="entry-summary">
+        <a href="#%3D%3D%28other%20%3A%20Regex%29-instance-method" class="signature"><strong>#==</strong>(other : Regex)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%3D%3D%3D%28other%20%3A%20String%29-instance-method" class="signature"><strong>#===</strong>(other : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%7E%28other%20%3A%20String%29-instance-method" class="signature"><strong>#=~</strong>(other : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%7E%28other%29-instance-method" class="signature"><strong>#=~</strong>(other)</a>
         
       </li>
     
@@ -89,6 +111,11 @@
     
       <li class="entry-summary">
         <a href="#match_at_byte_index%28str%2C%20byte_index%20%3D%200%2C%20options%20%3D%20Regex%3A%3AOptions%3A%3ANone%29-instance-method" class="signature"><strong>#match_at_byte_index</strong>(str, byte_index = 0, options = Regex::Options::None)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name_table-instance-method" class="signature"><strong>#name_table</strong></a>
         
       </li>
     
@@ -117,6 +144,25 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="error%3F%28source%29-class-method">
+        
+        def self.<strong>error?</strong>(source)
+      </div>
+      
+        <div class="doc"><p>Determines Regex's source validity. If it is, <code>nil</code> is returned.
+If it's not, a String containing the error message is returned.</p>
+
+<pre><code><span class="t">Regex</span>.error(<span class="s">"(foo|bar)"</span>) <span class="c">#=> nil</span>
+<span class="t">Regex</span>.error(<span class="s">"(foo|bar"</span>) <span class="c">#=> "missing ) at 8"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L143" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="escape%28str%29-class-method">
         
         def self.<strong>escape</strong>(str)
@@ -124,7 +170,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L78" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L120" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -135,11 +181,11 @@
         def self.<strong>new</strong>(source, options : <a href="Int32.html">Int32</a>)
       </div>
       
-        <div class="doc"><p>TODO: remove this constructor after 0.7.1</p></div>
+        <div class="doc"><p>TODO: remove this constructor after 0.7.3</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L32" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -152,7 +198,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L19" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -163,6 +209,19 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="%3D%3D%28other%20%3A%20Regex%29-instance-method">
+        
+        def <strong>==</strong>(other : <a href="Regex.html">Regex</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L116" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="%3D%3D%3D%28other%20%3A%20String%29-instance-method">
         
         def <strong>===</strong>(other : <a href="String.html">String</a>)
@@ -170,7 +229,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L59" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L87" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%7E%28other%20%3A%20String%29-instance-method">
+        
+        def <strong>=~</strong>(other : <a href="String.html">String</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L93" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%7E%28other%29-instance-method">
+        
+        def <strong>=~</strong>(other)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -183,7 +268,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L74" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L112" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -196,7 +281,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L36" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L62" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,7 +294,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L72" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="name_table-instance-method">
+        
+        def <strong>name_table</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -222,7 +320,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L32" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L58" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -235,7 +333,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -248,7 +346,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/regex/regex.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/regex/regex.cr#L103" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

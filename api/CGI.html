@@ -33,7 +33,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr">cgi.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr">cgi.cr</a>
     
     <br/>
   
@@ -47,6 +47,8 @@
     
       <li class="entry-summary">
         <a href="#build_form%28%26block%29-class-method" class="signature"><strong>.build_form</strong>(&block)</a>
+        
+          <div class="summary"><p>Builds a CGI form.</p></div>
         
       </li>
     
@@ -109,9 +111,22 @@
         def self.<strong>build_form</strong>(&block)
       </div>
       
+        <div class="doc"><p>Builds a CGI form.</p>
+
+<p>The yielded object has an <code>add</code> method that accepts two arguments,
+a key (String) and a value (String or Nil). Keys and values are escaped
+using <code><a href="CGI.html#escape%28string%20%3A%20String%29-class-method">CGI#escape</a></code>.</p>
+
+<pre><code>params <span class="o">=</span> <span class="t">CGI</span>.build_form <span class="k">do</span> <span class="o">|</span>form<span class="o">|</span>
+  form.add <span class="s">"color"</span>, <span class="s">"black"</span>
+  form.add <span class="s">"name"</span>, <span class="s">"crystal"</span>
+  form.add <span class="s">"year"</span>, <span class="s">"2012 - today"</span>
+<span class="k">end</span>
+params <span class="c">#=> "color=black&name=crystal&year=2012%20-%20today"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -128,7 +143,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L24" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -143,7 +158,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L29" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -162,7 +177,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L61" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L61" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -179,7 +194,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L47" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L47" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -194,7 +209,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L10" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -211,7 +226,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/cgi.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/cgi.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

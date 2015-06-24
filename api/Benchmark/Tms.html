@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
+</head>
+<body>
+
+
+  <h1>class Benchmark::Tms</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>A data object, representing the times associated with a benchmark measurement.</p>
+
+
+
+
+
+  <h2>Superclass hierarchy</h2>
+  <div style="padding-left: 0px"><a href="../Object.html">Object</a></div><div style="padding-left: 20px"><a href="../Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="../Benchmark/Tms.html">Benchmark::Tms</a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr">benchmark.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#cstime-instance-method" class="signature"><strong>#cstime</strong></a>
+        
+          <div class="summary"><p>System CPU time of children</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#cutime-instance-method" class="signature"><strong>#cutime</strong></a>
+        
+          <div class="summary"><p>User CPU time of children</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#label-instance-method" class="signature"><strong>#label</strong></a>
+        
+          <div class="summary"><p>The label associated with this measure</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#real-instance-method" class="signature"><strong>#real</strong></a>
+        
+          <div class="summary"><p>Elapsed real time</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#stime-instance-method" class="signature"><strong>#stime</strong></a>
+        
+          <div class="summary"><p>System CPU time</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Prints <em>utime</em>, <em>stime</em>, <em>total</em> and <em>real</em> to the given IO.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#total-instance-method" class="signature"><strong>#total</strong></a>
+        
+          <div class="summary"><p>Total time, that is utime + stime + cutime + cstime</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#utime-instance-method" class="signature"><strong>#utime</strong></a>
+        
+          <div class="summary"><p>User CPU time</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cstime-instance-method">
+        
+        def <strong>cstime</strong>
+      </div>
+      
+        <div class="doc"><p>System CPU time of children</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L58" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cutime-instance-method">
+        
+        def <strong>cutime</strong>
+      </div>
+      
+        <div class="doc"><p>User CPU time of children</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L55" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="label-instance-method">
+        
+        def <strong>label</strong>
+      </div>
+      
+        <div class="doc"><p>The label associated with this measure</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L64" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="real-instance-method">
+        
+        def <strong>real</strong>
+      </div>
+      
+        <div class="doc"><p>Elapsed real time</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L61" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="stime-instance-method">
+        
+        def <strong>stime</strong>
+      </div>
+      
+        <div class="doc"><p>System CPU time</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L52" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="../IO.html">IO</a>)
+      </div>
+      
+        <div class="doc"><p>Prints <em>utime</em>, <em>stime</em>, <em>total</em> and <em>real</em> to the given IO.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L76" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="total-instance-method">
+        
+        def <strong>total</strong>
+      </div>
+      
+        <div class="doc"><p>Total time, that is utime + stime + cutime + cstime</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L71" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="utime-instance-method">
+        
+        def <strong>utime</strong>
+      </div>
+      
+        <div class="doc"><p>User CPU time</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L49" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+
+
+</body>
+</html>

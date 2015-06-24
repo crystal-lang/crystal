@@ -15,6 +15,43 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The Benchmark module provides methods for benchmarking Crystal code, giving
+detailed reports on the time taken for each task.</p>
+
+<h3>Measure the time to construct the string given by the expression: <code>"a"*1_000_000_000</code></h3>
+
+<pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
+
+puts <span class="t">Benchmark</span>.measure { <span class="s">"a"</span><span class="o">*</span><span class="n">1000000000</span> }</code></pre>
+
+<p>This generates the following output:</p>
+
+<pre><code> 0.190000   0.220000   0.410000 (  0.420185)</code></pre>
+
+<p>This report shows the user CPU time, system CPU time, the sum of
+the user and system CPU times, and the elapsed real time. The unit
+of time is seconds.</p>
+
+<h3>Do some experiments sequentially using the <code><a href="Benchmark.html#bm%28%26block%29-instance-method">#bm</a></code> method:</h3>
+
+<pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
+
+n <span class="o">=</span> <span class="n">5000000</span>
+<span class="t">Benchmark</span>.bm <span class="k">do</span> <span class="o">|</span>x<span class="o">|</span>
+ x.report(<span class="s">"times:"</span>) { n.times <span class="k">do</span> ; a <span class="o">=</span> <span class="s">"1"</span>; <span class="k">end</span> }
+ x.report(<span class="s">"upto:"</span>) { <span class="n">1</span>.upto(n) <span class="k">do</span> ; a <span class="o">=</span> <span class="s">"1"</span>; <span class="k">end</span> }
+<span class="k">end</span></code></pre>
+
+<p>The result:</p>
+
+<pre><code>           user     system      total        real
+times:   0.010000   0.000000   0.010000 (  0.008976)
+upto:    0.010000   0.000000   0.010000 (  0.010466)</code></pre>
+
+<p>Make sure to always benchmark code by compiling with the <code>--release</code> flag.</p>
+
 
 
 
@@ -38,7 +75,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/benchmark.cr">benchmark.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr">benchmark.cr</a>
     
     <br/>
   
@@ -55,15 +92,21 @@
       <li class="entry-summary">
         <a href="#bm%28%26block%29-instance-method" class="signature"><strong>#bm</strong>(&block)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#measure%28label%20%3D%20%22%22%2C%20%26block%29-instance-method" class="signature"><strong>#measure</strong>(label = "", &block)</a>
+          <div class="summary"><p>Main interface of the <code><a href="Benchmark.html">Benchmark</a></code> module.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#realtime%28%26block%29-instance-method" class="signature"><strong>#realtime</strong>(&block)</a>
+        <a href="#measure%28label%20%3D%20%22%22%2C%20%26block%29%20%3A%20Tms-instance-method" class="signature"><strong>#measure</strong>(label = "", &block) : Tms</a>
+        
+          <div class="summary"><p>Returns the time used to execute the given block.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#realtime%28%26block%29%20%3A%20TimeSpan-instance-method" class="signature"><strong>#realtime</strong>(&block) : TimeSpan</a>
+        
+          <div class="summary"><p>Returns the elapsed real time used to execute the given block.</p></div>
         
       </li>
     
@@ -84,35 +127,44 @@
         def <strong>bm</strong>(&block)
       </div>
       
+        <div class="doc"><p>Main interface of the <code><a href="Benchmark.html">Benchmark</a></code> module. Yields a <code><a href="Benchmark/Job.html">Job</a></code> to which
+one can report the benchmarks. See the module's description.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/benchmark.cr#L74" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L141" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="measure%28label%20%3D%20%22%22%2C%20%26block%29-instance-method">
+      <div class="signature" id="measure%28label%20%3D%20%22%22%2C%20%26block%29%20%3A%20Tms-instance-method">
         
-        def <strong>measure</strong>(label = <span class="s">""</span>, &block)
+        def <strong>measure</strong>(label = <span class="s">""</span>, &block) : <a href="Benchmark/Tms.html">Tms</a>
       </div>
+      
+        <div class="doc"><p>Returns the time used to execute the given block.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/benchmark.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L116" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="realtime%28%26block%29-instance-method">
+      <div class="signature" id="realtime%28%26block%29%20%3A%20TimeSpan-instance-method">
         
-        def <strong>realtime</strong>(&block)
+        def <strong>realtime</strong>(&block) : <a href="TimeSpan.html">TimeSpan</a>
       </div>
+      
+        <div class="doc"><p>Returns the elapsed real time used to execute the given block.</p>
+
+<pre><code><span class="t">Benchmark</span>.realtime { <span class="s">"a"</span> <span class="o">*</span> <span class="n">100000</span> } <span class="c">#=> 00:00:00.0005840</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/benchmark.cr#L68" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L133" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

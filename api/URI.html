@@ -36,12 +36,31 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/uri.cr">uri.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr">uri.cr</a>
     
     <br/>
   
 
 
+
+  
+    <h2>Constant Summary</h2>
+  
+  <ul>
+    
+      <li class="entry-const">
+        <strong>RFC3986_relative_ref</strong> = <code><span class="s">/\\A(?<relative_ref>(?<relative_part>\\/\\/(?<authority>(?:(?<userinfo>(?:%\\h\\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\\[(?<IPv6address>(?:\\h{1,4}:){6}(?<ls32>\\h{1,4}:\\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]|\\d)\\.\\g<dec_octet>\\.\\g<dec_octet>\\.\\g<dec_octet>))|::(?:\\h{1,4}:){5}\\g<ls32>|\\h{1,4}?::(?:\\h{1,4}:){4}\\g<ls32>|(?:(?:\\h{1,4}:){,1}\\h{1,4})?::(?:\\h{1,4}:){3}\\g<ls32>|(?:(?:\\h{1,4}:){,2}\\h{1,4})?::(?:\\h{1,4}:){2}\\g<ls32>|(?:(?:\\h{1,4}:){,3}\\h{1,4})?::\\h{1,4}:\\g<ls32>|(?:(?:\\h{1,4}:){,4}\\h{1,4})?::\\g<ls32>|(?:(?:\\h{1,4}:){,5}\\h{1,4})?::\\h{1,4}|(?:(?:\\h{1,4}:){,6}\\h{1,4})?::)|(?<IPvFuture>v\\h+\\.[!$&-.0-;=A-Z_a-z~]+)\\])|\\g<IPv4address>|(?<reg_name>(?:%\\h\\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\\d*))?)(?<path_abempty>(?:\\/(?<segment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\\/(?:(?<segment_nz>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])+)(?:\\/\\g<segment>)*)?)|(?<path_noscheme>(?<segment_nz_nc>(?:%\\h\\h|[!$&-.0-9;=@-Z_a-z~])+)(?:\\/\\g<segment>)*)|(?<path_empty>))(?:\\?(?<query>[^#]*))?(?:\\#(?<fragment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~\\/?])*))?)\\z/</span></code>
+        
+      </li>
+    
+      <li class="entry-const">
+        <strong>RFC3986_URI</strong> = <code><span class="s">/\\A(?<URI>(?<scheme>[A-Za-z][+\\-.0-9A-Za-z]*):(?<hier_part>\\/\\/(?<authority>(?:(?<userinfo>(?:%\\h\\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\\[(?:(?<IPv6address>(?:\\h{1,4}:){6}(?<ls32>\\h{1,4}:\\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]|\\d)\\.\\g<dec_octet>\\.\\g<dec_octet>\\.\\g<dec_octet>))|::(?:\\h{1,4}:){5}\\g<ls32>|\\h{1,4}?::(?:\\h{1,4}:){4}\\g<ls32>|(?:(?:\\h{1,4}:)?\\h{1,4})?::(?:\\h{1,4}:){3}\\g<ls32>|(?:(?:\\h{1,4}:){,2}\\h{1,4})?::(?:\\h{1,4}:){2}\\g<ls32>|(?:(?:\\h{1,4}:){,3}\\h{1,4})?::\\h{1,4}:\\g<ls32>|(?:(?:\\h{1,4}:){,4}\\h{1,4})?::\\g<ls32>|(?:(?:\\h{1,4}:){,5}\\h{1,4})?::\\h{1,4}|(?:(?:\\h{1,4}:){,6}\\h{1,4})?::)|(?<IPvFuture>v\\h+\\.[!$&-.0-;=A-Z_a-z~]+))\\])|\\g<IPv4address>|(?<reg_name>(?:%\\h\\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\\d*))?)(?<path_abempty>(?:\\/(?<segment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\\/(?:(?<segment_nz>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])+)(?:\\/\\g<segment>)*)?)|(?<path_rootless>\\g<segment_nz>(?:\\/\\g<segment>)*)|(?<path_empty>))(?:\\?(?<query>[^#]*))?(?:\\#(?<fragment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~\\/?])*))?)\\z/</span></code>
+        
+          <div class="doc"><p>URI defined in RFC3986</p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
@@ -54,7 +73,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(scheme = nil, host = nil, port = nil, path = nil, query = nil)</a>
+        <a href="#new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%2C%20user%20%3D%20nil%2C%20password%20%3D%20nil%2C%20userinfo%20%3D%20nil%2C%20fragment%20%3D%20nil%2C%20opaque%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(scheme = nil, host = nil, port = nil, path = nil, query = nil, user = nil, password = nil, userinfo = nil, fragment = nil, opaque = nil)</a>
         
       </li>
     
@@ -64,6 +83,16 @@
 
   <h2>Instance Method Summary</h2>
   <ul>
+    
+      <li class="entry-summary">
+        <a href="#fragment-instance-method" class="signature"><strong>#fragment</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fragment%3D%28fragment%29-instance-method" class="signature"><strong>#fragment=</strong>(fragment)</a>
+        
+      </li>
     
       <li class="entry-summary">
         <a href="#full_path-instance-method" class="signature"><strong>#full_path</strong></a>
@@ -77,6 +106,26 @@
     
       <li class="entry-summary">
         <a href="#host%3D%28host%29-instance-method" class="signature"><strong>#host=</strong>(host)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#opaque-instance-method" class="signature"><strong>#opaque</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#opaque%3D%28opaque%29-instance-method" class="signature"><strong>#opaque=</strong>(opaque)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#password-instance-method" class="signature"><strong>#password</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#password%3D%28password%29-instance-method" class="signature"><strong>#password=</strong>(password)</a>
         
       </li>
     
@@ -125,6 +174,26 @@
         
       </li>
     
+      <li class="entry-summary">
+        <a href="#user-instance-method" class="signature"><strong>#user</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#user%3D%28user%29-instance-method" class="signature"><strong>#user=</strong>(user)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#userinfo-instance-method" class="signature"><strong>#userinfo</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#userinfo%3D%28ui%29-instance-method" class="signature"><strong>#userinfo=</strong>(ui)</a>
+        
+      </li>
+    
   </ul>
 
 
@@ -142,20 +211,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/uri.cr#L39" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L62" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%29-class-method">
+      <div class="signature" id="new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%2C%20user%20%3D%20nil%2C%20password%20%3D%20nil%2C%20userinfo%20%3D%20nil%2C%20fragment%20%3D%20nil%2C%20opaque%20%3D%20nil%29-class-method">
         
-        def self.<strong>new</strong>(scheme = <span class="n">nil</span>, host = <span class="n">nil</span>, port = <span class="n">nil</span>, path = <span class="n">nil</span>, query = <span class="n">nil</span>)
+        def self.<strong>new</strong>(scheme = <span class="n">nil</span>, host = <span class="n">nil</span>, port = <span class="n">nil</span>, path = <span class="n">nil</span>, query = <span class="n">nil</span>, user = <span class="n">nil</span>, password = <span class="n">nil</span>, userinfo = <span class="n">nil</span>, fragment = <span class="n">nil</span>, opaque = <span class="n">nil</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/uri.cr#L8" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -166,6 +235,26 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
+      <div class="signature" id="fragment-instance-method">
+        
+        def <strong>fragment</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="fragment%3D%28fragment%29-instance-method">
+        
+        def <strong>fragment=</strong>(fragment)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="full_path-instance-method">
         
         def <strong>full_path</strong>
@@ -173,7 +262,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/uri.cr#L11" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -192,6 +281,46 @@
       <div class="signature" id="host%3D%28host%29-instance-method">
         
         def <strong>host=</strong>(host)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="opaque-instance-method">
+        
+        def <strong>opaque</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="opaque%3D%28opaque%29-instance-method">
+        
+        def <strong>opaque=</strong>(opaque)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="password-instance-method">
+        
+        def <strong>password</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="password%3D%28password%29-instance-method">
+        
+        def <strong>password=</strong>(password)
       </div>
       
       
@@ -286,7 +415,53 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/bf72b077bc91a9a1d19db56fede684ae8a9347c2/src/uri.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L28" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="user-instance-method">
+        
+        def <strong>user</strong>
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="user%3D%28user%29-instance-method">
+        
+        def <strong>user=</strong>(user)
+      </div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="userinfo-instance-method">
+        
+        def <strong>userinfo</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L96" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="userinfo%3D%28ui%29-instance-method">
+        
+        def <strong>userinfo=</strong>(ui)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L90" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
