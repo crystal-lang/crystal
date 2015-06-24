@@ -197,7 +197,7 @@ module Crystal
       if ident_type
         restrict ident_type, context
       elsif single_name
-        if other.names.first.length == 1
+        if Parser.free_var_name?(other.names.first)
           context.set_free_var(other.names.first, self)
         else
           other.raise "undefined constant #{other}"

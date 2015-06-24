@@ -437,6 +437,7 @@ describe "Parser" do
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo".path, [Def.new("foo")] of ASTNode)
   it_parses "class Foo < Bar; end", ClassDef.new("Foo".path, superclass: "Bar".path)
   it_parses "class Foo(T); end", ClassDef.new("Foo".path, type_vars: ["T"])
+  it_parses "class Foo(T1); end", ClassDef.new("Foo".path, type_vars: ["T1"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
   it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
 

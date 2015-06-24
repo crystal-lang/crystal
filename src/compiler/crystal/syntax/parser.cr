@@ -1305,8 +1305,8 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :")"
           type_var_name = check_const
-          if type_var_name.length > 1
-            raise "type variables can only be single letters", @token
+          unless Parser.free_var_name?(type_var_name)
+            raise "type variables can only be single letters optionally followed by a digit", @token
           end
 
           if type_vars.includes? type_var_name
@@ -4291,6 +4291,10 @@ module Crystal
 
       name = name.to_s
       name == "self" || @def_vars.last.includes?(name)
+    end
+
+    def self.free_var_name?(name)
+      name.length == 1 || (name.length == 2 && name[1].digit?)
     end
   end
 end
