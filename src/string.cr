@@ -1016,6 +1016,7 @@ class String
 
         buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
         str = match[0]
+        $~ = match
         buffer << yield str, match
 
         if str.bytesize == 0
@@ -1804,6 +1805,7 @@ class String
 
     while match = pattern.match_at_byte_index(self, byte_offset)
       index = match.byte_begin(0)
+      $~ = match
       yield match
       match_bytesize = match[0].bytesize
       break if match_bytesize == 0

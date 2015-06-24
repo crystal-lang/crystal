@@ -755,6 +755,17 @@ describe "String" do
     str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
   end
 
+  it "gsubs using $~" do
+    "foo".gsub(/(o)/) { "x#{$1}x" }.should eq("fxoxxox")
+  end
+
+  it "scans using $~" do
+    str = String.build do |str|
+      "fooxooo".scan(/(o+)/) { str << $1 }
+    end
+    str.should eq("ooooo")
+  end
+
   it "dumps" do
     "a".dump.should eq("\"a\"")
     "\\".dump.should eq("\"\\\\\"")
