@@ -1,4 +1,4 @@
-## Next
+## 0.7.4 (2015-06-23)
 
 * Added Float module and remainder (thanks @wmoxam)
 * Show elapsed time in HTTP::LogHandler (thanks @zamith for the suggestion)
