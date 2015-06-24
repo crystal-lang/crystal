@@ -24,6 +24,7 @@
 * Optimized fibers performance.
 * Added inline assembly support.
 * The `.crystal` cache dir is now configurable with an ENV variable (thanks @jhass)
+* Generic type variables names can now also be a single letter followed by a digit.
 
 ## 0.7.3 (2015-06-07)
 
