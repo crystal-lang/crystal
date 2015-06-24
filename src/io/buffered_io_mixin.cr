@@ -172,10 +172,7 @@ module BufferedIOMixin
 
   def write_byte(byte : UInt8)
     if sync?
-      # TODO: user `super` call, but right now it crashes the compiler
-      x = byte
-      write Slice.new(pointerof(x), 1)
-      return
+      return super
     end
 
     reset_in_remaining
