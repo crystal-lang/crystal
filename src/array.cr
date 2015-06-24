@@ -895,6 +895,29 @@ class Array(T)
     @buffer
   end
 
+  # Assumes that `self` is an array of array and transposes the rows and columns.
+  #
+  # ```
+  # a = [[:a, :b], [:c, :d], [:e, :f]]
+  # a.transpose   # => [[:a, :c, :e], [:b, :d, :f]]
+  # a             # => [[:a, :b], [:c, :d], [:e, :f]]
+  # ```
+  def transpose
+    return Array(T).new if empty?
+
+    len = at(0).length
+    (1...@length).each do |i|
+      l = at(i).length
+      raise IndexError.new(l, len) if len != l
+    end
+
+    Array(T).new(len) do |i|
+      a = T.new(@length) do |j|
+        at(j).at(i)
+      end
+    end
+  end
+
   # Returns a new array by removing duplicate values in `self`.
   #
   # ```

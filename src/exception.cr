@@ -146,3 +146,9 @@ class DivisionByZero < Exception
     super(message)
   end
 end
+
+class IndexError < Exception
+  def initialize(n, m)
+    super("Element size differs (#{n} should be #{m})")
+  end
+end

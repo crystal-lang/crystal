@@ -1007,4 +1007,24 @@ describe "Array" do
       [1, 2, 3].cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
     end
   end
+
+  describe "transpose" do
+    it "transeposes elements" do
+      [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
+      [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
+      [[:a]].transpose.should eq([[:a]])
+    end
+
+    it "transposes empty array" do
+      e = [] of Array(Int32)
+      e.transpose.empty?.should be_true
+      [e].transpose.empty?.should be_true
+      [e, e, e].transpose.empty?.should be_true
+    end
+
+    it "raises IndexError error when length of element is invalid" do
+      expect_raises(IndexError){ [[1], [1, 2]].transpose }
+      expect_raises(IndexError){ [[1, 2], [1]].transpose }
+    end
+  end
 end
