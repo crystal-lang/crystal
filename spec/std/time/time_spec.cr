@@ -339,7 +339,7 @@ describe Time do
     t.to_s("%Y-%m-hello").should eq("2014-01-hello")
   end
 
-  it "parses with format" do
+  it "parses empty" do
     t = Time.parse("", "")
     t.year.should eq(1)
     t.month.should eq(1)
@@ -348,89 +348,132 @@ describe Time do
     t.minute.should eq(0)
     t.second.should eq(0)
     t.millisecond.should eq(0)
+  end
 
-    Time.parse("2014", "%Y").year.should eq(2014)
-    Time.parse("19", "%C").year.should eq(1900)
-    Time.parse("14", "%y").year.should eq(2014)
-    Time.parse("09", "%m").month.should eq(9)
-    Time.parse(" 9", "%_m").month.should eq(9)
-    Time.parse("9", "%-m").month.should eq(9)
-    Time.parse("February", "%B").month.should eq(2)
-    Time.parse("March", "%B").month.should eq(3)
-    Time.parse("MaRcH", "%B").month.should eq(3)
-    Time.parse("MaR", "%B").month.should eq(3)
-    Time.parse("MARCH", "%^B").month.should eq(3)
-    Time.parse("Mar", "%b").month.should eq(3)
-    Time.parse("Mar", "%^b").month.should eq(3)
-    Time.parse("MAR", "%^b").month.should eq(3)
-    Time.parse("MAR", "%h").month.should eq(3)
-    Time.parse("MAR", "%^h").month.should eq(3)
-    Time.parse("2", "%d").day.should eq(2)
-    Time.parse("02", "%d").day.should eq(2)
-    Time.parse("02", "%-d").day.should eq(2)
-    Time.parse(" 2", "%e").day.should eq(2)
-    Time.parse("0123", "%j").year.should eq(123)
-    Time.parse("9", "%H").hour.should eq(9)
-    Time.parse(" 9", "%k").hour.should eq(9)
-    Time.parse("09", "%I").hour.should eq(9)
-    Time.parse(" 9", "%l").hour.should eq(9)
-    Time.parse("9pm", "%l%p").hour.should eq(21)
-    Time.parse("9PM", "%l%P").hour.should eq(21)
-    Time.parse("09", "%M").minute.should eq(9)
-    Time.parse("09", "%S").second.should eq(9)
-    Time.parse("123", "%L").millisecond.should eq(123)
+  assert { Time.parse("2014", "%Y").year.should eq(2014) }
+  assert { Time.parse("19", "%C").year.should eq(1900) }
+  assert { Time.parse("14", "%y").year.should eq(2014) }
+  assert { Time.parse("09", "%m").month.should eq(9) }
+  assert { Time.parse(" 9", "%_m").month.should eq(9) }
+  assert { Time.parse("9", "%-m").month.should eq(9) }
+  assert { Time.parse("February", "%B").month.should eq(2) }
+  assert { Time.parse("March", "%B").month.should eq(3) }
+  assert { Time.parse("MaRcH", "%B").month.should eq(3) }
+  assert { Time.parse("MaR", "%B").month.should eq(3) }
+  assert { Time.parse("MARCH", "%^B").month.should eq(3) }
+  assert { Time.parse("Mar", "%b").month.should eq(3) }
+  assert { Time.parse("Mar", "%^b").month.should eq(3) }
+  assert { Time.parse("MAR", "%^b").month.should eq(3) }
+  assert { Time.parse("MAR", "%h").month.should eq(3) }
+  assert { Time.parse("MAR", "%^h").month.should eq(3) }
+  assert { Time.parse("2", "%d").day.should eq(2) }
+  assert { Time.parse("02", "%d").day.should eq(2) }
+  assert { Time.parse("02", "%-d").day.should eq(2) }
+  assert { Time.parse(" 2", "%e").day.should eq(2) }
+  assert { Time.parse("9", "%H").hour.should eq(9) }
+  assert { Time.parse(" 9", "%k").hour.should eq(9) }
+  assert { Time.parse("09", "%I").hour.should eq(9) }
+  assert { Time.parse(" 9", "%l").hour.should eq(9) }
+  assert { Time.parse("9pm", "%l%p").hour.should eq(21) }
+  assert { Time.parse("9PM", "%l%P").hour.should eq(21) }
+  assert { Time.parse("09", "%M").minute.should eq(9) }
+  assert { Time.parse("09", "%S").second.should eq(9) }
+  assert { Time.parse("123", "%L").millisecond.should eq(123) }
+  assert { Time.parse("Fri Oct 31 23:00:24 2014", "%c").to_s.should eq("2014-10-31 23:00:24") }
+  assert { Time.parse("10/31/14", "%D").to_s.should eq("2014-10-31 00:00:00") }
+  assert { Time.parse("10/31/69", "%D").to_s.should eq("1969-10-31 00:00:00") }
+  assert { Time.parse("2014-10-31", "%F").to_s.should eq("2014-10-31 00:00:00") }
+  assert { Time.parse("2014-10-31", "%F").to_s.should eq("2014-10-31 00:00:00") }
+  assert { Time.parse("10/31/14", "%x").to_s.should eq("2014-10-31 00:00:00") }
+  assert { Time.parse("10:11:12", "%X").to_s.should eq("0001-01-01 10:11:12") }
+  assert { Time.parse("11:14:01 PM", "%r").to_s.should eq("0001-01-01 23:14:01") }
+  assert { Time.parse("11:14", "%R").to_s.should eq("0001-01-01 11:14:00") }
+  assert { Time.parse("11:12:13", "%T").to_s.should eq("0001-01-01 11:12:13") }
+  assert { Time.parse("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00") }
+  assert { Time.parse("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00") }
 
-    # TODO %N
-    # TODO %Z
+  # TODO %N
+  # TODO %Z
+  # TODO %G
+  # TODO %g
+  # TODO %V
+  # TODO %U
+  # TODO %W
+  # TODO %s
+  # TODO %n
+  # TODO %t
+  # TODO %%
+  # TODO %v
 
-    # TODO %G
-    # TODO %g
-    # TODO %V
-    # TODO %U
-    # TODO %W
-    # TODO %s
-    # TODO %n
-    # TODO %t
-    # TODO %%
-
-    Time.parse("Fri Oct 31 23:00:24 2014", "%c").to_s.should eq("2014-10-31 23:00:24")
-    Time.parse("10/31/14", "%D").to_s.should eq("2014-10-31 00:00:00")
-    Time.parse("10/31/69", "%D").to_s.should eq("1969-10-31 00:00:00")
-    Time.parse("2014-10-31", "%F").to_s.should eq("2014-10-31 00:00:00")
-    Time.parse("2014-10-31", "%F").to_s.should eq("2014-10-31 00:00:00")
-    # TODO %v
-    Time.parse("10/31/14", "%x").to_s.should eq("2014-10-31 00:00:00")
-    Time.parse("10:11:12", "%X").to_s.should eq("0001-01-01 10:11:12")
-    Time.parse("11:14:01 PM", "%r").to_s.should eq("0001-01-01 23:14:01")
-    Time.parse("11:14", "%R").to_s.should eq("0001-01-01 11:14:00")
-    Time.parse("11:12:13", "%T").to_s.should eq("0001-01-01 11:12:13")
-
-    Time.parse("This was done on Friday, October 31, 2014", "This was done on %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
-    Time.parse("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00")
-
+  assert do
     time = Time.parse("2014-10-31 10:11:12 Z hi", "%F %T %z hi")
     time.utc?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
+  end
 
+  assert do
     time = Time.parse("2014-10-31 10:11:12 UTC hi", "%F %T %z hi")
     time.utc?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
+  end
 
+  assert do
     time = Time.parse("2014-10-31 10:11:12 -06:00 hi", "%F %T %z hi")
     time.local?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
+  end
 
+  assert do
     time = Time.parse("2014-10-31 10:11:12 +05:00 hi", "%F %T %z hi")
     time.local?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 05:11:12 UTC")
+  end
 
+  assert do
     time = Time.parse("2014-10-31 10:11:12 -06:00:00 hi", "%F %T %z hi")
     time.local?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
+  end
 
+  assert do
     time = Time.parse("2014-10-31 10:11:12 -060000 hi", "%F %T %z hi")
     time.local?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
+  end
+
+  it "parses the correct amount of digits (#853)" do
+    time = Time.parse("20150624", "%Y%m%d")
+    time.year.should eq(2015)
+    time.month.should eq(6)
+    time.day.should eq(24)
+  end
+
+  it "parses month blank padded" do
+    time = Time.parse("2015 624", "%Y%_m%d")
+    time.year.should eq(2015)
+    time.month.should eq(6)
+    time.day.should eq(24)
+  end
+
+  it "parses day of month blank padded" do
+    time = Time.parse("201506 4", "%Y%m%e")
+    time.year.should eq(2015)
+    time.month.should eq(6)
+    time.day.should eq(4)
+  end
+
+  it "parses hour 24 blank padded" do
+    time = Time.parse(" 31112", "%k%M%S")
+    time.hour.should eq(3)
+    time.minute.should eq(11)
+    time.second.should eq(12)
+  end
+
+  it "parses hour 12 blank padded" do
+    time = Time.parse(" 31112", "%l%M%S")
+    time.hour.should eq(3)
+    time.minute.should eq(11)
+    time.second.should eq(12)
   end
 
   it "can parse in UTC" do

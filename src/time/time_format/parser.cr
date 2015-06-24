@@ -33,11 +33,11 @@ struct TimeFormat
     end
 
     def year
-      @year = consume_number
+      @year = consume_number(4)
     end
 
     def year_modulo_100
-      year = consume_number
+      year = consume_number(2)
       if 69 <= year <= 99
         @year = year + 1900
       elsif 0 <= year
@@ -48,11 +48,11 @@ struct TimeFormat
     end
 
     def year_divided_by_100
-      @year = 100 * consume_number
+      @year = 100 * consume_number(2)
     end
 
     def month
-      @month = consume_number
+      @month = consume_number(2)
     end
 
     def month_zero_padded
@@ -60,8 +60,7 @@ struct TimeFormat
     end
 
     def month_blank_padded
-      skip_space
-      month
+      @month = consume_number_blank_padded(2)
     end
 
     def month_name
@@ -92,16 +91,15 @@ struct TimeFormat
     end
 
     def day_of_month
-      @day = consume_number
+      @day = consume_number(2)
     end
 
     def day_of_month_zero_padded
-      @day = consume_number
+      @day = consume_number(2)
     end
 
     def day_of_month_blank_padded
-      skip_space
-      @day = consume_number
+      @day = consume_number_blank_padded(2)
     end
 
     def day_name
@@ -130,16 +128,16 @@ struct TimeFormat
     end
 
     def day_of_year_zero_padded
-      @year = consume_number
+      # TODO
+      consume_number(3)
     end
 
     def hour_24_zero_padded
-      @hour = consume_number
+      @hour = consume_number(2)
     end
 
     def hour_24_blank_padded
-      skip_space
-      hour_24_zero_padded
+      @hour = consume_number_blank_padded(2)
     end
 
     def hour_12_zero_padded
@@ -147,20 +145,19 @@ struct TimeFormat
     end
 
     def hour_12_blank_padded
-      skip_space
-      hour_24_zero_padded
+      @hour= consume_number_blank_padded(2)
     end
 
     def minute
-      @minute = consume_number
+      @minute = consume_number(2)
     end
 
     def second
-      @second = consume_number
+      @second = consume_number(2)
     end
 
     def milliseconds
-      @millisecond = consume_number
+      @millisecond = consume_number(3)
     end
 
     def am_pm
@@ -180,11 +177,11 @@ struct TimeFormat
     end
 
     def day_of_week_monday_1_7
-      consume_number
+      consume_number(1)
     end
 
     def day_of_week_sunday_0_6
-      consume_number
+      consume_number(1)
     end
 
     def time_zone
@@ -254,7 +251,7 @@ struct TimeFormat
       end
     end
 
-    def consume_number
+    def consume_number(max_digits)
       n = 0
       char = current_char
 
@@ -265,12 +262,24 @@ struct TimeFormat
         raise "expecting number"
       end
 
-      while char.digit?
+      max_digits -= 1
+
+      while max_digits > 0 && char.digit?
         n = 10 * n + (char - '0')
         char = next_char
+        max_digits -= 1
       end
 
       n
+    end
+
+    def consume_number_blank_padded(max_digits)
+      if current_char.whitespace?
+        max_digits -= 1
+        next_char
+      end
+
+      consume_number(max_digits)
     end
 
     def consume_string
