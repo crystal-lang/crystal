@@ -2546,6 +2546,7 @@ module Crystal
     delegate is_subclass_of?, base_type
     delegate implements?, base_type
     delegate covariant?, base_type
+    delegate ancestors, base_type
 
     def has_instance_var_in_initialize?(name)
       if base_type.abstract

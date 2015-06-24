@@ -298,4 +298,31 @@ describe "Codegen: super" do
       Child.new.a
       )).to_i.should eq(1)
   end
+
+  it "does super in virtual type including module" do
+    run(%(
+      module Bar
+        def bar
+          123
+        end
+      end
+
+      module Foo
+        include Bar
+
+        def bar
+          super
+        end
+      end
+
+      class Base
+        include Foo
+      end
+
+      class Child < Base
+      end
+
+      (Base.new || Child.new).bar
+      )).to_i.should eq(123)
+  end
 end
