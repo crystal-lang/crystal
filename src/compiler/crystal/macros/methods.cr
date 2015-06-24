@@ -53,10 +53,6 @@ module Crystal
     def stringify
       StringLiteral.new(to_s)
     end
-
-    def to_macro_id
-      to_s
-    end
   end
 
   class Nop
