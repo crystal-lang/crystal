@@ -572,6 +572,7 @@ class Crystal::Call
     end
 
     node_scope = scope
+    node_scope = node_scope.base_type if node_scope.is_a?(VirtualType)
     node_scope = node_scope.metaclass unless node_scope.metaclass?
 
     macros = yield node_scope

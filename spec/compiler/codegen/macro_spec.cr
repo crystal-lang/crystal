@@ -1102,4 +1102,25 @@ describe "Code gen: macro" do
       ),
       "dynamic constant assignment"
   end
+
+  it "finds macro from virtual type" do
+    run(%(
+      class Foo
+        macro foo
+          123
+        end
+
+        def bar
+          foo
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      a = Pointer(Foo).malloc(1_u64)
+      a.value = Foo.new
+      a.value.bar
+      )).to_i.should eq(123)
+  end
 end
