@@ -2,6 +2,10 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def visit(node : Call)
+    if node.expanded
+      raise "Bug: #{node} at #{node.location} should have been expanded"
+    end
+
     target_defs = node.target_defs
     unless target_defs
       node.raise "Bug: no target defs"

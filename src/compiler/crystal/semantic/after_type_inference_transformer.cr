@@ -5,10 +5,39 @@ require "../types"
 module Crystal
   class Program
     def after_type_inference(node)
-      transformer = AfterTypeInferenceTransformer.new(self)
-      node = node.transform(transformer)
+      node = node.transform(after_type_inference_transformer)
       puts node if ENV["AFTER"]? == "1"
       node
+    end
+
+    def finish_types
+      transformer = after_type_inference_transformer()
+      after_inference_types.each do |type|
+        finish_type type, transformer
+      end
+    end
+
+    def finish_type(type, transformer)
+      case type
+      when ClassType
+        finish_single_type(type, transformer)
+      when GenericClassInstanceType
+        finish_single_type(type, transformer)
+      when GenericClassType
+        type.generic_types.each_value do |instance|
+          finish_type instance, transformer
+        end
+      end
+    end
+
+    def finish_single_type(type, transformer)
+      type.instance_vars_initializers.try &.each do |initializer|
+        initializer.value = initializer.value.transform(transformer)
+      end
+    end
+
+    def after_type_inference_transformer
+      @after_type_inference_transformer ||= AfterTypeInferenceTransformer.new(self)
     end
   end
 
@@ -407,6 +436,10 @@ module Crystal
     end
 
     def transform(node : Yield)
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+
       super
 
       # If the yield has a no-return expression, the yield never happens:

@@ -6,6 +6,12 @@ require "./*"
 module Crystal
   class Program
     def infer_type(node)
+      result = infer_type_intermediate(node)
+      finish_types
+      result
+    end
+
+    def infer_type_intermediate(node)
       node.accept TypeVisitor.new(self)
       expand_def_macros
       fix_empty_types node
@@ -439,6 +445,8 @@ module Crystal
       unless @scope
         current_type = current_type()
         if current_type.is_a?(ClassType)
+          @mod.after_inference_types << current_type
+
           ivar_visitor = TypeVisitor.new(mod)
           ivar_visitor.scope = current_type
           value.accept ivar_visitor

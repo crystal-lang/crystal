@@ -932,7 +932,14 @@ module Crystal
       end
     end
 
-    record InstanceVarInitializer, name, value, meta_vars
+    class InstanceVarInitializer
+      getter name
+      property value
+      getter meta_vars
+
+      def initialize(@name, @value, @meta_vars)
+      end
+    end
 
     def add_instance_var_initializer(name, value, meta_vars)
       initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer

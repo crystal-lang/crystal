@@ -843,14 +843,14 @@ module Crystal
 
     def type_cast_exception_call(to_type)
       call = Call.global("raise", StringLiteral.new("cast to #{to_type} failed"))
-      @mod.infer_type call
+      @mod.infer_type_intermediate call
       call
     end
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
         call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed"))
-        @mod.infer_type call
+        @mod.infer_type_intermediate call
         call
       end
     end
@@ -980,9 +980,8 @@ module Crystal
     end
 
     def visit(node : Yield)
-      if expanded = node.expanded
-        expanded.accept self
-        return
+      if node.expanded
+        raise "Bug: #{node} at #{node.location} should have been expanded"
       end
 
       block_context = context.block_context.not_nil!
@@ -1587,6 +1586,10 @@ module Crystal
 
     def accept(node)
       node.accept self
+    end
+
+    def visit(node : ExpandableNode)
+      raise "Bug: #{node} at #{node.location} should have been expanded"
     end
 
     def visit(node : ASTNode)

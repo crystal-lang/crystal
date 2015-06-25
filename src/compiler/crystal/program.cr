@@ -13,6 +13,7 @@ module Crystal
     getter global_vars
     getter target_machine
     getter splat_expansions
+    getter after_inference_types
     property vars
     property literal_expander
     property initialized_global_vars
@@ -36,6 +37,7 @@ module Crystal
       @unions = {} of Array(Int32) => Type
       @wants_doc = false
       @color = true
+      @after_inference_types = Set(Type).new
 
       @types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
       object.allowed_in_generics = false
