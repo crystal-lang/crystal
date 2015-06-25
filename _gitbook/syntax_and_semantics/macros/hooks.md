@@ -4,6 +4,7 @@ Special macros exist that are invoked in some situations, as hooks:
 `inherited`, `included` and `method_missing`.
 * `inherited` will be invoked at compile-time when a subclass is defined. `@type` becomes the inherited type.
 * `included` will be invoked at compile-time when a module is included. `@type` becomes the including type.
+* `extended` will be invoked at compile-time when a module is extended. `@type` becomes the extending type.
 * `method_missing` will be invoked at compile-time when a method is not found.
 
 Example of `inherited`:
