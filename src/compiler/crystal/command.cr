@@ -103,7 +103,7 @@ USAGE
   end
 
   private def self.browser(options)
-    result = compile_no_build "browser", options
+    config, result = compile_no_build "browser", options
     Browser.open result.original_node
   end
 
@@ -132,8 +132,8 @@ USAGE
   end
 
   private def self.hierarchy(options)
-    result = compile_no_build "hierarchy", options
-    Crystal.print_hierarchy result.program
+    config, result = compile_no_build "hierarchy", options, hierarchy: true
+    Crystal.print_hierarchy result.program, config.hierarchy_exp
   end
 
   private def self.run_command(options)
@@ -215,15 +215,15 @@ USAGE
   end
 
   private def self.types(options)
-    result = compile_no_build "types", options
+    config, result = compile_no_build "types", options
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_build(command, options, wants_doc = false)
-    config = create_compiler command, options, no_build: true
+  private def self.compile_no_build(command, options, wants_doc = false, hierarchy = false)
+    config = create_compiler command, options, no_build: true, hierarchy: hierarchy
     config.compiler.no_build = true
     config.compiler.wants_doc = wants_doc
-    config.compile
+    {config, config.compile}
   end
 
   private def self.execute(output_filename, run_args)
@@ -240,20 +240,21 @@ USAGE
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output do
+  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
     end
   end
 
-  private def self.create_compiler(command, options, no_build = false, run = false)
+  private def self.create_compiler(command, options, no_build = false, run = false, hierarchy = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
     opt_arguments = nil
     opt_output_filename = nil
     specified_output = false
+    hierarchy_exp = nil
 
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -276,6 +277,12 @@ USAGE
       unless no_build
         opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+        end
+      end
+
+      if hierarchy
+        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
+          hierarchy_exp = exp
         end
       end
 
@@ -359,7 +366,7 @@ USAGE
     original_output_filename = output_filename_from_sources(sources)
     output_filename ||= original_output_filename
 
-    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output
+    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp
   rescue ex : OptionParser::Exception
     error ex.message
   end

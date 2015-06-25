@@ -467,6 +467,10 @@ module Crystal
       io << @name
     end
 
+    def full_name
+      String.build { |io| append_full_name(io) }
+    end
+
     def to_s(io)
       append_full_name(io)
     end

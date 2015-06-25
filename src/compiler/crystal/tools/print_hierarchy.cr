@@ -3,21 +3,88 @@ require "colorize"
 require "../syntax/ast"
 
 module Crystal
-  def self.print_hierarchy(program)
-    HierarchyPrinter.new(program).execute
+  def self.print_hierarchy(program, exp)
+    HierarchyPrinter.new(program, exp).execute
   end
 
   class HierarchyPrinter
-    def initialize(@program)
+    def initialize(@program, exp)
+      @exp = exp ? Regex.new(exp) : nil
       @indents = [] of Bool
       @printed = Set(Type).new
+      @targets = Set(Type).new
       @llvm_typer = LLVMTyper.new(@program)
     end
 
     def execute
+      if exp = @exp
+        compute_targets(@program.types, exp, false)
+      end
+
       with_color.light_gray.bold.push(STDOUT) do
         print_types @program.types
       end
+    end
+
+    def compute_targets(types : Array, exp, must_include = false)
+      outer_must_include = must_include
+      types.each do |type|
+        must_include |= compute_target type, exp, outer_must_include
+      end
+      must_include
+    end
+
+    def compute_targets(types : Hash, exp, must_include = false)
+      outer_must_include = must_include
+      types.each_value do |type|
+        must_include |= compute_target type, exp, outer_must_include
+      end
+      must_include
+    end
+
+    def compute_target(type : NonGenericClassType, exp, must_include)
+      if must_include || (type.full_name =~ exp)
+        @targets << type
+        must_include = true
+      end
+
+      compute_targets type.types, exp, false
+
+      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) }
+      must_include |= compute_targets subtypes, exp, must_include
+      if must_include
+        @targets << type
+      end
+      must_include
+    end
+
+    def compute_target(type : GenericClassType, exp, must_include)
+      if must_include || (type.full_name =~ exp)
+        @targets << type
+        must_include = true
+      end
+
+      compute_targets type.types, exp, false
+      compute_targets type.generic_types, exp, must_include
+
+      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) }
+      must_include |= compute_targets subtypes, exp, must_include
+      if must_include
+        @targets << type
+      end
+      must_include
+    end
+
+    def compute_target(type : GenericClassInstanceType, exp, must_include)
+      if must_include
+        @targets << type
+        must_include = true
+      end
+      must_include
+    end
+
+    def compute_target(type, exp, must_include)
+      false
     end
 
     def print_types(types_hash)
@@ -149,10 +216,14 @@ module Crystal
     end
 
     def must_print?(type : NonGenericClassType | GenericClassInstanceType)
+      return false if @exp && !@targets.includes?(type)
+
       type.allocated && !@printed.includes?(type)
     end
 
     def must_print?(type : GenericClassType)
+      return false if @exp && !@targets.includes?(type)
+
       (!type.generic_types.empty? || !type.subclasses.empty?) && !@printed.includes?(type)
     end
 
