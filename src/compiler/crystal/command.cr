@@ -21,7 +21,7 @@ Command:
     spec                     compile and run specs (in spec directory)
     types                    show type of main variables
     --help                   show this help
-    --version                show version
+    --version, -v            show version
 USAGE
 
   VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
@@ -69,7 +69,7 @@ USAGE
         when "--help" == command
           puts USAGE
           exit
-        when "--version" == command
+        when "--version" == command, "-v" == command
           puts "Crystal #{Crystal.version_string}"
           exit
         else
