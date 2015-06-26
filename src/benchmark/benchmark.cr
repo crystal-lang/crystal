@@ -2,6 +2,34 @@ require "./**"
 # The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time taken for each task.
 #
+# ### Measure the number of iterations per second of each task
+#
+# ```
+# require "benchmark"
+# Benchmark.ips do |x|
+#   x.report("short sleep")   { sleep 0.01  }
+#   x.report("shorter sleep") { sleep 0.001 }
+# end
+# ```
+#
+# This generates the following output:
+#
+# ```text
+#   short sleep    91.82 (±  1.11)  8.72× slower
+# shorter sleep   800.98 (±  4.72)       fastest
+# ```
+#
+# `Benchmark::IPS` defaults to 2 seconds of warmup time and 5 seconds of
+# calculation time. This can be configured:
+#
+# ```
+# Benchmark.ips(warmup: 4, calculation: 10) do |x|
+#   # …
+# end
+# ```
+#
+# Make sure to always benchmark code by compiling with the `--release` flag.
+#
 # ### Measure the time to construct the string given by the expression: `"a"*1_000_000_000`
 #
 # ```
@@ -53,6 +81,12 @@ module Benchmark
     report
   end
 
+  # Instruction per second interface of the `Benchmark` module. Yields a `Job`
+  # to which one can report the benchmarks. See the module's description.
+  #
+  # The optional parameters `calculation` and `warmup` set the duration of
+  # those stages in seconds. For more detail on these stages see
+  # `Benchmark::IPS`.
   def ips(calculation = 5, warmup = 2)
     job = IPS::Job.new(calculation, warmup)
     yield job

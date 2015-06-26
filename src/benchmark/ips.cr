@@ -1,4 +1,16 @@
 module Benchmark
+  # Benchmark IPS calculates the number of iterations per second for a given
+  # block of code. The strategy is to use two stages: a warmup stage and a
+  # calculation stage.
+  #
+  # The warmup phase defaults to 2 seconds. During this stage we figure out how
+  # many cycles are needed to run the block for roughly 100ms, and record it.
+  #
+  # The calculation defaults to 5 seconds. During this stage we run the block
+  # in sets of the size calculated in the warmup stage. The measurements for
+  # those sets are then used to calculate the mean and standard deviation,
+  # which are then reported. Additionally we compare the means to that of the
+  # fastest.
   module IPS
     class Job
       # List of all entries in the benchmark.
@@ -34,7 +46,7 @@ module Benchmark
             compare = sprintf "%5.2f× slower", item.slower
           end
 
-          printf "%s %8.2f (± %5.2f%%) %s\n",
+          printf "%s %8.2f (± %5.2f) %s\n",
             item.label.rjust(max_label),
             item.mean,
             item.stddev,
