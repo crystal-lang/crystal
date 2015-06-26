@@ -1032,4 +1032,23 @@ module Macros
     def type_params : ArrayLiteral(TypeNode)
     end
   end
+
+  # A binary expression like `And` and `Or`.
+  class BinaryOp < ASTNode
+    # Returns the left hand side of this node.
+    def left : ASTNode
+    end
+
+    # Returns the left hand side of this node.
+    def right : ASTNode
+    end
+  end
+
+  # An `&&` (and) expression
+  class And < BinaryOp
+  end
+
+  # An `||` (or) expression
+  class Or < BinaryOp
+  end
 end

@@ -570,6 +570,19 @@ module Crystal
     end
   end
 
+  class BinaryOp
+    def interpret(method, args, block, interpreter)
+      case method
+      when "left"
+        interpret_argless_method(method, args) { @left }
+      when "right"
+        interpret_argless_method(method, args) { @right }
+      else
+        super
+      end
+    end
+  end
+
   class DeclareVar
     def interpret(method, args, block, interpreter)
       case method

@@ -435,6 +435,26 @@ describe "MacroExpander" do
     end
   end
 
+  describe "and methods" do
+    it "executes left" do
+      assert_macro "x", %({{x.left}}), [And.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(1)
+    end
+
+    it "executes right" do
+      assert_macro "x", %({{x.right}}), [And.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(2)
+    end
+  end
+
+  describe "or methods" do
+    it "executes left" do
+      assert_macro "x", %({{x.left}}), [Or.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(1)
+    end
+
+    it "executes right" do
+      assert_macro "x", %({{x.right}}), [Or.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(2)
+    end
+  end
+
   describe "array methods" do
     it "executes index 0" do
       assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
