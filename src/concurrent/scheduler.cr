@@ -3,7 +3,6 @@ require "event"
 class Scheduler
   @@runnables = [] of Fiber
   @@eb = Event::Base.new
-  @@loop_fiber = Fiber.new { @@eb.run_loop }
 
   def self.reschedule
     if runnable = @@runnables.pop?
@@ -12,6 +11,8 @@ class Scheduler
       @@loop_fiber.resume
     end
   end
+
+  @@loop_fiber = Fiber.new { @@eb.run_loop }
 
   def self.sleep(time)
     @@eb.add_timer_event time, LibEvent2::Callback.new do |s, flags, data|
