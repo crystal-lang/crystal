@@ -1023,8 +1023,8 @@ describe "Array" do
     end
 
     it "raises IndexError error when length of element is invalid" do
-      expect_raises(IndexError){ [[1], [1, 2]].transpose }
-      expect_raises(IndexError){ [[1, 2], [1]].transpose }
+      expect_raises(IndexOutOfBounds){ [[1], [1, 2]].transpose }
+      expect_raises(IndexOutOfBounds){ [[1, 2], [1]].transpose }
     end
   end
 end

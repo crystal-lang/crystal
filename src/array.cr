@@ -908,7 +908,7 @@ class Array(T)
     len = at(0).length
     (1...@length).each do |i|
       l = at(i).length
-      raise IndexError.new(l, len) if len != l
+      raise IndexOutOfBounds.new if len != l
     end
 
     Array(T).new(len) do |i|
