@@ -1038,8 +1038,8 @@ class Array(T)
         r -= 1
       end
     end
-    quicksort!(a, (r - a) + 1, comp)
-    quicksort!(l, (a + n) - l, comp)
+    quicksort!(a, (r - a) + 1, comp) unless r == a + n - 1
+    quicksort!(l, (a + n) - l, comp) unless l == a
   end
 
   protected def self.quicksort!(a, n)
@@ -1060,8 +1060,8 @@ class Array(T)
         r -= 1
       end
     end
-    quicksort!(a, (r - a) + 1)
-    quicksort!(l, (a + n) - l)
+    quicksort!(a, (r - a) + 1) unless r == a + n - 1
+    quicksort!(l, (a + n) - l) unless l == a
   end
 
   private def check_index_out_of_bounds(index)

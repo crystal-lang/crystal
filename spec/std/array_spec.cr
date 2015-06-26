@@ -2,6 +2,13 @@ require "spec"
 
 alias RecursiveArray = Array(RecursiveArray)
 
+class BadSortingClass
+  include Comparable(self)
+  def <=>(other)
+    1
+  end
+end
+
 describe "Array" do
   describe "==" do
     it "compares empty" do
@@ -721,6 +728,11 @@ describe "Array" do
       b = a.sort_by &.length
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
+    end
+
+    it "doesn't crash on special situations" do
+      [1, 2, 3].sort { 1 }
+      Array.new(10) { BadSortingClass.new }.sort
     end
   end
 
