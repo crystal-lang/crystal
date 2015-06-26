@@ -903,7 +903,7 @@ class Array(T)
   # a             # => [[:a, :b], [:c, :d], [:e, :f]]
   # ```
   def transpose
-    return Array(T).new if empty?
+    return Array(Array(typeof(first.first))).new if empty?
 
     len = at(0).length
     (1...@length).each do |i|
@@ -911,8 +911,8 @@ class Array(T)
       raise IndexOutOfBounds.new if len != l
     end
 
-    Array(T).new(len) do |i|
-      a = T.new(@length) do |j|
+    Array(Array(typeof(first.first))).new(len) do |i|
+      Array(typeof(first.first)).new(@length) do |j|
         at(j).at(i)
       end
     end

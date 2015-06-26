@@ -1015,6 +1015,15 @@ describe "Array" do
       [[:a]].transpose.should eq([[:a]])
     end
 
+    it "transposes union of arrays" do
+      [[1, 2], [1.0, 2.0]].transpose.should eq([[1, 1.0], [2, 2.0]])
+      [[1, 2.0], [1, 2.0]].transpose.should eq([[1, 1], [2.0, 2.0]])
+      [[1, 1.0], ['a', "aaa"]].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
+
+      typeof([[1.0], [1]].transpose).should eq(Array(Array(Int32 | Float64)))
+      typeof([[1, 1.0], ['a', "aaa"]].transpose).should eq(Array(Array(String | Int32 | Float64 | Char)))
+    end
+
     it "transposes empty array" do
       e = [] of Array(Int32)
       e.transpose.empty?.should be_true
