@@ -32,7 +32,7 @@ struct XML::Attributes
   end
 
   def [](name : String)
-    self[name]? || raise MissingKey.new("Missing attribute: #{name}")
+    self[name]? || raise KeyError.new("Missing attribute: #{name}")
   end
 
   def []?(name : String)

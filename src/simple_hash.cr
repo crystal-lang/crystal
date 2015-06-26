@@ -8,7 +8,7 @@ struct SimpleHash(K, V)
 
   def [](key)
     fetch(key) do
-      raise MissingKey.new "Missing hash value: #{key.inspect}"
+      raise KeyError.new "Missing hash value: #{key.inspect}"
     end
   end
 

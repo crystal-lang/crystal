@@ -2,7 +2,7 @@ require "spec"
 
 describe "ENV" do
   it "gets non existent key raises" do
-    expect_raises MissingKey, "Missing ENV key: NON-EXISTENT" do
+    expect_raises KeyError, "Missing ENV key: NON-EXISTENT" do
       ENV["NON-EXISTENT"]
     end
   end

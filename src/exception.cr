@@ -138,7 +138,7 @@ class InvalidByteSequenceError < Exception
   end
 end
 
-class MissingKey < Exception
+class KeyError < Exception
 end
 
 class DivisionByZero < Exception

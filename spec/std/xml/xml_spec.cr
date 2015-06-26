@@ -62,12 +62,12 @@ describe XML do
     attrs["id2"].content.should eq("2")
 
     attrs["id3"]?.should be_nil
-    expect_raises(MissingKey) { attrs["id3"] }
+    expect_raises(KeyError) { attrs["id3"] }
 
     person["id"].should eq("1")
     person["id2"].should eq("2")
     person["id3"]?.should be_nil
-    expect_raises(MissingKey) { person["id3"] }
+    expect_raises(KeyError) { person["id3"] }
 
     name = person.children.find { |node| node.name == "name" }.not_nil!
     name.content.should eq("John")

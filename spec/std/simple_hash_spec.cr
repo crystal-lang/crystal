@@ -16,7 +16,7 @@ describe "SimpleHash" do
 
     it "raises on a missing key" do
       a = SimpleHash {one: :two, three: :four}
-      expect_raises MissingKey do
+      expect_raises KeyError do
         a[:five]
       end
     end
