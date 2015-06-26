@@ -18,7 +18,7 @@
 #
 # Indexing with an integer value that is only known at runtime will return
 # a value whose type is the union of all the types in the tuple, and might raise
-# `IndexOutOfBounds` .
+# `IndexError` .
 #
 # Tuples are the preferred way to return fixed-length multiple return
 # values because no memory is needed to be allocated for them:
@@ -90,7 +90,7 @@ struct Tuple
   # tuple[i]                  #=> 1 (Int32 | String | Char)
   #
   # i = 3
-  # tuple[i]                  #=> runtime error: IndexOutOfBounds
+  # tuple[i]                  #=> runtime error: IndexError
   # ```
   def [](index : Int)
     at(index)
@@ -107,15 +107,15 @@ struct Tuple
     at(index) { nil }
   end
 
-  # Returns the element at the given index or raises IndexOutOfBounds if out of bounds.
+  # Returns the element at the given index or raises IndexError if out of bounds.
   #
   # ```
   # tuple = {1, "hello", 'x'}
   # tuple[0]                  #=> 1
-  # tuple[3]                  #=> raises IndexOutOfBounds
+  # tuple[3]                  #=> raises IndexError
   # ```
   def at(index : Int)
-    at(index) { raise IndexOutOfBounds.new }
+    at(index) { raise IndexError.new }
   end
 
   # Returns the element at the given index or the value returned by the block if

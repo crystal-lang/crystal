@@ -27,9 +27,9 @@ describe "Tuple" do
   it "does [] raises index out of bounds" do
     a = {1, 2.5}
     i = 2
-    expect_raises(IndexOutOfBounds) { a[i] }
+    expect_raises(IndexError) { a[i] }
     i = -1
-    expect_raises(IndexOutOfBounds) { a[i] }
+    expect_raises(IndexError) { a[i] }
   end
 
   it "does []?" do
@@ -42,7 +42,7 @@ describe "Tuple" do
     a = {1, 2}
     a.at(1).should eq(2)
 
-    expect_raises(IndexOutOfBounds) { a.at(2) }
+    expect_raises(IndexError) { a.at(2) }
 
     a.at(2) { 3 }.should eq(3)
   end
@@ -53,7 +53,7 @@ describe "Tuple" do
     end
 
     it "raises when passed an invalid index" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         {"a"}.values_at(10)
       end
     end

@@ -42,7 +42,7 @@ class BitArray
 
   private def bit_index_and_sub_index(index)
     index += @length if index < 0
-    raise IndexOutOfBounds.new if index >= @length || index < 0
+    raise IndexError.new if index >= @length || index < 0
 
     index.divmod(32)
   end

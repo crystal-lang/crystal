@@ -106,7 +106,7 @@ struct StaticArray(T, N)
   private def check_index_out_of_bounds(index)
     index += length if index < 0
     unless 0 <= index < length
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
     index
   end

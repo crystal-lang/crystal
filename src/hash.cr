@@ -284,7 +284,7 @@ class Hash(K, V)
   end
 
   def shift
-    shift { raise IndexOutOfBounds.new }
+    shift { raise IndexError.new }
   end
 
   def shift?

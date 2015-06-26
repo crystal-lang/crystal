@@ -49,7 +49,7 @@ describe "BitArray" do
 
   it "is raises when out of bounds" do
     ary = BitArray.new(10)
-    expect_raises IndexOutOfBounds do
+    expect_raises IndexError do
       ary[10] = true
     end
   end

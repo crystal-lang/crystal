@@ -26,14 +26,14 @@ describe "StaticArray" do
 
   it "raises index out of bounds on read" do
     a = StaticArray(Int32, 3).new 0
-    expect_raises IndexOutOfBounds do
+    expect_raises IndexError do
       a[4]
     end
   end
 
   it "raises index out of bounds on write" do
     a = StaticArray(Int32, 3).new 0
-    expect_raises IndexOutOfBounds do
+    expect_raises IndexError do
       a[4] = 1
     end
   end
@@ -51,7 +51,7 @@ describe "StaticArray" do
     end
 
     it "raises when passed an invalid index" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         StaticArray(Int32, 1).new { |i| i + 1 }.values_at(10)
       end
     end

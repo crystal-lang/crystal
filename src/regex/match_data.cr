@@ -85,7 +85,7 @@ class MatchData
   end
 
   private def check_index_out_of_bounds(index)
-    raise IndexOutOfBounds.new unless valid_group?(index)
+    raise IndexError.new unless valid_group?(index)
   end
 
   private def valid_group?(index)

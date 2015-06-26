@@ -93,7 +93,7 @@ describe "Array" do
     end
 
     it "raises on index out of bounds with range" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         [1, 2, 3][4, 0]
       end
     end
@@ -105,7 +105,7 @@ describe "Array" do
     end
 
     it "raises on index out of bounds" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         [1, 2, 3][-4, 2]
       end
     end
@@ -165,7 +165,7 @@ describe "Array" do
     end
 
     it "raises when passed an invalid index" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         ["a"].values_at(10)
       end
     end
@@ -259,7 +259,7 @@ describe "Array" do
 
     it "deletes out of bounds" do
       a = [1, 2, 3, 4]
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         a.delete_at(4)
       end
     end
@@ -366,7 +366,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         ([] of Int32).first
       end
     end
@@ -413,7 +413,7 @@ describe "Array" do
     end
 
     it "raises if out of bounds" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         [1, 2, 3][4]
       end
     end
@@ -444,7 +444,7 @@ describe "Array" do
     it "inserts out of range" do
       a = [1, 3, 4]
 
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         a.insert(4, 1)
       end
     end
@@ -461,7 +461,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         ([] of Int32).last
       end
     end
@@ -497,7 +497,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         ([] of Int32).pop
       end
     end
@@ -638,7 +638,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         ([] of Int32).shift
       end
     end
@@ -739,14 +739,14 @@ describe "Array" do
 
     it "swaps but raises out of bounds on left" do
       a = [1, 2, 3]
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         a.swap(3, 0)
       end
     end
 
     it "swaps but raises out of bounds on right" do
       a = [1, 2, 3]
-      expect_raises IndexOutOfBounds do
+      expect_raises IndexError do
         a.swap(0, 3)
       end
     end
@@ -1032,8 +1032,8 @@ describe "Array" do
     end
 
     it "raises IndexError error when length of element is invalid" do
-      expect_raises(IndexOutOfBounds){ [[1], [1, 2]].transpose }
-      expect_raises(IndexOutOfBounds){ [[1, 2], [1]].transpose }
+      expect_raises(IndexError){ [[1], [1, 2]].transpose }
+      expect_raises(IndexError){ [[1, 2], [1]].transpose }
     end
   end
 end

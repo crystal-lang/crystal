@@ -576,7 +576,7 @@ class String
     LibC.atof cstr
   end
 
-  # Returns the `Char` at the give index, or raises `IndexOutOfBounds` if out of bounds.
+  # Returns the `Char` at the give index, or raises `IndexError` if out of bounds.
   #
   # Negative indices can be used to start counting from the end of the string.
   #
@@ -585,17 +585,17 @@ class String
   # "hello"[1]  # 'e'
   # "hello"[-1] # 'o'
   # "hello"[-2] # 'l'
-  # "hello"[5]  # raises IndexOutOfBounds
+  # "hello"[5]  # raises IndexError
   # ```
   def [](index : Int)
-    at(index) { raise IndexOutOfBounds.new }
+    at(index) { raise IndexError.new }
   end
 
   # Returns a substring by using a Range's *begin* and *end*
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
   #
-  # Raises `IndexOutOfBounds` if the range's start is not in range.
+  # Raises `IndexError` if the range's start is not in range.
   #
   # ```
   # "hello"[0..2]  # "hel"
@@ -620,7 +620,7 @@ class String
   # The `start` argument can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexOutOfBounds` if `start` isn't in range.
+  # Raises `IndexError` if `start` isn't in range.
   #
   # Raises `ArgumentError` if `count` is negative.
   def [](start : Int, count : Int)
@@ -665,7 +665,7 @@ class String
         raise ArgumentError.new "negative count"
       end
     else
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
   end
 
@@ -699,7 +699,7 @@ class String
   end
 
   def at(index : Int)
-    at(index) { raise IndexOutOfBounds }
+    at(index) { raise IndexError }
   end
 
   def at(index : Int)
@@ -741,7 +741,7 @@ class String
         raise ArgumentError.new "negative count"
       end
     else
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
   end
 
@@ -758,7 +758,7 @@ class String
   end
 
   def byte_at(index)
-    byte_at(index) { raise IndexOutOfBounds.new }
+    byte_at(index) { raise IndexError.new }
   end
 
   def byte_at?(index)

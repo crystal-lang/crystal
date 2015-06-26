@@ -27,14 +27,14 @@ struct LLVM::ParameterCollection
     index += param_count if index < 0
 
     unless 0 <= index < param_count
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     Value.new LibLLVM.get_param(@function, index)
   end
 
   def first
-    raise IndexOutOfBounds.new if count == 0
+    raise IndexError.new if count == 0
 
     Value.new LibLLVM.get_param(@function, 0)
   end

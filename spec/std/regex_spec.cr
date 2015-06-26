@@ -28,7 +28,7 @@ describe "Regex" do
 
   it "raises if outside match range with []" do
     "foo" =~ /foo/
-    expect_raises(IndexOutOfBounds) { $1 }
+    expect_raises(IndexError) { $1 }
   end
 
   describe "name_table" do
@@ -45,7 +45,7 @@ describe "Regex" do
   describe "MatchData#[]" do
     it "raises if outside match range with []" do
       "foo" =~ /foo/
-      expect_raises(IndexOutOfBounds) { $~[1] }
+      expect_raises(IndexError) { $~[1] }
     end
 
     it "capture named group" do

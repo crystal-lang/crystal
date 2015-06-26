@@ -63,13 +63,13 @@ describe "String" do
     end
 
     it "raises index out of bound on index out of range with range" do
-      expect_raises(IndexOutOfBounds) do
+      expect_raises(IndexError) do
         "foo"[4 .. 1]
       end
     end
 
     it "raises index out of bound on index out of range with range and utf-8" do
-      expect_raises(IndexOutOfBounds) do
+      expect_raises(IndexError) do
         "há日本語"[6 .. 1]
       end
     end
@@ -87,13 +87,13 @@ describe "String" do
     end
 
     it "raises if index out of bounds" do
-      expect_raises(IndexOutOfBounds) do
+      expect_raises(IndexError) do
         "foo"[4, 1]
       end
     end
 
     it "raises if index out of bounds with utf-8" do
-      expect_raises(IndexOutOfBounds) do
+      expect_raises(IndexError) do
         "こんいちは"[6, 1]
       end
     end
@@ -158,7 +158,7 @@ describe "String" do
     end
 
     it "gets byte_slice with start out of bounds" do
-      expect_raises(IndexOutOfBounds) do
+      expect_raises(IndexError) do
         "hello".byte_slice(10, 3)
       end
     end
@@ -963,7 +963,7 @@ describe "String" do
 
   it "does byte_at" do
     "hello".byte_at(1).should eq('e'.ord)
-    expect_raises(IndexOutOfBounds) { "hello".byte_at(5) }
+    expect_raises(IndexError) { "hello".byte_at(5) }
   end
 
   it "does byte_at?" do

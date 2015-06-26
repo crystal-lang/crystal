@@ -108,7 +108,7 @@ class Matrix(T)
   end
 
   # Retrieves the element at the given row and column indexes.
-  # Raises IndexOutOfBounds.
+  # Raises IndexError.
   def [](row : Int, column : Int)
     at(row, column)
   end
@@ -121,14 +121,14 @@ class Matrix(T)
 
   # Replaces the element at the given row and column with the given value.
   def []=(row : Int, column : Int, value : T)
-    raise IndexOutOfBounds.new if row >= @rows || column >= @columns
+    raise IndexError.new if row >= @rows || column >= @columns
     row += @rows if row < 0
     column += @columns if column < 0
-    raise IndexOutOfBounds.new unless 0 <= row && 0 <= column
+    raise IndexError.new unless 0 <= row && 0 <= column
     @buffer[column + (row * @columns)] = value
   end
 
-  # Retrieves the element at the given linear index. Raises IndexOutOfBounds.
+  # Retrieves the element at the given linear index. Raises IndexError.
   def [](index : Int)
     at(index)
   end
@@ -141,9 +141,9 @@ class Matrix(T)
 
   # Replaces the element at the given linear index with the given value.
   def []=(index : Int, value : T)
-    raise IndexOutOfBounds.new if index >= size
+    raise IndexError.new if index >= size
     index += size if index < 0
-    raise IndexOutOfBounds.new if index < 0
+    raise IndexError.new if index < 0
     @buffer[index] = value
   end
 
@@ -160,9 +160,9 @@ class Matrix(T)
   end
 
   # Retrieves the element at the given row and column indexes.
-  # Raises IndexOutOfBounds.
+  # Raises IndexError.
   def at(row : Int, column : Int)
-    at(row, column) { raise IndexOutOfBounds.new }
+    at(row, column) { raise IndexError.new }
   end
 
   # Retrieves the element at the given linear index.
@@ -179,7 +179,7 @@ class Matrix(T)
   # Retrieves the element at the given linear index.
   # Raises if out of bounds.
   def at(index : Int)
-    at(index) { raise IndexOutOfBounds.new }
+    at(index) { raise IndexError.new }
   end
 
   # Checks equality between self and another matrix.
@@ -385,17 +385,17 @@ class Matrix(T)
 
   # Returns an iterator for the elements of the row at the given index.
   def row(row_index : Int)
-    raise IndexOutOfBounds.new if row_index >= @rows
+    raise IndexError.new if row_index >= @rows
     row_index += @rows if row_index < 0
-    raise IndexOutOfBounds.new if row_index < 0
+    raise IndexError.new if row_index < 0
     RowIterator.new(self, row_index)
   end
 
   # Yields elements of the row at the given index.
   def row(index : Int)
-    raise IndexOutOfBounds.new if index >= @rows
+    raise IndexError.new if index >= @rows
     index += @rows if index < 0
-    raise IndexOutOfBounds.new if index < 0
+    raise IndexError.new if index < 0
     @columns.times { |i| yield at(index, i) }
     self
   end
@@ -407,17 +407,17 @@ class Matrix(T)
 
   # Returns an iterator for the elements of the column at the given index.
   def column(column_index : Int)
-    raise IndexOutOfBounds.new if column_index >= @columns
+    raise IndexError.new if column_index >= @columns
     column_index += @columns if column_index < 0
-    raise IndexOutOfBounds.new if column_index < 0
+    raise IndexError.new if column_index < 0
     ColumnIterator.new(self, 0, column_index)
   end
 
   # Yields elements of the column at the given index.
   def column(index : Int)
-    raise IndexOutOfBounds.new if index >= @columns
+    raise IndexError.new if index >= @columns
     index += @columns if index < 0
-    raise IndexOutOfBounds.new if index < 0
+    raise IndexError.new if index < 0
     @rows.times { |i| yield at(i, index) }
     self
   end
@@ -541,14 +541,14 @@ class Matrix(T)
   # Returns a subsection of the matrix.
   def minor(start_row : Int, rows : Int, start_col : Int, columns : Int)
     raise DimensionMismatch.new if rows < 0 || columns < 0
-    raise IndexOutOfBounds.new if start_row + rows > @rows
-    raise IndexOutOfBounds.new if start_col + columns > @columns
+    raise IndexError.new if start_row + rows > @rows
+    raise IndexError.new if start_col + columns > @columns
 
     start_row += @rows if start_row < 0
     start_col += @columns if start_col < 0
 
-    raise IndexOutOfBounds.new if start_row < 0
-    raise IndexOutOfBounds.new if start_col < 0
+    raise IndexError.new if start_row < 0
+    raise IndexError.new if start_col < 0
 
     matrix = Matrix(T).new(rows, columns)
 
@@ -776,10 +776,10 @@ class Matrix(T)
 
   # Swaps two rows.
   def swap_rows(row_1 : Int, row_2 : Int)
-    raise IndexOutOfBounds.new if row_1 >= @rows || row_2 >= @rows
+    raise IndexError.new if row_1 >= @rows || row_2 >= @rows
     row_1 += @rows if row_1 < 0
     row_2 += @rows if row_2 < 0
-    raise IndexOutOfBounds.new if row_1 < 0 || row_2 < 0
+    raise IndexError.new if row_1 < 0 || row_2 < 0
     @columns.times do |i|
       self[row_1, i], self[row_2, i] = at(row_2, i), at(row_1, i)
     end
@@ -788,10 +788,10 @@ class Matrix(T)
 
   # Swaps two columns.
   def swap_columns(col_1 : Int, col_2 : Int)
-    raise IndexOutOfBounds.new if col_1 >= @columns || col_2 >= @columns
+    raise IndexError.new if col_1 >= @columns || col_2 >= @columns
     col_1 += @columns if col_1 < 0
     col_2 += @columns if col_2 < 0
-    aise IndexOutOfBounds.new if col_1 < 0 || col_2 < 0
+    aise IndexError.new if col_1 < 0 || col_2 < 0
     @rows.times do |i|
       self[i, col_1], self[i, col_2] = at(i, col_2), at(i, col_1)
     end

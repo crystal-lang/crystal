@@ -12,7 +12,7 @@ struct XML::NodeSet
     index += length if index < 0
 
     unless 0 <= index < length
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     internal_at(index)

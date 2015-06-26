@@ -23,7 +23,7 @@ struct Slice(T)
 
   def +(offset : Int)
     unless 0 <= offset <= length
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     Slice.new(@pointer + offset, @length - offset)
@@ -36,7 +36,7 @@ struct Slice(T)
   def []=(index : Int, value : T)
     index += length if index < 0
     unless 0 <= index < length
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     @pointer[index] = value
@@ -44,18 +44,18 @@ struct Slice(T)
 
   def [](start, count)
     unless 0 <= start <= @length
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     unless 0 <= count <= @length - start
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     Slice.new(@pointer + start, count)
   end
 
   def at(index : Int)
-    at(index) { raise IndexOutOfBounds.new }
+    at(index) { raise IndexError.new }
   end
 
   def at(index : Int)
@@ -83,7 +83,7 @@ struct Slice(T)
 
   def pointer(length)
     unless 0 <= length <= @length
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     @pointer

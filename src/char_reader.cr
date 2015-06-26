@@ -33,7 +33,7 @@ struct CharReader
   def next_char
     @pos += @current_char_width
     if @pos > @string.bytesize
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     decode_current_char
@@ -43,7 +43,7 @@ struct CharReader
     next_pos = @pos + @current_char_width
 
     if next_pos > @string.bytesize
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     decode_char_at(next_pos) do |code_point, width|
@@ -53,7 +53,7 @@ struct CharReader
 
   def pos=(pos)
     if pos > @string.bytesize
-      raise IndexOutOfBounds.new
+      raise IndexError.new
     end
 
     @pos = pos
