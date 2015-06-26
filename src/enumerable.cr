@@ -332,7 +332,7 @@ module Enumerable(T)
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
   #
-  #     [1, 2, 3, 4, 5].inject { |i, acc| i + acc }  #=> 15
+  #     [1, 2, 3, 4, 5].inject { |acc, i| acc + i }  #=> 15
   #
   def inject
     memo :: T
