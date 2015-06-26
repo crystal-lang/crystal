@@ -540,7 +540,10 @@ module Crystal
     property :expanded
   end
 
-  {% for name in %w(ArrayLiteral HashLiteral RegexLiteral MacroExpression MacroIf MacroFor) %}
+  {% for name in %w(And Or
+                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
+                    Case StringInterpolation
+                    MacroExpression MacroIf MacroFor) %}
     class {{name.id}}
       include ExpandableNode
     end

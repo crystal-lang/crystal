@@ -3255,7 +3255,6 @@ module Crystal
       node.type = mod.string
     end
 
-
     def visit(node : RegexLiteral)
       expand(node)
     end
@@ -3317,6 +3316,27 @@ module Crystal
       else
         expand(node)
       end
+    end
+
+    def visit(node : And)
+      expand(node)
+    end
+
+    def visit(node : Or)
+      expand(node)
+    end
+
+    def visit(node : RangeLiteral)
+      expand(node)
+    end
+
+    def visit(node : StringInterpolation)
+      expand(node)
+    end
+
+    def visit(node : Case)
+      expand(node)
+      false
     end
 
     def expand(node)
@@ -3521,9 +3541,7 @@ module Crystal
       @types.pop
     end
 
-    def visit(node : And | Or | Require | RangeLiteral | Case |
-                     When | Unless | StringInterpolation | MultiAssign |
-                     Until | MacroLiteral)
+    def visit(node : Require | When | Unless | MultiAssign | Until | MacroLiteral)
       raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
