@@ -1,5 +1,5 @@
 module Benchmark
-  module Ips
+  module IPS
     class Job
       # List of all entries in the benchmark.
       # After #execute, these are populated with the resulting statistics.
@@ -13,7 +13,9 @@ module Benchmark
 
       # Add code to be benchmarked
       def report(label = "", &action)
-        @items << Entry.new(label, action)
+        item = Entry.new(label, action)
+        @items << item
+        item
       end
 
       def execute
@@ -68,13 +70,14 @@ module Benchmark
           measurements = [] of TimeSpan
           target = Time.now + @calculation_time
 
-          while Time.now < target
+
+          begin
             before = Time.now
             item.call_for_100ms
             after = Time.now
 
             measurements << after-before
-          end
+          end while Time.now < target
 
           final_time = Time.now
 
@@ -134,8 +137,8 @@ module Benchmark
 
       def calculate_stats(samples)
         @size = samples.size
-        @mean = (samples.inject(0) { |acc, i| acc + i }) / size
-        @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }) / size
+        @mean = samples.sum.to_f / size.to_f
+        @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
         @stddev = Math.sqrt(variance)
       end
     end

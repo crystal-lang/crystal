@@ -54,7 +54,7 @@ module Benchmark
   end
 
   def ips(calculation = 5, warmup = 2)
-    job = Ips::Job.new(calculation, warmup)
+    job = IPS::Job.new(calculation, warmup)
     yield job
     job.execute
     job.report
