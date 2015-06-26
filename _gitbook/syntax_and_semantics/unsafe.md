@@ -3,7 +3,7 @@
 These parts of the language are considered unsafe:
 
 * Code involving raw pointers: the [Pointer](http://crystal-lang.org/api/Pointer.html) type and [pointerof](pointerof.html).
-* The [allocate](new_initialize_and_allocate.html) class method.
+* The [allocate](new,_initialize_and_allocate.html) class method.
 * Code involving C bindings
 * [Uninitialized variable declaration](declare_var.html)
 
