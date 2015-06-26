@@ -1909,7 +1909,16 @@ module Crystal
     def check_macro_opening_keyword(beginning_of_line)
       case char = current_char
       when 'a'
-        next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace? && next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :abstract_def
+        if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace?
+          case next_char
+          when 'd'
+            next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :abstract_def
+          when 'c'
+            next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :abstract_class
+          when 's'
+            next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :abstract_struct
+          end
+        end
       when 'b'
         next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && !ident_part_or_end?(next_char) && :begin
       when 'c'
@@ -1937,7 +1946,7 @@ module Crystal
           (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :module)
         )
       when 's'
-        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :lib
+        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :struct
       when 'u'
         next_char == 'n' && (char = next_char) && (
           (char == 'i' && next_char == 'o' && next_char == 'n' && !ident_part_or_end?(next_char) && :union) ||
