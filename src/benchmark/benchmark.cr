@@ -53,6 +53,14 @@ module Benchmark
     report
   end
 
+  def ips(calculation = 5, warmup = 2)
+    job = Ips::Job.new(calculation, warmup)
+    yield job
+    job.execute
+    job.report
+    job
+  end
+
   # Returns the time used to execute the given block.
   def measure(label = "") : BM::Tms
     t0, r0 = Process.times, Time.now
