@@ -1007,4 +1007,33 @@ describe "Array" do
       [1, 2, 3].cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
     end
   end
+
+  describe "transpose" do
+    it "transeposes elements" do
+      [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
+      [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
+      [[:a]].transpose.should eq([[:a]])
+    end
+
+    it "transposes union of arrays" do
+      [[1, 2], [1.0, 2.0]].transpose.should eq([[1, 1.0], [2, 2.0]])
+      [[1, 2.0], [1, 2.0]].transpose.should eq([[1, 1], [2.0, 2.0]])
+      [[1, 1.0], ['a', "aaa"]].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
+
+      typeof([[1.0], [1]].transpose).should eq(Array(Array(Int32 | Float64)))
+      typeof([[1, 1.0], ['a', "aaa"]].transpose).should eq(Array(Array(String | Int32 | Float64 | Char)))
+    end
+
+    it "transposes empty array" do
+      e = [] of Array(Int32)
+      e.transpose.empty?.should be_true
+      [e].transpose.empty?.should be_true
+      [e, e, e].transpose.empty?.should be_true
+    end
+
+    it "raises IndexError error when length of element is invalid" do
+      expect_raises(IndexOutOfBounds){ [[1], [1, 2]].transpose }
+      expect_raises(IndexOutOfBounds){ [[1, 2], [1]].transpose }
+    end
+  end
 end
