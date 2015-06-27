@@ -179,7 +179,7 @@ module Spec
     end
 
     def failure_message
-      "expected:   #{@actual.inspect}\nto include: #{@expected.inspect}"
+      "expected: #{@actual.inspect}\nto include: #{@expected.inspect}"
     end
 
     def negative_failure_message
