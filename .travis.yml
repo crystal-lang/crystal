@@ -42,6 +42,8 @@ notifications:
       - "irc.freenode.net#crystal-lang"
     use_notice: true
     skip_join: true
+    template:
+      - "%{repository_slug}#%{commit} (%{branch} - %{commit_message}): %{message} %{build_url}"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
 branches:
