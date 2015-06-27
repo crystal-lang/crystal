@@ -46,7 +46,6 @@ class HTTP::Server
       end
     end
 
-    puts "Ready"
     gets
   end
 
