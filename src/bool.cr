@@ -27,7 +27,7 @@ struct Bool
     self ? true : other
   end
 
-  # Bitwise AND. Returns `true` if this bool and `other` and `true`, otherwise returns `false`.
+  # Bitwise AND. Returns `true` if this bool and `other` are `true`, otherwise returns `false`.
   #
   # ```
   # false & false #=> false
