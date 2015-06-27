@@ -16,7 +16,7 @@ describe "Bool" do
   end
 
   describe "hash" do
-    true.hash.should eq(1)
-    false.hash.should eq(0)
+    assert { true.hash.should eq(1) }
+    assert { false.hash.should eq(0) }
   end
 end
