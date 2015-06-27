@@ -101,4 +101,21 @@ describe "Type inference: hooks" do
       $bar.name
       )) { string }
   end
+
+  it "includes error message in included hook (#889)" do
+    assert_error %(
+      module Doable
+        macro included
+          def {{@type.name.unknown}}
+            "woo!"
+          end
+        end
+      end
+
+      class BobWaa
+        include Doable
+      end
+      ),
+      "undefined macro method 'StringLiteral#unknown'"
+  end
 end

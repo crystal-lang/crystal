@@ -2962,7 +2962,7 @@ module Crystal
         current_type.include module_to_include
         run_hooks type.metaclass, current_type, kind, node
       rescue ex : TypeException
-        node_name.raise ex.message
+        node.raise "at '#{kind}' hook", ex
       end
     end
 

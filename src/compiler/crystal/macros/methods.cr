@@ -21,7 +21,7 @@ module Crystal
       when "!"
         BoolLiteral.new(!truthy?)
       else
-        raise "undefined macro method #{class_desc}##{method}'"
+        raise "undefined macro method '#{class_desc}##{method}'"
       end
     end
 
