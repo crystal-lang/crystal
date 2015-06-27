@@ -37,7 +37,7 @@ module Benchmark
       end
 
       def report
-        max_label = @items.map { |i| i.label.size }.max
+        max_label = @items.max_of &.label.size
 
         @items.each do |item|
           if item.slower == 1.0
