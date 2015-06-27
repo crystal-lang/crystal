@@ -242,7 +242,7 @@ describe "Hash" do
   it "clones" do
     h1 = {1 => 2, 3 => 4}
     h2 = h1.clone
-    h1.object_id.should_not eq(h2.object_id)
+    h1.should_not be(h2)
     h1.should eq(h2)
   end
 
@@ -290,11 +290,11 @@ describe "Hash" do
     h3 = {"1" => "5", "2" => "3"}
 
     h4 = h1.merge(h2)
-    h4.object_id.should_not eq(h1.object_id)
+    h4.should_not be(h1)
     h4.should eq({1 => 5, 3 => 4, 2 => 3})
 
     h5 = h1.merge(h3)
-    h5.object_id.should_not eq(h1.object_id)
+    h5.should_not be(h1)
     h5.should eq({1 => 2, 3 => 4, "1" => "5", "2" => "3"})
   end
 
@@ -303,7 +303,7 @@ describe "Hash" do
     h2 = {1 => 5, 2 => 3}
 
     h3 = h1.merge!(h2)
-    h3.object_id.should eq(h1.object_id)
+    h3.should be(h1)
     h3.should eq({1 => 5, 3 => 4, 2 => 3})
   end
 
@@ -312,7 +312,7 @@ describe "Hash" do
     h2 = {1 => 5, 3 => 4, 2 => 3}
 
     h3 = h2.merge!(h1) { |k, v1, v2| k + v1 + v2 }
-    h3.object_id.should eq(h2.object_id)
+    h3.should be(h2)
     h3.should eq({1 => 11, 3 => 4, 2 => 8})
   end
 

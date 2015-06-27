@@ -15,7 +15,7 @@ describe StringPool do
 
     s1.should eq("foo")
     s2.should eq("foo")
-    s1.object_id.should eq(s2.object_id)
+    s1.should be(s2)
     pool.length.should eq(1)
   end
 
@@ -28,7 +28,7 @@ describe StringPool do
 
     s1.should eq("foo")
     s2.should eq("foo")
-    s1.object_id.should eq(s2.object_id)
+    s1.should be(s2)
     pool.length.should eq(1)
   end
 
@@ -41,7 +41,7 @@ describe StringPool do
 
     s1.should eq("aaa")
     s2.should eq("aaa")
-    s1.object_id.should eq(s2.object_id)
+    s1.should be(s2)
     pool.length.should eq(1)
   end
 
@@ -54,7 +54,7 @@ describe StringPool do
 
     s1.should eq("aaa")
     s2.should eq("aaa")
-    s1.object_id.should eq(s2.object_id)
+    s1.should be(s2)
     pool.length.should eq(1)
   end
 

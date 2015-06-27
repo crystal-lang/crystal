@@ -193,8 +193,8 @@ describe "Array" do
     a = [x]
     b = a.clone
     b.should eq(a)
-    a.object_id.should_not eq(b.object_id)
-    a[0].object_id.should_not eq(b[0].object_id)
+    a.should_not be(b)
+    a[0].should_not be(b[0])
   end
 
   it "does compact" do
@@ -285,8 +285,8 @@ describe "Array" do
     a = [x]
     b = a.dup
     b.should eq([x])
-    a.object_id.should_not eq(b.object_id)
-    a[0].object_id.should eq(b[0].object_id)
+    a.should_not be(b)
+    a[0].should be(b[0])
     b << {3 => 4}
     a.should eq([x])
   end

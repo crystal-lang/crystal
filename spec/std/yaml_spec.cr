@@ -12,13 +12,13 @@ describe "YAML" do
 
     it "parses recursive sequence" do
       doc = YAML.load("--- &foo\n- *foo\n") as Array
-      doc[0].object_id.should eq(doc.object_id)
+      doc[0].should be(doc)
     end
 
     it "parses alias to scalar" do
       doc = YAML.load("---\n- &x foo\n- *x\n") as Array
       doc.should eq(["foo", "foo"])
-      doc[0].object_id.should eq(doc[1].object_id)
+      doc[0].should be(doc[1])
     end
   end
 end
