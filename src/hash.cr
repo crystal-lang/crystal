@@ -398,6 +398,14 @@ class Hash(K, V)
     end
   end
 
+  def invert
+    hash = Hash(V, K).new
+    self.each do |k, v|
+      hash[v] = k
+    end
+    hash
+  end
+
   protected def find_entry(key)
     index = bucket_index key
     entry = @buckets[index]

@@ -438,6 +438,17 @@ describe "Hash" do
     x.should eq({a: 1, c: 3})
   end
 
+  it "inverts" do
+    h1 = {"one" => 1, "two" => 2, "three" => 3}
+    h2 = {"a" => 1, "b" => 2, "c" => 1}
+
+    h1.invert.should eq({1 => "one", 2 => "two", 3 => "three"})
+
+    h3 = h2.invert
+    h3.length.should eq(2)
+    %w[a c].should contain h3[1]
+  end
+
   it "gets each iterator" do
     iter = {a: 1, b: 2}.each
     iter.next.should eq({:a, 1})
