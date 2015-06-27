@@ -247,7 +247,7 @@ class Hash(K, V)
     hash
   end
 
-  def merge!(other : Hash)
+  def merge!(other : Hash(K, V))
     other.each do |k, v|
       self[k] = v
     end
