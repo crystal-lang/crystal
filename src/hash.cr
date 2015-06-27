@@ -254,6 +254,17 @@ class Hash(K, V)
     self
   end
 
+  def merge!(other : Hash, &block : K, V, V -> V)
+    other.each do |k, v|
+      if self[k]?
+        self[k] = yield k, self[k], v
+      else
+        self[k] = v
+      end
+    end
+    self
+  end
+
   def self.zip(ary1 : Array(K), ary2 : Array(V))
     hash = {} of K => V
     ary1.each_with_index do |key, i|

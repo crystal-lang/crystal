@@ -295,9 +295,14 @@ describe "Hash" do
   it "merges!" do
     h1 = {1 => 2, 3 => 4}
     h2 = {1 => 5, 2 => 3}
+
     h3 = h1.merge!(h2)
     h3.object_id.should eq(h1.object_id)
     h3.should eq({1 => 5, 3 => 4, 2 => 3})
+
+    h4 = h3.merge!(h2) { |k, v1, v2| k + v1 + v2 }
+    h4.object_id.should eq(h3.object_id)
+    h4.should eq({1 => 11, 3 => 4, 2 => 8})
   end
 
   it "zips" do
