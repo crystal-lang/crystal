@@ -890,6 +890,10 @@ class String
       excess_right += 1
     end
 
+    if excess_right == bytesize
+      return ""
+    end
+
     excess_left = 0
     while cstr[excess_left].chr.whitespace?
       excess_left += 1
@@ -898,7 +902,7 @@ class String
     if excess_right == 0 && excess_left == 0
       self
     else
-      byte_slice excess_left, bytesize - excess_left - excess_right
+      String.new(unsafe_byte_slice excess_left, bytesize - excess_left - excess_right)
     end
   end
 
