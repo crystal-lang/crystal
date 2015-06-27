@@ -28,7 +28,7 @@ module Crystal
     describe_file "example-lib/src/example-lib.cr" do |file|
       file.should contain("Example::Lib")
     end
-    
+
     describe_file "example/.gitignore" do |gitignore|
       gitignore.should contain("/.deps/")
       gitignore.should contain("/.deps.lock")
@@ -62,24 +62,13 @@ end
     end
 
     describe_file "example/Projectfile" do |projectfile|
-      projectfile.should eq(%{deps do\nend\n})
+      projectfile.should eq(%{deps do\n  # github "[your-github-name]/example"\nend\n})
     end
 
     describe_file "example/.travis.yml" do |travis|
       parsed = YAML.load(travis) as Hash
 
-      parsed["language"].should eq("c")
-
-      (parsed["before_install"] as String)
-        .should contain("curl http://dist.crystal-lang.org/apt/setup.sh | sudo bash")
-
-      (parsed["before_install"] as String)
-        .should contain("sudo apt-get -q update")
-
-      (parsed["install"] as String)
-        .should contain("sudo apt-get install crystal")
-
-      parsed["script"].should eq(["crystal spec"])
+      parsed["language"].should eq("crystal")
     end
 
     describe_file "example/src/example.cr" do |example|
