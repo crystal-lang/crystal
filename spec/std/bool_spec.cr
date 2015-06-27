@@ -1,6 +1,11 @@
 require "spec"
 
 describe "Bool" do
+  describe "!" do
+    assert { (!true).should be_false }
+    assert { (!false).should be_true }
+  end
+
   describe "|" do
     assert { (false | false).should be_false }
     assert { (false | true).should be_true }
