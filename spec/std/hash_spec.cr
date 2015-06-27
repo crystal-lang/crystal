@@ -305,10 +305,24 @@ describe "Hash" do
     h3 = h1.merge!(h2)
     h3.object_id.should eq(h1.object_id)
     h3.should eq({1 => 5, 3 => 4, 2 => 3})
+  end
 
-    h4 = h3.merge!(h2) { |k, v1, v2| k + v1 + v2 }
-    h4.object_id.should eq(h3.object_id)
-    h4.should eq({1 => 11, 3 => 4, 2 => 8})
+  it "merges! with block" do
+    h1 = {1 => 5, 2 => 3}
+    h2 = {1 => 5, 3 => 4, 2 => 3}
+
+    h3 = h2.merge!(h1) { |k, v1, v2| k + v1 + v2 }
+    h3.object_id.should eq(h2.object_id)
+    h3.should eq({1 => 11, 3 => 4, 2 => 8})
+  end
+
+  it "merges! with block and nilable keys" do
+    h1 = {1 => nil, 2 => 4, 3 => "x"}
+    h2 = {1 => 2, 2 => nil, 3 => "y"}
+
+    h3 = h1.merge!(h2) { |k, v1, v2| (v1 || v2).to_s }
+    h3.should be(h1)
+    h3.should eq({1 => "2", 2 => "4", 3 => "x"})
   end
 
   it "zips" do

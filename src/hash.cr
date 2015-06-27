@@ -256,7 +256,7 @@ class Hash(K, V)
 
   def merge!(other : Hash, &block : K, V, V -> V)
     other.each do |k, v|
-      if self[k]?
+      if self.has_key?(k)
         self[k] = yield k, self[k], v
       else
         self[k] = v
