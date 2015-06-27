@@ -53,7 +53,7 @@ describe "Type inference: abstract def" do
       ) { int32 }
   end
 
-  it "doesn't error on abstract def on sub-subclass (bug)" do
+  it "works on abstract def on sub-subclass" do
     assert_type(%(
       abstract class Foo
         abstract def foo
