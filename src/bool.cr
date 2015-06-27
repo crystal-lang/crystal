@@ -39,6 +39,18 @@ struct Bool
     self ? other : false
   end
 
+  # Exclusive Or. Returns `true` if this bool is different from `other`, otherwise returns `false`.
+  #
+  # ```
+  # false ^ false #=> false
+  # false ^ true  #=> true
+  # true  ^ false #=> true
+  # true  ^ true  #=> false
+  # ```
+  def ^(other : Bool)
+    self != other
+  end
+
   # Returns a hash value for this boolean: 0 for false, 1 for true.
   def hash
     self ? 1 : 0
