@@ -287,9 +287,15 @@ describe "Hash" do
   it "merges" do
     h1 = {1 => 2, 3 => 4}
     h2 = {1 => 5, 2 => 3}
-    h3 = h1.merge(h2)
-    h3.object_id.should_not eq(h1.object_id)
-    h3.should eq({1 => 5, 3 => 4, 2 => 3})
+    h3 = {"1" => "5", "2" => "3"}
+
+    h4 = h1.merge(h2)
+    h4.object_id.should_not eq(h1.object_id)
+    h4.should eq({1 => 5, 3 => 4, 2 => 3})
+
+    h5 = h1.merge(h3)
+    h5.object_id.should_not eq(h1.object_id)
+    h5.should eq({1 => 2, 3 => 4, "1" => "5", "2" => "3"})
   end
 
   it "merges!" do
