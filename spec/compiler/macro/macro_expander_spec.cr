@@ -413,6 +413,14 @@ describe "MacroExpander" do
     it "executes gsub" do
       assert_macro "", %({{"hello".gsub(/e|o/, "a")}}), [] of ASTNode, %("halla")
     end
+
+    it "executes camelcase" do
+      assert_macro "", %({{"foo_bar".camelcase}}), [] of ASTNode, %("FooBar")
+    end
+
+    it "executes underscore" do
+      assert_macro "", %({{"FooBar".underscore}}), [] of ASTNode, %("foo_bar")
+    end
   end
 
   describe "macro id methods" do

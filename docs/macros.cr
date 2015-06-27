@@ -240,6 +240,10 @@ module Macros
     def +(other : StringLiteral | CharLiteral) : StringLiteral
     end
 
+    # Similar to `String#camelcase`.
+    def camelcase : StringLiteral
+    end
+
     # Similar to `String#capitalize`.
     def capitalize : StringLiteral
     end
@@ -294,6 +298,10 @@ module Macros
 
     # Similar to `String#tr`.
     def tr(from : StringLiteral, to : StringLiteral) : StringLiteral
+    end
+
+    # Similar to `String#underscore`.
+    def underscore : StringLiteral
     end
 
     # Similar to `String#upcase`.
