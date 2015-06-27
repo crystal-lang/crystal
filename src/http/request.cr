@@ -26,6 +26,8 @@ class HTTP::Request
       return true
     when "close"
       return false
+    when "upgrade"
+    	return false
     end
 
     case @version
