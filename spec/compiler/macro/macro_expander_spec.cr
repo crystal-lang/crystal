@@ -672,6 +672,12 @@ describe "MacroExpander" do
     end
   end
 
+  describe "expressions methods" do
+    it "executes expressions" do
+      assert_macro "x", %({{x.body.expressions[0]}}), [Block.new(body: Expressions.new([Call.new(nil, "some_call"), Call.new(nil, "some_other_call")] of ASTNode))] of ASTNode, "some_call"
+    end
+  end
+
   it "executes assign" do
     assert_macro "", %({{a = 1}}{{a}}), [] of ASTNode, "11"
   end

@@ -574,6 +574,19 @@ module Crystal
     end
   end
 
+  class Expressions
+    def interpret(method, args, block, interpreter)
+      case method
+      when "expressions"
+        interpret_argless_method(method, args) do
+          ArrayLiteral.map(@expressions) { |expression| expression }
+        end
+      else
+        super
+      end
+    end
+  end
+
   class BinaryOp
     def interpret(method, args, block, interpreter)
       case method

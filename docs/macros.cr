@@ -539,6 +539,12 @@ module Macros
     end
   end
 
+  class Expressions < ASTNode
+    # Returns the expressions' expressions
+    def expressions : ArrayLiteral(ASTNode)
+    end
+  end
+
   # A method call.
   class Call < ASTNode
     # Returns this call's name as a `MacroId`.
