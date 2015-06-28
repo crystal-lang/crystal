@@ -1,6 +1,17 @@
 require "spec"
 
 describe "Enumerable" do
+
+  describe "drop" do
+    it "returns an array without the dropped elements" do
+      [1, 2, 3, 4, 5, 6].drop(3).should eq [4, 5, 6]
+    end
+
+    it "returns an empty array when dropping more elements than array size" do
+      [1, 2].drop(3).should eq [] of Int32
+    end
+  end
+
   describe "find" do
     it "finds" do
       [1, 2, 3].find { |x| x > 2 }.should eq(3)

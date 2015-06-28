@@ -119,6 +119,21 @@ module Enumerable(T)
     n.times { each { |x| yield x } }
   end
 
+  # Returns an array with the first *count* elements removed from the original collection.
+  #
+  # If *count* is bigger than the number of elements in the collection, returns an empty array.
+  #
+  #     [1, 2, 3, 4, 5, 6].drop(3)  #=> [4, 5, 6]
+  def drop(count : Int)
+    array_size = size - count
+    array_size = 0 if size < 0
+    array = Array(T).new(array_size)
+    each_with_index do |e, i|
+      array << e if i >= count
+    end
+    array
+  end
+
   # Iterates over the collection in slices of size *count*, and runs the block for each of those.
   #
   #     [1, 2, 3, 4, 5].each_slice(2) do |slice|
