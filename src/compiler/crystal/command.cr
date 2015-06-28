@@ -20,7 +20,7 @@ Command:
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
     types                    show type of main variables
-    --help                   show this help
+    --help, -h               show this help
     --version, -v            show version
 USAGE
 
@@ -66,7 +66,7 @@ USAGE
         when "types".starts_with?(command)
           options.shift
           types options
-        when "--help" == command
+        when "--help" == command, "-h" == command
           puts USAGE
           exit
         when "--version" == command, "-v" == command
