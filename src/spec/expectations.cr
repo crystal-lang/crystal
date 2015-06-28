@@ -260,7 +260,6 @@ module Spec
     macro expect_raises(klass, message)
       begin
         {{yield}}
-        fail "expected to raise {{klass.id}}"
       rescue %ex : {{klass.id}}
         %msg = {{message}}
         %ex_to_s = %ex.to_s
@@ -274,6 +273,8 @@ module Spec
             fail "expected {{klass.id}}'s message to include #{ %msg.inspect }, but was #{ %ex_to_s.inspect }"
           end
         end
+      rescue
+        fail "expected to raise {{klass.id}}"
       end
     end
   end
