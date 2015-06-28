@@ -239,43 +239,44 @@ module Spec
     end
 
     macro expect_raises
-      %raised = false
-      begin
+      expect_raises(Exception) do
         {{yield}}
-      rescue
-        %raised = true
       end
-
-      fail "expected to raise" unless %raised
     end
 
     macro expect_raises(klass)
-      begin
+      expect_raises({{klass}}, nil) do
         {{yield}}
-        fail "expected to raise {{klass.id}}"
-      rescue {{klass.id}}
       end
     end
 
     macro expect_raises(klass, message)
       begin
         {{yield}}
-        fail "expected to raise {{klass.id}}"
+        fail "expected {{klass.id}} but nothing was raised"
       rescue %ex : {{klass.id}}
+        # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
+        if %ex.class == Spec::AssertionFailed && {{klass}} != Spec::AssertionFailed
+          raise %ex
+        end
+
         %msg = {{message}}
         %ex_to_s = %ex.to_s
         case %msg
         when Regex
           unless (%ex_to_s =~ %msg)
-            fail "expected {{klass.id}}'s message to match #{ %msg }, but was #{ %ex_to_s.inspect }"
+            backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
+            fail "expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}"
           end
         when String
           unless %ex_to_s.includes?(%msg)
-            fail "expected {{klass.id}}'s message to include #{ %msg.inspect }, but was #{ %ex_to_s.inspect }"
+            backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
+            fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}"
           end
         end
-      rescue
-        fail "expected to raise {{klass.id}}"
+      rescue %ex
+        backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
+        fail "expected {{klass.id}}, got #{ %ex.class } with backtrace:\n#{backtrace}"
       end
     end
   end
