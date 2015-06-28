@@ -90,6 +90,12 @@ describe "Char" do
     'Z'.to_i(16, or_else: -1).should eq(-1)
   end
 
+  it "to_i rejects unsupported base" do
+    expect_raises Exception, "Unsupported base: 32" do
+      '0'.to_i(32)
+    end
+  end
+
   it "does ord for multibyte char" do
     '日'.ord.should eq(26085)
   end
