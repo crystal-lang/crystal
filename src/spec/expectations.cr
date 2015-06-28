@@ -274,6 +274,8 @@ module Spec
             fail "expected {{klass.id}}'s message to include #{ %msg.inspect }, but was #{ %ex_to_s.inspect }"
           end
         end
+      rescue
+        fail "expected to raise {{klass.id}}"
       end
     end
   end
