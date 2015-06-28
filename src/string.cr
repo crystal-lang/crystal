@@ -448,7 +448,7 @@ class String
   end
 
   private def to_u64_info(base, whitespace, underscore, prefix, strict)
-    raise "Invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new "invalid base #{base}" unless 2 <= base <= 36
 
     ptr = cstr
 
