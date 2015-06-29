@@ -1812,8 +1812,8 @@ module Crystal
           whitespace = true
           beginning_of_line = true
         when '\\'
+          char = next_char
           if delimiter_state
-            char = next_char
             if char == '"'
               char = next_char
             end
@@ -1821,6 +1821,7 @@ module Crystal
           else
             whitespace = false
           end
+          next
         when '\'', '"'
           if delimiter_state
             delimiter_state = nil if delimiter_state.end == char

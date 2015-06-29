@@ -2159,7 +2159,7 @@ module Crystal
     end
 
     def check_macro_skip_whitespace
-      if current_char == '\\'
+      if current_char == '\\' && peek_next_char.whitespace?
         next_char
         true
       else
