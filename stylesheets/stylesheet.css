@@ -495,8 +495,9 @@ i.ip.downg {
   font-size: 12px;
   color: #b5b5b5;
   position: absolute;
-  top: 129px;
-  left: 320px;
+  right: 50%;
+  margin-right: 152px;
+  margin-top: 93px;
 }
 #logo-canvas {
   width: 108px;
