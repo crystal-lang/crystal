@@ -200,7 +200,7 @@ a:hover {
 }
 header {
   *zoom: 1;
-  padding: 50px 20px 20px;
+  padding: 35px 20px 20px;
   border-bottom: 1px solid #e5e5e5;
   height: 250px;
 }
@@ -232,6 +232,23 @@ nav ul.menu li {
 }
 nav ul.menu li a {
   display: block;
+  font-weight: bold;
+  font-size: 10px;
+  font-family: "Open Sans";
+  text-align: center;
+  color: #b5b5b5;
+}
+nav ul.menu li a:hover {
+  color: black;
+}
+nav ul.menu li a:hover .git {
+  background-position: 0px -40px;
+}
+nav ul.menu li a:hover .download {
+  background-position: -40px -40px;
+}
+nav ul.menu li a:hover .bookmark {
+  background-position: -80px -40px;
 }
 nav ul.menu li .arrow {
   -webkit-transition: all ease 0.3s;
@@ -416,6 +433,7 @@ footer img {
 }
 i.ic {
   background: url("/images/icons_40x40.png") no-repeat 40px 40px;
+  background-size: 120px 80px;
   display: inline-block;
   vertical-align: middle;
   width: 40px;
@@ -430,18 +448,6 @@ i.ic.download {
 }
 i.ic.bookmark {
   background-position: -80px 0px;
-}
-i.ic:hover.git,
-i.ic:focus.git {
-  background-position: 0px -40px;
-}
-i.ic:hover.download,
-i.ic:focus.download {
-  background-position: -40px -40px;
-}
-i.ic:hover.bookmark,
-i.ic:focus.bookmark {
-  background-position: -80px -40px;
 }
 i.ip {
   background: url("/images/icons_18x18.png") no-repeat 18px 18px;
@@ -489,7 +495,7 @@ i.ip.downg {
   font-size: 12px;
   color: #b5b5b5;
   position: absolute;
-  top: 144px;
+  top: 129px;
   left: 320px;
 }
 #logo-canvas {

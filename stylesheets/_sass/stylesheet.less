@@ -411,7 +411,7 @@ a {
 
 header {
   .clearfix();
-  padding: 50px 20px 20px;
+  padding: 35px 20px 20px;
   border-bottom: 1px solid @grayLight;
   height: 250px;
 
@@ -437,9 +437,22 @@ nav {
     li {
         margin-bottom: 12px;
         position: relative;
+
       a {
         display: block;
+        font-weight: bold;
+        font-size: 10px;
+        font-family: "Open Sans";
+        text-align: center;
+        color: #b5b5b5;
 
+        &:hover {
+          color: black;
+
+          .git       { background-position:   0px  -40px }
+          .download  { background-position: -40px  -40px }
+          .bookmark  { background-position: -80px  -40px }
+        }
       }
 
       .arrow {
@@ -660,6 +673,7 @@ footer {
 
 i.ic {
   background: url(@icSpritePath) no-repeat 40px 40px;
+  background-size: 120px 80px;
   display: inline-block;
   vertical-align: middle;
   width: 40px;
@@ -669,13 +683,6 @@ i.ic {
   &.git       { background-position:   0px  0px }
   &.download  { background-position: -40px  0px }
   &.bookmark  { background-position: -80px  0px }
-
-  &:hover, &:focus {
-    &.git       { background-position:   0px  -40px }
-    &.download  { background-position: -40px  -40px }
-    &.bookmark  { background-position: -80px  -40px }
-
-  }
 }
 
 i.ip {
@@ -717,7 +724,7 @@ i.ip {
   font-size: 12px;
   color: #b5b5b5;
   position: absolute;
-  top: 144px;
+  top: 129px;
   left: 320px;
 }
 
