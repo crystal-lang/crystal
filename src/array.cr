@@ -310,10 +310,10 @@ class Array(T)
 
   def at(index : Int)
     index += length if index < 0
-    if index >= length || index < 0
-      yield
-    else
+    if 0 <= index < length
       @buffer[index]
+    else
+      yield
     end
   end
 
