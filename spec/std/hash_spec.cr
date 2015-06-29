@@ -298,6 +298,15 @@ describe "Hash" do
     h5.should eq({1 => 2, 3 => 4, "1" => "5", "2" => "3"})
   end
 
+  it "merges with block" do
+    h1 = {1 => 5, 2 => 3}
+    h2 = {1 => 5, 3 => 4, 2 => 3}
+
+    h3 = h2.merge(h1) { |k, v1, v2| k + v1 + v2 }
+    h3.should_not be(h2)
+    h3.should eq({1 => 11, 3 => 4, 2 => 8})
+  end
+
   it "merges!" do
     h1 = {1 => 2, 3 => 4}
     h2 = {1 => 5, 2 => 3}
