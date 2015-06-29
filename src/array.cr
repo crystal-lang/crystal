@@ -324,7 +324,7 @@ class Array(T)
   # ["a", "b", "c", "d"].values_at(0, 2) #=> {"a", "c"}
   # ```
   def values_at(*indexes : Int)
-    indexes.map {|index| self[index] }
+    indexes.map { |index| self[index] }
   end
 
   def buffer
