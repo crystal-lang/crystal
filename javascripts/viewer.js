@@ -370,9 +370,9 @@ function Viewer3D(container) {
     var bounds = _container.getBoundingClientRect();
     var x = event.clientX - bounds.left;
     var y = event.clientY - bounds.top;
-    var depth = _scale  / _distance / 2;
-    _yaw = Math.atan2(_last.point.x - self.width / 2 , depth) - Math.atan2(x - self.width / 2 , depth);
-    _pitch = Math.atan2(_last.point.y - self.height / 2, depth) - Math.atan2(y - self.height / 2, depth);
+    var depth = _scale  / _distance / 4;
+    _yaw = Math.atan2(_last.point.x - self.width / 4 , depth) - Math.atan2(x - self.width / 4 , depth);
+    _pitch = Math.atan2(_last.point.y - self.height / 4, depth) - Math.atan2(y - self.height / 4, depth);
     _last = {point:{x:x, y:y}};
   }
 
