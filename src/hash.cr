@@ -250,13 +250,7 @@ class Hash(K, V)
   def merge(other : Hash(L, W), &block : K, V, W -> V | W)
     hash = Hash(K | L, V | W).new
     hash.merge! self
-    other.each do |l, w|
-      if hash.has_key?(l)
-        hash[l] = yield l, hash[l], w
-      else
-        hash[l] = w
-      end
-    end
+    hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
     hash
   end
 
