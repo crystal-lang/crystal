@@ -1,3 +1,5 @@
 _site
 .bundle
 _book
+tmp
+.build
