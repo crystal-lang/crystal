@@ -470,26 +470,31 @@ i.ip.down {
 i.ip.downg {
   background-position: -90px 0px;
 }
-#logo {
-  position: absolute;
-  left: 50%;
-  margin-left: 30px;
-  margin-top: 25px;
-  cursor: move;
+.logo {
+  float: left;
+  margin-left: 35px;
 }
-#logo-img {
-  margin-top: 81px;
-  right: 50%;
-  margin-right: -71px;
-  position: absolute;
+.logo > * {
+  display: inline-block;
+  vertical-align: middle;
+}
+.logo {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
 }
 #logo-text {
   font-size: 12px;
   color: #b5b5b5;
   position: absolute;
-  right: 50%;
-  margin-right: -71px;
-  margin-top: 144px;
+  top: 144px;
+  left: 320px;
+}
+#logo-canvas {
+  width: 108px;
+  height: 108px;
 }
 #disqus_thread {
   margin-top: 40px;

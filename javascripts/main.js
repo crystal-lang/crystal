@@ -1,4 +1,5 @@
-var model = new Viewer3D("logo");
-// model.ambient(50, 50, 50);
-model.shader("transparent", 0, 0, 0);
-model.insertModel("/javascripts/polyhedron/triangular_dipyramid.xml");
+var canvas = document.getElementById("logo-canvas")
+var model = new Viewer3D(canvas);
+model.shader("flat", 255, 255, 255);
+model.insertModel("/javascripts/polyhedron/icosahedron.xml");
+model.contrast(0.90);

@@ -1,11 +1,11 @@
-function Viewer3D(name) {
+function Viewer3D(container) {
 
+  var _container = container;
   var self = this;
-  self.name = name;
-  self.width = document.getElementById(name).width;
-  self.height = document.getElementById(name).height;
+  self.width = _container.width;
+  self.height = _container.height;
 
-  var _vertices, _faces, _canvas, _ambient, _shader, _req, _renderInterval, _dragging, _container;
+  var _vertices, _faces, _canvas, _shader, _req, _renderInterval, _dragging, _container;
   var _min = 0.01;
   var _yaw = _min;
   var _pitch = _min;
@@ -16,26 +16,14 @@ function Viewer3D(name) {
             [0, 0, 1]];
   var _loaded = false;
   var _start;
+  var _contrast = 0;
 
   self.insertModel = function(url) {
     window.clearInterval(_renderInterval);
     _renderInterval = undefined;
-    lastOnload = window.onload;
-    if(_loaded) {
-      onloadDocument(url);
-    } else {
-      window.onload = function() {
-        _loaded = true;
-        onloadDocument(url);
-        if (lastOnload) {
-          lastOnload();
-        }
-      }
-    }
-  }
-
-  self.ambient = function(r, g, b) {
-    _ambient = {r:r, g:g, b:b};
+    _container.addEventListener("mousedown", mouseDownHandler, false);
+    _canvas = _container.getContext("2d");
+    fetchXML(url);
   }
 
   self.shader = function(id, r, g, b) {
@@ -55,6 +43,13 @@ function Viewer3D(name) {
 
   self.toScreenY = function(y, z) {
     return self.height / 2 + _scale * y / (_distance - z);
+  }
+
+  self.contrast = function(value) {
+    if(value == null) {
+      return _contrast;
+    }
+    _contrast = Math.max(-1, Math.min(1, value));
   }
 
   //Geometry
@@ -183,16 +178,17 @@ function Viewer3D(name) {
       _yaw = 0;
       _pitch = 0;
     } else {
-      _yaw = decelerate(_yaw);
-      _pitch = decelerate(_pitch);
+      var restart = _pitch == 0 && _yaw == 0;
+      _yaw = decelerate(_yaw, restart);
+      _pitch = decelerate(_pitch, restart);
     }
     if(_renderInterval == undefined) {
      _renderInterval = window.setInterval(animate, 20);
     }
   }
 
-  function decelerate(value) {
-    if (!value) {
+  function decelerate(value, restart) {
+    if (restart) {
       return 0.0001 * (Math.round(Math.random())? 1 : -1);
     } else if(Math.abs(value) < _min) {
       value *= 1.01;
@@ -240,20 +236,19 @@ function Viewer3D(name) {
 
   function FlatShader(r, g, b) {
     var _lights = new Array();
-    _lights.push(new Light(10, -10, 10, r, g, b));
-    _lights.push(new Light(0, 0, 10, 50, 50, 50));
+    _lights.push(new Light(-5, -5, 20, 140, 140, 140));
 
     this.fill = function (face) {
-      var r = _ambient.r;
-      var g = _ambient.g;
-      var b = _ambient.b;
+      var r = 0;
+      var g = 0;
+      var b = 0;
       for(var i = 0; i < _lights.length; i++) {
         var cos = face.transform.normal.x * _lights[i].x + face.transform.normal.y * _lights[i].y + face.transform.normal.z * _lights[i].z;
-        if(cos > 0) {
-          r = Math.max(0, Math.min(255, Math.round(r + cos * _lights[i].r)));
-          g = Math.max(0, Math.min(255, Math.round(g + cos * _lights[i].g)));
-          b = Math.max(0, Math.min(255, Math.round(b + cos * _lights[i].b)));
-        }
+        //if(cos > 0) {
+        r = Math.max(0, Math.min(255, Math.round(applyContrast(r + cos * _lights[i].r, _contrast))));
+        g = Math.max(0, Math.min(255, Math.round(applyContrast(g + cos * _lights[i].g, _contrast))));
+        b = Math.max(0, Math.min(255, Math.round(applyContrast(b + cos * _lights[i].b, _contrast))));
+        //}
       }
       var value = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).substring(1);
       return value;
@@ -294,6 +289,15 @@ function Viewer3D(name) {
     this.r = r;
     this.g = g;
     this.b = b;
+  }
+
+  function applyContrast(channel, contrast) {
+    var value = channel / 255 - 0.5;
+    if(contrast > 0) {
+      return (value / (1 - contrast) + 0.5) * 255;
+    } else {
+      return (value * (1 + contrast) + 0.5) * 255;
+    }
   }
 
   //Model
@@ -346,13 +350,6 @@ function Viewer3D(name) {
     alert("Can't find XML Http Request object!");
   }
 
-   function onloadDocument(url) {
-    _container = document.getElementById(self.name);
-    _container.addEventListener("mousedown", mouseDownHandler, false);
-    _canvas = _container.getContext("2d");
-    fetchXML(url);
-  }
-
   function mouseDownHandler(event) {
     var bounds = _container.getBoundingClientRect();
     var x = event.clientX - bounds.left;
@@ -379,6 +376,5 @@ function Viewer3D(name) {
     _last = {point:{x:x, y:y}};
   }
 
-  self.shader("flat", 100, 100, 100);
-  self.ambient(0, 0, 0);
+  self.shader("flat", 200, 200, 200);
 }
