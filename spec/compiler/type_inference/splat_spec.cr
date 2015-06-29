@@ -44,7 +44,14 @@ describe "Type inference: splat" do
       a = {1} || {1, 2}
       foo *a
       ),
-      "splatting a union (({Int32} | {Int32, Int32})) is not yet supported"
+      "splatting a union ({Int32} | {Int32, Int32}) is not yet supported"
+  end
+
+  it "errors if splatting non-tuple type" do
+    assert_error %(
+      foo *1
+      ),
+      "argument to splat must be a tuple, not Int32"
   end
 
   it "forwards tuple with an extra argument" do
