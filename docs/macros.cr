@@ -821,8 +821,15 @@ module Macros
   # class Metaclass < ASTNode
   # end
 
-  # class Cast < ASTNode
-  # end
+  class Cast < ASTNode
+    # Returns the object part of the cast.
+    def obj : ASTNode
+    end
+
+    # Returns the target type of the cast.
+    def to : ASTNode
+    end
+  end
 
   # class TypeOf < ASTNode
   # end

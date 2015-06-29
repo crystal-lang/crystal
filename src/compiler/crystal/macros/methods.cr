@@ -877,4 +877,17 @@ module Crystal
       @names.join "::"
     end
   end
+
+  class Cast
+    def interpret(method, args, block, interpreter)
+      case method
+      when "obj"
+        obj
+      when "to"
+        to
+      else
+        super
+      end
+    end
+  end
 end

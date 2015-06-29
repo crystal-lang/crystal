@@ -794,6 +794,16 @@ describe "MacroExpander" do
     end
   end
 
+  describe "cast methods" do
+    it "executes obj" do
+      assert_macro "x", %({{x.obj}}), [Cast.new(Call.new(nil, "x"), Path.new(["Int32"]))] of ASTNode, "x"
+    end
+
+    it "executes to" do
+      assert_macro "x", %({{x.to}}), [Cast.new(Call.new(nil, "x"), Path.new(["Int32"]))] of ASTNode, "Int32"
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"
