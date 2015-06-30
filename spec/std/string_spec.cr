@@ -989,6 +989,22 @@ describe "String" do
     s.bytesize.should eq(3)
   end
 
+  it "from a slice, it stops at the first zero or full length, whichever is shorter" do
+    sl = Slice(UInt8).new(3)
+    sl[0] = 'a'.ord.to_u8
+    sl[1] = '\0'.ord.to_u8
+    sl[2] = 'c'.ord.to_u8
+
+    st = String.new(sl)
+    st.should eq("a")
+    st.bytesize.should eq(1)
+
+    sl[1] = 'b'.ord.to_u8
+    st = String.new(sl)
+    st.should eq("abc")
+    st.bytesize.should eq(3)
+  end
+
   it "tr" do
     "bla".tr("a", "h").should eq("blh")
     "bla".tr("a", "⊙").should eq("bl⊙")
