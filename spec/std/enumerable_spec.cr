@@ -1,6 +1,26 @@
 require "spec"
 
 describe "Enumerable" do
+  describe "all? with block" do
+    it "returns true" do
+      ["ant", "bear", "cat"].all? { |word| word.length >= 3 }.should be_true
+    end
+
+    it "returns false" do
+      ["ant", "bear", "cat"].all? { |word| word.length >= 4 }.should be_false
+    end
+  end
+
+  describe "all? without block" do
+    it "returns true" do
+      [15].all?.should be_true
+    end
+
+    it "returns false" do
+      [nil, true, 99].all?.should be_false
+    end
+  end
+
   describe "find" do
     it "finds" do
       [1, 2, 3].find { |x| x > 2 }.should eq(3)
