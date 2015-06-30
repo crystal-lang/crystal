@@ -1,7 +1,6 @@
 require "spec"
 
 describe "Enumerable" do
-
   describe "drop" do
     it "returns an array without the dropped elements" do
       [1, 2, 3, 4, 5, 6].drop(3).should eq [4, 5, 6]
@@ -9,6 +8,26 @@ describe "Enumerable" do
 
     it "returns an empty array when dropping more elements than array size" do
       [1, 2].drop(3).should eq [] of Int32
+    end
+  end
+
+  describe "all? with block" do
+    it "returns true" do
+      ["ant", "bear", "cat"].all? { |word| word.length >= 3 }.should be_true
+    end
+
+    it "returns false" do
+      ["ant", "bear", "cat"].all? { |word| word.length >= 4 }.should be_false
+    end
+  end
+
+  describe "all? without block" do
+    it "returns true" do
+      [15].all?.should be_true
+    end
+
+    it "returns false" do
+      [nil, true, 99].all?.should be_false
     end
   end
 
