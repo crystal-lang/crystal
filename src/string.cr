@@ -112,7 +112,8 @@ class String
 
   include Comparable(self)
 
-  # Creates a String form the given slice. Bytes will be copied from the slice.
+  # Creates a String form the given slice. Bytes will be copied from the slice
+  # until the first \0 or the full length of the slice, whichever comes first.
   #
   # This method is always safe to call, and the resulting string will have
   # the contents and length of the slice.
@@ -125,7 +126,12 @@ class String
   # Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(slice : Slice(UInt8))
-    new(slice.pointer(slice.length), slice.length)
+    length = 0
+    slice.each do |byte|
+      break if byte == 0_u8
+      length += 1
+    end
+    new(slice.pointer(length), length)
   end
 
   # Creates a String from a pointer. Bytes will be copied from the pointer.
