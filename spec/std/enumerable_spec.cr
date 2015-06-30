@@ -102,6 +102,11 @@ describe "Enumerable" do
     assert { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
   end
 
+  describe "none? without block" do
+    assert { [nil, false].none?.should be_true }
+    assert { [nil, false, true].none?.should be_false }
+  end
+
   describe "group_by" do
     assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
   end
