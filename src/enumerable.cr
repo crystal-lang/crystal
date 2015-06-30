@@ -608,7 +608,7 @@ module Enumerable(T)
     true
   end
 
-  # Returns `true` if all of the elements of the collection is `false` or `nil`.
+  # Returns `true` if all of the elements of the collection are `false` or `nil`.
   #
   #     [nil, false].none?        #=> true
   #     [nil, false, true].none?  #=> false
