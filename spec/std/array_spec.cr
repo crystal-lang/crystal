@@ -691,23 +691,11 @@ describe "Array" do
   end
 
   describe "sort" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
-
     it "sort without block" do
       a = [3, 4, 1, 2, 5, 6]
       b = a.sort
       b.should eq([1, 2, 3, 4, 5, 6])
       a.should_not eq(b)
-    end
-
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.length <=> y.length }
-      a.should eq(["a", "foo", "hello"])
     end
 
     it "sort with a block" do
@@ -717,22 +705,40 @@ describe "Array" do
       a.should_not eq(b)
     end
 
-    it "sorts by!" do
-      a = ["foo", "a", "hello"]
-      a.sort_by! &.length
-      a.should eq(["a", "foo", "hello"])
+    it "doesn't crash on special situations" do
+      [1, 2, 3].sort { 1 }
+      Array.new(10) { BadSortingClass.new }.sort
+    end
+  end
+
+  describe "sort!" do
+    it "sort! without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      a.sort!
+      a.should eq([1, 2, 3, 4, 5, 6])
     end
 
+    it "sort! with a block" do
+      a = ["foo", "a", "hello"]
+      a.sort! { |x, y| x.length <=> y.length }
+      a.should eq(["a", "foo", "hello"])
+    end
+  end
+
+  describe "sort_by" do
     it "sorts by" do
       a = ["foo", "a", "hello"]
       b = a.sort_by &.length
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
+  end
 
-    it "doesn't crash on special situations" do
-      [1, 2, 3].sort { 1 }
-      Array.new(10) { BadSortingClass.new }.sort
+  describe "sort_by!" do
+    it "sorts by!" do
+      a = ["foo", "a", "hello"]
+      a.sort_by! &.length
+      a.should eq(["a", "foo", "hello"])
     end
   end
 
