@@ -162,8 +162,15 @@ module Crystal
         raise "dynamic constant assignment"
       end
 
-      exp = Var.new(exp.name) if exp.is_a?(Call) && !exp.obj && exp.args.empty?
-      push_var exp if exp.is_a?(Var)
+      if exp.is_a?(Call) && !exp.obj && exp.args.empty?
+        exp = Var.new(exp.name).at(exp)
+      end
+      if exp.is_a?(Var)
+        if exp.name == "self"
+          raise "can't change the value of self", exp.location.not_nil!
+        end
+        push_var exp
+      end
       exp
     end
 

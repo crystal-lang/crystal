@@ -1141,6 +1141,10 @@ describe "Parser" do
                       "can't change the value of self"
   assert_syntax_error "self += 1",
                       "can't change the value of self"
+  assert_syntax_error "self, x = 1, 2",
+                      "can't change the value of self"
+  assert_syntax_error "x, self = 1, 2",
+                      "can't change the value of self"
 
   assert_syntax_error "macro foo(x : Int32); end"
 
