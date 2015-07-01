@@ -166,6 +166,28 @@ foo("hello") #=> String
 
 That is, `T` becomes the type that was effectively used to instantiate the method.
 
+A free variable can be used to extract the type parameter of a generic type within a type restriction:
+
+```ruby
+def foo(x : Array(T))
+  T
+end
+
+foo([1, 2])   #=> Int32
+foo([1, "a"]) #=> (Int32 | String)
+```
+
+To create a method that accepts a type name, rather than an instance of a type, append `.class` to a free variable in the type restriction:
+
+```ruby
+def foo(x : T.class)
+  Array(T)
+end
+
+foo(Int32)  #=> Array(Int32)
+foo(String) #=> Array(String)
+```
+
 ## Free variables in constructors
 
 Free variables allow type inference to be used when creating generic types. Refer to the [Generics](generics.html) section.
