@@ -100,6 +100,11 @@ class Set(T)
     join ", ", io, &.inspect(io)
     io << "}"
   end
+
+  def subset?(other : Set)
+    return false if other.length < length
+    all? { |value| other.includes?(value) }
+  end
 end
 
 class Array
