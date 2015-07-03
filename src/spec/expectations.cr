@@ -251,8 +251,10 @@ module Spec
     end
 
     macro expect_raises(klass, message)
+      %failed = false
       begin
         {{yield}}
+        %failed = true
         fail "expected {{klass.id}} but nothing was raised"
       rescue %ex : {{klass.id}}
         # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
@@ -275,8 +277,12 @@ module Spec
           end
         end
       rescue %ex
-        backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-        fail "expected {{klass.id}}, got #{ %ex.class } with backtrace:\n#{backtrace}"
+        if %failed
+          raise %ex
+        else
+          backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
+          fail "expected {{klass.id}}, got #{ %ex.class } with backtrace:\n#{backtrace}"
+        end
       end
     end
   end
