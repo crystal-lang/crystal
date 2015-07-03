@@ -624,6 +624,16 @@ module Enumerable(T)
     true
   end
 
+  # Returns `true` if all of the elements of the collection are `false` or `nil`.
+  #
+  #     [nil, false].none?        #=> true
+  #     [nil, false, true].none?  #=> false
+  #
+  # It's the opposite of `all?`.
+  def none?
+    none? &.itself
+  end
+
   # Returns `true` if the passed block returns `true` for exactly one of the elements of the collection.
   #
   #     [1, 2, 3].one? { |i| i > 2 }  #=> true
