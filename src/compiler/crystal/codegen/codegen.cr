@@ -656,8 +656,17 @@ module Crystal
         return false
       end
 
+      target_type = target.type?
+
       # This means it's an instance variable initialize of a generic type
-      return unless target.type?
+      unless target_type
+        return false
+      end
+
+      # This is the case of an instance variable initializer
+      if target.is_a?(InstanceVar) && !context.type.is_a?(InstanceVarContainer)
+        return false
+      end
 
       request_value do
         accept value
@@ -665,21 +674,13 @@ module Crystal
 
       return if value.no_returns?
 
-      target_type = target.type
-
       ptr = case target
             when InstanceVar
-              context_type = context.type
-              if context_type.is_a?(InstanceVarContainer)
-                instance_var_ptr context_type, target.name, llvm_self_ptr
-              else
-                # This is the case of an instance variable initializer
-                return false
-              end
+              instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
             when Global
-              get_global target, target.name, target.type
+              get_global target, target.name, target_type
             when ClassVar
-              get_global target, class_var_global_name(target), target.type
+              get_global target, class_var_global_name(target), target_type
             when Var
               # Can't assign void
               return if target.type.void?

@@ -392,7 +392,13 @@ module Crystal
       super
 
       if call = node.call?
-        node.call = call.transform(self) as Call
+        result = call.transform(self)
+
+        # If the transform didn't end up in a Call, it means the
+        # call will never be executed.
+        if result.is_a?(Call)
+          node.call = result
+        end
       end
 
       node
