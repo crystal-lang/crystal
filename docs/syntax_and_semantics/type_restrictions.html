@@ -2049,6 +2049,22 @@ foo(<span class="hljs-number">1</span>)       <span class="hljs-comment">#=&gt; 
 foo(<span class="hljs-string">&quot;hello&quot;</span>) <span class="hljs-comment">#=&gt; String</span>
 </code></pre>
 <p>That is, <code>T</code> becomes the type that was effectively used to instantiate the method.</p>
+<p>A free variable can be used to extract the type parameter of a generic type within a type restriction:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>foo(x <span class="hljs-symbol">:</span> <span class="hljs-constant">Array</span>(<span class="hljs-constant">T</span>))
+  <span class="hljs-constant">T</span>
+<span class="hljs-keyword">end</span>
+
+foo([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>])   <span class="hljs-comment">#=&gt; Int32</span>
+foo([<span class="hljs-number">1</span>, <span class="hljs-string">&quot;a&quot;</span>]) <span class="hljs-comment">#=&gt; (Int32 | String)</span>
+</code></pre>
+<p>To create a method that accepts a type name, rather than an instance of a type, append <code>.class</code> to a free variable in the type restriction:</p>
+<pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>foo(x <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>.<span class="hljs-keyword">class</span>)
+  <span class="hljs-constant">Array</span>(<span class="hljs-constant">T</span>)
+<span class="hljs-keyword">end</span>
+
+foo(<span class="hljs-constant">Int32</span>)  <span class="hljs-comment">#=&gt; Array(Int32)</span>
+foo(<span class="hljs-constant">String</span>) <span class="hljs-comment">#=&gt; Array(String)</span>
+</code></pre>
 <h2 id="free-variables-in-constructors">Free variables in constructors</h2>
 <p>Free variables allow type inference to be used when creating generic types. Refer to the <a href="generics.html">Generics</a> section.</p>
 
