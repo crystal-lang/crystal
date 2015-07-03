@@ -52,9 +52,9 @@ describe "Set" do
 
   it "does |" do
     set1 = Set{1, 2, 3}
-    set2 = Set{4, 2, 5, 3}
+    set2 = Set{4, 2, 5, "3"}
     set3 = set1 | set2
-    set3.should eq(Set{1, 2, 3, 4, 5})
+    set3.should eq(Set{1, 2, 3, 4, 5, "3"})
   end
 
   it "does to_a" do

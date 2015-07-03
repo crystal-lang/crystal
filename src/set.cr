@@ -66,8 +66,8 @@ class Set(T)
     set
   end
 
-  def |(other : Set)
-    set = Set(T).new
+  def |(other : Set(U))
+    set = Set(T | U).new
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
