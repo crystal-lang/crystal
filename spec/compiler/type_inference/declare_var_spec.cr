@@ -139,4 +139,15 @@ describe "Type inference: declare var" do
       ),
       "type must be Int32, not (Int32 | Int64)"
   end
+
+  it "errors if declaring variable multiple times with different types (#917)" do
+    assert_error %(
+      if 1 == 0
+        buf :: Int32
+      else
+        buf :: Float64
+      end
+      ),
+      "variable 'buf' already declared with type Int32"
+  end
 end

@@ -181,12 +181,15 @@ module Crystal
 
         var.bind_to node
 
-        meta_var = new_meta_var(var.name)
+        meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
+        if (existing_type = meta_var.type?) && existing_type != node.type
+          node.raise "variable '#{var.name}' already declared with type #{existing_type}"
+        end
+
         meta_var.bind_to(var)
         meta_var.freeze_type = node.type
 
         @vars[var.name] = meta_var
-        @meta_vars[var.name] = meta_var
 
         check_exception_handler_vars(var.name, node)
       when InstanceVar
