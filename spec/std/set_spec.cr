@@ -90,4 +90,18 @@ describe "Set" do
     iter.rewind
     iter.next.should eq(1)
   end
+
+  it "check subset" do
+    set = Set{1, 2, 3}
+    empty_set = Set(Int32).new
+
+    set.subset?(Set{1, 2, 3, 4}).should be_true
+    set.subset?(Set{1, 2, 3, "4"}).should be_true
+    set.subset?(Set{1, 2, 3}).should be_true
+    set.subset?(Set{1, 2}).should be_false
+    set.subset?(empty_set).should be_false
+
+    empty_set.subset?(Set{1}).should be_true
+    empty_set.subset?(empty_set).should be_true
+  end
 end
