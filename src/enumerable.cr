@@ -360,6 +360,9 @@ module Enumerable(T)
   end
 
   # Just like the other variant, but you can set the initial value of the accumulator.
+  #
+  #     [1, 2, 3, 4, 5].inject(10) { |acc, i| acc + i }  #=> 25
+  #
   def inject(memo)
     each do |elem|
       memo = yield memo, elem
