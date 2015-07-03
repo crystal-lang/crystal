@@ -4,6 +4,7 @@ To easily install Crystall on Mac you can use our [Homebrew](http://brew.sh/) [t
 
 ```
 brew tap manastech/crystal
+brew update
 brew install crystal-lang
 ```
 
