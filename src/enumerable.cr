@@ -125,6 +125,8 @@ module Enumerable(T)
   #
   #     [1, 2, 3, 4, 5, 6].drop(3)  #=> [4, 5, 6]
   def drop(count : Int)
+    raise ArgumentError.new("attempt to drop negative size") if count < 0
+
     array = Array(T).new
     each_with_index do |e, i|
       array << e if i >= count

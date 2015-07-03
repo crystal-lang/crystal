@@ -9,6 +9,12 @@ describe "Enumerable" do
     it "returns an empty array when dropping more elements than array size" do
       [1, 2].drop(3).should eq [] of Int32
     end
+
+    it "raises if count is negative" do
+      expect_raises(ArgumentError) do
+        [1, 2].drop(-1)
+      end
+    end
   end
 
   describe "all? with block" do
