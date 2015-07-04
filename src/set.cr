@@ -105,6 +105,11 @@ class Set(T)
     return false if other.length < length
     all? { |value| other.includes?(value) }
   end
+
+  def superset?(other : Set)
+    return false if other.length > length
+    other.all? { |value| includes?(value) }
+  end
 end
 
 class Array
