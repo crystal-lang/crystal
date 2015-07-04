@@ -104,4 +104,18 @@ describe "Set" do
     empty_set.subset?(Set{1}).should be_true
     empty_set.subset?(empty_set).should be_true
   end
+
+  it "check superset" do
+    set = Set{1, 2, "3"}
+    empty_set = Set(Int32).new
+
+    set.superset?(empty_set).should be_true
+    set.superset?(Set{1, 2}).should be_true
+    set.superset?(Set{1, 2, "3"}).should be_true
+    set.superset?(Set{1, 2, 3}).should be_false
+    set.superset?(Set{1, 2, 3, 4}).should be_false
+    set.superset?(Set{1, 4}).should be_false
+
+    empty_set.superset?(empty_set).should be_true
+  end
 end
