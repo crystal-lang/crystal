@@ -1,21 +1,6 @@
 require "spec"
 
 describe "Enumerable" do
-  describe "drop" do
-    it "returns an array without the dropped elements" do
-      [1, 2, 3, 4, 5, 6].drop(3).should eq [4, 5, 6]
-    end
-
-    it "returns an empty array when dropping more elements than array size" do
-      [1, 2].drop(3).should eq [] of Int32
-    end
-
-    it "raises if count is negative" do
-      expect_raises(ArgumentError) do
-        [1, 2].drop(-1)
-      end
-    end
-  end
 
   describe "all? with block" do
     it "returns true" do
@@ -34,6 +19,46 @@ describe "Enumerable" do
 
     it "returns false" do
       [nil, true, 99].all?.should be_false
+    end
+  end
+
+  describe "drop" do
+    it "returns an array without the dropped elements" do
+      [1, 2, 3, 4, 5, 6].drop(3).should eq [4, 5, 6]
+    end
+
+    it "returns an empty array when dropping more elements than array size" do
+      [1, 2].drop(3).should eq [] of Int32
+    end
+
+    it "raises if count is negative" do
+      expect_raises(ArgumentError) do
+        [1, 2].drop(-1)
+      end
+    end
+  end
+
+  describe "drop_while" do
+    it "drops elements while the condition holds true" do
+      result = [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3}
+      result.should eq [3, 4, 5, 0]
+    end
+
+    it "returns an empty array if the condition is always true" do
+      [1, 2, 3].drop_while {true}.should eq [] of Int32
+    end
+
+    it "returns the full Array if the the first check is false" do
+      [5, 0, 1, 2, 3].drop_while {|x| x < 4}.should eq [5, 0, 1, 2, 3]
+    end
+
+    it "does not yield to the block anymore once it returned false" do
+      called = 0
+      [1, 2, 3, 4, 4].drop_while do |i|
+        called += 1
+        i < 3
+      end
+      called.should eq 3
     end
   end
 

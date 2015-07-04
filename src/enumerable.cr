@@ -134,6 +134,20 @@ module Enumerable(T)
     array
   end
 
+  # Drops elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
+  #
+  #     [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3} #=> [3, 4, 5, 0]
+  #
+  def drop_while
+    result = Array(T).new
+    block_returned_false = false
+    each do |x|
+      block_returned_false = true unless block_returned_false || yield x
+      result << x if block_returned_false
+    end
+    result
+  end
+
   # Iterates over the collection in slices of size *count*, and runs the block for each of those.
   #
   #     [1, 2, 3, 4, 5].each_slice(2) do |slice|
