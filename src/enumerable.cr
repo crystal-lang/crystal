@@ -397,7 +397,7 @@ module Enumerable(T)
 
   # Prints to *io* all the elements in the collection, separated by *separator*.
   #
-  #     [1, 2, 3, 4, 5].join(", ")
+  #     [1, 2, 3, 4, 5].join(", ", STDOUT)
   #
   # Prints:
   #
