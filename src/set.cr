@@ -95,6 +95,21 @@ class Set(T)
     @hash.hash
   end
 
+  # Returns true if the set and the given set have at least one
+  # element in common.
+  #
+  # ```
+  # Set{1, 2, 3}.intersect? Set{4, 5} # => false
+  # Set{1, 2, 3}.intersect? Set{3, 4} # => true
+  # ```
+  def intersect?(other : Set)
+    if length < other.length
+      any? { |o| other.includes?(o) }
+    else
+      other.any? { |o| includes?(o) }
+    end
+  end
+
   def to_s(io)
     io << "Set{"
     join ", ", io, &.inspect(io)
