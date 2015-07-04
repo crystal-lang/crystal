@@ -829,15 +829,15 @@ module Crystal
 
   # A method definition.
   #
-  #     [ receiver '.' ] 'def' name
+  #     'def' [ receiver '.' ] name
   #       body
   #     'end'
   #   |
-  #     [ receiver '.' ] 'def' name '(' [ arg [ ',' arg ]* ] ')'
+  #     'def' [ receiver '.' ] name '(' [ arg [ ',' arg ]* ] ')'
   #       body
   #     'end'
   #   |
-  #     [ receiver '.' ] 'def' name arg [ ',' arg ]*
+  #     'def' [ receiver '.' ] name arg [ ',' arg ]*
   #       body
   #     'end'
   #
