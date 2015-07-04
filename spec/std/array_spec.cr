@@ -54,6 +54,11 @@ describe "Array" do
     0.upto(4) { |i| c[i].should eq(i + 1) }
   end
 
+  it "does + with empty tuple converted to array (#909)" do
+    ([1, 2] + Tuple.new.to_a).should eq([1, 2])
+    (Tuple.new.to_a + [1, 2]).should eq([1, 2])
+  end
+
   it "does -" do
     ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
   end
