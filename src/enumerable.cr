@@ -711,6 +711,8 @@ module Enumerable(T)
   # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
   # include the case of calling it over an empty collection, in which case it returns an empty array.
   def take(count : Int)
+    raise ArgumentError.new("attempt to take negative size") if count < 0
+
     ary = Array(T).new(count)
     each_with_index do |e, i|
       break if i == count
