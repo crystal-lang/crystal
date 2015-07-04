@@ -38,6 +38,10 @@ class Set(T)
     @hash.length
   end
 
+  def size
+    length
+  end
+
   def clear
     @hash.clear
     self
