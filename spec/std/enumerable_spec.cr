@@ -172,6 +172,29 @@ describe "Enumerable" do
     end
   end
 
+  describe "take_while" do
+    it "keeps elements while the block returns true" do
+      [1, 2, 3, 4, 5, 0].take_while {|i| i < 3}.should eq [1, 2]
+    end
+
+    it "returns the full Array if the condition is always true" do
+      [1, 2, 3, -3].take_while {true}.should eq [1, 2, 3, -3]
+    end
+
+    it "returns an empty Array if the block is false for the first element" do
+      [1, 2, -1, 0].take_while {|i| i <= 0}.should eq [] of Int32
+    end
+
+    it "does not call the block again once it returned false" do
+      called = 0
+      [1, 2, 3, 4, 0].take_while do |i|
+        called += 1
+        i < 3
+      end
+      called.should eq 3
+    end
+  end
+
   describe "first" do
     assert { [-1, -2, -3].first.should eq(-1) }
     assert { [-1, -2, -3].first(1).should eq([-1]) }

@@ -736,6 +736,19 @@ module Enumerable(T)
     ary
   end
 
+  # Passes elements to the block until the block returns nil or false, then stops iterating and returns an array of all prior elements.
+  #
+  #     [1, 2, 3, 4, 5, 0].take_while {|i| i < 3} #=> [1, 2]
+  #
+  def take_while
+    result = Array(T).new
+    each do |x|
+      break unless yield x
+      result << x
+    end
+    result
+  end
+
   # Returns an array with all the elements in the collection.
   #
   #     (1..5).to_a  #=> 1, 2, 3, 4, 5]
