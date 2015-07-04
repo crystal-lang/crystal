@@ -684,6 +684,14 @@ module Enumerable(T)
     ary
   end
 
+  def sort(&block: T, T -> Int32)
+    to_a.sort &block
+  end
+
+  def sort
+    to_a.sort
+  end
+
   # Adds all the elements in the collection together.
   #
   # Only collections of numbers are supported.
