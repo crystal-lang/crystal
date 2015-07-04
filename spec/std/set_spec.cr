@@ -74,19 +74,19 @@ describe "Set" do
     x.to_a.should eq([1])
   end
 
-  it "checks intersect" do
+  it "checks intersects" do
     set = Set{3, 4, 5}
     empty_set = Set(Int32).new
 
-    set.intersect?(set).should be_true
-    set.intersect?(Set{2, 4}).should be_true
-    set.intersect?(Set{5, 6, 7}).should be_true
-    set.intersect?(Set{1, 2, 6, 8, 4}).should be_true
+    set.intersects?(set).should be_true
+    set.intersects?(Set{2, 4}).should be_true
+    set.intersects?(Set{5, 6, 7}).should be_true
+    set.intersects?(Set{1, 2, 6, 8, 4}).should be_true
 
-    set.intersect?(empty_set).should be_false
-    set.intersect?(Set{0, 2}).should be_false
-    set.intersect?(Set{0, 2, 6}).should be_false
-    set.intersect?(Set{0, 2, 6, 8, 10}).should be_false
+    set.intersects?(empty_set).should be_false
+    set.intersects?(Set{0, 2}).should be_false
+    set.intersects?(Set{0, 2, 6}).should be_false
+    set.intersects?(Set{0, 2, 6, 8, 10}).should be_false
 
     # Make sure set hasn't changed
     set.should eq(Set{3, 4, 5})
