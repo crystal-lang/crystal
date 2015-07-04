@@ -11,6 +11,10 @@ module Crystal
       self == other
     end
 
+    def is_restriction_of?(other : Type, owner)
+      false
+    end
+
     def is_restriction_of?(other, owner)
       raise "Bug: called #{self}.is_restriction_of?(#{other})"
     end
