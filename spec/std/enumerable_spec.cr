@@ -37,6 +37,26 @@ describe "Enumerable" do
     end
   end
 
+  describe "any? with block" do
+    it "returns true" do
+      ["ant", "bear", "cat"].any? { |word| word.length >= 4 }.should be_true
+    end
+
+    it "returns false" do
+      ["ant", "bear", "cat"].any? { |word| word.length > 4 }.should be_false
+    end
+  end
+
+  describe "any? without block" do
+    it "returns true" do
+      [nil, true, 99].any?.should be_true
+    end
+
+    it "returns false" do
+      [nil, false].any?.should be_false
+    end
+  end
+
   describe "find" do
     it "finds" do
       [1, 2, 3].find { |x| x > 2 }.should eq(3)

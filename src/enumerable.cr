@@ -51,8 +51,8 @@ module Enumerable(T)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil` for at least one element of the collection.
   #
-  #     ["ant", "bear", "cat"].any? { |word| word.length >= 3 }  #=> true
   #     ["ant", "bear", "cat"].any? { |word| word.length >= 4 }  #=> true
+  #     ["ant", "bear", "cat"].any? { |word| word.length > 4 }   #=> false
   #
   def any?
     each { |e| return true if yield e }
@@ -62,6 +62,7 @@ module Enumerable(T)
   # Returns `true` if at least one of the collection members is not `false` or `nil`.
   #
   #     [nil, true, 99].any?  #=> true
+  #     [nil, false].any?     #=> false
   #
   def any?
     any? &.itself
