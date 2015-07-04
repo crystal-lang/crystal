@@ -1862,6 +1862,8 @@ module Crystal
     delegate :"instance_vars_in_initialize=", @extended_class
     delegate :"allocated=", @extended_class
     delegate notify_subclass_added, @extended_class
+    delegate has_def_without_parents?, @extended_class
+    delegate add_def, @extended_class
 
     def lookup_instance_var?(name, create = false)
       nil
