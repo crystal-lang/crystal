@@ -93,7 +93,7 @@ class Person
   end
 end
 
-class Employee
+class Employee < Person
   def greet(msg)
     super # Same as: super(msg)
     super("another message")
