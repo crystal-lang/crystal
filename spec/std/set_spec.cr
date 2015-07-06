@@ -2,7 +2,7 @@ require "spec"
 require "set"
 
 describe "Set" do
-  describe "set" do
+  describe "an empty set" do
     it "is empty" do
       Set(Nil).new.empty?.should be_true
     end
