@@ -115,7 +115,7 @@ module Macros
     #     puts "Got a number literal"
     #   {% else %}
     #     puts "Didn't get a number literal"
-    #   {% else %}
+    #   {% end %}
     # end
     #
     # test 1    #=> prints "Got a number literal"
