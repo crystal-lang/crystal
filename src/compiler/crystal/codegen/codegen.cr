@@ -100,7 +100,7 @@ module Crystal
 
     alias LLVMVars = Hash(String, LLVMVar)
 
-    record Handler, node, catch_block, vars
+    record Handler, node, catch_block, context
     record StringKey, mod, string
 
     def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
@@ -420,8 +420,7 @@ module Crystal
       if handler = @exception_handlers.try &.last?
         if node_ensure = handler.node.ensure
           old_last = @last
-          with_cloned_context do
-            context.vars = handler.vars
+          with_context(handler.context) do
             accept node_ensure
           end
           @last = old_last
@@ -1056,7 +1055,7 @@ module Crystal
 
       Phi.open(self, node, @needs_value) do |phi|
         exception_handlers = (@exception_handlers ||= [] of Handler)
-        exception_handlers << Handler.new(node, catch_block, context.vars)
+        exception_handlers << Handler.new(node, catch_block, context)
         accept node.body
         exception_handlers.pop
 
@@ -1105,7 +1104,7 @@ module Crystal
               # Make sure the rescue knows about the current ensure
               # and the previous catch block
               previous_catch_block = exception_handlers.last?.try &.catch_block
-              exception_handlers << Handler.new(node, previous_catch_block, context.vars)
+              exception_handlers << Handler.new(node, previous_catch_block, context)
               accept a_rescue.body
               exception_handlers.pop
             end
