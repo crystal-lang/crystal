@@ -748,6 +748,11 @@ describe "MacroExpander" do
     it "executes receiver" do
       assert_macro "x", %({{x.receiver}}), [Def.new("some_def", receiver: Var.new("self"))] of ASTNode, "self"
     end
+
+    it "executes visibility" do
+      assert_macro "x", %({{x.visibility}}), [Def.new("some_def")] of ASTNode, ":public"
+      assert_macro "x", %({{x.visibility}}), [Def.new("some_def").tap { |d| d.visibility = :private }] of ASTNode, ":private"
+    end
   end
 
   describe "call methods" do
