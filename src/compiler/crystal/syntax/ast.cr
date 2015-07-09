@@ -1587,7 +1587,7 @@ module Crystal
       LibDef.new(@name, @body.clone, @name_column_number)
     end
 
-    def_equals_and_hash @name, @libname, @body
+    def_equals_and_hash @name, @body
   end
 
   class FunDef < ASTNode
