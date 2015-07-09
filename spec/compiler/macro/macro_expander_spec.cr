@@ -585,6 +585,14 @@ describe "MacroExpander" do
     it "executes uniq" do
       assert_macro "", %({{[1, 1, 1, 2, 3, 1, 2, 3, 4].uniq}}), [] of ASTNode, %([1, 2, 3, 4])
     end
+
+    it "executes unshift" do
+      assert_macro "", %({% x = [1]; x.unshift(2); %}{{x}}), [] of ASTNode, %([2, 1])
+    end
+
+    it "executes push" do
+      assert_macro "", %({% x = [1]; x.push(2); x << 3 %}{{x}}), [] of ASTNode, %([1, 2, 3])
+    end
   end
 
   describe "hash methods" do
