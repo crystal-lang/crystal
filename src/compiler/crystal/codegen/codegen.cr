@@ -27,12 +27,18 @@ module Crystal
     def evaluate(node)
       llvm_mod = build(node, single_module: true)[""]
       main = llvm_mod.functions[MAIN_NAME]
-      wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main.return_type) do |func|
+
+      main_return_type = main.return_type
+
+      # It seems the JIT doesn't like it if we return an empty type (struct {})
+      main_return_type = LLVM::Void if node.type.nil_type?
+
+      wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main_return_type) do |func|
         func.basic_blocks.append "entry"  do |builder|
           argc = LLVM.int(LLVM::Int32, 0)
           argv = LLVM::VoidPointer.pointer.null
           ret = builder.call(main, [argc, argv])
-          node.type.void? ? builder.ret : builder.ret(ret)
+          (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
         end
       end
 

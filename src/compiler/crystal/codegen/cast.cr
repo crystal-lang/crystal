@@ -6,7 +6,11 @@ class Crystal::CodeGenVisitor
     value_type = value_type.remove_alias
 
     if target_type == value_type
-      store to_rhs(value, target_type), target_pointer
+      if target_type.nil_type?
+        value
+      else
+        store to_rhs(value, target_type), target_pointer
+      end
     else
       assign_distinct target_pointer, target_type, value_type, value
     end

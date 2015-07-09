@@ -7,7 +7,7 @@ module Crystal
     end
 
     def llvm_nil
-      LLVM.int LLVM::Int1, 0
+      LLVMTyper::NIL_VALUE
     end
 
     def ret
