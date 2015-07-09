@@ -136,4 +136,8 @@ describe "Set" do
 
     empty_set.superset?(empty_set).should be_true
   end
+
+  it "has object_id" do
+    Set(Int32).new.object_id.should be > 0
+  end
 end

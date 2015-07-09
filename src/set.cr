@@ -1,4 +1,4 @@
-class Set(T)
+struct Set(T)
   include Enumerable(T)
   include Iterable
 
@@ -128,6 +128,14 @@ class Set(T)
   def superset?(other : Set)
     return false if other.length > length
     other.all? { |value| includes?(value) }
+  end
+
+  def object_id
+    @hash.object_id
+  end
+
+  def same?(other : Set)
+    @hash.same?(other.@hash)
   end
 end
 
