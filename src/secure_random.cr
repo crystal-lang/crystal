@@ -33,12 +33,15 @@ module SecureRandom
     bytes = random_bytes(16)
     bytes[6] = (bytes[6] & 0x0f) | 0x40
     bytes[8] = (bytes[8] & 0x3f) | 0x80
-    {
-      bytes[0, 4].hexstring,
-      bytes[4, 2].hexstring,
-      bytes[6, 2].hexstring,
-      bytes[8, 2].hexstring,
-      bytes[10, 6].hexstring,
-    }.join('-')
+
+    String.new(36) do |buffer|
+      buffer[8] = buffer[13] = buffer[18] = buffer[23] = 45_u8
+      bytes[0, 4].hexstring(buffer, 0)
+      bytes[4, 2].hexstring(buffer, 9)
+      bytes[6, 2].hexstring(buffer, 14)
+      bytes[8, 2].hexstring(buffer, 19)
+      bytes[10, 6].hexstring(buffer, 24)
+      {36, 36}
+    end
   end
 end
