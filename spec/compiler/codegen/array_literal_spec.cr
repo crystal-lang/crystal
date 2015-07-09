@@ -130,4 +130,20 @@ describe "Code gen: array literal spec" do
       custom.value
       )).to_i.should eq(6)
   end
+
+  it "creates string array literal" do
+    run(%(require "prelude";typeof(%w(foo)).name)).to_string.should eq("Array(String)")
+  end
+
+  it "creates empty string array literal" do
+    run(%(require "prelude";typeof(%w()).name)).to_string.should eq("Array(String)")
+  end
+
+  it "creates symbol array literal" do
+    run(%(require "prelude";typeof(%i(foo)).name)).to_string.should eq("Array(Symbol)")
+  end
+
+  it "creates empty symbol array literal" do
+    run(%(require "prelude";typeof(%i()).name)).to_string.should eq("Array(Symbol)")
+  end
 end
