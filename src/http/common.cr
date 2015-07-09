@@ -6,9 +6,9 @@ module HTTP
       if line == "\r\n" || line == "\n"
         body = nil
         if content_length = headers["Content-length"]?
-          body = io.read(content_length.to_i)
+          body = FixedLengthContent.new(io, content_length.to_i)
         elsif headers["Transfer-encoding"]? == "chunked"
-          body = read_chunked_body(io)
+          body = ChunkedContent.new(io)
         end
 
         yield headers, body
@@ -77,8 +77,25 @@ module HTTP
     io << "\r\n"
     io << body if body
   end
+
+  def self.keep_alive?(message)
+    case message.headers["Connection"]?.try &.downcase
+    when "keep-alive"
+      return true
+    when "close"
+      return false
+    end
+
+    case message.version
+    when "HTTP/1.0"
+      false
+    else
+      true
+    end
+  end
 end
 
 require "./request"
 require "./response"
 require "./headers"
+require "./content"

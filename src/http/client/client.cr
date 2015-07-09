@@ -38,8 +38,20 @@ class HTTP::Client
       exec {{method.upcase}}, path, headers, body
     end
 
+    def {{method.id}}(path, headers = nil, body = nil)
+      exec {{method.upcase}}, path, headers, body do  |response|
+        yield response
+      end
+    end
+
     def self.{{method.id}}(url, headers = nil, body = nil)
       exec {{method.upcase}}, url, headers, body
+    end
+
+    def self.{{method.id}}(url, headers = nil, body = nil)
+      exec {{method.upcase}}, url, headers, body do |response|
+        yield response
+      end
     end
   {% end %}
 
@@ -63,11 +75,29 @@ class HTTP::Client
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
-    HTTP::Response.from_io(socket)
+    HTTP::Response.from_io(socket).tap do |response|
+      close unless response.keep_alive?
+    end
+  end
+
+  def exec(request : HTTP::Request, &block)
+    request.headers["User-agent"] ||= "Crystal"
+    request.to_io(socket)
+    socket.flush
+    HTTP::Response.from_io(socket) do |response|
+      yield response
+      close unless response.keep_alive?
+    end
   end
 
   def exec(method : String, path, headers = nil, body = nil)
     exec new_request method, path, headers, body
+  end
+
+  def exec(method : String, path, headers = nil, body = nil)
+    exec(new_request(method, path, headers, body)) do |response|
+      yield response
+    end
   end
 
   def close
@@ -113,6 +143,14 @@ class HTTP::Client
   def self.exec(method, url, headers = nil, body = nil)
     exec(url) do |client, path|
       client.exec method, path, headers, body
+    end
+  end
+
+  def self.exec(method, url, headers = nil, body = nil)
+    exec(url) do |client, path|
+      client.exec(method, path, headers, body) do |response|
+        yield response
+      end
     end
   end
 

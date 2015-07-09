@@ -5,9 +5,10 @@ class HTTP::Response
   getter status_code
   getter status_message
   getter headers
+  getter! body_io
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1")
+  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
     if (body = @body)
@@ -21,6 +22,10 @@ class HTTP::Response
 
   def body?
     @body
+  end
+
+  def keep_alive?
+    HTTP.keep_alive?(self)
   end
 
   def self.not_found
@@ -52,8 +57,24 @@ class HTTP::Response
       status_message = status_message.chomp
 
       HTTP.parse_headers_and_body(io) do |headers, body|
-        return new status_code, body, headers, status_message, http_version
+        return new status_code, body.try &.read, headers, status_message, http_version
       end
+    end
+
+    raise "unexpected end of http response"
+  end
+
+  def self.from_io(io, &block)
+    line = io.gets
+    if line
+      http_version, status_code, status_message = line.split(3)
+      status_code = status_code.to_i
+      status_message = status_message.chomp
+
+      HTTP.parse_headers_and_body(io) do |headers, body|
+        yield new status_code, nil, headers, status_message, http_version, body
+      end
+      return
     end
 
     raise "unexpected end of http response"

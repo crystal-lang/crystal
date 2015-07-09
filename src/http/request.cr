@@ -21,19 +21,7 @@ class HTTP::Request
   end
 
   def keep_alive?
-    case @headers["Connection"]?.try &.downcase
-    when "keep-alive"
-      return true
-    when "close"
-      return false
-    end
-
-    case @version
-    when "HTTP/1.0"
-      false
-    else
-      true
-    end
+    HTTP.keep_alive?(self)
   end
 
   def to_io(io)
