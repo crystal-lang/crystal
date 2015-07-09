@@ -2,6 +2,39 @@ require "spec"
 require "secure_random"
 
 describe SecureRandom do
+  describe "base64" do
+    it "gets base64 with default number of digits" do
+      base64 = SecureRandom.base64
+      base64.length.should eq(24)
+      base64.should_not match(/\n/)
+    end
+
+    it "gets base64 with requested number of digits" do
+      base64 = SecureRandom.base64(50)
+      base64.length.should eq(68)
+      base64.should_not match(/\n/)
+    end
+  end
+
+  describe "urlsafe_base64" do
+    it "gets urlsafe base64 with default number of digits" do
+      base64 = SecureRandom.urlsafe_base64
+      (base64.length <= 24).should be_true
+      base64.should_not match(/[\n+\/=]/)
+    end
+
+    it "gets urlsafe base64 with requested number of digits" do
+      base64 = SecureRandom.urlsafe_base64(50)
+      (base64.length >= 24 && base64.length <= 68).should be_true
+      base64.should_not match(/[\n+\/=]/)
+    end
+
+    it "keeps padding" do
+      base64 = SecureRandom.urlsafe_base64(padding: true)
+      base64[-2..-1].should eq("==")
+    end
+  end
+
   describe "hex" do
     it "gets hex with default number of digits" do
       hex = SecureRandom.hex

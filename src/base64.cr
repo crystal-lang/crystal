@@ -43,11 +43,11 @@ module Base64
     end
   end
 
-  def urlsafe_encode64(data)
+  def urlsafe_encode64(data, padding = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_SAFE, false) { |byte| appender << byte }
+      to_base64(slice, CHARS_SAFE, padding) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
