@@ -28,4 +28,17 @@ module SecureRandom
     end
     slice
   end
+
+  def self.uuid
+    bytes = random_bytes(16)
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+    {
+      bytes[0, 4].hexstring,
+      bytes[4, 2].hexstring,
+      bytes[6, 2].hexstring,
+      bytes[8, 2].hexstring,
+      bytes[10, 6].hexstring,
+    }.join('-')
+  end
 end

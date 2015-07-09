@@ -64,4 +64,11 @@ describe SecureRandom do
       bytes.length.should eq(50)
     end
   end
+
+  describe "uuid" do
+    it "gets uuid" do
+      uuid = SecureRandom.uuid
+      uuid.should match(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{4}[0-9a-f]{8}\Z/)
+    end
+  end
 end
