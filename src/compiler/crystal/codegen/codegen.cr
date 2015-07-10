@@ -1051,7 +1051,10 @@ module Crystal
 
     def visit(node : ExceptionHandler)
       rescue_block = new_block "rescue"
+
+      node_rescues = node.rescues
       node_ensure = node.ensure
+      rescue_ensure_block = nil
 
       Phi.open(self, node, @needs_value) do |phi|
         exception_handlers = (@exception_handlers ||= [] of Handler)
@@ -1077,7 +1080,11 @@ module Crystal
         unwind_ex_obj = extract_value lp, 0
         ex_type_id = extract_value lp, 1
 
-        if node_rescues = node.rescues
+        if node_rescues
+          if node_ensure
+            rescue_ensure_block = new_block "rescue_ensure"
+          end
+
           node_rescues.each do |a_rescue|
             this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
             if a_rescue_types = a_rescue.types
@@ -1109,7 +1116,12 @@ module Crystal
               # Make sure the rescue knows about the current ensure
               # and the previous catch block
               exception_handlers << Handler.new(node, context)
+              old_rescue_block = @rescue_block
+              @rescue_block = rescue_ensure_block || @rescue_block
+
               accept a_rescue.body
+
+              @rescue_block = old_rescue_block
               exception_handlers.pop
             end
             phi.add @last, a_rescue.body.type?
@@ -1126,11 +1138,31 @@ module Crystal
         codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, raise_fun.params.first.type)], true, @mod.no_return)
       end
 
-      if node_ensure && !@builder.end
-        old_last = @last
+      old_last = @last
+      builder_end = @builder.end
+
+      if node_ensure && !builder_end
         accept node_ensure
-        @last = old_last
       end
+
+      if node_ensure && node_rescues
+        old_block = insert_block
+        position_at_end rescue_ensure_block.not_nil!
+        lp_ret_type = llvm_typer.landing_pad_type
+        lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
+        unwind_ex_obj = extract_value lp, 0
+
+        accept node_ensure
+        raise_fun = main_fun(RAISE_NAME)
+        codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, raise_fun.params.first.type)], true, @mod.no_return)
+
+        position_at_end old_block
+
+        # Since we went to another block, we must restore the 'end' state
+        @builder.end = builder_end
+      end
+
+      @last = old_last
 
       false
     end

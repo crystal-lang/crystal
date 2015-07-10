@@ -697,4 +697,25 @@ describe "Code gen: exception" do
       end
       ))
   end
+
+  it "executes ensure when raising inside rescue" do
+    run(%(
+      require "prelude"
+
+      a = 1
+
+      begin
+        begin
+          raise "OH NO"
+        rescue
+          raise "LALA"
+        ensure
+          a = 2
+        end
+      rescue
+      end
+
+      a
+      )).to_i.should eq(2)
+  end
 end

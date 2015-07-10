@@ -1,6 +1,6 @@
 module Crystal
   class CrystalLLVMBuilder
-    getter :end
+    property :end
 
     def initialize(@builder, @printf)
       @end = false
