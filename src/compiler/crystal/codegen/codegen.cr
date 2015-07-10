@@ -100,7 +100,7 @@ module Crystal
 
     alias LLVMVars = Hash(String, LLVMVar)
 
-    record Handler, node, catch_block, context
+    record Handler, node, context
     record StringKey, mod, string
 
     def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
@@ -1050,13 +1050,18 @@ module Crystal
     end
 
     def visit(node : ExceptionHandler)
-      catch_block = new_block "catch"
+      rescue_block = new_block "rescue"
       node_ensure = node.ensure
 
       Phi.open(self, node, @needs_value) do |phi|
         exception_handlers = (@exception_handlers ||= [] of Handler)
-        exception_handlers << Handler.new(node, catch_block, context)
+        exception_handlers << Handler.new(node, context)
+
+        old_rescue_block = @rescue_block
+        @rescue_block = rescue_block
         accept node.body
+        @rescue_block = old_rescue_block
+
         exception_handlers.pop
 
         if node_else = node.else
@@ -1066,7 +1071,7 @@ module Crystal
           phi.add @last, node.body.type?
         end
 
-        position_at_end catch_block
+        position_at_end rescue_block
         lp_ret_type = llvm_typer.landing_pad_type
         lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
         unwind_ex_obj = extract_value lp, 0
@@ -1103,8 +1108,7 @@ module Crystal
 
               # Make sure the rescue knows about the current ensure
               # and the previous catch block
-              previous_catch_block = exception_handlers.last?.try &.catch_block
-              exception_handlers << Handler.new(node, previous_catch_block, context)
+              exception_handlers << Handler.new(node, context)
               accept a_rescue.body
               exception_handlers.pop
             end
@@ -1393,7 +1397,9 @@ module Crystal
       @llvm_mod = @main_mod
 
       old_exception_handlers = @exception_handlers
+      old_rescue_block = @rescue_block
       @exception_handlers = nil
+      @rescue_block = nil
 
       with_cloned_context do
         context.fun = @main
@@ -1409,6 +1415,7 @@ module Crystal
 
       @llvm_mod = old_llvm_mod
       @exception_handlers = old_exception_handlers
+      @rescue_block = old_rescue_block
     end
 
     def printf(format, args = [] of LLVM::Value)

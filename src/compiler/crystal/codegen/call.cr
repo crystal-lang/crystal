@@ -370,9 +370,9 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
-    if raises && (handler = @exception_handlers.try &.last?) && (catch_block = handler.catch_block)
+    if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
-      @last = builder.invoke func, call_args, invoke_out_block, catch_block
+      @last = builder.invoke func, call_args, invoke_out_block, rescue_block
       position_at_end invoke_out_block
     else
       @last = call func, call_args
