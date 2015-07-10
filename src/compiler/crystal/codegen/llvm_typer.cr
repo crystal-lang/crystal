@@ -95,6 +95,10 @@ module Crystal
       LLVM::Int32
     end
 
+    def create_llvm_type(type : LibType)
+      LLVM::Int32
+    end
+
     def create_llvm_type(type : GenericClassInstanceMetaclassType)
       LLVM::Int32
     end
