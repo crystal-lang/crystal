@@ -1636,14 +1636,14 @@ module Crystal
     end
 
     def parse_string_array
-      parse_string_or_symbol_array StringLiteral
+      parse_string_or_symbol_array StringLiteral, "String"
     end
 
     def parse_symbol_array
-      parse_string_or_symbol_array SymbolLiteral
+      parse_string_or_symbol_array SymbolLiteral, "Symbol"
     end
 
-    def parse_string_or_symbol_array(klass)
+    def parse_string_or_symbol_array(klass, elements_type)
       strings = [] of ASTNode
 
       next_string_array_token
@@ -1660,7 +1660,7 @@ module Crystal
         end
       end
 
-      ArrayLiteral.new strings
+      ArrayLiteral.new strings, Path.global(elements_type)
     end
 
     def parse_empty_array_literal
