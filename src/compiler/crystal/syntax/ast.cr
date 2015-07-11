@@ -55,7 +55,7 @@ module Crystal
     end
 
     macro def class_desc : String
-      {{@type.name.split("::").last.id.stringify }}
+      {{@type.name.split("::").last.id.stringify}}
     end
   end
 
