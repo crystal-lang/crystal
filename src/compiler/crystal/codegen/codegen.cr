@@ -565,6 +565,8 @@ module Crystal
     end
 
     def visit(node : While)
+      node.ensure_exception_handler = @ensure_exception_handlers.try &.last?
+
       with_cloned_context do
         while_block, body_block, exit_block = new_blocks "while", "body", "exit"
 
@@ -616,6 +618,7 @@ module Crystal
       if break_phi = context.break_phi
         break_phi.add @last, node_type
       elsif while_exit_block = context.while_exit_block
+        execute_ensures_until(node.target as While)
         br while_exit_block
       else
         node.raise "Bug: unknown exit for break"
@@ -630,6 +633,7 @@ module Crystal
       if next_phi = context.next_phi
         next_phi.add @last, node_type
       elsif while_block = context.while_block
+        execute_ensures_until(node.target as While)
         br while_block
       else
         node.raise "Bug: unknown exit for next"
@@ -647,6 +651,21 @@ module Crystal
       else
         @last = llvm_nil
         @mod.nil
+      end
+    end
+
+    def execute_ensures_until(node)
+      stop_exception_handler = node.ensure_exception_handler.try &.node
+
+      @ensure_exception_handlers.try &.reverse_each do |exception_handler|
+        break if exception_handler.node.same?(stop_exception_handler)
+
+        target_ensure = exception_handler.node.ensure
+        next unless target_ensure
+
+        with_context(exception_handler.context) do
+          target_ensure.accept self
+        end
       end
     end
 
@@ -1057,8 +1076,13 @@ module Crystal
       rescue_ensure_block = nil
 
       Phi.open(self, node, @needs_value) do |phi|
+        exception_handler = Handler.new(node, context)
+
         exception_handlers = (@exception_handlers ||= [] of Handler)
-        exception_handlers << Handler.new(node, context)
+        exception_handlers.push exception_handler
+
+        ensure_exception_handlers = (@ensure_exception_handlers ||= [] of Handler)
+        ensure_exception_handlers.push exception_handler
 
         old_rescue_block = @rescue_block
         @rescue_block = rescue_block
@@ -1129,6 +1153,8 @@ module Crystal
             position_at_end next_rescue_block
           end
         end
+
+        ensure_exception_handlers.pop
 
         if node_ensure
           accept node_ensure
@@ -1429,8 +1455,10 @@ module Crystal
       @llvm_mod = @main_mod
 
       old_exception_handlers = @exception_handlers
+      old_ensure_exception_handlers = @ensure_exception_handlers
       old_rescue_block = @rescue_block
       @exception_handlers = nil
+      @ensure_exception_handlers = nil
       @rescue_block = nil
 
       with_cloned_context do
@@ -1447,6 +1475,7 @@ module Crystal
 
       @llvm_mod = old_llvm_mod
       @exception_handlers = old_exception_handlers
+      @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
     end
 

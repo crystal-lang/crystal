@@ -2456,22 +2456,19 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      container = @while_stack.last? || (block.try &.break)
-      node.raise "Invalid break" unless container
+      if target_while = @while_stack.last?
+        node.target = target_while
+        target_while.has_breaks = true
 
-      if container.is_a?(While)
-        container.has_breaks = true
-
-        break_vars = (container.break_vars = container.break_vars || [] of MetaVars)
+        break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
-      else
-        if exp = node.exp
-          container.bind_to(exp)
-        else
-          container.bind_to mod.nil_var
-        end
+      elsif target_block = block
+        node.target = target_block
 
-        bind_vars @vars, block.not_nil!.after_vars
+        target_block.break.bind_to(node.exp || mod.nil_var)
+        bind_vars @vars, target_block.after_vars
+      else
+        node.raise "Invalid break"
       end
 
       @unreachable = true
@@ -2483,10 +2480,12 @@ module Crystal
 
         bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars
-      elsif @while_stack.empty?
-        node.raise "Invalid next"
-      else
+      elsif target_while = @while_stack.last?
+        node.target = target_while
+
         bind_vars @vars, @while_vars
+      else
+        node.raise "Invalid next"
       end
 
       @unreachable = true

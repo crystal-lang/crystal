@@ -32,6 +32,10 @@ module Crystal
     end
   end
 
+  class While
+    property :ensure_exception_handler
+  end
+
   class Def
     def mangled_name(self_type)
       name = String.build do |str|

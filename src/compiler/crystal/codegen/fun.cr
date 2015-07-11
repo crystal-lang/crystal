@@ -46,6 +46,7 @@ class Crystal::CodeGenVisitor
     old_entry_block = @entry_block
     old_alloca_block = @alloca_block
     old_exception_handlers = @exception_handlers
+    old_ensure_exception_handlers = @ensure_exception_handlers
     old_rescue_block = @rescue_block
     old_llvm_mod = @llvm_mod
     old_needs_value = @needs_value
@@ -58,6 +59,7 @@ class Crystal::CodeGenVisitor
       @llvm_mod = fun_module
 
       @exception_handlers = nil
+      @ensure_exception_handlers = nil
       @rescue_block = nil
       @needs_value = true
 
@@ -107,6 +109,7 @@ class Crystal::CodeGenVisitor
 
       @llvm_mod = old_llvm_mod
       @exception_handlers = old_exception_handlers
+      @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block

@@ -718,4 +718,122 @@ describe "Code gen: exception" do
       a
       )).to_i.should eq(2)
   end
+
+  it "executes ensure of break inside while inside body" do
+    run(%(
+      require "prelude"
+
+      a = 0
+      while true
+        begin
+          break
+        ensure
+          a = 123
+        end
+      end
+      a
+      )).to_i.should eq(123)
+  end
+
+  it "executes ensure of break inside while inside body with nested handlers" do
+    run(%(
+      require "prelude"
+
+      a = 0
+      b = 0
+      begin
+        while true
+          begin
+            break
+          ensure
+            a += 1
+          end
+        end
+        b = a
+      ensure
+        a += 1
+      end
+      b
+      )).to_i.should eq(1)
+  end
+
+  it "executes ensure of break inside while inside body with block" do
+    run(%(
+      require "prelude"
+
+      $a = 0
+      $b = 0
+
+      def bar
+        begin
+          yield
+        ensure
+          $a = 1
+        end
+      end
+
+      bar do
+        while true
+          break
+        end
+        $b = $a
+      end
+
+      $b
+      )).to_i.should eq(0)
+  end
+
+  it "executes ensure of break inside while inside rescue" do
+    run(%(
+      require "prelude"
+
+      a = 0
+      while true
+        begin
+          raise "OH NO"
+        rescue
+          break
+        ensure
+          a = 123
+        end
+      end
+      a
+      )).to_i.should eq(123)
+  end
+
+  it "executes ensure of break inside while inside else" do
+    run(%(
+      require "prelude"
+
+      a = 0
+      while true
+        begin
+        rescue
+        else
+          break
+        ensure
+          a = 123
+        end
+      end
+      a
+      )).to_i.should eq(123)
+  end
+
+  it "executes ensure of next inside while inside body" do
+    run(%(
+      require "prelude"
+
+      a = 0
+      continue = true
+      while continue
+        continue = false
+        begin
+          next
+        ensure
+          a = 123
+        end
+      end
+      a
+      )).to_i.should eq(123)
+  end
 end
