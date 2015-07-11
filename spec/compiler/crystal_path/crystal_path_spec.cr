@@ -33,6 +33,23 @@ describe Crystal::CrystalPath do
       ])
   end
 
+  it "finds all files with * but ignore files starting with _" do
+    path = Crystal::CrystalPath.new(__DIR__)
+    matches = path.find "ignore_files/*"
+    matches.should eq([
+      "#{__DIR__}/ignore_files/file_one.cr",
+      ])
+  end
+
+  it "finds all files with ** but ignore files starting with _" do
+    path = Crystal::CrystalPath.new(__DIR__)
+    matches = path.find "ignore_files/**"
+    matches.should eq([
+      "#{__DIR__}/ignore_files/file_one.cr",
+      "#{__DIR__}/ignore_files/test_folder/file_three.cr",
+      ])
+  end
+
   it "finds file in directory with its basename" do
     path = Crystal::CrystalPath.new(__DIR__)
     matches = path.find "test_files/test_folder"
