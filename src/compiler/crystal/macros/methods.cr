@@ -14,6 +14,8 @@ module Crystal
         interpret_argless_method("id", args) { MacroId.new(to_macro_id) }
       when "stringify"
         interpret_argless_method("stringify", args) { stringify }
+      when "class_name"
+        interpret_argless_method("class_name", args) { class_name }
       when "=="
         BoolLiteral.new(self == args.first)
       when "!="
@@ -52,6 +54,10 @@ module Crystal
 
     def stringify
       StringLiteral.new(to_s)
+    end
+
+    def class_name
+      StringLiteral.new(class_desc)
     end
   end
 

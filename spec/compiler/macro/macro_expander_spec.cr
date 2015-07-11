@@ -201,6 +201,28 @@ describe "MacroExpander" do
     it "executes == on symbols (false) (#240)" do
       assert_macro "", "{{:foo == :bar}}", [] of ASTNode, "false"
     end
+
+    describe "class_name" do
+      it "executes class_name" do
+        assert_macro "", "{{:foo.class_name}}", [] of ASTNode, "\"SymbolLiteral\""
+      end
+
+      it "executes class_name" do
+        assert_macro "x", "{{x.class_name}}", [StringLiteral.new("hello")] of ASTNode, "\"StringLiteral\""
+      end
+
+      it "executes class_name" do
+        assert_macro "x", "{{x.class_name}}", [SymbolLiteral.new("hello")] of ASTNode, "\"SymbolLiteral\""
+      end
+
+      it "executes class_name" do
+        assert_macro "x", "{{x.class_name}}", [NumberLiteral.new(1)] of ASTNode, "\"NumberLiteral\""
+      end
+
+      it "executes class_name" do
+        assert_macro "x", "{{x.class_name}}", [ArrayLiteral.new([Path.new("Foo"), Path.new("Bar")] of ASTNode)] of ASTNode, "\"ArrayLiteral\""
+      end
+    end
   end
 
   describe "number methods" do
