@@ -1478,6 +1478,7 @@ module Crystal
 
     def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
       run_instance_vars_initializers(real_type, type.generic_class, type_ptr)
+      run_instance_vars_initializers_non_recursive real_type, type, type_ptr
     end
 
     def run_instance_vars_initializers(real_type, type : InheritedGenericClass, type_ptr)
@@ -1489,6 +1490,16 @@ module Crystal
         run_instance_vars_initializers(real_type, superclass, type_ptr)
       end
 
+      return if type.is_a?(GenericClassType)
+
+      run_instance_vars_initializers_non_recursive real_type, type, type_ptr
+    end
+
+    def run_instance_vars_initializers(real_type, type : Type, type_ptr)
+      # Nothing to do
+    end
+
+    def run_instance_vars_initializers_non_recursive(real_type, type, type_ptr)
       initializers = type.instance_vars_initializers
       return unless initializers
 
@@ -1516,10 +1527,6 @@ module Crystal
           assign ivar_ptr, ivar.type, value.type, @last
         end
       end
-    end
-
-    def run_instance_vars_initializers(real_type, type : Type, type_ptr)
-      # Nothing to do
     end
 
     def malloc(type)

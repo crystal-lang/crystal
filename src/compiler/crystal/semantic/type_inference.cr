@@ -452,7 +452,10 @@ module Crystal
 
           ivar_visitor = TypeVisitor.new(mod)
           ivar_visitor.scope = current_type
-          value.accept ivar_visitor
+
+          unless current_type.is_a?(GenericType)
+            value.accept ivar_visitor
+          end
 
           current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
           if current_type.is_a?(GenericType)

@@ -805,8 +805,29 @@ module Crystal
     end
   end
 
+  module InstanceVarInitializerContainer
+    class InstanceVarInitializer
+      getter name
+      property value
+      getter meta_vars
+
+      def initialize(@name, @value, @meta_vars)
+      end
+    end
+
+    getter instance_vars_initializers
+
+    def add_instance_var_initializer(name, value, meta_vars)
+      initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
+      initializer = InstanceVarInitializer.new(name, value, meta_vars)
+      initializers << initializer
+      initializer
+    end
+  end
+
   abstract class ClassType < ModuleType
     include InheritableClass
+    include InstanceVarInitializerContainer
 
     getter :superclass
     getter :subclasses
@@ -816,7 +837,6 @@ module Crystal
     getter :owned_instance_vars
     property :instance_vars_in_initialize
     getter :allocated
-    getter :instance_vars_initializers
     property? :allowed_in_generics
 
     def initialize(program, container, name, @superclass, add_subclass = true)
@@ -934,20 +954,6 @@ module Crystal
       mod.parents.try &.each do |parent|
         transfer_instance_vars_of_mod parent
       end
-    end
-
-    class InstanceVarInitializer
-      getter name
-      property value
-      getter meta_vars
-
-      def initialize(@name, @value, @meta_vars)
-      end
-    end
-
-    def add_instance_var_initializer(name, value, meta_vars)
-      initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
-      initializers << InstanceVarInitializer.new(name, value, meta_vars)
     end
 
     def include(mod)
@@ -1321,11 +1327,7 @@ module Crystal
       end
 
       type.instance_vars_initializers.try &.each do |initializer|
-        visitor = TypeVisitor.new(program, vars: initializer.meta_vars, meta_vars: initializer.meta_vars)
-        value = initializer.value.clone
-        value.accept visitor
-        instance_var = instance.lookup_instance_var(initializer.name)
-        instance_var.bind_to(value)
+        run_instance_var_initializer initializer, instance
       end
     end
 
@@ -1335,6 +1337,17 @@ module Crystal
 
     def run_instance_vars_initializers(real_type, type, instance)
       # Nothing
+    end
+
+    def run_instance_var_initializer(initializer, instance)
+      meta_vars = MetaVars.new
+      visitor = TypeVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
+      visitor.scope = instance
+      value = initializer.value.clone
+      value.accept visitor
+      instance_var = instance.lookup_instance_var(initializer.name)
+      instance_var.bind_to(value)
+      instance.add_instance_var_initializer(initializer.name, value, meta_vars)
     end
 
     def initialize_instance(instance)
@@ -1475,6 +1488,7 @@ module Crystal
   class GenericClassInstanceType < Type
     include InheritableClass
     include InstanceVarContainer
+    include InstanceVarInitializerContainer
     include ClassVarContainer
     include DefInstanceContainer
     include MatchesLookup
@@ -1519,7 +1533,6 @@ module Crystal
     delegate superclass, @generic_class
     delegate owned_instance_vars, @generic_class
     delegate instance_vars_in_initialize, @generic_class
-    delegate instance_vars_initializers, @generic_class
     delegate macros, @generic_class
     delegate :abstract, @generic_class
     delegate struct?, @generic_class

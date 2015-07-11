@@ -463,4 +463,21 @@ describe "Type inference: generic class" do
       Bar(Float32).new
     )) { (types["Bar"] as GenericClassType).instantiate([float32] of TypeVar) }
   end
+
+  it "initializes instance variable of generic type using type var (#961)" do
+    assert_type(%(
+      class Bar(T)
+      end
+
+      class Foo(T)
+        @bar = Bar(T).new
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo(Int32).new.bar
+      )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
+  end
 end

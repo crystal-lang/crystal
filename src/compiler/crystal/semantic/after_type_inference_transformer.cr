@@ -19,14 +19,14 @@ module Crystal
 
     def finish_type(type, transformer)
       case type
-      when ClassType
-        finish_single_type(type, transformer)
       when GenericClassInstanceType
         finish_single_type(type, transformer)
       when GenericClassType
         type.generic_types.each_value do |instance|
           finish_type instance, transformer
         end
+      when ClassType
+        finish_single_type(type, transformer)
       end
     end
 
@@ -44,6 +44,7 @@ module Crystal
   class AfterTypeInferenceTransformer < Transformer
     def initialize(@program)
       @transformed = Set(typeof(object_id)).new
+      @def_nest_count = 0
     end
 
     def transform(node : Def)
@@ -114,6 +115,11 @@ module Crystal
 
     def transform(node : Assign)
       target = node.target
+
+      # This is the case of an instance variable initializer
+      if @def_nest_count == 0 && target.is_a?(InstanceVar)
+        return Nop.new
+      end
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
@@ -280,7 +286,11 @@ module Crystal
               node.bubbling_exception do
                 old_body = target_def.body
                 old_type = target_def.body.type?
+
+                @def_nest_count += 1
                 target_def.body = target_def.body.transform(self)
+                @def_nest_count -= 1
+
                 new_type = target_def.body.type?
 
                 # It can happen that the body of the function changed, and as
