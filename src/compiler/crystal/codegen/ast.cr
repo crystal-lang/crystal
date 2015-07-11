@@ -36,7 +36,13 @@ module Crystal
     property :ensure_exception_handler
   end
 
+  class Block
+    property :ensure_exception_handler
+  end
+
   class Def
+    property :ensure_exception_handler
+
     def mangled_name(self_type)
       name = String.build do |str|
         str << "*"

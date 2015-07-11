@@ -527,6 +527,10 @@ module Crystal
     property! target
   end
 
+  class Return
+    property! target
+  end
+
   class FunPointer
     property! :call
 

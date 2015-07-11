@@ -1323,17 +1323,16 @@ module Crystal
 
     def visit(node : Return)
       node.raise "can't return from top level" unless @typed_def
-      true
-    end
 
-    def end_visit(node : Return)
+      node.exp.try &.accept self
+
+      node.target = @typed_def
+
       typed_def = @typed_def.not_nil!
-      if exp = node.exp
-        typed_def.bind_to exp
-      else
-        typed_def.bind_to mod.nil_var
-      end
+      typed_def.bind_to(node.exp || mod.nil_var)
       @unreachable = true
+
+      false
     end
 
     def visit(node : Generic)
@@ -2456,17 +2455,18 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      if target_while = @while_stack.last?
+      if target_block = block
+        node.target = target_block
+
+        target_block.break.bind_to(node.exp || mod.nil_var)
+
+        bind_vars @vars, target_block.after_vars
+      elsif target_while = @while_stack.last?
         node.target = target_while
         target_while.has_breaks = true
 
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
-      elsif target_block = block
-        node.target = target_block
-
-        target_block.break.bind_to(node.exp || mod.nil_var)
-        bind_vars @vars, target_block.after_vars
       else
         node.raise "Invalid break"
       end
@@ -2476,6 +2476,8 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
+        node.target = block
+
         block.bind_to(node.exp || mod.nil_var)
 
         bind_vars @vars, block.vars

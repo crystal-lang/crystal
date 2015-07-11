@@ -861,4 +861,143 @@ describe "Code gen: exception" do
       $a
       )).to_i.should eq(2)
   end
+
+  it "executes ensure from return until target" do
+    run(%(
+      require "prelude"
+
+      def foo
+        yield
+        return
+      end
+
+      a = 0
+
+      begin
+        foo {}
+      ensure
+        a += 1
+      end
+
+      a
+      )).to_i.should eq(1)
+  end
+
+  it "executes ensure from return until target" do
+    run(%(
+      require "prelude"
+
+      $a = 0
+
+      def foo
+        begin
+          yield
+        ensure
+          $a += 1
+        end
+      end
+
+      def bar
+        begin
+          foo do
+            return
+          end
+        ensure
+          $a += 1
+        end
+      end
+
+      bar
+
+      $a
+      )).to_i.should eq(2)
+  end
+
+  it "executes ensure of next inside block" do
+    run(%(
+      require "prelude"
+
+      def foo
+        yield
+      end
+
+      a = 0
+      b = 0
+
+      begin
+        foo do
+          begin
+            next
+          ensure
+            a += 1
+          end
+        end
+        b = a
+      ensure
+        a += 1
+      end
+
+      b
+      )).to_i.should eq(1)
+  end
+
+  it "executes ensure of next inside block" do
+    run(%(
+      require "prelude"
+
+      $a = 0
+      $b = 0
+
+      def foo
+        begin
+          yield
+          $b = $a
+        ensure
+          $a += 1
+        end
+      end
+
+      begin
+        foo do
+          begin
+            next
+          ensure
+            $a += 1
+          end
+        end
+      ensure
+        $a += 1
+      end
+
+      $b
+      )).to_i.should eq(1)
+  end
+
+  it "executes ensure of break inside block" do
+    run(%(
+      require "prelude"
+
+      def foo
+        yield
+      end
+
+      a = 0
+      b = 0
+
+      begin
+        foo do
+          begin
+            break
+          ensure
+            a += 1
+          end
+        end
+        b = a
+      ensure
+        a += 1
+      end
+
+      b
+      )).to_i.should eq(1)
+  end
 end

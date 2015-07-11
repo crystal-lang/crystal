@@ -230,6 +230,7 @@ class Crystal::CodeGenVisitor
         context.reset_closure
 
         target_def = node.target_def
+        target_def.ensure_exception_handler = current_ensure_exception_handler
 
         alloca_vars target_def.vars, target_def
         create_local_copy_of_block_args(target_def, self_type, call_args)
