@@ -417,7 +417,7 @@ module Crystal
   #
   #     [ obj '.' ] name '(' ')' [ block ]
   #   |
-  #     [ obj '.' ] name '(' arg [ ',' arg ]* ')' [ block]
+  #     [ obj '.' ] name '(' arg [ ',' arg ]* ')' [ block ]
   #   |
   #     [ obj '.' ] name arg [ ',' arg ]* [ block ]
   #   |
