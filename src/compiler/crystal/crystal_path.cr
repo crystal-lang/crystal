@@ -3,6 +3,7 @@ require "./config"
 module Crystal
   struct CrystalPath
     DEFAULT_PATH = ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
+    IGNORE_PREFIX = "_"
 
     def initialize(path = DEFAULT_PATH)
       @crystal_path = path.split ':'
@@ -67,11 +68,11 @@ module Crystal
         full_name = "#{dir}/#{filename}"
 
         if File.directory?(full_name)
-          if filename != "." && filename != ".." && recursive
+          if filename != "." && filename != ".." && recursive && !filename.starts_with?(IGNORE_PREFIX)
             dirs << filename
           end
         else
-          if filename.ends_with?(".cr")
+          if filename.ends_with?(".cr") && !filename.starts_with?(IGNORE_PREFIX)
             files << full_name
           end
         end
