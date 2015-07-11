@@ -12,6 +12,15 @@ describe "Set" do
     end
   end
 
+  describe "new" do
+    it "creates new set with enumerable without block" do
+      set = Set.new([2, 4, 6, 4])
+
+      set.length.should eq(3)
+      set.to_a.sort.should eq([2, 4, 6])
+    end
+  end
+
   describe "add" do
     it "adds and includes" do
       set = Set(Int32).new
