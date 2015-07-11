@@ -6,9 +6,9 @@ struct Set(T)
     @hash = Hash(T, Nil).new
   end
 
-  def self.new(array : Array(T))
+  def self.new(enumerable : Enumerable(T))
     set = Set(T).new
-    array.each do |elem|
+    enumerable.each do |elem|
       set << elem
     end
     set

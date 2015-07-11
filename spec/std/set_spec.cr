@@ -14,10 +14,15 @@ describe "Set" do
 
   describe "new" do
     it "creates new set with enumerable without block" do
-      set = Set.new([2, 4, 6, 4])
+      set_from_array = Set.new([2, 4, 6, 4])
+      set_from_array.length.should eq(3)
+      set_from_array.to_a.sort.should eq([2, 4, 6])
 
-      set.length.should eq(3)
-      set.to_a.sort.should eq([2, 4, 6])
+      set_from_tulpe = Set.new({1, "hello", 'x'})
+      set_from_tulpe.length.should eq(3)
+      set_from_tulpe.to_a.includes?(1).should be_true
+      set_from_tulpe.to_a.includes?("hello").should be_true
+      set_from_tulpe.to_a.includes?('x').should be_true
     end
   end
 
