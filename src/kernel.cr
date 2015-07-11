@@ -102,6 +102,7 @@ end
 def exit(status = 0)
   AtExitHandlers.run
   STDOUT.flush
+  STDERR.flush
   Process.exit(status)
 end
 
