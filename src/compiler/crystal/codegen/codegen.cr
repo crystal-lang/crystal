@@ -417,15 +417,11 @@ module Crystal
     def visit(node : Return)
       node_type = accept_control_expression(node)
 
-      if handler = @exception_handlers.try &.last?
-        if node_ensure = handler.node.ensure
-          old_last = @last
-          with_context(handler.context) do
-            accept node_ensure
-          end
-          @last = old_last
-        end
-      end
+      old_last = @last
+
+      execute_ensures_until nil
+
+      @last = old_last
 
       if return_phi = context.return_phi
         return_phi.add @last, node_type
@@ -655,7 +651,7 @@ module Crystal
     end
 
     def execute_ensures_until(node)
-      stop_exception_handler = node.ensure_exception_handler.try &.node
+      stop_exception_handler = node.try &.ensure_exception_handler.try &.node
 
       @ensure_exception_handlers.try &.reverse_each do |exception_handler|
         break if exception_handler.node.same?(stop_exception_handler)
@@ -1078,9 +1074,6 @@ module Crystal
       Phi.open(self, node, @needs_value) do |phi|
         exception_handler = Handler.new(node, context)
 
-        exception_handlers = (@exception_handlers ||= [] of Handler)
-        exception_handlers.push exception_handler
-
         ensure_exception_handlers = (@ensure_exception_handlers ||= [] of Handler)
         ensure_exception_handlers.push exception_handler
 
@@ -1088,8 +1081,6 @@ module Crystal
         @rescue_block = rescue_block
         accept node.body
         @rescue_block = old_rescue_block
-
-        exception_handlers.pop
 
         if node_else = node.else
           accept node_else
@@ -1139,14 +1130,12 @@ module Crystal
 
               # Make sure the rescue knows about the current ensure
               # and the previous catch block
-              exception_handlers << Handler.new(node, context)
               old_rescue_block = @rescue_block
               @rescue_block = rescue_ensure_block || @rescue_block
 
               accept a_rescue.body
 
               @rescue_block = old_rescue_block
-              exception_handlers.pop
             end
             phi.add @last, a_rescue.body.type?
 

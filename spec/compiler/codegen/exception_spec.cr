@@ -836,4 +836,29 @@ describe "Code gen: exception" do
       a
       )).to_i.should eq(123)
   end
+
+  it "executes return inside rescue, executing ensure" do
+    run(%(
+      require "prelude"
+
+      $a = 0
+
+      def foo
+        begin
+          begin
+            raise "foo"
+          rescue
+            $a += 1
+            return
+          end
+        ensure
+          $a += 1
+        end
+      end
+
+      foo
+
+      $a
+      )).to_i.should eq(2)
+  end
 end
