@@ -35,7 +35,7 @@ class HTTP::Request
 
     method, path, http_version = request_line.split
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, path, headers, body, http_version
+      return new method, path, headers, body.try &.read, http_version
     end
 
     # Unexpected end of http request

@@ -86,6 +86,7 @@ class HTTP::Client
     socket.flush
     HTTP::Response.from_io(socket) do |response|
       yield response
+      response.body_io.try &.close
       close unless response.keep_alive?
     end
   end

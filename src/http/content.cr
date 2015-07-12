@@ -1,5 +1,13 @@
 module HTTP
-  class FixedLengthContent
+  abstract class Content
+    def close
+      buffer :: UInt8[1024]
+      while read(buffer.to_slice) > 0
+      end
+    end
+  end
+
+  class FixedLengthContent < Content
     include IO
 
     def initialize(@io, length)
@@ -18,7 +26,7 @@ module HTTP
     end
   end
 
-  class ChunkedContent
+  class ChunkedContent < Content
     include IO
 
     def initialize(@io)
