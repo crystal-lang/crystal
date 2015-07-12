@@ -72,9 +72,8 @@ class HTTP::Response
       status_message = status_message.chomp
 
       HTTP.parse_headers_and_body(io) do |headers, body|
-        yield new status_code, nil, headers, status_message, http_version, body
+        return yield new status_code, nil, headers, status_message, http_version, body
       end
-      return
     end
 
     raise "unexpected end of http response"

@@ -39,7 +39,7 @@ class HTTP::Client
     end
 
     def {{method.id}}(path, headers = nil, body = nil)
-      exec {{method.upcase}}, path, headers, body do  |response|
+      exec {{method.upcase}}, path, headers, body do |response|
         yield response
       end
     end
@@ -85,9 +85,10 @@ class HTTP::Client
     request.to_io(socket)
     socket.flush
     HTTP::Response.from_io(socket) do |response|
-      yield response
+      value = yield response
       response.body_io.try &.close
       close unless response.keep_alive?
+      value
     end
   end
 
