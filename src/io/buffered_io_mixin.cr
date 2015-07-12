@@ -14,6 +14,12 @@ module BufferedIOMixin
   #   @flush_on_newline = false
   # end
 
+  abstract def unbuffered_read(slice : Slice(UInt8), count)
+  abstract def unbuffered_write(slice : Slice(UInt8), count)
+  abstract def unbuffered_flush
+  abstract def unbuffered_close
+  abstract def unbuffered_rewind
+
   def gets(delimiter : Char)
     if delimiter.ord >= 128
       return super

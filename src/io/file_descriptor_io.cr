@@ -43,8 +43,8 @@ class FileDescriptorIO
     end
   end
 
-  # TODO: probably flush buffer
   def seek(amount, whence = SEEK_SET)
+    flush
     LibC.lseek(@fd, LibC::SizeT.cast(amount), whence)
   end
 
