@@ -313,8 +313,8 @@ class Markdown::Parser
           @renderer.end_link
 
           paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.ord).not_nil!
-          pos += paren_idx + 2
-          cursor = pos
+          pos += paren_idx + 1
+          cursor = pos + 1
           in_link = false
         end
       end
