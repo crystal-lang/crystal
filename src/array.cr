@@ -13,8 +13,8 @@
 # ```
 #
 # An Array can have mixed types, meaning T will be a union of types, but these are determined
-# when the array is created, either by specifying T or by using an array literal. In the later
-# case, T will be set to the union of the array literal elements.
+# when the array is created, either by specifying T or by using an array literal. In the latter
+# case, T will be set to the union of the array literal elements' types.
 #
 # When creating an empty array you must always specify T:
 #
@@ -121,7 +121,7 @@ class Array(T)
   # by passing it to a C function.
   #
   # ```
-  # Array.new(3) do |buffer|
+  # Array.build(3) do |buffer|
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
@@ -131,14 +131,38 @@ class Array(T)
     ary
   end
 
+  # Equality. Returns true if it is passed an Array and `equals?`
+  # returns true for both arrays, the caller and the argument.
+  #
+  # ```
+  # ary = [1,2,3]
+  # ary == [1,2,3] # => true
+  # ary == [2,3]   # => false
+  # ```
   def ==(other : Array)
     equals?(other) { |x, y| x == y }
   end
 
+  # :nodoc:
   def ==(other)
     false
   end
 
+  # Combined comparison operator. Returns 0 if the first array equals the second, 1
+  # if the first is greater than the second and -1 if the first is smaller than
+  # the second.
+  #
+  # It compares the elements of both arrays in the same position using the
+  # `<=>` operator, as soon as one of such comparisons returns a non zero
+  # value, that result is the return value of the whole comparison.
+  #
+  # If all elements are equal, the comparison is based on the length of the arrays.
+  #
+  # ```
+  # [8] <=> [1,2,3] # => 1
+  # [2] <=> [4,2,3] # => -1
+  # [1,2] <=> [1,2] # => 0
+  # ```
   def <=>(other : Array)
     min_length = Math.min(length, other.length)
     0.upto(min_length - 1) do |i|
@@ -207,6 +231,14 @@ class Array(T)
     end
   end
 
+  # Concatenation. Returns a new array built by concatenating two arrays
+  # together to create a third. The type of the new array is the union of the
+  # types of both the other arrays.
+  #
+  # ```
+  # [1,2] + ["a"] # => [1,2,"a"] of (Int32 | String)
+  # [1,2] + [2,3] # => [1,2,2,3]
+  # ```
   def +(other : Array(U))
     new_length = length + other.length
     Array(T | U).build(new_length) do |buffer|
@@ -216,6 +248,13 @@ class Array(T)
     end
   end
 
+  # Difference. Returns a new array that is a copy of the original, removing
+  # any items that appear in `other`. The order of the original array is
+  # preserved.
+  #
+  # ```
+  # [1,2,3] - [2,1] # => [3]
+  # ```
   def -(other : Array(U))
     ary = Array(T).new(length - other.length)
     hash = other.to_lookup_hash
@@ -225,6 +264,12 @@ class Array(T)
     ary
   end
 
+  # Append. Alias for `push`.
+  #
+  # ```
+  # a = [1,2]
+  # a << 3 # => [1,2,3]
+  # ```
   def <<(value : T)
     push(value)
   end
@@ -327,6 +372,7 @@ class Array(T)
     indexes.map {|index| self[index] }
   end
 
+  # :nodoc:
   def buffer
     @buffer
   end
@@ -697,6 +743,20 @@ class Array(T)
     self.each { |a| ary.each { |b| yield a, b } }
   end
 
+  # Append. Pushes one value to the end of the array, given that the type of
+  # the value belongs to the union type of the array. This expression returns
+  # the array iself, so several of them can be chained. See `pop` for the
+  # opposite effect.
+  #
+  # ```
+  # a = ["a", "b"]
+  # a.push("c") # => ["a", "b", "c"]
+  # a.push(1) # => Errors, because the array only accepts String
+  #
+  # a = ["a", "b"] of (Int32|String)
+  # a.push("c") # => ["a", "b", "c"]
+  # a.push(1) # => ["a", "b", "c", 1]
+  # ```
   def push(value : T)
     check_needs_resize
     @buffer[@length] = value
@@ -704,6 +764,8 @@ class Array(T)
     self
   end
 
+  # Append multiple values. The same as `push`, but takes an arbitrary number
+  # of values to push into the array.
   def push(*values : T)
     values.each do |value|
       self << value
