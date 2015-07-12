@@ -89,4 +89,6 @@ describe Markdown do
   assert_render "  *  *  *  ", "<hr/>"
 
   assert_render "hello < world", "<p>hello &lt; world</p>"
+
+  assert_render "Hello __[World](http://foo.com)__!", %(<p>Hello <strong><a href="http://foo.com">World</a></strong>!</p>)
 end
