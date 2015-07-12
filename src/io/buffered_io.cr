@@ -4,7 +4,7 @@ class BufferedIO(T)
   include BufferedIOMixin
 
   def initialize(@io : T)
-    @in_remaining = Slice.new(Pointer(UInt8).null, 0)
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
     @out_count = 0
     @flush_on_newline = false
     @sync = false
@@ -15,18 +15,6 @@ class BufferedIO(T)
     yield buffered_io
     buffered_io.flush
     io
-  end
-
-  def fd
-    @io.fd
-  end
-
-  def closed?
-    @io.closed?
-  end
-
-  def to_fd_io
-    @io.to_fd_io
   end
 
   private def unbuffered_read(slice : Slice(UInt8), count)
@@ -41,8 +29,20 @@ class BufferedIO(T)
     @io.flush
   end
 
+  def fd
+    @io.fd
+  end
+
   private def unbuffered_close
     @io.close
+  end
+
+  def closed?
+    @io.closed?
+  end
+
+  def to_fd_io
+    @io.to_fd_io
   end
 
   private def unbuffered_rewind
