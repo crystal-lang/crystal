@@ -448,4 +448,36 @@ describe "Type inference: generic class" do
       Bar(Char).new.x
       )) { int32 }
   end
+
+  it "calls super on generic type when superclass has no initialize (#933)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+          def initialize()
+              super()
+          end
+      end
+
+      Bar(Float32).new
+    )) { (types["Bar"] as GenericClassType).instantiate([float32] of TypeVar) }
+  end
+
+  it "initializes instance variable of generic type using type var (#961)" do
+    assert_type(%(
+      class Bar(T)
+      end
+
+      class Foo(T)
+        @bar = Bar(T).new
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo(Int32).new.bar
+      )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
+  end
 end

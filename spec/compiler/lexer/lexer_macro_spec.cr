@@ -536,4 +536,12 @@ describe "Lexer macro" do
     token.type.should eq(:IDENT)
     token.value.should eq("op")
   end
+
+  it "lexes escaped quote inside string (#895)" do
+    lexer = Lexer.new(%("\\"" end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%("\\"" ))
+  end
 end

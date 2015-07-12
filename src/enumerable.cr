@@ -51,8 +51,8 @@ module Enumerable(T)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil` for at least one element of the collection.
   #
-  #     ["ant", "bear", "cat"].any? { |word| word.length >= 3 }  #=> true
   #     ["ant", "bear", "cat"].any? { |word| word.length >= 4 }  #=> true
+  #     ["ant", "bear", "cat"].any? { |word| word.length > 4 }   #=> false
   #
   def any?
     each { |e| return true if yield e }
@@ -62,6 +62,7 @@ module Enumerable(T)
   # Returns `true` if at least one of the collection members is not `false` or `nil`.
   #
   #     [nil, true, 99].any?  #=> true
+  #     [nil, false].any?     #=> false
   #
   def any?
     any? &.itself
@@ -117,6 +118,35 @@ module Enumerable(T)
   # Calls the given block for each element in this enumerable *n* times.
   def cycle(n)
     n.times { each { |x| yield x } }
+  end
+
+  # Returns an array with the first *count* elements removed from the original collection.
+  #
+  # If *count* is bigger than the number of elements in the collection, returns an empty array.
+  #
+  #     [1, 2, 3, 4, 5, 6].drop(3)  #=> [4, 5, 6]
+  def drop(count : Int)
+    raise ArgumentError.new("attempt to drop negative size") if count < 0
+
+    array = Array(T).new
+    each_with_index do |e, i|
+      array << e if i >= count
+    end
+    array
+  end
+
+  # Drops elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
+  #
+  #     [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3} #=> [3, 4, 5, 0]
+  #
+  def drop_while
+    result = Array(T).new
+    block_returned_false = false
+    each do |x|
+      block_returned_false = true unless block_returned_false || yield x
+      result << x if block_returned_false
+    end
+    result
   end
 
   # Iterates over the collection in slices of size *count*, and runs the block for each of those.
@@ -347,6 +377,9 @@ module Enumerable(T)
   end
 
   # Just like the other variant, but you can set the initial value of the accumulator.
+  #
+  #     [1, 2, 3, 4, 5].inject(10) { |acc, i| acc + i }  #=> 25
+  #
   def inject(memo)
     each do |elem|
       memo = yield memo, elem
@@ -379,7 +412,7 @@ module Enumerable(T)
 
   # Prints to *io* all the elements in the collection, separated by *separator*.
   #
-  #     [1, 2, 3, 4, 5].join(", ")
+  #     [1, 2, 3, 4, 5].join(", ", STDOUT)
   #
   # Prints:
   #
@@ -608,6 +641,16 @@ module Enumerable(T)
     true
   end
 
+  # Returns `true` if all of the elements of the collection are `false` or `nil`.
+  #
+  #     [nil, false].none?        #=> true
+  #     [nil, false, true].none?  #=> false
+  #
+  # It's the opposite of `all?`.
+  def none?
+    none? &.itself
+  end
+
   # Returns `true` if the passed block returns `true` for exactly one of the elements of the collection.
   #
   #     [1, 2, 3].one? { |i| i > 2 }  #=> true
@@ -683,12 +726,27 @@ module Enumerable(T)
   # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
   # include the case of calling it over an empty collection, in which case it returns an empty array.
   def take(count : Int)
+    raise ArgumentError.new("attempt to take negative size") if count < 0
+
     ary = Array(T).new(count)
     each_with_index do |e, i|
       break if i == count
       ary << e
     end
     ary
+  end
+
+  # Passes elements to the block until the block returns nil or false, then stops iterating and returns an array of all prior elements.
+  #
+  #     [1, 2, 3, 4, 5, 0].take_while {|i| i < 3} #=> [1, 2]
+  #
+  def take_while
+    result = Array(T).new
+    each do |x|
+      break unless yield x
+      result << x
+    end
+    result
   end
 
   # Returns an array with all the elements in the collection.

@@ -657,9 +657,9 @@ describe "Parser" do
 
   it_parses "A = 1", Assign.new("A".path, 1.int32)
 
-  it_parses "puts %w(one two)", Call.new(nil, "puts", (["one".string, "two".string] of ASTNode).array)
-  it_parses "puts %w{one two}", Call.new(nil, "puts", (["one".string, "two".string] of ASTNode).array)
-  it_parses "puts %i(one two)", Call.new(nil, "puts", (["one".symbol, "two".symbol] of ASTNode).array)
+  it_parses "puts %w(one two)", Call.new(nil, "puts", (["one".string, "two".string] of ASTNode).array_of(Path.global("String")))
+  it_parses "puts %w{one two}", Call.new(nil, "puts", (["one".string, "two".string] of ASTNode).array_of(Path.global("String")))
+  it_parses "puts %i(one two)", Call.new(nil, "puts", (["one".symbol, "two".symbol] of ASTNode).array_of(Path.global("Symbol")))
   it_parses "puts {{1}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{\n1\n}}", Call.new(nil, "puts", MacroExpression.new(1.int32))
   it_parses "puts {{*1}}", Call.new(nil, "puts", MacroExpression.new(1.int32.splat))
@@ -1140,6 +1140,10 @@ describe "Parser" do
   assert_syntax_error "self = 1",
                       "can't change the value of self"
   assert_syntax_error "self += 1",
+                      "can't change the value of self"
+  assert_syntax_error "self, x = 1, 2",
+                      "can't change the value of self"
+  assert_syntax_error "x, self = 1, 2",
                       "can't change the value of self"
 
   assert_syntax_error "macro foo(x : Int32); end"

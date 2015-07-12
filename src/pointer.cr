@@ -134,6 +134,13 @@ struct Pointer(T)
     self
   end
 
+  # :nodoc:
+  def copy_from(source : Pointer(NoReturn), count : Int)
+    # We need this overload for cases when we have a pointer to unreachable
+    # data, like when doing Tuple.new.to_a
+    self
+  end
+
   # Copies *count* elements from *self* into *target*.
   # If *self* and *target* overlap, behaviour is undefined.
   # Use `#move_to` if they overlap (slower but always works).
@@ -185,6 +192,13 @@ struct Pointer(T)
         end
       end
     end
+    self
+  end
+
+  # :nodoc:
+  def move_from(source : Pointer(NoReturn), count : Int)
+    # We need this overload for cases when we have a pointer to unreachable
+    # data, like when doing Tuple.new.to_a
     self
   end
 

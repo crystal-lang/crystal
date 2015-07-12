@@ -177,4 +177,19 @@ describe "Restrictions" do
       foo(x)
       )) { char }
   end
+
+  it "works with generic compared to fixed (primitive) type" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      struct Float64
+        def /(other : Foo(_))
+          'a'
+        end
+      end
+
+      1.5 / Foo(Int32).new
+      )) { char }
+  end
 end

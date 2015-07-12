@@ -29,7 +29,7 @@ module Crystal
     end
 
     def llvm_nil
-      int1(0)
+      LLVMTyper::NIL_VALUE
     end
 
     def llvm_false

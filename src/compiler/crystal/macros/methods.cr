@@ -21,7 +21,7 @@ module Crystal
       when "!"
         BoolLiteral.new(!truthy?)
       else
-        raise "undefined macro method #{class_desc}##{method}'"
+        raise "undefined macro method '#{class_desc}##{method}'"
       end
     end
 
@@ -253,6 +253,8 @@ module Crystal
           end
           StringLiteral.new(@value + piece)
         end
+      when "camelcase"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.camelcase) }
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
       when "chars"
@@ -334,6 +336,8 @@ module Crystal
           raise "second arguent to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
           StringLiteral.new(value.tr(first.value, second.value))
         end
+      when "underscore"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.underscore) }
       when "upcase"
         interpret_argless_method(method, args) { StringLiteral.new(@value.upcase) }
       else
@@ -563,6 +567,19 @@ module Crystal
       when "args"
         interpret_argless_method(method, args) do
           ArrayLiteral.map(@args) { |arg| MacroId.new(arg.name) }
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class Expressions
+    def interpret(method, args, block, interpreter)
+      case method
+      when "expressions"
+        interpret_argless_method(method, args) do
+          ArrayLiteral.map(@expressions) { |expression| expression }
         end
       else
         super
@@ -858,6 +875,19 @@ module Crystal
   class Path
     def to_macro_id
       @names.join "::"
+    end
+  end
+
+  class Cast
+    def interpret(method, args, block, interpreter)
+      case method
+      when "obj"
+        obj
+      when "to"
+        to
+      else
+        super
+      end
     end
   end
 end

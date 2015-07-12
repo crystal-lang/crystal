@@ -110,10 +110,13 @@ class Crystal::Call
     arg_types = Array(Type).new(args.length * 2)
     args.each do |arg|
       if arg.is_a?(Splat)
-        if (arg_type = arg.type).is_a?(TupleInstanceType)
+        case arg_type = arg.type
+        when TupleInstanceType
           arg_types.concat arg_type.tuple_types
+        when UnionType
+          arg.raise "splatting a union #{arg_type} is not yet supported"
         else
-          arg.raise "splatting a union (#{arg_type}) is not yet supported"
+          arg.raise "argument to splat must be a tuple, not #{arg_type}"
         end
       else
         arg_types << arg.type

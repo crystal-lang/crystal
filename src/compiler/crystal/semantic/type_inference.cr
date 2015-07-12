@@ -181,12 +181,15 @@ module Crystal
 
         var.bind_to node
 
-        meta_var = new_meta_var(var.name)
+        meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
+        if (existing_type = meta_var.type?) && existing_type != node.type
+          node.raise "variable '#{var.name}' already declared with type #{existing_type}"
+        end
+
         meta_var.bind_to(var)
         meta_var.freeze_type = node.type
 
         @vars[var.name] = meta_var
-        @meta_vars[var.name] = meta_var
 
         check_exception_handler_vars(var.name, node)
       when InstanceVar
@@ -449,7 +452,10 @@ module Crystal
 
           ivar_visitor = TypeVisitor.new(mod)
           ivar_visitor.scope = current_type
-          value.accept ivar_visitor
+
+          unless current_type.is_a?(GenericType)
+            value.accept ivar_visitor
+          end
 
           current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
           if current_type.is_a?(GenericType)
@@ -1317,17 +1323,16 @@ module Crystal
 
     def visit(node : Return)
       node.raise "can't return from top level" unless @typed_def
-      true
-    end
 
-    def end_visit(node : Return)
+      node.exp.try &.accept self
+
+      node.target = @typed_def
+
       typed_def = @typed_def.not_nil!
-      if exp = node.exp
-        typed_def.bind_to exp
-      else
-        typed_def.bind_to mod.nil_var
-      end
+      typed_def.bind_to(node.exp || mod.nil_var)
       @unreachable = true
+
+      false
     end
 
     def visit(node : Generic)
@@ -2450,22 +2455,20 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      container = @while_stack.last? || (block.try &.break)
-      node.raise "Invalid break" unless container
+      if target_block = block
+        node.target = target_block
 
-      if container.is_a?(While)
-        container.has_breaks = true
+        target_block.break.bind_to(node.exp || mod.nil_var)
 
-        break_vars = (container.break_vars = container.break_vars || [] of MetaVars)
+        bind_vars @vars, target_block.after_vars
+      elsif target_while = @while_stack.last?
+        node.target = target_while
+        target_while.has_breaks = true
+
+        break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
       else
-        if exp = node.exp
-          container.bind_to(exp)
-        else
-          container.bind_to mod.nil_var
-        end
-
-        bind_vars @vars, block.not_nil!.after_vars
+        node.raise "Invalid break"
       end
 
       @unreachable = true
@@ -2473,14 +2476,18 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
+        node.target = block
+
         block.bind_to(node.exp || mod.nil_var)
 
         bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars
-      elsif @while_stack.empty?
-        node.raise "Invalid next"
-      else
+      elsif target_while = @while_stack.last?
+        node.target = target_while
+
         bind_vars @vars, @while_vars
+      else
+        node.raise "Invalid next"
       end
 
       @unreachable = true
@@ -2962,7 +2969,7 @@ module Crystal
         current_type.include module_to_include
         run_hooks type.metaclass, current_type, kind, node
       rescue ex : TypeException
-        node_name.raise ex.message
+        node.raise "at '#{kind}' hook", ex
       end
     end
 

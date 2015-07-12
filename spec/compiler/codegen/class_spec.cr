@@ -644,4 +644,15 @@ describe "Code gen: class" do
       Foo(Int32).new.sum
       )).to_i.should eq(6)
   end
+
+  it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
+    build(%(
+      class Klass
+        def f(arg)
+        end
+
+        @a = ->f(String)
+      end
+      ))
+  end
 end

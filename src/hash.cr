@@ -247,6 +247,13 @@ class Hash(K, V)
     hash
   end
 
+  def merge(other : Hash(L, W), &block : K, V, W -> V | W)
+    hash = Hash(K | L, V | W).new
+    hash.merge! self
+    hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
+    hash
+  end
+
   def merge!(other : Hash(K, V))
     other.each do |k, v|
       self[k] = v

@@ -1,6 +1,87 @@
 require "spec"
 
 describe "Enumerable" do
+
+  describe "all? with block" do
+    it "returns true" do
+      ["ant", "bear", "cat"].all? { |word| word.length >= 3 }.should be_true
+    end
+
+    it "returns false" do
+      ["ant", "bear", "cat"].all? { |word| word.length >= 4 }.should be_false
+    end
+  end
+
+  describe "all? without block" do
+    it "returns true" do
+      [15].all?.should be_true
+    end
+
+    it "returns false" do
+      [nil, true, 99].all?.should be_false
+    end
+  end
+
+  describe "drop" do
+    it "returns an array without the dropped elements" do
+      [1, 2, 3, 4, 5, 6].drop(3).should eq [4, 5, 6]
+    end
+
+    it "returns an empty array when dropping more elements than array size" do
+      [1, 2].drop(3).should eq [] of Int32
+    end
+
+    it "raises if count is negative" do
+      expect_raises(ArgumentError) do
+        [1, 2].drop(-1)
+      end
+    end
+  end
+
+  describe "drop_while" do
+    it "drops elements while the condition holds true" do
+      result = [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3}
+      result.should eq [3, 4, 5, 0]
+    end
+
+    it "returns an empty array if the condition is always true" do
+      [1, 2, 3].drop_while {true}.should eq [] of Int32
+    end
+
+    it "returns the full Array if the the first check is false" do
+      [5, 0, 1, 2, 3].drop_while {|x| x < 4}.should eq [5, 0, 1, 2, 3]
+    end
+
+    it "does not yield to the block anymore once it returned false" do
+      called = 0
+      [1, 2, 3, 4, 4].drop_while do |i|
+        called += 1
+        i < 3
+      end
+      called.should eq 3
+    end
+  end
+
+  describe "any? with block" do
+    it "returns true if at least one element fulfills the condition" do
+      ["ant", "bear", "cat"].any? { |word| word.length >= 4 }.should be_true
+    end
+
+    it "returns false if all elements dose not fulfill the condition" do
+      ["ant", "bear", "cat"].any? { |word| word.length > 4 }.should be_false
+    end
+  end
+
+  describe "any? without block" do
+    it "returns true if at least one element is truthy" do
+      [nil, true, 99].any?.should be_true
+    end
+
+    it "returns false if all elements are falsey" do
+      [nil, false].any?.should be_false
+    end
+  end
+
   describe "find" do
     it "finds" do
       [1, 2, 3].find { |x| x > 2 }.should eq(3)
@@ -83,6 +164,35 @@ describe "Enumerable" do
   describe "take" do
     assert { [-1, -2, -3].take(1).should eq([-1]) }
     assert { [-1, -2, -3].take(4).should eq([-1, -2, -3]) }
+
+    it "raises if count is negative" do
+      expect_raises(ArgumentError) do
+        [1, 2].take(-1)
+      end
+    end
+  end
+
+  describe "take_while" do
+    it "keeps elements while the block returns true" do
+      [1, 2, 3, 4, 5, 0].take_while {|i| i < 3}.should eq [1, 2]
+    end
+
+    it "returns the full Array if the condition is always true" do
+      [1, 2, 3, -3].take_while {true}.should eq [1, 2, 3, -3]
+    end
+
+    it "returns an empty Array if the block is false for the first element" do
+      [1, 2, -1, 0].take_while {|i| i <= 0}.should eq [] of Int32
+    end
+
+    it "does not call the block again once it returned false" do
+      called = 0
+      [1, 2, 3, 4, 0].take_while do |i|
+        called += 1
+        i < 3
+      end
+      called.should eq 3
+    end
   end
 
   describe "first" do
@@ -100,6 +210,11 @@ describe "Enumerable" do
   describe "none?" do
     assert { [1, 2, 2, 3].none? { |x| x == 1 }.should eq(false) }
     assert { [1, 2, 2, 3].none? { |x| x == 0 }.should eq(true) }
+  end
+
+  describe "none? without block" do
+    assert { [nil, false].none?.should be_true }
+    assert { [nil, false, true].none?.should be_false }
   end
 
   describe "group_by" do

@@ -417,7 +417,7 @@ module Crystal
   #
   #     [ obj '.' ] name '(' ')' [ block ]
   #   |
-  #     [ obj '.' ] name '(' arg [ ',' arg ]* ')' [ block]
+  #     [ obj '.' ] name '(' arg [ ',' arg ]* ')' [ block ]
   #   |
   #     [ obj '.' ] name arg [ ',' arg ]* [ block ]
   #   |
@@ -829,15 +829,15 @@ module Crystal
 
   # A method definition.
   #
-  #     [ receiver '.' ] 'def' name
+  #     'def' [ receiver '.' ] name
   #       body
   #     'end'
   #   |
-  #     [ receiver '.' ] 'def' name '(' [ arg [ ',' arg ]* ] ')'
+  #     'def' [ receiver '.' ] name '(' [ arg [ ',' arg ]* ] ')'
   #       body
   #     'end'
   #   |
-  #     [ receiver '.' ] 'def' name arg [ ',' arg ]*
+  #     'def' [ receiver '.' ] name arg [ ',' arg ]*
   #       body
   #     'end'
   #
@@ -1587,7 +1587,7 @@ module Crystal
       LibDef.new(@name, @body.clone, @name_column_number)
     end
 
-    def_equals_and_hash @name, @libname, @body
+    def_equals_and_hash @name, @body
   end
 
   class FunDef < ASTNode

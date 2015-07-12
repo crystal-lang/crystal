@@ -519,6 +519,18 @@ module Crystal
     @has_breaks = false
   end
 
+  class Break
+    property! target
+  end
+
+  class Next
+    property! target
+  end
+
+  class Return
+    property! target
+  end
+
   class FunPointer
     property! :call
 

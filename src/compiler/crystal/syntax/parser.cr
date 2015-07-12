@@ -162,8 +162,15 @@ module Crystal
         raise "dynamic constant assignment"
       end
 
-      exp = Var.new(exp.name) if exp.is_a?(Call) && !exp.obj && exp.args.empty?
-      push_var exp if exp.is_a?(Var)
+      if exp.is_a?(Call) && !exp.obj && exp.args.empty?
+        exp = Var.new(exp.name).at(exp)
+      end
+      if exp.is_a?(Var)
+        if exp.name == "self"
+          raise "can't change the value of self", exp.location.not_nil!
+        end
+        push_var exp
+      end
       exp
     end
 
@@ -1629,14 +1636,14 @@ module Crystal
     end
 
     def parse_string_array
-      parse_string_or_symbol_array StringLiteral
+      parse_string_or_symbol_array StringLiteral, "String"
     end
 
     def parse_symbol_array
-      parse_string_or_symbol_array SymbolLiteral
+      parse_string_or_symbol_array SymbolLiteral, "Symbol"
     end
 
-    def parse_string_or_symbol_array(klass)
+    def parse_string_or_symbol_array(klass, elements_type)
       strings = [] of ASTNode
 
       next_string_array_token
@@ -1653,7 +1660,7 @@ module Crystal
         end
       end
 
-      ArrayLiteral.new strings
+      ArrayLiteral.new strings, Path.global(elements_type)
     end
 
     def parse_empty_array_literal
@@ -2159,7 +2166,7 @@ module Crystal
     end
 
     def check_macro_skip_whitespace
-      if current_char == '\\'
+      if current_char == '\\' && peek_next_char.whitespace?
         next_char
         true
       else

@@ -46,14 +46,20 @@ describe "ECR::Lexer" do
     token = lexer.next_token
     token.type.should eq(:STRING)
     token.value.should eq("hello ")
+    token.column_number.should eq(1)
+    token.line_number.should eq(1)
 
     token = lexer.next_token
     token.type.should eq(:OUTPUT)
     token.value.should eq(" foo ")
+    token.line_number.should eq(1)
+    token.column_number.should eq(10)
 
     token = lexer.next_token
     token.type.should eq(:STRING)
     token.value.should eq(" bar")
+    token.line_number.should eq(1)
+    token.column_number.should eq(17)
 
     token = lexer.next_token
     token.type.should eq(:EOF)

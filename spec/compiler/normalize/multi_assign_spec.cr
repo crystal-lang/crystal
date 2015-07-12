@@ -5,6 +5,10 @@ describe "Normalize: multi assign" do
     assert_normalize "a, b, c = 1, 2, 3", "__temp_1 = 1\n__temp_2 = 2\n__temp_3 = 3\na = __temp_1\nb = __temp_2\nc = __temp_3"
   end
 
+  it "normalizes n to n with constants" do
+    assert_normalize "a, B, C = 1, 2, 3", "__temp_1 = 1\na = __temp_1\nB = 2\nC = 3"
+  end
+
   it "normalizes 1 to n" do
     assert_normalize "d = 1\na, b, c = d", "d = 1\n__temp_1 = d\na = __temp_1[0]\nb = __temp_1[1]\nc = __temp_1[2]"
   end

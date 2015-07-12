@@ -153,4 +153,13 @@ describe "Code gen: lib" do
       p.value.func.call(p)
       )).to_i.should eq(10)
   end
+
+  it "refers to lib type (#960)" do
+    build(%(
+      lib Thing
+      end
+
+      Thing
+      ))
+  end
 end

@@ -21,7 +21,7 @@ Command:
     spec                     compile and run specs (in spec directory)
     types                    show type of main variables
     ast                      show ast
-    --help                   show this help
+    --help, -h               show this help
     --version, -v            show version
 USAGE
 
@@ -70,7 +70,7 @@ USAGE
         when "ast".starts_with?(command)
           options.shift
           ast options
-        when "--help" == command
+        when "--help" == command, "-h" == command
           puts USAGE
           exit
         when "--version" == command, "-v" == command

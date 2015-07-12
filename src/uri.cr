@@ -84,7 +84,7 @@ class URI
       raise "bad URI(is not URI?): #{string}"
     end
 
-    URI.new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
+    new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
   end
 
   def userinfo=(ui)

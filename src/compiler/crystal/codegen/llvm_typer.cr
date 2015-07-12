@@ -5,6 +5,8 @@ module Crystal
   class LLVMTyper
     TYPE_ID_POINTER = LLVM::Int32.pointer
     FUN_TYPE = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
+    NIL_TYPE = LLVM::Type.struct([] of LLVM::Type, "Nil")
+    NIL_VALUE = NIL_TYPE.null
 
     getter landing_pad_type
 
@@ -42,7 +44,7 @@ module Crystal
     end
 
     def create_llvm_type(type : NilType)
-      LLVM::Int1
+      NIL_TYPE
     end
 
     def create_llvm_type(type : BoolType)
@@ -90,6 +92,10 @@ module Crystal
     end
 
     def create_llvm_type(type : MetaclassType)
+      LLVM::Int32
+    end
+
+    def create_llvm_type(type : LibType)
       LLVM::Int32
     end
 

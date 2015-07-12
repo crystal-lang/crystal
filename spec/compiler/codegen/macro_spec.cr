@@ -1123,4 +1123,14 @@ describe "Code gen: macro" do
       a.value.bar
       )).to_i.should eq(123)
   end
+
+  it "expands macro with escaped quotes (#895)" do
+    run(%(
+      macro foo(x)
+        "{{x}}\\""
+      end
+
+      foo hello
+      )).to_string.should eq(%(hello"))
+  end
 end

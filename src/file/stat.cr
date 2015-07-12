@@ -66,17 +66,17 @@ lib LibC
     end
   end
 
-  S_ISVTX  = 0001000
-  S_ISGID  = 0002000
-  S_ISUID  = 0004000
-  S_IFIFO  = 0010000
-  S_IFCHR  = 0020000
-  S_IFDIR  = 0040000
-  S_IFBLK  = 0060000
-  S_IFREG  = 0100000
-  S_IFLNK  = 0120000
-  S_IFSOCK = 0140000
-  S_IFMT   = 0170000
+  S_ISVTX  = 0o001000
+  S_ISGID  = 0o002000
+  S_ISUID  = 0o004000
+  S_IFIFO  = 0o010000
+  S_IFCHR  = 0o020000
+  S_IFDIR  = 0o040000
+  S_IFBLK  = 0o060000
+  S_IFREG  = 0o100000
+  S_IFLNK  = 0o120000
+  S_IFSOCK = 0o140000
+  S_IFMT   = 0o170000
 
   fun stat(path : UInt8*, stat : Stat*) : Int32
   fun lstat(path : UInt8*, stat : Stat *) : Int32

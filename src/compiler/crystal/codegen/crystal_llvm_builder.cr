@@ -1,13 +1,13 @@
 module Crystal
   class CrystalLLVMBuilder
-    getter :end
+    property :end
 
     def initialize(@builder, @printf)
       @end = false
     end
 
     def llvm_nil
-      LLVM.int LLVM::Int1, 0
+      LLVMTyper::NIL_VALUE
     end
 
     def ret

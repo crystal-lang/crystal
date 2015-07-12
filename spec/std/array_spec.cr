@@ -54,6 +54,11 @@ describe "Array" do
     0.upto(4) { |i| c[i].should eq(i + 1) }
   end
 
+  it "does + with empty tuple converted to array (#909)" do
+    ([1, 2] + Tuple.new.to_a).should eq([1, 2])
+    (Tuple.new.to_a + [1, 2]).should eq([1, 2])
+  end
+
   it "does -" do
     ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
   end
@@ -691,23 +696,11 @@ describe "Array" do
   end
 
   describe "sort" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
-
     it "sort without block" do
       a = [3, 4, 1, 2, 5, 6]
       b = a.sort
       b.should eq([1, 2, 3, 4, 5, 6])
       a.should_not eq(b)
-    end
-
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.length <=> y.length }
-      a.should eq(["a", "foo", "hello"])
     end
 
     it "sort with a block" do
@@ -717,22 +710,40 @@ describe "Array" do
       a.should_not eq(b)
     end
 
-    it "sorts by!" do
-      a = ["foo", "a", "hello"]
-      a.sort_by! &.length
-      a.should eq(["a", "foo", "hello"])
+    it "doesn't crash on special situations" do
+      [1, 2, 3].sort { 1 }
+      Array.new(10) { BadSortingClass.new }.sort
+    end
+  end
+
+  describe "sort!" do
+    it "sort! without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      a.sort!
+      a.should eq([1, 2, 3, 4, 5, 6])
     end
 
+    it "sort! with a block" do
+      a = ["foo", "a", "hello"]
+      a.sort! { |x, y| x.length <=> y.length }
+      a.should eq(["a", "foo", "hello"])
+    end
+  end
+
+  describe "sort_by" do
     it "sorts by" do
       a = ["foo", "a", "hello"]
       b = a.sort_by &.length
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
+  end
 
-    it "doesn't crash on special situations" do
-      [1, 2, 3].sort { 1 }
-      Array.new(10) { BadSortingClass.new }.sort
+  describe "sort_by!" do
+    it "sorts by!" do
+      a = ["foo", "a", "hello"]
+      a.sort_by! &.length
+      a.should eq(["a", "foo", "hello"])
     end
   end
 

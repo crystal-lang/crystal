@@ -304,8 +304,8 @@ describe "String" do
     assert { "1234123412341234".to_i64.should eq(1234123412341234_i64) }
     assert { "9223372036854775808".to_u64.should eq(9223372036854775808_u64) }
 
-    assert { expect_raises { "12ab".to_i(1) } }
-    assert { expect_raises { "12ab".to_i(37) } }
+    assert { expect_raises(ArgumentError, "invalid base 1") { "12ab".to_i(1) } }
+    assert { expect_raises(ArgumentError, "invalid base 37") { "12ab".to_i(37) } }
 
     assert { expect_raises { "1Y2P0IJ32E8E7".to_i(36) } }
     assert { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }

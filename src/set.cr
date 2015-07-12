@@ -1,4 +1,4 @@
-class Set(T)
+struct Set(T)
   include Enumerable(T)
   include Iterable
 
@@ -6,9 +6,9 @@ class Set(T)
     @hash = Hash(T, Nil).new
   end
 
-  def self.new(array : Array(T))
+  def self.new(enumerable : Enumerable(T))
     set = Set(T).new
-    array.each do |elem|
+    enumerable.each do |elem|
       set << elem
     end
     set
@@ -36,6 +36,10 @@ class Set(T)
 
   def length
     @hash.length
+  end
+
+  def size
+    length
   end
 
   def clear
@@ -66,8 +70,8 @@ class Set(T)
     set
   end
 
-  def |(other : Set)
-    set = Set(T).new
+  def |(other : Set(U))
+    set = Set(T | U).new
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
@@ -95,10 +99,43 @@ class Set(T)
     @hash.hash
   end
 
+  # Returns true if the set and the given set have at least one
+  # element in common.
+  #
+  # ```
+  # Set{1, 2, 3}.intersects? Set{4, 5} # => false
+  # Set{1, 2, 3}.intersects? Set{3, 4} # => true
+  # ```
+  def intersects?(other : Set)
+    if length < other.length
+      any? { |o| other.includes?(o) }
+    else
+      other.any? { |o| includes?(o) }
+    end
+  end
+
   def to_s(io)
     io << "Set{"
     join ", ", io, &.inspect(io)
     io << "}"
+  end
+
+  def subset?(other : Set)
+    return false if other.length < length
+    all? { |value| other.includes?(value) }
+  end
+
+  def superset?(other : Set)
+    return false if other.length > length
+    other.all? { |value| includes?(value) }
+  end
+
+  def object_id
+    @hash.object_id
+  end
+
+  def same?(other : Set)
+    @hash.same?(other.@hash)
   end
 end
 

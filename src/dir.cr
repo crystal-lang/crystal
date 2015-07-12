@@ -275,14 +275,14 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
-  def self.mkdir(path, mode=0777)
+  def self.mkdir(path, mode=0o777)
     if LibC.mkdir(path, LibC::ModeT.cast(mode)) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0
   end
 
-  def self.mkdir_p(path, mode=0777)
+  def self.mkdir_p(path, mode=0o777)
     return 0 if Dir.exists?(path)
 
     components = path.split(File::SEPARATOR)

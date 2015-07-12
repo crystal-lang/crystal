@@ -115,7 +115,7 @@ module Macros
     #     puts "Got a number literal"
     #   {% else %}
     #     puts "Didn't get a number literal"
-    #   {% else %}
+    #   {% end %}
     # end
     #
     # test 1    #=> prints "Got a number literal"
@@ -240,6 +240,10 @@ module Macros
     def +(other : StringLiteral | CharLiteral) : StringLiteral
     end
 
+    # Similar to `String#camelcase`.
+    def camelcase : StringLiteral
+    end
+
     # Similar to `String#capitalize`.
     def capitalize : StringLiteral
     end
@@ -294,6 +298,10 @@ module Macros
 
     # Similar to `String#tr`.
     def tr(from : StringLiteral, to : StringLiteral) : StringLiteral
+    end
+
+    # Similar to `String#underscore`.
+    def underscore : StringLiteral
     end
 
     # Similar to `String#upcase`.
@@ -528,6 +536,12 @@ module Macros
 
     # Returns the blocks arguments.
     def args : ArrayLiteral(MacroId)
+    end
+  end
+
+  class Expressions < ASTNode
+    # Returns the expressions' expressions
+    def expressions : ArrayLiteral(ASTNode)
     end
   end
 
@@ -807,8 +821,15 @@ module Macros
   # class Metaclass < ASTNode
   # end
 
-  # class Cast < ASTNode
-  # end
+  class Cast < ASTNode
+    # Returns the object part of the cast.
+    def obj : ASTNode
+    end
+
+    # Returns the target type of the cast.
+    def to : ASTNode
+    end
+  end
 
   # class TypeOf < ASTNode
   # end

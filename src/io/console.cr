@@ -21,146 +21,146 @@ lib LibTermios
 
   @[Flags]
   enum IFlag
-#    IGNBRK  = 0000001
-    BRKINT  = 0000002
-#    IGNPAR  = 0000004
-#    PARMRK  = 0000010
-#    INPCK   = 0000020
-    ISTRIP  = 0000040
-#    INLCR   = 0000100
-#    IGNCR   = 0000200
-    ICRNL   = 0000400
-#    IUCLC   = 0001000
-    IXON    = 0002000
-#    IXANY   = 0004000
-#    IXOFF   = 0010000
-#    IMAXBEL = 0020000
-#    IUTF8   = 0040000
+#    IGNBRK  = 0o000001
+    BRKINT  = 0o000002
+#    IGNPAR  = 0o000004
+#    PARMRK  = 0o000010
+#    INPCK   = 0o000020
+    ISTRIP  = 0o000040
+#    INLCR   = 0o000100
+#    IGNCR   = 0o000200
+    ICRNL   = 0o000400
+#    IUCLC   = 0o001000
+    IXON    = 0o002000
+#    IXANY   = 0o004000
+#    IXOFF   = 0o010000
+#    IMAXBEL = 0o020000
+#    IUTF8   = 0o040000
   end
 
   @[Flags]
   enum OFlag
-    OPOST  = 0000001
-#    OLCUC  = 0000002
-#    ONLCR  = 0000004
-#    OCRNL  = 0000010
-#    ONOCR  = 0000020
-#    ONLRET = 0000040
-#    OFILL  = 0000100
-#    OFDEL  = 0000200
+    OPOST  = 0o000001
+#    OLCUC  = 0o000002
+#    ONLCR  = 0o000004
+#    OCRNL  = 0o000010
+#    ONOCR  = 0o000020
+#    ONLRET = 0o000040
+#    OFILL  = 0o000100
+#    OFDEL  = 0o000200
 ##if defined __USE_MISC || defined __USE_XOPEN
-#    NLDLY  = 0000400
-#      NL0  = 0000000
-#      NL1  = 0000400
-#    CRDLY  = 0003000
-#      CR0  = 0000000
-#      CR1  = 0001000
-#      CR2  = 0002000
-#      CR3  = 0003000
-#    TABDLY = 0014000
-#      TAB0 = 0000000
-#      TAB1 = 0004000
-#      TAB2 = 0010000
-#      TAB3 = 0014000
-#    BSDLY  = 0020000
-#      BS0  = 0000000
-#      BS1  = 0020000
-#    FFDLY  = 0100000
-#      FF0  = 0000000
-#      FF1  = 0100000
+#    NLDLY  = 0o000400
+#      NL0  = 0o000000
+#      NL1  = 0o000400
+#    CRDLY  = 0o003000
+#      CR0  = 0o000000
+#      CR1  = 0o001000
+#      CR2  = 0o002000
+#      CR3  = 0o003000
+#    TABDLY = 0o014000
+#      TAB0 = 0o000000
+#      TAB1 = 0o004000
+#      TAB2 = 0o010000
+#      TAB3 = 0o014000
+#    BSDLY  = 0o020000
+#      BS0  = 0o000000
+#      BS1  = 0o020000
+#    FFDLY  = 0o100000
+#      FF0  = 0o000000
+#      FF1  = 0o100000
 ##endif
-#    VTDLY  = 0040000
-#      VT0  = 0000000
-#      VT1  = 0040000
+#    VTDLY  = 0o040000
+#      VT0  = 0o000000
+#      VT1  = 0o040000
 ##ifdef __USE_MISC
-#    XTABS  = 0014000
+#    XTABS  = 0o014000
 ##endif
   end
 
 #  enum CFlag
 ##ifdef __USE_MISC
-#    CBAUD  = 0010017
+#    CBAUD  = 0o010017
 ##endif
-#    B0     = 0000000     # hang up
-#    B50    = 0000001
-#    B75    = 0000002
-#    B110   = 0000003
-#    B134   = 0000004
-#    B150   = 0000005
-#    B200   = 0000006
-#    B300   = 0000007
-#    B600   = 0000010
-#    B1200  = 0000011
-#    B1800  = 0000012
-#    B2400  = 0000013
-#    B4800  = 0000014
-#    B9600  = 0000015
-#    B19200 = 0000016
-#    B38400 = 0000017
+#    B0     = 0o000000     # hang up
+#    B50    = 0o000001
+#    B75    = 0o000002
+#    B110   = 0o000003
+#    B134   = 0o000004
+#    B150   = 0o000005
+#    B200   = 0o000006
+#    B300   = 0o000007
+#    B600   = 0o000010
+#    B1200  = 0o000011
+#    B1800  = 0o000012
+#    B2400  = 0o000013
+#    B4800  = 0o000014
+#    B9600  = 0o000015
+#    B19200 = 0o000016
+#    B38400 = 0o000017
 ##ifdef __USE_MISC
 ## define EXTA B19200
 ## define EXTB B38400
 ##endif
-#    CSIZE    = 0000060
-#    CS5      = 0000000
-#    CS6      = 0000020
-#    CS7      = 0000040
-#    CS8      = 0000060
-#    CSTOPB   = 0000100
-#    CREAD    = 0000200
-#    PARENB   = 0000400
-#    PARODD   = 0001000
-#    HUPCL    = 0002000
-#    CLOCAL   = 0004000
+#    CSIZE    = 0o000060
+#    CS5      = 0o000000
+#    CS6      = 0o000020
+#    CS7      = 0o000040
+#    CS8      = 0o000060
+#    CSTOPB   = 0o000100
+#    CREAD    = 0o000200
+#    PARENB   = 0o000400
+#    PARODD   = 0o001000
+#    HUPCL    = 0o002000
+#    CLOCAL   = 0o004000
 ##ifdef __USE_MISC
-#    CBAUDEX  = 0010000
+#    CBAUDEX  = 0o010000
 ##endif
-#    B57600   = 0010001
-#    B115200  = 0010002
-#    B230400  = 0010003
-#    B460800  = 0010004
-#    B500000  = 0010005
-#    B576000  = 0010006
-#    B921600  = 0010007
-#    B1000000 = 0010010
-#    B1152000 = 0010011
-#    B1500000 = 0010012
-#    B2000000 = 0010013
-#    B2500000 = 0010014
-#    B3000000 = 0010015
-#    B3500000 = 0010016
-#    B4000000 = 0010017
+#    B57600   = 0o010001
+#    B115200  = 0o010002
+#    B230400  = 0o010003
+#    B460800  = 0o010004
+#    B500000  = 0o010005
+#    B576000  = 0o010006
+#    B921600  = 0o010007
+#    B1000000 = 0o010010
+#    B1152000 = 0o010011
+#    B1500000 = 0o010012
+#    B2000000 = 0o010013
+#    B2500000 = 0o010014
+#    B3000000 = 0o010015
+#    B3500000 = 0o010016
+#    B4000000 = 0o010017
 ##define __MAX_BAUD B4000000
 ##ifdef __USE_MISC
-#    CIBAUD   = 002003600000     # input baud rate (not used)
-#    CMSPAR   = 010000000000     # mark or space (stick) parity
-#    CRTSCTS  = 020000000000     # flow control
+#    CIBAUD   = 0o02003600000     # input baud rate (not used)
+#    CMSPAR   = 0o10000000000     # mark or space (stick) parity
+#    CRTSCTS  = 0o20000000000     # flow control
 ##endif
 #  end
 
   @[Flags]
   enum LFlag
-    ISIG    = 0000001
-    ICANON  = 0000002
+    ISIG    = 0o000001
+    ICANON  = 0o000002
 ##if defined __USE_MISC || defined __USE_XOPEN
-#    XCASE   = 0000004
+#    XCASE   = 0o000004
 ##endif
-    ECHO    = 0000010
-    ECHOE   = 0000020
-    ECHOK   = 0000040
-    ECHONL  = 0000100
-#    NOFLSH  = 0000200
-#    TOSTOP  = 0000400
+    ECHO    = 0o000010
+    ECHOE   = 0o000020
+    ECHOK   = 0o000040
+    ECHONL  = 0o000100
+#    NOFLSH  = 0o000200
+#    TOSTOP  = 0o000400
 ##ifdef __USE_MISC
-#    ECHOCTL = 0001000
-#    ECHOPRT = 0002000
-#    ECHOKE  = 0004000
-#    FLUSHO  = 0010000
-#    PENDIN  = 0040000
+#    ECHOCTL = 0o001000
+#    ECHOPRT = 0o002000
+#    ECHOKE  = 0o004000
+#    FLUSHO  = 0o010000
+#    PENDIN  = 0o040000
 ##endif
-    IEXTEN  = 0100000
+    IEXTEN  = 0o100000
 #ifdef __USE_BSD
-    EXTPROC = 0200000
+    EXTPROC = 0o200000
 #endif
 
   end
