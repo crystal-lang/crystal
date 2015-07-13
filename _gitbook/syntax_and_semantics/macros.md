@@ -32,6 +32,22 @@ Macros declared at the top-level are visible anywhere. If a top-level macro is m
 
 They can also be defined in classes and modules, and are only visible in those scopes. Macros are also looked-up in the ancestors chain (superclasses and included modules).
 
+For example, a block which is given an object to use as the default receiver by being invoked with `with ... yield` can access macros defined within that object's ancestors chain:
+
+```ruby
+class Foo
+  macro emphasize(value)
+    "***#{ {{value}} }***"
+  end
+
+  def yield_with_self
+    with self yield
+  end
+end
+
+Foo.new.yield_with_self { emphasize(10) } #=> "***10***"
+```
+
 ## Interpolation
 
 You use `{{...}}` to paste, or interpolate, an AST node, as in the above example.
