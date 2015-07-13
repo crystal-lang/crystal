@@ -6,6 +6,7 @@ lib LibC
   fun getpid : Int32
   fun getppid : Int32
   fun exit(status : Int32) : NoReturn
+  fun _exit(status : Int32) : NoReturn
 
   ifdef x86_64
     ClockT = UInt64
@@ -69,6 +70,7 @@ module Process
 
   def self.fork
     pid = LibC.fork
+    raise Errno.new("fork") if pid == -1
     pid = nil if pid == 0
     pid
   end
