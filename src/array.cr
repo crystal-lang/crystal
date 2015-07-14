@@ -744,9 +744,9 @@ class Array(T)
   end
 
   # Append. Pushes one value to the end of the array, given that the type of
-  # the value belongs to the union type of the array. This expression returns
-  # the array iself, so several of them can be chained. See `pop` for the
-  # opposite effect.
+  # the value is T (which might be a type or a union of types). This expression
+  # returns the array iself, so several of them can be chained. See `pop` for
+  # the opposite effect.
   #
   # ```
   # a = ["a", "b"]
