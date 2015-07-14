@@ -280,6 +280,33 @@ end
 
 If a `next` receives many arguments, they are automaticaly transformed to a [Tuple](http://crystal-lang.org/api/Tuple.html). If it receives no arguments it's the same as receiving a single `nil` argument.
 
+## with ... yield
+
+A `yield` expression can be modified, using the `with` keyword, to specify an object to use as the default receiver of method calls within the block:
+
+```ruby
+class Foo
+  def one
+    1
+  end
+
+  def yield_with_self
+    with self yield
+  end
+
+  def yield_normally
+    yield
+  end
+end
+
+def one
+  "one"
+end
+
+Foo.new.yield_with_self { one } # => 1
+Foo.new.yield_normally { one }  # => "one"
+```
+
 ## Performance
 
 When using blocks with `yield`, the blocks are **always** inlined: no closures, calls or function pointers are involved. This means that this:

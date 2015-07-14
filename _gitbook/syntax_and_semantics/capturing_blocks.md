@@ -67,3 +67,7 @@ proc.call(1) # "1"
 `break` and `next` can't be used inside a captured block. `return` can be used and will exit from the block (not the surrounding method).
 
 The semantic for `next` and `return` inside captured blocks [might swap in the future](https://github.com/manastech/crystal/issues/420).
+
+## with ... yield
+
+The default receiver within a captured block can't be changed by using `with ... yield`.

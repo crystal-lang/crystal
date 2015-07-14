@@ -1953,6 +1953,19 @@ a <code>def</code> without a matching <code>end</code>, or a single <code>when</
 <h2 id="scope">Scope</h2>
 <p>Macros declared at the top-level are visible anywhere. If a top-level macro is marked as <code>private</code> it is only accessible in that file.</p>
 <p>They can also be defined in classes and modules, and are only visible in those scopes. Macros are also looked-up in the ancestors chain (superclasses and included modules).</p>
+<p>For example, a block which is given an object to use as the default receiver by being invoked with <code>with ... yield</code> can access macros defined within that object&apos;s ancestors chain:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
+  macro emphasize(value)
+    <span class="hljs-string">&quot;***<span class="hljs-subst">#{ {{value}</span>} }***&quot;</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>yield_with_self
+    with <span class="hljs-keyword">self</span> <span class="hljs-keyword">yield</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Foo</span>.new.yield_with_self { emphasize(<span class="hljs-number">10</span>) } <span class="hljs-comment">#=&gt; &quot;***10***&quot;</span>
+</code></pre>
 <h2 id="interpolation">Interpolation</h2>
 <p>You use <code>{{...}}</code> to paste, or interpolate, an AST node, as in the above example.</p>
 <p>Note that the node is pasted as-is. If in the previous example we pass a symbol, the generated code becomes invalid:</p>

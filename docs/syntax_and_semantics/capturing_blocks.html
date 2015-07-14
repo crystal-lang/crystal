@@ -1978,6 +1978,8 @@ proc.call(<span class="hljs-number">1</span>) <span class="hljs-comment"># &quot
 <h2 id="break-and-next">break and next</h2>
 <p><code>break</code> and <code>next</code> can&apos;t be used inside a captured block. <code>return</code> can be used and will exit from the block (not the surrounding method).</p>
 <p>The semantic for <code>next</code> and <code>return</code> inside captured blocks <a href="https://github.com/manastech/crystal/issues/420" target="_blank">might swap in the future</a>.</p>
+<h2 id="with-yield">with ... yield</h2>
+<p>The default receiver within a captured block can&apos;t be changed by using <code>with ... yield</code>.</p>
 
                     
                     </section>

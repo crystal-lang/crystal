@@ -2136,6 +2136,29 @@ twice <span class="hljs-keyword">do</span> |i|
 <span class="hljs-comment"># 3</span>
 </code></pre>
 <p>If a <code>next</code> receives many arguments, they are automaticaly transformed to a <a href="http://crystal-lang.org/api/Tuple.html" target="_blank">Tuple</a>. If it receives no arguments it&apos;s the same as receiving a single <code>nil</code> argument.</p>
+<h2 id="with-yield">with ... yield</h2>
+<p>A <code>yield</code> expression can be modified, using the <code>with</code> keyword, to specify an object to use as the default receiver of method calls within the block:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>one
+    <span class="hljs-number">1</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>yield_with_self
+    with <span class="hljs-keyword">self</span> <span class="hljs-keyword">yield</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>yield_normally
+    <span class="hljs-keyword">yield</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>one
+  <span class="hljs-string">&quot;one&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Foo</span>.new.yield_with_self { one } <span class="hljs-comment"># =&gt; 1</span>
+<span class="hljs-constant">Foo</span>.new.yield_normally { one }  <span class="hljs-comment"># =&gt; &quot;one&quot;</span>
+</code></pre>
 <h2 id="performance">Performance</h2>
 <p>When using blocks with <code>yield</code>, the blocks are <strong>always</strong> inlined: no closures, calls or function pointers are involved. This means that this:</p>
 <pre><code class="lang-ruby"><span class="hljs-function"><span class="hljs-keyword">def</span> </span>twice
