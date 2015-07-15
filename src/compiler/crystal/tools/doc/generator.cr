@@ -240,8 +240,8 @@ class Crystal::Doc::Generator
     return unless  $?.success?
 
     remotes.lines.each do |line|
-      if line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_)+)/
-        user, repo = $1, $2
+      if line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
+        user, repo = $1, $2.gsub(/\.git$/, "")
         rev = `git rev-parse HEAD`.chomp
 
         @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
