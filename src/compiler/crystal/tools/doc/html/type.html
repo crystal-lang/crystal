@@ -41,7 +41,7 @@
   <h2>Defined in:</h2>
   <% locations.each do |location| %>
     <% if url = location.url %>
-      <a href="<%= url %>"><%= location.filename %></a>
+      <a href="<%= url %>" target="_blank"><%= location.filename %></a>
     <% else %>
       <%= location.filename %>
     <% end %>
