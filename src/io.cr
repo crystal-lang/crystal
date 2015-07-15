@@ -1,5 +1,6 @@
 lib LibC
   enum FCNTL
+    FD_CLOEXEC = 1
     F_GETFL = 3
     F_SETFL = 4
   end

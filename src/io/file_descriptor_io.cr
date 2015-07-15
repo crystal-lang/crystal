@@ -21,8 +21,8 @@ class FileDescriptorIO
     @out_count = 0
 
     unless blocking
-      before = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
-      LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
+      before = fcntl(LibC::FCNTL::F_GETFL)
+      fcntl(LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
       if @edge_triggerable
         @event = Scheduler.create_fd_events(self)
       end
@@ -87,6 +87,16 @@ class FileDescriptorIO
 
   def to_fd_io
     self
+  end
+
+  def close_on_exec=(arg : Bool)
+    fcntl(LibC::FCNTL::FD_CLOEXEC, arg ? 1 : 0)
+  end
+
+  def fcntl cmd, arg = 0
+    r = LibC.fcntl @fd, cmd, arg
+    raise Errno.new("fcntl() failed") if r == -1
+    r
   end
 
   private def unbuffered_read(slice : Slice(UInt8), count)
