@@ -81,7 +81,7 @@ describe "Complex" do
   end
 
   it "exp" do
-    Complex.new(1.15, -5.1).exp.should eq(Complex.new(1.1937266270566773, 2.923901365414129))
+    Complex.new(1.15, -5.1).exp.should be_close(Complex.new(1.1937266270566773, 2.923901365414129), 1e-15)
   end
 
   describe "logarithms" do

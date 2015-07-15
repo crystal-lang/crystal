@@ -14,11 +14,19 @@ struct BigInt < Int
   end
 
   def initialize(num : SignedInt)
-    LibGMP.init_set_si(out @mpz, num.to_i64)
+    if LibC::Long::MIN <= num <= LibC::Long::MAX
+      LibGMP.init_set_si(out @mpz, LibC::Long.cast(num))
+    else
+      LibGMP.init_set_str(out @mpz, num.to_s, 10)
+    end
   end
 
   def initialize(num : UnsignedInt)
-    LibGMP.init_set_ui(out @mpz, num.to_u64)
+    if num <= LibC::ULong::MAX
+      LibGMP.init_set_ui(out @mpz, LibC::ULong.cast(num))
+    else
+      LibGMP.init_set_str(out @mpz, num.to_s, 10)
+    end
   end
 
   def initialize(@mpz : LibGMP::MPZ)
@@ -39,11 +47,19 @@ struct BigInt < Int
   end
 
   def <=>(other : SignedInt)
-    LibGMP.cmp_si(mpz, other.to_i64)
+    if LibC::Long::MIN <= other <= LibC::Long::MAX
+      LibGMP.cmp_si(mpz, LibC::Long.cast(other))
+    else
+      self <=> BigInt.new(other)
+    end
   end
 
   def <=>(other : UnsignedInt)
-    LibGMP.cmp_ui(mpz, other.to_u64)
+    if other <= LibC::ULong::MAX
+      LibGMP.cmp_ui(mpz, LibC::ULong.cast(other))
+    else
+      self <=> BigInt.new(other)
+    end
   end
 
   def +(other : BigInt)
@@ -54,7 +70,7 @@ struct BigInt < Int
     if other < 0
       self - other.abs
     else
-      BigInt.new { |mpz| LibGMP.add_ui(mpz, self, other.to_u64) }
+      BigInt.new { |mpz| LibGMP.add_ui(mpz, self, LibC::ULong.cast(other)) }
     end
   end
 
@@ -66,7 +82,7 @@ struct BigInt < Int
     if other < 0
       self + other.abs
     else
-      BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, other.to_u64) }
+      BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, LibC::ULong.cast(other)) }
     end
   end
 
@@ -83,11 +99,11 @@ struct BigInt < Int
   end
 
   def *(other : SignedInt)
-    BigInt.new { |mpz| LibGMP.mul_si(mpz, self, other.to_i64) }
+    BigInt.new { |mpz| LibGMP.mul_si(mpz, self, LibC::Long.cast(other)) }
   end
 
   def *(other : UnsignedInt)
-    BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, other.to_u64) }
+    BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, LibC::ULong.cast(other)) }
   end
 
   def /(other : BigInt)
@@ -102,7 +118,7 @@ struct BigInt < Int
     if other < 0
       -(self / other.abs)
     else
-      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, other.to_u64) }
+      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, LibC::ULong.cast(other)) }
     end
   end
 
@@ -115,7 +131,7 @@ struct BigInt < Int
   def %(other : Int)
     check_division_by_zero other
 
-    BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs.to_u64) }
+    BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, LibC::ULong.cast(other.abs)) }
   end
 
   def ~
