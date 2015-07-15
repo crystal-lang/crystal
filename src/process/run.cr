@@ -1,68 +1,58 @@
-lib LibC
-  fun execvp(file : UInt8*, argv : UInt8**) : Int32
-end
-
-def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
-  argv = [command.cstr]
-  if args
-    args.each do |arg|
-      argv << arg.cstr
-    end
-  end
-  argv << Pointer(UInt8).null
-
-  if output
-    process_output, fork_output = IO.pipe(write_blocking: true)
-  end
-
-  if input
+# Executes a command, waits for it to exit and returns a Process::Status object.
+#
+# Output is captured in status.output if the output parameter is true
+#
+# See Process.spawn for arguments
+def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO | Bool, chdir = nil : String)
+  case input
+  when FileDescriptorIO, Bool, nil
+    # passed to spawn
+  when IO, String
     fork_input, process_input = IO.pipe(read_blocking: true)
+    fork_input.close_on_exec = true
+    process_input.close_on_exec = true
+  else
+    raise "unknown type #{input.inspect}"
   end
 
-  pid = fork do
-    if output == false
-      null = File.new("/dev/null", "r+")
-      STDOUT.reopen(null)
-    elsif fork_output
-      STDOUT.reopen(fork_output)
-    end
-
-    if process_input && fork_input
-      process_input.close
-      STDIN.reopen(fork_input)
-    end
-
-    LibC.execvp(command, argv.buffer)
-    LibC.exit 127
+  case output
+  when FileDescriptorIO, false, nil
+    # passed to spawn
+  when IO, String, true
+    process_output, fork_output = IO.pipe(write_blocking: true)
+    process_output.close_on_exec = true
+    fork_output.close_on_exec = true
+  else
+    raise "unknown type #{input.inspect}"
   end
 
-  if pid == -1
-    raise Errno.new("Error executing system command '#{command}'")
+  pid = spawn(command, args, input: (fork_input || input), output: (fork_output || output), chdir: chdir) do
+    process_input.close if process_input
+    process_output.close if process_output
   end
 
   status = Process::Status.new(pid)
 
-  if input
-    process_input = process_input.not_nil!
+  if process_input
     fork_input.not_nil!.close
 
     case input
-    when String
-      process_input.print input
+    when String, StringIO
+      process_input.print input.to_s
       process_input.close
       process_input = nil
-    when IO
+    when IO # not FileDescriptorIO
       input_io = input
     end
   end
 
-  if output
+  if process_output
     fork_output.not_nil!.close
 
     case output
     when true
       status_output = StringIO.new
-    when IO
+    when IO # not FileDescriptorIO
       status_output = output
     end
   end
