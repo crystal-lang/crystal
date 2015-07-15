@@ -30,6 +30,22 @@ describe "Range" do
     (1...5).inspect.should eq("1...5")
   end
 
+  it "is empty with .. and begin > end" do
+    (1..0).to_a.empty?.should be_true
+  end
+
+  it "is empty with ... and begin > end" do
+    (1...0).to_a.empty?.should be_true
+  end
+
+  it "is not empty with .. and begin == end" do
+    (1..1).to_a.should eq([1])
+  end
+
+  it "is not empty with ... and begin.succ == end" do
+    (1...2).to_a.should eq([1])
+  end
+
   describe "each iterator" do
     it "does next with inclusive range" do
       a = 1..3
@@ -56,6 +72,22 @@ describe "Range" do
 
     it "cycles" do
       (1..3).cycle.take(8).join.should eq("12312312")
+    end
+
+    it "is empty with .. and begin > end" do
+      (1..0).each.to_a.empty?.should be_true
+    end
+
+    it "is empty with ... and begin > end" do
+      (1...0).each.to_a.empty?.should be_true
+    end
+
+    it "is not empty with .. and begin == end" do
+      (1..1).each.to_a.should eq([1])
+    end
+
+    it "is not empty with ... and begin.succ == end" do
+      (1...2).each.to_a.should eq([1])
     end
   end
 
@@ -93,6 +125,22 @@ describe "Range" do
 
       iter.rewind
       iter.next.should eq(1)
+    end
+
+    it "is empty with .. and begin > end" do
+      (1..0).step(1).to_a.empty?.should be_true
+    end
+
+    it "is empty with ... and begin > end" do
+      (1...0).step(1).to_a.empty?.should be_true
+    end
+
+    it "is not empty with .. and begin == end" do
+      (1..1).step(1).to_a.should eq([1])
+    end
+
+    it "is not empty with ... and begin.succ == end" do
+      (1...2).step(1).to_a.should eq([1])
     end
   end
 end

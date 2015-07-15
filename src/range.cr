@@ -99,7 +99,7 @@ struct Range(B, E)
       yield current
       current = current.succ
     end
-    yield current unless @exclusive
+    yield current if !@exclusive && current == @end
     self
   end
 
@@ -232,18 +232,18 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current == @range.end
-        @reached_end = true
-
-        if @range.excludes_end?
-          return stop
-        else
-          return @current
-        end
-      else
+      if @current < @range.end
         value = @current
         @current = @current.succ
         value
+      else
+        @reached_end = true
+
+        if !@range.excludes_end? && @current == @range.end
+          @current
+        else
+          stop
+        end
       end
     end
 
@@ -264,19 +264,19 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      value = @current
+      if @current < @range.end
+        value = @current
+        @step.times { @current = @current.succ }
+        value
+      else
+        @reached_end = true
 
-      @step.times { @current = @current.succ }
-
-      unless @current < @range.end
-        if @current == @range.end
-          @reached_end = true if @range.excludes_end?
+        if !@range.excludes_end? && @current == @range.end
+          @current
         else
-          @reached_end = true
+          stop
         end
       end
-
-      value
     end
 
     def rewind
