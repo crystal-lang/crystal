@@ -83,10 +83,6 @@ struct Int
     end
   end
 
-  def [](index : Int)
-    bit(index)
-  end
-
   # Returns an array containing the bits of this integer
   # corresponding to the indicies of the range given.
   #
@@ -99,7 +95,7 @@ struct Int
       raise ArgumentError.new "Invalid range: #{range}"
     end
 
-    range.map { |i| self[i] }.reverse
+    range.map { |i| bit(i) }.reverse
   end
 
   def remainder(other : Int)

@@ -115,10 +115,6 @@ describe "Int" do
     assert { 5.bit(3).should eq(0) }
   end
 
-  describe "[index : Int]" do
-    assert { 0b01[0].should eq(1) }
-  end
-
   describe "[index : Range(Int, Int)]" do
     it "returns an array of bits for range indicies" do
       a   = -15_i8
