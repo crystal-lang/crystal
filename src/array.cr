@@ -172,8 +172,9 @@ class Array(T)
     length <=> other.length
   end
 
-  # Set intersection: returns a new array containing elements common to the two arrays, excluding any duplicates.
-  # The order is preserved from the original array.
+  # Set intersection: returns a new array containing elements common to the two
+  # arrays, excluding any duplicates. The order is preserved from the original
+  # array.
   #
   # ```
   # [ 1, 1, 3, 5 ] & [ 1, 2, 3 ]                 #=> [ 1, 3 ]
@@ -201,8 +202,8 @@ class Array(T)
     end
   end
 
-  # Set union: returns a new array by joining ary with `other_ary`, excluding any duplicates
-  # and preserving the order from the original array.
+  # Set union: returns a new array by joining ary with `other_ary`, excluding
+  # any duplicates and preserving the order from the original array.
   #
   # ```
   # [ "a", "b", "c" ] | [ "c", "d", "a" ]    #=> [ "a", "b", "c", "d" ]
@@ -312,11 +313,38 @@ class Array(T)
     at(index) { nil }
   end
 
+  # Sets the given value at the given index.
+  #
+  # Raises `IndexError` if the array had no previous value at the given index.
+  #
+  # ```
+  # ary = [1,2,3]
+  # ary[0] = 5
+  # p ary # => [5,2,3]
+  #
+  # ary[3] = 5 # => IndexError
+  # ```
   def []=(index : Int, value : T)
     index = check_index_out_of_bounds index
     @buffer[index] = value
   end
 
+  # Returns all elements that are within the given range
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Aditionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # a = [ "a", "b", "c", "d", "e" ]
+  # a[1..3] # => ["b", "c", "d"]
+  # a[4..7] # => ["e"]
+  # a[6..10] # => Index Error
+  # a[5..10] # => []
+  # a[-2...-1] # => ["d"]
+  # ```
   def [](range : Range)
     from = range.begin
     from += length if from < 0
@@ -328,6 +356,22 @@ class Array(T)
     self[from, length]
   end
 
+  # Returns count or less (if there aren't enough) elements starting at the
+  # given start index.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Aditionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # a = [ "a", "b", "c", "d", "e" ]
+  # a[-3, 3] # => ["c", "d", "e"]
+  # a[6, 1] # => Index Error
+  # a[1, 2] # => ["b", "c"]
+  # a[5, 1] # => []
+  # ```
   def [](start : Int, count : Int)
     if (start == 0 && length == 0) || (start == length && count >= 0)
       return Array(T).new
