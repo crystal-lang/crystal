@@ -38,8 +38,7 @@ class URI
   property fragment
   property opaque
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil, @fragment = nil, @opaque = nil)
-    self.userinfo = userinfo if userinfo
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
   # Returns the full path of this URI.
@@ -126,21 +125,15 @@ class URI
       raise "bad URI(is not URI?): #{raw_url}"
     end
 
-    new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
-  end
+    if userinfo
+      split = userinfo.split(":")
+      user = split[0]
+      password = split[1]?
+    else
+      user = password = nil
+    end
 
-  # Sets the user-information.
-  #
-  # ```
-  # uri = URI.parse "http://admin:password@foo.com"
-  # uri.userinfo = "user:password"
-  # uri.to_s
-  # # => "http://user:password@foo.com"
-  # ```
-  def userinfo=(ui)
-    split = ui.split(":")
-    self.user = split[0]
-    self.password = split[1]?
+    new scheme: scheme, host: host, port: port, path: path, query: query, user: user, password: password, fragment: fragment, opaque: opaque
   end
 
   # Returns the user-information component containing the provided username and password.
