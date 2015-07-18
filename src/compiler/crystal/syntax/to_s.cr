@@ -466,19 +466,7 @@ module Crystal
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
-
-      value = node.value
-
-      if value.is_a?(Expressions)
-        @str << keyword("begin")
-        newline
-        accept_with_indent(value)
-        append_indent
-        @str << keyword("end")
-      else
-        value.accept self
-      end
-
+      accept_with_maybe_begin_end node.value
       false
     end
 
@@ -867,7 +855,7 @@ module Crystal
       @str << keyword(keyword)
       if exp = node.exp
         @str << " "
-        exp.accept self
+        accept_with_maybe_begin_end exp
       end
       false
     end
@@ -1378,6 +1366,18 @@ module Crystal
         node.accept self
       end
       newline
+    end
+
+    def accept_with_maybe_begin_end(node)
+      if node.is_a?(Expressions)
+        @str << keyword("begin")
+        newline
+        accept_with_indent(node)
+        append_indent
+        @str << keyword("end")
+      else
+        node.accept self
+      end
     end
 
     def to_s
