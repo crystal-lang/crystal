@@ -36,6 +36,9 @@ module Crystal
 
   struct DefWithMetadata
     def is_restriction_of?(other : DefWithMetadata, owner)
+      # If one yields and the other doesn't, none is stricter than the other
+      return false unless yields == other.yields
+
       # A def with more required arguments than the other comes first
       if min_length > other.max_length
         return true
@@ -43,15 +46,26 @@ module Crystal
         return false
       end
 
-      return false unless yields == other.yields
+      self_splat_index = self.def.splat_index
+      other_splat_index = other.def.splat_index
 
-      if self.def.splat_index && other.def.splat_index
+      # If I splat but the other doesn't, I come later
+      if self_splat_index && !other_splat_index
+        return false
+      end
+
+      # If the other splats but I don't, I come first
+      if other_splat_index && !self_splat_index
+        return true
+      end
+
+      if self_splat_index && other_splat_index
         min = Math.min(min_length, other.min_length)
       else
         min = Math.min(max_length, other.max_length)
       end
 
-      0.upto(min - 1) do |index|
+      (0...min).each do |index|
         self_arg = self.def.args[index]
         other_arg = other.def.args[index]
 
@@ -66,17 +80,13 @@ module Crystal
         end
       end
 
-      if (my_splat_index = self.def.splat_index) && (other_splat_index = other.def.splat_index) && (my_splat_index == other_splat_index)
-        self_arg = self.def.args[my_splat_index]
+      if self_splat_index && other_splat_index && self_splat_index == other_splat_index
+        self_arg = self.def.args[self_splat_index]
         other_arg = other.def.args[other_splat_index]
 
         if (self_restriction = self_arg.restriction) && (other_restriction = other_arg.restriction)
           return false unless self_restriction.is_restriction_of?(other_restriction, owner)
         end
-      end
-
-      if self.def.splat_index && !other.def.splat_index
-        return false
       end
 
       true

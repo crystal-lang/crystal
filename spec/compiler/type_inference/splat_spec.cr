@@ -211,4 +211,32 @@ describe "Type inference: splat" do
       foo 1, 2, 3
       )) { char }
   end
+
+  it "overloads with splat against method with two arguments (#986) (1)" do
+    assert_type(%(
+      def foo(a, b)
+        1
+      end
+
+      def foo(*arg)
+        'a'
+      end
+
+      foo "bar", "baz"
+      )) { int32 }
+  end
+
+  it "overloads with splat against method with two arguments (#986) (2)" do
+    assert_type(%(
+      def foo(a, b)
+        1
+      end
+
+      def foo(*arg)
+        'a'
+      end
+
+      foo "bar"
+      )) { char }
+  end
 end
