@@ -143,6 +143,12 @@ describe "Type inference: did you mean" do
       Foo.new.foo
       ),
       "did you mean @barbara"
+  end
 
+  it "doesn't suggest when declaring var with suffix if and using it (#946)" do
+    assert_error %(
+      a if a = 1
+      ),
+      "if you declared 'a' in a suffix if, declare it in a regular if for this to work"
   end
 end

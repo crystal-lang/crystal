@@ -79,9 +79,22 @@ class Crystal::Call
           msg << "undefined method '#{def_name}'"
         else
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
-          msg << "undefined local variable or method '#{def_name}'"
+          if similar_name == def_name
+            # This check is for the case `a if a = 1`
+            msg << "undefined method '#{def_name}'"
+          else
+            msg << "undefined local variable or method '#{def_name}'"
+          end
         end
-        msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
+
+        if similar_name
+          if similar_name == def_name
+            # This check is for the case `a if a = 1`
+            msg << colorize(" (if you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work)").yellow.bold
+          else
+            msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+          end
+        end
 
         # Check if it's an instance variable that was never assigned a value
         if obj.is_a?(InstanceVar)
