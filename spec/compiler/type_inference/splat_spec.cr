@@ -239,4 +239,22 @@ describe "Type inference: splat" do
       foo "bar"
       )) { char }
   end
+
+  it "calls super with implicit splat arg (#1001)" do
+    assert_type(%(
+      class Foo
+        def foo(name)
+          name
+        end
+      end
+
+      class Bar < Foo
+        def foo(*args)
+          super
+        end
+      end
+
+      Bar.new.foo 1
+      )) { int32 }
+  end
 end

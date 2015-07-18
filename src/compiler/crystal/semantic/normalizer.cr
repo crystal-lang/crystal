@@ -149,8 +149,10 @@ module Crystal
       when "super", "previous_def"
         if node.args.empty? && !node.has_parenthesis
           if current_def = @current_def
-            current_def.args.each do |arg|
-              node.args.push Var.new(arg.name)
+            current_def.args.each_with_index do |arg, i|
+              arg = Var.new(arg.name)
+              arg = Splat.new(arg) if i == current_def.splat_index
+              node.args.push arg
             end
           end
           node.has_parenthesis = true
