@@ -1967,6 +1967,13 @@
   <span class="hljs-comment"># here a can&apos;t be nil</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
+<p>That logic also doesn&apos;t work with proc and method calls, including getters and properties, because nilable (or, more generally, union-typed) procs and methods aren&apos;t guaranteed to return the same more-specific type on two successive calls.</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">if</span> method <span class="hljs-comment"># first call to a method that can return Int32 or Nil</span>
+          <span class="hljs-comment"># here we know that the first call did not return Nil</span>
+  method  <span class="hljs-comment"># second call can still return Int32 or Nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The techniques described above for instance variables will also work for proc and method calls.</p>
 
                     
                     </section>

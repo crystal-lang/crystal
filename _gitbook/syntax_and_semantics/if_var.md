@@ -56,3 +56,14 @@ end
   # here a can't be nil
 end
 ```
+
+That logic also doesn't work with proc and method calls, including getters and properties, because nilable (or, more generally, union-typed) procs and methods aren't guaranteed to return the same more-specific type on two successive calls.
+
+```ruby
+if method # first call to a method that can return Int32 or Nil
+          # here we know that the first call did not return Nil
+  method  # second call can still return Int32 or Nil
+end
+```
+
+The techniques described above for instance variables will also work for proc and method calls.
