@@ -142,11 +142,17 @@ class URI
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
   # ```
-  def userinfo
+  private def userinfo
     if user && password
-      {user, password}.map{|s| CGI.escape(s.not_nil!)}.join(":")
+      {user, password}.map{|s| escape(s.not_nil!)}.join(":")
     elsif user
-      CGI.escape(user.not_nil!)
+      escape(user.not_nil!)
+    end
+  end
+
+  private def escape(str)
+    str.gsub(/[:@\/]/) do |match|
+      "%#{match[0].ord.to_s(16, upcase: true)}"
     end
   end
 end
