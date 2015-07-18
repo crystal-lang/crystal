@@ -1,5 +1,3 @@
-require "cgi"
-
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
 #
