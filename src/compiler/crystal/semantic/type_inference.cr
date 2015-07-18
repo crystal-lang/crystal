@@ -338,6 +338,8 @@ module Crystal
         node.raise "can't use instance variables at the top level"
       when PrimitiveType
         node.raise "can't use instance variables inside #{scope}"
+      when EnumType
+        node.raise "can't use instance variables inside enums (at enum #{scope})"
       when .metaclass?
         node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       when InstanceVarContainer

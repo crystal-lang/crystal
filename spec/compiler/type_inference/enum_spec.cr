@@ -238,4 +238,19 @@ describe "Type inference: enum" do
       ),
       "invalid Int32: 2147486719"
   end
+
+  it "errors if using instance var inside enum (#991)" do
+    assert_error %(
+      enum X
+        A
+
+        def meth
+          puts @value
+        end
+      end
+
+      X::A.meth
+      ),
+      "can't use instance variables inside enums (at enum X)"
+  end
 end
