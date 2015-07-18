@@ -163,4 +163,17 @@ describe "Type inference: primitives" do
       Test.foo << 1
       )) { types["Test"].types["K"] }
   end
+
+  it "errors if using instance variable inside primitive type" do
+    assert_error %(
+      struct Int32
+        def meth
+          puts @value
+        end
+      end
+
+      1.meth
+      ),
+      "can't use instance variables inside primitive types (at Int32)"
+  end
 end

@@ -337,7 +337,7 @@ module Crystal
       when Program
         node.raise "can't use instance variables at the top level"
       when PrimitiveType
-        node.raise "can't use instance variables inside #{scope}"
+        node.raise "can't use instance variables inside primitive types (at #{scope})"
       when EnumType
         node.raise "can't use instance variables inside enums (at enum #{scope})"
       when .metaclass?
