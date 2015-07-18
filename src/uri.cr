@@ -1,4 +1,28 @@
 require "cgi"
+
+# This class represents a URI reference as defined by RFC 3986: Uniform Resource Identifier
+# (URI): Generic Syntax. This class provides constructors for creating URI instances from
+# their components or by parsing their string forms, methods for accessing the various
+# components of an instance, and methods for normalizing, resolving, and relativizing URI
+# instances.
+#
+# Basic example:
+#
+# ```
+# require 'uri'
+#
+# uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
+# # => #<URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
+# uri.scheme
+# # => "http"
+# uri.host
+# # => "foo.com"
+# uri.query
+# # => "id=30&limit=5"
+#
+# uri.to_s
+# # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
+# ```
 class URI
   # URI defined in RFC3986
   RFC3986_URI = /\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%\h\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:\h{1,4}:){6}(?<ls32>\h{1,4}:\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:\h{1,4}:){5}\g<ls32>|\h{1,4}?::(?:\h{1,4}:){4}\g<ls32>|(?:(?:\h{1,4}:)?\h{1,4})?::(?:\h{1,4}:){3}\g<ls32>|(?:(?:\h{1,4}:){,2}\h{1,4})?::(?:\h{1,4}:){2}\g<ls32>|(?:(?:\h{1,4}:){,3}\h{1,4})?::\h{1,4}:\g<ls32>|(?:(?:\h{1,4}:){,4}\h{1,4})?::\g<ls32>|(?:(?:\h{1,4}:){,5}\h{1,4})?::\h{1,4}|(?:(?:\h{1,4}:){,6}\h{1,4})?::)|(?<IPvFuture>v\h+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%\h\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
@@ -18,6 +42,11 @@ class URI
     self.userinfo = userinfo if userinfo
   end
 
+  # Return full path for given URI:
+  # ```
+  # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
+  # uri.full_path # => "/posts?id=30&limit=5"
+  # ```
   def full_path
     String.build do |str|
       str << (@path.try {|p| !p.empty?} ? @path : "/")
@@ -59,6 +88,18 @@ class URI
     end
   end
 
+  # Parse parses rawurl string into a URL structure. The rawurl may be relative or absolute.
+  #
+  # ```
+  # require 'uri'
+  #
+  # uri = URI.parse("http://crystal-lang.org")
+  # # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
+  # uri.scheme
+  # # => "http"
+  # uri.host
+  # # => "crystal-lang.org"
+  # ```
   def self.parse(string : String)
     if m = RFC3986_URI.match(string)
       query = m["query"]?
@@ -87,12 +128,24 @@ class URI
     new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
   end
 
+  # Sets the user-information:
+  # ```
+  # uri = URI.parse "http://admin:password@foo.com"
+  # uri.userinfo = "user:password"
+  # uri.to_s
+  # # => "http://user:password@foo.com"
+  # ```
   def userinfo=(ui)
     split = ui.split(":")
     self.user = split[0]
     self.password = split[1]?
   end
 
+  # Returns the user-information component containing the provided username and password.
+  # ```
+  # uri = URI.parse "http://admin:password@foo.com"
+  # uri.userinfo # => "admin:password"
+  # ```
   def userinfo
     if user && password
       {user, password}.map{|s| CGI.escape(s.not_nil!)}.join(":")
