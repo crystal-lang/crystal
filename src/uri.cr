@@ -1,25 +1,25 @@
 require "cgi"
 
-# This class represents a URI reference as defined by RFC 3986: Uniform Resource Identifier
-# (URI): Generic Syntax. This class provides constructors for creating URI instances from
-# their components or by parsing their string forms, methods for accessing the various
-# components of an instance, and methods for normalizing, resolving, and relativizing URI
-# instances.
+# This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
+# (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
+#
+# This class provides constructors for creating URI instances from
+# their components or by parsing their string forms and methods for accessing the various
+# components of an instance.
 #
 # Basic example:
 #
 # ```
-# require 'uri'
+# require "uri"
 #
 # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-# # => #<URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
+# # => #&lt;URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... >
 # uri.scheme
 # # => "http"
 # uri.host
 # # => "foo.com"
 # uri.query
 # # => "id=30&limit=5"
-#
 # uri.to_s
 # # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
 # ```
@@ -42,7 +42,8 @@ class URI
     self.userinfo = userinfo if userinfo
   end
 
-  # Return full path for given URI:
+  # Returns the full path of this URI.
+  #
   # ```
   # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
   # uri.full_path # => "/posts?id=30&limit=5"
@@ -88,7 +89,7 @@ class URI
     end
   end
 
-  # Parse parses rawurl string into a URL structure. The rawurl may be relative or absolute.
+  # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
   #
   # ```
   # require 'uri'
@@ -100,8 +101,8 @@ class URI
   # uri.host
   # # => "crystal-lang.org"
   # ```
-  def self.parse(string : String)
-    if m = RFC3986_URI.match(string)
+  def self.parse(raw_url : String)
+    if m = RFC3986_URI.match(raw_url)
       query = m["query"]?
       scheme = m["scheme"]?
       opaque = m["path_rootless"]?
@@ -114,7 +115,7 @@ class URI
         path = m["path_abempty"]? || m["path_absolute"]? || m["path_empty"]?
         fragment = m["fragment"]?
       end
-    elsif m = RFC3986_relative_ref.match(string)
+    elsif m = RFC3986_relative_ref.match(raw_url)
       userinfo = m["userinfo"]?
       host = m["host"]?
       port = m["port"]?.try(&.to_i)
@@ -122,13 +123,14 @@ class URI
       query = m["query"]?
       fragment = m["fragment"]?
     else
-      raise "bad URI(is not URI?): #{string}"
+      raise "bad URI(is not URI?): #{raw_url}"
     end
 
     new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
   end
 
-  # Sets the user-information:
+  # Sets the user-information.
+  #
   # ```
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo = "user:password"
@@ -142,6 +144,7 @@ class URI
   end
 
   # Returns the user-information component containing the provided username and password.
+  #
   # ```
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
