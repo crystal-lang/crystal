@@ -3,8 +3,9 @@ module Crystal
     property owner
     property type_lookup
     getter free_vars
+    getter? strict
 
-    def initialize(@owner, @type_lookup, @free_vars = nil)
+    def initialize(@owner, @type_lookup, @free_vars = nil, @strict = false)
     end
 
     def get_free_var(name)

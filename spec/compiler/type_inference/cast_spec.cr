@@ -229,4 +229,20 @@ describe "Type inference: cast" do
       ),
       "useless cast"
   end
+
+  it "doesn't allow upcast of generic type var (#996)" do
+    assert_error %(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Gen(T)
+      end
+
+      Gen(Foo).new
+      Gen(Bar).new as Gen(Foo)
+      ), "can't cast Gen(Bar) to Gen(Foo+)"
+  end
 end

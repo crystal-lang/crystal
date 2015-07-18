@@ -230,7 +230,7 @@ module Crystal
     end
 
     def filter_by(other_type)
-      restrict other_type, MatchContext.new(self, self)
+      restrict other_type, MatchContext.new(self, self, strict: true)
     end
 
     def filter_by_responds_to(name)
