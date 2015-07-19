@@ -293,4 +293,24 @@ describe "Type inference: def" do
       foo
       )) { nilable int32 }
   end
+
+  it "says compile-time type on error" do
+    assert_error %(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def bar
+          1
+        end
+      end
+
+      class Baz < Foo
+      end
+
+      f = Bar.new || Baz.new
+      f.bar
+      ),
+      "compile-time type is Foo+"
+  end
 end

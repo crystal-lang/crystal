@@ -87,6 +87,10 @@ class Crystal::Call
           end
         end
 
+        if obj && obj.type != owner
+          msg << colorize(" (compile-time type is #{obj.type})").yellow.bold
+        end
+
         if similar_name
           if similar_name == def_name
             # This check is for the case `a if a = 1`
