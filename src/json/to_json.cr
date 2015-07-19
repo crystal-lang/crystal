@@ -1,10 +1,26 @@
 class Object
+  # Serialize object to JSON string
+  #
+  # ```
+  # require "json"
+  #
+  # puts { hello: "goodbye" }.to_json
+  # # => "{\"hello\":\"goodbye\"}"
+  # ```
   def to_json
     String.build do |str|
       to_json str
     end
   end
 
+  # Serialize object to pretty JSON string
+  #
+  # ```
+  # require "json"
+  #
+  # puts { hello: "goodbye" }.to_pretty_json
+  # # => "{\n  \"hello\": \"goodbye\"\n}"
+  # ```
   def to_pretty_json
     String.build do |str|
       to_pretty_json str
