@@ -74,6 +74,11 @@ describe Markdown do
   assert_render "* Hello\nWorld", "<ul><li>Hello</li></ul>\n\n<p>World</p>"
   assert_render "Params:\n  * Foo\n  * Bar", "<p>Params:</p>\n\n<ul><li>Foo</li><li>Bar</li></ul>"
 
+  assert_render "1. Hello", "<ol><li>Hello</li></ol>"
+  assert_render "2. Hello", "<ol><li>Hello</li></ol>"
+  assert_render "01. Hello\n02. World", "<ol><li>Hello</li><li>World</li></ol>"
+  assert_render "Params:\n  1. Foo\n  2. Bar", "<p>Params:</p>\n\n<ol><li>Foo</li><li>Bar</li></ol>"
+
   assert_render "Hello [world](http://foo.com)", %(<p>Hello <a href="http://foo.com">world</a></p>)
   assert_render "Hello [world](http://foo.com)!", %(<p>Hello <a href="http://foo.com">world</a>!</p>)
   assert_render "Hello [world **2**](http://foo.com)!", %(<p>Hello <a href="http://foo.com">world <strong>2</strong></a>!</p>)
