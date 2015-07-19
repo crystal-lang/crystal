@@ -62,6 +62,14 @@ class Markdown::HTMLRenderer
     @io << "</ul>"
   end
 
+  def begin_ordered_list
+    @io << "<ol>"
+  end
+
+  def end_ordered_list
+    @io << "</ol>"
+  end
+
   def begin_list_item
     @io << "<li>"
   end

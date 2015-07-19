@@ -47,6 +47,10 @@ class Markdown::Parser
       return render_fenced_code
     end
 
+    if starts_with_digits_dot? line
+      return render_ordered_list
+    end
+
     render_paragraph
   end
 
@@ -88,7 +92,7 @@ class Markdown::Parser
         break
       end
 
-      if starts_with_star?(line) || starts_with_backticks?(line)
+      if starts_with_star?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line)
         break
       end
 
@@ -193,6 +197,39 @@ class Markdown::Parser
     end
 
     @renderer.end_unordered_list
+
+    append_double_newline_if_has_more
+  end
+
+  def render_ordered_list
+    @renderer.begin_ordered_list
+
+    while true
+      line = @lines[@line]
+
+      if empty? line
+        @line += 1
+
+        if @line == @lines.length
+          break
+        end
+
+        next
+      end
+
+      break unless starts_with_digits_dot? line
+
+      @renderer.begin_list_item
+      process_line line.byte_slice(line.index('.').not_nil! + 1)
+      @renderer.end_list_item
+      @line += 1
+
+      if @line == @lines.length
+        break
+      end
+    end
+
+    @renderer.end_ordered_list
 
     append_double_newline_if_has_more
   end
@@ -434,6 +471,25 @@ class Markdown::Parser
 
   def starts_with_backticks?(line)
     line.starts_with? "```"
+  end
+
+  def starts_with_digits_dot?(line)
+    bytesize = line.bytesize
+    str = line.to_unsafe
+    pos = 0
+    while pos < bytesize && str[pos].chr.whitespace?
+      pos += 1
+    end
+
+    return false unless pos < bytesize
+    return false unless str[pos].chr.digit?
+
+    while pos < bytesize && str[pos].chr.digit?
+      pos += 1
+    end
+
+    return false unless pos < bytesize
+    str[pos].chr == '.'
   end
 
   def next_lines_empty_of_code?
