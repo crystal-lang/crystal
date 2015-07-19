@@ -411,7 +411,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
-    load(gep @llvm_mod.globals["symbol_table"], int(0), call_args[0])
+    load(gep @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
   end
 
   def codegen_primitive_symbol_hash(node, target_def, call_args)

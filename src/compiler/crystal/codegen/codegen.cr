@@ -65,6 +65,7 @@ module Crystal
   class CodeGenVisitor < Visitor
     PERSONALITY_NAME = "__crystal_personality"
     GET_EXCEPTION_NAME = "__crystal_get_exception"
+    SYMBOL_TABLE_NAME = ":symbol_table"
 
     include LLVMBuilderHelper
 
@@ -176,7 +177,7 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod)
-      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.count), "symbol_table"
+      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.count), SYMBOL_TABLE_NAME
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -309,7 +310,7 @@ module Crystal
     end
 
     def visit(node : StringLiteral)
-      @last = build_string_constant(node.value)
+      @last = build_string_constant(node.value, node.value)
     end
 
     def visit(node : SymbolLiteral)
@@ -1639,7 +1640,9 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
+      name = "#{name[0 .. 18]}..." if name.bytesize > 18
       name = name.gsub '@', '.'
+      name = "'#{name}'"
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
         global = @llvm_mod.globals.add(@llvm_typer.llvm_string_type(str.bytesize), name)

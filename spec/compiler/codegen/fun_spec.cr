@@ -596,4 +596,16 @@ describe "Code gen: fun" do
       foo &->{ 123 }
       )).to_i.should eq(123)
   end
+
+  it "mangles strings in such a way they don't conflict with funs (#1006)" do
+    run(%(
+      a = :foo
+
+      fun foo : Int32
+        123
+      end
+
+      foo
+      )).to_i.should eq(123)
+  end
 end
