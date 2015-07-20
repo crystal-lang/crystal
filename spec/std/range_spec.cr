@@ -1,6 +1,12 @@
 require "spec"
 
 describe "Range" do
+  it "initialized with new method" do
+    Range.new(1, 10).should eq(1..10)
+    Range.new(1, 10, false).should eq(1..10)
+    Range.new(1, 10, true).should eq(1...10)
+  end
+
   it "gets basic properties" do
     r = 1 .. 5
     r.begin.should eq(1)
