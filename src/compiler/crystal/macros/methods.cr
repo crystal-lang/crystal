@@ -658,7 +658,7 @@ module Crystal
   class MacroId
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify"
+      when "==", "!=", "stringify", "class_name"
         return super
       end
 
@@ -675,7 +675,7 @@ module Crystal
   class SymbolLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify"
+      when "==", "!=", "stringify", "class_name"
         return super
       end
 

@@ -208,6 +208,10 @@ describe "MacroExpander" do
       end
 
       it "executes class_name" do
+        assert_macro "x", "{{x.class_name}}", [MacroId.new("hello")] of ASTNode, "\"MacroId\""
+      end
+
+      it "executes class_name" do
         assert_macro "x", "{{x.class_name}}", [StringLiteral.new("hello")] of ASTNode, "\"StringLiteral\""
       end
 
