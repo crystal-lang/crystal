@@ -371,4 +371,7 @@ module Crystal
 
   class FrozenTypeException < TypeException
   end
+
+  class UndefinedMacroMethodError < TypeException
+  end
 end
