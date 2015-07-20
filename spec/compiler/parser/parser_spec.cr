@@ -733,6 +733,7 @@ describe "Parser" do
   it_parses "/foo/imximx", regex("foo", Regex::Options::IGNORE_CASE | Regex::Options::MULTILINE | Regex::Options::EXTENDED)
   it_parses "/fo\\so/", regex("fo\\so")
   it_parses "/fo\#{1}o/", RegexLiteral.new(StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode))
+  it_parses "/(fo\#{\"bar\"}\#{1}o)/", RegexLiteral.new(StringInterpolation.new(["(fo".string, "bar".string, 1.int32, "o)".string] of ASTNode))
   it_parses "%r(foo(bar))", regex("foo(bar)")
   it_parses "/ /", regex(" ")
   it_parses "/ hi /", regex(" hi ")

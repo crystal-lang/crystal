@@ -1581,6 +1581,7 @@ module Crystal
             raise "Unterminated string literal"
           end
         else
+          delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
           exp = parse_expression
 
@@ -1595,6 +1596,7 @@ module Crystal
             raise "Unterminated string interpolation"
           end
 
+          @token.delimiter_state = delimiter_state
           next_string_token(delimiter_state)
           delimiter_state = @token.delimiter_state
         end
