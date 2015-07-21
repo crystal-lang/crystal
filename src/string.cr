@@ -812,13 +812,13 @@ class String
     return self if bytesize == 0
 
     case cstr[bytesize - 1]
-    when '\n'.ord
+    when '\n'
       if bytesize > 1 && cstr[bytesize - 2] == '\r'.ord
         byte_slice 0, bytesize - 2
       else
         byte_slice 0, bytesize - 1
       end
-    when '\r'.ord
+    when '\r'
       byte_slice 0, bytesize - 1
     else
       self

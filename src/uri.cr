@@ -238,7 +238,7 @@ class URI
   private def escape(str, io)
     str.each_byte do |byte|
       case byte
-      when ':'.ord, '@'.ord, '/'.ord
+      when ':', '@', '/'
         io << '%'
         byte.to_s(16, io, upcase: true)
       else
