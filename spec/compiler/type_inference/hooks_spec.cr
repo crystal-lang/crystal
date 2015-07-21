@@ -116,6 +116,6 @@ describe "Type inference: hooks" do
         include Doable
       end
       ),
-      "undefined macro method 'StringLiteral#unknown'"
+      "undefined macro method 'MacroId#unknown'"
   end
 end
