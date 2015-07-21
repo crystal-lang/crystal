@@ -496,4 +496,8 @@ struct Char
       io.write chars.to_slice, i
     end
   end
+
+  def ===(byte : Int)
+    ord === byte
+  end
 end
