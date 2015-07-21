@@ -21,7 +21,7 @@ module Crystal
       when "!"
         BoolLiteral.new(!truthy?)
       else
-        raise "undefined macro method '#{class_desc}##{method}'"
+        raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
       end
     end
 
@@ -659,6 +659,8 @@ module Crystal
       value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
       value = MacroId.new(value.value) if value.is_a?(StringLiteral)
       value
+    rescue UndefinedMacroMethodError
+      raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
 
     def interpret_compare(other : MacroId | StringLiteral)
@@ -676,6 +678,8 @@ module Crystal
       value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
       value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
       value
+    rescue UndefinedMacroMethodError
+      raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
   end
 
