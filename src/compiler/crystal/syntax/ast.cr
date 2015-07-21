@@ -244,7 +244,7 @@ module Crystal
 
   # An array literal.
   #
-  #  '[' ( expression ( ',' expression )* ) ']'
+  #  '[' [ expression [ ',' expression ]* ] ']'
   #
   class ArrayLiteral < ASTNode
     property :elements
