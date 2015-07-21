@@ -1,5 +1,3 @@
-require "cgi"
-
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
 #
@@ -28,18 +26,98 @@ class URI
   RFC3986_URI = /\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%\h\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:\h{1,4}:){6}(?<ls32>\h{1,4}:\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:\h{1,4}:){5}\g<ls32>|\h{1,4}?::(?:\h{1,4}:){4}\g<ls32>|(?:(?:\h{1,4}:)?\h{1,4})?::(?:\h{1,4}:){3}\g<ls32>|(?:(?:\h{1,4}:){,2}\h{1,4})?::(?:\h{1,4}:){2}\g<ls32>|(?:(?:\h{1,4}:){,3}\h{1,4})?::\h{1,4}:\g<ls32>|(?:(?:\h{1,4}:){,4}\h{1,4})?::\g<ls32>|(?:(?:\h{1,4}:){,5}\h{1,4})?::\h{1,4}|(?:(?:\h{1,4}:){,6}\h{1,4})?::)|(?<IPvFuture>v\h+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%\h\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
   RFC3986_relative_ref = /\A(?<relative_ref>(?<relative_part>\/\/(?<authority>(?:(?<userinfo>(?:%\h\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?<IPv6address>(?:\h{1,4}:){6}(?<ls32>\h{1,4}:\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:\h{1,4}:){5}\g<ls32>|\h{1,4}?::(?:\h{1,4}:){4}\g<ls32>|(?:(?:\h{1,4}:){,1}\h{1,4})?::(?:\h{1,4}:){3}\g<ls32>|(?:(?:\h{1,4}:){,2}\h{1,4})?::(?:\h{1,4}:){2}\g<ls32>|(?:(?:\h{1,4}:){,3}\h{1,4})?::\h{1,4}:\g<ls32>|(?:(?:\h{1,4}:){,4}\h{1,4})?::\g<ls32>|(?:(?:\h{1,4}:){,5}\h{1,4})?::\h{1,4}|(?:(?:\h{1,4}:){,6}\h{1,4})?::)|(?<IPvFuture>v\h+\.[!$&-.0-;=A-Z_a-z~]+)\])|\g<IPv4address>|(?<reg_name>(?:%\h\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%\h\h|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_noscheme>(?<segment_nz_nc>(?:%\h\h|[!$&-.0-9;=@-Z_a-z~])+)(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%\h\h|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
 
-  property scheme
-  property host
-  property port
-  property path
-  property query
-  property user
-  property password
-  property fragment
-  property opaque
+  # Returns the scheme component of the URI.
+  #
+  # ```
+  # URI.parse("http://foo.com").scheme # => "http"
+  # URI.parse("mailto:alice@example.com").scheme # => "mailto"
+  # ```
+  getter scheme
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, userinfo = nil, @fragment = nil, @opaque = nil)
-    self.userinfo = userinfo if userinfo
+  # Sets the scheme component of the URI.
+  setter scheme
+
+  # Returns the host component of the URI.
+  #
+  # ```
+  # URI.parse("http://foo.com").host # => "foo.com"
+  # ```
+  getter host
+
+  # Sets the host component of the URI.
+  setter host
+
+  # Returns the port component of the URI.
+  #
+  # ```
+  # URI.parse("http://foo.com:5432").port # => 5432
+  # ```
+  getter port
+
+  # Sets the port component of the URI.
+  setter port
+
+  # Returns the path component of the URI.
+  #
+  # ```
+  # URI.parse("http://foo.com/bar").host # => "/bar"
+  # ```
+  getter path
+
+  # Sets the path component of the URI.
+  setter path
+
+  # Returns the query component of the URI.
+  #
+  # ```
+  # URI.parse("http://foo.com/bar?q=1").host # => "q=1"
+  # ```
+  getter query
+
+  # Sets the query component of the URI.
+  setter query
+
+  # Returns the user component of the URI.
+  #
+  # ```
+  # URI.parse("http://admin:password@foo.com").user # => "admin"
+  # ```
+  getter user
+
+  # Sets the user component of the URI.
+  setter user
+
+  # Returns the password component of the URI.
+  #
+  # ```
+  # URI.parse("http://admin:password@foo.com").password # => "password"
+  # ```
+  getter password
+
+  # Sets the password component of the URI.
+  setter password
+
+  # Returns the fragment component of the URI.
+  #
+  # ```
+  # URI.parse("http://foo.com/bar#section1").fragment # => "section1"
+  # ```
+  getter fragment
+
+  # Sets the fragment component of the URI.
+  setter fragment
+
+  # Returns the opaque component of the URI.
+  #
+  # ```
+  # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
+  # ```
+  getter opaque
+
+  # Sets the opaque component of the URI.
+  setter opaque
+
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
   # Returns the full path of this URI.
@@ -126,21 +204,15 @@ class URI
       raise "bad URI(is not URI?): #{raw_url}"
     end
 
-    new scheme: scheme, host: host, port: port, path: path, query: query, userinfo: userinfo, fragment: fragment, opaque: opaque
-  end
+    if userinfo
+      split = userinfo.split(":")
+      user = split[0]
+      password = split[1]?
+    else
+      user = password = nil
+    end
 
-  # Sets the user-information.
-  #
-  # ```
-  # uri = URI.parse "http://admin:password@foo.com"
-  # uri.userinfo = "user:password"
-  # uri.to_s
-  # # => "http://user:password@foo.com"
-  # ```
-  def userinfo=(ui)
-    split = ui.split(":")
-    self.user = split[0]
-    self.password = split[1]?
+    new scheme: scheme, host: host, port: port, path: path, query: query, user: user, password: password, fragment: fragment, opaque: opaque
   end
 
   # Returns the user-information component containing the provided username and password.
@@ -149,11 +221,17 @@ class URI
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
   # ```
-  def userinfo
+  private def userinfo
     if user && password
-      {user, password}.map{|s| CGI.escape(s.not_nil!)}.join(":")
+      {user, password}.map{|s| escape(s.not_nil!)}.join(":")
     elsif user
-      CGI.escape(user.not_nil!)
+      escape(user.not_nil!)
+    end
+  end
+
+  private def escape(str)
+    str.gsub(/[:@\/]/) do |match|
+      "%#{match[0].ord.to_s(16, upcase: true)}"
     end
   end
 end
