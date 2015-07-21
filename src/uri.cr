@@ -143,8 +143,8 @@ class URI
       io << opaque
       return
     end
-    if ui = userinfo
-      io << ui
+    if user = @user
+      userinfo(user, io)
       io << '@'
     end
     if host
@@ -221,17 +221,29 @@ class URI
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
   # ```
-  private def userinfo
-    if user && password
-      {user, password}.map{|s| escape(s.not_nil!)}.join(":")
-    elsif user
-      escape(user.not_nil!)
+  def userinfo
+    if user = @user
+      String.build { |io| userinfo(user, io) }
     end
   end
 
-  private def escape(str)
-    str.gsub(/[:@\/]/) do |match|
-      "%#{match[0].ord.to_s(16, upcase: true)}"
+  private def userinfo(user, io)
+    escape(user, io)
+    if password = @password
+      io << ':'
+      escape(password, io)
+    end
+  end
+
+  private def escape(str, io)
+    str.each_byte do |byte|
+      case byte
+      when ':'.ord, '@'.ord, '/'.ord
+        io << '%'
+        byte.to_s(16, io, upcase: true)
+      else
+        io.write_byte byte
+      end
     end
   end
 end

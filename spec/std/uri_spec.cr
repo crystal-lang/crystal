@@ -37,6 +37,12 @@ describe "URI" do
   assert { URI.parse("http://www.google.com/?q=1").full_path.should eq("/?q=1") }
   assert { URI.parse("http://www.google.com?q=1").full_path.should eq("/?q=1") }
 
+  describe "userinfo" do
+    assert { URI.parse("http://www.google.com").userinfo.should be_nil }
+    assert { URI.parse("http://foo@www.google.com").userinfo.should eq("foo") }
+    assert { URI.parse("http://foo:bar@www.google.com").userinfo.should eq("foo:bar") }
+  end
+
   describe "to_s" do
     assert { URI.new("http", "www.google.com").to_s.should eq("http://www.google.com") }
     assert { URI.new("http", "www.google.com", 80).to_s.should eq("http://www.google.com") }
