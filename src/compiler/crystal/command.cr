@@ -17,6 +17,7 @@ Command:
     docs                     generate documentation
     eval                     eval code
     hierarchy                show type hierarchy
+    impl:FILE:LINE:COL       show implementations for given call in location
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
     types                    show type of main variables
@@ -57,6 +58,9 @@ USAGE
         when "hierarchy".starts_with?(command)
           options.shift
           hierarchy options
+        when command.starts_with?("impl")
+          options.shift
+          implementations command, options
         when "run".starts_with?(command)
           options.shift
           run_command options
@@ -134,6 +138,19 @@ USAGE
   private def self.hierarchy(options)
     config, result = compile_no_build "hierarchy", options, hierarchy: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
+  end
+
+  private def self.implementations(command, options)
+    config, result = compile_no_build "implementations", options
+    c, file, line, col = command.split(':')
+    file = File.expand_path(file)
+    visitor = ImplementationsVisitor.new(Location.new(line.to_i, col.to_i, file))
+
+    result.program.def_instances.each_value do |typed_def|
+      typed_def.accept(visitor)
+    end
+
+    result.node.accept(visitor)
   end
 
   private def self.run_command(options)
