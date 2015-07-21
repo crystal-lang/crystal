@@ -38,7 +38,7 @@ struct Symbol
     end
   end
 
-  # Returns the symbols name to the passed io.
+  # Appends the symbol's name to the passed IO.
   #
   # ```
   # :crystal.to_s # => "crystal"
