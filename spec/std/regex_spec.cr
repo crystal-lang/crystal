@@ -144,4 +144,9 @@ describe "Regex" do
     Regex.new("foo").should eq(Regex.new("foo"))
     Regex.new("foo").should_not eq(Regex.new("bar"))
   end
+
+  it "matches lines beginnings on ^ in multiline mode" do
+    ("foo\nbar" =~ /^bar/).should be_nil
+    ("foo\nbar" =~ /^bar/m).should eq(4)
+  end
 end
