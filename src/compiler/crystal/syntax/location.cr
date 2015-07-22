@@ -1,5 +1,9 @@
+require "../../../partial_comparable"
+
 module Crystal
   class Location
+    include PartialComparable(self)
+
     getter line_number
     getter column_number
     getter filename
@@ -22,6 +26,16 @@ module Crystal
 
     def to_s(io)
       io << filename << ":" << line_number << ":" << column_number
+    end
+
+    def <=>(other)
+      self_file = @filename
+      other_file = other.filename
+      if self_file.is_a?(String) && other_file.is_a?(String) && self_file == other_file
+        {@line_number, @column_number} <=> {other.line_number, other.column_number}
+      else
+        nil
+      end
     end
   end
 end

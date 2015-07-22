@@ -146,11 +146,11 @@ USAGE
     file = File.expand_path(file)
     visitor = ImplementationsVisitor.new(Location.new(line.to_i, col.to_i, file))
 
-    result.program.def_instances.each_value do |typed_def|
-      typed_def.accept(visitor)
-    end
+    visitor.process(result)
 
-    result.node.accept(visitor)
+    visitor.locations.each do |loc|
+      puts loc
+    end
   end
 
   private def self.run_command(options)

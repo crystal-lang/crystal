@@ -1,115 +1,62 @@
 require "../syntax/ast"
+require "../compiler"
 
 module Crystal
+  class Call
+    def name_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number, loc.filename)
+    end
+
+    def name_end_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number + name_length, loc.filename)
+    end
+  end
+
   class ImplementationsVisitor < Visitor
+    getter locations
+
     def initialize(@target_location)
+      @locations = [] of Location
+    end
+
+    def process(result : Compiler::Result)
+      result.program.def_instances.each_value do |typed_def|
+        typed_def.accept(self)
+      end
+
+      result.node.accept(self)
     end
 
     def visit(node : Call)
-      if contains_token_target(node)
-        if target_defs = node.target_defs
-          target_defs.each do |target_def|
-            puts target_def.location
+      if node.location
+        if @target_location.between?(node.name_location, node.name_end_location)
+
+          if target_defs = node.target_defs
+            target_defs.each do |target_def|
+              @locations << target_def.location.not_nil!
+            end
           end
-        end
-      else
-        if contains_target(node)
-          true
+
+        else
+          contains_target(node)
         end
       end
-    end
-
-    def visit(node : Expressions)
-      true
     end
 
     def visit(node)
       contains_target(node)
     end
 
-    def contains_target(node)
-      if loc = node.location
-        if loc.filename == @target_location.filename
-          a = { loc.line_number, loc.column_number }
-          b = { @target_location.line_number, @target_location.column_number }
-          if a <= b
-            end_loc = end_location(node).not_nil!
-            c = { end_loc.line_number, end_loc.column_number }
-            if b <= c
-              return true
-            end
-          end
-        end
-      end
-
-      false
-    end
-
-    def end_location(node : Expressions)
-      if node.empty?
-        nil
+    private def contains_target(node)
+      if loc_start = node.location
+        loc_end = node.end_location.not_nil!
+        @target_location.between?(loc_start, loc_end)
       else
-        node.last.location
-      end
-    end
-
-    def end_location(node : Def)
-      end_location(node.body)
-    end
-
-    def end_location(node : Call)
-      if loc = node.location
-        delta = node.name_length
-
-        if o = node.obj
-          delta += o.name_length + 1
-        end
-
-        if node.args.empty?
-          Location.new(loc.line_number, loc.column_number + delta, loc.filename)
-        else
-          end_location(node.args.last)
-        end
-      else
-        nil
-      end
-    end
-
-    def end_location(node)
-      node.location
-    end
-
-
-
-    def contains_token_target(node : Call)
-      if loc = node.location
-        if loc.filename == @target_location.filename
-          a = { loc.line_number, loc.column_number }
-          b = { @target_location.line_number, @target_location.column_number }
-          if a <= b
-            end_loc = end_token_location(node).not_nil!
-            c = { end_loc.line_number, end_loc.column_number }
-            if b <= c
-              return true
-            end
-          end
-        end
-      end
-
-      false
-    end
-
-    def end_token_location(node : Call)
-      if loc = node.location
-        delta = node.name_length
-
-        if o = node.obj
-          delta += o.name_length + 1
-        end
-
-        Location.new(loc.line_number, loc.column_number + delta, loc.filename)
-      else
-        nil
+        # if node has no location, assume they may contain the target.
+        # for example with the main expressions ast node this matters
+        true
       end
     end
   end
