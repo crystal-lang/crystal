@@ -13,7 +13,7 @@ end
 module Readline
   extend self
 
-  alias CompletionProc = String -> Array(String)?
+  alias CompletionProc = String, Int32, Int32 -> Array(String)?
 
   def readline(prompt = "", add_history = false)
     line = LibReadline.readline(prompt)
@@ -44,7 +44,7 @@ module Readline
     return Pointer(UInt8*).null unless completion_proc
 
     text = String.new(text_ptr)
-    matches = completion_proc.call(text)
+    matches = completion_proc.call(text, start, finish)
 
     return Pointer(UInt8*).null unless matches
     return Pointer(UInt8*).null if matches.empty?
