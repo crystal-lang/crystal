@@ -17,7 +17,7 @@ Command:
     docs                     generate documentation
     eval                     eval code
     hierarchy                show type hierarchy
-    impl:FILE:LINE:COL       show implementations for given call in location
+    implementations          show implementations for given call in location
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
     types                    show type of main variables
@@ -58,7 +58,7 @@ USAGE
         when "hierarchy".starts_with?(command)
           options.shift
           hierarchy options
-        when command.starts_with?("impl")
+        when "implementations".starts_with?(command)
           options.shift
           implementations command, options
         when "run".starts_with?(command)
@@ -141,8 +141,29 @@ USAGE
   end
 
   private def self.implementations(command, options)
+    cursor_given = false
+    file = ""
+    line = ""
+    col = ""
+
+    option_parser = OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal #{command} [options] [programfile]\n\nOptions:\n    all build command options and ..."
+      opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+        loc = cursor.split(':')
+        if loc.size == 3
+          file, line, col = loc
+          cursor_given = true
+        end
+      end
+    end
+
+    unless cursor_given
+      puts option_parser
+      exit 1
+    end
+
     config, result = compile_no_build "implementations", options
-    c, file, line, col = command.split(':')
+
     file = File.expand_path(file)
     visitor = ImplementationsVisitor.new(Location.new(line.to_i, col.to_i, file))
 
@@ -150,6 +171,10 @@ USAGE
 
     visitor.locations.each do |loc|
       puts loc
+    end
+
+    if visitor.locations.empty?
+      puts "no implementations or method call found"
     end
   end
 

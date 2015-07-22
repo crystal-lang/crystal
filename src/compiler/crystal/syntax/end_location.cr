@@ -49,4 +49,10 @@ module Crystal
       body.end_location || location
     end
   end
+
+  class While
+    def build_end_location
+      body.end_location || location
+    end
+  end
 end

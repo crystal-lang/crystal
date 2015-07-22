@@ -11,7 +11,9 @@ class B
 end
 
 def bar(o)
-  o.foo
+  while false
+    o.foo
+  end
 end
 
 def baz(o)
@@ -23,19 +25,19 @@ puts bar(B.new)
 puts baz(A.new)
 
 
-# ./crystal impl:samples/impl.cr:14:5 samples/impl.cr
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:15:8
 #
 # .../samples/impl.cr:2:3
 # .../samples/impl.cr:8:3
 
-# ./crystal impl:samples/impl.cr:18:5 samples/impl.cr
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:20:5
 #
 # .../samples/impl.cr:2:3
 
-# ./crystal impl:samples/impl.cr:21:7 samples/impl.cr
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:23:7
 #
 # .../samples/impl.cr:13:1
 
-# ./crystal impl:samples/impl.cr:22:3 samples/impl.cr
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:25:3
 #
 # .../src/kernel.cr:67:1
