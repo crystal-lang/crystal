@@ -170,7 +170,7 @@ USAGE
     visitor.process(result)
 
     visitor.locations.each do |loc|
-      puts loc
+      loc.human_trace
     end
 
     if visitor.locations.empty?

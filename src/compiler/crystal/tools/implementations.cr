@@ -14,6 +14,21 @@ module Crystal
     end
   end
 
+  class Location
+    def human_trace
+      f = filename
+      if f.is_a?(VirtualFile)
+        loc = f.expanded_location
+        if loc
+          loc.human_trace
+          puts " ~> #{f} #{f.macro.location}"
+        end
+      else
+        puts self
+      end
+    end
+  end
+
   class ImplementationsVisitor < Visitor
     getter locations
 
