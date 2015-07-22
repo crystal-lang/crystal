@@ -16,7 +16,27 @@ module Crystal
     end
 
     def build_end_location
-      location
+      res = location.not_nil!
+
+      location_child_nodes do |node|
+        if node.is_a?(Array)
+          if n = node.last?
+            if node_end = n.end_location
+              res = Math.max(res, node_end)
+            end
+          end
+        elsif node.is_a?(ASTNode)
+          if node_end = node.end_location
+            res = Math.max(res, node_end)
+          end
+        end
+      end
+
+      res
+    end
+
+    def location_child_nodes
+      yield nil
     end
   end
 
@@ -35,24 +55,46 @@ module Crystal
   end
 
   class Expressions
-    def build_end_location
-      if empty?
-        location
-      else
-        last.end_location
+    def location_child_nodes
+      unless empty?
+        yield last
       end
     end
   end
 
   class Def
-    def build_end_location
-      body.end_location || location
+    def location_child_nodes
+      yield @body
     end
   end
 
   class While
-    def build_end_location
-      body.end_location || location
+    def location_child_nodes
+      yield @body
+    end
+  end
+
+  class Rescue < ASTNode
+    def end_location
+      # Recues does not have starting location
+      @body.end_location
+    end
+  end
+
+  class If
+    def location_child_nodes
+      yield @cond
+      yield @then
+      yield @else
+    end
+  end
+
+  class ExceptionHandler
+    def location_child_nodes
+      yield @body
+      yield @rescues
+      yield @else
+      yield @ensure
     end
   end
 end

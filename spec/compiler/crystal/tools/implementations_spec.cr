@@ -91,4 +91,64 @@ describe "implementations" do
       B.new
     )
   end
+
+  it "find method calls inside while" do
+    assert_implementations %(
+      ༓def foo
+        1
+      end
+
+      while false
+        f‸oo
+      end
+    )
+  end
+
+  it "find method calls inside while cond" do
+    assert_implementations %(
+      ༓def foo
+        1
+      end
+
+      while f‸oo
+        puts 2
+      end
+    )
+  end
+
+  it "find method calls inside if" do
+    assert_implementations %(
+      ༓def foo
+        1
+      end
+
+      if f‸oo
+        puts 2
+      end
+    )
+  end
+
+  it "find method calls inside trailing if" do
+    assert_implementations %(
+      ༓def foo
+        1
+      end
+
+      puts 2 if f‸oo
+    )
+  end
+
+  it "find method calls inside rescue" do
+    assert_implementations %(
+      ༓def foo
+        1
+      end
+
+      begin
+        puts 2
+      rescue
+        f‸oo
+      end
+    )
+  end
 end
