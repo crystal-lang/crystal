@@ -193,5 +193,8 @@ describe "Char" do
     ('c' === 99_u8).should be_true
     ('c' === 99).should be_true
     ('z' === 99).should be_false
+
+    ('酒'.ord).should eq(37202)
+    ('酒' === 37202).should be_true
   end
 end

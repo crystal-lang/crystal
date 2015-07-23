@@ -16,9 +16,10 @@ describe "Int" do
   end
 
   describe "#===(:Char)" do
-    assert { (99 === 'c').should    be_true }
-    assert { (99_u8 === 'c').should be_true }
-    assert { (99 === 'z').should    be_false }
+    assert { (99 === 'c').should     be_true }
+    assert { (99_u8 === 'c').should  be_true }
+    assert { (99 === 'z').should     be_false }
+    assert { (37202 === '酒').should be_true }
   end
 
   describe "divisible_by?" do
