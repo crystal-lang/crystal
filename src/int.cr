@@ -119,6 +119,10 @@ struct Int
     to_f ** other
   end
 
+  def ===(char : Char)
+    self === char.ord
+  end
+
   def bit(bit)
     self & (1 << bit) == 0 ? 0 : 1
   end
