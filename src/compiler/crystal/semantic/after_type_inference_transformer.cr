@@ -546,7 +546,7 @@ module Crystal
       super
 
       if replacement = node.syntax_replacement
-        replacement
+        replacement.transform(self)
       else
         transform_is_a_or_responds_to node, &.filter_by(node.const.type)
       end
