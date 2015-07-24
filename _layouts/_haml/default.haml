@@ -9,6 +9,11 @@
     %link{:rel => 'shortcut icon', :href => "/images/favico.ico", :type => "image/x-icon"}
     %script{:src => '/javascripts/viewer.js', :type => 'text/javascript'}
   %body
+    #fund
+      .inner
+        %a{:href => "https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language", :target => "_blank"} Fund Crystal and help it become production-ready!
+        %a.badge{:href => "https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language", :target => "_blank"}
+          %img{:src => "https://api.bountysource.com/badge/team?team_id=89730&style=raised"}
     .wrapper
       {% include header.html %}
       {{ content }}

@@ -506,3 +506,23 @@ i.ip.downg {
 #disqus_thread {
   margin-top: 40px;
 }
+#fund {
+  background-color: #B0B0B0;
+  color: #4C4C4C;
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  width: 100%;
+  height: 40px;
+  padding-top: 8px;
+}
+#fund .inner {
+  width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#fund .badge {
+  float: right;
+}
+#fund a {
+  color: #4C4C4C;
+  font-weight: normal;
+}
