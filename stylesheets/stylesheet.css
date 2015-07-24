@@ -515,12 +515,15 @@ i.ip.downg {
   padding-top: 8px;
 }
 #fund .inner {
-  width: 1000px;
+  width: 960px;
   margin-left: auto;
   margin-right: auto;
 }
 #fund .badge {
   float: right;
+}
+#fund .badge .text {
+  margin-right: 10px;
 }
 #fund a {
   color: #4C4C4C;
