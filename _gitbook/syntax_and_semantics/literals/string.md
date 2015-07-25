@@ -47,7 +47,7 @@ A string can span multiple lines:
 
 ```ruby
 "hello
-      world" # same as "hello      \nworld"
+      world" # same as "hello\n      world"
 ```
 
 Note that in the above example trailing and leading spaces, as well as newlines,
