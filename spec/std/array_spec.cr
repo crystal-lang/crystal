@@ -63,6 +63,10 @@ describe "Array" do
     ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
   end
 
+  it "does *" do
+    ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
+  end
+
   describe "[]" do
     it "gets on positive index" do
       [1, 2, 3][1].should eq(2)
