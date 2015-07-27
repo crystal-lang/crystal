@@ -6,6 +6,8 @@ class HTTP::WebSocket
   OPCODE_PING   = 0x9_u8
   OPCODE_PONG   = 0xa_u8
 
+  MASK_BIT      = 128_u8
+
   struct PacketInfo
     property type
     property length
@@ -37,7 +39,27 @@ class HTTP::WebSocket
 
     @io.write_byte(hdr1)
     @io.write_byte(hdr2)
+
     @io.print data
+    @io.flush
+  end
+
+  def send_masked(data)
+    hdr1 = 0x81_u8
+    hdr2 = data.length.to_u8 | MASK_BIT
+
+    @io.write_byte(hdr1)
+    @io.write_byte(hdr2)
+
+    maskArray = generate_mask
+    maskArray.each do |byte|
+      @io.write_byte byte
+    end
+
+    data.length.times do |index|
+      mask = maskArray[index % 4]
+      @io.write_byte (mask ^ data.byte_at(index).to_u8).to_u8
+    end
     @io.flush
   end
 
@@ -107,6 +129,12 @@ class HTTP::WebSocket
 
   private def masked?
     (@header[1] & 0x80_u8) != 0_u8
+  end
+
+  private def generate_mask
+    Array(UInt8).new(4, 0_u8).map do
+      Random.rand(256).to_u8
+    end
   end
 
   def close
