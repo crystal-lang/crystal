@@ -77,6 +77,22 @@ module Macros
   abstract class ASTNode
     # Returns this node as a `MacroId`. Useful when you need an identifier
     # out of a `StringLiteral`, `SymbolLiteral`, `Var` or `Call`.
+    #
+    # ```
+    # macro define_method(name, content)
+    #   def {{name.id}}
+    #     {{content}}
+    #   end
+    # end
+    #
+    # define_method :foo, 1
+    # define_method "bar", 2
+    # define_method baz, 3
+    #
+    # puts foo #=> prints 1
+    # puts bar #=> prints 2
+    # puts baz #=> prints 3
+    # ```
     def id : MacroId
     end
 
