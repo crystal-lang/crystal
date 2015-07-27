@@ -1133,4 +1133,14 @@ describe "Code gen: macro" do
       foo hello
       )).to_string.should eq(%(hello"))
   end
+
+  it "expands macro def with return (#1040)" do
+    run(%(
+      macro def a : Int32
+        return 123
+      end
+
+      a
+      )).to_i.should eq(123)
+  end
 end
