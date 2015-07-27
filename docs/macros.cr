@@ -657,7 +657,7 @@ module Macros
     end
 
     # Returns the body of this method.
-    def body : MacroId
+    def body : ASTNode
     end
 
     # Returns the arguments of this method.
