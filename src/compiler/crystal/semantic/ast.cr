@@ -11,6 +11,14 @@ module Crystal
 
     @dirty = false
 
+    def type
+      @type || ::raise "Bug: `#{self}` at #{self.location} has no type"
+    end
+
+    def type?
+      @type
+    end
+
     def set_type(type : Type)
       type = type.remove_alias_if_simple
       if (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
