@@ -10,6 +10,30 @@ class BadSortingClass
 end
 
 describe "Array" do
+  describe "new" do
+    it "creates with default value" do
+      ary = Array.new(5, 3)
+      ary.should eq([3, 3, 3, 3, 3])
+    end
+
+    it "creates with default value in block" do
+      ary = Array.new(5) { |i| i * 2 }
+      ary.should eq([0, 2, 4, 6, 8])
+    end
+
+    it "raises on negative count" do
+      expect_raises(ArgumentError, "negative array size") do
+        Array.new(-1, 3)
+      end
+    end
+
+    it "raises on negative capacity" do
+      expect_raises(ArgumentError, "negative array size") do
+        Array(Int32).new(-1)
+      end
+    end
+  end
+
   describe "==" do
     it "compares empty" do
       ([] of Int32).should eq([] of Int32)
@@ -59,8 +83,14 @@ describe "Array" do
     (Tuple.new.to_a + [1, 2]).should eq([1, 2])
   end
 
-  it "does -" do
-    ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
+  describe "-" do
+    it "does it" do
+      ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
+    end
+
+    it "does with larger array coming second" do
+      ([4, 2] - [1, 2, 3]).should eq([4])
+    end
   end
 
   describe "[]" do

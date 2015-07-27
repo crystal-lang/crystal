@@ -66,6 +66,10 @@ class Array(T)
   # ary.length #=> 0
   # ```
   def initialize(initial_capacity = 3 : Int)
+    if initial_capacity < 0
+      raise ArgumentError.new("negative array size: #{initial_capacity}")
+    end
+
     initial_capacity = Math.max(initial_capacity, 3)
     @length = 0
     @capacity = initial_capacity.to_i
@@ -217,7 +221,7 @@ class Array(T)
   end
 
   def -(other : Array(U))
-    ary = Array(T).new(length - other.length)
+    ary = Array(T).new(Math.max(length - other.length, 0))
     hash = other.to_lookup_hash
     each do |obj|
       ary << obj unless hash.has_key?(obj)
