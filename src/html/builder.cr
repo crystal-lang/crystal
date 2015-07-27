@@ -79,8 +79,10 @@ struct HTML::Builder
     # end
     # # => <{{tag.id}} class="crystal">crystal is awesome</{{tag.id}}>
     # ```
-    def {{tag.id}}(attrs = Hash(Symbol, String).new : Hash?)
-      @str << "<{{tag.id}}#{attributes_string(attrs)}>"
+    def {{tag.id}}(attrs = nil : Hash(Symbol, String)?)
+      @str << "<{{tag.id}}"
+      append_attributes_string(attrs)
+      @str << ">"
       with self yield self
       @str << "</{{tag.id}}>"
     end
@@ -95,14 +97,22 @@ struct HTML::Builder
     # end
     # # => <{{tag.id}} class="crystal">
     # ```
-    def {{tag.id}}(attrs = Hash(Symbol, String).new : Hash?)
-      @str << "<{{tag.id}}#{attributes_string(attrs)}>"
+    def {{tag.id}}(attrs = nil : Hash(Symbol, String)?)
+      @str << "<{{tag.id}}"
+      append_attributes_string(attrs)
+      @str << ">"
     end
   {% end %}
 
-  private def attributes_string(attrs : Hash)
-    attrs
-      .map { |name, value| " #{name}=\"#{HTML.escape(value)}\"" }
-      .join("")
+  private def append_attributes_string(attrs : Hash(Symbol, String)?)
+    if attrs
+      attrs.each do |name, value|
+        @str << " "
+        @str << name
+        @str << %(=")
+        HTML.escape(value, @str)
+        @str << %(")
+      end
+    end
   end
 end
