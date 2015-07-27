@@ -33,7 +33,7 @@ struct HTML::Builder
     @str.to_s
   end
 
-  # Returns html doctype tag.
+  # Renders `HTML` doctype tag.
   #
   # ```
   # HTML::Builder.new.build { doctype } # => <doctype/>
@@ -42,7 +42,7 @@ struct HTML::Builder
     @str << "<!DOCTYPE html>"
   end
 
-  # Returns br html tag.
+  # Renders `BR` html tag.
   #
   # ```
   # HTML::Builder.new.build { br } # => <br/>
@@ -51,7 +51,7 @@ struct HTML::Builder
     @str << "<br/>"
   end
 
-  # Returns hr html tag.
+  # Renders `HR` html tag.
   #
   # ```
   # HTML::Builder.new.build { hr } # => <hr/>
@@ -60,7 +60,7 @@ struct HTML::Builder
     @str << "<hr/>"
   end
 
-  # Render escaped text in html tag.
+  # Renders escaped text in html tag.
   #
   # ```
   # HTML::Builder.new.build { text "crystal is awesome" }
@@ -71,7 +71,7 @@ struct HTML::Builder
   end
 
   {% for tag in %w(a b body button div em h1 h2 h3 head html i li ol p s script span strong table tbody td textarea thead title tr u ul form) %}
-    # Returns `{{tag.id}}` html tag with any options.
+    # Renders `{{tag.id.upcase}}` html tag with any options.
     #
     # ```
     # HTML::Builder.new.build do
@@ -79,15 +79,17 @@ struct HTML::Builder
     # end
     # # => <{{tag.id}} class="crystal">crystal is awesome</{{tag.id}}>
     # ```
-    def {{tag.id}}(attrs = Hash(Symbol, String).new : Hash?)
-      @str << "<{{tag.id}}#{attributes_string(attrs)}>"
+    def {{tag.id}}(attrs = nil : Hash(Symbol, String)?)
+      @str << "<{{tag.id}}"
+      append_attributes_string(attrs)
+      @str << ">"
       with self yield self
       @str << "</{{tag.id}}>"
     end
   {% end %}
 
   {% for tag in %w(link input img) %}
-    # Returns `{{tag.id}}` html tag with any options.
+    # Renders `{{tag.id.upcase}}` html tag with any options.
     #
     # ```
     # HTML::Builder.new.build do
@@ -95,14 +97,22 @@ struct HTML::Builder
     # end
     # # => <{{tag.id}} class="crystal">
     # ```
-    def {{tag.id}}(attrs = Hash(Symbol, String).new : Hash?)
-      @str << "<{{tag.id}}#{attributes_string(attrs)}>"
+    def {{tag.id}}(attrs = nil : Hash(Symbol, String)?)
+      @str << "<{{tag.id}}"
+      append_attributes_string(attrs)
+      @str << ">"
     end
   {% end %}
 
-  private def attributes_string(attrs : Hash)
-    attrs
-      .map { |name, value| " #{name}=\"#{HTML.escape(value)}\"" }
-      .join("")
+  private def append_attributes_string(attrs : Hash(Symbol, String)?)
+    if attrs
+      attrs.each do |name, value|
+        @str << " "
+        @str << name
+        @str << %(=")
+        HTML.escape(value, @str)
+        @str << %(")
+      end
+    end
   end
 end
