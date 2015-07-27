@@ -1800,6 +1800,68 @@ class String
     end
   end
 
+  # Returns the successor of the string. The successor is calculated by incrementing characters starting from the rightmost
+  # alphanumeric (or the rightmost character if there are no alphanumerics) in the string. Incrementing a digit always
+  # results in another digit, and incrementing a letter results in another letter of the same case.
+  #
+  # If the increment generates a “carry”, the character to the left of it is incremented. This process repeats until
+  # there is no carry, adding an additional character if necessary.
+  #
+  # ```
+  # "abcd".succ        #=> "abce"
+  # "THX1138".succ     #=> "THX1139"
+  # "((koala))".succ   #=> "((koalb))"
+  # "1999zzz".succ     #=> "2000aaa"
+  # "ZZZ9999".succ     #=> "AAAA0000"
+  # "***".succ         #=> "**+"
+  # ```
+  def succ
+    return self if length == 0
+
+    chars = self.chars
+
+    carry = nil
+    last_alnum = 0
+    index = length - 1
+
+    while index >= 0
+      s = chars[index]
+      if s.alphanumeric?
+        carry = 0
+        if ('0' <= s && s < '9') ||
+           ('a' <= s && s < 'z') ||
+           ('A' <= s && s < 'Z')
+          chars[index] = s.succ
+          break
+        elsif s == '9'
+          chars[index] = '0'
+          carry = '1'
+        elsif s == 'z'
+          chars[index] = carry = 'a'
+        elsif s == 'Z'
+          chars[index] = carry = 'A'
+        end
+
+        last_alnum = index
+      end
+      index -= 1
+    end
+
+    if carry.nil? # there were no alphanumeric chars
+      chars[length - 1] = chars[length - 1].succ
+    end
+
+    if carry.is_a?(Char) && index < 0 # we still have a carry and already reached the beginning
+      chars.insert(last_alnum, carry)
+    end
+
+    String.build(chars.length) do |str|
+      chars.each do |char|
+        str << char
+      end
+    end
+  end
+
   def match(regex : Regex, pos = 0)
     match = regex.match self, pos
     $~ = match
