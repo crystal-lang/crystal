@@ -360,6 +360,12 @@ describe "String" do
     (str * 10).should eq("ffffffffff")
   end
 
+  it "multiplies with negative size" do
+    expect_raises(ArgumentError, "negative argument") do
+      "f" * -1
+    end
+  end
+
   describe "downcase" do
     assert { "HELLO!".downcase.should eq("hello!") }
     assert { "HELLO MAN!".downcase.should eq("hello man!") }

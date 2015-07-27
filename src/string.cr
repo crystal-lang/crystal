@@ -1306,7 +1306,9 @@ class String
   end
 
   def *(times : Int)
-    if times <= 0 || bytesize == 0
+    raise ArgumentError.new "negative argument" if times < 0
+
+    if times == 0 || bytesize == 0
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
