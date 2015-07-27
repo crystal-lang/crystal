@@ -257,4 +257,32 @@ describe "Type inference: splat" do
       Bar.new.foo 1
       )) { int32 }
   end
+
+  it "splats arg and splat against splat (1) (#1042)" do
+    assert_type(%(
+      def foo(a: Bool, *b: Int32)
+        1
+      end
+
+      def foo(*b: Int32)
+        'a'
+      end
+
+      foo(true, 3, 4, 5)
+      )) { int32 }
+  end
+
+  it "splats arg and splat against splat (2) (#1042)" do
+    assert_type(%(
+      def foo(a: Bool, *b: Int32)
+        1
+      end
+
+      def foo(*b: Int32)
+        'a'
+      end
+
+      foo(3, 4, 5)
+      )) { char }
+  end
 end
