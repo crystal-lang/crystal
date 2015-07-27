@@ -1003,7 +1003,7 @@ module Macros
     def instance_vars : ArrayLiteral(MetaVar)
     end
 
-    # Returns the instance variables of this type, if any.
+    # Returns the direct superclass of this type.
     def superclass : TypeNode | NilLiteral
     end
 
