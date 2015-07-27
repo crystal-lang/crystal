@@ -36,6 +36,21 @@ abstract class CSV::Lexer
       @token.kind = :cell
       @token.value = ""
       check_last_empty_column
+    when '\r'
+      @token.kind =
+        case next_char
+        when '\0'
+          :eof
+        when '\n'
+          case next_char
+          when '\0'
+            :eof
+          else
+            :newline
+          end
+        else
+          :newline
+        end
     when '\n'
       @token.kind = next_char == '\0' ? :eof : :newline
     when '"'
@@ -60,7 +75,7 @@ abstract class CSV::Lexer
         when ','
           check_last_empty_column
           break
-        when '\n', '\0'
+        when '\r', '\n', '\0'
           break
         when '"'
           @buffer << '"'
@@ -76,7 +91,7 @@ abstract class CSV::Lexer
 
   private def check_last_empty_column
     case next_char
-    when '\n', '\0'
+    when '\r', '\n', '\0'
       @last_empty_column = true
     end
   end
@@ -84,7 +99,7 @@ abstract class CSV::Lexer
   private def next_char
     @column_number += 1
     char = next_char_no_column_increment
-    if char == '\n'
+    if char == '\n' || char == '\r'
       @column_number = 0
       @line_number += 1
     end

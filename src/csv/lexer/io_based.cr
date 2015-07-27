@@ -18,7 +18,7 @@ class CSV::Lexer::IOBased < CSV::Lexer
       when ','
         check_last_empty_column
         break
-      when '\n', '\0'
+      when '\r', '\n', '\0'
         break
       when '"'
         raise "unexpected quote"
