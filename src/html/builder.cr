@@ -33,7 +33,7 @@ struct HTML::Builder
     @str.to_s
   end
 
-  # Returns html doctype tag.
+  # Renders `HTML` doctype tag.
   #
   # ```
   # HTML::Builder.new.build { doctype } # => <doctype/>
@@ -42,7 +42,7 @@ struct HTML::Builder
     @str << "<!DOCTYPE html>"
   end
 
-  # Returns br html tag.
+  # Renders `BR` html tag.
   #
   # ```
   # HTML::Builder.new.build { br } # => <br/>
@@ -51,7 +51,7 @@ struct HTML::Builder
     @str << "<br/>"
   end
 
-  # Returns hr html tag.
+  # Renders `HR` html tag.
   #
   # ```
   # HTML::Builder.new.build { hr } # => <hr/>
@@ -60,7 +60,7 @@ struct HTML::Builder
     @str << "<hr/>"
   end
 
-  # Render escaped text in html tag.
+  # Renders escaped text in html tag.
   #
   # ```
   # HTML::Builder.new.build { text "crystal is awesome" }
@@ -71,7 +71,7 @@ struct HTML::Builder
   end
 
   {% for tag in %w(a b body button div em h1 h2 h3 head html i li ol p s script span strong table tbody td textarea thead title tr u ul form) %}
-    # Returns `{{tag.id}}` html tag with any options.
+    # Renders `{{tag.id.upcase}}` html tag with any options.
     #
     # ```
     # HTML::Builder.new.build do
@@ -89,7 +89,7 @@ struct HTML::Builder
   {% end %}
 
   {% for tag in %w(link input img) %}
-    # Returns `{{tag.id}}` html tag with any options.
+    # Renders `{{tag.id.upcase}}` html tag with any options.
     #
     # ```
     # HTML::Builder.new.build do
