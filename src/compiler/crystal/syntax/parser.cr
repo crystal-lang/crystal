@@ -385,16 +385,23 @@ module Crystal
     end
 
     def parse_question_colon
-      location = @token.location
       cond = parse_range
+
       while @token.type == :"?"
+        location = @token.location
+
         check_void_value cond, location
 
         next_token_skip_space_or_newline
-        true_val = parse_range
-        check :":"
+        next_token_skip_space_or_newline if @token.type == :":"
+        true_val = parse_question_colon
+
+        check [:":", :NEWLINE]
+
         next_token_skip_space_or_newline
-        false_val = parse_range
+        next_token_skip_space_or_newline if @token.type == :":"
+        false_val = parse_question_colon
+
         cond = If.new(cond, true_val, false_val)
       end
       cond

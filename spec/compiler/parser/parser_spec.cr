@@ -481,6 +481,22 @@ describe "Parser" do
 
   it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
   it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
+  it_parses "1 ? a : b ? c : 3", If.new(1.int32, "a".call, If.new("b".call, "c".call, 3.int32))
+  it_parses "a ? 1 : b ? 2 : c ? 3 : 0", If.new("a".call, 1.int32, If.new("b".call, 2.int32, If.new("c".call, 3.int32, 0.int32)))
+  it_parses "a ? 1
+             : b", If.new("a".call, 1.int32, "b".call)
+  it_parses "a ? 1 :
+             b ? 2 :
+             c ? 3
+             : 0", If.new("a".call, 1.int32, If.new("b".call, 2.int32, If.new("c".call, 3.int32, 0.int32)))
+  it_parses "a ? 1
+             : b ? 2
+             : c ? 3
+             : 0", If.new("a".call, 1.int32, If.new("b".call, 2.int32, If.new("c".call, 3.int32, 0.int32)))
+  it_parses "a ?
+             b ? b1 : b2
+             : c ? 3
+             : 0", If.new("a".call, If.new("b".call, "b1".call, "b2".call), If.new("c".call, 3.int32, 0.int32))
 
   it_parses "1 if 3", If.new(3.int32, 1.int32)
   it_parses "1 unless 3", Unless.new(3.int32, 1.int32)
