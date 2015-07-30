@@ -76,14 +76,14 @@ struct String::Formatter
   end
 
   private def consume_number
-    num = current_char.ord - '0'.ord
+    num = current_char - '0'
     length = 1
     next_char
     while true
       case char = current_char
       when '0' .. '9'
         num *= 10
-        num += char.ord - '0'.ord
+        num += char - '0'
         length += 1
       else
         break

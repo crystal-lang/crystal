@@ -1465,9 +1465,9 @@ module Crystal
       end
 
       first_byte = @reader.string.byte_at(start)
-      if first_byte == '+'.ord
+      if first_byte === '+'
         string_value = "+#{string_value}"
-      elsif first_byte == '-'.ord && num == 0
+      elsif first_byte === '-' && num == 0
         string_value = "-0"
       end
 

@@ -813,7 +813,7 @@ class String
 
     case cstr[bytesize - 1]
     when '\n'
-      if bytesize > 1 && cstr[bytesize - 2] == '\r'.ord
+      if bytesize > 1 && cstr[bytesize - 2] === '\r'
         byte_slice 0, bytesize - 2
       else
         byte_slice 0, bytesize - 1
@@ -842,8 +842,8 @@ class String
       return self if empty?
 
       pos = bytesize - 1
-      while pos > 0 && cstr[pos] == '\n'.ord
-        if pos > 1 && cstr[pos - 1] == '\r'.ord
+      while pos > 0 && cstr[pos] === '\n'
+        if pos > 1 && cstr[pos - 1] === '\r'
           pos -= 2
         else
           pos -= 1
@@ -873,7 +873,7 @@ class String
   def chop
     return "" if bytesize <= 1
 
-    if bytesize >= 2 && cstr[bytesize - 1] == '\n'.ord && cstr[bytesize - 2] == '\r'.ord
+    if bytesize >= 2 && cstr[bytesize - 1] === '\n' && cstr[bytesize - 2] === '\r'
       return byte_slice(0, bytesize - 2)
     end
 

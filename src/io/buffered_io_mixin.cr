@@ -179,7 +179,7 @@ module BufferedIOMixin
     out_buffer[@out_count] = byte
     @out_count += 1
 
-    if flush_on_newline? && byte == '\n'.ord
+    if flush_on_newline? && byte === '\n'
       flush
     end
   end

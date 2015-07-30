@@ -44,9 +44,9 @@ module HTTP
 
     # Get where the header value ends (chomp line)
     right_index = bytesize
-    if right_index > 1 && cstr[right_index - 2] == '\r'.ord && cstr[right_index - 1] == '\n'.ord
+    if right_index > 1 && cstr[right_index - 2] === '\r' && cstr[right_index - 1] === '\n'
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord
+    elsif right_index > 0 && cstr[right_index - 1] === '\n'
       right_index -= 1
     end
 
