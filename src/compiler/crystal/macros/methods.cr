@@ -459,6 +459,22 @@ module Crystal
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
         end
+      when "unshift"
+        case args.length
+        when 1
+          elements.unshift(args.first)
+          self
+        else
+          raise "wrong number of arguments for push (#{args.length} for 1)"
+        end
+      when "push", "<<"
+        case args.length
+        when 1
+          elements << args.first
+          self
+        else
+          raise "wrong number of arguments for push (#{args.length} for 1)"
+        end
       else
         super
       end
@@ -634,6 +650,8 @@ module Crystal
         ArrayLiteral.map(self.args) { |arg| arg }
       when "receiver"
         receiver || Nop.new
+      when "visibility"
+        visibility ? SymbolLiteral.new(visibility.to_s) : NilLiteral.new
       else
         super
       end
