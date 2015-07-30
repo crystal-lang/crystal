@@ -384,6 +384,8 @@ module Crystal
       atomic
     end
 
+    ColonOrNewline = [:":", :NEWLINE]
+
     def parse_question_colon
       cond = parse_range
 
@@ -396,7 +398,7 @@ module Crystal
         next_token_skip_space_or_newline if @token.type == :":"
         true_val = parse_question_colon
 
-        check [:":", :NEWLINE]
+        check ColonOrNewline
 
         next_token_skip_space_or_newline
         next_token_skip_space_or_newline if @token.type == :":"
@@ -3783,7 +3785,7 @@ module Crystal
         next_token_skip_space_or_newline
         if @token.type == :"="
           next_token_skip_space
-          check [:IDENT, :CONST]
+          check IdentOrConst
           real_name = @token.value.to_s
           next_token_skip_space
         end
