@@ -1303,8 +1303,7 @@ describe "String" do
     "ab☃".codepoints.should eq [97, 98, 9731]
   end
 
-  # TODO: enable after 0.7.4
-  pending "gets length of \0 string" do
+  it "gets length of \0 string" do
     "\0\0".length.should eq(2)
   end
 end
