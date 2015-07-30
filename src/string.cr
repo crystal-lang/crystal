@@ -1816,7 +1816,7 @@ class String
   # "***".succ         #=> "**+"
   # ```
   def succ
-    return self if length == 0
+    return self if bytesize == 0
 
     chars = self.chars
 
