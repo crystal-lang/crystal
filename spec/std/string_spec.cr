@@ -1230,6 +1230,45 @@ describe "String" do
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")
   end
 
+  describe "succ" do
+    it "returns self if empty" do
+      assert { "".succ.should eq("") }
+    end
+
+    it "increments the last alphanumeric character" do
+      assert { "a".succ.should eq("b") }
+      assert { "aa".succ.should eq("ab") }
+      assert { "zz".succ.should eq("aaa") }
+      assert { "abcd".succ.should eq("abce") }
+      assert { "THX1138".succ.should eq("THX1139") }
+      assert { "<<koala>>".succ.should eq("<<koalb>>") }
+      assert { "==A??".succ.should eq("==B??") }
+      assert { "[123]".succ.should eq("[124]") }
+    end
+
+    it "increments other characters in absence of alphanumeric characters" do
+      assert { "***".succ.should eq("**+") }
+      assert { "**`".succ.should eq("**a") }
+    end
+
+    it "increments with carry" do
+      assert { "z".succ.should eq("aa") }
+      assert { "IZZ".succ.should eq("JAA") }
+      assert { "9999".succ.should eq("10000") }
+      assert { "1999zzz".succ.should eq("2000aaa") }
+      assert { "ZZZ9999".succ.should eq("AAAA0000") }
+      assert { "NZ/[]ZZZ9999".succ.should eq("OA/[]AAA0000") }
+      assert { "<<z>>".succ.should eq("<<aa>>") }
+      assert { "[zzz]".succ.should eq("[aaaa]") }
+      assert { "(ZaZ)".succ.should eq("(ZbA)") }
+    end
+
+    it "can be used in a Range" do
+      assert { ("0000".."9999").count.should eq(10_000) }
+      assert { ("abc".."xyz").count.should eq(16_170) }
+    end
+  end
+
   it "gets each_char iterator" do
     iter = "abc".each_char
     iter.next.should eq('a')

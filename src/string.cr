@@ -1636,6 +1636,64 @@ class String
     ary
   end
 
+  def succ
+    return self if @bytesize == 0
+    carry = nil
+    start = @bytesize - 1
+    last_alnum = 0
+    byte = 0_u8
+    str = String.new(@bytesize) do |buffer|
+      buffer.copy_from(cstr, @bytesize)
+
+      until start < 0
+        byte = buffer[start]
+        if 48 <= byte <= 57 || 65 <= byte <= 90 || 97 <= byte <= 122
+          carry = 0_u8
+
+          case byte
+          when 48...57, 65...90, 97...122
+            buffer[start] += 1
+          when 57
+            buffer[start] = 48_u8
+            carry = 49_u8
+          when 122
+            buffer[start] = carry = 97_u8
+          when 90
+            buffer[start] = carry = 65_u8
+          end
+
+          carry == 0 ? break : (last_alnum = start)
+
+        end
+        start -= 1
+      end
+
+      unless carry
+        start = length - 1
+        carry = 1_u8
+        while start >= 0
+          if buffer[start] >= 255
+            buffer[start] = 0_u8
+          else
+            buffer[start] += 1
+            break
+          end
+          start -= 1
+        end
+      end
+      {@bytesize, @bytesize}
+    end
+
+    return str unless start < 0 && carry
+
+    String.build do |buffer|
+      str.each_char_with_index do |char, index|
+        buffer << carry.chr if index == last_alnum
+        buffer << char
+      end
+    end
+  end
+
   def lines
     lines = [] of String
     each_line do |line|
