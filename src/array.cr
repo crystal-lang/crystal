@@ -229,6 +229,19 @@ class Array(T)
     ary
   end
 
+  # Repetition: Returns a new array built by concatenating `times` copies of `ary`.
+  #
+  # ```
+  # [ "a", "b", "c" ] * 2   #=> [ "a", "b", "c", "a", "b", "c" ]
+  # ```
+  def *(times : Int)
+    ary = Array(T).new(length * times)
+    times.times do
+      ary.concat(self)
+    end
+    ary
+  end
+
   def <<(value : T)
     push(value)
   end

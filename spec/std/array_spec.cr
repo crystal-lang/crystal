@@ -93,6 +93,10 @@ describe "Array" do
     end
   end
 
+  it "does *" do
+    ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
+  end
+
   describe "[]" do
     it "gets on positive index" do
       [1, 2, 3][1].should eq(2)
