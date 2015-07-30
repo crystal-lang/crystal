@@ -1993,7 +1993,7 @@ class String
   # codepoints.next #=> 9731
   # ```
   def each_codepoint
-    CodepointIterator.new(CharReader.new(self))
+    each_char.map &.ord
   end
 
 
@@ -2298,30 +2298,6 @@ class String
       @end = true unless @reader.has_next?
 
       value
-    end
-
-    def rewind
-      @reader.pos = 0
-      @end = false
-      self
-    end
-  end
-
-  # :nodoc:
-  class CodepointIterator
-    include Iterator(Int32)
-
-    def initialize(@reader, @end = false)
-    end
-
-    def next
-      return stop if @end
-
-      value = @reader.current_char
-      @reader.next_char
-      @end = true unless @reader.has_next?
-
-      value.ord
     end
 
     def rewind
