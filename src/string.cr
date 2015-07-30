@@ -2010,6 +2010,13 @@ class String
     codepoints
   end
 
+  # Yields each byte in the string to the block.
+  #
+  # ```
+  # "ab☃".each_byte do |byte|
+  #   byte #=> 97, 98, 226, 152, 131
+  # end
+  # ```
   def each_byte
     cstr.to_slice(bytesize).each do |byte|
       yield byte
@@ -2017,8 +2024,28 @@ class String
     self
   end
 
+  # Returns an iterator over each byte in the string.
+  #
+  # ```
+  # bytes = "ab☃".each_byte
+  # bytes.next #=> 97
+  # bytes.next #=> 98
+  # bytes.next #=> 226
+  # bytes.next #=> 156
+  # bytes.next #=> 131
+  # ```
   def each_byte
     to_slice.each
+  end
+
+  # Returns this string's bytes as an `Array(UInt8)`.
+  #
+  # ```
+  # "hello".bytes          #=> [104, 101, 108, 108, 111]
+  # "你好".bytes           #=> [228, 189, 160, 229, 165, 189]
+  # ```
+  def bytes
+    Array.new(bytesize) { |i| cstr[i] }
   end
 
   def inspect(io)
@@ -2177,16 +2204,6 @@ class String
       h = 31 * h + c
     end
     h
-  end
-
-  # Returns this string's bytes as an `Array(UInt8)`.
-  #
-  # ```
-  # "hello".bytes          #=> [104, 101, 108, 108, 111]
-  # "你好".bytes           #=> [228, 189, 160, 229, 165, 189]
-  # ```
-  def bytes
-    Array.new(bytesize) { |i| cstr[i] }
   end
 
   # Returns the number of unicode codepoints in this string.
