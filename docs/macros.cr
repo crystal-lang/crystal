@@ -105,7 +105,8 @@ module Macros
     #   {{ "foo".stringify }}
     # end
     #
-    # puts test # prints "foo" (including the double quotes)
+    # puts test #=> prints "foo" (including the double quotes)
+    # ```
     def stringify : StringLiteral
     end
 
