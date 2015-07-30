@@ -82,7 +82,7 @@ module HTTP
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
       return true
-    when "close"
+    when "close", "upgrade"
       return false
     end
 
