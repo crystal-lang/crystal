@@ -634,6 +634,8 @@ module Crystal
         ArrayLiteral.map(self.args) { |arg| arg }
       when "receiver"
         receiver || Nop.new
+      when "visibility"
+        SymbolLiteral.new(visibility ? visibility.to_s : "public")
       else
         super
       end
