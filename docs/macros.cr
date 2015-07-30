@@ -93,6 +93,18 @@ module Macros
     def stringify : StringLiteral
     end
 
+    # Returns a `StringLiteral` that contains this node's name.
+    #
+    # ```
+    # macro test
+    #   {{ "foo".class_name }}
+    # end
+    #
+    # puts test #=> prints StringLiteral
+    # ```
+    def class_name : StringLiteral
+    end
+
     # Returns true if this node's textual representation is the same as
     # the other node.
     def ==(other : ASTNode) : BoolLiteral
