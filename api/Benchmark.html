@@ -20,6 +20,28 @@
   <p>The Benchmark module provides methods for benchmarking Crystal code, giving
 detailed reports on the time taken for each task.</p>
 
+<h3>Measure the number of iterations per second of each task</h3>
+
+<pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
+<span class="t">Benchmark</span>.ips <span class="k">do</span> <span class="o">|</span>x<span class="o">|</span>
+  x.report(<span class="s">"short sleep"</span>)   { sleep <span class="n">0.01</span>  }
+  x.report(<span class="s">"shorter sleep"</span>) { sleep <span class="n">0.001</span> }
+<span class="k">end</span></code></pre>
+
+<p>This generates the following output:</p>
+
+<pre><code>  short sleep    91.82 (±  1.11)  8.72× slower
+shorter sleep   800.98 (±  4.72)       fastest</code></pre>
+
+<p><code><a href="Benchmark/IPS.html">Benchmark::IPS</a></code> defaults to 2 seconds of warmup time and 5 seconds of
+calculation time. This can be configured:</p>
+
+<pre><code><span class="t">Benchmark</span>.ips(warmup: <span class="n">4</span>, calculation: <span class="n">10</span>) <span class="k">do</span> <span class="o">|</span>x<span class="o">|</span>
+  <span class="c"># …</span>
+<span class="k">end</span></code></pre>
+
+<p>Make sure to always benchmark code by compiling with the <code>--release</code> flag.</p>
+
 <h3>Measure the time to construct the string given by the expression: <code>"a"*1_000_000_000</code></h3>
 
 <pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
@@ -75,7 +97,17 @@ upto:    0.010000   0.000000   0.010000 (  0.010466)</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr">benchmark.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/bm.cr" target="_blank">benchmark/bm.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/ips.cr" target="_blank">benchmark/ips.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/benchmark.cr" target="_blank">benchmark/benchmark.cr</a>
     
     <br/>
   
@@ -97,7 +129,14 @@ upto:    0.010000   0.000000   0.010000 (  0.010466)</code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#measure%28label%20%3D%20%22%22%2C%20%26block%29%20%3A%20Tms-instance-method" class="signature"><strong>#measure</strong>(label = "", &block) : Tms</a>
+        <a href="#ips%28calculation%20%3D%205%2C%20warmup%20%3D%202%2C%20%26block%29-instance-method" class="signature"><strong>#ips</strong>(calculation = 5, warmup = 2, &block)</a>
+        
+          <div class="summary"><p>Instruction per second interface of the <code><a href="Benchmark.html">Benchmark</a></code> module.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#measure%28label%20%3D%20%22%22%2C%20%26block%29%20%3A%20BM%3A%3ATms-instance-method" class="signature"><strong>#measure</strong>(label = "", &block) : BM::Tms</a>
         
           <div class="summary"><p>Returns the time used to execute the given block.</p></div>
         
@@ -127,27 +166,47 @@ upto:    0.010000   0.000000   0.010000 (  0.010466)</code></pre>
         def <strong>bm</strong>(&block)
       </div>
       
-        <div class="doc"><p>Main interface of the <code><a href="Benchmark.html">Benchmark</a></code> module. Yields a <code><a href="Benchmark/Job.html">Job</a></code> to which
+        <div class="doc"><p>Main interface of the <code><a href="Benchmark.html">Benchmark</a></code> module. Yields a <code>Job</code> to which
 one can report the benchmarks. See the module's description.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L141" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/benchmark.cr#L77" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="measure%28label%20%3D%20%22%22%2C%20%26block%29%20%3A%20Tms-instance-method">
+      <div class="signature" id="ips%28calculation%20%3D%205%2C%20warmup%20%3D%202%2C%20%26block%29-instance-method">
         
-        def <strong>measure</strong>(label = <span class="s">""</span>, &block) : <a href="Benchmark/Tms.html">Tms</a>
+        def <strong>ips</strong>(calculation = <span class="n">5</span>, warmup = <span class="n">2</span>, &block)
+      </div>
+      
+        <div class="doc"><p>Instruction per second interface of the <code><a href="Benchmark.html">Benchmark</a></code> module. Yields a <code>Job</code>
+to which one can report the benchmarks. See the module's description.</p>
+
+<p>The optional parameters <code>calculation</code> and <code>warmup</code> set the duration of
+those stages in seconds. For more detail on these stages see
+<code><a href="Benchmark/IPS.html">Benchmark::IPS</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/benchmark.cr#L90" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="measure%28label%20%3D%20%22%22%2C%20%26block%29%20%3A%20BM%3A%3ATms-instance-method">
+        
+        def <strong>measure</strong>(label = <span class="s">""</span>, &block) : <a href="Benchmark/BM/Tms.html">BM::Tms</a>
       </div>
       
         <div class="doc"><p>Returns the time used to execute the given block.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L116" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/benchmark.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -164,7 +223,7 @@ one can report the benchmarks. See the module's description.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/benchmark.cr#L133" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/benchmark/benchmark.cr#L116" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

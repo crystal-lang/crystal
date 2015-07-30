@@ -15,6 +15,42 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>A User Datagram Protocol socket.
+UDP runs on top of the Internet Protocol (IP) and was developed for applications that do
+not require reliability, acknowledgement, or flow control features at the transport layer.
+This simple protocol provides transport layer addressing in the form of UDP ports and an
+optional checksum capability.</p>
+
+<p>UDP is a very simple protocol. Messages, so called datagrams, are sent to other hosts on
+an IP network without the need to set up special transmission channels or data paths
+beforehand. The UDP socket only needs to be opened for communication. It listens for
+incoming messages and sends outgoing messages on request.</p>
+
+<p>This implementation supports both IPv4 and IPv6 addresses. For IPv4 addresses you need use
+<code><a href="Socket/Family.html">Socket::Family</a>::INET</code> family (used by default). And <code><a href="Socket/Family.html">Socket::Family</a>::INET6</code> for IPv6
+addresses accordingly.</p>
+
+<p>Usage example:</p>
+
+<pre><code><span class="k">require</span> <span class="s">"socket"</span>
+
+<span class="c"># Create server</span>
+server <span class="o">=</span> <span class="t">UDPSocket</span>.<span class="k">new</span>
+server.bind <span class="s">"localhost"</span>, <span class="n">1234</span>
+
+<span class="c"># Create client and connect to server</span>
+client <span class="o">=</span> <span class="t">UDPSocket</span>.<span class="k">new</span>
+client.connect <span class="s">"localhost"</span>, <span class="n">1234</span>
+
+client <span class="o"><<</span> <span class="s">"message"</span> <span class="c"># send message to server</span>
+server.read(<span class="n">7</span>)      <span class="c"># => "message"</span>
+
+<span class="c"># Close client and server</span>
+client.close
+server.close</code></pre>
+
 
 
 
@@ -36,7 +72,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/socket/udp_socket.cr">socket/udp_socket.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/socket/udp_socket.cr" target="_blank">socket/udp_socket.cr</a>
     
     <br/>
   
@@ -63,10 +99,14 @@
       <li class="entry-summary">
         <a href="#bind%28host%2C%20port%29-instance-method" class="signature"><strong>#bind</strong>(host, port)</a>
         
+          <div class="summary"><p>Creates a UDP socket from the given address.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#connect%28host%2C%20port%29-instance-method" class="signature"><strong>#connect</strong>(host, port)</a>
+        
+          <div class="summary"><p>Attempts to connect the socket to a remote address and port for this socket.</p></div>
         
       </li>
     
@@ -87,7 +127,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/socket/udp_socket.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/socket/udp_socket.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -103,9 +143,14 @@
         def <strong>bind</strong>(host, port)
       </div>
       
+        <div class="doc"><p>Creates a UDP socket from the given address.</p>
+
+<pre><code>server <span class="o">=</span> <span class="t">UDPSocket</span>.<span class="k">new</span>
+server.bind <span class="s">"localhost"</span>, <span class="n">1234</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/socket/udp_socket.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/socket/udp_socket.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -116,9 +161,14 @@
         def <strong>connect</strong>(host, port)
       </div>
       
+        <div class="doc"><p>Attempts to connect the socket to a remote address and port for this socket.</p>
+
+<pre><code>client <span class="o">=</span> <span class="t">UDPSocket</span>.<span class="k">new</span>
+client.connect <span class="s">"localhost"</span>, <span class="n">1234</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/socket/udp_socket.cr#L24" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/socket/udp_socket.cr#L70" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

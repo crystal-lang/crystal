@@ -38,7 +38,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr">base64.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr" target="_blank">base64.cr</a>
     
     <br/>
   
@@ -62,35 +62,19 @@
     
       <li class="entry-const">
         <strong>DECODE_TABLE</strong> = <code><span class="t">Array</span>(<span class="t">Int8</span>).<span class="k">new</span>(<span class="n">256</span>) <span class="k">do</span> <span class="o">|</span>i<span class="o">|</span>
-  __temp_363 <span class="o">=</span> i.chr
-  <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'A'</span>, <span class="s">'Z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_363
+  <span class="k">case</span> i.chr
+  <span class="k">when</span> <span class="s">'A'</span>..<span class="s">'Z'</span>
     (i <span class="o">-</span> <span class="n">65</span>).to_i8
+  <span class="k">when</span> <span class="s">'a'</span>..<span class="s">'z'</span>
+    (i <span class="o">-</span> <span class="n">71</span>).to_i8
+  <span class="k">when</span> <span class="s">'0'</span>..<span class="s">'9'</span>
+    (i <span class="o">+</span> <span class="n">4</span>).to_i8
+  <span class="k">when</span> <span class="s">'+'</span>, <span class="s">'-'</span>
+    <span class="n">62</span>
+  <span class="k">when</span> <span class="s">'/'</span>, <span class="s">'_'</span>
+    <span class="n">63</span>
   <span class="k">else</span>
-    <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'a'</span>, <span class="s">'z'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_363
-      (i <span class="o">-</span> <span class="n">71</span>).to_i8
-    <span class="k">else</span>
-      <span class="k">if</span> (<span class="t">::</span><span class="t">Range</span>.<span class="k">new</span>(<span class="s">'0'</span>, <span class="s">'9'</span>, <span class="n">false</span>)) <span class="o">===</span> __temp_363
-        (i <span class="o">+</span> <span class="n">4</span>).to_i8
-      <span class="k">else</span>
-        <span class="k">if</span> <span class="k">if</span> __temp_364 <span class="o">=</span> <span class="s">'+'</span> <span class="o">===</span> __temp_363
-          __temp_364
-        <span class="k">else</span>
-          <span class="s">'-'</span> <span class="o">===</span> __temp_363
-        <span class="k">end</span>
-          <span class="n">62</span>
-        <span class="k">else</span>
-          <span class="k">if</span> <span class="k">if</span> __temp_365 <span class="o">=</span> <span class="s">'/'</span> <span class="o">===</span> __temp_363
-            __temp_365
-          <span class="k">else</span>
-            <span class="s">'_'</span> <span class="o">===</span> __temp_363
-          <span class="k">end</span>
-            <span class="n">63</span>
-          <span class="k">else</span>
-            <span class="n">-1</span>
-          <span class="k">end</span>
-        <span class="k">end</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
+    <span class="n">-1</span>
   <span class="k">end</span>
 <span class="k">end</span></code>
         
@@ -184,7 +168,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -197,7 +181,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -210,7 +194,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -223,7 +207,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L36" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -236,7 +220,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L69" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L69" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -249,7 +233,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -267,7 +251,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/base64.cr#L151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L151" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

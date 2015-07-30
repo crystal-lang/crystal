@@ -53,9 +53,13 @@ the instance is no longer referred by any other entity in the program.</p>
   
     Array::ReverseIterator(T),
   
-    <a href="Benchmark/Job.html">Benchmark::Job</a>,
+    <a href="Benchmark/BM/Job.html">Benchmark::BM::Job</a>,
   
-    <a href="Benchmark/Tms.html">Benchmark::Tms</a>,
+    <a href="Benchmark/BM/Tms.html">Benchmark::BM::Tms</a>,
+  
+    <a href="Benchmark/IPS/Entry.html">Benchmark::IPS::Entry</a>,
+  
+    <a href="Benchmark/IPS/Job.html">Benchmark::IPS::Job</a>,
   
     <a href="BitArray.html">BitArray</a>,
   
@@ -100,6 +104,8 @@ the instance is no longer referred by any other entity in the program.</p>
     Hash::ValueIterator(K, V),
   
     <a href="HTTP/Client.html">HTTP::Client</a>,
+  
+    <a href="HTTP/Content.html">HTTP::Content</a>,
   
     <a href="HTTP/Handler.html">HTTP::Handler</a>,
   
@@ -213,8 +219,6 @@ the instance is no longer referred by any other entity in the program.</p>
   
     <a href="Scheduler.html">Scheduler</a>,
   
-    <a href="Set.html">Set(T)</a>,
-  
     Slice::ItemIterator(T),
   
     Spec::Be(T),
@@ -270,7 +274,7 @@ the instance is no longer referred by any other entity in the program.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr">reference.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr" target="_blank">reference.cr</a>
     
     <br/>
   
@@ -371,7 +375,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L41" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L41" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -386,7 +390,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -401,7 +405,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L15" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -416,7 +420,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -429,7 +433,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -444,7 +448,7 @@ the instance is no longer referred by any other entity in the program.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L36" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -478,7 +482,7 @@ ref2.object_id <span class="o">==</span> ref.object_id <span class="c">#=> true<
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -494,7 +498,7 @@ true if this reference's <code><a href="Reference.html#object_id-instance-method
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -507,7 +511,7 @@ true if this reference's <code><a href="Reference.html#object_id-instance-method
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/reference.cr#L69" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/reference.cr#L69" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

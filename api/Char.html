@@ -75,7 +75,12 @@ It occupies 32 bits.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr">char.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr" target="_blank">char.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/char.cr" target="_blank">docs/char.cr</a>
     
     <br/>
   
@@ -142,6 +147,11 @@ It occupies 32 bits.</p>
         <a href="#%3D%3D%28other%20%3A%20Char%29-instance-method" class="signature"><strong>#==</strong>(other : Char)</a>
         
           <div class="summary"><p>Returns true if this Char is equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%3D%28byte%20%3A%20Int%29-instance-method" class="signature"><strong>#===</strong>(byte : Int)</a>
         
       </li>
     
@@ -251,9 +261,9 @@ It occupies 32 bits.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#ord-instance-method" class="signature"><strong>#ord</strong></a>
+        <a href="#ord%20%3A%20Int32-instance-method" class="signature"><strong>#ord</strong> : Int32</a>
         
-          <div class="summary"><p>Returns this Char's Unicode codepoint.</p></div>
+          <div class="summary"><p>Returns the codepoint of this char.</p></div>
         
       </li>
     
@@ -265,23 +275,9 @@ It occupies 32 bits.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
-        
-          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit, 0 otherwise.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#to_i%28%26block%29-instance-method" class="signature"><strong>#to_i</strong>(&block)</a>
         
           <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit, otherwise the value returned by the block.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#to_i%28base%2C%20or_else%20%3D%200%29-instance-method" class="signature"><strong>#to_i</strong>(base, or_else = 0)</a>
-        
-          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base, otherwise the value of <code>or_else</code>.</p></div>
         
       </li>
     
@@ -293,9 +289,16 @@ It occupies 32 bits.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        <a href="#to_i%28base%2C%20or_else%20%3D%200%29-instance-method" class="signature"><strong>#to_i</strong>(base, or_else = 0)</a>
         
-          <div class="summary"><p>Appens this Char to the given IO.</p></div>
+          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base, otherwise the value of <code>or_else</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_i-instance-method" class="signature"><strong>#to_i</strong></a>
+        
+          <div class="summary"><p>Returns the integer value of this char if it's an ASCII char denoting a digit, 0 otherwise.</p></div>
         
       </li>
     
@@ -303,6 +306,13 @@ It occupies 32 bits.</p>
         <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
         
           <div class="summary"><p>Returns this Char as a String containing this Char as a single character.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Appens this Char to the given IO.</p></div>
         
       </li>
     
@@ -357,7 +367,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L58" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L58" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -400,7 +410,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L69" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L69" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -413,6 +423,19 @@ It occupies 32 bits.</p>
       
         <div class="doc"><p>Returns true if this Char is equal to <code>other</code>.</p></div>
       
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3D%3D%3D%28byte%20%3A%20Int%29-instance-method">
+        
+        def <strong>===</strong>(byte : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L500" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -454,7 +477,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L89" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L89" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -473,7 +496,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L101" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L101" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -491,7 +514,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L469" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L461" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -516,7 +539,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L256" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L256" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -534,7 +557,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L79" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L79" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -553,7 +576,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L203" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L203" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -570,7 +593,7 @@ It occupies 32 bits.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L311" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L311" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -591,7 +614,7 @@ with characters with a codepoint greater than 0x79 written as <code>\u{...}</cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L296" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L296" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -627,7 +650,7 @@ puts <span class="s">"'あ'"</span>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L436" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L428" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -642,7 +665,7 @@ puts <span class="s">"'あ'"</span>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L227" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L227" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -681,7 +704,7 @@ or the end of a a set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L143" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L143" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -701,7 +724,7 @@ or the end of a a set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L268" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -718,22 +741,35 @@ or the end of a a set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L283" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L283" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="ord-instance-method">
+      <div class="signature" id="ord%20%3A%20Int32-instance-method">
         
-        def <strong>ord</strong>
+        def <strong>ord</strong> : <a href="Int32.html">Int32</a>
       </div>
       
-        <div class="doc"><p>Returns this Char's Unicode codepoint.</p>
+        <div class="doc"><p>Returns the codepoint of this char.</p>
 
-<pre><code><span class="s">'a'</span>.ord  <span class="c">#=> 97</span>
-<span class="s">'あ'</span>.ord <span class="c">#=> 12354</span></code></pre></div>
+<p>The codepoint is the integer
+representation. The Universal Coded Character Set (UCS) standard,
+commonly known as Unicode, assigns names and meanings to numbers, these
+numbers are called codepoints.</p>
+
+<p>For values below and including 127 this matches the ASCII codes
+and thus its byte representation.</p>
+
+<pre><code><span class="s">'a'</span>.ord      <span class="c">#=> 97</span>
+<span class="s">'\u{0}'</span>.ord     <span class="c">#=> 0</span>
+<span class="s">'\u{7f}'</span>.ord <span class="c">#=> 127</span>
+<span class="s">'☃'</span>.ord      <span class="c">#=> 9731</span></code></pre></div>
       
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/char.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -753,27 +789,7 @@ or the end of a a set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L239" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_i-instance-method">
-        
-        def <strong>to_i</strong>
-      </div>
-      
-        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit,
-0 otherwise.</p>
-
-<pre><code><span class="s">'1'</span>.to_i <span class="c">#=> 1</span>
-<span class="s">'8'</span>.to_i <span class="c">#=> 8</span>
-<span class="s">'c'</span>.to_i <span class="c">#=> 0</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L344" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L239" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -793,7 +809,28 @@ otherwise the value returned by the block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L356" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L356" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i%28base%2C%20%26block%29-instance-method">
+        
+        def <strong>to_i</strong>(base, &block)
+      </div>
+      
+        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
+otherwise the value return by the block.</p>
+
+<pre><code><span class="s">'1'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 1</span>
+<span class="s">'a'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 10</span>
+<span class="s">'f'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 15</span>
+<span class="s">'z'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 20</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L387" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -811,52 +848,31 @@ otherwise the value of <code>or_else</code>.</p>
 <span class="s">'a'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 10</span>
 <span class="s">'f'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 15</span>
 <span class="s">'z'</span>.to_i(<span class="n">16</span>)     <span class="c">#=> 0</span>
-<span class="s">'z'</span>.to_i(<span class="n">16</span>, <span class="n">20</span>) <span class="c">#=> 20</span></code></pre>
-
-<p><strong>Note</strong>: the only bases supported right now are 10 and 16.</p></div>
+<span class="s">'z'</span>.to_i(<span class="n">16</span>, <span class="n">20</span>) <span class="c">#=> 20</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L376" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L374" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="to_i%28base%2C%20%26block%29-instance-method">
+      <div class="signature" id="to_i-instance-method">
         
-        def <strong>to_i</strong>(base, &block)
+        def <strong>to_i</strong>
       </div>
       
-        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
-otherwise the value return by the block.</p>
+        <div class="doc"><p>Returns the integer value of this char if it's an ASCII char denoting a digit,
+0 otherwise.</p>
 
-<pre><code><span class="s">'1'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 1</span>
-<span class="s">'a'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 10</span>
-<span class="s">'f'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 15</span>
-<span class="s">'z'</span>.to_i(<span class="n">16</span>) { <span class="n">20</span> } <span class="c">#=> 20</span></code></pre>
-
-<p><strong>Note</strong>: the only bases supported right now are 10 and 16.</p></div>
+<pre><code><span class="s">'1'</span>.to_i <span class="c">#=> 1</span>
+<span class="s">'8'</span>.to_i <span class="c">#=> 8</span>
+<span class="s">'c'</span>.to_i <span class="c">#=> 0</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L391" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
-        
-        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
-      </div>
-      
-        <div class="doc"><p>Appens this Char to the given IO. This appens this Char's bytes as encoded
-by UTF-8 to the given IO.</p></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L494" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L344" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -874,7 +890,23 @@ by UTF-8 to the given IO.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L483" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L475" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28io%20%3A%20IO%29-instance-method">
+        
+        def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
+      </div>
+      
+        <div class="doc"><p>Appens this Char to the given IO. This appens this Char's bytes as encoded
+by UTF-8 to the given IO.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L486" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -893,7 +925,7 @@ by UTF-8 to the given IO.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L218" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L218" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -912,7 +944,7 @@ by UTF-8 to the given IO.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/char.cr#L112" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/char.cr#L112" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -15,6 +15,30 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
+(URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).</p>
+
+<p>This class provides constructors for creating URI instances from
+their components or by parsing their string forms and methods for accessing the various
+components of an instance.</p>
+
+<p>Basic example:</p>
+
+<pre><code><span class="k">require</span> <span class="s">"uri"</span>
+
+uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">"http://foo.com/posts?id=30&limit=5#time=1305298413"</span>
+<span class="c"># => #&lt;URI:0x1003f1e40 @scheme="http", @host="foo.com", @port=nil, @path="/posts", @query="id=30&limit=5", ... ></span>
+uri.scheme
+<span class="c"># => "http"</span>
+uri.host
+<span class="c"># => "foo.com"</span>
+uri.query
+<span class="c"># => "id=30&limit=5"</span>
+uri.to_s
+<span class="c"># => "http://foo.com/posts?id=30&limit=5#time=1305298413"</span></code></pre>
+
 
 
 
@@ -36,7 +60,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr">uri.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr" target="_blank">uri.cr</a>
     
     <br/>
   
@@ -68,12 +92,14 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#parse%28string%20%3A%20String%29-class-method" class="signature"><strong>.parse</strong>(string : String)</a>
+        <a href="#parse%28raw_url%20%3A%20String%29-class-method" class="signature"><strong>.parse</strong>(raw_url : String)</a>
+        
+          <div class="summary"><p>Parses <code>raw_url</code> into an URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%2C%20user%20%3D%20nil%2C%20password%20%3D%20nil%2C%20userinfo%20%3D%20nil%2C%20fragment%20%3D%20nil%2C%20opaque%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(scheme = nil, host = nil, port = nil, path = nil, query = nil, user = nil, password = nil, userinfo = nil, fragment = nil, opaque = nil)</a>
+        <a href="#new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%2C%20user%20%3D%20nil%2C%20password%20%3D%20nil%2C%20fragment%20%3D%20nil%2C%20opaque%20%3D%20nil%29-class-method" class="signature"><strong>.new</strong>(scheme = nil, host = nil, port = nil, path = nil, query = nil, user = nil, password = nil, fragment = nil, opaque = nil)</a>
         
       </li>
     
@@ -87,85 +113,119 @@
       <li class="entry-summary">
         <a href="#fragment-instance-method" class="signature"><strong>#fragment</strong></a>
         
+          <div class="summary"><p>Returns the fragment component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#fragment%3D%28fragment%29-instance-method" class="signature"><strong>#fragment=</strong>(fragment)</a>
+        
+          <div class="summary"><p>Sets the fragment component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#full_path-instance-method" class="signature"><strong>#full_path</strong></a>
         
+          <div class="summary"><p>Returns the full path of this URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#host-instance-method" class="signature"><strong>#host</strong></a>
+        
+          <div class="summary"><p>Returns the host component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#host%3D%28host%29-instance-method" class="signature"><strong>#host=</strong>(host)</a>
         
+          <div class="summary"><p>Sets the host component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#opaque-instance-method" class="signature"><strong>#opaque</strong></a>
+        
+          <div class="summary"><p>Returns the opaque component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#opaque%3D%28opaque%29-instance-method" class="signature"><strong>#opaque=</strong>(opaque)</a>
         
+          <div class="summary"><p>Sets the opaque component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#password-instance-method" class="signature"><strong>#password</strong></a>
+        
+          <div class="summary"><p>Returns the password component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#password%3D%28password%29-instance-method" class="signature"><strong>#password=</strong>(password)</a>
         
+          <div class="summary"><p>Sets the password component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        
+          <div class="summary"><p>Returns the path component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#path%3D%28path%29-instance-method" class="signature"><strong>#path=</strong>(path)</a>
         
+          <div class="summary"><p>Sets the path component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#port-instance-method" class="signature"><strong>#port</strong></a>
+        
+          <div class="summary"><p>Returns the port component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#port%3D%28port%29-instance-method" class="signature"><strong>#port=</strong>(port)</a>
         
+          <div class="summary"><p>Sets the port component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#query-instance-method" class="signature"><strong>#query</strong></a>
+        
+          <div class="summary"><p>Returns the query component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#query%3D%28query%29-instance-method" class="signature"><strong>#query=</strong>(query)</a>
         
+          <div class="summary"><p>Sets the query component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#scheme-instance-method" class="signature"><strong>#scheme</strong></a>
         
+          <div class="summary"><p>Returns the scheme component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#scheme%3D%28scheme%29-instance-method" class="signature"><strong>#scheme=</strong>(scheme)</a>
+        
+          <div class="summary"><p>Sets the scheme component of the URI.</p></div>
         
       </li>
     
@@ -177,20 +237,21 @@
       <li class="entry-summary">
         <a href="#user-instance-method" class="signature"><strong>#user</strong></a>
         
+          <div class="summary"><p>Returns the user component of the URI.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#user%3D%28user%29-instance-method" class="signature"><strong>#user=</strong>(user)</a>
+        
+          <div class="summary"><p>Sets the user component of the URI.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#userinfo-instance-method" class="signature"><strong>#userinfo</strong></a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#userinfo%3D%28ui%29-instance-method" class="signature"><strong>#userinfo=</strong>(ui)</a>
+          <div class="summary"><p>Returns the user-information component containing the provided username and password.</p></div>
         
       </li>
     
@@ -204,27 +265,31 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="parse%28string%20%3A%20String%29-class-method">
+      <div class="signature" id="parse%28raw_url%20%3A%20String%29-class-method">
         
-        def self.<strong>parse</strong>(string : <a href="String.html">String</a>)
+        def self.<strong>parse</strong>(raw_url : <a href="String.html">String</a>)
       </div>
+      
+        <div class="doc"><p>Parses <code>raw_url</code> into an URI. The <code>raw_url</code> may be relative or absolute.</p>
+
+<pre><code><span class="k">require</span> </code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L62" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L182" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%2C%20user%20%3D%20nil%2C%20password%20%3D%20nil%2C%20userinfo%20%3D%20nil%2C%20fragment%20%3D%20nil%2C%20opaque%20%3D%20nil%29-class-method">
+      <div class="signature" id="new%28scheme%20%3D%20nil%2C%20host%20%3D%20nil%2C%20port%20%3D%20nil%2C%20path%20%3D%20nil%2C%20query%20%3D%20nil%2C%20user%20%3D%20nil%2C%20password%20%3D%20nil%2C%20fragment%20%3D%20nil%2C%20opaque%20%3D%20nil%29-class-method">
         
-        def self.<strong>new</strong>(scheme = <span class="n">nil</span>, host = <span class="n">nil</span>, port = <span class="n">nil</span>, path = <span class="n">nil</span>, query = <span class="n">nil</span>, user = <span class="n">nil</span>, password = <span class="n">nil</span>, userinfo = <span class="n">nil</span>, fragment = <span class="n">nil</span>, opaque = <span class="n">nil</span>)
+        def self.<strong>new</strong>(scheme = <span class="n">nil</span>, host = <span class="n">nil</span>, port = <span class="n">nil</span>, path = <span class="n">nil</span>, query = <span class="n">nil</span>, user = <span class="n">nil</span>, password = <span class="n">nil</span>, fragment = <span class="n">nil</span>, opaque = <span class="n">nil</span>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L120" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -240,6 +305,13 @@
         def <strong>fragment</strong>
       </div>
       
+        <div class="doc"><p>Returns the fragment component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar#section1"</span>).fragment <span class="c"># => "section1"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L105" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -250,6 +322,11 @@
         def <strong>fragment=</strong>(fragment)
       </div>
       
+        <div class="doc"><p>Sets the fragment component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L108" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -260,9 +337,14 @@
         def <strong>full_path</strong>
       </div>
       
+        <div class="doc"><p>Returns the full path of this URI.</p>
+
+<pre><code>uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">"http://foo.com/posts?id=30&limit=5#time=1305298413"</span>
+uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L129" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -273,6 +355,13 @@
         def <strong>host</strong>
       </div>
       
+        <div class="doc"><p>Returns the host component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com"</span>).host <span class="c"># => "foo.com"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L45" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -283,6 +372,11 @@
         def <strong>host=</strong>(host)
       </div>
       
+        <div class="doc"><p>Sets the host component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L48" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -293,6 +387,13 @@
         def <strong>opaque</strong>
       </div>
       
+        <div class="doc"><p>Returns the opaque component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"mailto:alice@example.com"</span>).opaque <span class="c"># => "alice@example.com"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L115" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -303,6 +404,11 @@
         def <strong>opaque=</strong>(opaque)
       </div>
       
+        <div class="doc"><p>Sets the opaque component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L118" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -313,6 +419,13 @@
         def <strong>password</strong>
       </div>
       
+        <div class="doc"><p>Returns the password component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://admin:password@foo.com"</span>).password <span class="c"># => "password"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -323,6 +436,11 @@
         def <strong>password=</strong>(password)
       </div>
       
+        <div class="doc"><p>Sets the password component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -333,6 +451,13 @@
         def <strong>path</strong>
       </div>
       
+        <div class="doc"><p>Returns the path component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar"</span>).host <span class="c"># => "/bar"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -343,6 +468,11 @@
         def <strong>path=</strong>(path)
       </div>
       
+        <div class="doc"><p>Sets the path component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L68" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -353,6 +483,13 @@
         def <strong>port</strong>
       </div>
       
+        <div class="doc"><p>Returns the port component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com:5432"</span>).port <span class="c"># => 5432</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L55" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -363,6 +500,11 @@
         def <strong>port=</strong>(port)
       </div>
       
+        <div class="doc"><p>Sets the port component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L58" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -373,6 +515,13 @@
         def <strong>query</strong>
       </div>
       
+        <div class="doc"><p>Returns the query component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar?q=1"</span>).host <span class="c"># => "q=1"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -383,6 +532,11 @@
         def <strong>query=</strong>(query)
       </div>
       
+        <div class="doc"><p>Sets the query component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -393,6 +547,14 @@
         def <strong>scheme</strong>
       </div>
       
+        <div class="doc"><p>Returns the scheme component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com"</span>).scheme <span class="c"># => "http"</span>
+<span class="t">URI</span>.parse(<span class="s">"mailto:alice@example.com"</span>).scheme <span class="c"># => "mailto"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L35" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -403,6 +565,11 @@
         def <strong>scheme=</strong>(scheme)
       </div>
       
+        <div class="doc"><p>Sets the scheme component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -415,7 +582,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L28" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L136" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -426,6 +593,13 @@
         def <strong>user</strong>
       </div>
       
+        <div class="doc"><p>Returns the user component of the URI.</p>
+
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://admin:password@foo.com"</span>).user <span class="c"># => "admin"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L85" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -436,6 +610,11 @@
         def <strong>user=</strong>(user)
       </div>
       
+        <div class="doc"><p>Sets the user component of the URI.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L88" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -446,22 +625,14 @@
         def <strong>userinfo</strong>
       </div>
       
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L96" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="userinfo%3D%28ui%29-instance-method">
-        
-        def <strong>userinfo=</strong>(ui)
-      </div>
+        <div class="doc"><p>Returns the user-information component containing the provided username and password.</p>
+
+<pre><code>uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">"http://admin:password@foo.com"</span>
+uri.userinfo <span class="c"># => "admin:password"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/uri.cr#L90" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L224" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

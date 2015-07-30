@@ -15,6 +15,17 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The Comparable mixin is used by classes whose objects may be ordered.</p>
+
+<p>Including types must provide an <code><=></code> method, which compares the receiver against
+another object, returning -1, 0, or +1 depending on whether the receiver is less than,
+equal to, or greater than the other object.</p>
+
+<p>Comparable uses <code><=></code> to implement the conventional comparison operators (<code><a href="Comparable.html#%3C%28other%20%3A%20T%29-instance-method">#<</a></code>, <code><a href="Comparable.html#%3C%3D%28other%20%3A%20T%29-instance-method">#<=</a></code>, <code><a href="Comparable.html#%3D%3D%28other%20%3A%20T%29-instance-method">#==</a></code>, <code><a href="Comparable.html#%3E%3D%28other%20%3A%20T%29-instance-method">#>=</a></code>, and <code><a href="Comparable.html#%3E%28other%20%3A%20T%29-instance-method">#></a></code>)
+and the method <code><a href="Comparable.html#between%3F%28min%2C%20max%29-instance-method">#between?</a></code>.</p>
+
 
 
 
@@ -58,7 +69,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr">comparable.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr" target="_blank">comparable.cr</a>
     
     <br/>
   
@@ -75,30 +86,42 @@
       <li class="entry-summary">
         <a href="#%3C%28other%20%3A%20T%29-instance-method" class="signature"><strong>#<</strong>(other : T)</a>
         
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%3D%28other%20%3A%20T%29-instance-method" class="signature"><strong>#<=</strong>(other : T)</a>
+        
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code> or <code>0</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%20%3A%20T%29-instance-method" class="signature"><strong>#==</strong>(other : T)</a>
         
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>0</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3E%28other%20%3A%20T%29-instance-method" class="signature"><strong>#></strong>(other : T)</a>
+        
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3E%3D%28other%20%3A%20T%29-instance-method" class="signature"><strong>#>=</strong>(other : T)</a>
         
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code> or <code>0</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#between%3F%28min%2C%20max%29-instance-method" class="signature"><strong>#between?</strong>(min, max)</a>
+        
+          <div class="summary"><p>Returns <code>false</code> if <code>self <=> min</code> is less than zero or if <code>self <=> max</code> is greater than zero, <code>true</code> otherwise.</p></div>
         
       </li>
     
@@ -119,9 +142,11 @@
         def <strong><</strong>(other : T)
       </div>
       
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr#L2" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr#L11" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -132,9 +157,11 @@
         def <strong><=</strong>(other : T)
       </div>
       
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code> or <code>0</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr#L16" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -145,9 +172,12 @@
         def <strong>==</strong>(other : T)
       </div>
       
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>0</code>.
+Also returns <code>true</code> if this and <code>other</code> are the same object.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr#L10" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr#L22" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -158,9 +188,11 @@
         def <strong>></strong>(other : T)
       </div>
       
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -171,9 +203,11 @@
         def <strong>>=</strong>(other : T)
       </div>
       
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code> or <code>0</code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr#L36" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -184,9 +218,11 @@
         def <strong>between?</strong>(min, max)
       </div>
       
+        <div class="doc"><p>Returns <code>false</code> if <code>self <=> min</code> is less than zero or if <code>self <=> max</code> is greater than zero, <code>true</code> otherwise.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/comparable.cr#L22" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/comparable.cr#L41" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -55,7 +55,7 @@ gets assigned a unique number.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/symbol.cr">symbol.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/symbol.cr" target="_blank">symbol.cr</a>
     
     <br/>
   
@@ -91,6 +91,8 @@ gets assigned a unique number.</p>
       <li class="entry-summary">
         <a href="#%3C%3D%3E%28other%20%3A%20Symbol%29-instance-method" class="signature"><strong>#<=></strong>(other : Symbol)</a>
         
+          <div class="summary"><p>Compares symbol with other based on <code><a href="String.html#%3C%3D%3E%28other%20%3A%20self%29-instance-method">String#<=></a></code> method.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -108,6 +110,8 @@ gets assigned a unique number.</p>
       <li class="entry-summary">
         <a href="#inspect%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
         
+          <div class="summary"><p>Returns the symbol literal representation as a string.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -117,6 +121,8 @@ gets assigned a unique number.</p>
     
       <li class="entry-summary">
         <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Appends the symbol's name to the passed IO.</p></div>
         
       </li>
     
@@ -140,11 +146,14 @@ gets assigned a unique number.</p>
         def self.<strong>needs_quotes?</strong>(string)
       </div>
       
-        <div class="doc"><p>Determines if a string needs to be quoted to be used for a symbol.</p></div>
+        <div class="doc"><p>Determines if a string needs to be quoted to be used for a symbol.</p>
+
+<pre><code><span class="t">Symbol</span>.needs_quotes? <span class="s">"string"</span>      <span class="c"># => false</span>
+<span class="t">Symbol</span>.needs_quotes? <span class="s">"long string"</span> <span class="c"># => true</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/symbol.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/symbol.cr#L56" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -172,9 +181,14 @@ gets assigned a unique number.</p>
         def <strong><=></strong>(other : <a href="Symbol.html">Symbol</a>)
       </div>
       
+        <div class="doc"><p>Compares symbol with other based on <code><a href="String.html#%3C%3D%3E%28other%20%3A%20self%29-instance-method">String#<=></a></code> method. Returns -1, 0
+or +1 depending on whether symbol is less than, equal to, or greater than
+other_symbol.
+See <code><a href="String.html#%3C%3D%3E%28other%20%3A%20self%29-instance-method">String#<=></a></code> for more information.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/symbol.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/symbol.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,9 +223,13 @@ gets assigned a unique number.</p>
         def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
       </div>
       
+        <div class="doc"><p>Returns the symbol literal representation as a string.</p>
+
+<pre><code><span class="n">:crystal</span>.inspect <span class="c"># => ":crystal"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/symbol.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/symbol.cr#L30" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -234,9 +252,13 @@ gets assigned a unique number.</p>
         def <strong>to_s</strong>(io : <a href="IO.html">IO</a>)
       </div>
       
+        <div class="doc"><p>Appends the symbol's name to the passed IO.</p>
+
+<pre><code><span class="n">:crystal</span>.to_s <span class="c"># => "crystal"</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/symbol.cr#L32" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/symbol.cr#L46" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

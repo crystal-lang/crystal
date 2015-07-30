@@ -11,7 +11,7 @@
 <body>
 
 
-  <h1>class Set(T)</h1>
+  <h1>struct Set(T)</h1>
 
 
 
@@ -20,7 +20,7 @@
 
 
   <h2>Superclass hierarchy</h2>
-  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Reference.html">Reference</a></div><div style="padding-left: 40px"><a href="Set.html">Set(T)</a></div>
+  <div style="padding-left: 0px"><a href="Object.html">Object</a></div><div style="padding-left: 20px"><a href="Value.html">Value</a></div><div style="padding-left: 40px"><a href="Struct.html">Struct</a></div><div style="padding-left: 60px"><a href="Set.html">Set(T)</a></div>
 
 
 
@@ -43,7 +43,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr">set.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr" target="_blank">set.cr</a>
     
     <br/>
   
@@ -56,7 +56,7 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#new%28array%20%3A%20Array%28T%29%29-class-method" class="signature"><strong>.new</strong>(array : Array(T))</a>
+        <a href="#new%28enumerable%20%3A%20Enumerable%28T%29%29-class-method" class="signature"><strong>.new</strong>(enumerable : Enumerable(T))</a>
         
       </li>
     
@@ -108,12 +108,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
+        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
         
       </li>
     
@@ -138,12 +138,44 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#intersects%3F%28other%20%3A%20Set%29-instance-method" class="signature"><strong>#intersects?</strong>(other : Set)</a>
+        
+          <div class="summary"><p>Returns true if the set and the given set have at least one element in common.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#length-instance-method" class="signature"><strong>#length</strong></a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#merge%28elems%29-instance-method" class="signature"><strong>#merge</strong>(elems)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#object_id-instance-method" class="signature"><strong>#object_id</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#same%3F%28other%20%3A%20Set%29-instance-method" class="signature"><strong>#same?</strong>(other : Set)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#subset%3F%28other%20%3A%20Set%29-instance-method" class="signature"><strong>#subset?</strong>(other : Set)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#superset%3F%28other%20%3A%20Set%29-instance-method" class="signature"><strong>#superset?</strong>(other : Set)</a>
         
       </li>
     
@@ -158,7 +190,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20Set%29-instance-method" class="signature"><strong>#|</strong>(other : Set)</a>
+        <a href="#%7C%28other%20%3A%20Set%28U%29%29-instance-method" class="signature"><strong>#|</strong>(other : Set(U))</a>
         
       </li>
     
@@ -172,14 +204,14 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="new%28array%20%3A%20Array%28T%29%29-class-method">
+      <div class="signature" id="new%28enumerable%20%3A%20Enumerable%28T%29%29-class-method">
         
-        def self.<strong>new</strong>(array : <a href="Array.html">Array</a>(T))
+        def self.<strong>new</strong>(enumerable : <a href="Enumerable.html">Enumerable</a>(T))
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L9" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L9" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -192,7 +224,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -210,7 +242,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L61" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -223,7 +255,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -236,7 +268,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L80" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -249,7 +281,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -262,7 +294,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L41" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L45" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -275,7 +307,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L33" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L33" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -288,20 +320,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L80" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="each-instance-method">
-        
-        def <strong>each</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L57" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L84" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -314,7 +333,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L50" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L54" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="each-instance-method">
+        
+        def <strong>each</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L61" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -327,7 +359,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L50" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -340,7 +372,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L94" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -353,7 +385,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L29" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -366,7 +398,26 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L90" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L94" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="intersects%3F%28other%20%3A%20Set%29-instance-method">
+        
+        def <strong>intersects?</strong>(other : <a href="Set.html">Set</a>)
+      </div>
+      
+        <div class="doc"><p>Returns true if the set and the given set have at least one
+element in common.</p>
+
+<pre><code><span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>}.intersects? <span class="t">Set</span>{<span class="n">4</span>, <span class="n">5</span>} <span class="c"># => false</span>
+<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>}.intersects? <span class="t">Set</span>{<span class="n">3</span>, <span class="n">4</span>} <span class="c"># => true</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L109" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -379,7 +430,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L37" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L37" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -392,7 +443,72 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L25" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L25" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="object_id-instance-method">
+        
+        def <strong>object_id</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L133" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="same%3F%28other%20%3A%20Set%29-instance-method">
+        
+        def <strong>same?</strong>(other : <a href="Set.html">Set</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L137" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="size-instance-method">
+        
+        def <strong>size</strong>
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L41" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="subset%3F%28other%20%3A%20Set%29-instance-method">
+        
+        def <strong>subset?</strong>(other : <a href="Set.html">Set</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L123" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="superset%3F%28other%20%3A%20Set%29-instance-method">
+        
+        def <strong>superset?</strong>(other : <a href="Set.html">Set</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L128" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -405,7 +521,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L86" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L90" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -418,20 +534,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L117" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20Set%29-instance-method">
+      <div class="signature" id="%7C%28other%20%3A%20Set%28U%29%29-instance-method">
         
-        def <strong>|</strong>(other : <a href="Set.html">Set</a>)
+        def <strong>|</strong>(other : <a href="Set.html">Set</a>(U))
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/set.cr#L69" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/set.cr#L73" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

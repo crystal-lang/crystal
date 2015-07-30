@@ -91,7 +91,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr">enumerable.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr" target="_blank">enumerable.cr</a>
     
     <br/>
   
@@ -141,9 +141,9 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
-        <a href="#count%28%26block%29-instance-method" class="signature"><strong>#count</strong>(&block)</a>
+        <a href="#count%28item%29-instance-method" class="signature"><strong>#count</strong>(item)</a>
         
-          <div class="summary"><p>Returns the number of elements in the collection for which the passed block returns <code>true</code>.</p></div>
+          <div class="summary"><p>Returns the number of times that the passed item is present in the collection.</p></div>
         
       </li>
     
@@ -155,9 +155,9 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
-        <a href="#count%28item%29-instance-method" class="signature"><strong>#count</strong>(item)</a>
+        <a href="#count%28%26block%29-instance-method" class="signature"><strong>#count</strong>(&block)</a>
         
-          <div class="summary"><p>Returns the number of times that the passed item is present in the collection.</p></div>
+          <div class="summary"><p>Returns the number of elements in the collection for which the passed block returns <code>true</code>.</p></div>
         
       </li>
     
@@ -172,6 +172,20 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
         <a href="#cycle%28n%2C%20%26block%29-instance-method" class="signature"><strong>#cycle</strong>(n, &block)</a>
         
           <div class="summary"><p>Calls the given block for each element in this enumerable <em>n</em> times.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#drop%28count%20%3A%20Int%29-instance-method" class="signature"><strong>#drop</strong>(count : Int)</a>
+        
+          <div class="summary"><p>Returns an array with the first <em>count</em> elements removed from the original collection.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#drop_while%28%26block%29-instance-method" class="signature"><strong>#drop_while</strong>(&block)</a>
+        
+          <div class="summary"><p>Drops elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.</p></div>
         
       </li>
     
@@ -267,16 +281,16 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
-        <a href="#index%28%26block%29-instance-method" class="signature"><strong>#index</strong>(&block)</a>
+        <a href="#index%28obj%29-instance-method" class="signature"><strong>#index</strong>(obj)</a>
         
-          <div class="summary"><p>Returns the index of the first element for which the passed block returns <code>true</code>.</p></div>
+          <div class="summary"><p>Returns the index of the object <em>obj</em> in the collection.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#index%28obj%29-instance-method" class="signature"><strong>#index</strong>(obj)</a>
+        <a href="#index%28%26block%29-instance-method" class="signature"><strong>#index</strong>(&block)</a>
         
-          <div class="summary"><p>Returns the index of the object <em>obj</em> in the collection.</p></div>
+          <div class="summary"><p>Returns the index of the first element for which the passed block returns <code>true</code>.</p></div>
         
       </li>
     
@@ -300,9 +314,9 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
-        <a href="#join%28separator%20%3D%20%22%22%29-instance-method" class="signature"><strong>#join</strong>(separator = "")</a>
+        <a href="#join%28separator%2C%20io%2C%20%26block%29-instance-method" class="signature"><strong>#join</strong>(separator, io, &block)</a>
         
-          <div class="summary"><p>Returns a <code><a href="String.html">String</a></code> created by concatenating the elements in the collection, separated by <em>separator</em> (defaults to none).</p></div>
+          <div class="summary"><p>Prints to <em>io</em> the concatenation of the elements, with the possibility of controlling how the printing is done via a block.</p></div>
         
       </li>
     
@@ -321,9 +335,9 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
-        <a href="#join%28separator%2C%20io%2C%20%26block%29-instance-method" class="signature"><strong>#join</strong>(separator, io, &block)</a>
+        <a href="#join%28separator%20%3D%20%22%22%29-instance-method" class="signature"><strong>#join</strong>(separator = "")</a>
         
-          <div class="summary"><p>Prints to <em>io</em> the concatenation of the elements, with the possibility of controlling how the printing is done via a block.</p></div>
+          <div class="summary"><p>Returns a <code><a href="String.html">String</a></code> created by concatenating the elements in the collection, separated by <em>separator</em> (defaults to none).</p></div>
         
       </li>
     
@@ -405,6 +419,13 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
+        <a href="#none%3F-instance-method" class="signature"><strong>#none?</strong></a>
+        
+          <div class="summary"><p>Returns <code>true</code> if all of the elements of the collection are <code>false</code> or <code>nil</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#none%3F%28%26block%29-instance-method" class="signature"><strong>#none?</strong>(&block)</a>
         
           <div class="summary"><p>Returns <code>true</code> if the passed block returns <code>true</code> for none of the elements of the collection.</p></div>
@@ -461,6 +482,13 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       </li>
     
       <li class="entry-summary">
+        <a href="#take_while%28%26block%29-instance-method" class="signature"><strong>#take_while</strong>(&block)</a>
+        
+          <div class="summary"><p>Passes elements to the block until the block returns nil or false, then stops iterating and returns an array of all prior elements.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#to_a-instance-method" class="signature"><strong>#to_a</strong></a>
         
           <div class="summary"><p>Returns an array with all the elements in the collection.</p></div>
@@ -496,7 +524,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L48" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L48" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -514,7 +542,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L38" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -527,11 +555,12 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
         <div class="doc"><p>Returns <code>true</code> if at least one of the collection members is not <code>false</code> or <code>nil</code>.</p>
 
-<pre><code>[<span class="n">nil</span>, <span class="n">true</span>, <span class="n">99</span>].any?  <span class="c">#=> true</span></code></pre></div>
+<pre><code>[<span class="n">nil</span>, <span class="n">true</span>, <span class="n">99</span>].any?  <span class="c">#=> true</span>
+[<span class="n">nil</span>, <span class="n">false</span>].any?     <span class="c">#=> false</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L66" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L67" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -544,12 +573,12 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
         <div class="doc"><p>Returns <code>true</code> if the passed block returns a value other than <code>false</code> or <code>nil</code> for at least one element of the collection.</p>
 
-<pre><code>[<span class="s">"ant"</span>, <span class="s">"bear"</span>, <span class="s">"cat"</span>].any? { <span class="o">|</span>word<span class="o">|</span> word.length <span class="o">>=</span> <span class="n">3</span> }  <span class="c">#=> true</span>
-[<span class="s">"ant"</span>, <span class="s">"bear"</span>, <span class="s">"cat"</span>].any? { <span class="o">|</span>word<span class="o">|</span> word.length <span class="o">>=</span> <span class="n">4</span> }  <span class="c">#=> true</span></code></pre></div>
+<pre><code>[<span class="s">"ant"</span>, <span class="s">"bear"</span>, <span class="s">"cat"</span>].any? { <span class="o">|</span>word<span class="o">|</span> word.length <span class="o">>=</span> <span class="n">4</span> }  <span class="c">#=> true</span>
+[<span class="s">"ant"</span>, <span class="s">"bear"</span>, <span class="s">"cat"</span>].any? { <span class="o">|</span>word<span class="o">|</span> word.length <span class="o">></span> <span class="n">4</span> }   <span class="c">#=> false</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L57" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L57" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -567,41 +596,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L75" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="count%28%26block%29-instance-method">
-        
-        def <strong>count</strong>(&block)
-      </div>
-      
-        <div class="doc"><p>Returns the number of elements in the collection for which the passed block returns <code>true</code>.</p>
-
-<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>].count { <span class="o">|</span>i<span class="o">|</span> i <span class="o">%</span> <span class="n">2</span> <span class="o">==</span> <span class="n">0</span> }  <span class="c">#=> 2</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L90" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="count-instance-method">
-        
-        def <strong>count</strong>
-      </div>
-      
-        <div class="doc"><p>Returns the number of elements in the collection.</p>
-
-<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>].count  <span class="c">#=> 4</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L100" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -618,7 +613,41 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L108" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L109" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="count-instance-method">
+        
+        def <strong>count</strong>
+      </div>
+      
+        <div class="doc"><p>Returns the number of elements in the collection.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>].count  <span class="c">#=> 4</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L101" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="count%28%26block%29-instance-method">
+        
+        def <strong>count</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Returns the number of elements in the collection for which the passed block returns <code>true</code>.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>].count { <span class="o">|</span>i<span class="o">|</span> i <span class="o">%</span> <span class="n">2</span> <span class="o">==</span> <span class="n">0</span> }  <span class="c">#=> 2</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L91" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -633,7 +662,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L113" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L114" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -648,7 +677,43 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L118" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L119" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="drop%28count%20%3A%20Int%29-instance-method">
+        
+        def <strong>drop</strong>(count : <a href="Int.html">Int</a>)
+      </div>
+      
+        <div class="doc"><p>Returns an array with the first <em>count</em> elements removed from the original collection.</p>
+
+<p>If <em>count</em> is bigger than the number of elements in the collection, returns an empty array.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span>].drop(<span class="n">3</span>)  <span class="c">#=> [4, 5, 6]</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L128" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="drop_while%28%26block%29-instance-method">
+        
+        def <strong>drop_while</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Drops elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">0</span>].drop_while {<span class="o">|</span>i<span class="o">|</span> i <span class="o"><</span> <span class="n">3</span>} <span class="c">#=> [3, 4, 5, 0]</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L142" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -663,7 +728,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L31" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L31" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -689,7 +754,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L161" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L191" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -716,7 +781,7 @@ the <code><a href="Iterator.html">Iterator</a></code> and <code><a href="Iterabl
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L135" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L165" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -752,7 +817,7 @@ friendly version of the previous snippet would be:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L196" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L226" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -771,7 +836,7 @@ friendly version of the previous snippet would be:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L210" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L240" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -792,7 +857,7 @@ friendly version of the previous snippet would be:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L225" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L255" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -807,7 +872,7 @@ friendly version of the previous snippet would be:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L233" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L263" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -826,7 +891,7 @@ without a parameter).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L243" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L273" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -841,7 +906,7 @@ without a parameter).</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L248" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L278" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -861,7 +926,7 @@ every element in the collection.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L259" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L289" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -878,7 +943,7 @@ every element in the collection.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L269" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L299" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -896,7 +961,7 @@ collection, and which values are an array of the elements for which the block re
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L278" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L308" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -914,26 +979,7 @@ collection, and which values are an array of the elements for which the block re
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L296" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="index%28%26block%29-instance-method">
-        
-        def <strong>index</strong>(&block)
-      </div>
-      
-        <div class="doc"><p>Returns the index of the first element for which the passed block returns <code>true</code>.</p>
-
-<pre><code>[<span class="s">"Alice"</span>, <span class="s">"Bob"</span>].index { <span class="o">|</span>name<span class="o">|</span> name.length <span class="o"><</span> <span class="n">4</span> }  <span class="c">#=> 1 (Bob's index)</span></code></pre>
-
-<p>Returns <code>nil</code> if the block didn't return <code>true</code>for any element.</p></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L305" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L326" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -952,7 +998,26 @@ collection, and which values are an array of the elements for which the block re
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L317" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L347" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28%26block%29-instance-method">
+        
+        def <strong>index</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Returns the index of the first element for which the passed block returns <code>true</code>.</p>
+
+<pre><code>[<span class="s">"Alice"</span>, <span class="s">"Bob"</span>].index { <span class="o">|</span>name<span class="o">|</span> name.length <span class="o"><</span> <span class="n">4</span> }  <span class="c">#=> 1 (Bob's index)</span></code></pre>
+
+<p>Returns <code>nil</code> if the block didn't return <code>true</code>for any element.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L335" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -965,7 +1030,7 @@ collection, and which values are an array of the elements for which the block re
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L321" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L351" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -982,11 +1047,11 @@ collection, and which values are an array of the elements for which the block re
 result becomes the new value for <em>memo</em>. At the end of the iteration, the final value of <em>memo</em> is
 the return value for the method. The initial value for the accumulator is the first element in the collection.</p>
 
-<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].inject { <span class="o">|</span>i, acc<span class="o">|</span> i <span class="o">+</span> acc }  <span class="c">#=> 15</span></code></pre></div>
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].inject { <span class="o">|</span>acc, i<span class="o">|</span> acc <span class="o">+</span> i }  <span class="c">#=> 15</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L337" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L367" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -997,67 +1062,13 @@ the return value for the method. The initial value for the accumulator is the fi
         def <strong>inject</strong>(memo, &block)
       </div>
       
-        <div class="doc"><p>Just like the other variant, but you can set the initial value of the accumulator.</p></div>
+        <div class="doc"><p>Just like the other variant, but you can set the initial value of the accumulator.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].inject(<span class="n">10</span>) { <span class="o">|</span>acc, i<span class="o">|</span> acc <span class="o">+</span> i }  <span class="c">#=> 25</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L350" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="join%28separator%20%3D%20%22%22%29-instance-method">
-        
-        def <strong>join</strong>(separator = <span class="s">""</span>)
-      </div>
-      
-        <div class="doc"><p>Returns a <code><a href="String.html">String</a></code> created by concatenating the elements in the collection, separated by <em>separator</em> (defaults to none).</p>
-
-<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].join(<span class="s">", "</span>)  <span class="c">#=> "1, 2, 3, 4, 5"</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L361" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="join%28separator%20%3D%20%22%22%2C%20%26block%29-instance-method">
-        
-        def <strong>join</strong>(separator = <span class="s">""</span>, &block)
-      </div>
-      
-        <div class="doc"><p>Returns a <code><a href="String.html">String</a></code> created by concatenating the results of passing the elements in the collection to the passed
-block, separated by <em>separator</em> (defaults to none).</p>
-
-<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].join(<span class="s">", "</span>) { <span class="o">|</span>i<span class="o">|</span> <span class="o">-</span>i }  <span class="c">#=> "-1, -2, -3, -4, -5"</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L372" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="join%28separator%2C%20io%29-instance-method">
-        
-        def <strong>join</strong>(separator, io)
-      </div>
-      
-        <div class="doc"><p>Prints to <em>io</em> all the elements in the collection, separated by <em>separator</em>.</p>
-
-<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].join(<span class="s">", "</span>)</code></pre>
-
-<p>Prints:</p>
-
-<pre><code><span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L388" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L383" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1079,7 +1090,63 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L402" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L435" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%20%3D%20%22%22%2C%20%26block%29-instance-method">
+        
+        def <strong>join</strong>(separator = <span class="s">""</span>, &block)
+      </div>
+      
+        <div class="doc"><p>Returns a <code><a href="String.html">String</a></code> created by concatenating the results of passing the elements in the collection to the passed
+block, separated by <em>separator</em> (defaults to none).</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].join(<span class="s">", "</span>) { <span class="o">|</span>i<span class="o">|</span> <span class="o">-</span>i }  <span class="c">#=> "-1, -2, -3, -4, -5"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L405" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%2C%20io%29-instance-method">
+        
+        def <strong>join</strong>(separator, io)
+      </div>
+      
+        <div class="doc"><p>Prints to <em>io</em> all the elements in the collection, separated by <em>separator</em>.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].join(<span class="s">", "</span>, <span class="t">STDOUT</span>)</code></pre>
+
+<p>Prints:</p>
+
+<pre><code><span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L421" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="join%28separator%20%3D%20%22%22%29-instance-method">
+        
+        def <strong>join</strong>(separator = <span class="s">""</span>)
+      </div>
+      
+        <div class="doc"><p>Returns a <code><a href="String.html">String</a></code> created by concatenating the elements in the collection, separated by <em>separator</em> (defaults to none).</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>].join(<span class="s">", "</span>)  <span class="c">#=> "1, 2, 3, 4, 5"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L394" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1096,7 +1163,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L413" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L446" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1113,7 +1180,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L423" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L456" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1135,7 +1202,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L437" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L470" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1156,7 +1223,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L448" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L481" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1173,7 +1240,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L469" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L502" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1195,7 +1262,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L492" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L525" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1216,7 +1283,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L565" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L598" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1233,7 +1300,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L586" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L619" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1252,7 +1319,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L501" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L534" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1271,7 +1338,7 @@ done via a block.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L510" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L543" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1291,7 +1358,27 @@ collection.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L539" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L572" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="none%3F-instance-method">
+        
+        def <strong>none?</strong>
+      </div>
+      
+        <div class="doc"><p>Returns <code>true</code> if all of the elements of the collection are <code>false</code> or <code>nil</code>.</p>
+
+<pre><code>[<span class="n">nil</span>, <span class="n">false</span>].none?        <span class="c">#=> true</span>
+[<span class="n">nil</span>, <span class="n">false</span>, <span class="n">true</span>].none?  <span class="c">#=> false</span></code></pre>
+
+<p>It's the opposite of <code><a href="Enumerable.html#all%3F-instance-method">#all?</a></code>.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L650" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1310,7 +1397,7 @@ collection.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L606" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L639" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1328,7 +1415,7 @@ collection.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L616" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L659" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1346,7 +1433,7 @@ returned <code>true</code>, and the second one those for which it returned <code
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L630" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L673" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1363,7 +1450,7 @@ returned <code>true</code>, and the second one those for which it returned <code
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L643" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L686" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1380,7 +1467,7 @@ returned <code>true</code>, and the second one those for which it returned <code
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L653" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L696" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1397,7 +1484,7 @@ returned <code>true</code>, and the second one those for which it returned <code
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L677" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L720" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1420,7 +1507,7 @@ returned <code>true</code>, and the second one those for which it returned <code
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L669" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L712" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1438,7 +1525,24 @@ include the case of calling it over an empty collection, in which case it return
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L685" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L728" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="take_while%28%26block%29-instance-method">
+        
+        def <strong>take_while</strong>(&block)
+      </div>
+      
+        <div class="doc"><p>Passes elements to the block until the block returns nil or false, then stops iterating and returns an array of all prior elements.</p>
+
+<pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">0</span>].take_while {<span class="o">|</span>i<span class="o">|</span> i <span class="o"><</span> <span class="n">3</span>} <span class="c">#=> [1, 2]</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L743" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1455,7 +1559,7 @@ include the case of calling it over an empty collection, in which case it return
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L698" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L756" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1468,7 +1572,7 @@ include the case of calling it over an empty collection, in which case it return
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/enumerable.cr#L704" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/enumerable.cr#L762" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

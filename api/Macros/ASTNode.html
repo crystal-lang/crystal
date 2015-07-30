@@ -39,17 +39,23 @@ available to all AST nodes.</p>
   
     <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>,
   
+    <a href="../Macros/BinaryOp.html">Macros::BinaryOp</a>,
+  
     <a href="../Macros/Block.html">Macros::Block</a>,
   
     <a href="../Macros/BoolLiteral.html">Macros::BoolLiteral</a>,
   
     <a href="../Macros/Call.html">Macros::Call</a>,
   
+    <a href="../Macros/Cast.html">Macros::Cast</a>,
+  
     <a href="../Macros/CharLiteral.html">Macros::CharLiteral</a>,
   
     <a href="../Macros/DeclareVar.html">Macros::DeclareVar</a>,
   
     <a href="../Macros/Def.html">Macros::Def</a>,
+  
+    <a href="../Macros/Expressions.html">Macros::Expressions</a>,
   
     <a href="../Macros/HashLiteral.html">Macros::HashLiteral</a>,
   
@@ -88,7 +94,7 @@ available to all AST nodes.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr" target="_blank">docs/macros.cr</a>
     
     <br/>
   
@@ -120,6 +126,13 @@ available to all AST nodes.</p>
         <a href="#%3D%3D%28other%20%3A%20ASTNode%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#==</strong>(other : ASTNode) : BoolLiteral</a>
         
           <div class="summary"><p>Returns true if this node's textual representation is the same as the other node.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#class_name%20%3A%20StringLiteral-instance-method" class="signature"><strong>#class_name</strong> : StringLiteral</a>
+        
+          <div class="summary"><p>Returns a <code><a href="../Macros/StringLiteral.html">StringLiteral</a></code> that contains this node's name.</p></div>
         
       </li>
     
@@ -165,7 +178,7 @@ available to all AST nodes.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L107" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L135" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -181,7 +194,7 @@ the other node.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L103" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L131" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -197,7 +210,28 @@ the other node.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L126" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="class_name%20%3A%20StringLiteral-instance-method">
+        
+        def <strong>class_name</strong> : <a href="../Macros/StringLiteral.html">StringLiteral</a>
+      </div>
+      
+        <div class="doc"><p>Returns a <code><a href="../Macros/StringLiteral.html">StringLiteral</a></code> that contains this node's name.</p>
+
+<pre><code><span class="k">macro</span> test
+  {{ <span class="s">"foo"</span>.class_name }}
+<span class="k">end</span>
+
+puts test <span class="c">#=> prints StringLiteral</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L121" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,11 +243,25 @@ the other node.</p></div>
       </div>
       
         <div class="doc"><p>Returns this node as a <code><a href="../Macros/MacroId.html">MacroId</a></code>. Useful when you need an identifier
-out of a <code><a href="../Macros/StringLiteral.html">StringLiteral</a></code>, <code><a href="../Macros/SymbolLiteral.html">SymbolLiteral</a></code>, <code><a href="../Macros/Var.html">Var</a></code> or <code><a href="../Macros/Call.html">Call</a></code>.</p></div>
+out of a <code><a href="../Macros/StringLiteral.html">StringLiteral</a></code>, <code><a href="../Macros/SymbolLiteral.html">SymbolLiteral</a></code>, <code><a href="../Macros/Var.html">Var</a></code> or <code><a href="../Macros/Call.html">Call</a></code>.</p>
+
+<pre><code><span class="k">macro</span> define_method(name, content)
+  <span class="k">def</span> {{name.id}}
+    {{content}}
+  <span class="k">end</span>
+<span class="k">end</span>
+
+define_method <span class="n">:foo</span>, <span class="n">1</span>
+define_method <span class="s">"bar"</span>, <span class="n">2</span>
+define_method baz, <span class="n">3</span>
+
+puts foo <span class="c">#=> prints 1</span>
+puts bar <span class="c">#=> prints 2</span>
+puts baz <span class="c">#=> prints 3</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L80" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L96" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -231,7 +279,7 @@ out of a <code><a href="../Macros/StringLiteral.html">StringLiteral</a></code>, 
     puts <span class="s">"Got a number literal"</span>
   {% <span class="k">else</span> %}
     puts <span class="s">"Didn't get a number literal"</span>
-  {% <span class="k">else</span> %}
+  {% <span class="k">end</span> %}
 <span class="k">end</span>
 
 test <span class="n">1</span>    <span class="c">#=> prints "Got a number literal"</span>
@@ -239,7 +287,7 @@ test <span class="s">"hi"</span> <span class="c">#=> prints "Didn't get a number
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L124" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L152" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -262,7 +310,7 @@ puts test <span class="c"># prints "foo" (including the double quotes)</span></c
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L109" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

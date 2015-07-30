@@ -43,12 +43,12 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr">bool.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr" target="_blank">bool.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/json/to_json.cr">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -97,6 +97,13 @@
         <a href="#%3D%3D%28other%20%3A%20Bool%29-instance-method" class="signature"><strong>#==</strong>(other : Bool)</a>
         
           <div class="summary"><p>Returns true if this Bool is equal to <code>other</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20Bool%29-instance-method" class="signature"><strong>#^</strong>(other : Bool)</a>
+        
+          <div class="summary"><p>Exclusive Or.</p></div>
         
       </li>
     
@@ -150,7 +157,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/json/from_json.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/from_json.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -173,7 +180,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -196,7 +203,7 @@
         def <strong>&</strong>(other : <a href="Bool.html">Bool</a>)
       </div>
       
-        <div class="doc"><p>Bitwise AND. Returns <code>true</code> if this bool and <code>other</code> and <code>true</code>, otherwise returns <code>false</code>.</p>
+        <div class="doc"><p>Bitwise AND. Returns <code>true</code> if this bool and <code>other</code> are <code>true</code>, otherwise returns <code>false</code>.</p>
 
 <pre><code><span class="n">false</span> <span class="o">&</span> <span class="n">false</span> <span class="c">#=> false</span>
 <span class="n">false</span> <span class="o">&</span> <span class="n">true</span>  <span class="c">#=> false</span>
@@ -205,7 +212,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr#L38" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -223,6 +230,26 @@
     <hr/>
   
     <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20Bool%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="Bool.html">Bool</a>)
+      </div>
+      
+        <div class="doc"><p>Exclusive Or. Returns <code>true</code> if this bool is different from <code>other</code>, otherwise returns <code>false</code>.</p>
+
+<pre><code><span class="n">false</span> <span class="o">^</span> <span class="n">false</span> <span class="c">#=> false</span>
+<span class="n">false</span> <span class="o">^</span> <span class="n">true</span>  <span class="c">#=> true</span>
+<span class="n">true</span>  <span class="o">^</span> <span class="n">false</span> <span class="c">#=> true</span>
+<span class="n">true</span>  <span class="o">^</span> <span class="n">true</span>  <span class="c">#=> false</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L50" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="hash-instance-method">
         
         def <strong>hash</strong>
@@ -232,7 +259,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr#L43" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L55" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -245,7 +272,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/json/to_json.cr#L115" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr#L115" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -260,7 +287,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr#L48" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L60" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -275,7 +302,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr#L53" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -295,7 +322,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/src/bool.cr#L26" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bool.cr#L26" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -80,7 +80,7 @@ end</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr">docs/macros.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr" target="_blank">docs/macros.cr</a>
     
     <br/>
   
@@ -97,7 +97,7 @@ end</code></pre>
       <li class="entry-summary">
         <a href="#%2B%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20MacroId-instance-method" class="signature"><strong>#+</strong>(other : StringLiteral | CharLiteral) : MacroId</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#%2B%28char%20%3A%20Char%29-instance-method">String#+</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#%2B%28other%20%3A%20self%29-instance-method">String#+</a></code>.</p></div>
         
       </li>
     
@@ -111,7 +111,7 @@ end</code></pre>
       <li class="entry-summary">
         <a href="#%5B%5D%28range%20%3A%20RangeLiteral%29%20%3A%20MacroId-instance-method" class="signature"><strong>#[]</strong>(range : RangeLiteral) : MacroId</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#%5B%5D%28str%20%3A%20String%29-instance-method">String#[]</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#%5B%5D%28range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method">String#[]</a></code>.</p></div>
         
       </li>
     
@@ -153,7 +153,7 @@ end</code></pre>
       <li class="entry-summary">
         <a href="#ends_with%3F%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#ends_with?</strong>(other : StringLiteral | CharLiteral) : BoolLiteral</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#ends_with%3F%28str%20%3A%20String%29-instance-method">String#ends_with?</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#ends_with%3F%28char%20%3A%20Char%29-instance-method">String#ends_with?</a></code>.</p></div>
         
       </li>
     
@@ -188,21 +188,21 @@ end</code></pre>
       <li class="entry-summary">
         <a href="#split%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#split</strong> : ArrayLiteral(StringLiteral)</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#split%28limit%20%3D%20nil%20%3A%20Int32%20%7C%20%3A%3ANil%29-instance-method">String#split</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20String%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#split%28node%20%3A%20ASTNode%29%20%3A%20ArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#split</strong>(node : ASTNode) : ArrayLiteral(StringLiteral)</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#split%28limit%20%3D%20nil%20%3A%20Int32%20%7C%20%3A%3ANil%29-instance-method">String#split</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20String%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#starts_with%3F%28other%20%3A%20StringLiteral%20%7C%20CharLiteral%29%20%3A%20BoolLiteral-instance-method" class="signature"><strong>#starts_with?</strong>(other : StringLiteral | CharLiteral) : BoolLiteral</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#starts_with%3F%28char%20%3A%20Char%29-instance-method">String#starts_with?</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#starts_with%3F%28str%20%3A%20String%29-instance-method">String#starts_with?</a></code>.</p></div>
         
       </li>
     
@@ -244,11 +244,11 @@ end</code></pre>
         def <strong>+</strong>(other : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/CharLiteral.html">CharLiteral</a>) : <a href="../Macros/MacroId.html">MacroId</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#%2B%28char%20%3A%20Char%29-instance-method">String#+</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#%2B%28other%20%3A%20self%29-instance-method">String#+</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L907" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L960" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -263,7 +263,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L903" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L956" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -274,11 +274,11 @@ end</code></pre>
         def <strong>[]</strong>(range : <a href="../Macros/RangeLiteral.html">RangeLiteral</a>) : <a href="../Macros/MacroId.html">MacroId</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#%5B%5D%28str%20%3A%20String%29-instance-method">String#[]</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#%5B%5D%28range%20%3A%20Range%28Int%2C%20Int%29%29-instance-method">String#[]</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L899" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L952" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -293,7 +293,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L911" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L964" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -308,7 +308,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L915" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L968" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -323,7 +323,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L919" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L972" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -338,7 +338,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L923" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L976" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -353,7 +353,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L927" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L980" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -364,11 +364,11 @@ end</code></pre>
         def <strong>ends_with?</strong>(other : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/CharLiteral.html">CharLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#ends_with%3F%28str%20%3A%20String%29-instance-method">String#ends_with?</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#ends_with%3F%28char%20%3A%20Char%29-instance-method">String#ends_with?</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L931" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L984" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -383,7 +383,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L935" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L988" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -398,7 +398,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L895" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L948" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -413,7 +413,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L939" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L992" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -428,7 +428,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L943" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L996" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -439,11 +439,11 @@ end</code></pre>
         def <strong>split</strong> : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/StringLiteral.html">StringLiteral</a>)
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#split%28limit%20%3D%20nil%20%3A%20Int32%20%7C%20%3A%3ANil%29-instance-method">String#split</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20String%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L947" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L1000" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -454,11 +454,11 @@ end</code></pre>
         def <strong>split</strong>(node : <a href="../Macros/ASTNode.html">ASTNode</a>) : <a href="../Macros/ArrayLiteral.html">Macros::ArrayLiteral</a>(<a href="../Macros/StringLiteral.html">StringLiteral</a>)
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#split%28limit%20%3D%20nil%20%3A%20Int32%20%7C%20%3A%3ANil%29-instance-method">String#split</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#split%28separator%20%3A%20String%2C%20limit%20%3D%20nil%29-instance-method">String#split</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L951" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L1004" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -469,11 +469,11 @@ end</code></pre>
         def <strong>starts_with?</strong>(other : <a href="../Macros/StringLiteral.html">StringLiteral</a> | <a href="../Macros/CharLiteral.html">CharLiteral</a>) : <a href="../Macros/BoolLiteral.html">BoolLiteral</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#starts_with%3F%28char%20%3A%20Char%29-instance-method">String#starts_with?</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#starts_with%3F%28str%20%3A%20String%29-instance-method">String#starts_with?</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L955" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L1008" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -488,7 +488,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L959" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L1012" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -503,7 +503,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L963" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L1016" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -518,7 +518,7 @@ end</code></pre>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/42efdbf797349d70c1e2e4c0ece607c6ed419077/docs/macros.cr#L967" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/docs/macros.cr#L1020" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
