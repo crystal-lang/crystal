@@ -651,7 +651,7 @@ module Crystal
       when "receiver"
         receiver || Nop.new
       when "visibility"
-        visibility ? SymbolLiteral.new(visibility.to_s) : NilLiteral.new
+        SymbolLiteral.new(visibility ? visibility.to_s : "public")
       else
         super
       end
