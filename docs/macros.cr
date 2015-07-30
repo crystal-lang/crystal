@@ -696,6 +696,10 @@ module Macros
     # or `Nop` if not specified.
     def receiver : ASTNode | Nop
     end
+
+    # Returns the visibility of this def: `:public`, `:protected` or `:private`.
+    def visibility : SymbolLiteral
+    end
   end
 
   # A macro definition.
