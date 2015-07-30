@@ -1909,6 +1909,13 @@ class String
     matches
   end
 
+  # Yields each character in the string to the block.
+  #
+  # ```
+  # "ab☃".each_char do |char|
+  #   char #=> 'a', 'b', '☃'
+  # end
+  # ```
   def each_char
     if single_byte_optimizable?
       each_byte do |byte|
@@ -1922,10 +1929,26 @@ class String
     self
   end
 
+  # Returns an iterator over each character in the string.
+  #
+  # ```
+  # chars = "ab☃".each_char
+  # chars.next #=> 'a'
+  # chars.next #=> 'b'
+  # chars.next #=> '☃'
+  # ```
   def each_char
     CharIterator.new(CharReader.new(self))
   end
 
+  # Yields each character and its index in the string to the block.
+  #
+  # ```
+  # "ab☃".each_char_with_index do |char, index|
+  #   char  #=> 'a', 'b', '☃'
+  #   index #=>  0,   1,   2
+  # end
+  # ```
   def each_char_with_index
     i = 0
     each_char do |char|
@@ -1935,6 +1958,11 @@ class String
     self
   end
 
+  # Returns an array of all characters in the string.
+  #
+  # ```
+  # "ab☃".chars #=> ['a', 'b', '☃']
+  # ```
   def chars
     chars = Array(Char).new(@length > 0 ? @length : bytesize)
     each_char do |char|
@@ -1943,6 +1971,52 @@ class String
     chars
   end
 
+  # Yields each codepoint to the block. See Char#ord
+  #
+  # ```
+  # "ab☃".each_codepoint do |codepoint|
+  #   codepoint #=> 97, 98, 9731
+  # end
+  # ```
+  def each_codepoint
+    each_char do |char|
+      yield char.ord
+    end
+  end
+
+  # Returns an iterator for each codepoint. See Char#ord
+  #
+  # ```
+  # codepoints = "ab☃".each_codepoint
+  # codepoints.next #=> 97
+  # codepoints.next #=> 98
+  # codepoints.next #=> 9731
+  # ```
+  def each_codepoint
+    CodepointIterator.new(CharReader.new(self))
+  end
+
+
+  # Returns an array of the codepoints that make the string. See Char#ord
+  #
+  # ```
+  # "ab☃".codepoints #=> [97, 98, 9731]
+  # ```
+  def codepoints
+    codepoints = Array(Int32).new(@length > 0 ? @length : bytesize)
+    each_codepoint do |codepoint|
+      codepoints << codepoint
+    end
+    codepoints
+  end
+
+  # Yields each byte in the string to the block.
+  #
+  # ```
+  # "ab☃".each_byte do |byte|
+  #   byte #=> 97, 98, 226, 152, 131
+  # end
+  # ```
   def each_byte
     cstr.to_slice(bytesize).each do |byte|
       yield byte
@@ -1950,8 +2024,28 @@ class String
     self
   end
 
+  # Returns an iterator over each byte in the string.
+  #
+  # ```
+  # bytes = "ab☃".each_byte
+  # bytes.next #=> 97
+  # bytes.next #=> 98
+  # bytes.next #=> 226
+  # bytes.next #=> 156
+  # bytes.next #=> 131
+  # ```
   def each_byte
     to_slice.each
+  end
+
+  # Returns this string's bytes as an `Array(UInt8)`.
+  #
+  # ```
+  # "hello".bytes          #=> [104, 101, 108, 108, 111]
+  # "你好".bytes           #=> [228, 189, 160, 229, 165, 189]
+  # ```
+  def bytes
+    Array.new(bytesize) { |i| cstr[i] }
   end
 
   def inspect(io)
@@ -2112,16 +2206,6 @@ class String
     h
   end
 
-  # Returns this string's bytes as an `Array(UInt8)`.
-  #
-  # ```
-  # "hello".bytes          #=> [104, 101, 108, 108, 111]
-  # "你好".bytes           #=> [228, 189, 160, 229, 165, 189]
-  # ```
-  def bytes
-    Array.new(bytesize) { |i| cstr[i] }
-  end
-
   # Returns the number of unicode codepoints in this string.
   #
   # ```
@@ -2214,6 +2298,30 @@ class String
       @end = true unless @reader.has_next?
 
       value
+    end
+
+    def rewind
+      @reader.pos = 0
+      @end = false
+      self
+    end
+  end
+
+  # :nodoc:
+  class CodepointIterator
+    include Iterator(Int32)
+
+    def initialize(@reader, @end = false)
+    end
+
+    def next
+      return stop if @end
+
+      value = @reader.current_char
+      @reader.next_char
+      @end = true unless @reader.has_next?
+
+      value.ord
     end
 
     def rewind

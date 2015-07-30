@@ -1284,6 +1284,25 @@ describe "String" do
     iter.next.should eq("foo\n")
   end
 
+  it "has yields to each_codepoint" do
+    codepoints = [] of Int32
+    "ab☃".each_codepoint do |codepoint|
+      codepoints << codepoint
+    end
+    codepoints.should eq [97, 98, 9731]
+  end
+
+  it "has the each_codepoint iterator" do
+    iter = "ab☃".each_codepoint
+    iter.next.should eq 97
+    iter.next.should eq 98
+    iter.next.should eq 9731
+  end
+
+  it "has codepoints" do
+    "ab☃".codepoints.should eq [97, 98, 9731]
+  end
+
   # TODO: enable after 0.7.4
   pending "gets length of \0 string" do
     "\0\0".length.should eq(2)
