@@ -527,4 +527,14 @@ describe "Code gen: def" do
       end
       ))
   end
+
+  it "uses previous argument in default value (#1062)" do
+    run(%(
+      def foo(x = 123, y = x + 456)
+        x + y
+      end
+
+      foo
+      )).to_i.should eq(123 * 2 + 456)
+  end
 end
