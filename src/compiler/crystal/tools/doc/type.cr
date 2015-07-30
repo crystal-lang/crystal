@@ -573,6 +573,11 @@ class Crystal::Doc::Type
     io << ')'
   end
 
+  def type_to_html(type : Crystal::VirtualType, io, text = nil)
+    type_to_html type.base_type, io, text
+    io << '+'
+  end
+
   def type_to_html(type : Crystal::Type, io, text = nil)
     type_to_html @generator.type(type), io, text
   end
