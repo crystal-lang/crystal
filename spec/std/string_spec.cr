@@ -1175,6 +1175,56 @@ describe "String" do
     assert { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
+  describe "succ" do
+    it "returns an empty string for empty strings" do
+      "".succ.should eq("")
+    end
+
+    it "returns the successor by increasing the rightmost alphanumeric (digit => digit, letter => letter with same case)" do
+      "abcd".succ.should eq("abce")
+      "THX1138".succ.should eq("THX1139")
+
+      "<<koala>>".succ.should eq("<<koalb>>")
+      "==A??".succ.should eq("==B??")
+    end
+
+    it "increases non-alphanumerics (via ascii rules) if there are no alphanumerics" do
+      "***".succ.should eq("**+")
+      "**`".succ.should eq("**a")
+    end
+
+    it "increases the next best alphanumeric (jumping over non-alphanumerics) if there is a carry" do
+      "dz".succ.should eq("ea")
+      "HZ".succ.should eq("IA")
+      "49".succ.should eq("50")
+
+      "izz".succ.should eq("jaa")
+      "IZZ".succ.should eq("JAA")
+      "699".succ.should eq("700")
+
+      "6Z99z99Z".succ.should eq("7A00a00A")
+
+      "1999zzz".succ.should eq("2000aaa")
+      "NZ/[]ZZZ9999".succ.should eq("OA/[]AAA0000")
+    end
+
+    it "adds an additional character (just left to the last increased one) if there is a carry and no character left to increase" do
+      "z".succ.should eq("aa")
+      "Z".succ.should eq("AA")
+      "9".succ.should eq("10")
+
+      "zz".succ.should eq("aaa")
+      "ZZ".succ.should eq("AAA")
+      "99".succ.should eq("100")
+
+      "9Z99z99Z".succ.should eq("10A00a00A")
+
+      "ZZZ9999".succ.should eq("AAAA0000")
+      "/[]ZZZ9999".succ.should eq("/[]AAAA0000")
+      "Z/[]ZZZ9999".succ.should eq("AA/[]AAA0000")
+    end
+  end
+
   it "uses sprintf from top-level" do
     sprintf("Hello %d world", 123).should eq("Hello 123 world")
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")
