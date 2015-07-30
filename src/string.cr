@@ -1943,6 +1943,45 @@ class String
     chars
   end
 
+  # Yields each codepoint to the block. See Char#ord
+  #
+  # ```
+  # "ab☃".each_codepoint do |codepoint|
+  #   codepoint #=> 97, 98, 9731
+  # end
+  # ```
+  def each_codepoint
+    each_char do |char|
+      yield char.ord
+    end
+  end
+
+  # Returns an iterator for each codepoint. See Char#ord
+  #
+  # ```
+  # codepoints = "ab☃".each_codepoint
+  # codepoints.next #=> 97
+  # codepoints.next #=> 98
+  # codepoints.next #=> 9731
+  # ```
+  def each_codepoint
+    CodepointIterator.new(CharReader.new(self))
+  end
+
+
+  # Returns an array of the codepoints that make the string. See Char#ord
+  #
+  # ```
+  # "ab☃".codepoints #=> [97, 98, 9731]
+  # ```
+  def codepoints
+    codepoints = Array(Int32).new(@length > 0 ? @length : bytesize)
+    each_codepoint do |codepoint|
+      codepoints << codepoint
+    end
+    codepoints
+  end
+
   def each_byte
     cstr.to_slice(bytesize).each do |byte|
       yield byte
@@ -2214,6 +2253,30 @@ class String
       @end = true unless @reader.has_next?
 
       value
+    end
+
+    def rewind
+      @reader.pos = 0
+      @end = false
+      self
+    end
+  end
+
+  # :nodoc:
+  class CodepointIterator
+    include Iterator(Int32)
+
+    def initialize(@reader, @end = false)
+    end
+
+    def next
+      return stop if @end
+
+      value = @reader.current_char
+      @reader.next_char
+      @end = true unless @reader.has_next?
+
+      value.ord
     end
 
     def rewind
