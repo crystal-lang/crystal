@@ -15,6 +15,13 @@ describe "Int" do
     assert { (2 ** 2.5).should eq(5.656854249492381) }
   end
 
+  describe "#===(:Char)" do
+    assert { (99 === 'c').should     be_true }
+    assert { (99_u8 === 'c').should  be_true }
+    assert { (99 === 'z').should     be_false }
+    assert { (37202 === '酒').should be_true }
+  end
+
   describe "divisible_by?" do
     assert { 10.divisible_by?(5).should be_true }
     assert { 10.divisible_by?(3).should be_false }
