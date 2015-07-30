@@ -1909,6 +1909,13 @@ class String
     matches
   end
 
+  # Yields each character in the string to the block.
+  #
+  # ```
+  # "ab☃".each_char do |char|
+  #   char #=> 'a', 'b', '☃'
+  # end
+  # ```
   def each_char
     if single_byte_optimizable?
       each_byte do |byte|
@@ -1922,10 +1929,26 @@ class String
     self
   end
 
+  # Returns an iterator over each character in the string.
+  #
+  # ```
+  # chars = "ab☃".each_char
+  # chars.next #=> 'a'
+  # chars.next #=> 'b'
+  # chars.next #=> '☃'
+  # ```
   def each_char
     CharIterator.new(CharReader.new(self))
   end
 
+  # Yields each character and its index in the string to the block.
+  #
+  # ```
+  # "ab☃".each_char_with_index do |char, index|
+  #   char  #=> 'a', 'b', '☃'
+  #   index #=>  0,   1,   2
+  # end
+  # ```
   def each_char_with_index
     i = 0
     each_char do |char|
@@ -1935,6 +1958,11 @@ class String
     self
   end
 
+  # Returns an array of all characters in the string.
+  #
+  # ```
+  # "ab☃".chars #=> ['a', 'b', '☃']
+  # ```
   def chars
     chars = Array(Char).new(@length > 0 ? @length : bytesize)
     each_char do |char|
