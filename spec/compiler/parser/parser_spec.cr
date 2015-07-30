@@ -199,6 +199,7 @@ describe "Parser" do
   it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new(Expressions.new(["a".var] of ASTNode), "/", "b".call)]
+  it_parses "_ = 1", Assign.new(Underscore.new, 1.int32)
 
   it_parses "!1", Call.new(1.int32, "!")
   it_parses "- 1", Call.new(1.int32, "-")
@@ -214,6 +215,7 @@ describe "Parser" do
 
   it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
+  it_parses "_, _ = 1, 2", MultiAssign.new([Underscore.new, Underscore.new] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", 0.int32), Call.new("a".call, "[]", 1.int32)] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [Assign.new("x".var, Call.new("x".var, "+", 1.int32))] of ASTNode)] of ASTNode
@@ -250,6 +252,7 @@ describe "Parser" do
   it_parses "def foo; a = 1; a {}; end", Def.new("foo", body: [Assign.new("a".var, 1.int32), Call.new(nil, "a", block: Block.new)] of ASTNode)
   it_parses "def foo; a = 1; x { a }; end", Def.new("foo", body: [Assign.new("a".var, 1.int32), Call.new(nil, "x", block: Block.new(body: ["a".var] of ASTNode))] of ASTNode)
   it_parses "def foo; x { |a| a }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["a".var], ["a".var] of ASTNode))] of ASTNode)
+  it_parses "def foo; x { |_| 1 }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["_".var], [1.int32] of ASTNode))] of ASTNode)
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)])
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int32)])
@@ -518,6 +521,7 @@ describe "Parser" do
   it_parses "puts __FILE__", Call.new(nil, "puts", "/foo/bar/baz.cr".string)
   it_parses "puts __DIR__", Call.new(nil, "puts", "/foo/bar".string)
   it_parses "puts __LINE__", Call.new(nil, "puts", 1.int32)
+  it_parses "puts _", Call.new(nil, "puts", Underscore.new)
 
   it_parses "x = 2; foo do bar x end", [Assign.new("x".var, 2.int32), Call.new(nil, "foo", block: Block.new(body: Call.new(nil, "bar", "x".var)))] of ASTNode
 

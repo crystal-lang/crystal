@@ -681,8 +681,12 @@ module Crystal
     def visit(node : Assign)
       target, value = node.target, node.value
 
-      # Initialize constants if they are used
-      if target.is_a?(Path)
+      case target
+      when Underscore
+        request_value(false) { accept value }
+        return false
+      when Path
+        # Initialize constants if they are used
         const = target.target_const.not_nil!
         initialize_const const
         @last = llvm_nil

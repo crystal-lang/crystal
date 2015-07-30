@@ -442,9 +442,6 @@ module Crystal
       end
     end
 
-    def type_assign_helper(var_name, target, value)
-    end
-
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
@@ -559,6 +556,11 @@ module Crystal
 
       node.bind_to value
       var.bind_to node
+    end
+
+    def type_assign(target : Underscore, value, node)
+      value.accept self
+      node.bind_to value
     end
 
     def type_assign(target, value, node)
@@ -1377,7 +1379,11 @@ module Crystal
     end
 
     def visit(node : Underscore)
-      node.raise "can't use underscore as generic type argument"
+      if @in_type_args == 0
+        node.raise "can't read from _"
+      else
+        node.raise "can't use underscore as generic type argument"
+      end
     end
 
     def visit(node : IsA)

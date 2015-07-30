@@ -64,4 +64,11 @@ describe "Type inference: var" do
       ),
       "variable 'a' already declared"
   end
+
+  it "errors if reads from underscore" do
+    assert_error %(
+      _
+      ),
+      "can't read from _"
+  end
 end

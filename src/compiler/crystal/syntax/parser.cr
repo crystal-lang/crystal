@@ -977,6 +977,8 @@ module Crystal
         end
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
+      when :UNDERSCORE
+        node_and_next_token Underscore.new
       else
         unexpected_token_in_atomic
       end
@@ -2944,7 +2946,16 @@ module Crystal
       if @token.type == :"|"
         next_token_skip_space_or_newline
         while @token.type != :"|"
-          var = Var.new(check_ident).at(@token.location)
+          case @token.type
+          when :IDENT
+            arg_name = @token.value.to_s
+          when :UNDERSCORE
+            arg_name = "_"
+          else
+            raise "expecting block argument name, not #{@token.type}", @token
+          end
+
+          var = Var.new(arg_name).at(@token.location)
           block_args << var
 
           next_token_skip_space_or_newline
@@ -3049,7 +3060,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__FILE__, :__DIR__
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*"
         if current_char.whitespace?
@@ -4167,7 +4178,7 @@ module Crystal
 
     def can_be_assigned?(node)
       case node
-      when Var, InstanceVar, ClassVar, Path, Global
+      when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
         (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"
