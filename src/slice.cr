@@ -116,6 +116,18 @@ struct Slice(T)
     end
   end
 
+  def hexstring(buffer, offset = 0)
+    self as Slice(UInt8)
+
+    each do |v|
+      buffer[offset] = to_hex(v >> 4)
+      buffer[offset + 1] = to_hex(v & 0x0f)
+      offset += 2
+    end
+
+    nil
+  end
+
   def rindex(value)
     rindex { |elem| elem == value }
   end
