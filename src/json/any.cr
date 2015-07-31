@@ -1,4 +1,8 @@
+# You can use `JSON::Any` inside a `JSON::Mapping` to make a property be parsed
+# to a `JSON::Type`. This is useful if you have properties with dynamic content
+# that must later be inspected at runtime.
 module JSON::Any
+  # Reads a `JSON::Type` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
     case pull.kind
     when :null

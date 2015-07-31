@@ -1,12 +1,12 @@
 require "./lexer"
 
 class JSON::Parser
-  def initialize(string_or_io)
+  def initialize(string_or_io : String | IO)
     @lexer = JSON::Lexer.new(string_or_io)
     next_token
   end
 
-  def parse
+  def parse : Type
     json = parse_value
     check :EOF
     json

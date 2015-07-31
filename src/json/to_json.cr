@@ -16,15 +16,19 @@ class Object
   end
 end
 
+# Handly struct to write JSON objects
 struct JSON::ObjectBuilder(T)
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
 
+  # Adds a field to this JSON object
   def field(name, value)
     field(name) { value.to_json(@io) }
   end
 
+  # Adds a field to this JSON object by specifying
+  # it's name, then executes the block, which must append the value.
   def field(name)
     if @count > 0
       @io << ","
@@ -40,29 +44,65 @@ struct JSON::ObjectBuilder(T)
   end
 end
 
+# Handly struct to write JSON arrays
 struct JSON::ArrayBuilder(T)
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
 
+  # Appends a JSON value into this array
   def <<(value)
+    push value
+  end
+
+  # Same as `#<<`
+  def push(value)
+    push { value.to_json(@io) }
+  end
+
+  # Executes the block, expecting it to append a value
+  # in this array
+  def push
     if @count > 0
       @io << ","
       @io << '\n' if @indent > 0
     end
     @indent.times { @io << "  " }
-    value.to_json(@io)
+    yield
     @count += 1
   end
 end
 
+# The `JSON::Builder` module adds two methods, `json_object` and `json_array`
+# to all `IO`s so generating JSON by streaming to an IO is easy and convenient.
+#
+# ### Example
+#
+# ```
+# require "json"
+#
+# result = String.build do |io|
+#   io.json_object do |object|
+#     object.field "address", "Crystal Road 1234"
+#     object.field "location" do
+#       io.json_array do |array|
+#         array << 12.3
+#         array << 34.5
+#       end
+#     end
+#   end
+# end
+# result #=> %({"address":"Crystal Road 1234","location":[12.3,34.5]})
+# ```
 module JSON::Builder
+  # Writes a JSON object to the given IO. Yields a `JSON::ObjectBuilder`.
   def json_object
     self << "{"
     yield JSON::ObjectBuilder.new(self)
     self << "}"
   end
 
+  # Writes a JSON array to the given IO. Yields a `JSON::ArrayBuilder`.
   def json_array
     self << "["
     yield JSON::ArrayBuilder.new(self)

@@ -1,3 +1,4 @@
+# :nodoc:
 class JSON::Lexer::StringBased < JSON::Lexer
   def initialize(string)
     super()
