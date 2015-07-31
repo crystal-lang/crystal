@@ -105,20 +105,16 @@ struct Slice(T)
     self as Slice(UInt8)
 
     str_length = length * 2
-    hash_str = String.new(str_length) do |buffer|
-      i = 0
-      each do |v|
-        buffer[i * 2] = to_hex(v >> 4)
-        buffer[i * 2 + 1] = to_hex(v & 0x0f)
-        i += 1
-      end
+    String.new(str_length) do |buffer|
+      hexstring(buffer)
       {str_length, str_length}
     end
   end
 
-  def hexstring(buffer, offset = 0)
+  def hexstring(buffer)
     self as Slice(UInt8)
 
+    offset = 0
     each do |v|
       buffer[offset] = to_hex(v >> 4)
       buffer[offset + 1] = to_hex(v & 0x0f)
