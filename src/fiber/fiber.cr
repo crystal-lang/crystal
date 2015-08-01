@@ -48,7 +48,7 @@ class Fiber
     @@stack_pool.pop? || LibC.mmap(nil, LibC::SizeT.cast(Fiber::STACK_SIZE),
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
-      -1, 0)
+      -1, LibC::SSizeT.cast(0))
   end
 
   def self.stack_pool_collect

@@ -7,7 +7,7 @@ lib LibC
   ifdef darwin
     alias UsecT = Int32
   else
-    alias UsecT = LongT
+    alias UsecT = Long
   end
 
   struct TimeVal

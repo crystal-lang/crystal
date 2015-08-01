@@ -49,9 +49,9 @@ module Readline
     return Pointer(UInt8*).null unless matches
     return Pointer(UInt8*).null if matches.empty?
 
-    result = LibC.malloc(sizeof(UInt8*).to_u32 * (matches.length + 1)) as UInt8**
+    result = LibC.malloc(LibC::SizeT.cast(sizeof(UInt8*)) * (matches.length + 1)) as UInt8**
     matches.each_with_index do |match, i|
-      match_ptr = LibC.malloc(match.bytesize.to_u32 + 1) as UInt8*
+      match_ptr = LibC.malloc(LibC::SizeT.cast(match.bytesize) + 1) as UInt8*
       match_ptr.copy_from(match.to_unsafe, match.bytesize)
       match_ptr[match.bytesize] = 0_u8
       result[i] = match_ptr
