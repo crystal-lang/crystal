@@ -544,4 +544,36 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_LITERAL)
     token.value.should eq(%("\\"" ))
   end
+
+  it "lexes with if/end inside escaped macro (#1029)" do
+    lexer = Lexer.new(%(\\{%    if true %} 2 \\{% end %} end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("{%    if")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, token.macro_state.beginning_of_line)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(" true %} 2 ")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, token.macro_state.beginning_of_line)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("{% end")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(0)
+  end
+
+  it "lexes with for inside escaped macro (#1029)" do
+    lexer = Lexer.new(%(\\{%    for true %} 2 \\{% end %} end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("{%    for")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(1)
+  end
 end

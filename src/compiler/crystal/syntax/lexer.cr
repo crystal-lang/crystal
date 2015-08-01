@@ -1724,9 +1724,32 @@ module Crystal
       if current_char == '\\' && peek_next_char == '{'
         beginning_of_line = false
         next_char
-        next_char
+        start = current_pos
+        if next_char == '%'
+          while (char = next_char).whitespace?
+          end
+
+          case char
+          when 'e'
+            if next_char == 'n' && next_char == 'd' && !ident_part_or_end?(peek_next_char)
+              next_char
+              nest -= 1
+            end
+          when 'f'
+            if next_char == 'o' && next_char == 'r' && !ident_part_or_end?(peek_next_char)
+              next_char
+              nest += 1
+            end
+          when 'i'
+            if next_char == 'f' && !ident_part_or_end?(peek_next_char)
+              next_char
+              nest += 1
+            end
+          end
+        end
+
         @token.type = :MACRO_LITERAL
-        @token.value = "{"
+        @token.value = string_range(start)
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
         return @token
       end
