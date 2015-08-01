@@ -1869,8 +1869,7 @@ class String
   end
 
   def match(regex : Regex, pos = 0)
-    match = regex.match self, pos
-    $~ = match
+    match = self.match(regex, pos)
     if match
       yield match
     end
