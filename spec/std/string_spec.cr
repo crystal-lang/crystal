@@ -1135,6 +1135,12 @@ describe "String" do
     "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
   end
 
+  it "matches with block" do
+    "FooBar".match(/oo/) do |match_data|
+      match_data[0].should eq("oo")
+    end
+  end
+
   it "has size (same as length)" do
     "テスト".size.should eq(3)
   end
