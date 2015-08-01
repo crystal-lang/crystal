@@ -70,7 +70,7 @@ class URI
   # Returns the query component of the URI.
   #
   # ```
-  # URI.parse("http://foo.com/bar?q=1").host # => "q=1"
+  # URI.parse("http://foo.com/bar?q=1").query # => "q=1"
   # ```
   getter query
 
