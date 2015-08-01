@@ -5,6 +5,7 @@
    * [On Debian and Ubuntu](installation/on_debian_and_ubuntu.md)
    * [On RedHat and CentOS](installation/on_redhat_and_centos.md)
    * [On Mac OSX using Homebrew](installation/on_mac_osx_using_homebrew.md)
+       * [Troubleshooting](installation/on_mac_osx_using_homebrew/troubleshooting.md)
    * [From a tar.gz](installation/from_a_targz.md)
    * [From sources](installation/from_source_repository.md)
 * [Using the compiler](using_the_compiler/README.md)
