@@ -2117,8 +2117,12 @@ module Crystal
       true
     end
 
-    def lookup_instance_var(name)
-      @vars[remove_at_from_var_name(name)].not_nil!
+    def lookup_instance_var(name, create = nil)
+      lookup_instance_var?(name).not_nil!
+    end
+
+    def lookup_instance_var?(name, create = nil)
+      @vars[remove_at_from_var_name(name)]
     end
 
     def all_instance_vars

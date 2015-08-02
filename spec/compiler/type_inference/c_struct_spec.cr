@@ -292,4 +292,17 @@ describe "Type inference: struct" do
       ),
       "can't use Void as a struct field type"
   end
+
+  it "can access instance var from the outside (#1092)" do
+    assert_type(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      f = LibFoo::Foo.new x: 123
+      f.@x
+      )) { int32 }
+  end
 end

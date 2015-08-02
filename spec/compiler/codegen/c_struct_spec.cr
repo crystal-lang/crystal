@@ -307,4 +307,17 @@ describe "Code gen: struct" do
       point.to_s
       )).to_string.should eq("LibFoo::Point(@x=1, @y=2)")
   end
+
+  it "can access instance var from the outside (#1092)" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      f = LibFoo::Foo.new x: 123
+      f.@x
+      )).to_i.should eq(123)
+  end
 end
