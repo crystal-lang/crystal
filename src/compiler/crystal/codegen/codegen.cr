@@ -50,13 +50,8 @@ module Crystal
 
     def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
-      begin
-        node.accept visitor
-        visitor.finish
-      rescue ex
-        visitor.llvm_mod.dump
-        raise ex
-      end
+      node.accept visitor
+      visitor.finish
 
       visitor.modules
     end
