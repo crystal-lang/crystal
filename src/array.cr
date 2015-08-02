@@ -125,7 +125,7 @@ class Array(T)
   # by passing it to a C function.
   #
   # ```
-  # Array.new(3) do |buffer|
+  # Array.build(3) do |buffer|
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
