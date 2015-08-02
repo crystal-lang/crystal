@@ -601,8 +601,11 @@ module Crystal
       node.doc ||= attributes_doc()
       check_ditto node
 
+      is_instance_method = false
+
       target_type = case receiver = node.receiver
                     when Nil
+                      is_instance_method = true
                       current_type
                     when Var
                       unless receiver.name == "self"
@@ -619,6 +622,10 @@ module Crystal
 
       target_type.add_def node
       node.set_type @mod.nil
+
+      if is_instance_method
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+      end
       false
     end
 
@@ -1632,14 +1639,18 @@ module Crystal
       end
     end
 
-    def run_hooks(type_with_hooks, current_type, kind, node)
+    def run_hooks(type_with_hooks, current_type, kind, node, call = nil)
       hooks = type_with_hooks.hooks
       if hooks
         hooks.each do |hook|
           next if hook.kind != kind
 
           expanded = expand_macro(hook.macro, node) do
-            @mod.expand_macro hook.macro.body, current_type.instance_type
+            if call
+              @mod.expand_macro hook.macro, call, current_type.instance_type
+            else
+              @mod.expand_macro hook.macro.body, current_type.instance_type
+            end
           end
           expanded.accept self
           node.add_runtime_initializer(expanded)

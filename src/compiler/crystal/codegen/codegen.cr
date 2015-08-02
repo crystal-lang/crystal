@@ -928,6 +928,8 @@ module Crystal
     end
 
     def visit(node : Def)
+      node.runtime_initializers.try &.each &.accept self
+
       @last = llvm_nil
       false
     end
