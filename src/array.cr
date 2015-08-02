@@ -603,6 +603,20 @@ class Array(T)
     first { nil }
   end
 
+  # Gets you a flat list of the same typed sub arrays.
+  #
+  # ```
+  # a = [[1, "a"], 5, "b", [3, 4, "c"]]
+  # a.flat    #=> [1, "a", 5, "b", 3, 4, "c"]
+  # b = [1, [1, 2, [3]]]
+  # b.flat    #=> Compile Error
+  # ```
+  def flat
+    ary = [] of T
+    each { |e| e.is_a?(Array) ? ary.concat(e) : ary << e }
+    ary
+  end
+
   def hash
     inject(31 * @length) do |memo, elem|
       31 * memo + elem.hash
