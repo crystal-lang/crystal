@@ -429,6 +429,24 @@ describe "Array" do
     end
   end
 
+  describe "flat" do
+    it "flats empty arrays" do
+      ([] of Int32).flat.should eq([] of Int32)
+    end
+
+    it "flats flat arrays" do
+      [1, 2, 3].flat.should eq([1, 2, 3])
+    end
+
+    it "flats a level 2 array" do
+      [[1, 2], 5, [3, 4]].flat.should eq([1, 2, 5, 3, 4])
+    end
+
+    it "flats also mixed arrays" do
+      [[1, 2, "a"], 5, "b", [3, 4, "c"]].flat.should eq([1, 2, "a", 5, "b", 3, 4, "c"])
+    end
+  end
+
   describe "flat_map" do
     it "does example 1" do
       [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
