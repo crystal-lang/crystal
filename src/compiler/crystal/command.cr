@@ -90,7 +90,7 @@ USAGE
       puts frame
     end
     puts
-    error "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues"
+    error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/manastech/crystal/issues"
   end
 
   private def self.init(options)
