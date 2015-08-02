@@ -1868,6 +1868,13 @@ class String
     match
   end
 
+  def match(regex : Regex, pos = 0)
+    match = self.match(regex, pos)
+    if match
+      yield match
+    end
+  end
+
   def scan(pattern : Regex)
     byte_offset = 0
 
