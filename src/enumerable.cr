@@ -751,7 +751,7 @@ module Enumerable(T)
 
   # Returns an array with all the elements in the collection.
   #
-  #     (1..5).to_a  #=> 1, 2, 3, 4, 5]
+  #     (1..5).to_a  #=> [1, 2, 3, 4, 5]
   #
   def to_a
     ary = [] of T
