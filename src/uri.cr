@@ -60,7 +60,7 @@ class URI
   # Returns the path component of the URI.
   #
   # ```
-  # URI.parse("http://foo.com/bar").host # => "/bar"
+  # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
   getter path
 
