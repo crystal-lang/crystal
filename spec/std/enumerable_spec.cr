@@ -96,6 +96,16 @@ describe "Enumerable" do
     end
   end
 
+  describe "flat_map" do
+    it "does example 1" do
+      [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
+    end
+
+    it "does example 2" do
+      [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
+    end
+  end
+
   describe "inject" do
     assert { [1, 2, 3].inject { |memo, i| memo + i }.should eq(6) }
     assert { [1, 2, 3].inject(10) { |memo, i| memo + i }.should eq(16) }
