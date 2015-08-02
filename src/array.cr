@@ -1028,6 +1028,18 @@ class Array(T)
     pairs
   end
 
+  def zip?(other : Array)
+    each_with_index do |elem, i|
+      yield elem, other[i]?
+    end
+  end
+
+  def zip?(other : Array(U))
+    pairs = Array({T, U?}).new(length)
+    zip?(other) { |x, y| pairs << {x, y} }
+    pairs
+  end
+
   private def check_needs_resize
     resize_to_capacity(@capacity * 2) if @length == @capacity
   end

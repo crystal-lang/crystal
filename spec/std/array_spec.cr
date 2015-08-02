@@ -936,6 +936,30 @@ describe "Array" do
     end
   end
 
+  describe "zip?" do
+    describe "when a block is provided" do
+      describe "and length of an arg is less than receiver" do
+        it "yields pairs of self's elements and passed array (with nil)" do
+          a, b, r = [1, 2, 3], [4, 5], ""
+          a.zip?(b) { |x, y| r += "#{x}:#{y}," }
+          r.should eq("1:4,2:5,3:,")
+        end
+      end
+    end
+
+    describe "when no block is provided" do
+      describe "and the arrays have different typed elements" do
+        describe "and length of an arg is less than receiver" do
+          it "returns an array of paired elements (tuples with nil)" do
+            a, b = [1, 2, 3], ["a", "b"]
+            r = a.zip?(b)
+            r.should eq([{1, "a"}, {2, "b"}, {3, nil}])
+          end
+        end
+      end
+    end
+  end
+
   it "does compact_map" do
     a = [1, 2, 3, 4, 5]
     b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
