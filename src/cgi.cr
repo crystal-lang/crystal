@@ -76,7 +76,14 @@ module CGI
       when '&', ';'
         value = buffer.to_s
         buffer.clear
-        yield key.not_nil!, value
+
+        if key
+          yield key.not_nil!, value
+        else
+          yield value, ""
+        end
+
+        key = nil
         i += 1
       else
         i = unescape_one query, bytesize, i, byte, char, buffer

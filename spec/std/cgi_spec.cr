@@ -58,6 +58,8 @@ describe "CGI" do
     { "foo=hello%2Bworld", {"foo" => ["hello+world"]} },
     { "foo=", {"foo" => [""]} },
     { "foo", {"foo" => [""]} },
+    { "foo=&bar", { "foo" => [""], "bar" => [""] } },
+    { "bar&foo", { "bar" => [""], "foo" => [""] } },
   ].each do |tuple|
     from, to = tuple
     it "parses #{from}" do
