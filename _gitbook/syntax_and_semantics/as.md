@@ -45,10 +45,16 @@ In this case, no runtime checks are done: pointers are unsafe and this type of c
 Conversion between pointer types and Reference types is also possible:
 
 ```ruby
-ptr = Pointer(UInt8).malloc(10)
-str = ptr as String             #:: String
+array = [1, 2, 3]
 
-str as Int32*                   #:: Pointer(Int32)
+# object_id returns the address of an object in memory,
+# so we create a pointer with that address
+ptr = Pointer(Void).new(array.object_id)
+
+# Now we cast that pointer to the same type, and
+# we should get the same value
+array2 = ptr as Array(Int32)
+array2.same?(array) #=> true
 ```
 
 No runtime checks are performed in these cases because, again, pointers are involved. The need for this cast is even more rare than the previous one, but allows to implement some core types (like String) in Crystal itself, and it also allows passing a Reference type to C functions by casting it to a void pointer.

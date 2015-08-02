@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.8.3" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.8.3" data-basepath=".." data-revision="Sun Aug 02 2015 12:12:24 GMT-0300 (ART)">
     
 
 <div class="book-summary">
@@ -1954,10 +1954,16 @@ ptr as <span class="hljs-constant">Int8</span>*                    <span class="
 <p>In this case, no runtime checks are done: pointers are unsafe and this type of casting is usually only needed in C bindings and low-level code.</p>
 <h2 id="converting-between-pointer-types-and-other-types">Converting between pointer types and other types</h2>
 <p>Conversion between pointer types and Reference types is also possible:</p>
-<pre><code class="lang-ruby">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">UInt8</span>).malloc(<span class="hljs-number">10</span>)
-str = ptr as <span class="hljs-constant">String</span>             <span class="hljs-comment">#:: String</span>
+<pre><code class="lang-ruby">array = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
 
-str as <span class="hljs-constant">Int32</span>*                   <span class="hljs-comment">#:: Pointer(Int32)</span>
+<span class="hljs-comment"># object_id returns the address of an object in memory,</span>
+<span class="hljs-comment"># so we create a pointer with that address</span>
+ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Void</span>).new(array.object_id)
+
+<span class="hljs-comment"># Now we cast that pointer to the same type, and</span>
+<span class="hljs-comment"># we should get the same value</span>
+array2 = ptr as <span class="hljs-constant">Array</span>(<span class="hljs-constant">Int32</span>)
+array2.same?(array) <span class="hljs-comment">#=&gt; true</span>
 </code></pre>
 <p>No runtime checks are performed in these cases because, again, pointers are involved. The need for this cast is even more rare than the previous one, but allows to implement some core types (like String) in Crystal itself, and it also allows passing a Reference type to C functions by casting it to a void pointer.</p>
 <h2 id="usage-for-casting-to-a-bigger-type">Usage for casting to a bigger type</h2>
