@@ -1,13 +1,13 @@
 fun __crystal_malloc(size : UInt32) : Void*
-  LibC.malloc(size)
+  LibC.malloc(LibC::SizeT.cast(size))
 end
 
 fun __crystal_malloc_atomic(size : UInt32) : Void*
-  LibC.malloc(size)
+  LibC.malloc(LibC::SizeT.cast(size))
 end
 
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  LibC.realloc(ptr, size)
+  LibC.realloc(ptr, LibC::SizeT.cast(size))
 end
 
 module GC
