@@ -1,4 +1,5 @@
 class A
+  property lorem
   def foo
     1
   end
@@ -24,20 +25,32 @@ puts bar(A.new)
 puts bar(B.new)
 puts baz(A.new)
 
+A.new.lorem
 
-# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:15:8
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:16:8
 #
-# .../samples/impl.cr:2:3
-# .../samples/impl.cr:8:3
+# 2 implementations found
+# .../samples/impl.cr:3:3
+# .../samples/impl.cr:9:3
 
-# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:20:5
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:21:5
 #
-# .../samples/impl.cr:2:3
+# 1 implementation found
+# .../samples/impl.cr:3:3
 
-# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:23:7
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:24:7
 #
-# .../samples/impl.cr:13:1
+# 1 implementation found
+# .../samples/impl.cr:14:1
 
-# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:25:3
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:26:3
 #
+# 1 implementation found
 # .../src/kernel.cr:67:1
+
+# ./crystal implementations samples/impl.cr --cursor samples/impl.cr:28:9
+#
+# 1 implementation found
+# .../samples/impl.cr:2:3
+#  ~> macro property: .../src/object.cr:364:5
+#  ~> macro getter: .../src/object.cr:207:7

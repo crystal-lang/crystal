@@ -22,6 +22,17 @@ module Crystal
   end
 end
 
+def processed_implementation_visitor(code, cursor_location)
+  compiler = Compiler.new
+  compiler.no_build = true
+  result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
+
+  visitor = ImplementationsVisitor.new(cursor_location)
+  process_result = visitor.process(result)
+
+  {visitor, process_result}
+end
+
 def assert_implementations(code)
   cursor_location = nil
   expected_locations = [] of Location
@@ -39,12 +50,7 @@ def assert_implementations(code)
   code = code.gsub('‸', "").gsub('༓', "")
 
   if cursor_location
-    compiler = Compiler.new
-    compiler.no_build = true
-    result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
-
-    visitor = ImplementationsVisitor.new(cursor_location)
-    visitor.process(result)
+    visitor, _ = processed_implementation_visitor(code, cursor_location)
 
     visitor.locations.map(&.top_location.to_s).sort.should eq(expected_locations.map(&.to_s))
   else
@@ -184,5 +190,43 @@ describe "implementations" do
       ༓baz
       b‸ar
     )
+  end
+
+  it "find full trace for macro expansions" do
+    visitor, result = processed_implementation_visitor(%(
+      macro foo
+        def bar
+        end
+      end
+
+      macro baz
+        foo
+      end
+
+      baz
+      bar
+    ), Location.new(12, 9, "."))
+
+    result.implementations.should_not be_nil
+    impls = result.implementations.not_nil!
+    impls.size.should eq(1)
+
+    impls[0].line.should eq(11) # location of baz
+    impls[0].column.should eq(7)
+    impls[0].filename.should eq(".")
+
+    impls[0].expands.should_not be_nil
+    exp = impls[0].expands.not_nil!
+    exp.line.should eq(8) # location of foo call in macro baz
+    exp.column.should eq(9)
+    exp.macro.should eq("baz")
+    exp.filename.should eq(".")
+
+    exp.expands.should_not be_nil
+    exp = exp.expands.not_nil!
+    exp.line.should eq(3) # location of def bar in macro foo
+    exp.column.should eq(9)
+    exp.macro.should eq("foo")
+    exp.filename.should eq(".")
   end
 end

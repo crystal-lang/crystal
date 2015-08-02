@@ -1,3 +1,5 @@
+require "json"
+
 module Crystal
   def self.tempfile(basename)
     Dir.mkdir_p Config.cache_dir
@@ -145,6 +147,7 @@ USAGE
     file = ""
     line = ""
     col = ""
+    format = "text"
 
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile]\n\nOptions:\n    all build command options and ..."
@@ -154,6 +157,10 @@ USAGE
           file, line, col = loc
           cursor_given = true
         end
+      end
+
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        format = f
       end
     end
 
@@ -167,14 +174,23 @@ USAGE
     file = File.expand_path(file)
     visitor = ImplementationsVisitor.new(Location.new(line.to_i, col.to_i, file))
 
-    visitor.process(result)
+    result = visitor.process(result)
 
-    visitor.locations.each do |loc|
-      loc.human_trace
-    end
-
-    if visitor.locations.empty?
-      puts "no implementations or method call found"
+    case format
+    when "json"
+      result.to_json(STDOUT)
+    else
+      puts result.message
+      result.implementations.try do |arr|
+        arr.each do |impl|
+          puts "#{impl.filename}:#{impl.line}:#{impl.column}"
+          expanded = impl.expands
+          while expanded
+            puts " ~> macro #{expanded.macro}: #{expanded.filename}:#{expanded.line}:#{expanded.column}"
+            expanded = expanded.expands
+          end
+        end
+      end
     end
   end
 
