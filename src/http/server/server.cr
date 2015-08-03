@@ -63,10 +63,6 @@ class HTTP::Server
         begin
           request = HTTP::Request.from_io(io)
         rescue
-          # HACK: these lines can be removed once #171 is fixed
-          ssl_sock.try &.close if @ssl
-          sock.close
-
           return
         end
         break unless request
