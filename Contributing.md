@@ -69,3 +69,9 @@ If something is missing from the language it might be that it's not yet implemen
 ## Contributing to this guide
 
 If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
+
+## Code of Conduct
+
+Contributors to this project are expected to review and uphold the [code of conduct][coc].
+
+[coc]: https://github.com/manastech/crystal/blob/master/CODE_OF_CONDUCT.md
