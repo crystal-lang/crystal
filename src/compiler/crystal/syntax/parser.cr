@@ -1588,6 +1588,8 @@ module Crystal
             raise "Unterminated command"
           when :regex
             raise "Unterminated regular expression"
+          when :heredoc
+            raise "Unterminated heredoc"
           else
             raise "Unterminated string literal"
           end

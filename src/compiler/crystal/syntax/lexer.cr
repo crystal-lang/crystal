@@ -127,64 +127,35 @@ module Crystal
             next_char :"<<="
           when '-'
             here = StringIO.new(20)
-            here_start = 0
 
             while true
               case char = next_char
               when '\n'
                 @line_number += 1
                 @column_number = 0
-                next_char
-                here_start = current_pos
                 break
+              when '\\'
+                if peek_next_char == 'n'
+                  next_char
+                  raise "invalid heredoc identifier"
+                end
+              when ' '
+                case peek_next_char
+                when ' '
+                  next_char
+                when '\n'
+                  next_char
+                  break
+                else
+                  raise "invalid heredoc identifier"
+                end
               else
                 here << char
               end
             end
 
             here = here.to_s
-            char = next_char
-
-            while true
-              case char
-              when '\0'
-                raise "unterminated heredoc"
-              when '\n'
-                @line_number += 1
-                @column_number = 0
-
-                here_end = current_pos
-                is_here  = false
-                while true
-                  char = peek_next_char
-                  if char != ' '
-                    break
-                  else
-                    next_char
-                  end
-                end
-                here.each_char do |c|
-                  char = next_char
-                  unless char == c
-                    is_here = false
-                    break
-                  end
-                  is_here = true
-                end
-
-                if is_here
-                  peek = peek_next_char
-                  if peek == '\n' || peek == '\0'
-                    next_char
-                    @token.value = string_range(here_start, here_end)
-                    @token.type = :STRING
-                    break
-                  end
-                end
-              else
-                char = next_char
-              end
-            end
+            delimited_pair :heredoc, here, here
           else
             @token.type = :"<<"
           end
@@ -1660,8 +1631,46 @@ module Crystal
         next_char
         @column_number = 1
         @line_number += 1
-        @token.type = :STRING
-        @token.value = "\n"
+
+        if delimiter_state.kind == :heredoc
+          string_end = string_end.to_s
+          old_pos    = current_pos
+          old_column = @column_number
+
+          while current_char == ' '
+            next_char
+          end
+
+          if string_end.starts_with?(current_char)
+            reached_end = false
+
+            string_end.each_char do |c|
+              unless c == current_char
+                reached_end = false
+                break
+              end
+              next_char
+              reached_end = true
+            end
+
+            if reached_end &&
+              (current_char == '\n' || current_char == '\0')
+              @token.type = :DELIMITER_END
+            else
+              @reader.pos    = old_pos
+              @column_number = old_column
+              next_string_token delimiter_state
+            end
+          else
+            @reader.pos    = old_pos
+            @column_number = old_column
+            @token.type    = :STRING
+            @token.value   = "\n"
+          end
+        else
+          @token.type  = :STRING
+          @token.value = "\n"
+        end
       else
         start = current_pos
         count = 0
@@ -1683,9 +1692,10 @@ module Crystal
 
     def raise_unterminated_quoted(string_end)
       msg = case string_end
-            when '`' then "unterminated command"
-            when '/' then "unterminated regular expression"
-            else          "unterminated string literal"
+            when '`'    then "unterminated command"
+            when '/'    then "unterminated regular expression"
+            when String then "unterminated heredoc"
+            else             "unterminated string literal"
             end
       raise msg, @line_number, @column_number
     end
