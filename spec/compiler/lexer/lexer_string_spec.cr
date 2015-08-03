@@ -147,48 +147,88 @@ describe "Lexer string" do
   end
 
   it "lexes heredoc" do
-    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERESY"
+    string = "Hello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY"
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE")
     tester = LexerObjects::Strings.new(lexer)
 
-    tester.next_token_should_be(:STRING, string)
-    tester.should_have_reached_eof
+    tester.string_should_start_correctly
+    tester.next_string_token_should_be("Hello, mom! I am HERE.")
+    tester.next_string_token_should_be("HER dress is beautiful.")
+    tester.next_string_token_should_be("HE is OK.")
+    tester.next_string_token_should_be("  HERESY")
+    tester.string_should_end_correctly
   end
 
   it "lexes heredoc with empty line" do
     lexer = Lexer.new("<<-XML\nfoo\n\nXML")
     tester = LexerObjects::Strings.new(lexer)
 
-    tester.next_token_should_be(:STRING, "foo\n")
-    tester.should_have_reached_eof
+    tester.string_should_start_correctly
+    tester.next_string_token_should_be("foo")
+    tester.next_string_token_should_be("\n")
+    tester.string_should_end_correctly
   end
 
   it "lexes heredoc with spaces before close tag" do
     lexer = Lexer.new("<<-XML\nfoo\n   XML")
     tester = LexerObjects::Strings.new(lexer)
 
-    tester.next_token_should_be(:STRING, "foo")
-    tester.should_have_reached_eof
+    tester.string_should_start_correctly
+    tester.next_string_token_should_be("foo")
+    tester.string_should_end_correctly
   end
 
   it "assigns correct location after heredoc (#346)" do
-    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK."
+    string = "Hello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK."
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE\n1")
     tester = LexerObjects::Strings.new(lexer)
 
-    tester.next_token_should_be(:STRING, string)
-    tester.token_should_be_at(line: 1, column: 1)
+    tester.string_should_start_correctly
+    tester.next_string_token_should_be("Hello, mom! I am HERE.")
+    tester.token_should_be_at(line: 1)
+    tester.next_string_token_should_be("HER dress is beautiful.")
+    tester.token_should_be_at(line: 1)
+    tester.next_string_token_should_be("HE is OK.")
+    tester.token_should_be_at(line: 1)
+    tester.string_should_end_correctly(false)
     tester.next_token_should_be(:NEWLINE)
     tester.token_should_be_at(line: 5, column: 5)
     tester.next_token_should_be(:NUMBER)
     tester.token_should_be_at(line: 6, column: 1)
-    tester.should_have_reached_eof
+  end
+
+  it "lexes interpolations in heredocs" do
+    lexer = Lexer.new("<<-HERE\n\abc\#{foo}\nHERE")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_start_correctly
+    tester.next_string_token_should_be("abc")
+    tester.string_should_have_an_interpolation_of("foo")
+    tester.string_should_end_correctly
   end
 
   it "raises on unterminated heredoc" do
     lexer = Lexer.new("<<-HERE\nHello")
+    token = lexer.next_token
+    state = token.delimiter_state
 
     expect_raises Crystal::SyntaxException, /unterminated heredoc/ do
+      token = lexer.next_string_token state until token.type == :DELIMITER_END
+    end
+  end
+
+  it "raises on invalid heredoc identifier (<<-HERE A)" do
+    lexer = Lexer.new("<<-HERE A\ntest\nHERE\n")
+
+    expect_raises Crystal::SyntaxException, /invalid heredoc identifier/ do
+      lexer.next_token
+    end
+  end
+
+  it "raises on invalid heredoc identifier (<<-HERE\\n)" do
+    lexer = Lexer.new("<<-HERE\\ntest\nHERE\n")
+
+    expect_raises Crystal::SyntaxException, /invalid heredoc identifier/ do
       lexer.next_token
     end
   end
