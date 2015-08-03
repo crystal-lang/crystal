@@ -76,6 +76,41 @@ describe "File" do
     end
   end
 
+  describe "link" do
+    it "creates a hard link" do
+      out_path = "#{ __DIR__ }/data/test_file_link.txt"
+      begin
+        File.link("#{ __DIR__ }/data/test_file.txt", out_path)
+        File.exists?(out_path).should be_true
+      ensure
+        File.delete(out_path) if File.exists?(out_path)
+      end
+    end
+  end
+
+  describe "symlink" do
+    it "creates a symbolic link" do
+      out_path = "#{ __DIR__ }/data/test_file_symlink.txt"
+      begin
+        File.symlink("#{ __DIR__ }/data/test_file.txt", out_path)
+        File.symlink?(out_path).should be_true
+      ensure
+        File.delete(out_path) if File.exists?(out_path)
+      end
+    end
+  end
+
+  describe "symlink?" do
+    it "gives true" do
+      File.symlink?("#{ __DIR__ }/data/symlink.txt").should be_true
+    end
+
+    it "gives false" do
+      File.symlink?("#{ __DIR__ }/data/test_file.txt").should be_false
+      File.symlink?("#{ __DIR__ }/data/unknown_file.txt").should be_false
+    end
+  end
+
   it "gets dirname" do
     File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
     File.dirname("foo").should eq(".")
