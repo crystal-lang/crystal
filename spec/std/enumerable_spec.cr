@@ -231,6 +231,25 @@ describe "Enumerable" do
     assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
   end
 
+  describe "in_groups_of" do
+    assert { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
+    assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
+    assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
+    assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
+  
+    it "raises argument error if size is less than 0" do
+      expect_raises ArgumentError, "size must be positive" do
+        [1, 2, 3].in_groups_of(0)
+      end
+    end
+
+    it "takes a block" do
+      sums = [] of Int32
+      [1, 2, 4].in_groups_of(2, 0) { |a| sums << a.sum }
+      sums.should eq([3, 4])
+    end
+  end
+
   describe "partition" do
     assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
   end
