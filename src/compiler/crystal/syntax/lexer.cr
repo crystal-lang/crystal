@@ -1628,53 +1628,53 @@ module Crystal
           @token.value = "#"
         end
       when '\n'
-       next_char
-       @column_number = 1
-       @line_number += 1
+        next_char
+        @column_number = 1
+        @line_number += 1
 
-       if delimiter_state.kind == :heredoc
-         string_end = string_end.to_s
-         old_pos    = current_pos
-         old_column = @column_number
+        if delimiter_state.kind == :heredoc
+          string_end = string_end.to_s
+          old_pos    = current_pos
+          old_column = @column_number
 
-         loop do
-           if current_char != ' '
-             break
-           else
-             next_char
-           end
-         end
+          loop do
+            if current_char != ' '
+              break
+            else
+              next_char
+            end
+          end
 
-         if string_end.starts_with?(current_char)
-           reached_end = false
+          if string_end.starts_with?(current_char)
+            reached_end = false
 
-           string_end.each_char do |c|
-             unless c == current_char
-               reached_end = false
-               break
-             end
-             next_char
-             reached_end = true
-           end
+            string_end.each_char do |c|
+              unless c == current_char
+                reached_end = false
+                break
+              end
+              next_char
+              reached_end = true
+            end
 
-           if reached_end &&
-             (current_char == '\n' || current_char == '\0')
-             @token.type = :DELIMITER_END
-           else
-             @reader.pos    = old_pos
-             @column_number = old_column
-             next_string_token delimiter_state
-           end
-         else
-           @reader.pos    = old_pos
-           @column_number = old_column
-           @token.type    = :STRING
-           @token.value   = "\n"
-         end
-       else
-         @token.type  = :STRING
-         @token.value = "\n"
-       end
+            if reached_end &&
+              (current_char == '\n' || current_char == '\0')
+              @token.type = :DELIMITER_END
+            else
+              @reader.pos    = old_pos
+              @column_number = old_column
+              next_string_token delimiter_state
+            end
+          else
+            @reader.pos    = old_pos
+            @column_number = old_column
+            @token.type    = :STRING
+            @token.value   = "\n"
+          end
+        else
+          @token.type  = :STRING
+          @token.value = "\n"
+        end
       else
         start = current_pos
         count = 0
