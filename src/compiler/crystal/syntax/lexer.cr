@@ -1637,12 +1637,8 @@ module Crystal
           old_pos    = current_pos
           old_column = @column_number
 
-          loop do
-            if current_char != ' '
-              break
-            else
-              next_char
-            end
+          while current_char == ' '
+            next_char
           end
 
           if string_end.starts_with?(current_char)
