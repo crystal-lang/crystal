@@ -72,6 +72,7 @@ If this guide is not clear and it needs improvements, please send pull requests 
 
 ## Code of Conduct
 
-Contributors to this project are expected to review and uphold the [code of conduct][coc].
+Please note that this project is released with a [Contributor Code of Conduct][ccoc].
+By participating in this project you agree to abide by its terms.
 
-[coc]: https://github.com/manastech/crystal/blob/master/CODE_OF_CONDUCT.md
+[ccoc]: https://github.com/manastech/crystal/blob/master/CODE_OF_CONDUCT.md
