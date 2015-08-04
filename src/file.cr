@@ -1,7 +1,9 @@
 lib LibC
   fun access(filename : UInt8*, how : Int32) : Int32
-  fun unlink(filename : UInt8*) : Int32
+  fun link(oldpath : UInt8*, newpath : UInt8*) : Int32
   fun rename(oldname : UInt8*, newname : UInt8*) : Int32
+  fun symlink(oldpath : UInt8*, newpath : UInt8*) : Int32
+  fun unlink(filename : UInt8*) : Int32
 
   F_OK = 0
   X_OK = 1 << 0
@@ -187,6 +189,28 @@ class File < FileDescriptorIO
       end
       items.join SEPARATOR_STRING, str
     end
+  end
+
+  # Creates a new link (also known as a hard link) to an existing file.
+  def self.link(old_path, new_path)
+    ret = LibC.symlink(old_path, new_path)
+    raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
+    ret
+  end
+
+  # Creates a symbolic link to an existing file.
+  def self.symlink(old_path, new_path)
+    ret = LibC.symlink(old_path, new_path)
+    raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
+    ret
+  end
+
+  # Returns true if the pointed file is a symlink.
+  def self.symlink?(filename)
+    if LibC.lstat(filename, out stat) != 0
+      false
+    end
+    (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
   def self.open(filename, mode = "r")
