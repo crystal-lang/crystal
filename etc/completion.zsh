@@ -1,4 +1,5 @@
 #compdef crystal
+
 _crystal() {
 
 _crystal_commands() {
@@ -14,38 +15,34 @@ _crystal_commands() {
     "run:compile and run program file"
     "spec:compile and run specs (in spec directory)"
     "types:show type of main variables"
-    {-h,--help}":show help"
-    {-v,--version}":show version"
   )
-  # mabye make last thing "$@" instead? from _play
-_describe -t commands 'Crystal command' commands
+  _describe -t commands 'Crystal command' commands
 }
 
-# TODO maybe you can have more than one -D?
 local -a common_args; common_args=(
-  '(-D --define)'{-D,--define}'[Define a compile-time flag]:' \
-  '(-h --help)'{-h,--help}'[Show help]' \
-  '(--no-color)--no-color[Disable colored output]' \
-  '(--prelude)--prelude[Use given file as prelude]')
+  '(\*)'{-D+,--define=}'[define a compile-time flag]:' \
+  '(-h --help)'{-h,--help}'[show help]' \
+  '(--no-color)--no-color[disable colored output]' \
+  '(--prelude)--prelude[use given file as prelude]'
+)
 
 # TODO make 'emit' allow completion with more than one
 local -a shared_run_build; shared_run_build=(
-    '*:Crystal File:_files -g "*.cr(.)"' \
-    $common_args \
-    '(--ll)-ll[Dump ll to .crystal directory]' \
-    '(--link-flags)--link-flags[Additional flags to pass to the linker]:' \
-    '(--mcpu)--mcpu[Target specific cpu type]:' \
-    '(--no-build)--no-build[Disable build output]' \
-    '(-o)-o[Output filename]:' \
-    '(--prelude)--prelude[Use given file as prelude]:' \
-    '(--release)--release[Compile in release mode]' \
-    '(-s --stats)'{-s,--stats}'[Enable statistics output]' \
-    '(--single-module)--single-module[Generate a single LLVM module]' \
-    '(--threads)--threads[Maximum number of threads to use]:' \
-    '(--verbose)--verbose[Display executed commands]' \
-    '(--emit)--emit[Comma separated list of types of output for the compiler to emit]:foo:(asm llvm-bc llvm-ir obj)'
-    )
-
+  '*:Crystal File:_files -g "*.cr(.)"' \
+  $common_args \
+  '(--ll)-ll[Dump ll to .crystal directory]' \
+  '(--link-flags)--link-flags[additional flags to pass to the linker]:' \
+  '(--mcpu)--mcpu[target specific cpu type]:' \
+  '(--no-build)--no-build[disable build output]' \
+  '(-o)-o[Output filename]:' \
+  '(--prelude)--prelude[use given file as prelude]:' \
+  '(--release)--release[compile in release mode]' \
+  '(-s --stats)'{-s,--stats}'[enable statistics output]' \
+  '(--single-module)--single-module[generate a single llvm module]' \
+  '(--threads)--threads[maximum number of threads to use]:' \
+  '(--verbose)--verbose[display executed commands]' \
+  '(--emit)--emit[comma separated list of types of output for the compiler to emit]:foo:(asm llvm-bc llvm-ir obj)'
+)
 
 # TODO add help text for name and dir
 _crystal-init() {
@@ -58,7 +55,7 @@ _crystal-build() {
   _arguments \
     $shared_run_build \
     '(--cross-compile)--cross-compile[cross-compile FLAGS]:' \
-    '(--target)--target[Target triple]:' \
+    '(--target)--target[target triple]:' \
     && ret=0
 }
 
@@ -88,20 +85,24 @@ _crystal-types() {
 
 
 local curcontext=$curcontext ret=1
-local context state line
 declare -A opt_args
-_arguments -C   '*::arg:->cmd' && return
+_arguments -C \
+  '(- 1 *)'{-h,--help}'[show help]' \
+  '(- 1 *)'{-v,--version}'[show version]' \
+  '1:sub-command: _alternative "subcommands:sub command:_crystal_commands" "files:file:_files -g \*.cr\(-.\)"' \
+  '*::arg:->cmd' && ret=0
 case $state in
   (cmd)
     if (( $CURRENT == 1 )); then
-      _crystal_commands
     else
       curcontext="${curcontext%:*:*}:crystal-$words[1]:"
-      _call_function ret _crystal-$words[1]
+      if ! _call_function ret _crystal-$words[1] ; then
+          _default && ret=0
+      fi
+      return ret
     fi
     ;;
 esac
-
 }
 _crystal
 
