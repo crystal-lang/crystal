@@ -270,4 +270,20 @@ describe "Codegen: const" do
       MyBase.new.base
       )).to_i.should eq(1)
   end
+
+  it "doesn't crash if constant is used, but class is never instantiated (#1106)" do
+    build(%(
+      require "prelude"
+
+      class Foo
+        BAR = 1 || 2
+
+        def foo
+          BAR
+        end
+      end
+
+      ->(x : Foo) { x.foo }
+      ))
+  end
 end

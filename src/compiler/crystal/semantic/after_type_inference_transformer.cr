@@ -137,7 +137,9 @@ module Crystal
       end
 
       if target.is_a?(Path)
-        const.not_nil!.initialized = true
+        const = const.not_nil!
+        const.initialized = true
+        const.value = const.value.transform self
         @const_being_initialized = nil
       end
 
@@ -169,8 +171,6 @@ module Crystal
                                         which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
           end
         end
-
-        target_const.value = target_const.value.transform self
       end
 
       super
