@@ -138,6 +138,19 @@ module BufferedIOMixin
     total_read
   end
 
+  def read(limit : Int)
+    fill_buffer if @in_buffer_rem.empty?
+
+    # If we have enough content in the buffer, use it
+    if limit <= @in_buffer_rem.length
+      string = String.new(@in_buffer_rem[0, limit])
+      @in_buffer_rem += limit
+      return string
+    end
+
+    super
+  end
+
   def write(slice : Slice(UInt8), count)
     if sync?
       return unbuffered_write(slice, count).to_i

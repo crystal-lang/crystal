@@ -130,7 +130,9 @@ describe "StringIO" do
   it "reads N chars" do
     io = StringIO.new("foobarbaz")
     io.read(3).should eq("foo")
-    io.read(50).should eq("barbaz")
+    io.read(2).should eq("ba")
+    io.read(50).should eq("rbaz")
+    io.read(3).should eq("")
   end
 
   it "write single byte" do

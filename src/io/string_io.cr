@@ -54,6 +54,16 @@ class StringIO
     string
   end
 
+  def read(limit : Int)
+    if limit <= @bytesize - @pos
+      string = String.new(@buffer + @pos, limit)
+      @pos += limit
+      return string
+    end
+
+    super
+  end
+
   def clear
     @bytesize = 0
   end
