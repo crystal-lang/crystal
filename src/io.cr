@@ -350,6 +350,11 @@ module IO
     buffer.to_s
   end
 
+  def gets(limit : Int)
+    str = read limit
+    str.empty? ? nil : str
+  end
+
   def read_line
     read_line '\n'
   end
@@ -360,6 +365,10 @@ module IO
 
   def read_line(delimiter : String)
     gets(delimiter) || raise EOFError.new
+  end
+
+  def read_line(limit : Int)
+    gets(limit) || raise EOFError.new
   end
 
   def write(array : Array(UInt8))

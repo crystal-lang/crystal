@@ -8,6 +8,13 @@ describe "BufferedIO" do
     io.gets.should be_nil
   end
 
+  it "does gets with limit" do
+    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
+    io.gets(3).should eq("hel")
+    io.gets(10_000).should eq("lo\nworld\n")
+    io.gets(3).should be_nil
+  end
+
   it "does gets with big line" do
     big_line = "a" * 20_000
     io = BufferedIO.new(StringIO.new("#{big_line}\nworld\n"))
@@ -27,6 +34,13 @@ describe "BufferedIO" do
     io.gets('ち').should eq("こんにち")
     io.gets('ち').should eq("は")
     io.gets('ち').should be_nil
+  end
+
+  it "does read_line with limit" do
+    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
+    io.read_line(3).should eq("hel")
+    io.read_line(10_000).should eq("lo\nworld\n")
+    expect_raises(IO::EOFError) { io.read_line(3) }
   end
 
   it "does puts" do
