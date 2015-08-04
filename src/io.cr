@@ -284,6 +284,19 @@ module IO
     end
   end
 
+  def read(length : Int)
+    buffer :: UInt8[2048]
+    String.build(length) do |str|
+      while length > 0
+        read_length = read(buffer.to_slice, length)
+        break if read_length == 0
+
+        str.write(buffer.to_slice, read_length)
+        length -= read_length
+      end
+    end
+  end
+
   def gets
     gets '\n'
   end
@@ -347,21 +360,6 @@ module IO
 
   def read_line(delimiter : String)
     gets(delimiter) || raise EOFError.new
-  end
-
-  def read(length)
-    buffer_pointer = buffer = Slice(UInt8).new(length)
-    remaining_length = length
-    while remaining_length > 0
-      read_length = read(buffer_pointer, remaining_length)
-      if read_length == 0
-        length -= remaining_length
-        break
-      end
-      remaining_length -= read_length
-      buffer_pointer += read_length
-    end
-    String.new(buffer[0, length])
   end
 
   def write(array : Array(UInt8))
