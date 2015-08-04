@@ -57,6 +57,12 @@ class String::Builder
 
     write_byte 0_u8
 
+    # Try to reclaim some memory if capacity is bigger than what we need
+    real_bytesize = real_bytesize()
+    if @capacity > real_bytesize
+      resize_to_capacity(real_bytesize)
+    end
+
     header = @buffer as {Int32, Int32, Int32}*
     header.value = {String::TYPE_ID, @bytesize - 1, 0}
     @buffer as String
