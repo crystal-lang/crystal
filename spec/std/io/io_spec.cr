@@ -103,8 +103,40 @@ describe IO do
     it "does gets with limit" do
       io = SimpleStringIO.new("hello\nworld\n")
       io.gets(3).should eq("hel")
-      io.gets(10_000).should eq("lo\nworld\n")
+      io.gets(10_000).should eq("lo\n")
+      io.gets(10_000).should eq("world\n")
       io.gets(3).should be_nil
+    end
+
+    it "does gets with char and limit" do
+      io = SimpleStringIO.new("hello\nworld\n")
+      io.gets('o', 2).should eq("he")
+      io.gets('w', 10_000).should eq("llo\nw")
+      io.gets('z', 10_000).should eq("orld\n")
+      io.gets('a', 3).should be_nil
+    end
+
+    it "raises if invoking gets with negative limit" do
+      io = SimpleStringIO.new("hello\nworld\n")
+      expect_raises ArgumentError, "negative limit" do
+        io.gets(-1)
+      end
+    end
+
+    it "does read_line with limit" do
+      io = SimpleStringIO.new("hello\nworld\n")
+      io.read_line(3).should eq("hel")
+      io.read_line(10_000).should eq("lo\n")
+      io.read_line(10_000).should eq("world\n")
+      expect_raises(IO::EOFError) { io.read_line(3) }
+    end
+
+    it "does read_line with char and limit" do
+      io = SimpleStringIO.new("hello\nworld\n")
+      io.read_line('o', 2).should eq("he")
+      io.read_line('w', 10_000).should eq("llo\nw")
+      io.read_line('z', 10_000).should eq("orld\n")
+      expect_raises(IO::EOFError) { io.read_line('a', 3) }
     end
 
     it "reads all remaining content" do
@@ -113,18 +145,18 @@ describe IO do
       io.read.should eq("bar\nbaz\n")
     end
 
-    it "does read_line with limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
-      io.read_line(3).should eq("hel")
-      io.read_line(10_000).should eq("lo\nworld\n")
-      expect_raises(IO::EOFError) { io.read_line(3) }
-    end
-
     it "does read with limit" do
       io = SimpleStringIO.new("hello world")
       io.read(5).should eq("hello")
       io.read(10).should eq(" world")
       io.read(5).should eq("")
+    end
+
+    it "raises argument error if reads negative length" do
+      io = SimpleStringIO.new("hello world")
+      expect_raises(ArgumentError, "negative length") do
+        io.read(-1)
+      end
     end
 
     it "reads char" do

@@ -36,14 +36,20 @@ class StringIO
     count
   end
 
-  def gets(delimiter : Char)
+  def gets(delimiter : Char, limit : Int32)
     if delimiter.ord >= 128
       return super
     end
 
+    raise ArgumentError.new "negative limit" if limit < 0
+
     index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.ord)
     if index
-      index += 1
+      if index > limit
+        index = limit
+      else
+        index += 1
+      end
     else
       index = @bytesize - @pos
       return nil if index == 0
@@ -54,10 +60,12 @@ class StringIO
     string
   end
 
-  def read(limit : Int)
-    if limit <= @bytesize - @pos
-      string = String.new(@buffer + @pos, limit)
-      @pos += limit
+  def read(length : Int)
+    raise ArgumentError.new "negative length" if length < 0
+
+    if length <= @bytesize - @pos
+      string = String.new(@buffer + @pos, length)
+      @pos += length
       return string
     end
 

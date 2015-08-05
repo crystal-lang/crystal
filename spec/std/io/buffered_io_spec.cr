@@ -29,6 +29,40 @@ describe "BufferedIO" do
     io.gets('ち').should be_nil
   end
 
+  it "does gets with limit" do
+    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
+    io.gets(3).should eq("hel")
+    io.gets(10_000).should eq("lo\n")
+    io.gets(10_000).should eq("world\n")
+    io.gets(3).should be_nil
+  end
+
+  it "does gets with char and limit" do
+    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
+    io.gets('o', 2).should eq("he")
+    io.gets('w', 10_000).should eq("llo\nw")
+    io.gets('z', 10_000).should eq("orld\n")
+    io.gets('a', 3).should be_nil
+  end
+
+  it "does gets with char and limit when not found in buffer" do
+    io = BufferedIO.new(StringIO.new(("a" * (BufferedIOMixin::BUFFER_SIZE + 10)) + "b"))
+    io.gets('b', 2).should eq("aa")
+  end
+
+  it "does gets with char and limit when not found in buffer (2)" do
+    base = "a" * (BufferedIOMixin::BUFFER_SIZE + 10)
+    io = BufferedIO.new(StringIO.new(base + "aabaaa"))
+    io.gets('b', BufferedIOMixin::BUFFER_SIZE + 11).should eq(base + "a")
+  end
+
+  it "raises if invoking gets with negative limit" do
+    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
+    expect_raises ArgumentError, "negative limit" do
+      io.gets(-1)
+    end
+  end
+
   it "writes bytes" do
     str = StringIO.new
     io = BufferedIO.new(str)
@@ -98,6 +132,13 @@ describe "BufferedIO" do
     io.read(5).should eq("hello")
     io.read(10).should eq(" world")
     io.read(5).should eq("")
+  end
+
+  it "raises argument error if reads negative length" do
+    io = BufferedIO.new(StringIO.new("hello world"))
+    expect_raises(ArgumentError, "negative length") do
+      io.read(-1)
+    end
   end
 
   it "does puts" do

@@ -12,28 +12,12 @@ def loop
   end
 end
 
-def gets
-  STDIN.gets
+def gets(*args)
+  STDIN.gets(*args)
 end
 
-def gets(delimiter : Char)
-  STDIN.gets(delimiter)
-end
-
-def gets(delimiter : String)
-  STDIN.gets(delimiter)
-end
-
-def read_line
-  STDIN.read_line
-end
-
-def read_line(delimiter : Char)
-  STDIN.read_line(delimiter)
-end
-
-def read_line(delimiter : String)
-  STDIN.read_line(delimiter)
+def read_line(*args)
+  STDIN.read_line(*args)
 end
 
 def print(*objects : _)

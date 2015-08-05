@@ -241,20 +241,25 @@ module IO
   end
 
   def read_char
+    info = read_char_with_bytesize
+    info ? info[0] : nil
+  end
+
+  def read_char_with_bytesize
     first = read_byte
     return nil unless first
 
     first = first.to_u32
-    return first.chr if first < 0x80
+    return first.chr, 1 if first < 0x80
 
     second = read_utf8_masked_byte
-    return ((first & 0x1f) << 6 | second).chr if first < 0xe0
+    return ((first & 0x1f) << 6 | second).chr, 2 if first < 0xe0
 
     third = read_utf8_masked_byte
-    return ((first & 0x0f) << 12 | (second << 6) | third).chr if first < 0xf0
+    return ((first & 0x0f) << 12 | (second << 6) | third).chr, 3 if first < 0xf0
 
     fourth = read_utf8_masked_byte
-    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr if first < 0xf8
+    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4 if first < 0xf8
 
     raise InvalidByteSequenceError.new
   end
@@ -285,6 +290,8 @@ module IO
   end
 
   def read(length : Int)
+    raise ArgumentError.new "negative length" if length < 0
+
     buffer :: UInt8[2048]
     String.build(length) do |str|
       while length > 0
@@ -301,15 +308,32 @@ module IO
     gets '\n'
   end
 
+  def gets(limit : Int)
+    gets '\n', limit
+  end
+
   def gets(delimiter : Char)
+    gets delimiter, Int32::MAX
+  end
+
+  def gets(delimiter : Char, limit : Int)
+    raise ArgumentError.new "negative limit" if limit < 0
+
     buffer = String::Builder.new
+    total = 0
     while true
-      unless ch = read_char
+      info = read_char_with_bytesize
+      unless info
         return buffer.empty? ? nil : buffer.to_s
       end
 
-      buffer << ch
-      break if ch == delimiter
+      char, char_bytesize = info
+
+      buffer << char
+      break if char == delimiter
+
+      total += char_bytesize
+      break if total >= limit
     end
     buffer.to_s
   end
@@ -350,25 +374,8 @@ module IO
     buffer.to_s
   end
 
-  def gets(limit : Int)
-    str = read limit
-    str.empty? ? nil : str
-  end
-
-  def read_line
-    read_line '\n'
-  end
-
-  def read_line(delimiter : Char)
-    gets(delimiter) || raise EOFError.new
-  end
-
-  def read_line(delimiter : String)
-    gets(delimiter) || raise EOFError.new
-  end
-
-  def read_line(limit : Int)
-    gets(limit) || raise EOFError.new
+  def read_line(*args)
+    gets(*args) || raise EOFError.new
   end
 
   def write(array : Array(UInt8))
