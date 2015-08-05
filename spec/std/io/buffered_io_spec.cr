@@ -8,13 +8,6 @@ describe "BufferedIO" do
     io.gets.should be_nil
   end
 
-  it "does gets with limit" do
-    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
-    io.gets(3).should eq("hel")
-    io.gets(10_000).should eq("lo\nworld\n")
-    io.gets(3).should be_nil
-  end
-
   it "does gets with big line" do
     big_line = "a" * 20_000
     io = BufferedIO.new(StringIO.new("#{big_line}\nworld\n"))
@@ -36,53 +29,12 @@ describe "BufferedIO" do
     io.gets('ち').should be_nil
   end
 
-  it "does read_line with limit" do
-    io = BufferedIO.new(StringIO.new("hello\nworld\n"))
-    io.read_line(3).should eq("hel")
-    io.read_line(10_000).should eq("lo\nworld\n")
-    expect_raises(IO::EOFError) { io.read_line(3) }
-  end
-
-  it "does puts" do
-    str = StringIO.new
-    io = BufferedIO.new(str)
-    io.puts "Hello"
-    str.to_s.should eq("")
-    io.flush
-    str.to_s.should eq("Hello\n")
-  end
-
-  it "does puts with big string" do
-    str = StringIO.new
-    io = BufferedIO.new(str)
-    s = "*" * 20_000
-    io << "hello"
-    io << s
-    io.flush
-    str.to_s.should eq("hello#{s}")
-  end
-
-  it "does puts many times" do
-    str = StringIO.new
-    io = BufferedIO.new(str)
-    10_000.times { io << "hello" }
-    io.flush
-    str.to_s.should eq("hello" * 10_000)
-  end
-
   it "writes bytes" do
     str = StringIO.new
     io = BufferedIO.new(str)
     10_000.times { io.write_byte 'a'.ord.to_u8 }
     io.flush
     str.to_s.should eq("a" * 10_000)
-  end
-
-  it "does read" do
-    io = BufferedIO.new(StringIO.new("hello world"))
-    io.read(5).should eq("hello")
-    io.read(10).should eq(" world")
-    io.read(5).should eq("")
   end
 
   it "reads char" do
@@ -112,7 +64,7 @@ describe "BufferedIO" do
     str.to_s.should eq("Hello")
   end
 
-  it "rewindws" do
+  it "rewinds" do
     str = StringIO.new("hello\nworld\n")
     io = BufferedIO.new str
     io.gets.should eq("hello\n")
@@ -139,6 +91,40 @@ describe "BufferedIO" do
         slice[i].should eq('a'.ord + i)
       end
     end
+  end
+
+  it "does read with limit" do
+    io = BufferedIO.new(StringIO.new("hello world"))
+    io.read(5).should eq("hello")
+    io.read(10).should eq(" world")
+    io.read(5).should eq("")
+  end
+
+  it "does puts" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    io.puts "Hello"
+    str.to_s.should eq("")
+    io.flush
+    str.to_s.should eq("Hello\n")
+  end
+
+  it "does puts with big string" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    s = "*" * 20_000
+    io << "hello"
+    io << s
+    io.flush
+    str.to_s.should eq("hello#{s}")
+  end
+
+  it "does puts many times" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    10_000.times { io << "hello" }
+    io.flush
+    str.to_s.should eq("hello" * 10_000)
   end
 
   it "flushes on \n" do
