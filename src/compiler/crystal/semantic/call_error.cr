@@ -118,9 +118,18 @@ class Crystal::Call
       raise error_msg, owner_trace
     end
 
+    real_args_length = self.args.sum do |arg|
+      arg_type = arg.type
+      if arg.is_a?(Splat) && arg_type.is_a?(TupleInstanceType)
+        arg_type.tuple_types.length
+      else
+        1
+      end
+    end
+
     defs_matching_args_length = defs.select do |a_def|
       min_length, max_length = a_def.min_max_args_lengths
-      min_length <= self.args.length <= max_length
+      min_length <= real_args_length <= max_length
     end
 
     if defs_matching_args_length.empty?
@@ -143,7 +152,7 @@ class Crystal::Call
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
         str << "' ("
-        str << args.length
+        str << real_args_length
         str << " for "
         all_arguments_lengths.join ", ", str
         if min_splat != Int32::MAX
@@ -175,7 +184,22 @@ class Crystal::Call
 
     message = String.build do |msg|
       msg << "no overload matches '#{full_name(owner, def_name)}'"
-      msg << " with types #{args.map(&.type).join ", "}" if args.length > 0
+      unless args.empty?
+        msg << " with types "
+        args.each_with_index do |arg, index|
+          msg << ", " if index > 0
+          arg_type = arg.type
+
+          if arg.is_a?(Splat) && arg_type.is_a?(TupleInstanceType)
+            arg_type.tuple_types.each_with_index do |tuple_type, sub_index|
+              msg << ", " if sub_index > 0
+              msg << tuple_type
+            end
+          else
+            msg << arg_type
+          end
+        end
+      end
       msg << "\n"
 
       defs.each do |a_def|
