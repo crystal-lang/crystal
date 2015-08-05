@@ -171,14 +171,6 @@ module IO
     end
   end
 
-  def reopen(other)
-    if LibC.dup2(self.fd, other.fd) == -1
-      raise Errno.new("Could not reopen file descriptor")
-    end
-
-    other
-  end
-
   # Writes the given object into this IO.
   # This ends up calling `to_s(io)` on the object.
   def <<(obj)
