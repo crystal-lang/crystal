@@ -168,7 +168,9 @@ class Crystal::Call
         if min_splat != Int32::MAX
           str << "+"
         end
-        str << ")"
+        str << ")\n"
+        str << "Overloads are:"
+        append_matches(owner, defs, str)
       end
     end
 
