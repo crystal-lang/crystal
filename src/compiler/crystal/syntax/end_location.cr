@@ -55,6 +55,15 @@ module Crystal
   end
 
   class Expressions
+    def location
+      res = super
+      if res.nil? && !empty?
+        res = self[0].location
+      end
+
+      res
+    end
+
     def location_child_nodes
       unless empty?
         yield last

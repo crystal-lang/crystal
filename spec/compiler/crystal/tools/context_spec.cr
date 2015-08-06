@@ -46,7 +46,7 @@ end
 #   ‸ marks the method call which implementations wants to be found
 #
 describe "context" do
-  it "include args" do
+  it "includes args" do
     assert_context_includes %(
       def foo(a)
         ‸
@@ -69,7 +69,7 @@ describe "context" do
     ), "a", ["Int64", "String"]
   end
 
-  it "include assignments" do
+  it "includes assignments" do
     assert_context_includes %(
       def foo(a)
         b = a
