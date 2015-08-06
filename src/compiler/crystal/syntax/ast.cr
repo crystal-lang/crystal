@@ -481,6 +481,16 @@ module Crystal
       clone
     end
 
+    def name_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number, loc.filename)
+    end
+
+    def name_end_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number + name_length, loc.filename)
+    end
+
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global
   end
 

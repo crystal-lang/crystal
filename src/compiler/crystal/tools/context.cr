@@ -67,6 +67,15 @@ module Crystal
       end
     end
 
+    def visit(node : Call)
+      if node.location && @target_location.between?(node.name_location, node.name_end_location)
+        @context[node.to_s] = node.type
+      end
+
+      contains_target(node)
+    end
+
+
     def visit(node)
       contains_target(node)
     end

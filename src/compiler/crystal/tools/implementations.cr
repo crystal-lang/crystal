@@ -3,18 +3,6 @@ require "../compiler"
 require "json"
 
 module Crystal
-  class Call
-    def name_location
-      loc = location.not_nil!
-      Location.new(loc.line_number, name_column_number, loc.filename)
-    end
-
-    def name_end_location
-      loc = location.not_nil!
-      Location.new(loc.line_number, name_column_number + name_length, loc.filename)
-    end
-  end
-
   class ImplementationResult
     json_mapping({
       status:           {type: String},

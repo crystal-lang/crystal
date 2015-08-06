@@ -107,4 +107,20 @@ describe "context" do
       1
     ), "a", ["Int64"]
   end
+
+  it "includes last call" do
+    assert_context_includes %(
+      class Foo
+        property lorem
+
+        def initialize(@lorem : Int64)
+        end
+      end
+
+      f = Foo.new(1i64)
+
+      puts f.lo‸rem
+      1
+    ), "f.lorem", ["Int64"]
+  end
 end
