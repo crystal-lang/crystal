@@ -1,3 +1,4 @@
 _site
 .bundle
 _book
+vendor/bundle
