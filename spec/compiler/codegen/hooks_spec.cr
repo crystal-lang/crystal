@@ -67,9 +67,9 @@ describe "Code gen: hooks" do
       ").to_i.should eq(2)
   end
 
-  it "does inherited macro after class def" do
+  it "does inherited macro before class body" do
     run("
-      $x = 0
+      $x = 123
       class Foo
         macro inherited
           $y = $x
@@ -81,6 +81,6 @@ describe "Code gen: hooks" do
       end
 
       $y
-      ").to_i.should eq(1)
+      ").to_i.should eq(123)
   end
 end

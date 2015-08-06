@@ -445,9 +445,8 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      accept node.body
-
       node.runtime_initializers.try &.each &.accept self
+      accept node.body
       @last = llvm_nil
       false
     end
