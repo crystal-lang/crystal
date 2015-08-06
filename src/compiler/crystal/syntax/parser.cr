@@ -1434,10 +1434,12 @@ module Crystal
 
       if @token.keyword?(:do)
         next_token_skip_statement_end
+        check_not_pipe_before_proc_literal_body
         body = parse_expressions
         check_ident :"end"
       elsif @token.type == :"{"
         next_token_skip_statement_end
+        check_not_pipe_before_proc_literal_body
         body = parse_expressions
         check :"}"
       else
@@ -1449,6 +1451,27 @@ module Crystal
       next_token_skip_space
 
       FunLiteral.new(Def.new("->", args, body))
+    end
+
+    def check_not_pipe_before_proc_literal_body
+      if @token.type == :"|"
+        location = @token.location
+        next_token_skip_space
+
+        msg = String.build do |msg|
+          msg << "unexpected token '|', proc literals specify their arguments like this: ->("
+          if @token.type == :IDENT
+            msg << @token.value.to_s << " : Type"
+            next_token_skip_space_or_newline
+            msg << ", ..." if @token.type == :","
+          else
+            msg << "arg : Type"
+          end
+          msg << ") { ... }"
+        end
+
+        raise msg, location
+      end
     end
 
     def parse_fun_literal_arg
