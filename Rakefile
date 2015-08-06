@@ -52,7 +52,7 @@ end
 
 desc 'Build docs'
 task :docs do
-  system "gitbook build ./_gitbook "
+  system "gitbook build ./_gitbook --gitbook=2.0.2"
   system "rm -rf ./docs"
   system "mv ./_gitbook/_book ./docs"
 end
