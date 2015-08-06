@@ -669,6 +669,57 @@ class Array(T)
     Array(U).new(length) { |i| yield buffer[i], i }
   end
 
+  # Returns an `Array` with all possible permutations.
+  #
+  #     a = [1, 2, 3]
+  #     a.permutation    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutation(1) #=> [[1],[2],[3]]
+  #     a.permutation(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+  #     a.permutation(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutation(0) #=> [[]]
+  #     a.permutation(4) #=> []
+  #
+  def permutation(n = nil : Int)
+    n ||= count
+    raise ArgumentError.new("size must be positive") if n < 0
+    ary = [] of Array(T)
+    return [[] of T] if n == 0
+
+    each_with_index do |e, i|
+      tail = self.dup
+      tail.delete_at(i)
+      perm = tail.permutation(n - 1).map { |t| t.unshift(e) }
+      ary.concat(perm)
+    end
+
+    ary
+  end
+
+
+  # Returns an `Array` with all possible permutations and yields each permutation
+  #
+  #     a = [1, 2, 3]
+  #     sums = [] of Int32
+  #     a.permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
+  #     sums #=> [3, 4, 3, 5, 4, 5]
+  #
+  def permutation(n = nil : Int)
+    n ||= count
+    raise ArgumentError.new("size must be positive") if n < 0
+    ary = [] of Array(T)
+    return [[] of T] if n == 0
+
+    each_with_index do |e, i|
+      tail = self.dup
+      tail.delete_at(i)
+      perm = tail.permutation(n - 1).map { |t| t.unshift(e) }
+      perm.each { |p| yield p }
+      ary.concat(perm)
+    end
+
+    self
+  end
+
   def pop
     pop { raise IndexError.new }
   end
