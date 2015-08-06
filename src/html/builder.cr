@@ -11,7 +11,7 @@ require "html"
 #   text "crystal is awesome"
 # end
 #
-# puts html # => "<a href="google.com">crystal is awesome</a>
+# puts html # => <a href="google.com">crystal is awesome</a>
 # ```
 #
 # Or also you can use `build` method:
@@ -21,7 +21,7 @@ require "html"
 #   a({href: "google.com"}) do
 #     text "crystal is awesome"
 #   end
-# end # => "<a href="google.com">crystal is awesome</a>
+# end # => <a href="google.com">crystal is awesome</a>
 # ```
 struct HTML::Builder
   def initialize

@@ -120,8 +120,8 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
 
   def end_code
     if @inside_code
-      text = Highlighter.highlight @code_buffer.to_s
-      @io << text
+      text = @code_buffer.to_s.gsub('<', "&lt;").gsub('>', "&gt;")
+      @io << Highlighter.highlight(text)
     end
 
     @inside_code = false
