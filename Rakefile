@@ -57,6 +57,19 @@ task :docs do
   system "mv ./_gitbook/_book ./docs"
 end
 
+desc 'Tidy up generated gitbook files to avoid superfluous changes'
+task :'docs:tidy' do
+  Dir.glob('docs/**/*.html') do |path|
+    diff = `git diff --numstat #{path}`
+    if diff.start_with?("1\t1\t")
+      line_change = `git diff -U0 #{path} | tail -n 1`
+      if line_change =~ /<div class="book" data-level="[^\"]+" data-basepath="[^\"]+" data-revision="[^\"]+">/
+        `git checkout #{path}`
+      end
+    end
+  end
+end
+
 desc 'Parse all haml items'
 task haml: ['haml:layouts', 'haml:includes', 'haml:indexes']
 
