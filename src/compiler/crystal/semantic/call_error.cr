@@ -66,6 +66,16 @@ class Crystal::Call
     end
 
     obj = @obj
+
+    # Check if this is a `foo` call and we actually find it in the Program
+    if !obj && defs.empty?
+      program_defs = mod.lookup_defs(def_name)
+      unless program_defs.empty?
+        defs = program_defs
+        owner = mod
+      end
+    end
+
     if defs.empty?
       check_macro_wrong_number_of_arguments(def_name)
 
