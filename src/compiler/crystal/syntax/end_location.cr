@@ -43,6 +43,10 @@ module Crystal
   class Call
     def build_end_location
       if loc = location
+        block.try do |b|
+          return b.end_location
+        end
+
         if args.empty?
           Location.new(loc.line_number, name_column_number + name_length, loc.filename)
         else
@@ -104,6 +108,17 @@ module Crystal
       yield @rescues
       yield @else
       yield @ensure
+    end
+  end
+
+  class Block
+    def location
+      super || @args.first?.try(&.location) || @body.try(&.location)
+    end
+
+    def location_child_nodes
+      yield @args
+      yield @body
     end
   end
 end

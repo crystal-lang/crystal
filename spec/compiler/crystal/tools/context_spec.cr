@@ -29,7 +29,7 @@ def assert_context_includes(code, variable, var_types)
   if cursor_location
     visitor, result = processed_context_visitor(code, cursor_location)
 
-    puts result.inspect
+    # puts result.inspect
     # puts result.to_json(STDOUT)
     result.contexts.should_not be_nil
     result.contexts.not_nil!.map { |h| h[variable].to_s }.should eq(var_types)
@@ -42,8 +42,7 @@ end
 
 # References
 #
-#   ༓ marks the expected implementations to be found
-#   ‸ marks the method call which implementations wants to be found
+#   ‸ marks location of the cursor to use
 #
 describe "context" do
   it "includes args" do
@@ -80,5 +79,32 @@ describe "context" do
       foo(1i64)
       foo("foo")
     ), "b", ["Int64", "String"]
+  end
+
+  it "includes block args" do
+    assert_context_includes %(
+      def bar(x)
+        yield x
+      end
+
+      def foo(a)
+        bar a do |b|
+          ‸
+          1
+        end
+        1
+      end
+
+      foo(1i64)
+      foo("foo")
+    ), "b", ["Int64", "String"]
+  end
+
+  it "includes top level vars" do
+    assert_context_includes %(
+      a = 0i64
+      ‸
+      1
+    ), "a", ["Int64"]
   end
 end
