@@ -25,7 +25,7 @@ module Crystal::Doc::Highlighter
       when :SPACE
         io << token.value
       when :COMMENT
-        highlight token, "c", io
+        highlight html_escape(token.value.to_s), "c", io
       when :NUMBER
         highlight token, "n", io
       when :CHAR
@@ -128,5 +128,9 @@ module Crystal::Doc::Highlighter
 
   private def end_highlight_klass(io)
     io << %(</span>)
+  end
+
+  private def html_escape(string)
+    string.gsub('<', "&lt;")
   end
 end
