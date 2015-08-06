@@ -5,7 +5,7 @@ before_install: |
 script: test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "gh-pages" && ./travis-build.sh
 env:
   global:
-    secure: SMuAAsKRJU0py82eb3jBPOeqZ0UAweJlLTOpVO+aVdw2rfIO0Mz0ZwFHMn0L7UKzMvJoKqM97k17jRTTHEm8v/sW09EwPyzYIk+O+cmkH2NHmAPY7CgsS+Mz4qSDKYHsVlRZU+YlGoZaD4tBGnnfi9N0WZhutVGvE98GdBcUNiteIe6MQDjB/Jrt+ka2aZgnynfUoojYvUK/l8i2YBfOU1qJBSTA/eD2kIvT3yEL630Dv1A+Qada0rYotPkzn7pNGGnKAgDLMmHcU2l/+Pl8fUsU4bq5/LFLyR3O7fnB01gWghYxqHXVs2e3esRK+FhwbXqdY1zh93zvNiD1YWy1wwG+SGRa9TYjHSAScz8aMmIbef/34hGM+3c446vabhPcMfC0qq2b71MliJuQb46aZIVPhC19XH4yhHi+64GFwwYCc8/RfzU8mEcnwgRx8360I58+sJZqwYjS+PJLGU0lOxMpHahCgnSnXkevjXuH/kWp8i91UoPP6TrOdK7er6sReOFjEXMuu77tFcYc4G1LKaW3zL/jvGzOXkjnx2atjhs60tp1dgJYvQ2EB52QYUpJGKAYyBPkZJLbENCZF6F2pqOHn/X6ODk7u4rYCG9G2j8qlJPWZyBNy8iKMqMMfjRXPZclRwX1x4+WvUCQ0idQCN0AXoaUVl9m92w9/0FWhno=
+    secure: R5ChjypUD0E9jHzdpSqKqnEeg80VBBzXoK34AUWjk7UOsTx3XBWuIm/Q9Ms4wnWoN2GLGOMp18KfAwenYCsOOkeFO/ugVgG5hGApfEpFdyv0KSyrSFc4Sf5k+c203+aDOlmuUfsCJ1X/bFFA0pz/KyeX+YxzTso20BqqNZCRD+o=
 branches:
   only:
     - master
