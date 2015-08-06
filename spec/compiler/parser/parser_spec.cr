@@ -1033,6 +1033,7 @@ describe "Parser" do
   it_parses "enum Foo; protected def foo; 1; end; end", EnumDef.new("Foo".path, [VisibilityModifier.new(:protected, Def.new("foo", body: 1.int32))] of ASTNode)
 
   it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
+  it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
   it_parses "1.[]=(2, 3)", Call.new(1.int32, "[]=", 2.int32, 3.int32)
 
   it_parses "a @b-1\nc", [Call.new(nil, "a", Call.new("@b".instance_var, "-", 1.int32)), "c".call] of ASTNode
