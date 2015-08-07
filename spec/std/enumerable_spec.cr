@@ -324,6 +324,14 @@ describe "Enumerable" do
     [1, 2, 3, 4].reject(&.even?).should eq([1, 3])
   end
 
+  it "sorts" do
+    {1, 2, 3, 1, 2}.sort.should eq([1, 1, 2, 2, 3])
+  end
+
+  it "sorts with block" do
+    {1, 2, 3, 1, 2}.sort { |a, b| b <=> a }.should eq([3, 2, 2, 1, 1])
+  end
+
   it "joins with separator and block" do
     str = [1, 2, 3].join(", ") { |x| x + 1 }
     str.should eq("2, 3, 4")
