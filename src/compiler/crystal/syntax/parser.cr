@@ -3414,7 +3414,9 @@ module Crystal
           if allow_primitives
             case @token.type
             when :NUMBER
-              types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
+              num = NumberLiteral.new(@token.value.to_s, @token.number_kind)
+              num.location = @token.location
+              types << node_and_next_token(num)
               skip_space
               return types
             end

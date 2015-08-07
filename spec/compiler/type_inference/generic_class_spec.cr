@@ -480,4 +480,18 @@ describe "Type inference: generic class" do
       Foo(Int32).new.bar
       )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
   end
+
+  it "errors if passing integer literal to Proc as generic argument (#1120)" do
+    assert_error %(
+      Proc(32)
+      ),
+      "argument to Proc must be a type, not 32"
+  end
+
+  it "errors if passing integer literal to Tuple as generic argument (#1120)" do
+    assert_error %(
+      Tuple(32)
+      ),
+      "argument to Tuple must be a type, not 32"
+  end
 end

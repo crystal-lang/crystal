@@ -1713,7 +1713,13 @@ module Crystal
         return instance
       end
 
-      types = type_vars.map { |type_var| type_var as Type }
+      types = type_vars.map do |type_var|
+        unless type_var.is_a?(Type)
+          type_var.raise "argument to Tuple must be a type, not #{type_var}"
+        end
+        # TODO: this cast shouldn't be needed
+        type_var as Type
+      end
       instance = TupleInstanceType.new(program, types)
       generic_types[type_vars] = instance
       initialize_instance instance
@@ -2752,7 +2758,12 @@ module Crystal
         return instance
       end
 
-      types = type_vars.map { |type_var| type_var as Type }
+      types = type_vars.map do |type_var|
+        unless type_var.is_a?(Type)
+          type_var.raise "argument to Proc must be a type, not #{type_var}"
+        end
+        type_var
+      end
       instance = FunInstanceType.new(program, types)
       generic_types[type_vars] = instance
       initialize_instance instance
