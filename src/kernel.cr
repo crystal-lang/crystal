@@ -91,7 +91,7 @@ def exit(status = 0)
 end
 
 def abort(message, status = 1)
-  puts message
+  STDERR.puts message
   exit status
 end
 
