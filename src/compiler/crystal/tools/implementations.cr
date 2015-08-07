@@ -114,7 +114,7 @@ module Crystal
 
     private def contains_target(node)
       if loc_start = node.location
-        loc_end = node.end_location.not_nil!
+        loc_end = node.end_location || loc_start
         # if it is not between, it could be the case that node is the top level Expressions
         # in which the (start) location might be in one file and the end location in another.
         @target_location.between?(loc_start, loc_end) || loc_start.filename != loc_end.filename

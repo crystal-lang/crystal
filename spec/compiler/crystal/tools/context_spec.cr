@@ -15,7 +15,7 @@ def processed_context_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-def assert_context_includes(code, variable, var_types)
+def run_context_tool(code)
   cursor_location = nil
 
   code.lines.each_with_index do |line, line_number_0|
@@ -29,14 +29,25 @@ def assert_context_includes(code, variable, var_types)
   if cursor_location
     visitor, result = processed_context_visitor(code, cursor_location)
 
-    # puts result.inspect
-    # puts result.to_json(STDOUT)
-    result.contexts.should_not be_nil
-    result.contexts.not_nil!.map { |h| h[variable].to_s }.should eq(var_types)
-    # t.should_not be_nil
-    # t.not_nil!.to_s.should eq(var_type)
+    yield result
   else
     raise "no cursor found in spec"
+  end
+end
+
+def assert_context_keys(code, *variables)
+  run_context_tool(code) do |result|
+    result.contexts.should_not be_nil
+    result.contexts.not_nil!.each do |context|
+      context.keys.should eq(variables.to_a)
+    end
+  end
+end
+
+def assert_context_includes(code, variable, var_types)
+  run_context_tool(code) do |result|
+    result.contexts.should_not be_nil
+    result.contexts.not_nil!.map { |h| h[variable].to_s }.should eq(var_types)
   end
 end
 
@@ -122,5 +133,57 @@ describe "context" do
       puts f.lo‸rem
       1
     ), "f.lorem", ["Int64"]
+  end
+
+  it "does not includes temp variables" do
+    assert_context_keys %(
+      a = 0i64
+      ‸
+      1
+    ), "a"
+  end
+
+  it "does includes regex special variables" do
+    assert_context_keys %(
+      def foo
+        s = "string"
+        s =~ /s/
+        ‸
+        0
+      end
+
+      foo
+    ), "s", "$~"
+  end
+
+  it "does includes self on classes" do
+    assert_context_includes %(
+      class Foo
+        def foo
+          ‸
+          0
+        end
+      end
+
+      f = Foo.new
+      f.foo
+      0
+    ), "self", ["Foo"]
+  end
+
+  it "does includes args, instance vars, local variables and expressions on instance methods" do
+    assert_context_keys %(
+      class Foo
+        def foo(the_arg)
+          @ivar = 2
+          the_arg.fo‸o(self)
+          0
+        end
+      end
+
+      f = Foo.new
+      f.foo(Foo.new)
+      0
+    ), "self", "@ivar", "the_arg", "the_arg.foo(self)"
   end
 end

@@ -121,4 +121,10 @@ module Crystal
       yield @body
     end
   end
+
+  class Assign < ASTNode
+    def location_child_nodes
+      yield @value
+    end
+  end
 end
