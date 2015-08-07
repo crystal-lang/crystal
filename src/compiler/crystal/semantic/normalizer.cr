@@ -263,7 +263,7 @@ module Crystal
     def transform(node : Until)
       node = super
       not_exp = Call.new(node.cond, "!").at(node.cond)
-      While.new(not_exp, node.body, node.run_once).at(node)
+      While.new(not_exp, node.body).at(node)
     end
 
     # Evaluate the ifdef's flags.

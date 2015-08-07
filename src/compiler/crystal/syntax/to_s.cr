@@ -492,32 +492,13 @@ module Crystal
     end
 
     def visit_while_or_until(node, name)
-      if node.run_once
-        if node.body.is_a?(Expressions)
-          @str << keyword("begin")
-          newline
-          accept_with_indent(node.body)
-          append_indent
-          @str << keyword("end")
-          @str << " "
-          @str << keyword(name)
-          @str << " "
-        else
-          node.body.accept self
-          @str << " "
-          @str << keyword(name)
-          @str << " "
-        end
-        node.cond.accept self
-      else
-        @str << keyword(name)
-        @str << " "
-        node.cond.accept self
-        newline
-        accept_with_indent(node.body)
-        append_indent
-        @str << keyword("end")
-      end
+      @str << keyword(name)
+      @str << " "
+      node.cond.accept self
+      newline
+      accept_with_indent(node.body)
+      append_indent
+      @str << keyword("end")
       false
     end
 

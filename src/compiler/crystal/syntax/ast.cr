@@ -1244,9 +1244,8 @@ module Crystal
   class While < ASTNode
     property :cond
     property :body
-    property :run_once
 
-    def initialize(@cond, body = nil, @run_once = false)
+    def initialize(@cond, body = nil)
       @body = Expressions.from body
     end
 
@@ -1256,10 +1255,10 @@ module Crystal
     end
 
     def clone_without_location
-      While.new(@cond.clone, @body.clone, @run_once)
+      While.new(@cond.clone, @body.clone)
     end
 
-    def_equals_and_hash @cond, @body, @run_once
+    def_equals_and_hash @cond, @body
   end
 
   # Until expression.
@@ -1271,9 +1270,8 @@ module Crystal
   class Until < ASTNode
     property :cond
     property :body
-    property :run_once
 
-    def initialize(@cond, body = nil, @run_once = false)
+    def initialize(@cond, body = nil)
       @body = Expressions.from body
     end
 
@@ -1283,10 +1281,10 @@ module Crystal
     end
 
     def clone_without_location
-      Until.new(@cond.clone, @body.clone, @run_once)
+      Until.new(@cond.clone, @body.clone)
     end
 
-    def_equals_and_hash @cond, @body, @run_once
+    def_equals_and_hash @cond, @body
   end
 
   class Generic < ASTNode

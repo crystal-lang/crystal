@@ -213,7 +213,10 @@ describe "Lexer string" do
     state = token.delimiter_state
 
     expect_raises Crystal::SyntaxException, /unterminated heredoc/ do
-      token = lexer.next_string_token state until token.type == :DELIMITER_END
+      loop do
+        token = lexer.next_string_token state
+        break if token.type == :DELIMITER_END
+      end
     end
   end
 

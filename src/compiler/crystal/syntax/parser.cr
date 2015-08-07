@@ -62,10 +62,11 @@ module Crystal
       exps = [] of ASTNode
       exps.push exp
 
-      begin
+      loop do
         exps << parse_multi_assign
         skip_statement_end
-      end until is_end_token
+        break if is_end_token
+      end
 
       Expressions.from(exps)
     end
@@ -192,9 +193,9 @@ module Crystal
           when :unless
             atomic = parse_expression_suffix(location) { |exp| Unless.new(exp, atomic) }
           when :while
-            atomic = parse_expression_suffix(location) { |exp| While.new(exp, atomic, true) }
+            raise "trailing `while` is not supported", @token
           when :until
-            atomic = parse_expression_suffix(location) { |exp| Until.new(exp, atomic, true) }
+            raise "trailing `until` is not supported", @token
           when :rescue
             next_token_skip_space
             rescue_body = parse_expression

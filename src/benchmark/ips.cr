@@ -82,14 +82,15 @@ module Benchmark
           measurements = [] of TimeSpan
           target = Time.now + @calculation_time
 
-
-          begin
+          loop do
             before = Time.now
             item.call_for_100ms
             after = Time.now
 
             measurements << after-before
-          end while Time.now < target
+
+            break if Time.now >= target
+          end
 
           final_time = Time.now
 

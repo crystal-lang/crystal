@@ -566,7 +566,7 @@ module Crystal
         context.break_phi = nil
         context.next_phi = nil
 
-        br node.run_once ? body_block : while_block
+        br while_block
 
         position_at_end while_block
 
