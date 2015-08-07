@@ -1,5 +1,3 @@
-require "./time"
-
 lib LibC
   enum FCNTL
     F_GETFL = 3

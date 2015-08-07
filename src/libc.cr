@@ -50,4 +50,23 @@ lib LibC
 
   fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : SSizeT) : Void*
   fun munmap(addr : Void*, len : SizeT)
+
+
+  # used by [event, io, time]
+  struct TimeSpec
+    tv_sec  : LibC::TimeT
+    tv_nsec : LibC::TimeT
+  end
+
+  ifdef darwin
+    alias UsecT = Int32
+  else
+    alias UsecT = Long
+  end
+
+  # used by [file/stat, time]
+  struct TimeVal
+    tv_sec  : LibC::TimeT
+    tv_usec : LibC::UsecT
+  end
 end
