@@ -123,8 +123,8 @@ class Crystal::CodeGenVisitor
             when "*" then builder.mul p1, p2
             when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
             when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
-            when "<<" then builder.shl(p1, p2)
-            when ">>" then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
+            when "<<", "unsafe_shl" then builder.shl(p1, p2)
+            when ">>", "unsafe_shr" then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
             when "|" then or(p1, p2)
             when "&" then and(p1, p2)
             when "^" then builder.xor(p1, p2)

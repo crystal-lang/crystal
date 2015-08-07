@@ -30,7 +30,7 @@ module Crystal
       # The `/` operator is only defined for int vs float combinations.
       # The `/` operator for int vs int is defined in Crystal on top
       # of unsafe div.
-      # The same goes with the `%` operator.
+      # The same goes with the `%`, `>>` and `<<` operators.
 
       %w(+ - *).each do |op|
         nums.product(nums) do |num1, num2|
@@ -54,7 +54,7 @@ module Crystal
         char.add_def Def.new(op, [Arg.new("other", type: char)], binary)
       end
 
-      %w(<< >> | & ^ unsafe_div unsafe_mod).each do |op|
+      %w(<< >> unsafe_shl unsafe_shr | & ^ unsafe_div unsafe_mod).each do |op|
         ints.each do |another_int|
           int.add_def Def.new(op, [Arg.new("other", type: another_int)], binary)
         end
