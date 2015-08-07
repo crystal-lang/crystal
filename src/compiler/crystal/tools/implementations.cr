@@ -12,6 +12,20 @@ module Crystal
 
     def initialize(@status, @message)
     end
+
+    def to_text(io)
+      io.puts message
+      implementations.try do |arr|
+        arr.each do |impl|
+          io.puts "#{impl.filename}:#{impl.line}:#{impl.column}"
+          expanded = impl.expands
+          while expanded
+            io.puts " ~> macro #{expanded.macro}: #{expanded.filename}:#{expanded.line}:#{expanded.column}"
+            expanded = expanded.expands
+          end
+        end
+      end
+    end
   end
 
   # Contains information regarding where an implementation is defined.

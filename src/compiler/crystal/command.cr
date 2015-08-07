@@ -19,6 +19,7 @@ Command:
     docs                     generate documentation
     eval                     eval code
     hierarchy                show type hierarchy
+    context                  show context for given location
     implementations          show implementations for given call in location
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
@@ -60,9 +61,12 @@ USAGE
         when "hierarchy".starts_with?(command)
           options.shift
           hierarchy options
+        when "context".starts_with?(command)
+          options.shift
+          context options
         when "implementations".starts_with?(command)
           options.shift
-          implementations command, options
+          implementations options
         when "run".starts_with?(command)
           options.shift
           run_command options
@@ -142,7 +146,19 @@ USAGE
     Crystal.print_hierarchy result.program, config.hierarchy_exp
   end
 
-  private def self.implementations(command, options)
+  private def self.implementations(options)
+    cursor_command("implementations", options) do |location, config, result|
+      result = ImplementationsVisitor.new(location).process(result)
+    end
+  end
+
+  private def self.context(options)
+    cursor_command("context", options) do |location, config, result|
+      result = ContextVisitor.new(location).process(result)
+    end
+  end
+
+  private def self.cursor_command(command, options)
     cursor_given = false
     file = ""
     line = ""
@@ -169,28 +185,17 @@ USAGE
       exit 1
     end
 
-    config, result = compile_no_build "implementations", options
+    config, result = compile_no_build command, options
 
     file = File.expand_path(file)
-    visitor = ImplementationsVisitor.new(Location.new(line.to_i, col.to_i, file))
 
-    result = visitor.process(result)
+    result = yield Location.new(line.to_i, col.to_i, file), config, result
 
     case format
     when "json"
       result.to_json(STDOUT)
     else
-      puts result.message
-      result.implementations.try do |arr|
-        arr.each do |impl|
-          puts "#{impl.filename}:#{impl.line}:#{impl.column}"
-          expanded = impl.expands
-          while expanded
-            puts " ~> macro #{expanded.macro}: #{expanded.filename}:#{expanded.line}:#{expanded.column}"
-            expanded = expanded.expands
-          end
-        end
-      end
+      result.to_text(STDOUT)
     end
   end
 

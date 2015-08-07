@@ -3,6 +3,12 @@ require "../compiler"
 require "json"
 
 module Crystal
+  class Type
+    def to_json(io)
+      name.to_json(io)
+    end
+  end
+  
   class ContextResult
     json_mapping({
       status:           {type: String},
@@ -11,6 +17,10 @@ module Crystal
     })
 
     def initialize(@status, @message)
+    end
+
+    def to_text(io)
+      to_json(io)
     end
   end
 
