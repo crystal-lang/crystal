@@ -1,20 +1,4 @@
 lib LibC
-  struct TimeSpec
-    tv_sec  : LibC::TimeT
-    tv_nsec : LibC::TimeT
-  end
-
-  ifdef darwin
-    alias UsecT = Int32
-  else
-    alias UsecT = Long
-  end
-
-  struct TimeVal
-    tv_sec  : LibC::TimeT
-    tv_usec : LibC::UsecT
-  end
-
   struct TimeZone
     tz_minuteswest : Int32
     tz_dsttime     : Int32
