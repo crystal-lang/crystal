@@ -1330,9 +1330,16 @@ describe "String" do
       end
     end
 
-    it "leaves the string untouched when not a valid argument" do
-      res = "change %{this}" % "this"
-      res.should eq "change %{this}"
+    it "raises if expecting hash but not given" do
+      expect_raises(ArgumentError, "one hash required") do
+        "change %{this}" % "this"
+      end
+    end
+
+    it "raises on unbalanced curly" do
+      expect_raises(ArgumentError, "malformed name - unmatched parenthesis") do
+        "change %{this" % {"this": 1}
+      end
     end
   end
 end

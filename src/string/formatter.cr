@@ -38,6 +38,8 @@ struct String::Formatter
     key = String.build do |io|
       loop do
         case current_char
+        when '\0'
+          raise ArgumentError.new "malformed name - unmatched parenthesis"
         when '}'
           break
         else
@@ -49,7 +51,7 @@ struct String::Formatter
     if (arg = current_arg).is_a?(Hash)
       @io << arg[key]
     else
-      @io << "%{#{key}}"
+      raise ArgumentError.new "one hash required"
     end
   end
 
