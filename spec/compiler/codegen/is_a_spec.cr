@@ -508,4 +508,15 @@ describe "Codegen: is_a?" do
       A.new.is_a?(A | B) && B.new.is_a?(A | B)
       )).to_b.should be_true
   end
+
+  it "doesn't skip assignment when used in combination with .is_a? (#1121)" do
+    run(%(
+      a = 123
+      if (b = a).is_a?(Int32)
+        b
+      else
+        a
+      end
+      )).to_i.should eq(123)
+  end
 end

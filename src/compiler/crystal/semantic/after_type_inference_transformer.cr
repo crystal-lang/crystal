@@ -564,15 +564,36 @@ module Crystal
         filtered_type = yield obj_type
 
         if obj_type == filtered_type
-          return true_literal
+          if var?(obj)
+            return true_literal
+          else
+            exps = Expressions.new([obj, true_literal] of ASTNode)
+            exps.type = @program.bool
+            return exps
+          end
         end
 
         unless filtered_type
-          return false_literal
+          if var?(obj)
+            return false_literal
+          else
+            exps = Expressions.new([obj, false_literal] of ASTNode)
+            exps.type = @program.bool
+            return exps
+          end
         end
       end
 
       node
+    end
+
+    def var?(node)
+      case node
+      when Var, InstanceVar, ClassVar, Global
+        true
+      else
+        false
+      end
     end
 
     def transform(node : Cast)
