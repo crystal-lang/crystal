@@ -22,11 +22,35 @@ struct String::Formatter
   end
 
   private def consume_percent
-    next_char
-    flags = consume_flags
-    flags = consume_width(flags)
-    flags = consume_precision(flags)
-    consume_type(flags)
+    case next_char
+    when '{'
+      next_char
+      consume_substitution
+    else
+      flags = consume_flags
+      flags = consume_width(flags)
+      flags = consume_precision(flags)
+      consume_type(flags)
+    end
+  end
+
+  private def consume_substitution
+    key = String.build do |io|
+      loop do
+        case current_char
+        when '}'
+          break
+        else
+          io << current_char
+        end
+        next_char
+      end
+    end
+    if (arg = current_arg).is_a?(Hash)
+      @io << arg[key]
+    else
+      @io << "%{#{key}}"
+    end
   end
 
   private def consume_flags

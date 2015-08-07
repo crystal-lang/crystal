@@ -1312,4 +1312,27 @@ describe "String" do
   it "gets length of \0 string" do
     "\0\0".length.should eq(2)
   end
+
+  context "%" do
+    it "substitutes one placeholder" do
+      res = "change %{this}" % { "this": "nothing" }
+      res.should eq "change nothing"
+    end
+
+    it "substitutes multiple placeholder" do
+      res = "change %{this} and %{more}" % { "this": "nothing", "more": "something" }
+      res.should eq "change nothing and something"
+    end
+
+    it "throws an error when the key is not found" do
+      expect_raises KeyError do
+        "change %{this}" % { "that": "wrong key" }
+      end
+    end
+
+    it "leaves the string untouched when not a valid argument" do
+      res = "change %{this}" % "this"
+      res.should eq "change %{this}"
+    end
+  end
 end
