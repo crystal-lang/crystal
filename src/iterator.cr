@@ -474,7 +474,7 @@ module Iterator(T)
 
     def rewind
       @iterator.rewind
-      @values = Array(T).new(@n)
+      @values.clear
       self
     end
   end
