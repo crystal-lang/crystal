@@ -187,35 +187,39 @@ module Iterator(T)
     end
   end
 
+  module BasicRewind
+    def rewind
+      @iterator.rewind
+      self
+    end
+  end
+
   # :nodoc:
   struct Map(I, T, U)
     include Iterator(U)
+    include BasicRewind
 
-    def initialize(@iter : Iterator(T), @func : T -> U)
+    def initialize(@iterator : Iterator(T), @func : T -> U)
     end
 
     def next
-      value = @iter.next
+      value = @iterator.next
       return stop if value.is_a?(Stop)
       @func.call(value)
-    end
-
-    def rewind
-      @iter.rewind
-      self
     end
   end
 
   # :nodoc:
   struct Select(I, T, B)
     include Iterator(T)
+    include BasicRewind
 
-    def initialize(@iter : Iterator(T), @func : T -> B)
+    def initialize(@iterator : Iterator(T), @func : T -> B)
     end
 
     def next
       while true
-        value = @iter.next
+        value = @iterator.next
         return stop if value.is_a?(Stop)
 
         if @func.call(value)
@@ -223,23 +227,19 @@ module Iterator(T)
         end
       end
     end
-
-    def rewind
-      @iter.rewind
-      self
-    end
   end
 
   # :nodoc:
   struct Reject(I, T, B)
     include Iterator(T)
+    include BasicRewind
 
-    def initialize(@iter : Iterator(T), @func : T -> B)
+    def initialize(@iterator : Iterator(T), @func : T -> B)
     end
 
     def next
       while true
-        value = @iter.next
+        value = @iterator.next
         return stop if value.is_a?(Stop)
 
         unless @func.call(value)
@@ -247,24 +247,20 @@ module Iterator(T)
         end
       end
     end
-
-    def rewind
-      @iter.rewind
-      self
-    end
   end
 
   # :nodoc:
   class Take(I, T)
     include Iterator(T)
+    include BasicRewind
 
-    def initialize(@iter : Iterator(T), @n : Int)
+    def initialize(@iterator : Iterator(T), @n : Int)
       @original = @n
     end
 
     def next
       if @n > 0
-        value = @iter.next
+        value = @iterator.next
         return stop if value.is_a?(Stop)
 
         @n -= 1
@@ -275,32 +271,31 @@ module Iterator(T)
     end
 
     def rewind
-      @iter.rewind
       @n = @original
-      self
+      super
     end
   end
 
   # :nodoc:
   class Skip(I, T)
     include Iterator(T)
+    include BasicRewind
 
-    def initialize(@iter : Iterator(T), @n : Int)
+    def initialize(@iterator : Iterator(T), @n : Int)
       @original = @n
     end
 
     def next
       while @n > 0
-        @iter.next
+        @iterator.next
         @n -= 1
       end
-      @iter.next
+      @iterator.next
     end
 
     def rewind
-      @iter.rewind
       @n = @original
-      self
+      super
     end
   end
 
@@ -331,6 +326,7 @@ module Iterator(T)
   # :nodoc:
   struct Cycle(I, T)
     include Iterator(T)
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T))
     end
@@ -344,16 +340,12 @@ module Iterator(T)
         value
       end
     end
-
-    def rewind
-      @iterator.rewind
-      self
-    end
   end
 
   # :nodoc:
   class CycleN(I, T, N)
     include Iterator(T)
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T), @n : N)
       @count = 0
@@ -373,15 +365,15 @@ module Iterator(T)
     end
 
     def rewind
-      @iterator.rewind
       @count = 0
-      self
+      super
     end
   end
 
   # :nodoc:
   class WithIndex(I, T)
     include Iterator({T, Int32})
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T), @offset, @index = offset)
     end
@@ -396,15 +388,15 @@ module Iterator(T)
     end
 
     def rewind
-      @iterator.rewind
       @index = @offset
-      self
+      super
     end
   end
 
   # :nodoc:
   struct WithObject(I, T, O)
     include Iterator({T, O})
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T), @object : O)
     end
@@ -415,16 +407,12 @@ module Iterator(T)
 
       {v, @object}
     end
-
-    def rewind
-      @iterator.rewind
-      self
-    end
   end
 
   # :nodoc:
   struct Slice(I, T)
     include Iterator(Array(T))
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T), @n)
     end
@@ -446,16 +434,12 @@ module Iterator(T)
         values
       end
     end
-
-    def rewind
-      @iterator.rewind
-      self
-    end
   end
 
   # :nodoc:
   struct Cons(I, T)
     include Iterator(Array(T))
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T), @n)
       @values = Array(T).new(@n)
@@ -473,15 +457,15 @@ module Iterator(T)
     end
 
     def rewind
-      @iterator.rewind
       @values = Array(T).new(@n)
-      self
+      super
     end
   end
 
   # :nodoc:
   struct Uniq(I, T, U)
     include Iterator(T)
+    include BasicRewind
 
     def initialize(@iterator : Iterator(T), @func : T -> U)
       @hash = {} of T => Bool
@@ -504,8 +488,8 @@ module Iterator(T)
     end
 
     def rewind
-      @iterator.rewind
       @hash.clear
+      super
     end
   end
 
@@ -568,12 +552,13 @@ module Iterator(T)
   # :nodoc:
   struct Tap(I, T)
     include Iterator(T)
+    include BasicRewind
 
-    def initialize(@iter, @proc)
+    def initialize(@iterator, @proc)
     end
 
     def next
-      value = @iter.next
+      value = @iterator.next
       if value.is_a?(Stop)
         stop
       else
@@ -581,11 +566,5 @@ module Iterator(T)
         value
       end
     end
-
-    def rewind
-      @iter.rewind
-      self
-    end
   end
 end
-
