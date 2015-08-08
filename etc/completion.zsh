@@ -26,9 +26,11 @@ local -a common_args; common_args=(
   '(--prelude)--prelude[use given file as prelude]'
 )
 
+local -a programfile; programfile='*:Crystal File:_files -g "*.cr(.)"'
+
 # TODO make 'emit' allow completion with more than one
 local -a shared_run_build; shared_run_build=(
-  '*:Crystal File:_files -g "*.cr(.)"' \
+  $programfile \
   $common_args \
   '(--ll)-ll[Dump ll to .crystal directory]' \
   '(--link-flags)--link-flags[additional flags to pass to the linker]:' \
@@ -67,6 +69,7 @@ _crystal-browser() {
 
 _crystal-hierarchy() {
   _arguments \
+    $programfile \
     $common_args \
     && ret=0
 }
