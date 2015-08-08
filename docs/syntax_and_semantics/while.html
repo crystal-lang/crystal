@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.6.5" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.6.5" data-basepath=".." data-revision="Sat Aug 08 2015 15:22:32 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1933,16 +1933,7 @@
   do_this
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>In the above form, the condition is first tested and, if <em>truthy</em>, the body is executed. That is, the body might never be executed.</p>
-<p>To execute the body at least once and then continue executing it while the condition is <em>truthy</em>, write the while as a suffix:</p>
-<pre><code class="lang-ruby">do_this <span class="hljs-keyword">while</span> some_condition
-</code></pre>
-<p>If you need to execute multiple expressions, group them between <code>begin</code> and <code>end</code>:</p>
-<pre><code class="lang-ruby"><span class="hljs-keyword">begin</span>
-  do_this
-  do_that
-<span class="hljs-keyword">end</span> <span class="hljs-keyword">while</span> some_condition
-</code></pre>
+<p>The condition is first tested and, if <em>truthy</em>, the body is executed. That is, the body might never be executed.</p>
 <p>A <code>while</code>&apos;s type is always <code>Nil</code>.</p>
 <p>Similar to an <code>if</code>, if a <code>while</code>&apos;s condition is a variable, the variable is guaranteed to not be <code>nil</code> inside the body. If the condition is an <code>var.is_a?(Type)</code> test, <code>var</code> is guaranteed to be of type Type inside the body. And if the condition is a <code>var.responds_to?(:method)</code>, <code>var</code> is guaranteed to be of a type that responds to that method.</p>
 <p>The type of a variable after a <code>while</code> depends on the type it had before the <code>while</code> and the type it had before leaving the <code>while</code>&apos;s body:</p>
@@ -1954,6 +1945,19 @@
   a.length
 <span class="hljs-keyword">end</span>
 <span class="hljs-comment"># a :: Int32 | String</span>
+</code></pre>
+<h2 id="checking-the-condition-at-the-end-of-a-loop">Checking the condition at the end of a loop</h2>
+<p>If you need to execute the body at least once and then check for a breaking condition, you can do this:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">while</span> <span class="hljs-keyword">true</span>
+  do_something
+  <span class="hljs-keyword">break</span> <span class="hljs-keyword">if</span> some_condition
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Or use <code>loop</code>, found in the standard library:</p>
+<pre><code class="lang-ruby">loop <span class="hljs-keyword">do</span>
+  do_something
+  <span class="hljs-keyword">break</span> <span class="hljs-keyword">if</span> some_condition
+<span class="hljs-keyword">end</span>
 </code></pre>
 
                     
