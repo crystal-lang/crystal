@@ -11,7 +11,7 @@ describe Process do
     end
 
     it "returns status 127 if command could not be executed" do
-      Process.run("foobarbaz", output: true).exit.should eq(127)
+      Process.run("foobarbaz", output: nil).exit.should eq(127)
     end
 
     it "includes PID in process status " do
@@ -32,23 +32,45 @@ describe Process do
     end
 
     it "gets output as string" do
-      Process.run("/bin/sh", {"-c", "echo hello"}, output: true).output.should eq("hello\n")
+      Process.run("/bin/sh", {"-c", "echo hello"}, output: nil).output.to_s.should eq("hello\n")
     end
 
     it "send input from string" do
-      Process.run("/bin/cat", input: "hello", output: true).output.should eq("hello")
+      Process.run("/bin/cat", input: StringIO.new("hello"), output: nil).output.to_s.should eq("hello")
     end
 
     it "send input from IO" do
       File.open(__FILE__, "r") do |file|
-        Process.run("/bin/cat", input: file, output: true).output.should eq(File.read(__FILE__))
+        Process.run("/bin/cat", input: file, output: nil).output.to_s.should eq(File.read(__FILE__))
       end
     end
 
     it "send output to IO" do
       io = StringIO.new
-      Process.run("/bin/cat", input: "hello", output: io).output.should be_nil
+      Process.run("/bin/cat", input: StringIO.new("hello"), output: io).output.to_s.should eq("hello")
       io.to_s.should eq("hello")
+    end
+
+    it "gets status code from successful process" do
+      system("true").should eq(true)
+    end
+
+    it "gets status code from failed process" do
+      system("false").should eq(false)
+    end
+
+    it "gets output as string" do
+      `echo hello`.should eq("hello\n")
+    end
+  end
+
+  describe "popen" do
+    it "test alive?" do
+      status = Process.popen("sleep", ["60"])
+      status.alive?.should be_true
+      status.kill
+      status.close
+      status.alive?.should be_false
     end
   end
 
@@ -59,14 +81,14 @@ describe Process do
     end
 
     it "kills many process" do
-      pid1 = fork { loop {} }
-      pid2 = fork { loop {} }
+      pid1 = fork { loop { sleep 60 } }
+      pid2 = fork { loop { sleep 60 } }
       Process.kill(Signal::KILL, pid1, pid2).should eq(0)
     end
   end
 
   it "gets the pgid of a process id" do
-    pid = fork { loop {} }
+    pid = fork { loop { sleep 60 } }
     Process.getpgid(pid).should be_a(Int32)
     Process.kill(Signal::KILL, pid)
   end
