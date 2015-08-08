@@ -13,4 +13,4 @@ while !some_condition
 end
 ```
 
-An `until` can also be used in its suffix form, causing the body to be executed at least once. `break` and `next` can also be used inside an `until`.
+`break` and `next` can also be used inside an `until`.

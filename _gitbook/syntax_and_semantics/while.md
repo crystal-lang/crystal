@@ -8,22 +8,7 @@ while some_condition
 end
 ```
 
-In the above form, the condition is first tested and, if *truthy*, the body is executed. That is, the body might never be executed.
-
-To execute the body at least once and then continue executing it while the condition is *truthy*, write the while as a suffix:
-
-```ruby
-do_this while some_condition
-```
-
-If you need to execute multiple expressions, group them between `begin` and `end`:
-
-```ruby
-begin
-  do_this
-  do_that
-end while some_condition
-```
+The condition is first tested and, if *truthy*, the body is executed. That is, the body might never be executed.
 
 A `while`'s type is always `Nil`.
 
@@ -40,4 +25,24 @@ while some_condition
   a.length
 end
 # a :: Int32 | String
+```
+
+## Checking the condition at the end of a loop
+
+If you need to execute the body at least once and then check for a breaking condition, you can do this:
+
+```ruby
+while true
+  do_something
+  break if some_condition
+end
+```
+
+Or use `loop`, found in the standard library:
+
+```ruby
+loop do
+  do_something
+  break if some_condition
+end
 ```
