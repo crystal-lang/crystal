@@ -20,3 +20,5 @@ The differences between a struct and a class are:
 A struct can inherit from other structs and can also includes modules. A struct can be generic, just like a class.
 
 A struct is mostly used for performance reasons to avoid lots of small memory allocations when passing small copies might be more efficient.
+
+So how do you choose between a struct and a class? The rule of thumb is that if no instance variable is ever reassigned, i.e. your type is immutable, you can use a struct, otherwise use a class.
