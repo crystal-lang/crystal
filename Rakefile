@@ -64,7 +64,15 @@ end
 
 desc 'Build docs'
 task :docs do
+  unless system "which gitbook"
+    abort "ERROR: can't find gitbook on your PATH, please install gitbook-cli:\n\n" \
+          "gem install bundler # if you don't have bundler already\n" \
+          "bundle\n" \
+          "npm install -g gitbook-cli"
+  end
+
   system "gitbook build ./_gitbook --gitbook=2.0.2"
+
   system "rm -rf ./docs"
   system "mv ./_gitbook/_book ./docs"
   tidy_docs
