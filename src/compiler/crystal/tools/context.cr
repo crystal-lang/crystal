@@ -5,10 +5,10 @@ require "json"
 module Crystal
   class Type
     def to_json(io)
-      name.to_json(io)
+      self.to_s.to_json(io)
     end
   end
-  
+
   class ContextResult
     json_mapping({
       status:           {type: String},

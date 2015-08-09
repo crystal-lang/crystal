@@ -186,4 +186,16 @@ describe "context" do
       0
     ), "self", "@ivar", "the_arg", "the_arg.foo(self)"
   end
+
+  it "can handle union types" do
+    assert_context_includes %(
+    a = if rand() > 0
+      1i64
+    else
+      "foo"
+    end
+    ‸
+    0
+    ), "a", ["(String | Int64)"]
+  end
 end
