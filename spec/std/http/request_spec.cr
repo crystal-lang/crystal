@@ -35,6 +35,13 @@ module HTTP
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
+    it "parses empty header" do
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).not_nil!
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
+    end
+
     it "headers are case insensitive" do
       request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
       headers = request.headers.not_nil!
