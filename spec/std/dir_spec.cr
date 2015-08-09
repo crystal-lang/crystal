@@ -114,6 +114,77 @@ describe "Dir" do
     end
   end
 
+
+# Temporary workaround for __FILE__ and __DIR__ not working in macros
+DIR__ = __DIR__
+FILE__ = __FILE__
+
+{% if HAVE_OPENAT %}
+  describe "openat" do
+    it "tests exists? (at) on existing file" do
+      dir = Dir.new(DIR__)
+      dir.exists?(File.basename(FILE__)).should be_true
+    end
+
+    it "tests mkdirat and rmdirat with a new path" do
+      dir = Dir.new("/tmp")
+      path = "crystal_mkdir_test_#{Process.pid}/"
+      dir.mkdir(path, 0o700).should eq(nil)
+      dir.exists?(path).should be_true
+      dir.rmdir(path).should eq(nil)
+      dir.exists?(path).should be_false
+    end
+
+    it "tests mkdirat with an existing path" do
+      dir = Dir.new(".")
+      expect_raises Errno do
+        dir.mkdir(".", 0o700)
+      end
+    end
+
+    it "tests rmdirat with an nonexistent path" do
+      dir = Dir.new("/tmp")
+      expect_raises Errno do
+        dir.rmdir("crystal_mkdir_test_#{Process.pid}/")
+      end
+    end
+
+    it "tests rmdirat with a path that cannot be removed" do
+      dir = Dir.new(DIR__)
+      expect_raises Errno do
+        dir.rmdir(DIR__)
+      end
+    end
+
+    it "tests dir.open with an existing path and checks stat" do
+      dir = Dir.new(File.dirname(DIR__))
+      dir2 = dir.open(File.basename(DIR__))
+
+      File.stat(FILE__).should eq(dir2.stat(File.basename(FILE__)))
+      File.lstat(FILE__).should eq(dir2.lstat(File.basename(FILE__)))
+    end
+
+    it "tests dir.open_file" do
+      dir = Dir.new(DIR__)
+      file = dir.open_file(File.basename(FILE__))
+
+      file.stat.should eq(File.stat(FILE__))
+      file.read.should eq(File.read(FILE__))
+    end
+
+    it "renames a file" do
+      filename = "temp1.txt"
+      filename2 = "temp2.txt"
+      dir = Dir.new(DIR__).open("data")
+      dir.open_file(filename, "w") { |f| f.puts "hello" }
+      dir.rename(filename, filename2)
+      dir.exists?(filename).should be_false
+      dir.exists?(filename2).should be_true
+      dir.delete(filename2)
+    end
+  end
+{% end %}
+
   it "opens with new" do
     filenames = [] of String
 

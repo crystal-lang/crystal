@@ -22,15 +22,29 @@ class File < FileDescriptorIO
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
   def initialize(filename, mode = "r")
+    fd = do_open(nil, filename, mode)
+    super(fd, blocking: true)
+  end
+
+  def initialize(dirfd : Int32, filename, mode = "r")
+    fd = do_open(dirfd, filename, mode)
+    super(fd, blocking: true)
+  end
+
+  private def do_open(dirfd : Int32?, filename, mode = "r")
     oflag = open_flag(mode)
 
-    fd = LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+    fd = if dirfd
+      LibC.openat(dirfd, filename, oflag, DEFAULT_CREATE_MODE)
+    else
+      LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+    end
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
 
     @path = filename
-    super(fd, blocking: true)
+    fd
   end
 
   protected def open_flag(mode)
