@@ -99,18 +99,33 @@ module Iterator(T)
     self
   end
 
+  # Returns a new array with the results of running block once for
+  # every element in enum.
+  #
+  # ```
+  # [1, 2, 3].map &.*(2) # => [2, 4, 6]
+  # ```
   def map(&func : T -> U)
     Map(typeof(self), T, U).new(self, func)
   end
 
+  # Returns an array containing all elements of enum for which the
+  # given block returns a true value.
   def select(&func : T -> U)
     Select(typeof(self), T, U).new(self, func)
   end
 
+  # Returns an array for all elements of enum for which the given
+  # block returns false.
   def reject(&func : T -> U)
     Reject(typeof(self), T, U).new(self, func)
   end
 
+  # Returns first `n` elements from enum.
+  #
+  # ```
+  # ["a", "b", "c"].take 2 # => ["a", "b"]
+  # ```
   def take(n)
     Take(typeof(self), T).new(self, n)
   end
@@ -119,22 +134,60 @@ module Iterator(T)
     Skip(typeof(self), T).new(self, n)
   end
 
+  # Takes one element from enum and merges corresponding elements from
+  # each args. This generates a sequence of n-element arrays with tuples,
+  # where n is one more than the count of arguments:
+  #
+  # ```
+  # a = [ 4, 5, 6 ]
+  # b = [ 7, 8, 9 ]
+  #
+  # a.zip(b) # => [{4, 7}, {5, 8}, {6, 9}]
+  # ```
   def zip(other : Iterator(U))
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
 
+  # Calls block for each element of enum repeatedly forever.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.cycle { |x| puts x }  # print, a, b, c, a, b, c,.. forever.
+  # ```
   def cycle
     Cycle(typeof(self), T).new(self)
   end
 
+  # Calls block for each element of enum repeatedly n times.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.cycle(2) { |x| puts x }  # print, a, b, c, a, b, c.
+  # ```
   def cycle(n : Int)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
 
+  # Returns uniq elements from enum.
+  #
+  # ```
+  # ["a", "b", "c"].uniq      # => ["a", "b", "c"]
+  # ["a", "b", "c", "c"].uniq # => ["a", "b", "c"]
+  # ```
   def uniq
     uniq &.itself
   end
 
+  # Returns uniq elements from enum. It will use the return value of
+  # the block for comparison.
+  #
+  # ```
+  # [["a", "a"], ["b", "a"], ["c", "a"]].uniq &.first
+  # # => [["a", "a"], ["b", "a"], ["c", "a"]]
+  #
+  # [["a", "a"], ["b", "a"], ["c", "a"]].uniq &.last
+  # # => [["a", "a"]]
+  # ```
   def uniq(&func : T -> U)
     Uniq(typeof(self), T, U).new(self, func)
   end
@@ -153,6 +206,14 @@ module Iterator(T)
     Slice(typeof(self), T).new(self, n)
   end
 
+  # Iterates the given block for each slice of `n` elements.
+  #
+  # ```
+  # (1..9).each_slice(3) { |a| p a }
+  # # => [1, 2, 3]
+  # # => [4, 5, 6]
+  # # => [7, 8, 9]
+  # ```
   def each_slice(n)
     slice(n)
   end
@@ -179,6 +240,13 @@ module Iterator(T)
     SingletonProc(T).new(block)
   end
 
+  # Calls the given block once for each element, passing that element
+  # as a parameter.
+  #
+  # ```
+  # a = [ "a", "b", "c" ]
+  # a.each {|x| print x, " " } # => "a b c"
+  # ```
   def each
     while true
       value = self.next
