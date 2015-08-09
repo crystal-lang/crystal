@@ -50,15 +50,7 @@ task :less do
   puts 'Parsed main.sass'
 end
 
-desc 'Build docs'
-task :docs do
-  system "gitbook build ./_gitbook --gitbook=2.0.2"
-  system "rm -rf ./docs"
-  system "mv ./_gitbook/_book ./docs"
-end
-
-desc 'Tidy up generated gitbook files to avoid superfluous changes'
-task :'docs:tidy' do
+def tidy_docs
   Dir.glob('docs/**/*.html') do |path|
     diff = `git diff --numstat #{path}`
     if diff.start_with?("1\t1\t")
@@ -68,6 +60,19 @@ task :'docs:tidy' do
       end
     end
   end
+end
+
+desc 'Build docs'
+task :docs do
+  system "gitbook build ./_gitbook --gitbook=2.0.2"
+  system "rm -rf ./docs"
+  system "mv ./_gitbook/_book ./docs"
+  tidy_docs
+end
+
+desc 'Tidy up generated gitbook files to avoid superfluous changes'
+task :'docs:tidy' do
+  tidy_docs
 end
 
 desc 'Parse all haml items'
