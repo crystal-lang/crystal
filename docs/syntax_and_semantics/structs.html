@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.7.6" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.7.6" data-basepath=".." data-revision="Sun Aug 09 2015 16:30:53 GMT+0200 (CEST)">
     
 
 <div class="book-summary">
@@ -1945,6 +1945,7 @@
 </ul>
 <p>A struct can inherit from other structs and can also includes modules. A struct can be generic, just like a class.</p>
 <p>A struct is mostly used for performance reasons to avoid lots of small memory allocations when passing small copies might be more efficient.</p>
+<p>So how do you choose between a struct and a class? The rule of thumb is that if no instance variable is ever reassigned, i.e. your type is immutable, you can use a struct, otherwise use a class.</p>
 
                     
                     </section>
