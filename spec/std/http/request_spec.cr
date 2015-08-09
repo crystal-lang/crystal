@@ -5,12 +5,12 @@ module HTTP
   describe Request do
     it "serialize GET" do
       headers = HTTP::Headers.new
-      headers["Host"] = "host.domain.com"
+      headers["Host"] = "host.example.org"
       request = Request.new "GET", "/", headers
 
       io = StringIO.new
       request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
     end
 
     it "serialize POST (with body)" do
@@ -21,25 +21,26 @@ module HTTP
     end
 
     it "parses GET" do
-      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")).not_nil!
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
       request.method.should eq("GET")
       request.path.should eq("/")
-      request.headers.should eq({"Host" => "host.domain.com"})
+      request.headers.should eq({"Host" => "host.example.org"})
     end
 
+
     it "parses GET without \\r" do
-      request = Request.from_io(StringIO.new("GET / HTTP/1.1\nHost: host.domain.com\n\n")).not_nil!
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).not_nil!
       request.method.should eq("GET")
       request.path.should eq("/")
-      request.headers.should eq({"Host" => "host.domain.com"})
+      request.headers.should eq({"Host" => "host.example.org"})
     end
 
     it "headers are case insensitive" do
-      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")).not_nil!
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
       headers = request.headers.not_nil!
-      headers["HOST"].should eq("host.domain.com")
-      headers["host"].should eq("host.domain.com")
-      headers["Host"].should eq("host.domain.com")
+      headers["HOST"].should eq("host.example.org")
+      headers["host"].should eq("host.example.org")
+      headers["Host"].should eq("host.example.org")
     end
 
     it "parses POST (with body)" do

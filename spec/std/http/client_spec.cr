@@ -20,7 +20,7 @@ module HTTP
 
     it "raises if URI is missing scheme" do
       expect_raises(ArgumentError) do
-        HTTP::Client.get "www.google.com"
+        HTTP::Client.get "www.example.com"
       end
     end
   end

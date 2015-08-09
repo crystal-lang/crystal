@@ -79,12 +79,12 @@ describe Markdown do
   assert_render "01. Hello\n02. World", "<ol><li>Hello</li><li>World</li></ol>"
   assert_render "Params:\n  1. Foo\n  2. Bar", "<p>Params:</p>\n\n<ol><li>Foo</li><li>Bar</li></ol>"
 
-  assert_render "Hello [world](http://foo.com)", %(<p>Hello <a href="http://foo.com">world</a></p>)
-  assert_render "Hello [world](http://foo.com)!", %(<p>Hello <a href="http://foo.com">world</a>!</p>)
-  assert_render "Hello [world **2**](http://foo.com)!", %(<p>Hello <a href="http://foo.com">world <strong>2</strong></a>!</p>)
+  assert_render "Hello [world](http://example.com)", %(<p>Hello <a href="http://example.com">world</a></p>)
+  assert_render "Hello [world](http://example.com)!", %(<p>Hello <a href="http://example.com">world</a>!</p>)
+  assert_render "Hello [world **2**](http://example.com)!", %(<p>Hello <a href="http://example.com">world <strong>2</strong></a>!</p>)
 
-  assert_render "Hello ![world](http://foo.com)", %(<p>Hello <img src="http://foo.com" alt="world"/></p>)
-  assert_render "Hello ![world](http://foo.com)!", %(<p>Hello <img src="http://foo.com" alt="world"/>!</p>)
+  assert_render "Hello ![world](http://example.com)", %(<p>Hello <img src="http://example.com" alt="world"/></p>)
+  assert_render "Hello ![world](http://example.com)!", %(<p>Hello <img src="http://example.com" alt="world"/>!</p>)
 
   assert_render "[![foo](bar)](baz)", %(<p><a href="baz"><img src="bar" alt="foo"/></a></p>)
 
@@ -95,5 +95,5 @@ describe Markdown do
 
   assert_render "hello < world", "<p>hello &lt; world</p>"
 
-  assert_render "Hello __[World](http://foo.com)__!", %(<p>Hello <strong><a href="http://foo.com">World</a></strong>!</p>)
+  assert_render "Hello __[World](http://example.com)__!", %(<p>Hello <strong><a href="http://example.com">World</a></strong>!</p>)
 end
