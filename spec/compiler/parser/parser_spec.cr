@@ -1175,5 +1175,10 @@ describe "Parser" do
   assert_syntax_error "1 until 3", "trailing `until` is not supported"
   assert_syntax_error "x++", "postfix increment is not supported, use `exp += 1`"
   assert_syntax_error "x--", "postfix decrement is not supported, use `exp -= 1`"
+  assert_syntax_error "if 1 == 1 a; end", "unexpected token"
+  assert_syntax_error "unless 1 == 1 a; end", "unexpected token"
+  assert_syntax_error "while 1 == 1 a; end", "unexpected token"
+  assert_syntax_error "case 1 == 1 a; when 2; end", "unexpected token"
+  assert_syntax_error "case 1 == 1; when 2 a; end", "unexpected token"
 end
 

@@ -896,7 +896,7 @@ module Crystal
         when '_'
           case next_char
           when 'D'
-            if next_char == 'I' && next_char == 'R' next_char == '_' && next_char == '_'
+            if next_char == 'I' && next_char == 'R' && next_char == '_' && next_char == '_'
               if ident_part_or_end?(peek_next_char)
                 scan_ident(start)
               else

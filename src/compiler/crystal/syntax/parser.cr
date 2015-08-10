@@ -239,12 +239,12 @@ module Crystal
       (yield exp).at(location)
     end
 
-    def parse_op_assign_no_control(allow_ops = true)
+    def parse_op_assign_no_control(allow_ops = true, allow_suffix = true)
       check_void_expression_keyword
-      parse_op_assign(allow_ops)
+      parse_op_assign(allow_ops, allow_suffix)
     end
 
-    def parse_op_assign(allow_ops = true)
+    def parse_op_assign(allow_ops = true, allow_suffix = true)
       doc = @token.doc
       location = @token.location
 
@@ -255,6 +255,9 @@ module Crystal
         when :SPACE
           next_token
           next
+        when :IDENT
+          unexpected_token unless allow_suffix
+          break
         when :"="
           slash_is_regex!
 
@@ -1182,7 +1185,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign_no_control
+      cond = parse_op_assign_no_control allow_suffix: false
 
       slash_is_regex!
       skip_statement_end
@@ -2727,7 +2730,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign_no_control
+      cond = parse_op_assign_no_control allow_suffix: false
       parse_if_after_condition cond, check_end
     end
 
@@ -2760,7 +2763,7 @@ module Crystal
     def parse_unless
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign_no_control
+      cond = parse_op_assign_no_control allow_suffix: false
       skip_statement_end
 
       a_then = parse_expressions
