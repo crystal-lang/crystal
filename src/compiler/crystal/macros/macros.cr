@@ -657,7 +657,8 @@ module Crystal
             return @last = NumberLiteral.new(scope.tuple_types.length)
           end
         when "@type"
-          return @last = TypeNode.new(@scope.instance_type)
+          target = @scope == @mod.class_type ? @scope : @scope.instance_type
+          return @last = TypeNode.new(target)
         when "@constants"
           scope = @scope.try &.instance_type
           return @last = TypeNode.constants(scope)

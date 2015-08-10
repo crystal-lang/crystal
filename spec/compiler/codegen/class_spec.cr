@@ -655,4 +655,15 @@ describe "Code gen: class" do
       end
       ))
   end
+
+  it "does to_s on class" do
+    run(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      Foo.class.to_s
+      )).to_string.should eq("Class")
+  end
 end
