@@ -311,7 +311,7 @@ describe "Code gen: fun" do
   end
 
   it "builds fun type from fun" do
-    build("
+    codegen("
       lib LibC
         fun foo : ->
       end
@@ -322,7 +322,7 @@ describe "Code gen: fun" do
   end
 
   it "builds nilable fun type from fun" do
-    build("
+    codegen("
       lib LibC
         fun foo : (->)?
       end
@@ -517,7 +517,7 @@ describe "Code gen: fun" do
   end
 
   it "codegens captured block that returns tuple" do
-    build(%(
+    codegen(%(
       def foo(&block)
         block
       end
@@ -565,7 +565,7 @@ describe "Code gen: fun" do
   end
 
   it "gets proc to lib fun (#504)" do
-    build(%(
+    codegen(%(
       lib LibFoo
         fun bar
       end

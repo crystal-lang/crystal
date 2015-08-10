@@ -10,7 +10,7 @@ describe "Code gen: no return" do
   end
 
   it "codegens if with no reutrn and variable used afterwards" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC

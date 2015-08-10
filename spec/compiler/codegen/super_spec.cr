@@ -238,7 +238,7 @@ describe "Codegen: super" do
   end
 
   it "build super on generic class (bug)" do
-    build(%(
+    codegen(%(
       class Base
         def foo(x)
           1.5

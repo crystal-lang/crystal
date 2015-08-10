@@ -108,7 +108,7 @@ describe "Code gen: var" do
   end
 
   it "codegens assignment that can never be reached" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       if 1 == 1 && (x = nil)

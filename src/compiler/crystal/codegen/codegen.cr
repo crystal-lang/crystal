@@ -25,7 +25,7 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build(node, single_module: true)[""]
+      llvm_mod = codegen(node, single_module: true)[""]
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type
@@ -48,7 +48,7 @@ module Crystal
       engine.run_function wrapper, [] of LLVM::GenericValue
     end
 
-    def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    def codegen(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
       node.accept visitor
       visitor.finish

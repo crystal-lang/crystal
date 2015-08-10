@@ -1058,7 +1058,7 @@ describe "Code gen: block" do
   end
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       class Bar
@@ -1088,7 +1088,7 @@ describe "Code gen: block" do
   end
 
   it "codegens method invocation on a object of a captured block with a type that was never instantiated (2)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       class Bar

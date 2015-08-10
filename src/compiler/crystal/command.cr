@@ -103,7 +103,7 @@ USAGE
   end
 
   private def self.browser(options)
-    config, result = compile_no_build "browser", options
+    config, result = compile_no_codegen "browser", options
     Browser.open result.original_node
   end
 
@@ -132,7 +132,7 @@ USAGE
   end
 
   private def self.hierarchy(options)
-    config, result = compile_no_build "hierarchy", options, hierarchy: true
+    config, result = compile_no_codegen "hierarchy", options, hierarchy: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
   end
 
@@ -146,7 +146,7 @@ USAGE
     output_filename = tempfile(config.output_filename)
 
     result = config.compile output_filename
-    execute output_filename, config.arguments unless config.compiler.no_build?
+    execute output_filename, config.arguments unless config.compiler.no_codegen?
   end
 
   private def self.run_specs(options)
@@ -215,13 +215,13 @@ USAGE
   end
 
   private def self.types(options)
-    config, result = compile_no_build "types", options
+    config, result = compile_no_codegen "types", options
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_build(command, options, wants_doc = false, hierarchy = false)
-    config = create_compiler command, options, no_build: true, hierarchy: hierarchy
-    config.compiler.no_build = true
+  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false)
+    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy
+    config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
     {config, config.compile}
   end
@@ -247,7 +247,7 @@ USAGE
     end
   end
 
-  private def self.create_compiler(command, options, no_build = false, run = false, hierarchy = false)
+  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -259,7 +259,7 @@ USAGE
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
-      unless no_build
+      unless no_codegen
         unless run
           opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
             compiler.cross_compile_flags = cross_compile
@@ -274,7 +274,7 @@ USAGE
         compiler.add_flag flag
       end
 
-      unless no_build
+      unless no_codegen
         opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
@@ -291,7 +291,7 @@ USAGE
         exit 1
       end
 
-      unless no_build
+      unless no_codegen
         opts.on("--ll", "Dump ll to .crystal directory") do
           compiler.dump_ll = true
         end
@@ -308,9 +308,9 @@ USAGE
         compiler.color = false
       end
 
-      unless no_build
-        opts.on("--no-build", "Disable build output") do
-          compiler.no_build = true
+      unless no_codegen
+        opts.on("--no-codegen", "Don't do code generation") do
+          compiler.no_codegen = true
         end
         opts.on("-o ", "Output filename") do |an_output_filename|
           opt_output_filename = an_output_filename
@@ -322,7 +322,7 @@ USAGE
         compiler.prelude = prelude
       end
 
-      unless no_build
+      unless no_codegen
         opts.on("--release", "Compile in release mode") do
           compiler.release = true
         end

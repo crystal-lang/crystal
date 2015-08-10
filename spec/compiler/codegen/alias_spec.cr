@@ -87,7 +87,7 @@ describe "Code gen: alias" do
   end
 
   it "doesn't crash on cast to as recursive alias (#639)" do
-    build(%(
+    codegen(%(
       class Foo(T)
       end
 

@@ -22,7 +22,7 @@ describe "Codegen: while" do
   end
 
   it "codegens endless while" do
-    build "while true; end"
+    codegen "while true; end"
   end
 
   it "codegens while with declared var 1" do

@@ -206,7 +206,7 @@ describe "Code gen: module" do
   end
 
   it "declares proc with module type and invoke it with two different types that return themselves" do
-    build(%(
+    codegen(%(
       module Moo
         def moo
           1
@@ -228,7 +228,7 @@ describe "Code gen: module" do
   end
 
   it "codegens proc of a module that was never included" do
-    build(%(
+    codegen(%(
       module Moo
       end
 

@@ -403,13 +403,13 @@ describe "Code gen: class" do
   end
 
   it "codegens class method" do
-    build(%(
+    codegen(%(
       Int32.class
       ))
   end
 
   it "codegens virtual class method" do
-    build(%(
+    codegen(%(
       class Foo
       end
 
@@ -449,7 +449,7 @@ describe "Code gen: class" do
   end
 
   it "makes .class always be a virtual type even if no subclasses" do
-    build(%(
+    codegen(%(
       class Foo
       end
 
@@ -520,7 +520,7 @@ describe "Code gen: class" do
   end
 
   it "builds generic class bug" do
-    build(%(
+    codegen(%(
       abstract class Base
         def initialize
           @value = 1
@@ -544,7 +544,7 @@ describe "Code gen: class" do
   end
 
   it "resolves type declaration when accessing instance var (#348)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
@@ -646,7 +646,7 @@ describe "Code gen: class" do
   end
 
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
-    build(%(
+    codegen(%(
       class Klass
         def f(arg)
         end

@@ -27,7 +27,7 @@ describe "Code gen: lib" do
   end
 
   it "allows passing type to LibC if it has a coverter with to_unsafe" do
-    build("
+    codegen("
       lib LibC
         fun foo(x : Int32) : Int32
       end
@@ -43,7 +43,7 @@ describe "Code gen: lib" do
   end
 
   it "allows passing type to LibC if it has a coverter with to_unsafe (bug)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
@@ -59,7 +59,7 @@ describe "Code gen: lib" do
   end
 
   it "allows setting/getting external variable as function pointer" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
@@ -72,7 +72,7 @@ describe "Code gen: lib" do
   end
 
   it "can use enum as fun argument" do
-    build(%(
+    codegen(%(
       enum Foo
         A
       end
@@ -86,7 +86,7 @@ describe "Code gen: lib" do
   end
 
   it "can use enum as fun return" do
-    build(%(
+    codegen(%(
       enum Foo
         A
       end
@@ -155,7 +155,7 @@ describe "Code gen: lib" do
   end
 
   it "refers to lib type (#960)" do
-    build(%(
+    codegen(%(
       lib Thing
       end
 

@@ -272,7 +272,7 @@ describe "Codegen: const" do
   end
 
   it "doesn't crash if constant is used, but class is never instantiated (#1106)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       class Foo

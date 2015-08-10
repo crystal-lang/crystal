@@ -22,7 +22,7 @@ module Crystal
     property  link_flags
     property  mcpu
     property? color
-    property? no_build
+    property? no_codegen
     property  n_threads
     property  prelude
     property? release
@@ -38,7 +38,7 @@ module Crystal
       @debug = false
       @dump_ll = false
       @color = true
-      @no_build = false
+      @no_codegen = false
       @n_threads = 8.to_i32
       @prelude = "prelude"
       @release = false
@@ -66,7 +66,7 @@ module Crystal
 
       node, original_node = parse program, sources
       node = infer_type program, node
-      build program, node, sources, output_filename unless @no_build
+      codegen program, node, sources, output_filename unless @no_codegen
 
       Result.new program, node, original_node
     end
@@ -133,11 +133,11 @@ module Crystal
       bc_flags_changed
     end
 
-    private def build(program, node, sources, output_filename)
+    private def codegen(program, node, sources, output_filename)
       lib_flags = program.lib_flags
 
       llvm_modules = timing("Codegen (crystal)") do
-        program.build node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags || @emit, expose_crystal_main: false
+        program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags || @emit, expose_crystal_main: false
       end
 
       if @cross_compile_flags

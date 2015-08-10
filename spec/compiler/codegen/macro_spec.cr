@@ -680,7 +680,7 @@ describe "Code gen: macro" do
   end
 
   it "transforms hooks (bug)" do
-    build(%(
+    codegen(%(
       module GC
         def self.add_finalizer(object : T)
           object.responds_to?(:finalize)

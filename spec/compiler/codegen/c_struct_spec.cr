@@ -223,7 +223,7 @@ describe "Code gen: struct" do
   end
 
   it "builds struct setter with fun type (1)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
@@ -238,7 +238,7 @@ describe "Code gen: struct" do
   end
 
   it "builds struct setter with fun type (2)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
