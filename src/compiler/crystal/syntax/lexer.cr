@@ -185,6 +185,8 @@ module Crystal
           scan_zero_number(start)
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(start)
+        when '+'
+          raise "postfix increment is not supported, use `exp += 1`"
         else
           @token.type = :"+"
         end
@@ -199,6 +201,8 @@ module Crystal
           scan_zero_number start, negative: true
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number start, negative: true
+        when '-'
+          raise "postfix decrement is not supported, use `exp -= 1`"
         else
           @token.type = :"-"
         end

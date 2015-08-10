@@ -1173,5 +1173,7 @@ describe "Parser" do
 
   assert_syntax_error "1 while 3", "trailing `while` is not supported"
   assert_syntax_error "1 until 3", "trailing `until` is not supported"
+  assert_syntax_error "x++", "postfix increment is not supported, use `exp += 1`"
+  assert_syntax_error "x--", "postfix decrement is not supported, use `exp -= 1`"
 end
 
