@@ -20,6 +20,7 @@ Command:
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
     types                    show type of main variables
+    ast                      show ast
     --help, -h               show this help
     --version, -v            show version
 USAGE
@@ -66,6 +67,9 @@ USAGE
         when "types".starts_with?(command)
           options.shift
           types options
+        when "ast".starts_with?(command)
+          options.shift
+          ast options
         when "--help" == command, "-h" == command
           puts USAGE
           exit
@@ -217,6 +221,11 @@ USAGE
   private def self.types(options)
     config, result = compile_no_build "types", options
     Crystal.print_types result.original_node
+  end
+
+  private def self.ast(options)
+    config, result = compile_no_build "ast", options
+    Crystal.print_ast result.original_node
   end
 
   private def self.compile_no_build(command, options, wants_doc = false, hierarchy = false)
