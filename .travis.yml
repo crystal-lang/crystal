@@ -35,7 +35,7 @@ install: |
   export CRYSTAL_CACHE_DIR=/tmp/crystal
 script:
   - make crystal spec
-  - find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-build
+  - find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
 notifications:
   irc:
     channels:
