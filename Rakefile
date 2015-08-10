@@ -64,7 +64,8 @@ end
 
 desc 'Build docs'
 task :docs do
-  unless system "which gitbook"
+  `which gitbook`
+  unless $?.success?
     abort "ERROR: can't find gitbook on your PATH, please install gitbook-cli:\n\n" \
           "gem install bundler # if you don't have bundler already\n" \
           "bundle\n" \
