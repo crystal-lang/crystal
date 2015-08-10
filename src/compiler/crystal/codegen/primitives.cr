@@ -419,8 +419,12 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_class(node, target_def, call_args)
-    value = call_args.first? || llvm_self(node.type)
-    codegen_primitive_class_with_type(type, value)
+    value = call_args.first?
+    if value
+      codegen_primitive_class_with_type(type, value)
+    else
+      type_id(node.type)
+    end
   end
 
   def codegen_primitive_class_with_type(type : VirtualType, value)

@@ -666,4 +666,23 @@ describe "Code gen: class" do
       Foo.class.to_s
       )).to_string.should eq("Class")
   end
+
+  it "invokes class method inside instance method (#1119)" do
+    run(%(
+      class Class
+        def bar
+          123
+        end
+      end
+
+      class A
+        def test
+          A.class
+        end
+      end
+
+      x = A.new.test
+      x.bar
+      )).to_i.should eq(123)
+  end
 end
