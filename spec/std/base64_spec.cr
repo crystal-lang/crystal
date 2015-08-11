@@ -9,25 +9,25 @@ describe "Base64" do
            "abcdefg" => "YWJjZGVmZw==\n"}
     eqs.each do |a, b|
       it "encode #{a.inspect} to #{b.inspect}" do
-        Base64.encode64(a).should eq(b)
+        Base64.encode(a).should eq(b)
       end
       it "decode from #{b.inspect} to #{a.inspect}" do
-        Base64.decode64(b).should eq(a)
+        Base64.decode(b).should eq(a)
       end
     end
   end
 
   it "encodes byte slice" do
     slice = Slice(UInt8).new(5) { 1_u8 }
-    Base64.encode64(slice).should eq("AQEBAQE=\n")
-    Base64.strict_encode64(slice).should eq("AQEBAQE=")
+    Base64.encode(slice).should eq("AQEBAQE=\n")
+    Base64.strict_encode(slice).should eq("AQEBAQE=")
   end
 
   it "encodes static array" do
     array :: StaticArray(UInt8, 5)
     (0...5).each { |i| array[i] = 1_u8 }
-    Base64.encode64(array).should eq("AQEBAQE=\n")
-    Base64.strict_encode64(array).should eq("AQEBAQE=")
+    Base64.encode(array).should eq("AQEBAQE=\n")
+    Base64.strict_encode(array).should eq("AQEBAQE=")
   end
 
   describe "base" do
@@ -38,81 +38,76 @@ describe "Base64" do
            "hahah⊙ⓧ⊙" => "aGFoYWjiipnik6fiipk=\n"}
     eqs.each do |a, b|
       it "encode #{a.inspect} to #{b.inspect}" do
-        Base64.encode64(a).should eq(b)
+        Base64.encode(a).should eq(b)
       end
       it "decode from #{b.inspect} to #{a.inspect}" do
-        Base64.decode64(b).should eq(a)
+        Base64.decode(b).should eq(a)
       end
     end
 
     it "decode from strict form" do
-      Base64.decode64("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
+      Base64.decode("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
        "Now is the time for all good coders\nto learn Crystal")
     end
 
     it "big message" do
       a = "a" * 100000
-      b = Base64.encode64(a)
-      Crypto::MD5.hex_digest(Base64.decode64(b)).should eq(Crypto::MD5.hex_digest(a))
+      b = Base64.encode(a)
+      Crypto::MD5.hex_digest(Base64.decode(b)).should eq(Crypto::MD5.hex_digest(a))
     end
 
     it "works for most characters" do
       a = String.build(65536 * 4) do |buf|
         65536.times { |i| buf << (i + 1).chr }
       end
-      b = Base64.encode64(a)
-      Crypto::MD5.hex_digest(Base64.decode64(b)).should eq(Crypto::MD5.hex_digest(a))
+      b = Base64.encode(a)
+      Crypto::MD5.hex_digest(Base64.decode(b)).should eq(Crypto::MD5.hex_digest(a))
     end
   end
 
   describe "decode cases" do
     it "decode \r\n" do
-      Base64.decode64("aGFo\r\nYWjiipnik6fiipk=\r\n").should eq("hahah⊙ⓧ⊙")
-      Base64.decode64("aGFo\r\nYWjiipnik6fiipk=\r\n\r\n").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\r\nYWjiipnik6fiipk=\r\n").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\r\nYWjiipnik6fiipk=\r\n\r\n").should eq("hahah⊙ⓧ⊙")
     end
 
     it "decode \n in multiple places" do
-      Base64.decode64("aGFoYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode64("aGFo\nYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode64("aGFo\nYWji\nipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode64("aGFo\nYWji\nipni\nk6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode64("aGFo\nYWji\nipni\nk6fi\nipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode64("aGFo\nYWji\nipni\nk6fi\nipk=\n").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFoYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\nYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\nYWji\nipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\nYWji\nipni\nk6fiipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\nYWji\nipni\nk6fi\nipk=").should eq("hahah⊙ⓧ⊙")
+      Base64.decode("aGFo\nYWji\nipni\nk6fi\nipk=\n").should eq("hahah⊙ⓧ⊙")
     end
 
     it "raise error when \n in incorrect place" do
       expect_raises Base64::Error do
-        Base64.decode64("aG\nFoYWjiipnik6fiipk=")
+        Base64.decode("aG\nFoYWjiipnik6fiipk=")
       end
     end
 
     it "raise error when incorrect symbol" do
       expect_raises Base64::Error do
-        Base64.decode64("()")
+        Base64.decode("()")
       end
     end
 
     it "raise error when incorrect length" do
       expect_raises Base64::Error do
-        Base64.decode64("a")
+        Base64.decode("a")
       end
     end
   end
 
   describe "scrict" do
     it "encode" do
-      Base64.strict_encode64("Now is the time for all good coders\nto learn Crystal").should eq(
+      Base64.strict_encode("Now is the time for all good coders\nto learn Crystal").should eq(
         "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==")
-    end
-    it "decode" do
-      Base64.strict_decode64("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
-       "Now is the time for all good coders\nto learn Crystal")
     end
     it "with spec symbols" do
       s = String.build { |b| (160..179).each{|i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
-      Base64.strict_encode64(s).should eq(se)
-      Base64.strict_decode64(se).should eq(s)
+      Base64.strict_encode(s).should eq(se)
     end
   end
 
@@ -120,10 +115,8 @@ describe "Base64" do
     it "work" do
       s = String.build { |b| (160..179).each{|i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw"
-      Base64.urlsafe_encode64(s).should eq(se)
-      Base64.urlsafe_decode64(se).should eq(s)
+      Base64.urlsafe_encode(s).should eq(se)
     end
   end
 
 end
-

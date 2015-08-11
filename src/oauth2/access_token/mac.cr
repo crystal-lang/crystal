@@ -38,7 +38,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
              when "hmac-sha-256" then :sha256
              else raise "unsupported algorithm: #{mac_algorithm}"
              end
-    Base64.strict_encode64 OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
+    Base64.strict_encode OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
   end
 
   def to_json(io)
