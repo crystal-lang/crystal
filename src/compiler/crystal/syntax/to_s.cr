@@ -615,7 +615,7 @@ module Crystal
       accept_with_indent node.body
       @inside_macro = false
 
-      newline
+      # newline
       append_indent
       @str << keyword("end")
       false
@@ -623,8 +623,9 @@ module Crystal
 
     def visit(node : MacroExpression)
       @str << (node.output ? "{{" : "{% ")
-      @str << " "
+      @str << " " if node.output
       node.exp.accept self
+      @str << " " if node.output
       @str << (node.output ? "}}" : " %}")
       false
     end
