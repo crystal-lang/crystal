@@ -19,7 +19,7 @@ struct OAuth::Signature
 
   def compute(request, ssl, ts, nonce)
     base_string = base_string(request, ssl, ts, nonce)
-    Base64.strict_encode64(OpenSSL::HMAC.digest :sha1, key, base_string)
+    Base64.strict_encode(OpenSSL::HMAC.digest :sha1, key, base_string)
   end
 
   def authorization_header(request, ssl, ts, nonce)

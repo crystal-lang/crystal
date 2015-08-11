@@ -39,13 +39,13 @@ module Base64
   # Line feeds are added to every 60 encoded characters.
   #
   #     require "base64"
-  #     puts Base64.encode64("Now is the time for all good coders\nto learn Crystal")
+  #     puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
   #
   # Generates:
   #
   #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
   #     Q3J5c3RhbA==
-  def encode64(data)
+  def encode(data)
     slice = data.to_slice
     String.new(encode_size(slice.length, new_lines: true)) do |buf|
       inc = 0
@@ -70,12 +70,12 @@ module Base64
   # This method complies with RFC 4648.
   #
   #     require "base64"
-  #     puts Base64.strict_encode64("Now is the time for all good coders\nto learn Crystal")
+  #     puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
   #
   # Generates:
   #
   #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
-  def strict_encode64(data)
+  def strict_encode(data)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
@@ -93,7 +93,7 @@ module Base64
   #
   # The `padding` paramter defaults to false. When true enough `=` characters
   # are added to make the output divisiable by 3.
-  def urlsafe_encode64(data, padding = false)
+  def urlsafe_encode(data, padding = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
@@ -105,7 +105,7 @@ module Base64
 
   # Returns the Base64-decoded version of `data`.
   # This will decode either the normal or urlsafe alphabets.
-  def decode64(data)
+  def decode(data)
     slice = data.to_slice
     String.new(decode_size(slice.length)) do |buf|
       appender = buf.appender
@@ -115,13 +115,13 @@ module Base64
   end
 
   # An alias for `decode`
-  def strict_decode64(str)
-    decode64(str)
+  def strict_decode(str)
+    decode(str)
   end
 
   # An alias for `decode`
-  def urlsafe_decode64(str)
-    decode64(str)
+  def urlsafe_decode(str)
+    decode(str)
   end
 
   private def encode_size(str_size, new_lines = false)
