@@ -1107,4 +1107,21 @@ describe "Array" do
       expect_raises(IndexError){ [[1, 2], [1]].transpose }
     end
   end
+
+  describe "permutation" do
+    assert { [1, 2, 2].permutation.should eq([[1,2,2],[1,2,2],[2,1,2],[2,2,1],[2,1,2],[2,2,1]]) }
+    assert { [1, 2, 3].permutation.should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
+    assert { [1, 2, 3].permutation(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].permutation(2).should eq([[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]) }
+    assert { [1, 2, 3].permutation(3).should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
+    assert { [1, 2, 3].permutation(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].permutation(4).should eq([] of Array(Int32)) }
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].permutation(2) do |perm|
+        sums << perm.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([3, 4, 3, 5, 4, 5])
+    end
+  end
 end
