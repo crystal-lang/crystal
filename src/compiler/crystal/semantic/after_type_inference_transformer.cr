@@ -207,9 +207,34 @@ module Crystal
         return expanded.transform self
       end
 
-      node = super
+      # Need to transform these manually because node.block doesn't
+      # need to be transformed if it has a fun_literal
+      # ~~~
+      if node_obj = node.obj
+        node.obj = node_obj.transform(self)
+      end
+      transform_many node.args
 
+      if (node_block = node.block) && !node_block.fun_literal
+        node.block = node_block.transform(self)
+      end
+
+      if node_block_arg = node.block_arg
+        node.block_arg = node_block_arg.transform(self)
+      end
+
+      if named_args = node.named_args
+        named_args.map! { |named_arg| named_arg.transform(self) as NamedArgument }
+      end
+      # ~~~
+
+      obj = node.obj
+      obj_type = obj.try &.type?
       block = node.block
+
+      if !node.type? && obj && obj_type && obj_type.module?
+        return untyped_expression(node, "`#{node}` has no type")
+      end
 
       if block && (fun_literal = block.fun_literal)
         block.fun_literal = fun_literal.transform(self)
@@ -217,8 +242,6 @@ module Crystal
 
       # Check if we have an untyped expression in this call, or an expression
       # whose type was never allocated. Replace it with raise.
-      obj = node.obj
-      obj_type = obj.try &.type?
       if (obj && !obj_type)
         return untyped_expression(node, "`#{obj}` has no type")
       end
