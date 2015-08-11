@@ -16,7 +16,7 @@ module Crystal
   class ToSVisitor < Visitor
     def initialize(@str = StringIO.new)
       @indent = 0
-      @inside_macro = false
+      @inside_macro = 0
     end
 
     def visit(node : Primitive)
@@ -136,7 +136,7 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      if @inside_macro
+      if @inside_macro > 0
         node.expressions.each &.accept self
       else
         node.expressions.each do |exp|
@@ -611,11 +611,11 @@ module Crystal
       end
       newline
 
-      @inside_macro = true
-      accept_with_indent node.body
-      @inside_macro = false
+      inside_macro do
+        accept_with_indent node.body
+      end
 
-      newline
+      # newline
       append_indent
       @str << keyword("end")
       false
@@ -623,8 +623,9 @@ module Crystal
 
     def visit(node : MacroExpression)
       @str << (node.output ? "{{" : "{% ")
-      @str << " "
+      @str << " " if node.output
       node.exp.accept self
+      @str << " " if node.output
       @str << (node.output ? "}}" : " %}")
       false
     end
@@ -632,13 +633,17 @@ module Crystal
     def visit(node : MacroIf)
       @str << "{% if "
       node.cond.accept self
-      @str << " }"
-      node.then.accept self
-      unless node.else.nop?
-        @str << "{% else }"
-        node.else.accept self
+      @str << " %}"
+      inside_macro do
+        node.then.accept self
       end
-      @str << "{% end }"
+      unless node.else.nop?
+        @str << "{% else %}"
+        inside_macro do
+          node.else.accept self
+        end
+      end
+      @str << "{% end %}"
       false
     end
 
@@ -650,9 +655,11 @@ module Crystal
       end
       @str << " in "
       node.exp.accept self
-      @str << " }"
-      node.body.accept self
-      @str << "{% end }"
+      @str << " %}"
+      inside_macro do
+        node.body.accept self
+      end
+      @str << "{% end %}"
       false
     end
 
@@ -1359,6 +1366,12 @@ module Crystal
       else
         node.accept self
       end
+    end
+
+    def inside_macro
+      @inside_macro += 1
+      yield
+      @inside_macro -= 1
     end
 
     def to_s
