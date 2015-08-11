@@ -35,7 +35,7 @@ local -a shared_run_build; shared_run_build=(
   '(--ll)-ll[Dump ll to .crystal directory]' \
   '(--link-flags)--link-flags[additional flags to pass to the linker]:' \
   '(--mcpu)--mcpu[target specific cpu type]:' \
-  '(--no-build)--no-build[disable build output]' \
+  '(--no-codegen)--no-codegen[disable code generation]' \
   '(-o)-o[Output filename]:' \
   '(--prelude)--prelude[use given file as prelude]:' \
   '(--release)--release[compile in release mode]' \
