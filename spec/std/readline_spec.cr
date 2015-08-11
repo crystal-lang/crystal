@@ -8,5 +8,5 @@ describe Readline do
   typeof(Readline.readline(add_history: false))
   typeof(Readline.line_buffer)
   typeof(Readline.point)
-  typeof(Readline.autocomplete { |s| %w(foo bar) })
+  typeof(Readline.autocomplete { |text, start, finish| %w(foo bar) })
 end
