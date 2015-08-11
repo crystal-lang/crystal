@@ -47,10 +47,10 @@ module Base64
   #     Q3J5c3RhbA==
   def encode64(data)
     slice = data.to_slice
-    String.new(encode_size(slice.length, true)) do |buf|
+    String.new(encode_size(slice.length, new_lines: true)) do |buf|
       inc = 0
       appender = buf.appender
-      to_base64(slice, CHARS_STD, true) do |byte|
+      to_base64(slice, CHARS_STD, pad: true) do |byte|
         appender << byte
         inc += 1
         if inc >= LINE_SIZE
@@ -79,7 +79,7 @@ module Base64
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_STD, true) { |byte| appender << byte }
+      to_base64(slice, CHARS_STD, pad: true) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
@@ -97,7 +97,7 @@ module Base64
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_SAFE, padding) { |byte| appender << byte }
+      to_base64(slice, CHARS_SAFE, pad: padding) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
