@@ -124,9 +124,9 @@ module Enumerable(T)
   #
   # If *count* is bigger than the number of elements in the collection, returns an empty array.
   #
-  #     [1, 2, 3, 4, 5, 6].drop(3)  #=> [4, 5, 6]
-  def drop(count : Int)
-    raise ArgumentError.new("attempt to drop negative size") if count < 0
+  #     [1, 2, 3, 4, 5, 6].skip(3)  #=> [4, 5, 6]
+  def skip(count : Int)
+    raise ArgumentError.new("attempt to skip negative size") if count < 0
 
     array = Array(T).new
     each_with_index do |e, i|
@@ -135,11 +135,11 @@ module Enumerable(T)
     array
   end
 
-  # Drops elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
+  # Skips elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
   #
-  #     [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3} #=> [3, 4, 5, 0]
+  #     [1, 2, 3, 4, 5, 0].skip_while {|i| i < 3} #=> [3, 4, 5, 0]
   #
-  def drop_while
+  def skip_while
     result = Array(T).new
     block_returned_false = false
     each do |x|
