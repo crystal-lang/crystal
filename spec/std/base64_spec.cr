@@ -104,15 +104,10 @@ describe "Base64" do
       Base64.strict_encode("Now is the time for all good coders\nto learn Crystal").should eq(
         "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==")
     end
-    it "decode" do
-      Base64.strict_decode("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
-       "Now is the time for all good coders\nto learn Crystal")
-    end
     it "with spec symbols" do
       s = String.build { |b| (160..179).each{|i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
       Base64.strict_encode(s).should eq(se)
-      Base64.strict_decode(se).should eq(s)
     end
   end
 
@@ -121,9 +116,7 @@ describe "Base64" do
       s = String.build { |b| (160..179).each{|i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw"
       Base64.urlsafe_encode(s).should eq(se)
-      Base64.urlsafe_decode(se).should eq(s)
     end
   end
 
 end
-

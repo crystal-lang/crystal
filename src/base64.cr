@@ -114,16 +114,6 @@ module Base64
     end
   end
 
-  # An alias for `decode`
-  def strict_decode(str)
-    decode(str)
-  end
-
-  # An alias for `decode`
-  def urlsafe_decode(str)
-    decode(str)
-  end
-
   private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 4
     size += size / LINE_SIZE if new_lines
