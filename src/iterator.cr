@@ -100,7 +100,7 @@ module Iterator(T)
   end
 
   def compact_map(&func : T -> U)
-    CompactMap(typeof(self), T, U).new(self, func)
+    CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
 
   def map(&func : T -> U)
@@ -194,7 +194,7 @@ module Iterator(T)
   struct CompactMap(I, T, U)
     include Iterator(U)
 
-    def initialize(@iter : Iterator(T), @func : T -> U)
+    def initialize(@iter : Iterator(T), @func)
     end
 
     def next

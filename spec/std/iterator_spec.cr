@@ -2,7 +2,6 @@ require "spec"
 require "iterator"
 
 describe Iterator do
-
   describe "compact_map" do
     it "applies the function and removes nil values" do
       iter = (1..3).each.compact_map {|e| e.odd? ? e : nil}
@@ -12,6 +11,10 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq(1)
+    end
+
+    it "sums after compact_map to_a" do
+      (1..3).each.compact_map {|e| e.odd? ? e : nil}.to_a.sum.should eq(4)
     end
   end
 
