@@ -99,6 +99,10 @@ module Iterator(T)
     self
   end
 
+  def compact_map(&func : T -> U)
+    CompactMap(typeof(self), T, U).new(self, func)
+  end
+
   def map(&func : T -> U)
     Map(typeof(self), T, U).new(self, func)
   end
@@ -184,6 +188,28 @@ module Iterator(T)
       value = self.next
       break if value.is_a?(Stop)
       yield value
+    end
+  end
+
+  struct CompactMap(I, T, U)
+    include Iterator(U)
+
+    def initialize(@iter : Iterator(T), @func : T -> U)
+    end
+
+    def next
+      while true
+        value = @iter.next
+        return stop if value.is_a?(Stop)
+        mapped_value = @func.call(value)
+
+        return mapped_value unless mapped_value.is_a?(Nil)
+      end
+    end
+
+    def rewind
+      @iter.rewind
+      self
     end
   end
 
@@ -588,4 +614,3 @@ module Iterator(T)
     end
   end
 end
-

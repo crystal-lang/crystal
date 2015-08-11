@@ -2,6 +2,19 @@ require "spec"
 require "iterator"
 
 describe Iterator do
+
+  describe "compact_map" do
+    it "applies the function and removes nil values" do
+      iter = (1..3).each.compact_map {|e| e.odd? ? e : nil}
+      iter.next.should eq(1)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+    end
+  end
+
   describe "map" do
     it "does map with Range iterator" do
       iter = (1..3).each.map &.*(2)
