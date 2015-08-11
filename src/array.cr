@@ -759,7 +759,7 @@ class Array(T)
     Array(U).new(length) { |i| yield buffer[i], i }
   end
 
-  # Returns an `Array` with all possible permutations.
+  # Returns an `Array` with all possible permutations of the given *size*.
   #
   #     a = [1, 2, 3]
   #     a.permutation    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
@@ -769,45 +769,57 @@ class Array(T)
   #     a.permutation(0) #=> [[]]
   #     a.permutation(4) #=> []
   #
-  def permutation(n = nil : Int)
-    n ||= count
-    raise ArgumentError.new("size must be positive") if n < 0
+  def permutations(size = length : Int)
     ary = [] of Array(T)
-    return [[] of T] if n == 0
-
-    each_with_index do |e, i|
-      tail = self.dup
-      tail.delete_at(i)
-      perm = tail.permutation(n - 1).map { |t| t.unshift(e) }
-      ary.concat(perm)
+    each_permutation(size) do |perm|
+      ary << perm
     end
-
     ary
   end
 
-
-  # Returns an `Array` with all possible permutations and yields each permutation
+  # Yields each possible permutation of size `n` of this array.
   #
   #     a = [1, 2, 3]
   #     sums = [] of Int32
   #     a.permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
-  def permutation(n = nil : Int)
-    n ||= count
-    raise ArgumentError.new("size must be positive") if n < 0
-    ary = [] of Array(T)
-    return [[] of T] if n == 0
+  def each_permutation(size = length : Int)
+    n = self.length
+    return self if size > n
 
-    each_with_index do |e, i|
-      tail = self.dup
-      tail.delete_at(i)
-      perm = tail.permutation(n - 1).map { |t| t.unshift(e) }
-      perm.each { |p| yield p }
-      ary.concat(perm)
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    pool = self.dup
+    cycles = (n - size + 1..n).to_a.reverse!
+    yield pool[0, size]
+
+    while true
+      stop = true
+      i = size - 1
+      while i >= 0
+        cycles[i] -= 1
+        if cycles[i] == 0
+          e = pool[i]
+          j = i + 1
+          while j < n
+            pool[j - 1] = pool[j]
+            j += 1
+          end
+          pool[n - 1] = e
+          cycles[i] = n - i
+        else
+          j = cycles[i]
+          pool.swap i, -j
+          yield pool[0, size]
+          stop = false
+          break
+        end
+        i -= 1
+      end
+
+      return self if stop
     end
-
-    self
   end
 
   def pop
