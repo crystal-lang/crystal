@@ -22,39 +22,39 @@ describe "Enumerable" do
     end
   end
 
-  describe "drop" do
-    it "returns an array without the dropped elements" do
-      [1, 2, 3, 4, 5, 6].drop(3).should eq [4, 5, 6]
+  describe "skip" do
+    it "returns an array without the skipped elements" do
+      [1, 2, 3, 4, 5, 6].skip(3).should eq [4, 5, 6]
     end
 
-    it "returns an empty array when dropping more elements than array size" do
-      [1, 2].drop(3).should eq [] of Int32
+    it "returns an empty array when skipping more elements than array size" do
+      [1, 2].skip(3).should eq [] of Int32
     end
 
     it "raises if count is negative" do
       expect_raises(ArgumentError) do
-        [1, 2].drop(-1)
+        [1, 2].skip(-1)
       end
     end
   end
 
-  describe "drop_while" do
-    it "drops elements while the condition holds true" do
-      result = [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3}
+  describe "skip_while" do
+    it "skips elements while the condition holds true" do
+      result = [1, 2, 3, 4, 5, 0].skip_while {|i| i < 3}
       result.should eq [3, 4, 5, 0]
     end
 
     it "returns an empty array if the condition is always true" do
-      [1, 2, 3].drop_while {true}.should eq [] of Int32
+      [1, 2, 3].skip_while {true}.should eq [] of Int32
     end
 
     it "returns the full Array if the the first check is false" do
-      [5, 0, 1, 2, 3].drop_while {|x| x < 4}.should eq [5, 0, 1, 2, 3]
+      [5, 0, 1, 2, 3].skip_while {|x| x < 4}.should eq [5, 0, 1, 2, 3]
     end
 
     it "does not yield to the block anymore once it returned false" do
       called = 0
-      [1, 2, 3, 4, 4].drop_while do |i|
+      [1, 2, 3, 4, 4].skip_while do |i|
         called += 1
         i < 3
       end
@@ -236,7 +236,7 @@ describe "Enumerable" do
     assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
     assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
     assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
-  
+
     it "raises argument error if size is less than 0" do
       expect_raises ArgumentError, "size must be positive" do
         [1, 2, 3].in_groups_of(0)
