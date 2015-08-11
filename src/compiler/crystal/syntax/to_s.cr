@@ -16,7 +16,7 @@ module Crystal
   class ToSVisitor < Visitor
     def initialize(@str = StringIO.new)
       @indent = 0
-      @inside_macro = false
+      @inside_macro = 0
     end
 
     def visit(node : Primitive)
@@ -136,7 +136,7 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      if @inside_macro
+      if @inside_macro > 0
         node.expressions.each &.accept self
       else
         node.expressions.each do |exp|
@@ -611,9 +611,9 @@ module Crystal
       end
       newline
 
-      @inside_macro = true
-      accept_with_indent node.body
-      @inside_macro = false
+      inside_macro do
+        accept_with_indent node.body
+      end
 
       # newline
       append_indent
@@ -634,10 +634,14 @@ module Crystal
       @str << "{% if "
       node.cond.accept self
       @str << " %}"
-      node.then.accept self
+      inside_macro do
+        node.then.accept self
+      end
       unless node.else.nop?
         @str << "{% else %}"
-        node.else.accept self
+        inside_macro do
+          node.else.accept self
+        end
       end
       @str << "{% end %}"
       false
@@ -652,7 +656,9 @@ module Crystal
       @str << " in "
       node.exp.accept self
       @str << " %}"
-      node.body.accept self
+      inside_macro do
+        node.body.accept self
+      end
       @str << "{% end %}"
       false
     end
@@ -1360,6 +1366,12 @@ module Crystal
       else
         node.accept self
       end
+    end
+
+    def inside_macro
+      @inside_macro += 1
+      yield
+      @inside_macro -= 1
     end
 
     def to_s
