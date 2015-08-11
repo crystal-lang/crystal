@@ -1879,13 +1879,11 @@ module Crystal
 
   # if inside a macro
   #
-  #     {% 'if' cond }
+  #     {% 'if' cond %}
   #       then
-  #     [
-  #     {% 'else' }
+  #     {% 'else' %}
   #       else
-  #     ]
-  #     %{ 'end' }
+  #     {% 'end' %}
   class MacroIf < ASTNode
     property :cond
     property :then
@@ -1911,9 +1909,9 @@ module Crystal
 
   # for inside a macro:
   #
-  #    {- for x1, x2, ... , xn in exp }
+  #    {% for x1, x2, ... , xn in exp %}
   #      body
-  #    {- end }
+  #    {% end %}
   class MacroFor < ASTNode
     property vars
     property exp
