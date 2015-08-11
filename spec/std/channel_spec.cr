@@ -8,6 +8,22 @@ describe Channel do
   it "creates buffered with capacity argument" do
     Channel(Int32).new(32).should be_a(BufferedChannel(Int32))
   end
+
+  describe ".select" do
+    it "returns the ready channel" do
+      ready = Channel(Int32).new
+      pending = Channel(Int32).new
+      spawn { ready.send(1) }
+      Channel.select(pending, ready).should be ready
+    end
+
+    it "accepts an array" do
+      ready = Channel(Int32).new
+      pending = Channel(Int32).new
+      spawn { ready.send(1) }
+      Channel.select([pending, ready]).should be ready
+    end
+  end
 end
 
 describe UnbufferedChannel do

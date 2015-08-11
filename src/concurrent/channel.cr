@@ -39,7 +39,7 @@ abstract class Channel(T)
     receive_impl { return nil }
   end
 
-  def self.select(*channels)
+  def self.select(channels : Enumerable)
     loop do
       ready_channel = channels.find &.ready?
       return ready_channel if ready_channel
@@ -48,6 +48,10 @@ abstract class Channel(T)
       Scheduler.reschedule
       channels.each &.unwait
     end
+  end
+
+  def self.select(*channels)
+    select(channels)
   end
 
   protected def wait
