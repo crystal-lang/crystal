@@ -1,17 +1,50 @@
+# The Base64 module provides for the encoding (`encode`, `strict_encode`,
+# `urlsafe_encode`) and decoding (`decode`, `strict_decode`, `urlsafe_decode`)
+# of binary data using a Base64 representation.
+#
+# ###Example
+#
+# A simple encoding and decoding.
+#
+#     require "base64"
+#     enc   = Base64.encode("Send reinforcements")
+#                         # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
+#     plain = Base64.decode(enc)
+#                         # => "Send reinforcements"
+#
+# The purpose of using base64 to encode data is that it translates any binary
+# data into purely printable characters.
 module Base64
   extend self
 
   class Error < Exception; end
 
+  # :nodoc:
   CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  # :nodoc:
   CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  # :nodoc:
   LINE_SIZE = 60
+  # :nodoc:
   PAD = '='.ord.to_u8
+  # :nodoc:
   NL = '\n'.ord.to_u8
+  # :nodoc:
   NR = '\r'.ord.to_u8
 
   class Error < Exception; end
 
+  # Returns the Base64-encoded version of `data`.
+  # This method complies with RFC 2045.
+  # Line feeds are added to every 60 encoded characters.
+  #
+  #     require "base64"
+  #     puts Base64.encode64("Now is the time for all good coders\nto learn Crystal")
+  #
+  # Generates:
+  #
+  #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
+  #     Q3J5c3RhbA==
   def encode64(data)
     slice = data.to_slice
     String.new(encode_size(slice.length, true)) do |buf|
@@ -33,6 +66,15 @@ module Base64
     end
   end
 
+  # Returns the Base64-encoded version of `data` with no newines.
+  # This method complies with RFC 4648.
+  #
+  #     require "base64"
+  #     puts Base64.strict_encode64("Now is the time for all good coders\nto learn Crystal")
+  #
+  # Generates:
+  #
+  #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
   def strict_encode64(data)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
@@ -43,6 +85,14 @@ module Base64
     end
   end
 
+  # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
+  # This method complies with "Base 64 Encoding with URL and Filename Safe
+  # Alphabet" in RFC 4648.
+  #
+  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  #
+  # The `padding` paramter defaults to false. When true enough `=` characters
+  # are added to make the output divisiable by 3.
   def urlsafe_encode64(data, padding = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
@@ -53,6 +103,8 @@ module Base64
     end
   end
 
+  # Returns the Base64-decoded version of `data`.
+  # This will decode either the normal or urlsafe alphabets.
   def decode64(data)
     slice = data.to_slice
     String.new(decode_size(slice.length)) do |buf|
@@ -62,10 +114,12 @@ module Base64
     end
   end
 
+  # An alias for `decode`
   def strict_decode64(str)
     decode64(str)
   end
 
+  # An alias for `decode`
   def urlsafe_decode64(str)
     decode64(str)
   end
@@ -158,6 +212,7 @@ module Base64
     res
   end
 
+  # :nodoc:
   DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.chr
     when 'A'..'Z'   then (i - 0x41).to_i8
