@@ -66,7 +66,7 @@ module Base64
     end
   end
 
-  # Returns the Base64-encoded version of `data` with no newines.
+  # Returns the Base64-encoded version of `data` with no newlines.
   # This method complies with RFC 4648.
   #
   #     require "base64"
@@ -91,8 +91,8 @@ module Base64
   #
   # The alphabet uses '-' instead of '+' and '_' instead of '/'.
   #
-  # The `padding` paramter defaults to false. When true enough `=` characters
-  # are added to make the output divisiable by 3.
+  # The `padding` parameter defaults to false. When true, enough `=` characters
+  # are added to make the output divisible by 3.
   def urlsafe_encode(data, padding = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
