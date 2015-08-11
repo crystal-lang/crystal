@@ -13,8 +13,8 @@
 # ```
 #
 # An Array can have mixed types, meaning T will be a union of types, but these are determined
-# when the array is created, either by specifying T or by using an array literal. In the later
-# case, T will be set to the union of the array literal elements.
+# when the array is created, either by specifying T or by using an array literal. In the latter
+# case, T will be set to the union of the array literal elements' types.
 #
 # When creating an empty array you must always specify T:
 #
@@ -135,14 +135,38 @@ class Array(T)
     ary
   end
 
+  # Equality. Returns true if it is passed an Array and `equals?`
+  # returns true for both arrays, the caller and the argument.
+  #
+  # ```
+  # ary = [1,2,3]
+  # ary == [1,2,3] # => true
+  # ary == [2,3]   # => false
+  # ```
   def ==(other : Array)
     equals?(other) { |x, y| x == y }
   end
 
+  # :nodoc:
   def ==(other)
     false
   end
 
+  # Combined comparison operator. Returns 0 if the first array equals the second, 1
+  # if the first is greater than the second and -1 if the first is smaller than
+  # the second.
+  #
+  # It compares the elements of both arrays in the same position using the
+  # `<=>` operator, as soon as one of such comparisons returns a non zero
+  # value, that result is the return value of the whole comparison.
+  #
+  # If all elements are equal, the comparison is based on the length of the arrays.
+  #
+  # ```
+  # [8] <=> [1,2,3] # => 1
+  # [2] <=> [4,2,3] # => -1
+  # [1,2] <=> [1,2] # => 0
+  # ```
   def <=>(other : Array)
     min_length = Math.min(length, other.length)
     0.upto(min_length - 1) do |i|
@@ -152,8 +176,9 @@ class Array(T)
     length <=> other.length
   end
 
-  # Set intersection: returns a new array containing elements common to the two arrays, excluding any duplicates.
-  # The order is preserved from the original array.
+  # Set intersection: returns a new array containing elements common to the two
+  # arrays, excluding any duplicates. The order is preserved from the original
+  # array.
   #
   # ```
   # [ 1, 1, 3, 5 ] & [ 1, 2, 3 ]                 #=> [ 1, 3 ]
@@ -181,8 +206,8 @@ class Array(T)
     end
   end
 
-  # Set union: returns a new array by joining ary with `other_ary`, excluding any duplicates
-  # and preserving the order from the original array.
+  # Set union: returns a new array by joining ary with `other_ary`, excluding
+  # any duplicates and preserving the order from the original array.
   #
   # ```
   # [ "a", "b", "c" ] | [ "c", "d", "a" ]    #=> [ "a", "b", "c", "d" ]
@@ -211,6 +236,14 @@ class Array(T)
     end
   end
 
+  # Concatenation. Returns a new array built by concatenating two arrays
+  # together to create a third. The type of the new array is the union of the
+  # types of both the other arrays.
+  #
+  # ```
+  # [1,2] + ["a"] # => [1,2,"a"] of (Int32 | String)
+  # [1,2] + [2,3] # => [1,2,2,3]
+  # ```
   def +(other : Array(U))
     new_length = length + other.length
     Array(T | U).build(new_length) do |buffer|
@@ -220,6 +253,13 @@ class Array(T)
     end
   end
 
+  # Difference. Returns a new array that is a copy of the original, removing
+  # any items that appear in `other`. The order of the original array is
+  # preserved.
+  #
+  # ```
+  # [1,2,3] - [2,1] # => [3]
+  # ```
   def -(other : Array(U))
     ary = Array(T).new(Math.max(length - other.length, 0))
     hash = other.to_lookup_hash
@@ -242,6 +282,12 @@ class Array(T)
     ary
   end
 
+  # Append. Alias for `push`.
+  #
+  # ```
+  # a = [1,2]
+  # a << 3 # => [1,2,3]
+  # ```
   def <<(value : T)
     push(value)
   end
@@ -284,11 +330,38 @@ class Array(T)
     at(index) { nil }
   end
 
+  # Sets the given value at the given index.
+  #
+  # Raises `IndexError` if the array had no previous value at the given index.
+  #
+  # ```
+  # ary = [1,2,3]
+  # ary[0] = 5
+  # p ary # => [5,2,3]
+  #
+  # ary[3] = 5 # => IndexError
+  # ```
   def []=(index : Int, value : T)
     index = check_index_out_of_bounds index
     @buffer[index] = value
   end
 
+  # Returns all elements that are within the given range
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Aditionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # a = [ "a", "b", "c", "d", "e" ]
+  # a[1..3] # => ["b", "c", "d"]
+  # a[4..7] # => ["e"]
+  # a[6..10] # => Index Error
+  # a[5..10] # => []
+  # a[-2...-1] # => ["d"]
+  # ```
   def [](range : Range)
     from = range.begin
     from += length if from < 0
@@ -300,6 +373,22 @@ class Array(T)
     self[from, length]
   end
 
+  # Returns count or less (if there aren't enough) elements starting at the
+  # given start index.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Aditionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # a = [ "a", "b", "c", "d", "e" ]
+  # a[-3, 3] # => ["c", "d", "e"]
+  # a[6, 1] # => Index Error
+  # a[1, 2] # => ["b", "c"]
+  # a[5, 1] # => []
+  # ```
   def [](start : Int, count : Int)
     if (start == 0 && length == 0) || (start == length && count >= 0)
       return Array(T).new
@@ -344,6 +433,7 @@ class Array(T)
     indexes.map {|index| self[index] }
   end
 
+  # :nodoc:
   def buffer
     @buffer
   end
@@ -714,6 +804,20 @@ class Array(T)
     self.each { |a| ary.each { |b| yield a, b } }
   end
 
+  # Append. Pushes one value to the end of the array, given that the type of
+  # the value is T (which might be a type or a union of types). This expression
+  # returns the array iself, so several of them can be chained. See `pop` for
+  # the opposite effect.
+  #
+  # ```
+  # a = ["a", "b"]
+  # a.push("c") # => ["a", "b", "c"]
+  # a.push(1) # => Errors, because the array only accepts String
+  #
+  # a = ["a", "b"] of (Int32|String)
+  # a.push("c") # => ["a", "b", "c"]
+  # a.push(1) # => ["a", "b", "c", 1]
+  # ```
   def push(value : T)
     check_needs_resize
     @buffer[@length] = value
@@ -721,6 +825,8 @@ class Array(T)
     self
   end
 
+  # Append multiple values. The same as `push`, but takes an arbitrary number
+  # of values to push into the array.
   def push(*values : T)
     values.each do |value|
       self << value
