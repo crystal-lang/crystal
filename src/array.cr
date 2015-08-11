@@ -830,8 +830,10 @@ class Array(T)
     end
 
     n = Math.min(n, @length)
-    ary = Array(T).new(n) { |i| @buffer[i] }
+    ary = Array(T).new(n)
+    ary.length = n
 
+    ary.buffer.move_from(@buffer, n)
     @buffer.move_from(@buffer + n, @length - n)
     @length -= n
     (@buffer + @length).clear(n)
