@@ -632,13 +632,13 @@ module Crystal
     def visit(node : MacroIf)
       @str << "{% if "
       node.cond.accept self
-      @str << " }"
+      @str << " %}"
       node.then.accept self
       unless node.else.nop?
-        @str << "{% else }"
+        @str << "{% else %}"
         node.else.accept self
       end
-      @str << "{% end }"
+      @str << "{% end %}"
       false
     end
 
@@ -650,9 +650,9 @@ module Crystal
       end
       @str << " in "
       node.exp.accept self
-      @str << " }"
+      @str << " %}"
       node.body.accept self
-      @str << "{% end }"
+      @str << "{% end %}"
       false
     end
 
