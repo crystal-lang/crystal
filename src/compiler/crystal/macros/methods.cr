@@ -336,11 +336,29 @@ module Crystal
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
+      when "to_i"
+        case args.length
+        when 0
+          value = @value.to_i64?
+        when 1
+          arg = args.first
+          raise "argument to StringLiteral#to_i must be a number, not #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+
+          value = @value.to_i64?(arg.to_number)
+        else
+          raise "wrong number of arguments for to_i (#{args.length} for 0, 1)"
+        end
+
+        if value
+          NumberLiteral.new(value)
+        else
+          raise "StringLiteral#to_i: #{@value} is not an integer"
+        end
       when "tr"
         interpret_two_args_method(method, args) do |first, second|
           raise "first arguent to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
           raise "second arguent to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
-          StringLiteral.new(value.tr(first.value, second.value))
+          StringLiteral.new(@value.tr(first.value, second.value))
         end
       when "underscore"
         interpret_argless_method(method, args) { StringLiteral.new(@value.underscore) }

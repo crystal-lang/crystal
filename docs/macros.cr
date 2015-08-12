@@ -324,6 +324,10 @@ module Macros
     def strip : StringLiteral
     end
 
+    # Similar to `String#to_i`.
+    def to_i(base = 10)
+    end
+
     # Similar to `String#tr`.
     def tr(from : StringLiteral, to : StringLiteral) : StringLiteral
     end
