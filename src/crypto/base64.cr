@@ -1,5 +1,7 @@
 # Bcrypt needs his own base64
 # Note that this is *not* compatible with the standard MIME-base64 encoding.
+#
+# TODO: try to unify with ::Base64 to remove all duplication
 module Bcrypt::Base64
   extend self
 
@@ -35,8 +37,8 @@ module Bcrypt::Base64
 
   private def encode_size(str_size)
     (str_size * 4 / 3.0).to_i + 1
-  end 
-  
+  end
+
   private def to_base64(data, chars)
     bytes = chars.cstr
     len = data.length

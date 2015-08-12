@@ -2,7 +2,7 @@ class Crypto::Subtle
   def self.constant_time_compare(x, y)
     return 0 if x.length != y.length
 
-    v :: UInt8
+    v = 0_u8
 
     0.upto(x.length - 1) do |i|
       v = v | x[i] ^ y[i]

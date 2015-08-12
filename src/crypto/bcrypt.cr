@@ -3,6 +3,7 @@ require "./blowfish"
 require "./subtle"
 require "./base64"
 
+# TODO: optimize this type
 module Crypto::Bcrypt
   extend self
 
