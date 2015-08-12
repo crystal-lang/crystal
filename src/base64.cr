@@ -192,7 +192,8 @@ module Base64
     end
   end
 
-  private macro next_decoded_value
+  # :nodoc:
+  macro next_decoded_value
     sym = cstr.value
     res = dt[sym]
     cstr += 1

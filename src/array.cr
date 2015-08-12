@@ -48,6 +48,11 @@ class Array(T)
   include Iterable
   include Comparable(Array)
 
+  # Returns the number of elements in the array.
+  #
+  # ```
+  # [:foo, :bar].length #=> 2
+  # ```
   getter length
   @length :: Int32
   @capacity :: Int32
@@ -410,10 +415,26 @@ class Array(T)
     end
   end
 
+  # Returns the element at the given index, if in bounds,
+  # otherwise raises `IndexError`.
+  #
+  # ```
+  # a = [:foo, :bar]
+  # a.at(0) #=> :foo
+  # a.at(2) #=> IndexError
+  # ```
   def at(index : Int)
     at(index) { raise IndexError.new }
   end
 
+  # Returns the element at the given index, if in bounds,
+  # otherwise executes the given block and returns its value.
+  #
+  # ```
+  # a = [:foo, :bar]
+  # a.at(0) { :baz } #=> :foo
+  # a.at(2) { :baz } #=> :baz
+  # ```
   def at(index : Int)
     index += length if index < 0
     if 0 <= index < length
@@ -470,20 +491,33 @@ class Array(T)
     Array(T).new(length) { |i| @buffer[i].clone as T }
   end
 
+  # Returns a copy of self with all nil elements removed.
+  #
+  # ```
+  # ["a", nil, "b", nil, "c", nil].compact #=> ["a", "b", "c"]
+  # ```
   def compact
     compact_map &.itself
   end
 
-  def compact(array)
-    each do |elem|
-      array.push elem if elem
-    end
-  end
-
+  # Removes nil elements from this array.
+  #
+  # ```
+  # ary = ["a", nil, "b", nil, "c"]
+  # ary.compact!
+  # ary          #=> ["a", "b", "c"]
+  # ```
   def compact!
     delete nil
   end
 
+  # Appends the elements of *other* to `self`, and returns `self`.
+  #
+  # ```
+  # ary = ["a", "b"]
+  # ary.concat(["c", "d"])
+  # ary                    #=> ["a", "b", "c", "d"]
+  # ```
   def concat(other : Array)
     other_length = other.length
     new_length = length + other_length
@@ -497,6 +531,7 @@ class Array(T)
     self
   end
 
+  # ditto
   def concat(other : Enumerable)
     left_before_resize = @capacity - @length
     len = @length
@@ -518,10 +553,18 @@ class Array(T)
     self
   end
 
+  # Same as `length`.
   def count
     @length
   end
 
+  # Deletes all items from `self` that are equal to `obj`.
+  #
+  # ```
+  # a = ["a", "b", "b", "b", "c"]
+  # a.delete("b")
+  # a #=> ["a", "c"]
+  # ```
   def delete(obj)
     delete_if { |e| e == obj }
   end
@@ -732,6 +775,7 @@ class Array(T)
     last { nil }
   end
 
+  # :nodoc:
   def length=(length : Int)
     @length = length.to_i
   end

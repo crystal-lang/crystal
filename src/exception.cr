@@ -114,12 +114,23 @@ class EmptyEnumerable < Exception
   end
 end
 
+# Raised when the given index is invalid.
+#
+# ```
+# a = [:foo, :bar]
+# a[2] #=> IndexError: index out of bounds
+# ```
 class IndexError < Exception
   def initialize(message = "Index out of bounds")
     super(message)
   end
 end
 
+# Raised when the arguments are wrong and there isn't a more specific `Exception` class.
+#
+# ```
+# [1, 2, 3].first(-4) #=> ArgumentError: attempt to take negative size
+# ```
 class ArgumentError < Exception
   def initialize(message = "Argument error")
     super(message)
@@ -138,6 +149,12 @@ class InvalidByteSequenceError < Exception
   end
 end
 
+# Raised when the specified key is not found.
+#
+# ```
+# h = {"foo" => "bar"}
+# h["baz"] #=> KeyError: Missing hash value: "baz"
+# ```
 class KeyError < Exception
 end
 

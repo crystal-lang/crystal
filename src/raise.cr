@@ -73,6 +73,7 @@ struct LEBReader
   end
 end
 
+# :nodoc:
 fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : LibABI::UnwindException*, context : Void*) : Int32
   start = LibABI.unwind_get_region_start(context)
   ip = LibABI.unwind_get_ip(context)
@@ -118,6 +119,7 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   return LibABI::URC_CONTINUE_UNWIND
 end
 
+# :nodoc:
 @[Raises]
 fun __crystal_raise(unwind_ex : LibABI::UnwindException*) : NoReturn
   ret = LibABI.unwind_raise_exception(unwind_ex)
@@ -128,6 +130,7 @@ fun __crystal_raise(unwind_ex : LibABI::UnwindException*) : NoReturn
   LibC.exit(ret)
 end
 
+# :nodoc:
 fun __crystal_get_exception(unwind_ex : LibABI::UnwindException*) : UInt64
   unwind_ex.value.exception_object
 end
@@ -145,6 +148,7 @@ def raise(message : String)
   raise Exception.new(message)
 end
 
+# :nodoc:
 fun __crystal_raise_string(message : UInt8*)
   raise String.new(message)
 end

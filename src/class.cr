@@ -11,6 +11,11 @@ class Class
     crystal_type_id == other.crystal_type_id
   end
 
+  # Returns the name of this class.
+  #
+  # ```
+  # String.name #=> "String"
+  # ```
   macro def name : String
     {{ @type.name.stringify }}
   end

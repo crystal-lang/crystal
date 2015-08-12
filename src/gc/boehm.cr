@@ -39,14 +39,17 @@ lib LibPThread
   fun detach = GC_pthread_detach(thread : Thread) : Int32
 end
 
+# :nodoc:
 fun __crystal_malloc(size : UInt32) : Void*
   LibGC.malloc(size)
 end
 
+# :nodoc:
 fun __crystal_malloc_atomic(size : UInt32) : Void*
   LibGC.malloc_atomic(size)
 end
 
+# :nodoc:
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
   LibGC.realloc(ptr, size)
 end
