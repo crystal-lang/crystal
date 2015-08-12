@@ -484,7 +484,7 @@ class Array(T)
     delete nil
   end
 
-  def concat(other : Array)
+  def concat(other : Array(T))
     other_length = other.length
     new_length = length + other_length
     if new_length > @capacity
@@ -497,7 +497,7 @@ class Array(T)
     self
   end
 
-  def concat(other : Enumerable)
+  def concat(other : Enumerable(T))
     left_before_resize = @capacity - @length
     len = @length
     buf = @buffer + len
