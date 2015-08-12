@@ -59,6 +59,20 @@ class BitArray
     end
   end
 
+  # Toggles the bit at the given index. A false bit becomes a true bit, and
+  # vice versa.
+  # Negative indices can be used to start counting from the end of the array.
+  # Raises `IndexError` if trying to access a bit outside the array's range.
+  #
+  #     ba = BitArray.new(5)
+  #     ba[3] # => false
+  #     ba.toggle(3)
+  #     ba[3] # => false
+  def toggle(index)
+    bit_index, sub_index = bit_index_and_sub_index(index)
+    @bits[bit_index] ^= 1 << sub_index
+  end
+
   def each
     @length.times do |i|
       yield self[i]

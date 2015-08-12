@@ -47,6 +47,17 @@ describe "BitArray" do
     ary[99].should be_true
   end
 
+  it "toggles a bit" do
+    ary = BitArray.new(32)
+    ary[3].should be_false
+
+    ary.toggle(3)
+    ary[3].should be_true
+
+    ary.toggle(3)
+    ary[3].should be_false
+  end
+
   it "raises when out of bounds" do
     ary = BitArray.new(10)
     expect_raises IndexError do
