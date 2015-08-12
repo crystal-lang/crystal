@@ -107,6 +107,39 @@ describe Iterator do
     end
   end
 
+  describe "skip_while" do
+    it "does skip_while with an array" do
+      iter = [1, 2, 3, 4, 0].each.skip_while { |i| i < 3}
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.next.should eq(0)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
+    end
+
+    it "can skip everything" do
+      iter = (1..3).each.skip_while {true}
+      iter.to_a.should eq [] of Int32
+    end
+
+    it "returns the full array if the condition is false for the first item" do
+      iter = (1..2).each.skip_while {false}
+      iter.to_a.should eq [1, 2]
+    end
+
+    it "only calls the block as much as needed" do
+      called = 0
+      iter = (1..5).each.skip_while do |i|
+        called += 1
+        i < 3
+      end
+      5.times {iter.next}
+      called.should eq 3
+    end
+  end
+
   describe "zip" do
     it "does skip with Range iterator" do
       r1 = (1..3).each
