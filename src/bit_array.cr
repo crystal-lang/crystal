@@ -1,6 +1,6 @@
 # BitArray is an array data structure that compactly stores bits.
 #
-# Bits externally represented as `Bool`s and are stored internally as
+# Bits externally represented as `Bool`s are stored internally as
 # `UInt32`s. The total number of bits stored is set at creation and is
 # immutable.
 #
