@@ -39,6 +39,10 @@ abstract class Channel(T)
     receive_impl { return nil }
   end
 
+  def inspect(io)
+    to_s(io)
+  end
+
   def self.select(*channels)
     loop do
       ready_channel = channels.find &.ready?
