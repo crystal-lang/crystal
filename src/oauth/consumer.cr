@@ -64,7 +64,7 @@ class OAuth::Consumer
   end
 
   private def oauth_header(client, request, oauth_token, token_shared_secret, extra_params)
-    ts = Time.now.to_i.to_s
+    ts = Time.now.epoch.to_s
     nonce = SecureRandom.hex
 
     signature = Signature.new @consumer_key, @consumer_secret, oauth_token, token_shared_secret, extra_params

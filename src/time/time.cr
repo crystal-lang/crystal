@@ -74,8 +74,12 @@ struct Time
     new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
 
-  def self.at(seconds : Int, kind = Kind::Utc)
+  def self.epoch(seconds : Int, kind = Kind::Unspecified)
     new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, kind)
+  end
+
+  def self.epoch_ms(milliseconds : Int, kind = Kind::Unspecified)
+    new(UnixEpoch + milliseconds.to_i64 * TimeSpan::TicksPerMillisecond, kind)
   end
 
   def +(other : TimeSpan)
@@ -257,11 +261,15 @@ struct Time
   end
 
   # Returns the number of seconds since the Epoch
-  def to_i
+  def epoch
     (ticks - UnixEpoch) / TimeSpan::TicksPerSecond
   end
 
-  def to_f
+  def epoch_ms
+    (ticks - UnixEpoch) / TimeSpan::TicksPerMillisecond
+  end
+
+  def epoch_f
     (ticks - UnixEpoch) / TimeSpan::TicksPerSecond.to_f
   end
 

@@ -49,11 +49,18 @@ describe Time do
     end
   end
 
-  it "initialize with .at" do
-    seconds = Time.now.to_i
-    from_at = Time.at(seconds)
-    from_at.to_i.should eq(seconds)
-    typeof(from_at).should eq(Time)
+  it "initialize with .epoch" do
+    seconds = 1439404155
+    time = Time.epoch(seconds)
+    time.should eq(Time.new(2015, 8, 12, 18, 29, 15))
+    time.epoch.should eq(seconds)
+  end
+
+  it "initialize with .epoch_ms" do
+    milliseconds = 1439404155000
+    time = Time.epoch_ms(milliseconds, kind: Time::Kind::Utc)
+    time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
+    time.epoch_ms.should eq(milliseconds)
   end
 
   it "fields" do
@@ -226,8 +233,8 @@ describe Time do
 
   it "gets unix epoch seconds" do
     t1 = Time.new 2014, 10, 30, 21, 18, 13
-    t1.to_i.should eq(1414703893)
-    t1.to_f.should be_close(1414703893, 1e-01)
+    t1.epoch.should eq(1414703893)
+    t1.epoch_f.should be_close(1414703893, 1e-01)
   end
 
   it "to_s" do
