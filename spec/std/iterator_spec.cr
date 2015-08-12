@@ -70,6 +70,32 @@ describe Iterator do
     end
   end
 
+  describe "take_while" do
+    it "does take_while with Range iterator" do
+      iter = (1..5).each.take_while {|i| i < 3}
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+    end
+
+    it "does take_while with more than available" do
+      (1..3).each.take_while{true}.to_a.should eq([1, 2, 3])
+    end
+
+    it "only calls the block as much as needed" do
+      called = 0
+      iter = (1..5).each.take_while do |i|
+        called += 1
+        i < 3
+      end
+      5.times {iter.next}
+      called.should eq 3
+    end
+  end
+
   describe "skip" do
     it "does skip with Range iterator" do
       iter = (1..3).each.skip(2)
