@@ -58,6 +58,21 @@ describe "BitArray" do
     ary[3].should be_false
   end
 
+  it "inverts all bits" do
+    ary = BitArray.new(100)
+    ary.none?.should be_true
+
+    ary.invert
+    ary.all?.should be_true
+
+    ary[50] = false
+    ary[33] = false
+    ary.count {|b| b}.should eq(98)
+
+    ary.invert
+    ary.count {|b| b}.should eq(2)
+  end
+
   it "raises when out of bounds" do
     ary = BitArray.new(10)
     expect_raises IndexError do

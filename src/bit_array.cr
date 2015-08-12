@@ -25,12 +25,8 @@ class BitArray
   # `initial` optionally sets the starting value, true or false, for all bits
   # in the array.
   def initialize(@length, initial = false : Bool)
-    malloc_size = (length / 32.0).ceil.to_i
-    if initial
-      @bits = Pointer(UInt32).malloc(malloc_size, UInt32::MAX)
-    else
-      @bits = Pointer(UInt32).malloc(malloc_size)
-    end
+    value = initial ? UInt32::MAX : UInt32::MIN
+    @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
 
   # Returns the bit at the given index.
@@ -73,6 +69,20 @@ class BitArray
     @bits[bit_index] ^= 1 << sub_index
   end
 
+  # Inverts all bits in the array. Falses become true and
+  # vice versa.
+  #
+  #     ba = BitArray.new(5)
+  #     ba[2] = true; ba[3] = true
+  #     ba # => BitArray[00110]
+  #     ba.invert
+  #     ba # => BitArray[11001]
+  def invert
+    malloc_size.times do |i|
+      @bits[i] = ~@bits[i]
+    end
+  end
+
   def each
     @length.times do |i|
       yield self[i]
@@ -92,5 +102,9 @@ class BitArray
     raise IndexError.new if index >= @length || index < 0
 
     index.divmod(32)
+  end
+
+  private def malloc_size
+    (@length / 32.0).ceil.to_i
   end
 end
