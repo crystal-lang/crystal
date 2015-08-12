@@ -56,6 +56,13 @@ describe Time do
     typeof(from_at).should eq(Time)
   end
 
+  it "initialize with .from_ms" do
+    ms = Time.now.to_i * 1000
+    from_ms = Time.from_ms(ms)
+    from_ms.to_ms.should eq(ms)
+    typeof(from_ms).should eq(Time)
+  end
+
   it "fields" do
     Time::MaxValue.ticks.should eq(3155378975999999999)
     Time::MinValue.ticks.should eq(0)
@@ -248,6 +255,17 @@ describe Time do
 
     t = Time.new 2014, 10, 30, 21, 18, 1
     t.to_s.should eq("2014-10-30 21:18:01")
+  end
+
+  it "to_i" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t.to_i.should eq(1414703893)
+    t.to_i.should eq(t.to_seconds)
+  end
+
+  it "to_ms" do
+    t = Time.new 2014, 10, 30, 21, 18, 13
+    t.to_ms.should eq(1414703893000)
   end
 
   it "formats" do
