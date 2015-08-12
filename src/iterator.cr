@@ -119,6 +119,10 @@ module Iterator(T)
     Take(typeof(self), T).new(self, n)
   end
 
+  def take_while(&func : T -> U)
+    TakeWhile(typeof(self), T, U).new(self, func)
+  end
+
   def skip(n)
     Skip(typeof(self), T).new(self, n)
   end
@@ -298,6 +302,32 @@ module Iterator(T)
 
     def rewind
       @n = @original
+      super
+    end
+  end
+
+  # :nodoc:
+  class TakeWhile(I, T, U)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func: T -> U)
+      @returned_false = false
+    end
+
+    def next
+      return stop if @returned_false == true
+      value = wrapped_next
+      if @func.call(value)
+        value
+      else
+        @returned_false = true
+        stop
+      end
+    end
+
+    def rewind
+      @returned_false = false
       super
     end
   end
