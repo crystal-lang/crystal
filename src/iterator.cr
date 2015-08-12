@@ -123,6 +123,10 @@ module Iterator(T)
     Skip(typeof(self), T).new(self, n)
   end
 
+  def skip_while(&func : T -> U)
+    SkipWhile(typeof(self), T, U).new(self, func)
+  end
+
   def zip(other : Iterator(U))
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
@@ -321,6 +325,33 @@ module Iterator(T)
 
     def rewind
       @n = @original
+      super
+    end
+  end
+
+
+  # :nodoc:
+  class SkipWhile(I, T, U)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func: T -> U)
+      @returned_false = false
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        return value if @returned_false == true
+        unless @func.call(value)
+          @returned_false = true
+          return value
+        end
+      end
+    end
+
+    def rewind
+      @returned_false = false
       super
     end
   end
