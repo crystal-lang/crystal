@@ -1833,6 +1833,7 @@ module Crystal
 
       call_convention = check_call_convention_attributes node
       check_valid_attributes node, ValidFunDefAttributes, "fun"
+      node.doc ||= attributes_doc()
 
       args = node.args.map do |arg|
         restriction = arg.restriction.not_nil!
