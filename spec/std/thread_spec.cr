@@ -8,6 +8,13 @@ describe "Thread" do
     a.should eq(1)
   end
 
+  it "checks if thread is alive" do 
+    thread = Thread.new { a = 5}
+    thread.alive?.should eq(true)
+    thread.join
+    thread.alive?.should eq(false)
+  end
+
   it "allows passing a fun with an argument to execute" do
     a = 0
     thread = Thread.new(3) { |i| a += i; 20 }
