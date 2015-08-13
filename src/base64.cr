@@ -76,10 +76,15 @@ module Base64
   #
   #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
   def strict_encode(data)
+    strict_encode data, CHARS_STD, pad: true
+  end
+
+  # :nodoc:
+  def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_STD, pad: true) { |byte| appender << byte }
+      to_base64(slice, alphabet, pad: pad) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
@@ -109,7 +114,7 @@ module Base64
     slice = data.to_slice
     String.new(decode_size(slice.length)) do |buf|
       appender = buf.appender
-      from_base64(slice) { |byte| appender << byte }
+      from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
       {appender.count, 0}
     end
   end
@@ -156,7 +161,7 @@ module Base64
     end
   end
 
-  private def from_base64(data)
+  private def from_base64(data, decode_table)
     len = data.length
     dt = DECODE_TABLE.buffer
     cstr = data.pointer(len)
