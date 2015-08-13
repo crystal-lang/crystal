@@ -69,7 +69,10 @@ module Process
 
   def self.fork
     pid = LibC.fork
-    pid = nil if pid == 0
+    if pid == 0
+      pid = nil
+      Scheduler.after_fork
+    end
     pid
   end
 

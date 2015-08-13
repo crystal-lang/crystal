@@ -14,6 +14,10 @@ class Scheduler
 
   @@loop_fiber = Fiber.new { @@eb.run_loop }
 
+  def self.after_fork
+    @@eb.reinit
+  end
+
   def self.sleep(time)
     @@eb.add_timer_event time, LibEvent2::Callback.new do |s, flags, data|
       fiber = data as Fiber

@@ -14,6 +14,12 @@ module Event
       @base = LibEvent2.event_base_new
     end
 
+    def reinit
+      unless LibEvent2.event_reinit(@base) == 0
+        raise "Error reinitializing libevent"
+      end
+    end
+
     def add_signal_event(signal, callback, data = nil)
       event = LibEvent2.event_new(@base, signal, LibEvent2::EventFlags::Signal | LibEvent2::EventFlags::Persist, callback, data)
       LibEvent2.event_add(event, nil)
