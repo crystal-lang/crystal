@@ -8,6 +8,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Bo Jeanes, http://bjeanes.com/
 - Bruno Antunes, https://github.com/sardaukar
 - gottlike, https://github.com/gottlike
+- Hirofumi Wakasugi, https://github.com/5t111111
 - Jean-Baptiste Barth, http://jbbarth.com/
 - jhp
 - Kris Leech, http://teamcoding.com/
@@ -17,7 +18,6 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Serdar Dogruyol, http://www.serdardogruyol.com/
 - Sergey Kucher, https://github.com/sergey-kucher
 - Simon George, http://www.sfcgeorge.co.uk/about
-- WAKASUGI 5T111111, https://twitter.com/5t111111
 - Yukihiro "Matz" Matsumoto, https://github.com/matz
 
 ### Your name in BACKERS.md.
