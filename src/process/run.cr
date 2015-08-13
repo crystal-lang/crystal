@@ -1,129 +1,74 @@
-lib LibC
-  fun execvp(file : UInt8*, argv : UInt8**) : Int32
-end
-
-def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
-  argv = [command.cstr]
-  if args
-    args.each do |arg|
-      argv << arg.cstr
-    end
-  end
-  argv << Pointer(UInt8).null
-
-  if output
-    process_output, fork_output = IO.pipe(write_blocking: true)
-  end
-
-  if input
-    fork_input, process_input = IO.pipe(read_blocking: true)
+# Executes a command, waits for it to exit and returns a Process::Status object.
+#
+# See Process.spawn for arguments
+#   output|error is captured in status.output if the parameter is nil
+#   StringIO objects may also be used for input|output|error unlike popen or spawn.
+def Process.run(command, args = nil, input = true : Nil | IO | StringIO | Bool, output = nil : Nil | IO | StringIO | Bool, error = true : Nil | IO | StringIO | Bool, chdir = nil : String?)
+  case input
+  when FileDescriptorIO, Bool, nil
+    # passed to popen
+    popen_input = input
+    copy_input = nil
+  when IO, StringIO
+    # redirected to IO provided
+    popen_input = nil
+    copy_input = input
   end
 
-  pid = fork do
-    if output == false
-      null = File.new("/dev/null", "r+")
-      STDOUT.reopen(null)
-    elsif fork_output
-      STDOUT.reopen(fork_output)
-    end
-
-    if process_input && fork_input
-      process_input.close
-      STDIN.reopen(fork_input)
-    end
-
-    LibC.execvp(command, argv.buffer)
-    LibC.exit 127
+  case output
+  when FileDescriptorIO, Bool
+    # passed to popen
+    popen_output = output
+    copy_output = nil
+  when IO, StringIO, nil
+    # redirected to IO provided
+    popen_output = nil
+    copy_output = output || StringIO.new
   end
 
-  if pid == -1
-    raise Errno.new("Error executing system command '#{command}'")
+  case error
+  when FileDescriptorIO, Bool
+    # passed to popen
+    popen_error = error
+    copy_error = nil
+  when IO, StringIO, nil
+    # redirected to IO provided
+    popen_error = nil
+    copy_error = error
   end
 
-  status = Process::Status.new(pid)
+  status = popen(command, args, input: popen_input, output: popen_output, error: popen_error, chdir: chdir)
 
-  if input
-    process_input = process_input.not_nil!
-    fork_input.not_nil!.close
+  input_copy = -> { io_copy("input", copy_input, status.input, true) }
+  output_copy = -> { io_copy("output", status.output, copy_output) }
+  error_copy = -> { io_copy("error", status.error, copy_error) }
+  parallel(input_copy.call, output_copy.call, error_copy.call)
 
-    case input
-    when String
-      process_input.print input
-      process_input.close
-      process_input = nil
-    when IO
-      input_io = input
-    end
-  end
+  status.close
 
-  if output
-    fork_output.not_nil!.close
-
-    case output
-    when true
-      status_output = StringIO.new
-    when IO
-      status_output = output
-    end
-  end
-
-  while process_input || process_output
-    wios = nil
-    rios = nil
-
-    if process_input
-      wios = {process_input}
-    end
-
-    if process_output
-      rios = {process_output}
-    end
-
-    buffer :: UInt8[2048]
-
-    ios = IO.select(rios, wios)
-    next unless ios
-
-    if process_input && ios.includes? process_input
-      bytes = input_io.not_nil!.read(buffer.to_slice)
-      if bytes == 0
-        process_input.close
-        process_input = nil
-      else
-        process_input.write(buffer.to_slice, bytes)
-      end
-    end
-
-    if process_output && ios.includes? process_output
-      bytes = process_output.read(buffer.to_slice)
-      if bytes == 0
-        process_output.close
-        process_output = nil
-      else
-        status_output.not_nil!.write(buffer.to_slice, bytes)
-      end
-    end
-  end
-
-  status.exit = Process.waitpid(pid)
-
-  if output == true
-    status.output = status_output.to_s
-  end
+  status.output = copy_output if copy_output
+  status.error = copy_error if copy_error
 
   $? = status
 
   status
 end
 
+private def io_copy msg, src, dst, close_dst = false
+  return true unless src.is_a?(IO) && dst.is_a?(IO)
+  IO.copy(src, dst)
+  dst.close if close_dst
+  true # not used.  compiler doesn't like nil return
+end
+
 def system(command : String)
-  status = Process.run("/bin/sh", input: command, output: STDOUT)
+  status = Process.run("/bin/sh", { "-c", command }, output: STDOUT, error: STDERR)
   $? = status
   status.success?
 end
 
 def `(command)
-  status = Process.run("/bin/sh", input: command, output: true)
+  status = Process.run("/bin/sh", { "-c", command }, output: nil, error: STDERR)
   $? = status
-  status.output.not_nil!
+  status.output.not_nil!.to_s
 end

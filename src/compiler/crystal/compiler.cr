@@ -214,7 +214,9 @@ module Crystal
 
       timing("Codegen (clang)") do
         quoted_object_names = object_names.map { |name| %("#{name}") }.join " "
-        system "#{CC} -o #{output_filename} #{quoted_object_names} #{@link_flags} #{lib_flags}"
+        cmd = "#{CC} -o #{output_filename} #{quoted_object_names} #{@link_flags} #{lib_flags}"
+        status = Process.run "/bin/sh", input: StringIO.new(cmd)
+        raise "exit=#{status.exit} #{cmd.inspect} failed" unless status.success?
       end
     end
 

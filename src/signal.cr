@@ -5,6 +5,7 @@ end
 
 ifdef darwin
   enum Signal
+    NONE   =  0
     HUP    =  1
     INT    =  2
     QUIT   =  3
@@ -41,6 +42,7 @@ ifdef darwin
   end
 else
   enum Signal
+    NONE   = 0
     HUP    = 1
     INT    = 2
     QUIT   = 3
