@@ -1,3 +1,26 @@
+## 0.7.6 (2015-08-13)
+
+* **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/manastech/crystal/commits/master?author=jessedoyle))
+* **(breaking change)** Renamed `Enumerable#drop` to `Enumerable#skip`
+* **(breaking change)** Renamed `Time.at` to `Time.epoch`, and `Time#to_i` and `Time#to_f` to `Time#epoch` and `Time#epoch_f`
+* **(breaking change)** `inherited` macro now runs before a class' body
+* Renamed `--no-build` flag to `--no-codegen`
+* Allow interpolations in heredocs (thanks @jessedoyle)
+* Allow hash substitutions in `String#%` and `sprintf` (thanks @zamith)
+* Added `SecureRandom.base64`, `SecureRandom.urlsafe_base64` and `SecureRandom.uuid` (thanks @ysbaddaden)
+* Added `File.link`, `File.symlink` and `File.symlink?` (thanks @ysbaddaden)
+* Added `Enumerable#in_groups_of` (thanks @jalyna)
+* Added `Array#zip?` (thanks @yui-knk)
+* Added `Array#permutations` and `Array#each_permutation` (thanks @jalyna and @kostya)
+* Added `IO#gets(limit : Int)` and `IO#gets(delimiter : Char, limit : Int)`
+* Added `Iterator#compact_map`, `Iterator#take_while` and `Iterator#skip_while` (thanks @PragTob)
+* Added `StringLiteral#to_i` macro method
+* Added `Crypto::Bcrypt` (thanks @akaufmann)
+* Added `Time.epoch_ms` and `Time#epoch_ms`
+* Added `BitArray#toggle` and `BitArray#invert` (thanks @will)
+* Fixed `IO#reopen` swapped semantic (thanks @technorama)
+* Many bug fixes and improvements
+
 ## 0.7.5 (2015-07-30)
 
 * **(breaking change)** `0` is not a prefix for octal numbers anymore. Use `0o`
