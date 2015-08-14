@@ -587,9 +587,9 @@ module Crystal
         if $?.success?
           @last = MacroId.new(result)
         elsif result.empty?
-          node.raise "error executing command: #{cmd}, got exit status #{$?.exit}"
+          node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}"
         else
-          node.raise "error executing command: #{cmd}, got exit status #{$?.exit}:\n\n#{result}\n"
+          node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
         end
       end
 

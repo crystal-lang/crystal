@@ -1,55 +1,79 @@
 require "spec"
+require "process"
 
 describe Process do
-  describe "run" do
-    it "gets status code from successful process" do
-      Process.run("true").exit.should eq(0)
-    end
+  it "runs true" do
+    process = Process.run("true")
+    process.wait.exit_code.should eq(0)
+  end
 
-    it "gets status code from failed process" do
-      Process.run("false").exit.should eq(1)
-    end
+  it "runs false" do
+    process = Process.run("false")
+    process.wait.exit_code.should eq(1)
+  end
 
-    it "returns status 127 if command could not be executed" do
-      Process.run("foobarbaz", output: true).exit.should eq(127)
-    end
+  it "returns status 127 if command could not be executed" do
+    process = Process.run("foobarbaz")
+    process.wait.exit_code.should eq(127)
+  end
 
-    it "includes PID in process status " do
-      Process.run("true").pid.should be > 0
-    end
+  it "runs true in block" do
+    Process.run("true") { }
+    $?.exit_code.should eq(0)
+  end
 
-    it "receives arguments in array" do
-      Process.run("/bin/sh", ["-c", "exit 123"]).exit.should eq(123)
-    end
+  it "receives arguments in array" do
+    Process.run("/bin/sh", ["-c", "exit 123"]).wait.exit_code.should eq(123)
+  end
 
-    it "receives arguments in tuple" do
-      Process.run("/bin/sh", {"-c", "exit 123"}).exit.should eq(123)
-    end
+  it "receives arguments in tuple" do
+    Process.run("/bin/sh", {"-c", "exit 123"}).wait.exit_code.should eq(123)
+  end
 
-    it "redirects output to /dev/null" do
-      # This doesn't test anything but no output should be seen while running tests
-      Process.run("/bin/ls", output: false).exit.should eq(0)
-    end
+  it "redirects output to /dev/null" do
+    # This doesn't test anything but no output should be seen while running tests
+    Process.run("/bin/ls", output: false).wait.exit_code.should eq(0)
+  end
 
-    it "gets output as string" do
-      Process.run("/bin/sh", {"-c", "echo hello"}, output: true).output.should eq("hello\n")
+  it "gets output" do
+    value = Process.run("/bin/sh", {"-c", "echo hello"}) do |proc|
+      proc.output.read
     end
+    value.should eq("hello\n")
+  end
 
-    it "send input from string" do
-      Process.run("/bin/cat", input: "hello", output: true).output.should eq("hello")
+  it "sends input in IO" do
+    value = Process.run("/bin/cat", input: StringIO.new("hello")) do |proc|
+      proc.input?.should be_nil
+      proc.output.read
     end
+    value.should eq("hello")
+  end
 
-    it "send input from IO" do
-      File.open(__FILE__, "r") do |file|
-        Process.run("/bin/cat", input: file, output: true).output.should eq(File.read(__FILE__))
-      end
-    end
+  it "sends output to IO" do
+    output = StringIO.new
+    Process.run("/bin/sh", {"-c", "echo hello"}, output: output).wait
+    output.to_s.should eq("hello\n")
+  end
 
-    it "send output to IO" do
-      io = StringIO.new
-      Process.run("/bin/cat", input: "hello", output: io).output.should be_nil
-      io.to_s.should eq("hello")
+  it "sends error to IO" do
+    error = StringIO.new
+    Process.run("/bin/sh", {"-c", "echo hello 1>&2"}, error: error).wait
+    error.to_s.should eq("hello\n")
+  end
+
+  it "controls process in block" do
+    value = Process.run("/bin/cat") do |proc|
+      proc.input.print "hello"
+      proc.input.close
+      proc.output.read
     end
+    value.should eq("hello")
+  end
+
+  it "closes ios after block" do
+    Process.run("/bin/cat") {}
+    $?.exit_code.should eq(0)
   end
 
   describe "kill" do

@@ -33,6 +33,7 @@ lib LibC
   fun time(t : TimeT) : TimeT
   fun free(ptr : Void*)
   fun memcmp(p1 : Void*, p2 : Void*, size : SizeT) : Int32
+  fun _exit(status : Int32) : NoReturn
 
   PROT_NONE = 0x00
   PROT_READ = 0x01

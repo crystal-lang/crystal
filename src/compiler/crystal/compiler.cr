@@ -293,7 +293,7 @@ module Crystal
       success = ::system(command)
       unless success
         print colorize("Error: ").red.bold
-        puts colorize("execution of command failed with code: #{$?.exit}: `#{command}`").bright
+        puts colorize("execution of command failed with code: #{$?.exit_code}: `#{command}`").bright
         exit 3
       end
       success

@@ -2,128 +2,176 @@ lib LibC
   fun execvp(file : UInt8*, argv : UInt8**) : Int32
 end
 
-def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : String | IO)
-  argv = [command.cstr]
-  if args
-    args.each do |arg|
-      argv << arg.cstr
+class Process
+  # The standard io configuration of a process:
+  #
+  # * `nil`: use a pipe
+  # * `false`: no IO (`/dev/null`)
+  # * `true`: inherit from parent
+  # * `IO`: use the given IO
+  alias Stdio = Nil | Bool | IO
+
+  # Executes a process but doesn't wait for it to complete.
+  #
+  # To wait for it to finish, invoke `wait`.
+  #
+  # By default the process is configured without input, output or error.
+  def self.run(cmd : String, args = nil, input = false : Stdio, output = false : Stdio, error = false : Stdio)
+    new(cmd, args, input, output, error)
+  end
+
+  # Executes a process, yields the block, and then waits for it to finish.
+  #
+  # By default the process is configured to use pipes for input, output and error. These
+  # will be closed automatically at the end of the block.
+  #
+  # Returns the block's value.
+  def self.run(cmd : String, args = nil, input = nil : Stdio, output = nil : Stdio, error = nil : Stdio)
+    process = run(cmd, args, input, output, error)
+    value = yield process
+    process.close
+    $? = process.wait
+    value
+  end
+
+  # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process via `Process.run`.
+  getter! input
+
+  # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process via `Process.run`.
+  getter! output
+
+  # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process via `Process.run`.
+  getter! error
+
+  def initialize(command : String, args, input : Stdio, output : Stdio, error : Stdio)
+    argv = [command.to_unsafe]
+    args.try &.each do |arg|
+      argv << arg.to_unsafe
     end
-  end
-  argv << Pointer(UInt8).null
+    argv << Pointer(UInt8).null
 
-  if output
-    process_output, fork_output = IO.pipe(write_blocking: true)
-  end
+    @wait_count = 0
 
-  if input
-    fork_input, process_input = IO.pipe(read_blocking: true)
-  end
-
-  pid = fork do
-    if output == false
-      null = File.new("/dev/null", "r+")
-      STDOUT.reopen(null)
-    elsif fork_output
-      STDOUT.reopen(fork_output)
+    if needs_pipe?(input)
+      fork_input, process_input = IO.pipe(read_blocking: true)
+      if input
+        @wait_count += 1
+        spawn { copy_io(input, process_input, channel) }
+      else
+        @input = process_input
+      end
     end
 
-    if process_input && fork_input
-      process_input.close
-      STDIN.reopen(fork_input)
+    if needs_pipe?(output)
+      process_output, fork_output = IO.pipe(write_blocking: true)
+      if output
+        @wait_count += 1
+        spawn { copy_io(process_output, output, channel) }
+      else
+        @output = process_output
+      end
     end
 
-    LibC.execvp(command, argv.buffer)
-    LibC.exit 127
-  end
-
-  if pid == -1
-    raise Errno.new("Error executing system command '#{command}'")
-  end
-
-  status = Process::Status.new(pid)
-
-  if input
-    process_input = process_input.not_nil!
-    fork_input.not_nil!.close
-
-    case input
-    when String
-      process_input.print input
-      process_input.close
-      process_input = nil
-    when IO
-      input_io = input
+    if needs_pipe?(error)
+      process_error, fork_error = IO.pipe(write_blocking: true)
+      if error
+        @wait_count += 1
+        spawn { copy_io(process_error, error, channel) }
+      else
+        @error = process_error
+      end
     end
+
+    @pid = fork do
+      begin
+        # File.umask(umask) if umask
+
+        reopen_io(fork_input || input, STDIN, "r")
+        reopen_io(fork_output || output, STDOUT, "w")
+        reopen_io(fork_error || error, STDERR, "w")
+
+        # Dir.chdir(chdir) if chdir
+
+        process_input.try &.close
+        process_output.try &.close
+        process_error.try &.close
+
+        LibC.execvp(command, argv)
+      rescue ex
+        # TODO: print backtrace
+        ex.inspect(STDERR)
+        STDERR.flush
+      ensure
+        LibC._exit 127
+      end
+    end
+
+    fork_input.try &.close
+    fork_output.try &.close
+    fork_error.try &.close
   end
 
-  if output
-    fork_output.not_nil!.close
+  # Waits for this process to complete and returns a `Process::Status`.
+  def wait
+    @wait_count.times { channel.receive }
 
-    case output
+    exit_code = Process.waitpid(@pid)
+    Status.new(exit_code)
+  end
+
+  # Closes any pipes to the child process
+  def close
+    close_io @input
+    close_io @output
+    close_io @error
+  end
+
+  private def channel
+    @channel ||= Channel(Nil).new
+  end
+
+  private def needs_pipe?(io)
+    io.nil? || (io.is_a?(IO) && !io.is_a?(FileDescriptorIO))
+  end
+
+  private def copy_io(src, dst, channel)
+    return unless src.is_a?(IO) && dst.is_a?(IO)
+
+    IO.copy(src, dst)
+    dst.close
+    channel.send nil
+  end
+
+  private def reopen_io(src_io, dst_io, mode)
+    case src_io
+    when FileDescriptorIO
+      dst_io.reopen(src_io)
     when true
-      status_output = StringIO.new
-    when IO
-      status_output = output
-    end
-  end
-
-  while process_input || process_output
-    wios = nil
-    rios = nil
-
-    if process_input
-      wios = {process_input}
-    end
-
-    if process_output
-      rios = {process_output}
-    end
-
-    buffer :: UInt8[2048]
-
-    ios = IO.select(rios, wios)
-    next unless ios
-
-    if process_input && ios.includes? process_input
-      bytes = input_io.not_nil!.read(buffer.to_slice)
-      if bytes == 0
-        process_input.close
-        process_input = nil
-      else
-        process_input.write(buffer.to_slice, bytes)
+      # use same io as parent
+    when false
+      File.open("/dev/null", mode) do |file|
+        dst_io.reopen(file)
       end
-    end
-
-    if process_output && ios.includes? process_output
-      bytes = process_output.read(buffer.to_slice)
-      if bytes == 0
-        process_output.close
-        process_output = nil
-      else
-        status_output.not_nil!.write(buffer.to_slice, bytes)
-      end
+    else
+      raise "unknown object type #{src_io}"
     end
   end
 
-  status.exit = Process.waitpid(pid)
-
-  if output == true
-    status.output = status_output.to_s
+  private def close_io(io)
+    io.close if io && !io.closed?
   end
-
-  $? = status
-
-  status
 end
 
 def system(command : String)
-  status = Process.run("/bin/sh", input: command, output: STDOUT)
+  status = Process.run("/bin/sh", input: StringIO.new(command), output: true, error: true).wait
   $? = status
   status.success?
 end
 
 def `(command)
-  status = Process.run("/bin/sh", input: command, output: true)
+  process = Process.run("/bin/sh", input: StringIO.new(command), output: nil, error: true)
+  output = process.output.read
+  status = process.wait
   $? = status
-  status.output.not_nil!
+  output
 end

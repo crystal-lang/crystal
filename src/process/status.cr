@@ -1,14 +1,13 @@
 class Process::Status
-  property pid
-  property exit
-  property input
-  property output
+  def initialize(@exit_status)
+  end
 
-  def initialize(@pid)
+  def exit_code
+    @exit_status >> 8
   end
 
   def success?
-    @exit == 0
+    exit_code == 0
   end
 end
 

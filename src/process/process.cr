@@ -29,7 +29,7 @@ lib LibC
   fun usleep(useconds : UInt32) : UInt32
 end
 
-module Process
+class Process
   def self.exit(status = 0)
     LibC.exit(status)
   end
@@ -81,7 +81,7 @@ module Process
       raise Errno.new("Error during waitpid")
     end
 
-    exit_code >> 8
+    exit_code
   end
 
   record Tms, utime, stime, cutime, cstime
