@@ -221,6 +221,8 @@ def render(scene, surface)
   surface.update_rect 0, 0, 0, 0
 end
 
+Signal::INT.trap { exit }
+
 SDL.init
 SDL.hide_cursor
 surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT
