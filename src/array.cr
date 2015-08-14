@@ -293,9 +293,7 @@ class Array(T)
   # a = [1,2]
   # a << 3 # => [1,2,3]
   # ```
-  def <<(value : T)
-    push(value)
-  end
+  alias_method :<<, :push
 
   # Returns the element at the given index.
   #
