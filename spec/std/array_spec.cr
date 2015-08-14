@@ -570,6 +570,30 @@ describe "Array" do
     [1, 2, 3].product(['a', 'b']).should eq([{1,'a'}, {1,'b'}, {2,'a'}, {2,'b'}, {3,'a'}, {3,'b'}])
   end
 
+  describe "push" do
+    it "adds one element to the array" do
+      a = ["a", "b"]
+      a.push("c")
+      a.should eq ["a", "b", "c"]
+    end
+
+    it "returns the array" do
+      a = ["a", "b"]
+      a.push("c").should eq ["a", "b", "c"]
+    end
+
+    it "has the << alias" do
+      a = ["a", "b"]
+      a << "c"
+      a.should eq ["a", "b", "c"]
+    end
+
+    it "has the append alias" do
+      a = ["a", "b"]
+      a.append("c").should eq ["a", "b", "c"]
+    end
+  end
+
   it "does replace" do
     a = [1, 2, 3]
     b = [1]
@@ -854,11 +878,18 @@ describe "Array" do
     end
   end
 
-  it "does unshift" do
-    a = [2, 3]
-    expected = [1, 2, 3]
-    a.unshift(1).should eq(expected)
-    a.should eq(expected)
+  describe "unshift" do
+    it "does unshift" do
+      a = [2, 3]
+      expected = [1, 2, 3]
+      a.unshift(1).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "has the prepend alias" do
+      a = [2, 3]
+      a.prepend(1).should eq [1, 2, 3]
+    end
   end
 
   it "does update" do

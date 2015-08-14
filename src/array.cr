@@ -293,9 +293,8 @@ class Array(T)
   # a = [1,2]
   # a << 3 # => [1,2,3]
   # ```
-  def <<(value : T)
-    push(value)
-  end
+  alias_method :<<, :push
+  alias_method :append, :push
 
   # Returns the element at the given index.
   #
@@ -1223,6 +1222,8 @@ class Array(T)
   def unshift(obj : T)
     insert 0, obj
   end
+
+  alias_method :prepend, :unshift
 
   def update(index : Int)
     index = check_index_out_of_bounds index
