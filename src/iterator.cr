@@ -463,7 +463,7 @@ module Iterator(T)
   end
 
   struct InGroupsOf(I, T, N, U)
-    include Iterator(T)
+    include Iterator(Array(T | U))
     include IteratorWrapper
 
     def initialize(@iterator : Iterator(T), @size : N, @filled_up_with : U)

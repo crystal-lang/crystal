@@ -227,6 +227,11 @@ describe Iterator do
         [1, 2, 3].each.in_groups_of(0)
       end
     end
+
+    it "still works with other iterator methods like to_a" do
+      iter = (1..3).each.in_groups_of(2, 'z')
+      iter.to_a.should eq [[1, 2], [3, 'z']]
+    end
   end
 
   describe "with_index" do
