@@ -139,6 +139,21 @@ describe "Int" do
     assert { (~1_u32).should eq(4294967294) }
   end
 
+  # TODO: enable after 0.7.6
+  # describe ">>" do
+  #   assert { (8000 >> 1).should eq(4000) }
+  #   assert { (8000 >> 2).should eq(2000) }
+  #   assert { (8000 >> 32).should eq(0) }
+  #   assert { (8000 >> -1).should eq(16000) }
+  # end
+
+  # describe "<<" do
+  #   assert { (8000 << 1).should eq(16000) }
+  #   assert { (8000 << 2).should eq(32000) }
+  #   assert { (8000 << 32).should eq(0) }
+  #   assert { (8000 << -1).should eq(4000) }
+  # end
+
   describe "to" do
     it "does upwards" do
       a = 0

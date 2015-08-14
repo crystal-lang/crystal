@@ -91,27 +91,50 @@ struct Int
     end
   end
 
-  # TODO enable after 0.7.5, and remove ">>" from primitives
-  # def >>(count : Int)
-  #   if count < 0
-  #     self << count.abs
-  #   elsif count < sizeof(self) * 8
-  #     self.unsafe_shr(count)
-  #   else
-  #     self.class.zero
-  #   end
-  # end
+  # Returns the result of shifting this number's bits *count* positions to the right.
+  # Also known as arithmetic right shift.
+  #
+  # * If *count* is greater than the number of bits of this integer, returns 0
+  # * If *count* is negative, a left shift is performed
+  #
+  # ```
+  # 8000 >> 1   #=> 4000
+  # 8000 >> 2   #=> 2000
+  # 8000 >> 32  #=> 0
+  # 8000 >> -1  #=> 16000
+  #
+  # -8000 >> 1  #=> -4000
+  # ```
+  def >>(count : Int)
+    if count < 0
+      self << count.abs
+    elsif count < sizeof(self) * 8
+      self.unsafe_shr(count)
+    else
+      self.class.zero
+    end
+  end
 
-  # TODO enable after 0.7.5 and remove "<<" from primitives
-  # def <<(count : Int)
-  #   if count < 0
-  #     self >> count.abs
-  #   elsif count < sizeof(self) * 8
-  #     self.unsafe_shl(count)
-  #   else
-  #     self.class.zero
-  #   end
-  # end
+  # Returns the result of shifting this number's bits *count* positions to the left.
+  #
+  # * If *count* is greater than the number of bits of this integer, returns 0
+  # * If *count* is negative, a right shift is performed
+  #
+  # ```
+  # 8000 << 1  #=> 4000
+  # 8000 << 2  #=> 2000
+  # 8000 << 32 #=> 0
+  # 8000 << -1 #=> 16000
+  # ```
+  def <<(count : Int)
+    if count < 0
+      self >> count.abs
+    elsif count < sizeof(self) * 8
+      self.unsafe_shl(count)
+    else
+      self.class.zero
+    end
+  end
 
   def abs
     self >= 0 ? self : -self

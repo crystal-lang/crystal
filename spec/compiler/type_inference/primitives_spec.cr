@@ -160,7 +160,7 @@ describe "Type inference: primitives" do
         fun foo : K
       end
 
-      Test.foo << 1
+      Test.foo.unsafe_shl 1
       )) { types["Test"].types["K"] }
   end
 
