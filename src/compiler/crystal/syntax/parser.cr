@@ -971,11 +971,12 @@ module Crystal
         name = @token.value.to_s
         @instance_vars.try &.add name
         ivar = InstanceVar.new(name)
+        ivar.location = @token.location
         next_token_skip_space
         if @token.type == :"::"
           next_token_skip_space
           ivar_type = parse_single_type
-          DeclareVar.new(ivar, ivar_type)
+          DeclareVar.new(ivar, ivar_type).at(ivar.location)
         else
           ivar
         end
@@ -2930,7 +2931,7 @@ module Crystal
             if @token.type == :"::"
               next_token_skip_space_or_newline
               declared_type = parse_single_type
-              declare_var = DeclareVar.new(Var.new(name), declared_type)
+              declare_var = DeclareVar.new(Var.new(name).at(location), declared_type).at(location)
               push_var declare_var
               declare_var
             elsif (!force_call && is_var)
