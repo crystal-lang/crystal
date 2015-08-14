@@ -1,5 +1,5 @@
 # :nodoc:
-module Bcrypt::Base64
+module Crypto::Bcrypt::Base64
   extend self
 
   ALPHABET = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

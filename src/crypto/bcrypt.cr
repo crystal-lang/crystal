@@ -95,11 +95,11 @@ module Crypto::Bcrypt
       end
     end
 
-    Bcrypt::Base64.encode(slice)
+    Crypto::Bcrypt::Base64.encode(slice)
   end
 
   private def setup(key, cost, salt)
-    sl = Bcrypt::Base64.decode(salt)
+    sl = Crypto::Bcrypt::Base64.decode(salt)
     bf = Blowfish.new
     bf.salted_expand_key(sl, key)
 
