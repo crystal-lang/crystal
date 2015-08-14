@@ -566,6 +566,13 @@ module Crystal
     end
   end
 
+  class GenericClassInstanceMetaclassType
+    def restrict(other : Metaclass, context)
+      restricted = instance_type.restrict(other.name, context)
+      restricted ? self : nil
+    end
+  end
+
   class FunInstanceType
     def restrict(other : Fun, context)
       inputs = other.inputs

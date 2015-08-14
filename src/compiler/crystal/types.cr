@@ -2297,7 +2297,12 @@ module Crystal
     end
 
     def parents
-      @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
+      @parents ||= begin
+        parents = [] of Type
+        parents << instance_type.generic_class.metaclass
+        parents << (instance_type.superclass.try(&.metaclass) || @program.class_type)
+        parents
+      end
     end
 
     delegate add_def, instance_type.generic_class.metaclass

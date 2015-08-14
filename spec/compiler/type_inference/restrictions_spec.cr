@@ -192,4 +192,30 @@ describe "Restrictions" do
       1.5 / Foo(Int32).new
       )) { char }
   end
+
+  it "works with generic class metaclass vs. generic instance class metaclass" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo(x : Foo(Int32).class)
+        1
+      end
+
+      foo Foo(Int32)
+      )) { int32 }
+  end
+
+  it "works with generic class metaclass vs. generic class metaclass" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo(x : Foo.class)
+        1
+      end
+
+      foo Foo(Int32)
+      )) { int32 }
+  end
 end

@@ -519,4 +519,13 @@ describe "Codegen: is_a?" do
       end
       )).to_i.should eq(123)
   end
+
+  it "does is_a? with generic class metaclass" do
+    run(%(
+      class Foo(T)
+      end
+
+      Foo(Int32).is_a?(Foo.class)
+      )).to_b.should be_true
+  end
 end
