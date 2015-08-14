@@ -35,7 +35,7 @@ if a.is_a?(String) && b.is_a?(Number)
 end
 ```
 
-This **doesn’t** work with instance variables, class variables or global variables. To work with these, first assign them to a variable:
+The above **doesn’t** work with instance variables, class variables or global variables. To work with these, first assign them to a variable:
 
 ```ruby
 if @a.is_a?(String)

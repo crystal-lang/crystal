@@ -20,3 +20,22 @@ else
   # here a will be String
 end
 ```
+
+The above **doesn’t** work with instance variables, class variables or global variables. To work with these, first assign them to a variable:
+
+```ruby
+if @a.responds_to?(:abs)
+  # here @a is not guaranteed to respond to `abs`
+end
+
+a = @a
+if a.responds_to?(:abs)
+  # here a is guaranteed to respond to `abs`
+end
+
+# A bit shorter:
+if (a = @a).responds_to?(:abs)
+  # here a is guaranteed to respond to `abs`
+end
+```
+
