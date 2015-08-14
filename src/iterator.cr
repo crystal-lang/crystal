@@ -148,6 +148,11 @@ module Iterator(T)
     InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
   end
 
+  def in_groups_of(size : Int, filled_up_with = nil, &func : Array(T) -> U)
+    basic_iterator = in_groups_of(size, filled_up_with)
+    InGroupsOfBlock(U).new(basic_iterator, func)
+  end
+
   def uniq
     uniq &.itself
   end
@@ -462,6 +467,7 @@ module Iterator(T)
     end
   end
 
+  # :nodoc:
   struct InGroupsOf(I, T, N, U)
     include Iterator(Array(T | U))
     include IteratorWrapper
@@ -479,6 +485,19 @@ module Iterator(T)
         array << new_value
       end
       array
+    end
+  end
+
+  # :nodoc:
+  struct InGroupsOfBlock(U)
+    include Iterator(U)
+    include IteratorWrapper
+
+    def initialize(@iterator, @func)
+    end
+
+    def next
+      @func.call wrapped_next
     end
   end
 
