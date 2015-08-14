@@ -15,6 +15,42 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The JSON module allows parsing and generating <a href="http://json.org/" target="_blank">JSON</a> documents.</p>
+
+<h3>Parsing and generating with <code><a href="JSON/Mapping.html">JSON::Mapping</a></code></h3>
+
+<p>Use <code><a href="JSON/Mapping.html">JSON::Mapping</a></code> to define how an object is mapped to JSON, making it
+the recommended easy, type-safe and efficient option for parsing and generating
+JSON. Refer to that module's documentation to learn about it.</p>
+
+<h3>Parsing with <code><a href="JSON.html#parse%28input%20%3A%20String%20%7C%20IO%29%20%3A%20Type-class-method">JSON#parse</a></code></h3>
+
+<p><code><a href="JSON.html#parse%28input%20%3A%20String%20%7C%20IO%29%20%3A%20Type-class-method">JSON#parse</a></code> will return a <code><a href="JSON/Type.html">Type</a></code>, which is a union of all possible JSON types,
+making it mandatory to use casts or type checks to deal with parsed values:</p>
+
+<pre><code><span class="k">require</span> <span class="s">"json"</span>
+
+value <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="s">"[1, 2, 3]"</span>) <span class="c">#:: JSON::Type</span>
+<span class="c"># value[0] # compile-error, compiler can't know that value is indeed an Array</span>
+array <span class="o">=</span> value <span class="k">as</span> <span class="t">Array</span>
+array[<span class="n">0</span>] <span class="c">#:: JSON::Type</span>
+(array[<span class="n">0</span>] <span class="k">as</span> <span class="t">Int</span>) <span class="o">+</span> <span class="n">10</span> <span class="c">#=> 11</span></code></pre>
+
+<p>The above becomes tedious quickly, but can be useful for handling dynamic JSON content.</p>
+
+<h3>Generating with <code><a href="JSON/Builder.html">JSON::Builder</a></code></h3>
+
+<p>Use <code>JSON::Buidler</code> to generate JSON on the fly by directly emitting data
+to an <code><a href="IO.html">IO</a></code>.</p>
+
+<h3>Generating with <code>to_json</code></h3>
+
+<p><code>to_json</code> and <code>to_json(<a href="IO.html">IO</a>)</code> methods are provided for primitive types, but you
+need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects, either manually or using
+<code><a href="JSON/Mapping.html">JSON::Mapping</a></code>.</p>
+
 
 
 
@@ -33,12 +69,12 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/any.cr" target="_blank">json/any.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/any.cr" target="_blank">json/any.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/json.cr" target="_blank">json/json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/json.cr" target="_blank">json/json.cr</a>
     
     <br/>
   
@@ -51,7 +87,9 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#parse%28string_or_io%29-class-method" class="signature"><strong>.parse</strong>(string_or_io)</a>
+        <a href="#parse%28input%20%3A%20String%20%7C%20IO%29%20%3A%20Type-class-method" class="signature"><strong>.parse</strong>(input : String | IO) : Type</a>
+        
+          <div class="summary"><p>Parses a JSON document.</p></div>
         
       </li>
     
@@ -67,14 +105,16 @@
   <h2>Class Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="parse%28string_or_io%29-class-method">
+      <div class="signature" id="parse%28input%20%3A%20String%20%7C%20IO%29%20%3A%20Type-class-method">
         
-        def self.<strong>parse</strong>(string_or_io)
+        def self.<strong>parse</strong>(input : <a href="String.html">String</a> | <a href="IO.html">IO</a>) : <a href="JSON/Type.html">Type</a>
       </div>
+      
+        <div class="doc"><p>Parses a JSON document.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/json.cr#L13" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/json.cr#L51" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

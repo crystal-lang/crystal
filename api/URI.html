@@ -60,7 +60,7 @@ uri.to_s
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr" target="_blank">uri.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr" target="_blank">uri.cr</a>
     
     <br/>
   
@@ -73,12 +73,12 @@ uri.to_s
   <ul>
     
       <li class="entry-const">
-        <strong>RFC3986_relative_ref</strong> = <code><span class="s">/\\A(?<relative_ref>(?<relative_part>\\/\\/(?<authority>(?:(?<userinfo>(?:%\\h\\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\\[(?<IPv6address>(?:\\h{1,4}:){6}(?<ls32>\\h{1,4}:\\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]|\\d)\\.\\g<dec_octet>\\.\\g<dec_octet>\\.\\g<dec_octet>))|::(?:\\h{1,4}:){5}\\g<ls32>|\\h{1,4}?::(?:\\h{1,4}:){4}\\g<ls32>|(?:(?:\\h{1,4}:){,1}\\h{1,4})?::(?:\\h{1,4}:){3}\\g<ls32>|(?:(?:\\h{1,4}:){,2}\\h{1,4})?::(?:\\h{1,4}:){2}\\g<ls32>|(?:(?:\\h{1,4}:){,3}\\h{1,4})?::\\h{1,4}:\\g<ls32>|(?:(?:\\h{1,4}:){,4}\\h{1,4})?::\\g<ls32>|(?:(?:\\h{1,4}:){,5}\\h{1,4})?::\\h{1,4}|(?:(?:\\h{1,4}:){,6}\\h{1,4})?::)|(?<IPvFuture>v\\h+\\.[!$&-.0-;=A-Z_a-z~]+)\\])|\\g<IPv4address>|(?<reg_name>(?:%\\h\\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\\d*))?)(?<path_abempty>(?:\\/(?<segment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\\/(?:(?<segment_nz>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])+)(?:\\/\\g<segment>)*)?)|(?<path_noscheme>(?<segment_nz_nc>(?:%\\h\\h|[!$&-.0-9;=@-Z_a-z~])+)(?:\\/\\g<segment>)*)|(?<path_empty>))(?:\\?(?<query>[^#]*))?(?:\\#(?<fragment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~\\/?])*))?)\\z/</span></code>
+        <strong>RFC3986_relative_ref</strong> = <code><span class="s">/\\A(?&lt;relative_ref>(?&lt;relative_part>\\/\\/(?&lt;authority>(?:(?&lt;userinfo>(?:%\\h\\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?&lt;host>(?&lt;IP_literal>\\[(?&lt;IPv6address>(?:\\h{1,4}:){6}(?&lt;ls32>\\h{1,4}:\\h{1,4}|(?&lt;IPv4address>(?&lt;dec_octet>[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]|\\d)\\.\\g&lt;dec_octet>\\.\\g&lt;dec_octet>\\.\\g&lt;dec_octet>))|::(?:\\h{1,4}:){5}\\g&lt;ls32>|\\h{1,4}?::(?:\\h{1,4}:){4}\\g&lt;ls32>|(?:(?:\\h{1,4}:){,1}\\h{1,4})?::(?:\\h{1,4}:){3}\\g&lt;ls32>|(?:(?:\\h{1,4}:){,2}\\h{1,4})?::(?:\\h{1,4}:){2}\\g&lt;ls32>|(?:(?:\\h{1,4}:){,3}\\h{1,4})?::\\h{1,4}:\\g&lt;ls32>|(?:(?:\\h{1,4}:){,4}\\h{1,4})?::\\g&lt;ls32>|(?:(?:\\h{1,4}:){,5}\\h{1,4})?::\\h{1,4}|(?:(?:\\h{1,4}:){,6}\\h{1,4})?::)|(?&lt;IPvFuture>v\\h+\\.[!$&-.0-;=A-Z_a-z~]+)\\])|\\g&lt;IPv4address>|(?&lt;reg_name>(?:%\\h\\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?&lt;port>\\d*))?)(?&lt;path_abempty>(?:\\/(?&lt;segment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?&lt;path_absolute>\\/(?:(?&lt;segment_nz>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])+)(?:\\/\\g&lt;segment>)*)?)|(?&lt;path_noscheme>(?&lt;segment_nz_nc>(?:%\\h\\h|[!$&-.0-9;=@-Z_a-z~])+)(?:\\/\\g&lt;segment>)*)|(?&lt;path_empty>))(?:\\?(?&lt;query>[^#]*))?(?:\\#(?&lt;fragment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~\\/?])*))?)\\z/</span></code>
         
       </li>
     
       <li class="entry-const">
-        <strong>RFC3986_URI</strong> = <code><span class="s">/\\A(?<URI>(?<scheme>[A-Za-z][+\\-.0-9A-Za-z]*):(?<hier_part>\\/\\/(?<authority>(?:(?<userinfo>(?:%\\h\\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\\[(?:(?<IPv6address>(?:\\h{1,4}:){6}(?<ls32>\\h{1,4}:\\h{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]|\\d)\\.\\g<dec_octet>\\.\\g<dec_octet>\\.\\g<dec_octet>))|::(?:\\h{1,4}:){5}\\g<ls32>|\\h{1,4}?::(?:\\h{1,4}:){4}\\g<ls32>|(?:(?:\\h{1,4}:)?\\h{1,4})?::(?:\\h{1,4}:){3}\\g<ls32>|(?:(?:\\h{1,4}:){,2}\\h{1,4})?::(?:\\h{1,4}:){2}\\g<ls32>|(?:(?:\\h{1,4}:){,3}\\h{1,4})?::\\h{1,4}:\\g<ls32>|(?:(?:\\h{1,4}:){,4}\\h{1,4})?::\\g<ls32>|(?:(?:\\h{1,4}:){,5}\\h{1,4})?::\\h{1,4}|(?:(?:\\h{1,4}:){,6}\\h{1,4})?::)|(?<IPvFuture>v\\h+\\.[!$&-.0-;=A-Z_a-z~]+))\\])|\\g<IPv4address>|(?<reg_name>(?:%\\h\\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\\d*))?)(?<path_abempty>(?:\\/(?<segment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\\/(?:(?<segment_nz>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])+)(?:\\/\\g<segment>)*)?)|(?<path_rootless>\\g<segment_nz>(?:\\/\\g<segment>)*)|(?<path_empty>))(?:\\?(?<query>[^#]*))?(?:\\#(?<fragment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~\\/?])*))?)\\z/</span></code>
+        <strong>RFC3986_URI</strong> = <code><span class="s">/\\A(?&lt;URI>(?&lt;scheme>[A-Za-z][+\\-.0-9A-Za-z]*):(?&lt;hier_part>\\/\\/(?&lt;authority>(?:(?&lt;userinfo>(?:%\\h\\h|[!$&-.0-;=A-Z_a-z~])*)@)?(?&lt;host>(?&lt;IP_literal>\\[(?:(?&lt;IPv6address>(?:\\h{1,4}:){6}(?&lt;ls32>\\h{1,4}:\\h{1,4}|(?&lt;IPv4address>(?&lt;dec_octet>[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5]|\\d)\\.\\g&lt;dec_octet>\\.\\g&lt;dec_octet>\\.\\g&lt;dec_octet>))|::(?:\\h{1,4}:){5}\\g&lt;ls32>|\\h{1,4}?::(?:\\h{1,4}:){4}\\g&lt;ls32>|(?:(?:\\h{1,4}:)?\\h{1,4})?::(?:\\h{1,4}:){3}\\g&lt;ls32>|(?:(?:\\h{1,4}:){,2}\\h{1,4})?::(?:\\h{1,4}:){2}\\g&lt;ls32>|(?:(?:\\h{1,4}:){,3}\\h{1,4})?::\\h{1,4}:\\g&lt;ls32>|(?:(?:\\h{1,4}:){,4}\\h{1,4})?::\\g&lt;ls32>|(?:(?:\\h{1,4}:){,5}\\h{1,4})?::\\h{1,4}|(?:(?:\\h{1,4}:){,6}\\h{1,4})?::)|(?&lt;IPvFuture>v\\h+\\.[!$&-.0-;=A-Z_a-z~]+))\\])|\\g&lt;IPv4address>|(?&lt;reg_name>(?:%\\h\\h|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?&lt;port>\\d*))?)(?&lt;path_abempty>(?:\\/(?&lt;segment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])*))*)|(?&lt;path_absolute>\\/(?:(?&lt;segment_nz>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~])+)(?:\\/\\g&lt;segment>)*)?)|(?&lt;path_rootless>\\g&lt;segment_nz>(?:\\/\\g&lt;segment>)*)|(?&lt;path_empty>))(?:\\?(?&lt;query>[^#]*))?(?:\\#(?&lt;fragment>(?:%\\h\\h|[!$&-.0-;=@-Z_a-z~\\/?])*))?)\\z/</span></code>
         
           <div class="doc"><p>URI defined in RFC3986</p></div>
         
@@ -276,7 +276,7 @@ uri.to_s
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L182" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L182" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -289,7 +289,7 @@ uri.to_s
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L120" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L120" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -311,7 +311,7 @@ uri.to_s
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L105" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L105" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -326,7 +326,7 @@ uri.to_s
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L108" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L108" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -344,7 +344,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L129" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L129" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -361,7 +361,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L45" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L45" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -376,7 +376,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L48" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L48" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -393,7 +393,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L115" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L115" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -408,7 +408,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L118" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L118" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -425,7 +425,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L95" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -440,7 +440,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -453,11 +453,11 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
         <div class="doc"><p>Returns the path component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar"</span>).host <span class="c"># => "/bar"</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar"</span>).path <span class="c"># => "/bar"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L65" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -472,7 +472,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L68" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L68" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -489,7 +489,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L55" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L55" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -504,7 +504,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L58" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L58" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -517,11 +517,11 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
         <div class="doc"><p>Returns the query component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar?q=1"</span>).host <span class="c"># => "q=1"</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar?q=1"</span>).query <span class="c"># => "q=1"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L75" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -536,7 +536,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L78" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -554,7 +554,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L35" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -569,7 +569,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L38" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -582,7 +582,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L136" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L136" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -599,7 +599,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L85" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L85" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -614,7 +614,7 @@ uri.full_path <span class="c"># => "/posts?id=30&limit=5"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L88" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L88" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -632,7 +632,7 @@ uri.userinfo <span class="c"># => "admin:password"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/uri.cr#L224" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/uri.cr#L224" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

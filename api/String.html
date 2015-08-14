@@ -122,17 +122,17 @@ b <span class="o">=</span> <span class="n">2</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr" target="_blank">string.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr" target="_blank">string.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -551,12 +551,12 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#ends_with%3F%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#ends_with?</strong>(char : Char)</a>
+        <a href="#ends_with%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#ends_with?</strong>(str : String)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#ends_with%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#ends_with?</strong>(str : String)</a>
+        <a href="#ends_with%3F%28char%20%3A%20Char%29-instance-method" class="signature"><strong>#ends_with?</strong>(char : Char)</a>
         
       </li>
     
@@ -582,16 +582,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28string%20%3A%20String%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(string : String, &block)</a>
+        <a href="#gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, &block)</a>
         
-          <div class="summary"><p>Returns a string where all occurrences of the given <em>string</em> are replaced with the block's value.</p></div>
+          <div class="summary"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced by the block value's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28pattern%20%3A%20Regex%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, &block)</a>
+        <a href="#gsub%28string%20%3A%20String%2C%20%26block%29-instance-method" class="signature"><strong>#gsub</strong>(string : String, &block)</a>
         
-          <div class="summary"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced by the block value's value.</p></div>
+          <div class="summary"><p>Returns a string where all occurrences of the given <em>string</em> are replaced with the block's value.</p></div>
         
       </li>
     
@@ -603,16 +603,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28pattern%20%3A%20Regex%2C%20hash%20%3A%20Hash%28String%2C%20_%29%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, hash : Hash(String, _))</a>
+        <a href="#gsub%28char%20%3A%20Char%2C%20replacement%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement)</a>
         
-          <div class="summary"><p>Returns a string where all ocurrences of the given <em>pattern</em> are replaced with a <em>hash</em> of replacements.</p></div>
+          <div class="summary"><p>Returns a string where all occurrences of the given char are replaced with the given <em>replacement</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28char%20%3A%20Char%2C%20replacement%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement)</a>
+        <a href="#gsub%28pattern%20%3A%20Regex%2C%20hash%20%3A%20Hash%28String%2C%20_%29%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, hash : Hash(String, _))</a>
         
-          <div class="summary"><p>Returns a string where all occurrences of the given char are replaced with the given <em>replacement</em>.</p></div>
+          <div class="summary"><p>Returns a string where all ocurrences of the given <em>pattern</em> are replaced with a <em>hash</em> of replacements.</p></div>
         
       </li>
     
@@ -624,22 +624,22 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#includes%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#includes?</strong>(str : String)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#includes%3F%28c%20%3A%20Char%29-instance-method" class="signature"><strong>#includes?</strong>(c : Char)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : Char, offset = 0)</a>
+        <a href="#includes%3F%28str%20%3A%20String%29-instance-method" class="signature"><strong>#includes?</strong>(str : String)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#index%28c%20%3A%20String%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : String, offset = 0)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method" class="signature"><strong>#index</strong>(c : Char, offset = 0)</a>
         
       </li>
     
@@ -677,6 +677,11 @@ b <span class="o">=</span> <span class="n">2</span>
     
       <li class="entry-summary">
         <a href="#lstrip-instance-method" class="signature"><strong>#lstrip</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#match%28regex%20%3A%20Regex%2C%20pos%20%3D%200%2C%20%26block%29-instance-method" class="signature"><strong>#match</strong>(regex : Regex, pos = 0, &block)</a>
         
       </li>
     
@@ -746,12 +751,12 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Char, limit = nil)</a>
+        <a href="#split%28limit%20%3D%20nil%20%3A%20Int32%20%7C%20%3A%3ANil%29-instance-method" class="signature"><strong>#split</strong>(limit = nil : Int32 | ::Nil)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#split%28limit%20%3D%20nil%20%3A%20Int32%20%7C%20%3A%3ANil%29-instance-method" class="signature"><strong>#split</strong>(limit = nil : Int32 | ::Nil)</a>
+        <a href="#split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method" class="signature"><strong>#split</strong>(separator : Char, limit = nil)</a>
         
       </li>
     
@@ -832,6 +837,13 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
+        <a href="#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
+        
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>, but returns the block's value if there is not a valid number at the start of this string, or if the resulting integer doesn't fit an Int32.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method" class="signature"><strong>#to_i</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true)</a>
         
           <div class="summary"><p>Returns the result of interpreting leading characters in this string as an integer base <em>base</em> (between 2 and 36).</p></div>
@@ -839,100 +851,93 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
+        <a href="#to_i16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i16</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>, but returns the block's value if there is not a valid number at the start of this string, or if the resulting integer doesn't fit an Int32.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int16-instance-method" class="signature"><strong>#to_i16</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int16.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#to_i16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i16</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
-        
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int16.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i16%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int16%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_i16?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int16 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int16 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int16 or nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i32%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int32-instance-method" class="signature"><strong>#to_i32</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int32</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i32%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i32</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i32%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int32%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_i32?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int32 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i64%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int64-instance-method" class="signature"><strong>#to_i64</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int64.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int64.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i64%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i64</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int64 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int64 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i64%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int64%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_i64?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int64 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int64 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int64 or nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i8%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int8-instance-method" class="signature"><strong>#to_i8</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int8.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int8.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i8%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_i8</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int8 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int8 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i8%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int8%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_i8?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int8 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int8 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int8 or nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_i%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method" class="signature"><strong>#to_i?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>, but returns <code>nil</code> if there is not a valid number at the start of this string, or if the resulting integer doesn't fit an Int32.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>, but returns <code>nil</code> if there is not a valid number at the start of this string, or if the resulting integer doesn't fit an Int32.</p></div>
         
       </li>
     
@@ -959,84 +964,84 @@ b <span class="o">=</span> <span class="n">2</span>
       <li class="entry-summary">
         <a href="#to_u16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_u16</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt16 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt16 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt16-instance-method" class="signature"><strong>#to_u16</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt16.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt16.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u16%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt16%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_u16?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt16 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt16 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt16 or nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u32%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt32-instance-method" class="signature"><strong>#to_u32</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u32%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_u32</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt32 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt32 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u32%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt32%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_u32?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt32 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt32 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt32 or nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u64%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt64-instance-method" class="signature"><strong>#to_u64</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt64.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt64.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u64%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_u64</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt64 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt64 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u64%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt64%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_u64?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt64 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt64 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt64 or nil.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u8%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method" class="signature"><strong>#to_u8</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt8 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt8 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u8%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt8-instance-method" class="signature"><strong>#to_u8</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt8.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt8.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_u8%3F%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20UInt8%20%7C%20%3A%3ANil-instance-method" class="signature"><strong>#to_u8?</strong>(base = 10, whitespace = true, underscore = false, prefix = false, strict = true) : UInt8 | ::Nil</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt8 or nil.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt8 or nil.</p></div>
         
       </li>
     
@@ -1114,7 +1119,7 @@ str <span class="c">#=> "hello 1"</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L216" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L216" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1148,7 +1153,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L195" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L195" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1161,7 +1166,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/from_json.cr#L51" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/from_json.cr#L51" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1187,7 +1192,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L166" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L166" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1211,7 +1216,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L127" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L127" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1240,7 +1245,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L148" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L148" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1258,7 +1263,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2193" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2200" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1271,7 +1276,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1307" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1307" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1284,7 +1289,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1271" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1271" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1297,7 +1302,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1285" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1285" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1310,7 +1315,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1253" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1253" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1323,7 +1328,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1247" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1247" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1336,7 +1341,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1267" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1267" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1349,7 +1354,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1261" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1261" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1373,7 +1378,7 @@ counting from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L605" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L605" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1396,7 +1401,7 @@ counting from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L589" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L589" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1409,7 +1414,7 @@ counting from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L688" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L688" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1432,7 +1437,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L625" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L625" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1445,7 +1450,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L692" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L692" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1458,7 +1463,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L696" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L696" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1471,7 +1476,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L675" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L675" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1484,7 +1489,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L679" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L679" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1497,7 +1502,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L683" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L683" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1510,7 +1515,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L671" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L671" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1523,7 +1528,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2245" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2252" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1536,7 +1541,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L704" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L704" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1549,7 +1554,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L700" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L700" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1562,7 +1567,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L759" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L759" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1575,7 +1580,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L767" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L767" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1588,7 +1593,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L763" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L763" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1601,7 +1606,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1409" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1409" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1614,7 +1619,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1400" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1400" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1627,7 +1632,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L747" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L747" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1640,7 +1645,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L721" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L721" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1658,7 +1663,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2046" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2053" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1676,7 +1681,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L228" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L228" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1689,7 +1694,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1715" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1715" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1702,7 +1707,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L796" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L796" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1715,7 +1720,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L755" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L755" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1733,7 +1738,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1430" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1430" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1750,7 +1755,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1965" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1972" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1763,7 +1768,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L839" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L839" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1776,7 +1781,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L827" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L827" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1789,7 +1794,7 @@ from the end of the string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L810" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L810" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1814,7 +1819,7 @@ Applying chop to an empty string returns an empty string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L872" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L872" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1827,7 +1832,7 @@ Applying chop to an empty string returns an empty string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L751" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L751" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1844,7 +1849,7 @@ Applying chop to an empty string returns an empty string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2004" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2011" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1861,7 +1866,7 @@ in this string that match the given set.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1151" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1879,7 +1884,7 @@ returns the number of times the block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1131" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1131" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1896,7 +1901,7 @@ returns the number of times the block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1144" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1144" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1909,7 +1914,7 @@ returns the number of times the block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2269" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2276" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1928,7 +1933,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1162" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1162" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1945,7 +1950,7 @@ block returned a truthy value removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1175" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1175" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1964,7 +1969,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1186" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1186" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1977,7 +1982,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L780" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L780" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1990,7 +1995,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2068" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2075" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2003,7 +2008,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2074" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2081" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2016,7 +2021,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2080" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2087" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2029,7 +2034,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2086" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2093" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2048,7 +2053,7 @@ all characters that match the given set removed.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2019" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2026" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2070,7 +2075,7 @@ bytes.<span class="k">next</span> <span class="c">#=> 131</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2036" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2043" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2089,7 +2094,7 @@ bytes.<span class="k">next</span> <span class="c">#=> 131</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1918" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1925" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2109,7 +2114,7 @@ chars.<span class="k">next</span> <span class="c">#=> '☃'</span></code></pre><
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1939" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1946" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2129,7 +2134,7 @@ chars.<span class="k">next</span> <span class="c">#=> '☃'</span></code></pre><
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1951" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1958" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2149,7 +2154,7 @@ codepoints.<span class="k">next</span> <span class="c">#=> 9731</span></code></p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1994" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2001" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2168,7 +2173,7 @@ codepoints.<span class="k">next</span> <span class="c">#=> 9731</span></code></p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1980" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1987" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2181,7 +2186,7 @@ codepoints.<span class="k">next</span> <span class="c">#=> 9731</span></code></p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1646" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1646" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2194,7 +2199,7 @@ codepoints.<span class="k">next</span> <span class="c">#=> 9731</span></code></p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1659" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1659" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2207,20 +2212,7 @@ codepoints.<span class="k">next</span> <span class="c">#=> 9731</span></code></p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1243" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="ends_with%3F%28char%20%3A%20Char%29-instance-method">
-        
-        def <strong>ends_with?</strong>(char : <a href="Char.html">Char</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2169" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1243" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2233,7 +2225,20 @@ codepoints.<span class="k">next</span> <span class="c">#=> 9731</span></code></p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2164" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2171" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="ends_with%3F%28char%20%3A%20Char%29-instance-method">
+        
+        def <strong>ends_with?</strong>(char : <a href="Char.html">Char</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2176" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2251,7 +2256,7 @@ with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1048" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1048" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2269,7 +2274,7 @@ by the corresponding hash values.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1119" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1119" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2287,25 +2292,7 @@ with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1074" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="gsub%28string%20%3A%20String%2C%20%26block%29-instance-method">
-        
-        def <strong>gsub</strong>(string : <a href="String.html">String</a>, &block)
-      </div>
-      
-        <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
-with the block's value.</p>
-
-<pre><code><span class="s">"hello yellow"</span>.gsub(<span class="s">"ll"</span>) { <span class="s">"dd"</span> } <span class="c">#=> "heddo yeddow"</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1084" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1074" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2323,7 +2310,25 @@ by the block value's value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1009" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1009" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28string%20%3A%20String%2C%20%26block%29-instance-method">
+        
+        def <strong>gsub</strong>(string : <a href="String.html">String</a>, &block)
+      </div>
+      
+        <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
+with the block's value.</p>
+
+<pre><code><span class="s">"hello yellow"</span>.gsub(<span class="s">"ll"</span>) { <span class="s">"dd"</span> } <span class="c">#=> "heddo yeddow"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1084" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2342,7 +2347,26 @@ is replaced by the block's return value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L980" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L980" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="gsub%28char%20%3A%20Char%2C%20replacement%29-instance-method">
+        
+        def <strong>gsub</strong>(char : <a href="Char.html">Char</a>, replacement)
+      </div>
+      
+        <div class="doc"><p>Returns a string where all occurrences of the given char are
+replaced with the given <em>replacement</em>.</p>
+
+<pre><code><span class="s">"hello"</span>.gsub(<span class="s">'l'</span>, <span class="s">"lo"</span>) <span class="c">#=> "heloloo"</span>
+<span class="s">"hello world"</span>.gsub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c">#=> "hella warld"</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L995" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2364,26 +2388,7 @@ not included in the returned string.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1062" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="gsub%28char%20%3A%20Char%2C%20replacement%29-instance-method">
-        
-        def <strong>gsub</strong>(char : <a href="Char.html">Char</a>, replacement)
-      </div>
-      
-        <div class="doc"><p>Returns a string where all occurrences of the given char are
-replaced with the given <em>replacement</em>.</p>
-
-<pre><code><span class="s">"hello"</span>.gsub(<span class="s">'l'</span>, <span class="s">"lo"</span>) <span class="c">#=> "heloloo"</span>
-<span class="s">"hello world"</span>.gsub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c">#=> "hella warld"</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L995" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1062" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2400,20 +2405,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2200" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="includes%3F%28str%20%3A%20String%29-instance-method">
-        
-        def <strong>includes?</strong>(str : <a href="String.html">String</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1444" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2207" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2426,20 +2418,20 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1440" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1440" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method">
+      <div class="signature" id="includes%3F%28str%20%3A%20String%29-instance-method">
         
-        def <strong>index</strong>(c : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
+        def <strong>includes?</strong>(str : <a href="String.html">String</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1334" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1444" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2452,7 +2444,20 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1347" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1347" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="index%28c%20%3A%20Char%2C%20offset%20%3D%200%29-instance-method">
+        
+        def <strong>index</strong>(c : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1334" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2465,7 +2470,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2050" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2057" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2478,7 +2483,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2062" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2069" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2491,7 +2496,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2056" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2063" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2509,7 +2514,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2214" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2221" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2522,7 +2527,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1638" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1638" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2535,7 +2540,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1752" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1752" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2548,7 +2553,20 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L921" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L921" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="match%28regex%20%3A%20Regex%2C%20pos%20%3D%200%2C%20%26block%29-instance-method">
+        
+        def <strong>match</strong>(regex : <a href="Regex.html">Regex</a>, pos = <span class="n">0</span>, &block)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1870" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2561,7 +2579,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1864" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1864" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2574,7 +2592,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1736" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1736" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2587,7 +2605,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1367" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1367" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2600,7 +2618,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1382" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1382" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2613,7 +2631,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1756" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1756" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2626,7 +2644,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L908" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L908" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2639,7 +2657,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1903" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1910" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2652,7 +2670,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1885" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1892" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2665,7 +2683,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1893" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1900" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2678,7 +2696,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1870" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1877" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2691,7 +2709,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2241" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2248" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2704,7 +2722,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1533" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1533" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2717,20 +2735,7 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1583" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method">
-        
-        def <strong>split</strong>(separator : <a href="Char.html">Char</a>, limit = <span class="n">nil</span>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1499" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1583" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2743,7 +2748,20 @@ replaced with the given <em>replacement</em>.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1448" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1448" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="split%28separator%20%3A%20Char%2C%20limit%20%3D%20nil%29-instance-method">
+        
+        def <strong>split</strong>(separator : <a href="Char.html">Char</a>, limit = <span class="n">nil</span>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1499" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2761,7 +2779,7 @@ that were the same as the previous one.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1239" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1239" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2784,7 +2802,7 @@ they match the given set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1229" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1229" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2801,7 +2819,7 @@ they match the given set.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1214" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1214" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2822,7 +2840,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1199" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1199" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2835,7 +2853,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2151" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2158" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2848,7 +2866,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2156" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2163" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2861,7 +2879,7 @@ block returned a truthy value.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L886" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L886" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2888,7 +2906,7 @@ there is no carry, adding an additional character if necessary.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1817" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1817" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2901,7 +2919,7 @@ there is no carry, adding an additional character if necessary.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L291" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L307" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2923,7 +2941,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L560" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L560" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2943,7 +2961,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L569" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L569" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2958,7 +2976,26 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L574" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L574" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">
+        
+        def <strong>to_i</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>, but returns the block's value if there is not a valid number at the start
+of this string, or if the resulting integer doesn't fit an Int32.</p>
+
+<pre><code><span class="s">"12345"</span>.to_i { <span class="n">0</span> }       <span class="c">#=> 12345</span>
+<span class="s">"hello"</span>.to_i { <span class="n">0</span> }       <span class="c">#=> 0</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L290" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3002,41 +3039,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L266" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">
-        
-        def <strong>to_i</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
-      </div>
-      
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>, but returns the block's value if there is not a valid number at the start
-of this string, or if the resulting integer doesn't fit an Int32.</p>
-
-<pre><code><span class="s">"12345"</span>.to_i { <span class="n">0</span> }       <span class="c">#=> 12345</span>
-<span class="s">"hello"</span>.to_i { <span class="n">0</span> }       <span class="c">#=> 0</span></code></pre></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L290" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_i16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int16-instance-method">
-        
-        def <strong>to_i16</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int16.html">Int16</a>
-      </div>
-      
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int16.</p></div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L325" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L266" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3047,11 +3050,26 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i16</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L335" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L335" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_i16%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29%20%3A%20Int16-instance-method">
+        
+        def <strong>to_i16</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int16.html">Int16</a>
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int16.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L325" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3062,11 +3080,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i16?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int16.html">Int16</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int16 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int16 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L330" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L330" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3077,11 +3095,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i32</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int32.html">Int32</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L355" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L355" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3092,11 +3110,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i32</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L365" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L365" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3107,11 +3125,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i32?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int32.html">Int32</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L360" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L360" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3122,11 +3140,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i64</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int64.html">Int64</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int64.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int64.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L385" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L385" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3137,11 +3155,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i64</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int64 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int64 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L395" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L395" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3152,11 +3170,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i64?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int64.html">Int64</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int64 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int64 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L390" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L390" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3167,11 +3185,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i8</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int8.html">Int8</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int8.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int8.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L295" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L295" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3182,11 +3200,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i8</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int8 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int8 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L305" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L305" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3197,11 +3215,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i8?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int8.html">Int8</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an Int8 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an Int8 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L300" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L300" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3212,7 +3230,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_i?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code>, but returns <code>nil</code> if there is not a valid number at the start
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code>, but returns <code>nil</code> if there is not a valid number at the start
 of this string, or if the resulting integer doesn't fit an Int32.</p>
 
 <pre><code><span class="s">"12345"</span>.to_i?            <span class="c">#=> 12345</span>
@@ -3222,7 +3240,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L279" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L279" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3235,7 +3253,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr#L133" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr#L173" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3248,7 +3266,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2265" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2272" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3261,7 +3279,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2261" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3274,7 +3292,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2257" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2264" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3285,11 +3303,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u16</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt16 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt16 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L350" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L350" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3300,11 +3318,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u16</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt16.html">UInt16</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt16.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt16.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L340" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L340" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3315,11 +3333,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u16?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt16.html">UInt16</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt16 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt16 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L345" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L345" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3330,11 +3348,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u32</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt32.html">UInt32</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L370" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L370" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3345,11 +3363,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u32</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt32 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt32 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L380" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L380" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3360,11 +3378,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u32?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt32.html">UInt32</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt32 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt32 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L375" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L375" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3375,11 +3393,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u64</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt64.html">UInt64</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt64.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt64.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L400" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L400" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3390,11 +3408,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u64</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt64 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt64 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L410" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L410" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3405,11 +3423,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u64?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt64.html">UInt64</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt64 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt64 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L405" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L405" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3420,11 +3438,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u8</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt8 or the block's value.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt8 or the block's value.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L320" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L320" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3435,11 +3453,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u8</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt8.html">UInt8</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt8.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt8.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L310" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L310" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3450,11 +3468,11 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         def <strong>to_u8?</strong>(base = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt8.html">UInt8</a> | <a href="Nil.html">Nil</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%29-instance-method">#to_i</a></code> but returns an UInt8 or nil.</p></div>
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%20%3D%2010%2C%20whitespace%20%3D%20true%2C%20underscore%20%3D%20false%2C%20prefix%20%3D%20false%2C%20strict%20%3D%20true%2C%20%26block%29-instance-method">#to_i</a></code> but returns an UInt8 or nil.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L315" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L315" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3467,7 +3485,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2273" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2280" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3480,7 +3498,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L934" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L934" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3493,7 +3511,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L1663" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L1663" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3506,7 +3524,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L776" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L776" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3519,7 +3537,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2277" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2284" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3532,7 +3550,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L2281" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L2288" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3545,7 +3563,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L788" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L788" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -3565,7 +3583,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/string.cr#L431" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/string.cr#L431" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

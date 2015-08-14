@@ -15,6 +15,25 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The Base64 module provides for the encoding (<code><a href="Base64.html#encode%28data%29-instance-method">#encode</a></code>, <code><a href="Base64.html#strict_encode%28data%29-instance-method">#strict_encode</a></code>,
+<code><a href="Base64.html#urlsafe_encode%28data%2C%20padding%20%3D%20false%29-instance-method">#urlsafe_encode</a></code>) and decoding (<code><a href="Base64.html#decode%28data%29-instance-method">#decode</a></code>, <code>strict_decode</code>, <code>urlsafe_decode</code>)
+of binary data using a Base64 representation.</p>
+
+<h3>Example</h3>
+
+<p>A simple encoding and decoding.</p>
+
+<pre><code><span class="k">require</span> <span class="s">"base64"</span>
+enc   <span class="o">=</span> <span class="t">Base64</span>.encode(<span class="s">"Send reinforcements"</span>)
+                    <span class="c"># => "U2VuZCByZWluZm9yY2VtZW50cw==\n"</span>
+plain <span class="o">=</span> <span class="t">Base64</span>.decode(enc)
+                    <span class="c"># => "Send reinforcements"</span></code></pre>
+
+<p>The purpose of using base64 to encode data is that it translates any binary
+data into purely printable characters.</p>
+
 
 
 
@@ -38,69 +57,12 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr" target="_blank">base64.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/base64.cr" target="_blank">base64.cr</a>
     
     <br/>
   
 
 
-
-  
-    <h2>Constant Summary</h2>
-  
-  <ul>
-    
-      <li class="entry-const">
-        <strong>CHARS_SAFE</strong> = <code><span class="s">"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>CHARS_STD</strong> = <code><span class="s">"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>DECODE_TABLE</strong> = <code><span class="t">Array</span>(<span class="t">Int8</span>).<span class="k">new</span>(<span class="n">256</span>) <span class="k">do</span> <span class="o">|</span>i<span class="o">|</span>
-  <span class="k">case</span> i.chr
-  <span class="k">when</span> <span class="s">'A'</span>..<span class="s">'Z'</span>
-    (i <span class="o">-</span> <span class="n">65</span>).to_i8
-  <span class="k">when</span> <span class="s">'a'</span>..<span class="s">'z'</span>
-    (i <span class="o">-</span> <span class="n">71</span>).to_i8
-  <span class="k">when</span> <span class="s">'0'</span>..<span class="s">'9'</span>
-    (i <span class="o">+</span> <span class="n">4</span>).to_i8
-  <span class="k">when</span> <span class="s">'+'</span>, <span class="s">'-'</span>
-    <span class="n">62</span>
-  <span class="k">when</span> <span class="s">'/'</span>, <span class="s">'_'</span>
-    <span class="n">63</span>
-  <span class="k">else</span>
-    <span class="n">-1</span>
-  <span class="k">end</span>
-<span class="k">end</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>LINE_SIZE</strong> = <code><span class="n">60</span></code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>NL</strong> = <code><span class="s">'\n'</span>.ord.to_u8</code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>NR</strong> = <code><span class="s">'\r'</span>.ord.to_u8</code>
-        
-      </li>
-    
-      <li class="entry-const">
-        <strong>PAD</strong> = <code><span class="s">'='</span>.ord.to_u8</code>
-        
-      </li>
-    
-  </ul>
 
 
 
@@ -110,48 +72,36 @@
   <ul>
     
       <li class="entry-summary">
-        <a href="#decode64%28data%29-instance-method" class="signature"><strong>#decode64</strong>(data)</a>
+        <a href="#decode%28data%29-instance-method" class="signature"><strong>#decode</strong>(data)</a>
+        
+          <div class="summary"><p>Returns the Base64-decoded version of <code>data</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#encode64%28data%29-instance-method" class="signature"><strong>#encode64</strong>(data)</a>
+        <a href="#encode%28data%29-instance-method" class="signature"><strong>#encode</strong>(data)</a>
+        
+          <div class="summary"><p>Returns the Base64-encoded version of <code>data</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#strict_decode64%28str%29-instance-method" class="signature"><strong>#strict_decode64</strong>(str)</a>
+        <a href="#strict_encode%28data%29-instance-method" class="signature"><strong>#strict_encode</strong>(data)</a>
+        
+          <div class="summary"><p>Returns the Base64-encoded version of <code>data</code> with no newlines.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#strict_encode64%28data%29-instance-method" class="signature"><strong>#strict_encode64</strong>(data)</a>
+        <a href="#urlsafe_encode%28data%2C%20padding%20%3D%20false%29-instance-method" class="signature"><strong>#urlsafe_encode</strong>(data, padding = false)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#urlsafe_decode64%28str%29-instance-method" class="signature"><strong>#urlsafe_decode64</strong>(str)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#urlsafe_encode64%28data%29-instance-method" class="signature"><strong>#urlsafe_encode64</strong>(data)</a>
+          <div class="summary"><p>Returns the Base64-encoded version of <code>data</code> using a urlsafe alphabet.</p></div>
         
       </li>
     
   </ul>
 
 
-
-  <h2>Macro Summary</h2>
-  <ul>
-    
-      <li class="entry-summary">
-        <a href="#next_decoded_value-macro" class="signature"><strong>next_decoded_value</strong></a>
-        
-      </li>
-    
-  </ul>
 
 
 
@@ -161,101 +111,93 @@
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="decode64%28data%29-instance-method">
+      <div class="signature" id="decode%28data%29-instance-method">
         
-        def <strong>decode64</strong>(data)
+        def <strong>decode</strong>(data)
       </div>
+      
+        <div class="doc"><p>Returns the Base64-decoded version of <code>data</code>.
+This will decode either the normal or urlsafe alphabets.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L56" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/base64.cr#L113" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="encode64%28data%29-instance-method">
+      <div class="signature" id="encode%28data%29-instance-method">
         
-        def <strong>encode64</strong>(data)
+        def <strong>encode</strong>(data)
       </div>
+      
+        <div class="doc"><p>Returns the Base64-encoded version of <code>data</code>.
+This method complies with RFC 2045.
+Line feeds are added to every 60 encoded characters.</p>
+
+<pre><code><span class="k">require</span> <span class="s">"base64"</span>
+puts <span class="t">Base64</span>.encode(<span class="s">"Now is the time for all good coders\nto learn Crystal"</span>)</code></pre>
+
+<p>Generates:</p>
+
+<pre><code><span class="t">Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g</span>
+<span class="t">Q3J5c3RhbA</span><span class="o">==</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/base64.cr#L48" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="strict_decode64%28str%29-instance-method">
+      <div class="signature" id="strict_encode%28data%29-instance-method">
         
-        def <strong>strict_decode64</strong>(str)
+        def <strong>strict_encode</strong>(data)
       </div>
+      
+        <div class="doc"><p>Returns the Base64-encoded version of <code>data</code> with no newlines.
+This method complies with RFC 4648.</p>
+
+<pre><code><span class="k">require</span> <span class="s">"base64"</span>
+puts <span class="t">Base64</span>.strict_encode(<span class="s">"Now is the time for all good coders\nto learn Crystal"</span>)</code></pre>
+
+<p>Generates:</p>
+
+<pre><code><span class="t">Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA</span><span class="o">==</span></code></pre></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/base64.cr#L78" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="strict_encode64%28data%29-instance-method">
+      <div class="signature" id="urlsafe_encode%28data%2C%20padding%20%3D%20false%29-instance-method">
         
-        def <strong>strict_encode64</strong>(data)
+        def <strong>urlsafe_encode</strong>(data, padding = <span class="n">false</span>)
       </div>
+      
+        <div class="doc"><p>Returns the Base64-encoded version of <code>data</code> using a urlsafe alphabet.
+This method complies with "Base 64 Encoding with URL and Filename Safe
+Alphabet" in RFC 4648.</p>
+
+<p>The alphabet uses '-' instead of '+' and '_' instead of '/'.</p>
+
+<p>The <code>padding</code> parameter defaults to false. When true, enough <code>=</code> characters
+are added to make the output divisible by 3.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L36" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="urlsafe_decode64%28str%29-instance-method">
-        
-        def <strong>urlsafe_decode64</strong>(str)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L69" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="urlsafe_encode64%28data%29-instance-method">
-        
-        def <strong>urlsafe_encode64</strong>(data)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L46" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/base64.cr#L101" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
 
 
-
-  <h2>Macro Detail</h2>
-  
-    <div class="entry-detail">
-      <div class="signature" id="next_decoded_value-macro">
-        
-        macro <strong>next_decoded_value</strong>
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/base64.cr#L151" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
 
 
 

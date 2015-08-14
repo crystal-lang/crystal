@@ -112,27 +112,27 @@ in which the number fits:</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr" target="_blank">int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr" target="_blank">int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr" target="_blank">time/time_span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr" target="_blank">time/time_span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr" target="_blank">time/time_span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr" target="_blank">time/time_span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -147,12 +147,12 @@ in which the number fits:</p>
   <ul>
     
       <li class="entry-summary">
-        <a href="#%25%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#%</strong>(other : Int)</a>
+        <a href="#%25%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#%</strong>(other : BigInt)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%25%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#%</strong>(other : BigInt)</a>
+        <a href="#%25%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#%</strong>(other : Int)</a>
         
       </li>
     
@@ -162,7 +162,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%26%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#&</strong>(other : Int16)</a>
+        <a href="#%26%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#&</strong>(other : Int64)</a>
         
       </li>
     
@@ -172,7 +172,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%26%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#&</strong>(other : Int64)</a>
+        <a href="#%26%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#&</strong>(other : Int16)</a>
         
       </li>
     
@@ -202,12 +202,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%2A%2A%28other%29-instance-method" class="signature"><strong>#**</strong>(other)</a>
+        <a href="#%2A%2A%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#**</strong>(other : Int)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2A%2A%28other%20%3A%20Int%29-instance-method" class="signature"><strong>#**</strong>(other : Int)</a>
+        <a href="#%2A%2A%28other%29-instance-method" class="signature"><strong>#**</strong>(other)</a>
         
       </li>
     
@@ -222,12 +222,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#%2F%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#/</strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%2F%28x%20%3A%20Int%29-instance-method" class="signature"><strong>#/</strong>(x : Int)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2F%28other%20%3A%20BigInt%29-instance-method" class="signature"><strong>#/</strong>(other : BigInt)</a>
+        <a href="#%3C%3C%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#<<</strong>(other : Int8)</a>
         
       </li>
     
@@ -237,7 +242,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%3C%3C%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#<<</strong>(other : UInt8)</a>
+        <a href="#%3C%3C%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#<<</strong>(other : Int16)</a>
         
       </li>
     
@@ -252,22 +257,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%3C%3C%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#<<</strong>(other : Int16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%3C%3C%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#<<</strong>(other : Int8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%3C%3C%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#<<</strong>(other : Int64)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%3C%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#<<</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3C%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#<<</strong>(other : UInt8)</a>
         
       </li>
     
@@ -282,26 +282,6 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%3E%3E%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#>></strong>(other : UInt16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%3E%3E%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#>></strong>(other : UInt64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%3E%3E%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#>></strong>(other : UInt32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%3E%3E%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#>></strong>(other : UInt8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%3E%3E%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#>></strong>(other : Int16)</a>
         
       </li>
@@ -312,7 +292,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%3E%3E%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#>></strong>(other : Int64)</a>
+        <a href="#%3E%3E%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#>></strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#>></strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3E%3E%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#>></strong>(other : UInt64)</a>
         
       </li>
     
@@ -322,12 +312,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%5E%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#^</strong>(other : UInt32)</a>
+        <a href="#%3E%3E%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#>></strong>(other : Int64)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%5E%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#^</strong>(other : UInt64)</a>
+        <a href="#%3E%3E%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#>></strong>(other : UInt8)</a>
         
       </li>
     
@@ -337,7 +327,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%5E%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#^</strong>(other : Int32)</a>
+        <a href="#%5E%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#^</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#^</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#^</strong>(other : UInt32)</a>
         
       </li>
     
@@ -357,7 +357,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%5E%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#^</strong>(other : UInt8)</a>
+        <a href="#%5E%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#^</strong>(other : Int32)</a>
         
       </li>
     
@@ -397,12 +397,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#downto%28n%29-instance-method" class="signature"><strong>#downto</strong>(n)</a>
+        <a href="#downto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#downto</strong>(n, &block : self -> )</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#downto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#downto</strong>(n, &block : self -> )</a>
+        <a href="#downto%28n%29-instance-method" class="signature"><strong>#downto</strong>(n)</a>
         
       </li>
     
@@ -522,12 +522,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#to</strong>(n, &block : self -> )</a>
+        <a href="#to%28n%29-instance-method" class="signature"><strong>#to</strong>(n)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to%28n%29-instance-method" class="signature"><strong>#to</strong>(n)</a>
+        <a href="#to%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#to</strong>(n, &block : self -> )</a>
         
       </li>
     
@@ -542,12 +542,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28base%20%3A%20Int%2C%20upcase%20%3D%20false%20%3A%20Bool%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, upcase = false : Bool)</a>
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        <a href="#to_s%28base%20%3A%20Int%2C%20upcase%20%3D%20false%20%3A%20Bool%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, upcase = false : Bool)</a>
         
       </li>
     
@@ -567,7 +567,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_div%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt32)</a>
+        <a href="#unsafe_div%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt8)</a>
         
       </li>
     
@@ -577,7 +582,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_div%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int32)</a>
+        <a href="#unsafe_div%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt32)</a>
         
       </li>
     
@@ -592,47 +597,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_div%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_div%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#unsafe_div%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int64)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_mod%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int16)</a>
+        <a href="#unsafe_div%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int32)</a>
         
       </li>
     
@@ -642,17 +612,127 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#unsafe_mod%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int32)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#upto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#upto</strong>(n, &block : self -> )</a>
+        <a href="#unsafe_mod%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20UInt8%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt64)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#upto%28n%29-instance-method" class="signature"><strong>#upto</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#upto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method" class="signature"><strong>#upto</strong>(n, &block : self -> )</a>
         
       </li>
     
@@ -677,32 +757,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#|</strong>(other : Int64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#|</strong>(other : Int8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#|</strong>(other : Int16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#|</strong>(other : Int32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#|</strong>(other : UInt32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#|</strong>(other : UInt64)</a>
+        <a href="#%7C%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#|</strong>(other : UInt16)</a>
         
       </li>
     
@@ -712,7 +767,32 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%7C%28other%20%3A%20UInt16%29-instance-method" class="signature"><strong>#|</strong>(other : UInt16)</a>
+        <a href="#%7C%28other%20%3A%20UInt64%29-instance-method" class="signature"><strong>#|</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20UInt32%29-instance-method" class="signature"><strong>#|</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int16%29-instance-method" class="signature"><strong>#|</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int8%29-instance-method" class="signature"><strong>#|</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int64%29-instance-method" class="signature"><strong>#|</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%20%3A%20Int32%29-instance-method" class="signature"><strong>#|</strong>(other : Int32)</a>
         
       </li>
     
@@ -733,19 +813,6 @@ in which the number fits:</p>
   <h2>Instance Method Detail</h2>
   
     <div class="entry-detail">
-      <div class="signature" id="%25%28other%20%3A%20Int%29-instance-method">
-        
-        def <strong>%</strong>(other : <a href="Int.html">Int</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L75" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
       <div class="signature" id="%25%28other%20%3A%20BigInt%29-instance-method">
         
         def <strong>%</strong>(other : <a href="BigInt.html">BigInt</a>)
@@ -753,7 +820,20 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L281" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L297" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%25%28other%20%3A%20Int%29-instance-method">
+        
+        def <strong>%</strong>(other : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -771,9 +851,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%26%28other%20%3A%20Int16%29-instance-method">
+      <div class="signature" id="%26%28other%20%3A%20Int64%29-instance-method">
         
-        def <strong>&</strong>(other : <a href="Int16.html">Int16</a>)
+        def <strong>&</strong>(other : <a href="Int64.html">Int64</a>)
       </div>
       
         <div class="doc"></div>
@@ -795,9 +875,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%26%28other%20%3A%20Int64%29-instance-method">
+      <div class="signature" id="%26%28other%20%3A%20Int16%29-instance-method">
         
-        def <strong>&</strong>(other : <a href="Int64.html">Int64</a>)
+        def <strong>&</strong>(other : <a href="Int16.html">Int16</a>)
       </div>
       
         <div class="doc"></div>
@@ -862,20 +942,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L273" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%2A%2A%28other%29-instance-method">
-        
-        def <strong>**</strong>(other)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L118" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L289" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -888,7 +955,20 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L114" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L136" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2A%2A%28other%29-instance-method">
+        
+        def <strong>**</strong>(other)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L140" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -901,7 +981,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L256" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L272" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -914,20 +994,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L260" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%2F%28x%20%3A%20Int%29-instance-method">
-        
-        def <strong>/</strong>(x : <a href="Int.html">Int</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L63" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L276" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -940,7 +1007,32 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L277" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L293" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%2F%28x%20%3A%20Int%29-instance-method">
+        
+        def <strong>/</strong>(x : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L63" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
       
     </div>
     <hr/>
@@ -958,9 +1050,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%3C%3C%28other%20%3A%20UInt8%29-instance-method">
+      <div class="signature" id="%3C%3C%28other%20%3A%20Int16%29-instance-method">
         
-        def <strong><<</strong>(other : <a href="UInt8.html">UInt8</a>)
+        def <strong><<</strong>(other : <a href="Int16.html">Int16</a>)
       </div>
       
         <div class="doc"></div>
@@ -994,30 +1086,6 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%3C%3C%28other%20%3A%20Int16%29-instance-method">
-        
-        def <strong><<</strong>(other : <a href="Int16.html">Int16</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%3C%3C%28other%20%3A%20Int8%29-instance-method">
-        
-        def <strong><<</strong>(other : <a href="Int8.html">Int8</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
       <div class="signature" id="%3C%3C%28other%20%3A%20Int64%29-instance-method">
         
         def <strong><<</strong>(other : <a href="Int64.html">Int64</a>)
@@ -1042,6 +1110,18 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
+      <div class="signature" id="%3C%3C%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong><<</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="%3C%3D%3E%28other%20%3A%20BigInt%29-instance-method">
         
         def <strong><=></strong>(other : <a href="BigInt.html">BigInt</a>)
@@ -1049,7 +1129,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L252" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1062,55 +1142,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L122" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%3E%3E%28other%20%3A%20UInt16%29-instance-method">
-        
-        def <strong>>></strong>(other : <a href="UInt16.html">UInt16</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%3E%3E%28other%20%3A%20UInt64%29-instance-method">
-        
-        def <strong>>></strong>(other : <a href="UInt64.html">UInt64</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%3E%3E%28other%20%3A%20UInt32%29-instance-method">
-        
-        def <strong>>></strong>(other : <a href="UInt32.html">UInt32</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%3E%3E%28other%20%3A%20UInt8%29-instance-method">
-        
-        def <strong>>></strong>(other : <a href="UInt8.html">UInt8</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L144" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1140,9 +1172,33 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%3E%3E%28other%20%3A%20Int64%29-instance-method">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt16%29-instance-method">
         
-        def <strong>>></strong>(other : <a href="Int64.html">Int64</a>)
+        def <strong>>></strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>>></strong>(other : <a href="UInt64.html">UInt64</a>)
       </div>
       
         <div class="doc"></div>
@@ -1164,9 +1220,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%5E%28other%20%3A%20UInt32%29-instance-method">
+      <div class="signature" id="%3E%3E%28other%20%3A%20Int64%29-instance-method">
         
-        def <strong>^</strong>(other : <a href="UInt32.html">UInt32</a>)
+        def <strong>>></strong>(other : <a href="Int64.html">Int64</a>)
       </div>
       
         <div class="doc"></div>
@@ -1176,9 +1232,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%5E%28other%20%3A%20UInt64%29-instance-method">
+      <div class="signature" id="%3E%3E%28other%20%3A%20UInt8%29-instance-method">
         
-        def <strong>^</strong>(other : <a href="UInt64.html">UInt64</a>)
+        def <strong>>></strong>(other : <a href="UInt8.html">UInt8</a>)
       </div>
       
         <div class="doc"></div>
@@ -1200,9 +1256,33 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%5E%28other%20%3A%20Int32%29-instance-method">
+      <div class="signature" id="%5E%28other%20%3A%20UInt8%29-instance-method">
         
-        def <strong>^</strong>(other : <a href="Int32.html">Int32</a>)
+        def <strong>^</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%5E%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>^</strong>(other : <a href="UInt32.html">UInt32</a>)
       </div>
       
         <div class="doc"></div>
@@ -1248,9 +1328,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%5E%28other%20%3A%20UInt8%29-instance-method">
+      <div class="signature" id="%5E%28other%20%3A%20Int32%29-instance-method">
         
-        def <strong>^</strong>(other : <a href="UInt8.html">UInt8</a>)
+        def <strong>^</strong>(other : <a href="Int32.html">Int32</a>)
       </div>
       
         <div class="doc"></div>
@@ -1267,7 +1347,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L94" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L116" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1280,7 +1360,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L126" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L148" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1293,7 +1373,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L120" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1318,7 +1398,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L244" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L244" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1331,7 +1411,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L248" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L248" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1344,20 +1424,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L138" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="downto%28n%29-instance-method">
-        
-        def <strong>downto</strong>(n)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L193" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L160" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1370,7 +1437,20 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L184" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L206" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="downto%28n%29-instance-method">
+        
+        def <strong>downto</strong>(n)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L215" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1383,7 +1463,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L142" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L164" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1396,7 +1476,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L71" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L71" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1409,7 +1489,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L102" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L124" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1422,7 +1502,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L130" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L152" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1435,7 +1515,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L150" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L172" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1448,7 +1528,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L252" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L252" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1461,7 +1541,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L256" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L256" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1474,7 +1554,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L134" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L156" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1487,7 +1567,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L276" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L276" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1500,7 +1580,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L280" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L280" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1513,7 +1593,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L260" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L260" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1526,7 +1606,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L264" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L264" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1539,7 +1619,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L212" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L234" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1552,7 +1632,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L324" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L324" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1565,7 +1645,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L328" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L328" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1578,7 +1658,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L146" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L168" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1591,7 +1671,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L86" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L86" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1604,7 +1684,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L106" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L128" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1617,7 +1697,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L268" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L268" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1630,7 +1710,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L272" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L272" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1643,7 +1723,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L154" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L176" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1656,7 +1736,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L167" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L189" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1669,20 +1749,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L158" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
-        
-        def <strong>to</strong>(n, &block : self -> )
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L197" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L180" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1695,7 +1762,20 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L208" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L230" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
+        
+        def <strong>to</strong>(n, &block : self -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L219" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1708,7 +1788,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/big_int/big_int.cr#L285" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/big_int/big_int.cr#L301" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1721,20 +1801,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr#L121" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="to_s%28base%20%3A%20Int%2C%20upcase%20%3D%20false%20%3A%20Bool%29-instance-method">
-        
-        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, upcase = <span class="n">false</span> : <a href="Bool.html">Bool</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L229" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr#L161" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1747,7 +1814,20 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L221" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L243" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="to_s%28base%20%3A%20Int%2C%20upcase%20%3D%20false%20%3A%20Bool%29-instance-method">
+        
+        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, upcase = <span class="n">false</span> : <a href="Bool.html">Bool</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L251" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1760,7 +1840,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L244" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L266" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1773,7 +1853,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L225" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L247" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -1786,15 +1866,27 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L110" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L132" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="unsafe_div%28other%20%3A%20UInt32%29-instance-method">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt16%29-instance-method">
         
-        def <strong>unsafe_div</strong>(other : <a href="UInt32.html">UInt32</a>)
+        def <strong>unsafe_div</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt8.html">UInt8</a>)
       </div>
       
         <div class="doc"></div>
@@ -1816,9 +1908,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="unsafe_div%28other%20%3A%20Int32%29-instance-method">
+      <div class="signature" id="unsafe_div%28other%20%3A%20UInt32%29-instance-method">
         
-        def <strong>unsafe_div</strong>(other : <a href="Int32.html">Int32</a>)
+        def <strong>unsafe_div</strong>(other : <a href="UInt32.html">UInt32</a>)
       </div>
       
         <div class="doc"></div>
@@ -1852,30 +1944,6 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="unsafe_div%28other%20%3A%20UInt16%29-instance-method">
-        
-        def <strong>unsafe_div</strong>(other : <a href="UInt16.html">UInt16</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="unsafe_div%28other%20%3A%20UInt8%29-instance-method">
-        
-        def <strong>unsafe_div</strong>(other : <a href="UInt8.html">UInt8</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
       <div class="signature" id="unsafe_div%28other%20%3A%20Int64%29-instance-method">
         
         def <strong>unsafe_div</strong>(other : <a href="Int64.html">Int64</a>)
@@ -1888,69 +1956,9 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt8%29-instance-method">
+      <div class="signature" id="unsafe_div%28other%20%3A%20Int32%29-instance-method">
         
-        def <strong>unsafe_mod</strong>(other : <a href="UInt8.html">UInt8</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="unsafe_mod%28other%20%3A%20Int64%29-instance-method">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="Int64.html">Int64</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt16%29-instance-method">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="UInt16.html">UInt16</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt64%29-instance-method">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="UInt64.html">UInt64</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt32%29-instance-method">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="UInt32.html">UInt32</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="unsafe_mod%28other%20%3A%20Int16%29-instance-method">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="Int16.html">Int16</a>)
+        def <strong>unsafe_div</strong>(other : <a href="Int32.html">Int32</a>)
       </div>
       
         <div class="doc"></div>
@@ -1972,6 +1980,30 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
       <div class="signature" id="unsafe_mod%28other%20%3A%20Int32%29-instance-method">
         
         def <strong>unsafe_mod</strong>(other : <a href="Int32.html">Int32</a>)
@@ -1984,14 +2016,241 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="upto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt8%29-instance-method">
         
-        def <strong>upto</strong>(n, &block : self -> )
+        def <strong>unsafe_mod</strong>(other : <a href="UInt8.html">UInt8</a>)
       </div>
       
+        <div class="doc"></div>
       
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L171" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_mod%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shl%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20UInt8%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="UInt8.html">UInt8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20UInt16%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="UInt16.html">UInt16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="Int32.html">Int32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="unsafe_shr%28other%20%3A%20UInt64%29-instance-method">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
       
     </div>
     <hr/>
@@ -2004,7 +2263,20 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L180" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L202" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="upto%28n%2C%20%26block%20%3A%20self%20-%3E%20%29-instance-method">
+        
+        def <strong>upto</strong>(n, &block : self -> )
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L193" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2017,7 +2289,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L236" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L236" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2030,7 +2302,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L240" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L240" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2043,7 +2315,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L332" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L332" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -2056,75 +2328,15 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/time/time_span.cr#L336" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/time/time_span.cr#L336" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20Int64%29-instance-method">
+      <div class="signature" id="%7C%28other%20%3A%20UInt16%29-instance-method">
         
-        def <strong>|</strong>(other : <a href="Int64.html">Int64</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20Int8%29-instance-method">
-        
-        def <strong>|</strong>(other : <a href="Int8.html">Int8</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20Int16%29-instance-method">
-        
-        def <strong>|</strong>(other : <a href="Int16.html">Int16</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20Int32%29-instance-method">
-        
-        def <strong>|</strong>(other : <a href="Int32.html">Int32</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20UInt32%29-instance-method">
-        
-        def <strong>|</strong>(other : <a href="UInt32.html">UInt32</a>)
-      </div>
-      
-        <div class="doc"></div>
-      
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20UInt64%29-instance-method">
-        
-        def <strong>|</strong>(other : <a href="UInt64.html">UInt64</a>)
+        def <strong>|</strong>(other : <a href="UInt16.html">UInt16</a>)
       </div>
       
         <div class="doc"></div>
@@ -2146,9 +2358,69 @@ in which the number fits:</p>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="%7C%28other%20%3A%20UInt16%29-instance-method">
+      <div class="signature" id="%7C%28other%20%3A%20UInt64%29-instance-method">
         
-        def <strong>|</strong>(other : <a href="UInt16.html">UInt16</a>)
+        def <strong>|</strong>(other : <a href="UInt64.html">UInt64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20UInt32%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="UInt32.html">UInt32</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int16%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int16.html">Int16</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int8%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int8.html">Int8</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int64%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int64.html">Int64</a>)
+      </div>
+      
+        <div class="doc"></div>
+      
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="%7C%28other%20%3A%20Int32%29-instance-method">
+        
+        def <strong>|</strong>(other : <a href="Int32.html">Int32</a>)
       </div>
       
         <div class="doc"></div>
@@ -2165,7 +2437,7 @@ in which the number fits:</p>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/int.cr#L59" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/int.cr#L59" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

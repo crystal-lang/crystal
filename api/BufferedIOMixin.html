@@ -45,7 +45,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr" target="_blank">io/buffered_io_mixin.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr" target="_blank">io/buffered_io_mixin.cr</a>
     
     <br/>
   
@@ -92,7 +92,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gets%28delimiter%20%3A%20Char%29-instance-method" class="signature"><strong>#gets</strong>(delimiter : Char)</a>
+        <a href="#gets%28delimiter%20%3A%20Char%2C%20limit%20%3A%20Int%29-instance-method" class="signature"><strong>#gets</strong>(delimiter : Char, limit : Int)</a>
         
       </li>
     
@@ -102,12 +102,17 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#read%28length%20%3A%20Int%29-instance-method" class="signature"><strong>#read</strong>(length : Int)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#read_byte-instance-method" class="signature"><strong>#read_byte</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#read_char-instance-method" class="signature"><strong>#read_char</strong></a>
+        <a href="#read_char_with_bytesize-instance-method" class="signature"><strong>#read_char_with_bytesize</strong></a>
         
       </li>
     
@@ -180,7 +185,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L210" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L248" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -193,7 +198,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L204" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L242" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -206,7 +211,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L187" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L225" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -219,20 +224,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L191" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L229" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="gets%28delimiter%20%3A%20Char%29-instance-method">
+      <div class="signature" id="gets%28delimiter%20%3A%20Char%2C%20limit%20%3A%20Int%29-instance-method">
         
-        def <strong>gets</strong>(delimiter : <a href="Char.html">Char</a>)
+        def <strong>gets</strong>(delimiter : <a href="Char.html">Char</a>, limit : <a href="Int.html">Int</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L23" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L23" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -245,7 +250,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L113" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L136" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28length%20%3A%20Int%29-instance-method">
+        
+        def <strong>read</strong>(length : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L164" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -258,20 +276,20 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L72" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="read_char-instance-method">
+      <div class="signature" id="read_char_with_bytesize-instance-method">
         
-        def <strong>read_char</strong>
+        def <strong>read_char_with_bytesize</strong>
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L83" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L106" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -284,7 +302,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L215" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L253" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -297,7 +315,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L195" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L233" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -310,7 +328,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L200" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L238" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -323,7 +341,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -336,7 +354,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L19" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L19" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -349,7 +367,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L17" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L17" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -362,7 +380,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L21" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -375,7 +393,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L18" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L18" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -388,7 +406,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L141" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L179" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -401,7 +419,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/buffered_io_mixin.cr#L171" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/buffered_io_mixin.cr#L209" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

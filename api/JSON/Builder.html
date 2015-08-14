@@ -15,6 +15,28 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>The <code><a href="../JSON/Builder.html">JSON::Builder</a></code> module adds two methods, <code><a href="../JSON/Builder.html#json_object%28%26block%29-instance-method">#json_object</a></code> and <code><a href="../JSON/Builder.html#json_array%28%26block%29-instance-method">#json_array</a></code>
+to all <code><a href="../IO.html">IO</a></code>s so generating JSON by streaming to an IO is easy and convenient.</p>
+
+<h3>Example</h3>
+
+<pre><code><span class="k">require</span> <span class="s">"json"</span>
+
+result <span class="o">=</span> <span class="t">String</span>.build <span class="k">do</span> <span class="o">|</span>io<span class="o">|</span>
+  io.json_object <span class="k">do</span> <span class="o">|</span>object<span class="o">|</span>
+    object.field <span class="s">"address"</span>, <span class="s">"Crystal Road 1234"</span>
+    object.field <span class="s">"location"</span> <span class="k">do</span>
+      io.json_array <span class="k">do</span> <span class="o">|</span>array<span class="o">|</span>
+        array <span class="o"><<</span> <span class="n">12.3</span>
+        array <span class="o"><<</span> <span class="n">34.5</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+result <span class="c">#=> %({"address":"Crystal Road 1234","location":[12.3,34.5]})</span></code></pre>
+
 
 
 
@@ -38,7 +60,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -55,10 +77,14 @@
       <li class="entry-summary">
         <a href="#json_array%28%26block%29-instance-method" class="signature"><strong>#json_array</strong>(&block)</a>
         
+          <div class="summary"><p>Writes a JSON array to the given IO.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#json_object%28%26block%29-instance-method" class="signature"><strong>#json_object</strong>(&block)</a>
+        
+          <div class="summary"><p>Writes a JSON object to the given IO.</p></div>
         
       </li>
     
@@ -79,9 +105,11 @@
         def <strong>json_array</strong>(&block)
       </div>
       
+        <div class="doc"><p>Writes a JSON array to the given IO. Yields a <code><a href="../JSON/ArrayBuilder.html">JSON::ArrayBuilder</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr#L66" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr#L106" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -92,9 +120,11 @@
         def <strong>json_object</strong>(&block)
       </div>
       
+        <div class="doc"><p>Writes a JSON object to the given IO. Yields a <code><a href="../JSON/ObjectBuilder.html">JSON::ObjectBuilder</a></code>.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/json/to_json.cr#L60" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/to_json.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

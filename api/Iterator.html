@@ -30,7 +30,7 @@ one for the <em>map</em> call and one for the <em>take</em> call. A more efficie
 <code><a href="Range.html#each-instance-method">Range#each</a></code> without a block, which gives us an Iterator so we can process the operations
 lazily:</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10000000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c">#=> #< Iterator(T)::Take...</span></code></pre>
+<pre><code>(<span class="n">1</span>..<span class="n">10000000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c">#=> #&lt; Iterator(T)::Take...</span></code></pre>
 
 <p>Iterator redefines many of <code><a href="Enumerable.html">Enumerable</a></code>'s method in a lazy way, returning iterators
 instead of arrays.</p>
@@ -79,8 +79,8 @@ zeros.take(<span class="n">3</span>).to_a    <span class="c">#=> [0, 0, 0]</span
 
 <p>The standard library provides iterators for many classes, like <code><a href="Array.html">Array</a></code>, <code><a href="Hash.html">Hash</a></code>, <code><a href="Range.html">Range</a></code>, <code><a href="String.html">String</a></code> and <code><a href="IO.html">IO</a></code>.
 Usually to get an iterator you invoke a method that would usually yield elements to a block,
-but without passing a block: <code><a href="Array.html#each%28%26block%29-instance-method">Array#each</a></code>, <code><a href="Array.html#each_index%28%26block%29-instance-method">Array#each_index</a></code>, <code><a href="Hash.html#each%28%26block%29-instance-method">Hash#each</a></code>, <code><a href="String.html#each_char%28%26block%29-instance-method">String#each_char</a></code>,
-<code><a href="IO.html#each_line%28%26block%29-instance-method">IO#each_line</a></code>, etc.</p>
+but without passing a block: <code><a href="Array.html#each%28%26block%29-instance-method">Array#each</a></code>, <code><a href="Array.html#each_index-instance-method">Array#each_index</a></code>, <code><a href="Hash.html#each%28%26block%29-instance-method">Hash#each</a></code>, <code><a href="String.html#each_char%28%26block%29-instance-method">String#each_char</a></code>,
+<code><a href="IO.html#each_line-instance-method">IO#each_line</a></code>, etc.</p>
 
 
 
@@ -101,6 +101,8 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
 
   <h2>Direct including types</h2>
   
+    <a href="Iterator/CompactMap.html">Iterator::CompactMap(I, T, U)</a>,
+  
     <a href="Matrix/ItemIterator.html">Matrix::ItemIterator(T)</a>,
   
     <a href="Tuple/ItemIterator.html">Tuple::ItemIterator(T)</a>
@@ -112,7 +114,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr" target="_blank">iterator.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr" target="_blank">iterator.cr</a>
     
     <br/>
   
@@ -154,17 +156,22 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       </li>
     
       <li class="entry-summary">
+        <a href="#compact_map%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#compact_map</strong>(&func : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#cons%28n%29-instance-method" class="signature"><strong>#cons</strong>(n)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#cycle%28n%20%3A%20Int%29-instance-method" class="signature"><strong>#cycle</strong>(n : Int)</a>
+        <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#cycle-instance-method" class="signature"><strong>#cycle</strong></a>
+        <a href="#cycle%28n%20%3A%20Int%29-instance-method" class="signature"><strong>#cycle</strong>(n : Int)</a>
         
       </li>
     
@@ -218,6 +225,11 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       </li>
     
       <li class="entry-summary">
+        <a href="#skip_while%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#skip_while</strong>(&func : T -> U)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#slice%28n%29-instance-method" class="signature"><strong>#slice</strong>(n)</a>
         
       </li>
@@ -231,6 +243,11 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
     
       <li class="entry-summary">
         <a href="#take%28n%29-instance-method" class="signature"><strong>#take</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#take_while%28%26func%20%3A%20T%20-%3E%20U%29-instance-method" class="signature"><strong>#take_while</strong>(&func : T -> U)</a>
         
       </li>
     
@@ -281,7 +298,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L178" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L190" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -294,7 +311,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L174" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L186" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -309,7 +326,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L87" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L87" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -327,7 +344,20 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L166" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L178" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="compact_map%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>compact_map</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L102" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -340,20 +370,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L160" target="_blank">View source</a>]</div>
-      
-    </div>
-    <hr/>
-  
-    <div class="entry-detail">
-      <div class="signature" id="cycle%28n%20%3A%20Int%29-instance-method">
-        
-        def <strong>cycle</strong>(n : <a href="Int.html">Int</a>)
-      </div>
-      
-      
-        <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L130" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L172" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -366,7 +383,20 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L126" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L138" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="cycle%28n%20%3A%20Int%29-instance-method">
+        
+        def <strong>cycle</strong>(n : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L142" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -379,7 +409,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L98" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L98" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -392,7 +422,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L182" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L194" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -405,7 +435,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L156" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L168" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -418,7 +448,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L102" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L106" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -434,7 +464,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L93" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L93" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -447,7 +477,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L110" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L114" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -462,7 +492,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L96" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L96" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -475,7 +505,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L106" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L110" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -488,7 +518,20 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L118" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L126" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="skip_while%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>skip_while</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L130" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -501,7 +544,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L150" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L162" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -516,7 +559,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L82" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L82" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -529,7 +572,20 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L114" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L118" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="take_while%28%26func%20%3A%20T%20-%3E%20U%29-instance-method">
+        
+        def <strong>take_while</strong>(&func : T -> U)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L122" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -542,7 +598,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L170" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L182" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -555,7 +611,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L138" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L150" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -568,7 +624,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L134" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L146" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -581,7 +637,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L142" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L154" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -594,7 +650,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L146" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L158" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -607,7 +663,7 @@ are no more elements.</p></div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/iterator.cr#L122" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L134" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

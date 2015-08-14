@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
+</head>
+<body>
+
+
+  <h1>module JSON::Mapping</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>The <code><a href="../JSON/Mapping.html">JSON::Mapping</a></code> module defines a single macro, <code><a href="../JSON/Mapping.html#json_mapping%28properties%2C%20strict%20%3D%20false%29-macro">json_mapping</a></code>, that
+defines how an object is mapped to JSON.</p>
+
+<p>This module is automatically included by <code><a href="../Object.html">Object</a></code> when you <code>require "json"</code>.</p>
+
+<h3>Example</h3>
+
+<pre><code><span class="k">require</span> <span class="s">"json"</span>
+
+<span class="k">class</span> <span class="t">Location</span>
+  json_mapping({
+    lat: <span class="t">Float64</span>,
+    lng: <span class="t">Float64</span>,
+  })
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="t">House</span>
+  json_mapping({
+    address: <span class="t">String</span>,
+    location: {<span class="k">type</span>: <span class="t">Location</span>, nilable: <span class="n">true</span>},
+  })
+<span class="k">end</span>
+
+house <span class="o">=</span> <span class="t">House</span>.from_json(<span class="s">%({\"address\": \"Crystal Road 1234\", \"location\": {\"lat\": 12.3, \"lng\": 34.5}})</span>)
+house.address  <span class="c">#=> "Crystal Road 1234"</span>
+house.location <span class="c">#=> #&lt;Location:0x10cd93d80 @lat=12.3, @lng=34.5></span>
+house.to_json  <span class="c">#=> %({"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}})</span></code></pre>
+
+<h3>Usage</h3>
+
+<p><code><a href="../JSON/Mapping.html#json_mapping%28properties%2C%20strict%20%3D%20false%29-macro">json_mapping</a></code> must receive a hash literal whose keys will define Crystal properties.</p>
+
+<p>The value of each key can be a single type (never a union type). Primitive types (numbers, string, boll and nil)
+are support, as well as custom objects which must either use <code><a href="../JSON/Mapping.html#json_mapping%28properties%2C%20strict%20%3D%20false%29-macro">json_mapping</a></code> or define a <code>new</code> method
+that accepts a <code><a href="../JSON/PullParser.html">JSON::PullParser</a></code> and returns an object from it.</p>
+
+<p>The value can also be another hash literal with the following options:</p>
+
+<ul><li>type: (required) the single type described above</li><li>key: the property name in the JSON document (as opposed to the property name in the Crystal code)</li><li>nilable: if true, the property can be <code><a href="../Nil.html">Nil</a></code></li><li>emit_null: if true, emits a <code>null</code> value for nilable properties (by default nulls are not emitted)</li><li>converter: specify an alternate type for parsing and generation. The converter must define <code>from_json(<a href="../JSON/PullParser.html">JSON::PullParser</a>)</code> and <code>to_json(value, <a href="../IO.html">IO</a>)</code> as class methods.</li></ul>
+
+<p>The mapping also automatically defines Crystal properties (getters and setters) for each
+of the keys. It doesn't define a constructor accepting those arguments, but you can provide
+an overload.</p>
+
+<p>The macro basically defines a constructor accepting a <code><a href="../JSON/PullParser.html">JSON::PullParser</a></code> that reads from
+it and initializes this type's instance variables. It also defines a <code>to_json(<a href="../IO.html">IO</a>)</code> method
+by invoking <code>to_json(<a href="../IO.html">IO</a>)</code> on each of the properties (unless a converter is specified, in
+which case <code>to_json(value, <a href="../IO.html">IO</a>)</code> is invoked).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Direct including types</h2>
+  
+    <a href="../Object.html">Object</a>
+  
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/mapping.cr" target="_blank">json/mapping.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#json_mapping%28properties%2C%20strict%20%3D%20false%29-macro" class="signature"><strong>json_mapping</strong>(properties, strict = false)</a>
+        
+          <div class="summary"><p>Defines a JSON mapping.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="json_mapping%28properties%2C%20strict%20%3D%20false%29-macro">
+        
+        macro <strong>json_mapping</strong>(properties, strict = false)
+      </div>
+      
+        <div class="doc"><p>Defines a JSON mapping. If <code>strict</code> is true, uknown properties in the JSON
+document will raise a parse exception. The default is <code>false</code>, so uknown properties
+are silently ignored.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/json/mapping.cr#L58" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

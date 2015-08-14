@@ -20,7 +20,7 @@
   <p>Struct is the base type of structs you create in your program.
 It is set as a struct's superstruct when you don't specify one:</p>
 
-<pre><code><span class="k">struct</span> <span class="t">Foo</span> <span class="c"># < Struct</span>
+<pre><code><span class="k">struct</span> <span class="t">Foo</span> <span class="c"># &lt; Struct</span>
 <span class="k">end</span></code></pre>
 
 <p>Structs inherit from <code><a href="Value.html">Value</a></code> so they are allocated on the stack and passed
@@ -54,7 +54,7 @@ mut.value              <span class="c">#=> 1</span>
 mut <span class="o">=</span> change_good(mut)
 mut.value              <span class="c">#=> 2</span></code></pre>
 
-<p>The standard library provides a useful <code><a href="toplevel.html#record%28name%2C%20%2Afields%29-macro">record</a></code> macro that allows you to
+<p>The standard library provides a useful <code><a href="toplevel.html#record%28name%2C%20%2Aproperties%29-macro">record</a></code> macro that allows you to
 create immutable structs with some fields, similar to a <code><a href="Tuple.html">Tuple</a></code> but using
 names instead of indices.</p>
 
@@ -80,6 +80,8 @@ names instead of indices.</p>
     <a href="Colorize/Object.html">Colorize::Object(T)</a>,
   
     <a href="Complex.html">Complex</a>,
+  
+    <a href="Crypto/Bcrypt/Info.html">Crypto::Bcrypt::Info</a>,
   
     Crypto::MD5::Context,
   
@@ -111,6 +113,8 @@ names instead of indices.</p>
   
     IO::LineIterator(I),
   
+    <a href="Iterator/CompactMap.html">Iterator::CompactMap(I, T, U)</a>,
+  
     Iterator::Cons(I, T),
   
     Iterator::Cycle(I, T),
@@ -133,7 +137,7 @@ names instead of indices.</p>
   
     Iterator::WithObject(I, T, O),
   
-    Iterator::Zip(I, J, T, U),
+    Iterator::Zip(I1, I2, T1, T2),
   
     <a href="JSON/ArrayBuilder.html">JSON::ArrayBuilder(T)</a>,
   
@@ -256,7 +260,7 @@ names instead of indices.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/struct.cr" target="_blank">struct.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/struct.cr" target="_blank">struct.cr</a>
     
     <br/>
   
@@ -336,7 +340,7 @@ p1 <span class="o">==</span> p3            <span class="c">#=> false</span></cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/struct.cr#L66" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/struct.cr#L66" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -353,7 +357,7 @@ p1 <span class="o">==</span> p3            <span class="c">#=> false</span></cod
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/struct.cr#L76" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/struct.cr#L76" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -378,7 +382,7 @@ p1.inspect          <span class="c"># "Point(@x=1, @y=2)"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/struct.cr#L97" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/struct.cr#L97" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -393,7 +397,7 @@ p1.inspect          <span class="c"># "Point(@x=1, @y=2)"</span></code></pre></d
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/struct.cr#L111" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/struct.cr#L111" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

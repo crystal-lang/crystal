@@ -41,7 +41,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr" target="_blank">io/string_io.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr" target="_blank">io/string_io.cr</a>
     
     <br/>
   
@@ -101,7 +101,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#gets%28delimiter%20%3A%20Char%29-instance-method" class="signature"><strong>#gets</strong>(delimiter : Char)</a>
+        <a href="#gets%28delimiter%20%3A%20Char%2C%20limit%20%3A%20Int32%29-instance-method" class="signature"><strong>#gets</strong>(delimiter : Char, limit : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read%28length%20%3A%20Int%29-instance-method" class="signature"><strong>#read</strong>(length : Int)</a>
         
       </li>
     
@@ -152,7 +157,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L14" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L14" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -165,7 +170,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L7" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L7" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -183,7 +188,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L4" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -196,7 +201,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L5" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L5" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -209,7 +214,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L57" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L75" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -222,7 +227,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L70" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L88" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -235,7 +240,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L77" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L95" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -248,20 +253,33 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L61" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L79" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
   
     <div class="entry-detail">
-      <div class="signature" id="gets%28delimiter%20%3A%20Char%29-instance-method">
+      <div class="signature" id="gets%28delimiter%20%3A%20Char%2C%20limit%20%3A%20Int32%29-instance-method">
         
-        def <strong>gets</strong>(delimiter : <a href="Char.html">Char</a>)
+        def <strong>gets</strong>(delimiter : <a href="Char.html">Char</a>, limit : <a href="Int32.html">Int32</a>)
       </div>
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L39" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L39" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="read%28length%20%3A%20Int%29-instance-method">
+        
+        def <strong>read</strong>(length : <a href="Int.html">Int</a>)
+      </div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L63" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -274,7 +292,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L20" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -287,7 +305,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L65" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L83" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -300,7 +318,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L81" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L99" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -313,7 +331,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L89" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L107" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -326,7 +344,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L85" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L103" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -339,7 +357,7 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/io/string_io.cr#L27" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/io/string_io.cr#L27" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link href="../css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript">
+    var pathToIndex = "../index.html"
+  </script>
+  <script type="text/javascript" src="../js/type.js"></script>
+</head>
+<body>
+
+
+  <h1>module Iterator::IteratorWrapper</h1>
+
+
+
+  <h2>Overview</h2>
+
+  <p>IteratorWrapper eliminates some boilerplate when defining an Iterator that wraps another iterator.</p>
+
+<p>To use it, include this module in your iterator and make sure that the wrapped
+iterator is stored in the <code>@iterator</code> instance variable.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>Direct including types</h2>
+  
+    <a href="../Iterator/CompactMap.html">Iterator::CompactMap(I, T, U)</a>
+  
+
+
+
+
+  <h2>Defined in:</h2>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr" target="_blank">iterator.cr</a>
+    
+    <br/>
+  
+
+
+
+
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#rewind-instance-method" class="signature"><strong>#rewind</strong></a>
+        
+          <div class="summary"><p>Rewinds the wrapped iterator and returns self.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Macro Summary</h2>
+  <ul>
+    
+      <li class="entry-summary">
+        <a href="#wrapped_next-macro" class="signature"><strong>wrapped_next</strong></a>
+        
+          <div class="summary"><p>Invokes <code>next</code> on the wrapped iterator and returns <code>stop</code> if the given value was a Stop.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+
+
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="rewind-instance-method">
+        
+        def <strong>rewind</strong>
+      </div>
+      
+        <div class="doc"><p>Rewinds the wrapped iterator and returns self.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L208" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail">
+      <div class="signature" id="wrapped_next-macro">
+        
+        macro <strong>wrapped_next</strong>
+      </div>
+      
+        <div class="doc"><p>Invokes <code>next</code> on the wrapped iterator and returns <code>stop</code> if
+the given value was a Stop. Otherwise, returns the value.</p></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/iterator.cr#L215" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+
+
+
+</body>
+</html>

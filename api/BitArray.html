@@ -15,6 +15,25 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>BitArray is an array data structure that compactly stores bits.</p>
+
+<p>Bits externally represented as <code><a href="Bool.html">Bool</a></code>s are stored internally as
+<code><a href="UInt32.html">UInt32</a></code>s. The total number of bits stored is set at creation and is
+immutable.</p>
+
+<p><code><a href="BitArray.html">BitArray</a></code> includes all the methods in <code><a href="Enumerable.html">Enumerable</a></code>.</p>
+
+<h3>Example</h3>
+
+<pre><code><span class="k">require</span> <span class="s">"bit_array"</span>
+ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">12</span>) <span class="c"># => "BitArray[000000000000]"</span>
+ba[<span class="n">2</span>]                 <span class="c"># => false</span>
+<span class="n">0</span>.upto(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> a[i<span class="o">*</span><span class="n">2</span>] <span class="o">=</span> <span class="n">true</span> }
+ba                    <span class="c"># => "BitArray[101010101010]"</span>
+ba[<span class="n">2</span>]                 <span class="c"># => true</span></code></pre>
+
 
 
 
@@ -41,7 +60,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr" target="_blank">bit_array.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr" target="_blank">bit_array.cr</a>
     
     <br/>
   
@@ -56,6 +75,8 @@
       <li class="entry-summary">
         <a href="#new%28length%2C%20initial%20%3D%20false%20%3A%20Bool%29-class-method" class="signature"><strong>.new</strong>(length, initial = false : Bool)</a>
         
+          <div class="summary"><p>Create a new BitArray of <code><a href="BitArray.html#length-instance-method">#length</a></code> bits.</p></div>
+        
       </li>
     
   </ul>
@@ -68,10 +89,14 @@
       <li class="entry-summary">
         <a href="#%5B%5D%28index%29-instance-method" class="signature"><strong>#[]</strong>(index)</a>
         
+          <div class="summary"><p>Returns the bit at the given index.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%5B%5D%3D%28index%2C%20value%20%3A%20Bool%29-instance-method" class="signature"><strong>#[]=</strong>(index, value : Bool)</a>
+        
+          <div class="summary"><p>Sets the bit at the given index.</p></div>
         
       </li>
     
@@ -81,12 +106,28 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#invert-instance-method" class="signature"><strong>#invert</strong></a>
+        
+          <div class="summary"><p>Inverts all bits in the array.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#length-instance-method" class="signature"><strong>#length</strong></a>
+        
+          <div class="summary"><p>The number of bits the BitArray stores</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28io%20%3A%20IO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#toggle%28index%29-instance-method" class="signature"><strong>#toggle</strong>(index)</a>
+        
+          <div class="summary"><p>Toggles the bit at the given index.</p></div>
         
       </li>
     
@@ -105,9 +146,14 @@
         def self.<strong>new</strong>(length, initial = <span class="n">false</span> : <a href="Bool.html">Bool</a>)
       </div>
       
+        <div class="doc"><p>Create a new BitArray of <code><a href="BitArray.html#length-instance-method">#length</a></code> bits.</p>
+
+<p><code>initial</code> optionally sets the starting value, true or false, for all bits
+in the array.</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr#L6" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L27" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -123,9 +169,16 @@
         def <strong>[]</strong>(index)
       </div>
       
+        <div class="doc"><p>Returns the bit at the given index.
+Negative indices can be used to start counting from the end of the array.
+Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access a bit outside the array's range.</p>
+
+<pre><code>ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">5</span>)
+ba[<span class="n">3</span>] <span class="c"># => false</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr#L15" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L38" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -136,9 +189,16 @@
         def <strong>[]=</strong>(index, value : <a href="Bool.html">Bool</a>)
       </div>
       
+        <div class="doc"><p>Sets the bit at the given index.
+Negative indices can be used to start counting from the end of the array.
+Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access a bit outside the array's range.</p>
+
+<pre><code>ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">5</span>)
+ba[<span class="n">3</span>] <span class="o">=</span> <span class="n">true</span></code></pre></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr#L20" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L49" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -151,7 +211,29 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr#L29" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L86" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="invert-instance-method">
+        
+        def <strong>invert</strong>
+      </div>
+      
+        <div class="doc"><p>Inverts all bits in the array. Falses become true and
+vice versa.</p>
+
+<pre><code>ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">5</span>)
+ba[<span class="n">2</span>] <span class="o">=</span> <span class="n">true</span>; ba[<span class="n">3</span>] <span class="o">=</span> <span class="n">true</span>
+ba <span class="c"># => BitArray[00110]</span>
+ba.invert
+ba <span class="c"># => BitArray[11001]</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L80" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -162,9 +244,11 @@
         def <strong>length</strong>
       </div>
       
+        <div class="doc"><p>The number of bits the BitArray stores</p></div>
+      
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr#L4" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L21" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
@@ -177,7 +261,30 @@
       
       
         <br/>
-        <div>[<a href="https://github.com/manastech/crystal/blob/2a33a87cd7ee498dd166ab9bba824cb2d9291321/src/bit_array.cr#L35" target="_blank">View source</a>]</div>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L92" target="_blank">View source</a>]</div>
+      
+    </div>
+    <hr/>
+  
+    <div class="entry-detail">
+      <div class="signature" id="toggle%28index%29-instance-method">
+        
+        def <strong>toggle</strong>(index)
+      </div>
+      
+        <div class="doc"><p>Toggles the bit at the given index. A false bit becomes a true bit, and
+vice versa.
+Negative indices can be used to start counting from the end of the array.
+Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access a bit outside the array's range.</p>
+
+<pre><code>ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">5</span>)
+ba[<span class="n">3</span>] <span class="c"># => false</span>
+ba.toggle(<span class="n">3</span>)
+ba[<span class="n">3</span>] <span class="c"># => false</span></code></pre></div>
+      
+      
+        <br/>
+        <div>[<a href="https://github.com/manastech/crystal/blob/eb13f75d8f6602d3a779b1a1f32bfb6230387ea5/src/bit_array.cr#L67" target="_blank">View source</a>]</div>
       
     </div>
     <hr/>
