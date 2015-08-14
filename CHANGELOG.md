@@ -1,6 +1,6 @@
 ## 0.7.6 (2015-08-13)
 
-* **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/manastech/crystal/commits/master?author=jessedoyle))
+* **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/manastech/crystal/wiki/FAQ#why-trailing-whileuntil-is-not-supported-unlike-ruby))
 * **(breaking change)** Renamed `Enumerable#drop` to `Enumerable#skip`
 * **(breaking change)** Renamed `Time.at` to `Time.epoch`, and `Time#to_i` and `Time#to_f` to `Time#epoch` and `Time#epoch_f`
 * **(breaking change)** `inherited` macro now runs before a class' body
