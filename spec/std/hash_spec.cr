@@ -487,4 +487,46 @@ describe "Hash" do
     iter.rewind
     iter.next.should eq(1)
   end
+
+  describe "omit" do
+    assert { { a: 2, b: 3 }.omit(:b, :d).should eq({ a: 2 }) }
+    assert { { a: 2, b: 3 }.omit(:b, :a).should eq({ } of Symbol => Int32) }
+    it "does not change currrent hash" do
+      h = { a: 3, b: 6, c: 9 }
+      h2 = h.omit(:b, :c)
+      h.should eq({ a: 3, b: 6, c: 9 })
+    end
+  end
+
+  describe "omit!" do
+    assert { { a: 2, b: 3 }.omit!(:b, :d).should eq({ a: 2 }) }
+    assert { { a: 2, b: 3 }.omit!(:b, :a).should eq({ } of Symbol => Int32) }
+    it "changes currrent hash" do
+      h = { a: 3, b: 6, c: 9 }
+      h.omit!(:b, :c)
+      h.should eq({ a: 3 })
+    end
+  end
+
+  describe "pick" do
+    assert { { a: 2, b: 3 }.pick(:b, :d).should eq({ b: 3 }) }
+    assert { { a: 2, b: 3 }.pick.should eq({ } of Symbol => Int32) }
+    assert { { a: 2, b: 3 }.pick(:b, :a).should eq({ a: 2, b: 3 }) }
+    it "does not change currrent hash" do
+      h = { a: 3, b: 6, c: 9 }
+      h2 = h.pick(:b, :c)
+      h.should eq({ a: 3, b: 6, c: 9 })
+    end
+  end
+
+  describe "pick!" do
+    assert { { a: 2, b: 3 }.pick!(:b, :d).should eq({ b: 3 }) }
+    assert { { a: 2, b: 3 }.pick!.should eq({ } of Symbol => Int32) }
+    assert { { a: 2, b: 3 }.pick!(:b, :a).should eq({ a: 2, b: 3 }) }
+    it "does not change currrent hash" do
+      h = { a: 3, b: 6, c: 9 }
+      h.pick!(:b, :c)
+      h.should eq({ b: 6, c: 9 })
+    end
+  end
 end
