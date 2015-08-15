@@ -68,7 +68,7 @@ class OptionParser
     new.tap { |parser| yield parser }
   end
 
-  # Establishes the initial message for the help printout. Tipically, you want to write here the name of your program,
+  # Establishes the initial message for the help printout. Typically, you want to write here the name of your program,
   # and a one-line template of its invocation.
   #
   # Example:
@@ -79,8 +79,8 @@ class OptionParser
 
   # Establishes a handler for a flag.
   #
-  # Flags can (but must not) start with a dash. They can also have an optional argument, which will get passed to the
-  # block. Each flag has a description, which will be used for the help message.
+  # Flags can (but don't have to) start with a dash. They can also have an optional argument, which will get passed to
+  # the block. Each flag has a description, which will be used for the help message.
   #
   # Examples of valid flags:
   #
@@ -111,7 +111,7 @@ class OptionParser
 
   # Sets a handler for arguments that didn't match any of the setup options.
   #
-  # You tipically use this to get the main arguments (not modifiers) that your program expects (for example, filenames)
+  # You typically use this to get the main arguments (not modifiers) that your program expects (for example, filenames)
   def unknown_args(&@unknown_args : Array(String), Array(String) -> )
   end
 
