@@ -349,13 +349,13 @@ class Hash(K, V)
   #
   # ```
   # h = { "foo" => "bar" }
-  # 
+  #
   # h.each_with_index do |key, value, index|
   #   key   #=> "foo"
   #   value #=> "bar"
   #   index #=> 0
   # end
-  # 
+  #
   # h.each_with_index(3) do |key, value, index|
   #   key   #=> "foo"
   #   value #=> "bar"
@@ -490,7 +490,7 @@ class Hash(K, V)
   # h = { "a" => 100, "b" => 200, "c" => 300 }
   # h.reject {|k,v| k > "a"}  #=> {"a" => 100}
   # h.reject {|k,v| v < 200}  #=> {"b" => 200, "c" => 300}
-  # ``` 
+  # ```
   def reject(&block : K, V -> U)
     each_with_object({} of K => V) do |memo, k, v|
       memo[k] = v unless yield k, v
@@ -504,6 +504,48 @@ class Hash(K, V)
       delete(key) if yield(key, value)
     end
     num_entries == size ? nil : self
+  end
+  # Returns a new hash without the given keys.
+  #
+  # ```
+  # {"a": 1, "b": 2, "c": 3, "d": 4}.omit("a", "c") #=> {"b": 2, "d": 4}
+  # ```
+  def omit(*keys)
+    hash = self.dup
+    hash.omit!(*keys)
+  end
+
+  # Removes a list of keys out of hash.
+  #
+  # ```
+  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.omit!("a", "c")
+  # h #=> {"b": 2, "d": 4}
+  # ```
+  def omit!(*keys)
+    keys.each { |k| delete(k) }
+    self
+  end
+
+  # Returns a new hash with the given keys.
+  #
+  # ```
+  # {"a": 1, "b": 2, "c": 3, "d": 4}.pick("a", "c") #=> {"a": 1, "c": 3}
+  # ```
+  def pick(*keys)
+    hash = {} of K => V
+    keys.each { |k| hash[k] = self[k] if has_key?(k) }
+    hash
+  end
+
+  # Removes every element except the given ones.
+  #
+  # ```
+  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.pick!("a", "c")
+  # h #=> {"a": 1, "c": 3}
+  # ```
+  def pick!(*keys)
+    each { |k, v| delete(k) unless keys.includes?(k) }
+    self
   end
 
   def self.zip(ary1 : Array(K), ary2 : Array(V))
