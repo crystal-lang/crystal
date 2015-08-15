@@ -73,5 +73,11 @@ module Event
     def loop_break
       LibEvent2.event_base_loopbreak(@base)
     end
+
+    def dns_base
+      @dns_base ||= begin
+        LibEvent2.evdns_base_new(@base, 1)
+      end
+    end
   end
 end

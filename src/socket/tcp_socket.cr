@@ -1,8 +1,8 @@
 require "./ip_socket"
 
 class TCPSocket < IPSocket
-  def initialize(host, port)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
+  def initialize(host, port, dns_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP, timeout: dns_timeout) do |ai|
       sock = create_socket(ai.family, ai.socktype, ai.protocol)
 
       if LibC.connect(sock, ai.addr, ai.addrlen) != 0

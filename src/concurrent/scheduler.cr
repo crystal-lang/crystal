@@ -4,6 +4,10 @@ class Scheduler
   @@runnables = [] of Fiber
   @@eb = Event::Base.new
 
+  def self.event_base
+    @@eb
+  end
+
   def self.reschedule
     if runnable = @@runnables.pop?
       runnable.resume
