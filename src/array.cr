@@ -970,6 +970,28 @@ class Array(T)
     end
   end
 
+  def repeated_permutations(size = length : Int)
+    ary = [] of Array(T)
+    each_repeated_permutation(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_permutation(size = length : Int)
+    n = self.size
+    return self if size != 0 && n == 0
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    if size == 0
+      yield([] of T)
+    else
+      Array.each_product([self] * size) { |r| yield r }
+    end
+
+    self
+  end
+
   def pop
     pop { raise IndexError.new }
   end
