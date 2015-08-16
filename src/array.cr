@@ -919,7 +919,7 @@ class Array(T)
     raise ArgumentError.new("size must be positive") if size < 0
 
     copy = self.dup
-    indices = [0] * size
+    indices = Array.new(size, 0)
     pool = indices.map { |i| copy[i] }
 
     yield pool[0, size]
@@ -951,7 +951,7 @@ class Array(T)
     lens = arrays.map &.length
     return if lens.any? &.==(0)
     n = arrays.size
-    indices = [0] * n
+    indices = Array.new(n, 0)
     yield pool[0, n]
 
     while true
@@ -986,7 +986,7 @@ class Array(T)
     if size == 0
       yield([] of T)
     else
-      Array.each_product([self] * size) { |r| yield r }
+      Array.each_product(Array.new(size, self)) { |r| yield r }
     end
 
     self
