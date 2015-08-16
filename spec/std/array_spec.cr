@@ -1200,4 +1200,30 @@ describe "Array" do
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_combination(-1) {} } }
   end
 
+  describe "Array.each_product" do
+    it "single array" do
+      res = [] of Array(Int32)
+      Array.each_product([[1]]) { |r| res << r }
+      res.should eq([[1]])
+    end
+
+    it "2 arrays" do
+      res = [] of Array(Int32)
+      Array.each_product([[1, 2], [3, 4]]) { |r| res << r }
+      res.should eq([[1, 3], [1, 4], [2, 3], [2, 4]])
+    end
+
+    it "2 arrays different types" do
+      res = [] of Array(Int32 | Char)
+      Array.each_product([[1, 2], ['a', 'b']]) { |r| res << r }
+      res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+
+    it "more arrays" do
+      res = [] of Array(Int32)
+      Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
+      res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+    end
+  end
+
 end

@@ -946,6 +946,30 @@ class Array(T)
     end
   end
 
+  def self.each_product(arrays)
+    pool = arrays.map &.first
+    lens = arrays.map &.length
+    return if lens.any? &.==(0)
+    n = arrays.size
+    indices = [0] * n
+    yield pool[0, n]
+
+    while true
+      i = n - 1
+      indices[i] += 1
+
+      while indices[i] >= lens[i]
+        indices[i] = 0
+        pool[i] = arrays[i][indices[i]]
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+      end
+      pool[i] = arrays[i][indices[i]]
+      yield pool[0, n]
+    end
+  end
+
   def pop
     pop { raise IndexError.new }
   end
