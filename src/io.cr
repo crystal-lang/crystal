@@ -12,6 +12,8 @@ lib LibC
     O_CREAT    = 0o0000100
     O_TRUNC    = 0o0001000
     O_NONBLOCK = 0o0004000
+    O_CLOEXEC  = 0o2000000
+    O_DIRECTORY = 0o200000
   elsif darwin
     O_RDONLY   = 0x0000
     O_WRONLY   = 0x0001
@@ -20,6 +22,8 @@ lib LibC
     O_CREAT    = 0x0200
     O_TRUNC    = 0x0400
     O_NONBLOCK = 0x0004
+    O_CLOEXEC  = 0x1000000
+    O_DIRECTORY = 0x100000
   end
 
   S_IRWXU    = 0o000700         # RWX mask for owner
