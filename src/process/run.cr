@@ -167,13 +167,18 @@ class Process
 end
 
 def system(command : String) : Bool
-  status = Process.run("/bin/sh", input: StringIO.new(command), output: true, error: true)
+  process = Process.new("/bin/sh", input: nil, output: true, error: true)
+  process.input.print command
+  process.input.close
+  status = process.wait
   $? = status
   status.success?
 end
 
 def `(command) : String
-  process = Process.new("/bin/sh", input: StringIO.new(command), output: nil, error: true)
+  process = Process.new("/bin/sh", input: nil, output: nil, error: true)
+  process.input.print command
+  process.input.close
   output = process.output.read
   status = process.wait
   $? = status
