@@ -136,6 +136,17 @@ struct Int
     end
   end
 
+  # Bit reference. Returns the `n`th bit in the binary representation of
+  # `self`, where `self[0]` is the least significant bit.
+  #
+  # ```
+  # 28[1] #=> 0
+  # 28[2] #=> 1
+  # ```
+  def [](n : Int)
+    to_s(2).reverse[n].to_i
+  end
+
   def abs
     self >= 0 ? self : -self
   end
