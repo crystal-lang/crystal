@@ -67,12 +67,12 @@ module Crystal
     def transform(node : MultiAssign)
       # From:
       #
-      #     a, b = 1
+      #     a, b = [1, 2]
       #
       #
       # To:
       #
-      #     temp = 1
+      #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
       if node.values.length == 1
