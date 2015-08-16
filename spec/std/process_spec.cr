@@ -98,4 +98,15 @@ describe Process do
     Process.getpgid(pid).should be_a(Int32)
     Process.kill(Signal::KILL, pid)
   end
+
+  it "can link processes together" do
+    buffer = StringIO.new
+    Process.run("/bin/cat") do |cat|
+      Process.run("/bin/cat", input: cat.output, output: buffer) do
+        1000.times { cat.input.puts "line" }
+        cat.close
+      end
+    end
+    buffer.to_s.lines.length.should eq(1000)
+  end
 end

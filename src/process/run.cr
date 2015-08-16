@@ -57,6 +57,7 @@ class Process
 
     if needs_pipe?(input)
       fork_input, process_input = IO.pipe(read_blocking: true)
+      process_input.not_nil!.close_on_exec = true
       if input
         @wait_count += 1
         spawn { copy_io(input, process_input, channel) }
@@ -67,6 +68,7 @@ class Process
 
     if needs_pipe?(output)
       process_output, fork_output = IO.pipe(write_blocking: true)
+      process_output.not_nil!.close_on_exec = true
       if output
         @wait_count += 1
         spawn { copy_io(process_output, output, channel) }
@@ -77,6 +79,7 @@ class Process
 
     if needs_pipe?(error)
       process_error, fork_error = IO.pipe(write_blocking: true)
+      process_error.not_nil!.close_on_exec = true
       if error
         @wait_count += 1
         spawn { copy_io(process_error, error, channel) }
@@ -94,10 +97,6 @@ class Process
         reopen_io(fork_error || error, STDERR, "w")
 
         # Dir.chdir(chdir) if chdir
-
-        process_input.try &.close
-        process_output.try &.close
-        process_error.try &.close
 
         LibC.execvp(command, argv)
       rescue ex

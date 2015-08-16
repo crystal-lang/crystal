@@ -1,8 +1,11 @@
 lib LibC
   enum FCNTL
+    F_SETFD = 2
     F_GETFL = 3
     F_SETFL = 4
   end
+
+  FD_CLOEXEC = 1
 
   ifdef linux
     O_RDONLY   = 0o0000000
