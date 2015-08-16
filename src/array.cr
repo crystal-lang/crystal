@@ -806,17 +806,17 @@ class Array(T)
   # Returns an `Array` with all possible permutations of the given *size*.
   #
   #     a = [1, 2, 3]
-  #     a.permutation    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutation(1) #=> [[1],[2],[3]]
-  #     a.permutation(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-  #     a.permutation(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutation(0) #=> [[]]
-  #     a.permutation(4) #=> []
+  #     a.permutations    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutations(1) #=> [[1],[2],[3]]
+  #     a.permutations(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+  #     a.permutations(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutations(0) #=> [[]]
+  #     a.permutations(4) #=> []
   #
   def permutations(size = length : Int)
     ary = [] of Array(T)
-    each_permutation(size) do |perm|
-      ary << perm
+    each_permutation(size) do |a|
+      ary << a
     end
     ary
   end
@@ -825,7 +825,7 @@ class Array(T)
   #
   #     a = [1, 2, 3]
   #     sums = [] of Int32
-  #     a.permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
+  #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
   def each_permutation(size = length : Int)
@@ -842,19 +842,14 @@ class Array(T)
       stop = true
       i = size - 1
       while i >= 0
-        cycles[i] -= 1
-        if cycles[i] == 0
+        ci = (cycles[i] -= 1)
+        if ci == 0
           e = pool[i]
-          j = i + 1
-          while j < n
-            pool[j - 1] = pool[j]
-            j += 1
-          end
+          (i + 1).upto(n - 1) { |j| pool[j - 1] = pool[j] }
           pool[n - 1] = e
           cycles[i] = n - i
         else
-          j = cycles[i]
-          pool.swap i, -j
+          pool.swap i, -ci
           yield pool[0, size]
           stop = false
           break
@@ -864,6 +859,137 @@ class Array(T)
 
       return self if stop
     end
+  end
+
+  def combinations(size = length : Int)
+    ary = [] of Array(T)
+    each_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_combination(size = length : Int)
+    n = self.size
+    return self if size > n
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    copy = self.dup
+    pool = self.dup
+
+    indices = (0...size).to_a
+    yield pool[0, size]
+
+    while true
+      stop = true
+      i = size - 1
+      while i >= 0
+        if indices[i] != i + n - size
+          stop = false
+          break
+        end
+        i -= 1
+      end
+
+      return self if stop
+
+      indices[i] += 1
+      pool[i] = copy[indices[i]]
+
+      (i + 1).upto(size - 1) do |j|
+        indices[j] = indices[j - 1] + 1
+        pool[j] = copy[indices[j]]
+      end
+
+      yield pool[0, size]
+    end
+  end
+
+  def repeated_combinations(size = length : Int)
+    ary = [] of Array(T)
+    each_repeated_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_combination(size = length : Int)
+    n = self.size
+    return self if size > n && n == 0
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    copy = self.dup
+    indices = [0] * size
+    pool = indices.map { |i| copy[i] }
+
+    yield pool[0, size]
+
+    while true
+      stop = true
+
+      i = size - 1
+      while i >= 0
+        if indices[i] != n - 1
+          stop = false
+          break
+        end
+        i -= 1
+      end
+      return self if stop
+
+      ii = indices[i] + 1
+      tmp = copy[ii]
+      indices.fill(i, size - i) { ii }
+      pool.fill(i, size - i) { tmp }
+
+      yield pool[0, size]
+    end
+  end
+
+  def self.each_product(arrays)
+    pool = arrays.map &.first
+    lens = arrays.map &.length
+    return if lens.any? &.==(0)
+    n = arrays.size
+    indices = [0] * n
+    yield pool[0, n]
+
+    while true
+      i = n - 1
+      indices[i] += 1
+
+      while indices[i] >= lens[i]
+        indices[i] = 0
+        pool[i] = arrays[i][indices[i]]
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+      end
+      pool[i] = arrays[i][indices[i]]
+      yield pool[0, n]
+    end
+  end
+
+  def repeated_permutations(size = length : Int)
+    ary = [] of Array(T)
+    each_repeated_permutation(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_permutation(size = length : Int)
+    n = self.size
+    return self if size != 0 && n == 0
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    if size == 0
+      yield([] of T)
+    else
+      Array.each_product([self] * size) { |r| yield r }
+    end
+
+    self
   end
 
   def pop
