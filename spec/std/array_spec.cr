@@ -1108,7 +1108,7 @@ describe "Array" do
     end
   end
 
-  describe "permutation" do
+  describe "permutations" do
     assert { [1, 2, 2].permutations.should eq([[1,2,2],[1,2,2],[2,1,2],[2,2,1],[2,1,2],[2,2,1]]) }
     assert { [1, 2, 3].permutations.should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
     assert { [1, 2, 3].permutations(1).should eq([[1],[2],[3]]) }
@@ -1124,6 +1124,15 @@ describe "Array" do
         sums << perm.sum
       end.should eq([1, 2, 3])
       sums.should eq([3, 4, 3, 5, 4, 5])
+    end
+
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_permutation(3) do |perm|
+        perm.map! &.+(1)
+        sums << perm.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([9, 9, 9, 9, 9, 9])
     end
 
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) {} } }

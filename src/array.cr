@@ -806,17 +806,17 @@ class Array(T)
   # Returns an `Array` with all possible permutations of the given *size*.
   #
   #     a = [1, 2, 3]
-  #     a.permutation    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutation(1) #=> [[1],[2],[3]]
-  #     a.permutation(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-  #     a.permutation(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutation(0) #=> [[]]
-  #     a.permutation(4) #=> []
+  #     a.permutations    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutations(1) #=> [[1],[2],[3]]
+  #     a.permutations(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+  #     a.permutations(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutations(0) #=> [[]]
+  #     a.permutations(4) #=> []
   #
   def permutations(size = length : Int)
     ary = [] of Array(T)
-    each_permutation(size) do |perm|
-      ary << perm
+    each_permutation(size) do |a|
+      ary << a
     end
     ary
   end
@@ -825,7 +825,7 @@ class Array(T)
   #
   #     a = [1, 2, 3]
   #     sums = [] of Int32
-  #     a.permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
+  #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
   def each_permutation(size = length : Int)
@@ -842,19 +842,14 @@ class Array(T)
       stop = true
       i = size - 1
       while i >= 0
-        cycles[i] -= 1
-        if cycles[i] == 0
+        ci = (cycles[i] -= 1)
+        if ci == 0
           e = pool[i]
-          j = i + 1
-          while j < n
-            pool[j - 1] = pool[j]
-            j += 1
-          end
+          (i + 1).upto(n - 1) { |j| pool[j - 1] = pool[j] }
           pool[n - 1] = e
           cycles[i] = n - i
         else
-          j = cycles[i]
-          pool.swap i, -j
+          pool.swap i, -ci
           yield pool[0, size]
           stop = false
           break
