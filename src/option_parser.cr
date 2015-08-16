@@ -1,7 +1,6 @@
 # `OptionParser` is a class for command-line options processing. It supports:
 #
 # * Short and long modifier style options (example: `-h`, `--help`)
-# * Command style arguments (example: `crystal build`)
 # * Passing arguments to the flags (example: `-f filename.txt`)
 # * Automatic help message generation
 #
@@ -15,16 +14,14 @@
 #     destination = "World"
 #
 #     OptionParser.parse! do |parser|
-#       parser.banner = "Usage: #{$0} salute"
+#       parser.banner = "Usage: salute [arguments]"
 #       parser.on("-u", "--upcase", "Upcases the sallute") { upcase = true }
 #       parser.on("-t NAME", "--to=NAME", "Specifies the name to salute") { |name| destination = name }
-#       parser.on("salute", "Salute the user") do
-#         salute = "Hello, #{destination}!"
-#         salute = salute.upcase if upcase
-#         puts salute
-#       end
 #       parser.on("-h", "--help", "Show this help") { puts parser }
 #     end
+#
+#     destination = destination.upcase if upcase
+#     puts "Hello #{destination}!"
 class OptionParser
   class Exception < ::Exception
   end
@@ -86,7 +83,6 @@ class OptionParser
   #
   # * `-a`, `-B`
   # * `--something-longer`
-  # * `command`
   # * `-f FILE`, `--file FILE`, `--file=FILE`  (these will yield the passed value to the block as a string)
   def on(flag, description, &block : String ->)
     append_flag flag.to_s, description
