@@ -1170,4 +1170,34 @@ describe "Array" do
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) {} } }
   end
 
+  describe "repeated_combinations" do
+    assert { [1, 2, 2].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 2], [1, 2, 2], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]) }
+    assert { [1, 2, 3].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
+    assert { [1, 2, 3].repeated_combinations(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].repeated_combinations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]) }
+    assert { [1, 2, 3].repeated_combinations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
+    assert { [1, 2, 3].repeated_combinations(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].repeated_combinations(-1) } }
+
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].each_repeated_combination(2) do |comb|
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([2, 3, 4, 4, 5, 6])
+    end
+
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_repeated_combination(3) do |comb|
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
+    end
+
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_combination(-1) {} } }
+  end
+
 end

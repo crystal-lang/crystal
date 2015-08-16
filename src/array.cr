@@ -905,6 +905,47 @@ class Array(T)
     end
   end
 
+  def repeated_combinations(size = length : Int)
+    ary = [] of Array(T)
+    each_repeated_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_combination(size = length : Int)
+    n = self.size
+    return self if size > n && n == 0
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    copy = self.dup
+    indices = [0] * size
+    pool = indices.map { |i| copy[i] }
+
+    yield pool[0, size]
+
+    while true
+      stop = true
+
+      i = size - 1
+      while i >= 0
+        if indices[i] != n - 1
+          stop = false
+          break
+        end
+        i -= 1
+      end
+      return self if stop
+
+      ii = indices[i] + 1
+      tmp = copy[ii]
+      indices.fill(i, size - i) { ii }
+      pool.fill(i, size - i) { tmp }
+
+      yield pool[0, size]
+    end
+  end
+
   def pop
     pop { raise IndexError.new }
   end
