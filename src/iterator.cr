@@ -143,6 +143,16 @@ module Iterator(T)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
 
+  def in_groups_of(size : Int, filled_up_with = nil)
+    raise ArgumentError.new("size must be positive") if size <= 0
+    InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
+  end
+
+  def in_groups_of(size : Int, filled_up_with = nil, &func : Array(T) -> U)
+    basic_iterator = in_groups_of(size, filled_up_with)
+    InGroupsOfBlock(U).new(basic_iterator, func)
+  end
+
   def uniq
     uniq &.itself
   end
@@ -454,6 +464,40 @@ module Iterator(T)
     def rewind
       @count = 0
       super
+    end
+  end
+
+  # :nodoc:
+  struct InGroupsOf(I, T, N, U)
+    include Iterator(Array(T | U))
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @size : N, @filled_up_with : U)
+    end
+
+    def next
+      value = wrapped_next
+      array = Array(T | U).new(@size)
+      array << value
+      (@size - 1).times do
+        new_value = @iterator.next
+        new_value = @filled_up_with if new_value.is_a?(Stop)
+        array << new_value
+      end
+      array
+    end
+  end
+
+  # :nodoc:
+  struct InGroupsOfBlock(U)
+    include Iterator(U)
+    include IteratorWrapper
+
+    def initialize(@iterator, @func)
+    end
+
+    def next
+      @func.call wrapped_next
     end
   end
 

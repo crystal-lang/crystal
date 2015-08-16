@@ -190,6 +190,68 @@ describe Iterator do
     end
   end
 
+  describe "in_groups_of" do
+    it "creats groups of one" do
+      iter = (1..3).each.in_groups_of(1)
+      iter.next.should eq([1])
+      iter.next.should eq([2])
+      iter.next.should eq([3])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq [1]
+    end
+
+    it "creats a group of two" do
+      iter = (1..3).each.in_groups_of(2)
+      iter.next.should eq([1, 2])
+      iter.next.should eq([3, nil])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq [1, 2]
+    end
+
+    it "fills up with the fill up argument" do
+      iter = (1..3).each.in_groups_of(2, 'z')
+      iter.next.should eq([1, 2])
+      iter.next.should eq([3, 'z'])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq [1, 2]
+    end
+
+    it "raises argument error if size is less than 0" do
+      expect_raises ArgumentError, "size must be positive" do
+        [1, 2, 3].each.in_groups_of(0)
+      end
+    end
+
+    it "still works with other iterator methods like to_a" do
+      iter = (1..3).each.in_groups_of(2, 'z')
+      iter.to_a.should eq [[1, 2], [3, 'z']]
+    end
+
+    describe "with a block" do
+      it "works" do
+        iter = (1..5).each.in_groups_of(2, 0) {|elements| elements.sum }
+        iter.next.should eq(3)
+        iter.next.should eq(7)
+        iter.next.should eq(5)
+        iter.next.should be_a(Iterator::Stop)
+
+        iter.rewind
+        iter.next.should eq 3
+      end
+
+      it "can still do to_a" do
+        iter = (1..5).each.in_groups_of(2, 0) {|elements| elements.sum }
+        iter.to_a.should eq [3, 7, 5]
+      end
+    end
+  end
+
   describe "with_index" do
     it "does with_index from range" do
       iter = (1..3).each.with_index
