@@ -805,6 +805,7 @@ module Crystal
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
+        @wants_regex = false
         node_and_next_token Global.new(@token.value.to_s)
       when :"$~", :"$?"
         location = @token.location
@@ -972,7 +973,10 @@ module Crystal
         @instance_vars.try &.add name
         ivar = InstanceVar.new(name)
         ivar.location = @token.location
+
+        @wants_regex = false
         next_token_skip_space
+
         if @token.type == :"::"
           next_token_skip_space
           ivar_type = parse_single_type
@@ -981,6 +985,7 @@ module Crystal
           ivar
         end
       when :CLASS_VAR
+        @wants_regex = false
         node_and_next_token ClassVar.new(@token.value.to_s)
       when :UNDERSCORE
         node_and_next_token Underscore.new

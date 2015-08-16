@@ -200,6 +200,9 @@ describe "Parser" do
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new(Expressions.new(["a".var] of ASTNode), "/", "b".call)]
   it_parses "_ = 1", Assign.new(Underscore.new, 1.int32)
+  it_parses "@foo/2", Call.new("@foo".instance_var, "/", 2.int32)
+  it_parses "@@foo/2", Call.new("@@foo".class_var, "/", 2.int32)
+  it_parses "$foo/2", Call.new(Global.new("$foo"), "/", 2.int32)
 
   it_parses "!1", Call.new(1.int32, "!")
   it_parses "- 1", Call.new(1.int32, "-")
