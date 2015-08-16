@@ -107,6 +107,12 @@ lib LibC
   SOCK_DGRAM = 2
   SOCK_RAW = 3
 
+  ifdef linux
+    SOCK_CLOEXEC = 0o2000000
+  else
+    SOCK_CLOEXEC = 0 # workaround in init_close_on_exec
+  end
+
   IPPROTO_IP = 0
   IPPROTO_TCP = 6
   IPPROTO_UDP = 17

@@ -36,9 +36,7 @@ require "./ip_socket"
 # ```
 class UDPSocket < IPSocket
   def initialize(family = Socket::Family::INET : Socket::Family)
-    super LibC.socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP).tap do |sock|
-      raise Errno.new("Error opening socket") if sock <= 0
-    end
+    super create_socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP)
   end
 
   # Creates a UDP socket from the given address.
