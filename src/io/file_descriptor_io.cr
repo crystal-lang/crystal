@@ -45,8 +45,14 @@ class FileDescriptorIO
     fcntl(LibC::FCNTL::F_SETFL, flags)
   end
 
+  def close_on_exec?
+    flags = fcntl(LibC::FCNTL::F_GETFD)
+    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+  end
+
   def close_on_exec=(arg : Bool)
     fcntl(LibC::FCNTL::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    arg
   end
 
   def fcntl cmd, arg = 0
@@ -105,6 +111,9 @@ class FileDescriptorIO
     if LibC.dup2(other.fd, self.fd) == -1
       raise Errno.new("Could not reopen file descriptor")
     end
+
+    # flag is lost after dup
+    self.close_on_exec = true
 
     other
   end

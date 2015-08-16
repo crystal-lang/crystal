@@ -40,6 +40,20 @@ class Socket < FileDescriptorIO
     self.sync = true
   end
 
+  protected def create_socket(family, stype, protocol = 0)
+    sock = LibC.socket(family, stype, protocol)
+    raise Errno.new("Error opening socket") if sock <= 0
+    init_close_on_exec sock
+    sock
+  end
+
+  # only used when SOCK_CLOEXEC doesn't exist on the current platform
+  protected def init_close_on_exec fd : Int32
+    {% if LibC::SOCK_CLOEXEC == 0 %}
+       LibC.fcntl(fd, LibC::FCNTL::F_SETFD, LibC::FD_CLOEXEC)
+    {% end %}
+  end
+
   def afamily(family)
     LibC::AF_UNSPEC.class.cast(family)
   end

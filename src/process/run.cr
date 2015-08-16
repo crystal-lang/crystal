@@ -57,7 +57,6 @@ class Process
 
     if needs_pipe?(input)
       fork_input, process_input = IO.pipe(read_blocking: true)
-      process_input.close_on_exec = true
       if input
         @wait_count += 1
         spawn { copy_io(input, process_input, channel) }
@@ -68,7 +67,6 @@ class Process
 
     if needs_pipe?(output)
       process_output, fork_output = IO.pipe(write_blocking: true)
-      process_output.close_on_exec = true
       if output
         @wait_count += 1
         spawn { copy_io(process_output, output, channel) }
@@ -79,7 +77,6 @@ class Process
 
     if needs_pipe?(error)
       process_error, fork_error = IO.pipe(write_blocking: true)
-      process_error.close_on_exec = true
       if error
         @wait_count += 1
         spawn { copy_io(process_error, error, channel) }
@@ -159,6 +156,8 @@ class Process
     else
       raise "unknown object type #{src_io}"
     end
+
+    dst_io.close_on_exec = false
   end
 
   private def close_io(io)

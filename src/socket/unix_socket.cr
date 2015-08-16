@@ -2,8 +2,7 @@ class UNIXSocket < Socket
   getter :path
 
   def initialize(@path : String, socktype = Socket::Type::STREAM : Socket::Type)
-    sock = LibC.socket(LibC::AF_UNIX, socktype.value, 0)
-    raise Errno.new("Error opening socket") if sock <= 0
+    sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
 
     addr = LibC::SockAddrUn.new
     addr.family = LibC::AF_UNIX
@@ -20,6 +19,7 @@ class UNIXSocket < Socket
   end
 
   def initialize(fd : Int32)
+    init_close_on_exec fd
     super fd
   end
 
@@ -34,7 +34,7 @@ class UNIXSocket < Socket
 
   def self.pair(socktype = Socket::Type::STREAM : Socket::Type, protocol = Socket::Protocol::IP : Socket::Protocol)
     fds = StaticArray(Int32, 2).new { 0_i32 }
-    if LibC.socketpair(LibC::AF_UNIX, socktype.value, protocol.value, pointerof(fds)) != 0
+    if LibC.socketpair(LibC::AF_UNIX, socktype.value | LibC::SOCK_CLOEXEC, protocol.value, pointerof(fds)) != 0
       raise Errno.new("socketpair:")
     end
     fds.map { |fd| UNIXSocket.new(fd) }

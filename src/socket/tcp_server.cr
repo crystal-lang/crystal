@@ -3,8 +3,7 @@ require "./tcp_socket"
 class TCPServer < TCPSocket
   def initialize(host, port, backlog = 128)
     getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
-      sock = LibC.socket(afamily(ai.family), ai.socktype, ai.protocol)
-      raise Errno.new("Error opening socket") if sock <= 0
+      sock = create_socket(afamily(ai.family), ai.socktype, ai.protocol)
 
       optval = 1
       LibC.setsockopt(sock, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
