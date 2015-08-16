@@ -31,6 +31,20 @@ class FileDescriptorIO
     end
   end
 
+  def blocking
+    LibC.fcntl(@fd, LibC::FCNTL::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  def blocking=(value)
+    flags = LibC.fcntl(@fd, LibC::FCNTL::F_GETFL)
+    if value
+      flags &= ~LibC::O_NONBLOCK
+    else
+      flags |= LibC::O_NONBLOCK
+    end
+    LibC.fcntl(@fd, LibC::FCNTL::F_SETFL, flags)
+  end
+
   def resume_read
     if reader = readers.pop?
       reader.resume

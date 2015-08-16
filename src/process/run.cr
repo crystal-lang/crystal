@@ -148,9 +148,11 @@ class Process
   private def reopen_io(src_io, dst_io, mode)
     case src_io
     when FileDescriptorIO
+      src_io.blocking = true
       dst_io.reopen(src_io)
     when true
       # use same io as parent
+      dst_io.blocking = true
     when false
       File.open("/dev/null", mode) do |file|
         dst_io.reopen(file)
