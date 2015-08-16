@@ -487,4 +487,20 @@ describe "Hash" do
     iter.rewind
     iter.next.should eq(1)
   end
+
+  describe "each_with_index" do
+    it "pass key, value, index values into block" do
+      hash = {2 => 4, 5 => 10, 7 => 14}
+      results = [] of Int32
+      hash.each_with_index { |k, v, i| results << k + v + i }
+      results.should eq [6, 16, 23]
+    end
+
+    it "can be used with offset" do
+      hash = {2 => 4, 5 => 10, 7 => 14}
+      results = [] of Int32
+      hash.each_with_index(3) { |k, v, i| results << k + v + i }
+      results.should eq [9, 19, 26]
+    end
+  end
 end

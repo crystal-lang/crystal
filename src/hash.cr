@@ -196,8 +196,8 @@ class Hash(K, V)
     ValueIterator(K, V).new(self, @first)
   end
 
-  def each_with_index
-    i = 0
+  def each_with_index(offset = 0)
+    i = offset
     each do |key, value|
       yield key, value, i
       i += 1
