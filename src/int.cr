@@ -144,7 +144,7 @@ struct Int
   # 28[2] #=> 1
   # ```
   def [](n : Int)
-    to_s(2).reverse[n].to_i
+    (self >> n) & 1
   end
 
   def abs
