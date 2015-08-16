@@ -861,6 +861,50 @@ class Array(T)
     end
   end
 
+  def combinations(size = length : Int)
+    ary = [] of Array(T)
+    each_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_combination(size = length : Int)
+    n = self.size
+    return self if size > n
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    copy = self.dup
+    pool = self.dup
+
+    indices = (0...size).to_a
+    yield pool[0, size]
+
+    while true
+      stop = true
+      i = size - 1
+      while i >= 0
+        if indices[i] != i + n - size
+          stop = false
+          break
+        end
+        i -= 1
+      end
+
+      return self if stop
+
+      indices[i] += 1
+      pool[i] = copy[indices[i]]
+
+      (i + 1).upto(size - 1) do |j|
+        indices[j] = indices[j - 1] + 1
+        pool[j] = copy[indices[j]]
+      end
+
+      yield pool[0, size]
+    end
+  end
+
   def pop
     pop { raise IndexError.new }
   end

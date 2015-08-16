@@ -1137,4 +1137,37 @@ describe "Array" do
 
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) {} } }
   end
+
+  describe "combinations" do
+    assert { [1, 2, 2].combinations.should eq([[1,2,2]]) }
+    assert { [1, 2, 3].combinations.should eq([[1,2,3]]) }
+    assert { [1, 2, 3].combinations(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].combinations(2).should eq([[1, 2], [1, 3], [2, 3]]) }
+    assert { [1, 2, 3].combinations(3).should eq([[1, 2, 3]]) }
+    assert { [1, 2, 3].combinations(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].combinations(4).should eq([] of Array(Int32)) }
+    assert { [1,2,3,4].combinations(3).should eq([[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]) }
+    assert { [1,2,3,4].combinations(2).should eq([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) }
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].combinations(-1) } }
+
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].each_combination(2) do |comb|
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([3, 4, 5])
+    end
+
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_combination(3) do |comb|
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([9])
+    end
+
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) {} } }
+  end
+
 end
