@@ -32,13 +32,13 @@ class Process
     value
   end
 
-  # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process via `Process.run`.
+  # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
   getter! input
 
-  # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process via `Process.run`.
+  # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process.
   getter! output
 
-  # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process via `Process.run`.
+  # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error
 
   # Creates a process, executes it, but doesn't wait for it to complete.
@@ -57,7 +57,7 @@ class Process
 
     if needs_pipe?(input)
       fork_input, process_input = IO.pipe(read_blocking: true)
-      process_input.not_nil!.close_on_exec = true
+      process_input.close_on_exec = true
       if input
         @wait_count += 1
         spawn { copy_io(input, process_input, channel) }
@@ -68,7 +68,7 @@ class Process
 
     if needs_pipe?(output)
       process_output, fork_output = IO.pipe(write_blocking: true)
-      process_output.not_nil!.close_on_exec = true
+      process_output.close_on_exec = true
       if output
         @wait_count += 1
         spawn { copy_io(process_output, output, channel) }
@@ -79,7 +79,7 @@ class Process
 
     if needs_pipe?(error)
       process_error, fork_error = IO.pipe(write_blocking: true)
-      process_error.not_nil!.close_on_exec = true
+      process_error.close_on_exec = true
       if error
         @wait_count += 1
         spawn { copy_io(process_error, error, channel) }
