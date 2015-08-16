@@ -99,6 +99,10 @@ module ENV
     end
   end
 
+  def self.clear
+    keys.each { |k| delete k }
+  end
+
   # Writes the contents of the environment to `io`.
   def self.inspect(io)
     io << "{"
