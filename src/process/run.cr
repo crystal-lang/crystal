@@ -17,7 +17,7 @@ class Process
   #
   # By default the process is configured without input, output or error.
   def self.run(cmd : String, args = nil, input = false : Stdio, output = false : Stdio, error = false : Stdio)
-    new(cmd, args, input, output, error)
+    new(cmd, args, input, output, error).wait
   end
 
   # Executes a process, yields the block, and then waits for it to finish.
@@ -27,7 +27,7 @@ class Process
   #
   # Returns the block's value.
   def self.run(cmd : String, args = nil, input = nil : Stdio, output = nil : Stdio, error = nil : Stdio)
-    process = run(cmd, args, input, output, error)
+    process = new(cmd, args, input, output, error)
     value = yield process
     process.close
     $? = process.wait
@@ -43,7 +43,7 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process via `Process.run`.
   getter! error
 
-  def initialize(command : String, args, input : Stdio, output : Stdio, error : Stdio)
+  def initialize(command : String, args = nil, input = false : Stdio, output = false : Stdio, error = false : Stdio)
     argv = [command.to_unsafe]
     args.try &.each do |arg|
       argv << arg.to_unsafe
@@ -163,13 +163,13 @@ class Process
 end
 
 def system(command : String)
-  status = Process.run("/bin/sh", input: StringIO.new(command), output: true, error: true).wait
+  status = Process.run("/bin/sh", input: StringIO.new(command), output: true, error: true)
   $? = status
   status.success?
 end
 
 def `(command)
-  process = Process.run("/bin/sh", input: StringIO.new(command), output: nil, error: true)
+  process = Process.new("/bin/sh", input: StringIO.new(command), output: nil, error: true)
   output = process.output.read
   status = process.wait
   $? = status

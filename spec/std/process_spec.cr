@@ -3,18 +3,22 @@ require "process"
 
 describe Process do
   it "runs true" do
-    process = Process.run("true")
+    process = Process.new("true")
     process.wait.exit_code.should eq(0)
   end
 
   it "runs false" do
-    process = Process.run("false")
+    process = Process.new("false")
     process.wait.exit_code.should eq(1)
   end
 
   it "returns status 127 if command could not be executed" do
-    process = Process.run("foobarbaz")
+    process = Process.new("foobarbaz")
     process.wait.exit_code.should eq(127)
+  end
+
+  it "run waits for the process" do
+    Process.run("true").exit_code.should eq(0)
   end
 
   it "runs true in block" do
@@ -23,16 +27,16 @@ describe Process do
   end
 
   it "receives arguments in array" do
-    Process.run("/bin/sh", ["-c", "exit 123"]).wait.exit_code.should eq(123)
+    Process.run("/bin/sh", ["-c", "exit 123"]).exit_code.should eq(123)
   end
 
   it "receives arguments in tuple" do
-    Process.run("/bin/sh", {"-c", "exit 123"}).wait.exit_code.should eq(123)
+    Process.run("/bin/sh", {"-c", "exit 123"}).exit_code.should eq(123)
   end
 
   it "redirects output to /dev/null" do
     # This doesn't test anything but no output should be seen while running tests
-    Process.run("/bin/ls", output: false).wait.exit_code.should eq(0)
+    Process.run("/bin/ls", output: false).exit_code.should eq(0)
   end
 
   it "gets output" do
@@ -52,13 +56,13 @@ describe Process do
 
   it "sends output to IO" do
     output = StringIO.new
-    Process.run("/bin/sh", {"-c", "echo hello"}, output: output).wait
+    Process.run("/bin/sh", {"-c", "echo hello"}, output: output)
     output.to_s.should eq("hello\n")
   end
 
   it "sends error to IO" do
     error = StringIO.new
-    Process.run("/bin/sh", {"-c", "echo hello 1>&2"}, error: error).wait
+    Process.run("/bin/sh", {"-c", "echo hello 1>&2"}, error: error)
     error.to_s.should eq("hello\n")
   end
 
