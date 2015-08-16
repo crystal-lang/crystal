@@ -11,12 +11,10 @@ class Process
   # * `IO`: use the given IO
   alias Stdio = Nil | Bool | IO
 
-  # Executes a process but doesn't wait for it to complete.
-  #
-  # To wait for it to finish, invoke `wait`.
+  # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
-  def self.run(cmd : String, args = nil, input = false : Stdio, output = false : Stdio, error = false : Stdio)
+  def self.run(cmd : String, args = nil, input = false : Stdio, output = false : Stdio, error = false : Stdio) : Process::Status
     new(cmd, args, input, output, error).wait
   end
 
@@ -43,6 +41,11 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process via `Process.run`.
   getter! error
 
+  # Creates a process, executes it, but doesn't wait for it to complete.
+  #
+  # To wait for it to finish, invoke `wait`.
+  #
+  # By default the process is configured without input, output or error.
   def initialize(command : String, args = nil, input = false : Stdio, output = false : Stdio, error = false : Stdio)
     argv = [command.to_unsafe]
     args.try &.each do |arg|
@@ -111,15 +114,15 @@ class Process
     fork_error.try &.close
   end
 
-  # Waits for this process to complete and returns a `Process::Status`.
-  def wait
+  # Waits for this process to complete.
+  def wait : Process::Status
     @wait_count.times { channel.receive }
 
     exit_code = Process.waitpid(@pid)
     Status.new(exit_code)
   end
 
-  # Closes any pipes to the child process
+  # Closes any pipes to the child process.
   def close
     close_io @input
     close_io @output
@@ -162,13 +165,13 @@ class Process
   end
 end
 
-def system(command : String)
+def system(command : String) : Bool
   status = Process.run("/bin/sh", input: StringIO.new(command), output: true, error: true)
   $? = status
   status.success?
 end
 
-def `(command)
+def `(command) : String
   process = Process.new("/bin/sh", input: StringIO.new(command), output: nil, error: true)
   output = process.output.read
   status = process.wait

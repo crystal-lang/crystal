@@ -1,3 +1,4 @@
+# The status of a terminated process.
 class Process::Status
   def initialize(@exit_status)
   end
