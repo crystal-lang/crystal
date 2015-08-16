@@ -116,6 +116,7 @@ module Iterator(T)
   end
 
   def take(n)
+    raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
     Take(typeof(self), T).new(self, n)
   end
 
@@ -124,6 +125,7 @@ module Iterator(T)
   end
 
   def skip(n)
+    raise ArgumentError.new "Attempted to skip negative size: #{n}" if n < 0
     Skip(typeof(self), T).new(self, n)
   end
 
@@ -444,6 +446,7 @@ module Iterator(T)
     end
 
     def next
+      return stop if @count >= @n
       value = @iterator.next
       if value.is_a?(Stop)
         @count += 1

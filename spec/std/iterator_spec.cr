@@ -68,6 +68,17 @@ describe Iterator do
     it "does take with more than available" do
       (1..3).each.take(10).to_a.should eq([1, 2, 3])
     end
+
+    it "is cool to take 0 elements" do
+      iter = (1..3).each.take(0)
+      iter.next.should be_a Iterator::Stop
+    end
+
+    it "raises ArgumentError if negative size is provided" do
+      expect_raises(ArgumentError) do
+        (1..3).each.take(-1)
+      end
+    end
   end
 
   describe "take_while" do
@@ -104,6 +115,16 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq(3)
+    end
+
+    it "is cool to skip 0 elements" do
+      (1..3).each.skip(0).to_a.should eq [1, 2, 3]
+    end
+
+    it "raises ArgumentError if negative size is provided" do
+      expect_raises(ArgumentError) do
+        (1..3).each.skip(-1)
+      end
     end
   end
 
@@ -187,6 +208,16 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq(1)
+    end
+
+    it "does not cycle provided 0" do
+      iter = (1..2).each.cycle(0)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does not cycle provided a negative size" do
+      iter = (1..2).each.cycle(-1)
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 
