@@ -24,6 +24,8 @@ class Scheduler
       fiber.resume
     end
     event.add(time)
+    reschedule
+    event.free
   end
 
   def self.create_fd_events(io : FileDescriptorIO)

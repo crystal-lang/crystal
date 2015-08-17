@@ -7,7 +7,6 @@ def sleep(seconds : Int | Float)
   end
 
   Scheduler.sleep(seconds)
-  Scheduler.reschedule
 end
 
 macro spawn
