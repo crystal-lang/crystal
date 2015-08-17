@@ -176,6 +176,101 @@ struct TimeFormat
       {negative, hours, minutes}
     end
 
+    # Compute week of the year, monday is the first day of the week
+    def week_of_year_monday_1_7
+      io << Formatter.iso8601_week_of_year(time, 1)
+    end
+
+    # Compute week of the year, sunday is the first day of the week
+    def week_of_year_sunday_0_6
+      io << Formatter.iso8601_week_of_year(time, 0)
+    end
+
+    # Internal helper wethod: Figure how many weeks into the year
+    def self.week_of_year(time, firstweekday)
+      day_of_week = TimeFormat.new("%w").format(time).to_i
+      week_num = 0
+
+      if firstweekday == 1
+        if day_of_week == 0 # sunday
+          day_of_week = 6
+        else
+          day_of_week -= 1
+        end
+      end
+
+      day_of_year = TimeFormat.new("%j").format(time).to_i
+      week_num = ((day_of_year + 7 - day_of_week) / 7)
+      week_num = 0 if week_num < 0
+
+      week_num
+    end
+
+    # Compute week number according to ISO 8601
+    def self.iso8601_week_of_year(time, firstweekday)
+      #	If the week (Monday to Sunday) containing January 1
+      #	has four or more days in the new year, then it is week 1;
+      #	otherwise it is the highest numbered week of the previous
+      #	year (52 or 53), and the next week is week 1.
+
+      weeknum = 0
+
+      # Get week number
+      weeknum = Formatter.week_of_year(time, firstweekday)
+
+      # What day of the week does January 1 fall on?
+      day_of_week_format = firstweekday == 0 ? TimeFormat.new("%w") : TimeFormat.new("%u")
+
+      jan1day = day_of_week_format.format(time).to_i - (TimeFormat.new("%j").format(time).to_i % 7)
+      jan1day += 7 if jan1day < 0
+
+      # If Jan 1 was a Monday through Thursday, it was in
+      # week 1.  Otherwise it was last year's highest week, which is this year's week 0.
+      #
+      # What does that mean?
+      # If Jan 1 was Monday, the week number is exactly right, it can never be 0.
+      # If it was Tuesday through Thursday, the weeknumber is one less than it should be, so we add one.
+      # Otherwise, Friday, Saturday or Sunday, the week number is
+      # OK, but if it is 0, it needs to be 52 or 53.
+
+      case jan1day
+      when 1 # Monday
+        # nothing
+
+      when 2, 3, 4 # Tuesday, Wednesday, Thursday
+        weeknum += 1
+
+      when 5, 6, 0 # Friday, Saturday, Sunday
+        if weeknum == 0
+          # get week number of last week of last year
+          weeknum = Formatter.iso8601_week_of_year(Time.new(31, 11, time.year - 1), firstweekday)
+        end
+      end
+
+      if time.month == 11
+        # The last week of the year
+        # can be in week 1 of next year.
+        # Sigh.
+        #
+        # This can only happen if
+        #	M   T   W
+        #	29  30  31
+        #	30  31
+        #	31
+
+        wday = TimeFormat.new("%w").format(time).to_i
+        mday = time.day
+
+        if (wday == 1 && (mday >= 29 && mday <= 31)) || (wday == 2 && (mday == 30 || mday == 31)) || (wday == 3 &&  mday == 31)
+          weeknum = 1
+        end
+      end
+
+      weeknum = weeknum - 1 if firstweekday == 0
+
+      weeknum
+    end
+
     def char(char)
       io << char
     end
