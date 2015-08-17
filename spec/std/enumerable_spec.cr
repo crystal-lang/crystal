@@ -46,6 +46,18 @@ describe "Enumerable" do
     assert { Set { 1, nil, 2, nil, 3 }.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
+  describe "count without block" do
+    it "returns the number of elements in the Enumerable" do
+      (1..3).count.should eq 3
+    end
+  end
+
+  describe "count with block" do
+    it "returns the number of the times the item is present" do
+      %w(a b c a d A).count("a").should eq 2
+    end
+  end
+
   describe "each_cons" do
     it "returns running pairs" do
       array = [] of Array(Int32)
@@ -97,6 +109,14 @@ describe "Enumerable" do
   end
 
   describe "each_with_index" do
+    it "yields the element and the index" do
+      collection = [] of {String, Int32}
+      ["a", "b", "c"].each_with_index do |e, i|
+        collection << {e, i}
+      end
+      collection.should eq [{"a", 0}, {"b", 1}, {"c", 2}]
+    end
+
     it "gets each_with_index iterator" do
       iter = [1, 2].each_with_index
       iter.next.should eq({1, 0})
@@ -109,6 +129,15 @@ describe "Enumerable" do
   end
 
   describe "each_with_object" do
+    it "yields the element and the given object" do
+      collection = [] of {Int32, String}
+      object = "a"
+      (1..3).each_with_object(object) do |e, o|
+        collection << {e, o}
+      end
+      collection.should eq [{1, object}, {2, object}, {3, object}]
+    end
+
     it "gets each_with_object iterator" do
       iter = [1, 2].each_with_object("a")
       iter.next.should eq({1, "a"})
@@ -396,6 +425,12 @@ describe "Enumerable" do
         i < 3
       end
       called.should eq 3
+    end
+  end
+
+  describe "to_a" do
+    it "converts to an Array" do
+      (1..3).to_a.should eq [1, 2, 3]
     end
   end
 
