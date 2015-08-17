@@ -53,6 +53,32 @@ class MatchData
     match
   end
 
+  # Returns the part of the original string before the matching part.
+  # If the matching part of the string starts at the start of the
+  # string, then the empty string is returned.
+  #
+  # ```
+  # "Crystal".match(/yst/) { |md| md.pre_match } #=> "Cr"
+  # ```
+  def pre_match
+    if self.begin(0) == 0
+      ""
+    else
+      @string[0..self.begin(0) - 1]
+    end
+  end
+
+  # Returns the part of the original string after the matching part.
+  # If the matching part of the string ends at the end of the
+  # string, then the empty string is returned.
+  #
+  # ```
+  # "Crystal".match(/yst/) { |md| md.post_match } #=> "al"
+  # ```
+  def post_match
+    @string[self.end(0)..-1]
+  end
+
   def inspect(io : IO)
     to_s(io)
   end
