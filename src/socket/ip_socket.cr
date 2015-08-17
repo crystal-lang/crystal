@@ -104,5 +104,19 @@ class IPSocket < Socket
       end
     end
   end
+
+  private def nonblocking_connect ai
+    loop do
+      ret = LibC.connect(@fd, ai.addr, ai.addrlen)
+      return true if ret == 0 # success
+
+      case LibC.errno
+      when Errno::EINPROGRESS, Errno::EALREADY
+        wait_writable
+      else
+        return false
+      end
+    end
+  end
 end
 

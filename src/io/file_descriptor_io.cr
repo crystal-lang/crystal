@@ -21,8 +21,7 @@ class FileDescriptorIO
     @out_count = 0
 
     unless blocking
-      before = fcntl(LibC::FCNTL::F_GETFL)
-      fcntl(LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
+      self.blocking = false
       if @edge_triggerable
         @event = Scheduler.create_fd_events(self)
       end
@@ -55,10 +54,14 @@ class FileDescriptorIO
     arg
   end
 
-  def fcntl cmd, arg = 0
-    r = LibC.fcntl @fd, cmd, arg
+  def self.fcntl fd, cmd, arg = 0
+    r = LibC.fcntl fd, cmd, arg
     raise Errno.new("fcntl() failed") if r == -1
     r
+  end
+
+  def fcntl cmd, arg = 0
+    self.class.fcntl @fd, cmd, arg
   end
 
   def resume_read
@@ -127,14 +130,7 @@ class FileDescriptorIO
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_read == -1
         if LibC.errno == Errno::EAGAIN
-          readers << Fiber.current
-          if @edge_triggerable
-            Scheduler.reschedule
-          else
-            event = Scheduler.create_fd_read_event(self)
-            Scheduler.reschedule
-            event.free
-          end
+          wait_readable
         else
           raise Errno.new "Error reading file"
         end
@@ -144,20 +140,24 @@ class FileDescriptorIO
     end
   end
 
+  private def wait_readable
+    readers << Fiber.current
+    if @edge_triggerable
+      Scheduler.reschedule
+    else
+      event = Scheduler.create_fd_read_event(self)
+      Scheduler.reschedule
+      event.free
+    end
+  end
+
   private def unbuffered_write(slice : Slice(UInt8), count)
     total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_written == -1
         if LibC.errno == Errno::EAGAIN
-          writers << Fiber.current
-          if @edge_triggerable
-            Scheduler.reschedule
-          else
-            event = Scheduler.create_fd_write_event(self)
-            Scheduler.reschedule
-            event.free
-          end
+          wait_writable
           next
         else
           raise Errno.new "Error writing file"
@@ -166,6 +166,17 @@ class FileDescriptorIO
       count -= bytes_written
       return total if count == 0
       slice += bytes_written
+    end
+  end
+
+  private def wait_writable
+    writers << Fiber.current
+    if @edge_triggerable
+      Scheduler.reschedule
+    else
+      event = Scheduler.create_fd_write_event(self)
+      Scheduler.reschedule
+      event.free
     end
   end
 

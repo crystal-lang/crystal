@@ -67,7 +67,7 @@ class UDPSocket < IPSocket
   # ```
   def connect(host, port, dns_timeout = nil)
     getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
-      if LibC.connect(fd, ai.addr, ai.addrlen) != 0
+      unless nonblocking_connect ai
         next false if ai.next
         raise Errno.new("Error connecting UDP socket at #{host}:#{port}")
       end

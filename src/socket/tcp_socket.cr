@@ -3,15 +3,15 @@ require "./ip_socket"
 class TCPSocket < IPSocket
   def initialize(host, port, dns_timeout = nil)
     getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP, timeout: dns_timeout) do |ai|
-      sock = create_socket(ai.family, ai.socktype, ai.protocol)
+      super create_socket(ai.family, ai.socktype, ai.protocol)
 
-      if LibC.connect(sock, ai.addr, ai.addrlen) != 0
-        LibC.close(sock)
+      unless nonblocking_connect ai
+        errno = LibC.errno
+        close
         next false if ai.next
+        LibC.errno = errno
         raise Errno.new("Error connecting to '#{host}:#{port}'")
       end
-
-      super sock
 
       true
     end
