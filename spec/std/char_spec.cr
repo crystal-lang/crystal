@@ -11,6 +11,16 @@ describe "Char" do
     assert { '1'.downcase.should eq('1') }
   end
 
+  describe "succ" do
+    assert { 'a'.succ.should eq('b') }
+    assert { 'あ'.succ.should eq('ぃ') }
+  end
+
+  describe "pred" do
+    assert { 'b'.pred.should eq('a') }
+    assert { 'ぃ'.pred.should eq('あ') }
+  end
+
   describe "whitespace?" do
     [' ', '\t', '\n', '\v', '\f', '\r'].each do |char|
       assert { char.whitespace?.should be_true }
