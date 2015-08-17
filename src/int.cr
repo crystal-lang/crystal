@@ -200,6 +200,10 @@ struct Int
     self + 1
   end
 
+  def pred
+    self - 1
+  end
+
   def times(&block : self -> )
     i = self ^ self
     while i < self
