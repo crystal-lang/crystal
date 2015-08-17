@@ -9,53 +9,21 @@ module Event
   end
 
   # :nodoc:
-  struct Event::Base
-    def initialize
-      @base = LibEvent2.event_base_new
+  struct Event
+    def initialize(@event)
     end
 
-    def reinit
-      unless LibEvent2.event_reinit(@base) == 0
-        raise "Error reinitializing libevent"
-      end
+    def add
+      LibEvent2.event_add(@event, nil)
     end
 
-    def add_signal_event(signal, callback, data = nil)
-      event = LibEvent2.event_new(@base, signal, LibEvent2::EventFlags::Signal | LibEvent2::EventFlags::Persist, callback, data)
-      LibEvent2.event_add(event, nil)
+    def add(timeout)
+      t = to_timeval(timeout)
+      LibEvent2.event_add(@event, pointerof(t))
     end
 
-    def add_timer_event(time, callback, data = nil)
-      event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::None, callback, data)
-      t = to_timeval(time)
-      LibEvent2.event_add(event, pointerof(t))
-    end
-
-    def add_interval_event(time, callback, data = nil)
-      event = LibEvent2.event_new(@base, -1, LibEvent2::EventFlags::Persist, callback, data)
-      t = to_timeval(time)
-      LibEvent2.event_add(event, pointerof(t))
-    end
-
-    def add_fd_read_event(fd, callback, data = nil)
-      event = LibEvent2.event_new(@base, fd, LibEvent2::EventFlags::Read, callback, data)
-      LibEvent2.event_add(event, nil)
-    end
-
-    def run_loop
-      LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
-    end
-
-    def run_once
-      LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
-    end
-
-    def loop_break
-      LibEvent2.event_base_loopbreak(@base)
-    end
-
-    def to_unsafe
-      @base
+    def free
+      LibEvent2.event_free(@event)
     end
 
     private def to_timeval(time : Int)
@@ -74,6 +42,36 @@ module Event
       t.tv_sec = seconds
       t.tv_usec = useconds
       t
+    end
+  end
+
+  # :nodoc:
+  struct Base
+    def initialize
+      @base = LibEvent2.event_base_new
+    end
+
+    def reinit
+      unless LibEvent2.event_reinit(@base) == 0
+        raise "Error reinitializing libevent"
+      end
+    end
+
+    def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
+      event = LibEvent2.event_new(@base, s, flags, callback, data as Void*)
+      Event.new(event)
+    end
+
+    def run_loop
+      LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
+    end
+
+    def run_once
+      LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
+    end
+
+    def loop_break
+      LibEvent2.event_base_loopbreak(@base)
     end
   end
 end

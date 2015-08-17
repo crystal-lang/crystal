@@ -133,7 +133,7 @@ class FileDescriptorIO
           else
             event = Scheduler.create_fd_read_event(self)
             Scheduler.reschedule
-            Scheduler.destroy_fd_events(event)
+            event.free
           end
         else
           raise Errno.new "Error reading file"
@@ -156,7 +156,7 @@ class FileDescriptorIO
           else
             event = Scheduler.create_fd_write_event(self)
             Scheduler.reschedule
-            Scheduler.destroy_fd_events(event)
+            event.free
           end
           next
         else
@@ -186,7 +186,7 @@ class FileDescriptorIO
     @closed = true
 
     if event = @event
-      Scheduler.destroy_fd_events(event)
+      event.free
     end
   end
 
