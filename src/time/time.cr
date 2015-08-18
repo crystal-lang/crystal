@@ -74,12 +74,12 @@ struct Time
     new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
 
-  def self.epoch(seconds : Int, kind = Kind::Unspecified)
-    new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, kind)
+  def self.epoch(seconds : Int)
+    new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, Kind::Utc)
   end
 
-  def self.epoch_ms(milliseconds : Int, kind = Kind::Unspecified)
-    new(UnixEpoch + milliseconds.to_i64 * TimeSpan::TicksPerMillisecond, kind)
+  def self.epoch_ms(milliseconds : Int)
+    new(UnixEpoch + milliseconds.to_i64 * TimeSpan::TicksPerMillisecond, Kind::Utc)
   end
 
   def +(other : TimeSpan)
