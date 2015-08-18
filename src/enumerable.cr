@@ -120,33 +120,29 @@ module Enumerable(T)
     n.times { each { |x| yield x } }
   end
 
-  # Returns an array with the first *count* elements removed from the original collection.
+  # Iterates over the collection yielding chunks of size *count*, but advancing one by one.
   #
-  # If *count* is bigger than the number of elements in the collection, returns an empty array.
+  #     [1, 2, 3, 4, 5].each_cons(2) do |cons|
+  #       puts cons
+  #     end
   #
-  #     [1, 2, 3, 4, 5, 6].skip(3)  #=> [4, 5, 6]
-  def skip(count : Int)
-    raise ArgumentError.new("attempt to skip negative size") if count < 0
-
-    array = Array(T).new
-    each_with_index do |e, i|
-      array << e if i >= count
+  # Prints:
+  #
+  #     [1, 2]
+  #     [2, 3]
+  #     [3, 4]
+  #     [4, 5]
+  #
+  def each_cons(count : Int)
+    cons = Array(T).new(count)
+    each do |elem|
+      cons << elem
+      cons.shift if cons.size > count
+      if cons.size == count
+        yield cons.dup
+      end
     end
-    array
-  end
-
-  # Skips elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
-  #
-  #     [1, 2, 3, 4, 5, 0].skip_while {|i| i < 3} #=> [3, 4, 5, 0]
-  #
-  def skip_while
-    result = Array(T).new
-    block_returned_false = false
-    each do |x|
-      block_returned_false = true unless block_returned_false || yield x
-      result << x if block_returned_false
-    end
-    result
+    nil
   end
 
   # Iterates over the collection in slices of size *count*, and runs the block for each of those.
@@ -172,31 +168,6 @@ module Enumerable(T)
       end
     end
     yield slice unless slice.empty?
-    nil
-  end
-
-  # Iterates over the collection yielding chunks of size *count*, but advancing one by one.
-  #
-  #     [1, 2, 3, 4, 5].each_cons(2) do |cons|
-  #       puts cons
-  #     end
-  #
-  # Prints:
-  #
-  #     [1, 2]
-  #     [2, 3]
-  #     [3, 4]
-  #     [4, 5]
-  #
-  def each_cons(count : Int)
-    cons = Array(T).new(count)
-    each do |elem|
-      cons << elem
-      cons.shift if cons.size > count
-      if cons.size == count
-        yield cons.dup
-      end
-    end
     nil
   end
 
@@ -565,6 +536,49 @@ module Enumerable(T)
     min_by &.itself
   end
 
+  # Returns the element for which the passed block returns with the minimum value.
+  #
+  # It compares using `<` so the block must return a type that supports that method
+  #
+  #     ["Alice", "Bob"].min_by { |name| name.length }  #=> "Bob"
+  #
+  # Raises `EmptyEnumerable` if the collection is empty.
+  def min_by(&block : T -> U)
+    min :: U
+    obj :: T
+    found = false
+
+    each_with_index do |elem, i|
+      value = yield elem
+      if i == 0 || value < min
+        min = value
+        obj = elem
+      end
+      found = true
+    end
+
+    found ? obj : raise EmptyEnumerable.new
+  end
+
+  # Like `min_by` but instead of the element, returns the value returned by the block.
+  #
+  #     ["Alice", "Bob"].min_of { |name| name.length }  #=> 3 (Bob's length)
+  #
+  def min_of(&block : T -> U)
+    min :: U
+    found = false
+
+    each_with_index do |elem, i|
+      value = yield elem
+      if i == 0 || value < min
+        min = value
+      end
+      found = true
+    end
+
+    found ? min : raise EmptyEnumerable.new
+  end
+
   # Returns a tuple with both the minimum and maximum value.
   #
   #     [1, 2, 3].minmax  #=> {1, 3}
@@ -625,49 +639,6 @@ module Enumerable(T)
     end
 
     found ? {min, max} : raise EmptyEnumerable.new
-  end
-
-  # Returns the element for which the passed block returns with the minimum value.
-  #
-  # It compares using `<` so the block must return a type that supports that method
-  #
-  #     ["Alice", "Bob"].min_by { |name| name.length }  #=> "Bob"
-  #
-  # Raises `EmptyEnumerable` if the collection is empty.
-  def min_by(&block : T -> U)
-    min :: U
-    obj :: T
-    found = false
-
-    each_with_index do |elem, i|
-      value = yield elem
-      if i == 0 || value < min
-        min = value
-        obj = elem
-      end
-      found = true
-    end
-
-    found ? obj : raise EmptyEnumerable.new
-  end
-
-  # Like `min_by` but instead of the element, returns the value returned by the block.
-  #
-  #     ["Alice", "Bob"].min_of { |name| name.length }  #=> 3 (Bob's length)
-  #
-  def min_of(&block : T -> U)
-    min :: U
-    found = false
-
-    each_with_index do |elem, i|
-      value = yield elem
-      if i == 0 || value < min
-        min = value
-      end
-      found = true
-    end
-
-    found ? min : raise EmptyEnumerable.new
   end
 
   # Returns `true` if the passed block returns `true` for none of the elements of the collection.
@@ -736,6 +707,35 @@ module Enumerable(T)
     ary = [] of T
     each { |e| ary << e if yield e }
     ary
+  end
+
+  # Returns an array with the first *count* elements removed from the original collection.
+  #
+  # If *count* is bigger than the number of elements in the collection, returns an empty array.
+  #
+  #     [1, 2, 3, 4, 5, 6].skip(3)  #=> [4, 5, 6]
+  def skip(count : Int)
+    raise ArgumentError.new("attempt to skip negative size") if count < 0
+
+    array = Array(T).new
+    each_with_index do |e, i|
+      array << e if i >= count
+    end
+    array
+  end
+
+  # Skips elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
+  #
+  #     [1, 2, 3, 4, 5, 0].skip_while {|i| i < 3} #=> [3, 4, 5, 0]
+  #
+  def skip_while
+    result = Array(T).new
+    block_returned_false = false
+    each do |x|
+      block_returned_false = true unless block_returned_false || yield x
+      result << x if block_returned_false
+    end
+    result
   end
 
   # Adds all the elements in the collection together.
