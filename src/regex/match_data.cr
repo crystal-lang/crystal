@@ -174,11 +174,7 @@ class MatchData
   # "Crystal".match(/yst/) { |md| md.pre_match } #=> "Cr"
   # ```
   def pre_match
-    if self.begin(0) == 0
-      ""
-    else
-      @string[0..self.begin(0) - 1]
-    end
+    @string.byte_slice(0, byte_begin(0))
   end
 
   # Returns the part of the original string after the match. If the match ends
@@ -188,7 +184,7 @@ class MatchData
   # "Crystal".match(/yst/) { |md| md.post_match } #=> "al"
   # ```
   def post_match
-    @string[self.end(0)..-1]
+    @string.byte_slice(byte_end(0))
   end
 
   def inspect(io : IO)
