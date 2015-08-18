@@ -102,6 +102,34 @@ describe "Regex" do
     end
   end
 
+  describe "MatchData#pre_match" do
+    it "returns the part of the string before the match" do
+      "Crystal".match(/yst/) { |md| md.pre_match.should eq "Cr" }
+    end
+
+    it "returns an empty string when there's nothing before" do
+      "Crystal".match(/Cryst/) { |md| md.pre_match.should eq "" }
+    end
+
+    it "works with unicode" do
+      "há日本語".match(/本/) { |md| md.pre_match.should eq "há日" }
+    end
+  end
+
+  describe "MatchData#post_match" do
+    it "returns the part of the string after the match" do
+      "Crystal".match(/yst/) { |md| md.post_match.should eq "al" }
+    end
+
+    it "returns an empty string when there's nothing after" do
+      "Crystal".match(/ystal/) { |md| md.post_match.should eq "" }
+    end
+
+    it "works with unicode" do
+      "há日本語".match(/本/) { |md| md.post_match.should eq "語" }
+    end
+  end
+
   it "matches multiline" do
     ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
     ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
