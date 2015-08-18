@@ -58,6 +58,31 @@ describe "Enumerable" do
     end
   end
 
+  describe "cycle" do
+    it "calls forever if we don't break" do
+      called = 0
+      elements = [] of Int32
+      (1..2).cycle do |e|
+        elements << e
+        called += 1
+        break if called == 6
+      end
+      called.should eq 6
+      elements.should eq [1, 2, 1, 2, 1, 2]
+    end
+
+    it "calls the block n times given the optional argument" do
+      called = 0
+      elements = [] of Int32
+      (1..2).cycle(3) do |e|
+        elements << e
+        called += 1
+      end
+      called.should eq 6
+      elements.should eq [1, 2, 1, 2, 1, 2]
+    end
+  end
+
   describe "each_cons" do
     it "returns running pairs" do
       array = [] of Array(Int32)
@@ -117,6 +142,14 @@ describe "Enumerable" do
       collection.should eq [{"a", 0}, {"b", 1}, {"c", 2}]
     end
 
+    it "accepts an optional offset parameter" do
+      collection = [] of {String, Int32}
+      ["Alice", "Bob"].each_with_index(1) do |e, i|
+        collection << {e, i}
+      end
+      collection.should eq [{"Alice", 1}, {"Bob", 2}]
+    end
+
     it "gets each_with_index iterator" do
       iter = [1, 2].each_with_index
       iter.next.should eq({1, 0})
@@ -149,28 +182,6 @@ describe "Enumerable" do
     end
   end
 
-  describe "first" do
-    it "gets first" do
-      (1..3).first.should eq(1)
-    end
-
-    it "raises if enumerable empty" do
-      expect_raises EmptyEnumerable do
-        (1...1).first
-      end
-    end
-  end
-
-  describe "first?" do
-    it "gets first?" do
-      (1..3).first?.should eq(1)
-    end
-
-    it "returns nil if enumerable empty" do
-      (1...1).first?.should be_nil
-    end
-  end
-
   describe "find" do
     it "finds" do
       [1, 2, 3].find { |x| x > 2 }.should eq(3)
@@ -186,9 +197,33 @@ describe "Enumerable" do
   end
 
   describe "first" do
+    it "gets first" do
+      (1..3).first.should eq(1)
+    end
+
+    it "raises if enumerable empty" do
+      expect_raises EmptyEnumerable do
+        (1...1).first
+      end
+    end
+
+    it "returns the first n elements with the optional argument" do
+      (1..5).first(2).should eq [1, 2]
+    end
+
     assert { [-1, -2, -3].first.should eq(-1) }
     assert { [-1, -2, -3].first(1).should eq([-1]) }
     assert { [-1, -2, -3].first(4).should eq([-1, -2, -3]) }
+  end
+
+  describe "first?" do
+    it "gets first?" do
+      (1..3).first?.should eq(1)
+    end
+
+    it "returns nil if enumerable empty" do
+      (1...1).first?.should be_nil
+    end
   end
 
   describe "flat_map" do
@@ -201,8 +236,23 @@ describe "Enumerable" do
     end
   end
 
+  describe "grep" do
+    it "works with regexes for instance" do
+      ["Alice", "Bob", "Cipher", "Anna"].grep(/^A/).should eq ["Alice", "Anna"]
+    end
+
+    it "returns empty array if nothing matches" do
+      %w(Alice Bob Mallory).grep(/nothing/).should eq [] of String
+    end
+  end
+
   describe "group_by" do
     assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
+
+    it "groups can group by length (like the doc example)" do
+      %w(Alice Bob Ary).group_by{|e| e.length}.should eq({ 3 => ["Bob", "Ary"],
+                                                           5 => ["Alice"]})
+    end
   end
 
   describe "in_groups_of" do
@@ -221,6 +271,36 @@ describe "Enumerable" do
       sums = [] of Int32
       [1, 2, 4].in_groups_of(2, 0) { |a| sums << a.sum }
       sums.should eq([3, 4])
+    end
+  end
+
+  describe "includes?" do
+    it "is true if the object exists in the collection" do
+      [1, 2, 3].includes?(2).should be_true
+    end
+
+    it "is false if the object is not part of the collection" do
+      [1, 2, 3].includes?(5).should be_false
+    end
+  end
+
+  describe "index with a block" do
+    it "returns the index of the first element where the blcok returns true" do
+      ["Alice", "Bob"].index { |name| name.length < 4 }.should eq 1
+    end
+
+    it "returns nil if no object could be found" do
+      ["Alice", "Bob"].index { |name| name.length < 3 }.should eq nil
+    end
+  end
+
+  describe "index with an object" do
+    it "returns the index of that object if found" do
+      ["Alice", "Bob"].index("Alice").should eq 0
+    end
+
+    it "returns nil if the object was not found" do
+      ["Alice", "Bob"].index("Mallory").should be_nil
     end
   end
 
