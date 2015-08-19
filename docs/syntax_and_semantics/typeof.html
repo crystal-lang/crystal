@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.8.4" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.8.4" data-basepath=".." data-revision="Wed Aug 19 2015 00:12:58 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1938,6 +1938,24 @@ b = typeof(a) <span class="hljs-comment">#=&gt; Int32</span>
 <p>It is often used in generic code, to make use of the compiler&apos;s type inference capabilities:</p>
 <pre><code class="lang-ruby">hash = {} of <span class="hljs-constant">Int32</span> =&gt; <span class="hljs-constant">String</span>
 another_hash = typeof(hash).new <span class="hljs-comment">#:: Hash(Int32, String)</span>
+</code></pre>
+<p>Since <code>typeof</code> doesn&apos;t actually evaluate the expression, it can be
+used on methods at compile time, such as in this example, which
+recursively forms a union type out of nested type paramters:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Array</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span><span class="hljs-keyword">self</span>.elem_type(typ)
+    <span class="hljs-keyword">if</span> typ.is_a?(<span class="hljs-constant">Array</span>)
+      elem_type(typ.first)
+    <span class="hljs-keyword">else</span>
+      typ
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+nest = [<span class="hljs-number">1</span>, [<span class="hljs-string">&quot;b&quot;</span>, [<span class="hljs-symbol">:c</span>, [<span class="hljs-string">&apos;d&apos;</span>]]]]
+flat = <span class="hljs-constant">Array</span>(typeof(<span class="hljs-constant">Array</span>.elem_type(nest))).new
+typeof(nest) <span class="hljs-comment">#=&gt; Array(Int32 | Array(String | Array(Symbol | Array(Char))))</span>
+typeof(flat) <span class="hljs-comment">#=&gt; Array(String | Int32 | Symbol | Char)</span>
 </code></pre>
 <p>This expression is also available in the <a href="type_grammar.html">type grammar</a>.</p>
 
