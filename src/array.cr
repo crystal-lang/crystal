@@ -1126,11 +1126,11 @@ class Array(T)
     if n <= length / 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, length - n)
-      (@buffer + length - n).move_from(tmp.buffer, n)
+      (@buffer + length - n).copy_from(tmp.buffer, n)
     else
       tmp = self[n..-1]
       (@buffer + length - n).move_from(@buffer, n)
-      @buffer.move_from(tmp.buffer, length - n)
+      @buffer.copy_from(tmp.buffer, length - n)
     end
     self
   end
