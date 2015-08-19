@@ -73,8 +73,7 @@ class JSON::PullParser
   end
 
   def read_object_key
-    expect_kind :object_key
-    @string_value.tap { read_next }
+    read_string
   end
 
   def read_object
@@ -209,15 +208,13 @@ class JSON::PullParser
         next_token_after_value
         return
       when :STRING
+        @kind = :string
+        @string_value = token.string_value
         if current_kind == :begin_object
-          @kind = :object_key
-          @string_value = token.string_value
           if next_token.type != :":"
             unexpected_token
           end
         else
-          @kind = :string
-          @string_value = token.string_value
           next_token_after_value
         end
         return
@@ -254,7 +251,7 @@ class JSON::PullParser
         end
 
         if obj == :object && token.type == :STRING
-          @kind = :object_key
+          @kind = :string
           @string_value = token.string_value
           if next_token.type != :":"
             unexpected_token
