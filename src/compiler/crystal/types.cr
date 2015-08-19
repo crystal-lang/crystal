@@ -205,6 +205,10 @@ module Crystal
       false
     end
 
+    def devirtualize
+      self
+    end
+
     def implements?(other_type : Type)
       case other_type
       when UnionType
@@ -255,6 +259,10 @@ module Crystal
 
     def add_def_instance(key, typed_def)
       raise "Bug: #{self} doesn't implement add_def_instance"
+    end
+
+    def instance_var_owner(var_name)
+      raise "Bug: #{self} doesn't implement instance_var_owner"
     end
 
     def types
@@ -996,6 +1004,14 @@ module Crystal
 
     def owns_instance_var?(name)
       owned_instance_vars.includes?(name) || superclass.try &.owns_instance_var?(name)
+    end
+
+    def instance_var_owner(name)
+      if owned_instance_vars.includes?(name)
+        self
+      else
+        superclass.try &.instance_var_owner(name)
+      end
     end
 
     def remove_instance_var(name)
@@ -2572,6 +2588,10 @@ module Crystal
 
     def virtual_lookup(type)
       type
+    end
+
+    def devirtualize
+      base_type
     end
   end
 
