@@ -24,9 +24,14 @@ module Crystal
     run_init_project("lib", "example", "tmp/example", "John Smith")
     run_init_project("app", "example_app", "tmp/example_app", "John Smith")
     run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith")
+    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith")
 
     describe_file "example-lib/src/example-lib.cr" do |file|
       file.should contain("Example::Lib")
+    end
+
+    describe_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
+      file.should contain("CamelExample::CamelLib")
     end
 
     describe_file "example/.gitignore" do |gitignore|
