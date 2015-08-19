@@ -533,17 +533,26 @@ class Crystal::Call
   def lookup_previous_def_matches(arg_types)
     enclosing_def = enclosing_def()
 
-    previous = enclosing_def.previous
-    unless previous
+    previous_item = enclosing_def.previous
+    unless previous_item
       raise "there is no previous definition of '#{enclosing_def.name}'"
+    end
+
+    previous = previous_item.def
+
+    signature = CallSignature.new(previous.name, arg_types, block, named_args)
+    context = MatchContext.new(scope, scope)
+    match = Match.new(previous, arg_types, context)
+    matches = Matches.new([match] of Match, true)
+
+    unless MatchesLookup.match_def(signature, previous_item, context)
+      raise_matches_not_found scope, previous.name, matches
     end
 
     unless scope.is_a?(Program)
       parent_visitor.check_self_closured
     end
 
-    match = Match.new(previous, arg_types, MatchContext.new(scope, scope))
-    matches = Matches.new([match] of Match, true)
     typed_defs = instantiate matches, scope
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def

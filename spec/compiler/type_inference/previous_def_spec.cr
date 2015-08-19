@@ -112,4 +112,20 @@ describe "type inference: previous_def" do
       foo(1)
       )) { int32 }
   end
+
+  it "says wrong number of arguments for previous_def (#1223)" do
+    assert_error %(
+      class Foo
+        def x
+        end
+
+        def x
+          previous_def(1)
+        end
+      end
+
+      Foo.new.x
+      ),
+      "wrong number of arguments"
+  end
 end
