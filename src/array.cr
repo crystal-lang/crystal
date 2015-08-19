@@ -92,14 +92,20 @@ class Array(T)
   # ary[0][0] = 2
   # puts ary #=> [[2], [2], [2]]
   # ```
-  def initialize(size, value : T)
+  def initialize(size : Int, value : T)
     if size < 0
       raise ArgumentError.new("negative array size: #{size}")
     end
 
     @length = size.to_i
-    @capacity = Math.max(size, 3)
-    @buffer = Pointer(T).malloc(size, value)
+
+    if size == 0
+      @capacity = 3
+      @buffer = Pointer(T).malloc(@capacity)
+    else
+      @capacity = size.to_i
+      @buffer = Pointer(T).malloc(size, value)
+    end
   end
 
   # Creates a new Array of the given size and invokes the
@@ -114,7 +120,7 @@ class Array(T)
   # ary[0][0] = 2
   # puts ary #=> [[2], [1], [1]]
   # ```
-  def self.new(size, &block : Int32 -> T)
+  def self.new(size : Int, &block : Int32 -> T)
     Array(T).build(size) do |buffer|
       size.times do |i|
         buffer[i] = yield i

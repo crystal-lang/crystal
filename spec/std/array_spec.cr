@@ -1275,4 +1275,11 @@ describe "Array" do
     end
   end
 
+  it "doesn't overflow buffer with Array.new(size, value) (#1209)" do
+    a = Array.new(1, 1_i64)
+    b = Array.new(1, 1_i64)
+    b << 2_i64 << 3_i64
+    a.should eq([1])
+    b.should eq([1, 2, 3])
+  end
 end
