@@ -1118,6 +1118,34 @@ class Array(T)
     nil
   end
 
+  def rotate!(n = 1)
+    return self if length == 0
+    n %= length if n.abs >= length
+    n += length if n < 0
+    return self if n == 0
+    if n <= length / 2
+      tmp = self[0..n]
+      @buffer.move_from(@buffer + n, length - n)
+      (@buffer + length - n).move_from(tmp.buffer, n)
+    else
+      tmp = self[n..-1]
+      (@buffer + length - n).move_from(@buffer, n)
+      @buffer.move_from(tmp.buffer, length - n)
+    end
+  end
+
+  def rotate(n = 1)
+    return self if length == 0
+    n %= length if n.abs >= length
+    n += length if n < 0
+    return self if n == 0
+    res = Array(T).new(length)
+    res.buffer.move_from(@buffer + n, length - n)
+    (res.buffer + length - n).move_from(@buffer, n)
+    res.length = length
+    res
+  end
+
   def sample
     raise IndexError.new if @length == 0
     @buffer[rand(@length)]

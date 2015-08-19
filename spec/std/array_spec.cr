@@ -1127,6 +1127,42 @@ describe "Array" do
     end
   end
 
+  describe "rotate" do
+    it "rotate!" do
+      a = [1, 2, 3]
+      a.rotate!; a.should eq([2, 3, 1])
+      a.rotate!; a.should eq([3, 1, 2])
+      a.rotate!; a.should eq([1, 2, 3])
+      a.rotate!; a.should eq([2, 3, 1])
+      a.rotate!.should eq(a)
+    end
+
+    it "rotate" do
+      a = [1, 2, 3]
+      a.rotate.should eq([2, 3, 1])
+      a.should eq([1, 2, 3])
+      a.rotate.should eq([2, 3, 1])
+    end
+
+    assert { a = [1, 2, 3]; a.rotate!(0); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate!(1); a.should eq([2, 3, 1]) }
+    assert { a = [1, 2, 3]; a.rotate!(2); a.should eq([3, 1, 2]) }
+    assert { a = [1, 2, 3]; a.rotate!(3); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate!(4); a.should eq([2, 3, 1]) }
+    assert { a = [1, 2, 3]; a.rotate!(3001); a.should eq([2, 3, 1]) }
+    assert { a = [1, 2, 3]; a.rotate!(-1); a.should eq([3, 1, 2]) }
+    assert { a = [1, 2, 3]; a.rotate!(-3001); a.should eq([3, 1, 2]) }
+
+    assert { a = [1, 2, 3]; a.rotate(0).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(1).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(2).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(3).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(4).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(3001).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(-1).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+  end
+
   describe "permutations" do
     assert { [1, 2, 2].permutations.should eq([[1,2,2],[1,2,2],[2,1,2],[2,2,1],[2,1,2],[2,2,1]]) }
     assert { [1, 2, 3].permutations.should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
