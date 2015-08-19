@@ -166,6 +166,10 @@ module Crystal
       self == type
     end
 
+    def instance_of?(type)
+      self == type
+    end
+
     def remove_typedef
       self
     end
@@ -1828,6 +1832,10 @@ module Crystal
     delegate has_def?, @module
     delegate metaclass, @module
 
+    def instance_of?(type)
+      type == @module
+    end
+
     def parents
       @parents ||= @module.parents.map do |t|
         case t
@@ -1867,6 +1875,10 @@ module Crystal
 
     def type_vars
       mapping.keys
+    end
+
+    def instance_of?(type)
+      type == @extended_class
     end
 
     delegate depth, @extended_class

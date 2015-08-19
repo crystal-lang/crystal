@@ -388,7 +388,9 @@ class Crystal::Call
           mod.push_def_macro typed_def
         else
           if typed_def_return_type = typed_def.return_type
-            return_type = TypeLookup.lookup(match.def.owner, typed_def_return_type, match_owner.instance_type)
+            self_type = match_owner.instance_type
+            root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
+            return_type = TypeLookup.lookup(root_type, typed_def_return_type, match_owner.instance_type)
             typed_def.freeze_type = return_type
           end
 
