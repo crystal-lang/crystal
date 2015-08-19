@@ -911,6 +911,20 @@ class Array(T)
     end
   end
 
+  # Returns a new array that is a one-dimensional flattening of self (recursively).
+  #
+  # That is, for every element that is an array, extract its elements into the new array
+  #
+  # ```
+  # s = [ 1, 2, 3 ]           #=> [1, 2, 3]
+  # t = [ 4, 5, 6, [7, 8] ]   #=> [4, 5, 6, [7, 8]]
+  # a = [ s, t, 9, 10 ]       #=> [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
+  # a.flatten                 #=> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  # ```
+  def flatten
+    FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
+  end
+
   def repeated_combinations(size = length : Int)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
@@ -1517,6 +1531,33 @@ class Array(T)
     def rewind
       @index = @array.length - 1
       self
+    end
+  end
+
+  # :nodoc:
+  struct FlattenHelper(T)
+    def self.flatten(ary)
+      result = [] of T
+      flatten ary, result
+      result
+    end
+
+    def self.flatten(ary : Array, result)
+      ary.each do |elem|
+        flatten elem, result
+      end
+    end
+
+    def self.flatten(other : T, result)
+      result << other
+    end
+
+    def self.element_type(ary)
+      if ary.is_a?(Array)
+        element_type(ary.first)
+      else
+        ary
+      end
     end
   end
 end

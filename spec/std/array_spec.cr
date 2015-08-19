@@ -1282,4 +1282,8 @@ describe "Array" do
     a.should eq([1])
     b.should eq([1, 2, 3])
   end
+
+  it "flattens" do
+    [[1, 'a'], [[[[true], "hi"]]]].flatten.should eq([1, 'a', true, "hi"])
+  end
 end
