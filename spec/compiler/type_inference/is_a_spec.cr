@@ -188,4 +188,17 @@ describe "Type inference: is_a?" do
       z
       ") { int32 }
   end
+
+  it "types if is_a? preceded by return if (preserves nops)" do
+    assert_type(%(
+      def coco
+        return if 1 == 1
+
+        if 1.is_a?(Int32)
+        end
+      end
+
+      coco
+      )) { |mod| mod.nil }
+  end
 end
