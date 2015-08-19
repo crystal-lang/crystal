@@ -86,4 +86,10 @@ describe "StringIO" do
     slice[0].should eq(0_u8)
     slice[1].should eq(1_u8)
   end
+
+  it "reads more than available (#1229)" do
+    s = "h" * (10 * 1024)
+    str = StringIO.new(s)
+    str.read(11 * 1024).should eq(s)
+  end
 end

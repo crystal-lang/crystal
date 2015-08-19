@@ -270,7 +270,7 @@ module IO
   def read_fully(buffer : Slice(UInt8))
     count = buffer.length
     while count > 0
-      read_bytes = read(buffer, count)
+      read_bytes = read(buffer, Math.min(count, buffer.length))
       raise EOFError.new if read_bytes == 0
       count -= read_bytes
       buffer += read_bytes
@@ -293,7 +293,7 @@ module IO
     buffer :: UInt8[2048]
     String.build(length) do |str|
       while length > 0
-        read_length = read(buffer.to_slice, length)
+        read_length = read(buffer.to_slice, Math.min(length, buffer.length))
         break if read_length == 0
 
         str.write(buffer.to_slice, read_length)
