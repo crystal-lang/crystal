@@ -309,10 +309,10 @@ module Crystal
           if restricted
             types << restricted
             discarded << type
-            break
           end
         end
       end
+
       program.type_merge_union_of(types)
     end
 

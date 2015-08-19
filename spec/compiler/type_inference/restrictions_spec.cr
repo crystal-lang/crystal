@@ -218,4 +218,20 @@ describe "Restrictions" do
       foo Foo(Int32)
       )) { int32 }
   end
+
+  it "works with union against unions of generics" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo(x : Foo | Int32)
+        x
+      end
+
+      foo(Foo(Int32).new || Foo(Float64).new)
+      )) { union_of(
+            (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar),
+            (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar),
+           ) }
+  end
 end
