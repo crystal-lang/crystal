@@ -1132,6 +1132,7 @@ class Array(T)
       (@buffer + length - n).move_from(@buffer, n)
       @buffer.move_from(tmp.buffer, length - n)
     end
+    self
   end
 
   def rotate(n = 1)
@@ -1140,8 +1141,8 @@ class Array(T)
     n += length if n < 0
     return self if n == 0
     res = Array(T).new(length)
-    res.buffer.move_from(@buffer + n, length - n)
-    (res.buffer + length - n).move_from(@buffer, n)
+    res.buffer.copy_from(@buffer + n, length - n)
+    (res.buffer + length - n).copy_from(@buffer, n)
     res.length = length
     res
   end
