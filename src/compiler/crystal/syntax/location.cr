@@ -20,8 +20,8 @@ module Crystal
       end
     end
 
-    def inspect
-      to_s
+    def inspect(io)
+      to_s(io)
     end
 
     def to_s(io)

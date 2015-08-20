@@ -198,4 +198,14 @@ describe "context" do
     0
     ), "a", ["(String | Int64)"]
   end
+
+  it "can get context of empty def" do
+    assert_context_includes %(
+    def foo(a)
+      ‸
+    end
+
+    foo(0i64)
+    ), "a", ["Int64"]
+  end
 end
