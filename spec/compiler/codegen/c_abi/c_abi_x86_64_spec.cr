@@ -3,7 +3,7 @@ ifdef x86_64
 
   describe "Code gen: C ABI x86_64" do
     it "passes struct less than 64 bits as { i64 }" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int8
@@ -49,7 +49,7 @@ ifdef x86_64
     end
 
     it "passes struct less than 64 bits as { i64 } in varargs" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int8
@@ -67,7 +67,7 @@ ifdef x86_64
     end
 
     it "passes struct between 64 and 128 bits as { i64, i64 }" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int64
@@ -113,7 +113,7 @@ ifdef x86_64
     end
 
     it "passes struct bigger than128 bits with byval" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int64
@@ -161,7 +161,7 @@ ifdef x86_64
     end
 
     it "returns struct less than 64 bits as { i64 }" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int8
@@ -207,7 +207,7 @@ ifdef x86_64
     end
 
     it "returns struct between 64 and 128 bits as { i64, i64 }" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int64
@@ -253,7 +253,7 @@ ifdef x86_64
     end
 
     it "returns struct bigger than 128 bits with sret" do
-      mod = build(%(
+      mod = codegen(%(
         lib LibFoo
           struct Struct
             x : Int64

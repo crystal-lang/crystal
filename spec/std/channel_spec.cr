@@ -213,4 +213,14 @@ describe BufferedChannel do
     spawn { ch.send 123 }
     ch.receive?.should eq(123)
   end
+
+  it "does inspect on unbuffered channel" do
+    ch = UnbufferedChannel(Int32).new
+    ch.inspect.should eq("#<UnbufferedChannel(Int32):0x#{ch.object_id.to_s(16)}>")
+  end
+
+  it "does inspect on buffered channel" do
+    ch = BufferedChannel(Int32).new(10)
+    ch.inspect.should eq("#<BufferedChannel(Int32):0x#{ch.object_id.to_s(16)}>")
+  end
 end

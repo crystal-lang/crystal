@@ -69,7 +69,7 @@ describe "Code gen: c union" do
   end
 
   it "builds union setter with fun type" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC

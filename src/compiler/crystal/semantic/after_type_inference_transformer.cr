@@ -137,7 +137,9 @@ module Crystal
       end
 
       if target.is_a?(Path)
-        const.not_nil!.initialized = true
+        const = const.not_nil!
+        const.initialized = true
+        const.value = const.value.transform self
         @const_being_initialized = nil
       end
 
@@ -169,8 +171,6 @@ module Crystal
                                         which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
           end
         end
-
-        target_const.value = target_const.value.transform self
       end
 
       super
@@ -207,9 +207,34 @@ module Crystal
         return expanded.transform self
       end
 
-      node = super
+      # Need to transform these manually because node.block doesn't
+      # need to be transformed if it has a fun_literal
+      # ~~~
+      if node_obj = node.obj
+        node.obj = node_obj.transform(self)
+      end
+      transform_many node.args
 
+      if (node_block = node.block) && !node_block.fun_literal
+        node.block = node_block.transform(self)
+      end
+
+      if node_block_arg = node.block_arg
+        node.block_arg = node_block_arg.transform(self)
+      end
+
+      if named_args = node.named_args
+        named_args.map! { |named_arg| named_arg.transform(self) as NamedArgument }
+      end
+      # ~~~
+
+      obj = node.obj
+      obj_type = obj.try &.type?
       block = node.block
+
+      if !node.type? && obj && obj_type && obj_type.module?
+        return untyped_expression(node, "`#{node}` has no type")
+      end
 
       if block && (fun_literal = block.fun_literal)
         block.fun_literal = fun_literal.transform(self)
@@ -217,8 +242,6 @@ module Crystal
 
       # Check if we have an untyped expression in this call, or an expression
       # whose type was never allocated. Replace it with raise.
-      obj = node.obj
-      obj_type = obj.try &.type?
       if (obj && !obj_type)
         return untyped_expression(node, "`#{obj}` has no type")
       end
@@ -546,7 +569,7 @@ module Crystal
       super
 
       if replacement = node.syntax_replacement
-        replacement
+        replacement.transform(self)
       else
         transform_is_a_or_responds_to node, &.filter_by(node.const.type)
       end
@@ -564,15 +587,36 @@ module Crystal
         filtered_type = yield obj_type
 
         if obj_type == filtered_type
-          return true_literal
+          if var?(obj)
+            return true_literal
+          else
+            exps = Expressions.new([obj, true_literal] of ASTNode)
+            exps.type = @program.bool
+            return exps
+          end
         end
 
         unless filtered_type
-          return false_literal
+          if var?(obj)
+            return false_literal
+          else
+            exps = Expressions.new([obj, false_literal] of ASTNode)
+            exps.type = @program.bool
+            return exps
+          end
         end
       end
 
       node
+    end
+
+    def var?(node)
+      case node
+      when Var, InstanceVar, ClassVar, Global
+        true
+      else
+        false
+      end
     end
 
     def transform(node : Cast)

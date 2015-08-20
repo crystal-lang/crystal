@@ -1,3 +1,67 @@
+## 0.7.6 (2015-08-13)
+
+* **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/manastech/crystal/commits/master?author=jessedoyle))
+* **(breaking change)** Renamed `Enumerable#drop` to `Enumerable#skip`
+* **(breaking change)** Renamed `Time.at` to `Time.epoch`, and `Time#to_i` and `Time#to_f` to `Time#epoch` and `Time#epoch_f`
+* **(breaking change)** `inherited` macro now runs before a class' body
+* Renamed `--no-build` flag to `--no-codegen`
+* Allow interpolations in heredocs (thanks @jessedoyle)
+* Allow hash substitutions in `String#%` and `sprintf` (thanks @zamith)
+* Added `SecureRandom.base64`, `SecureRandom.urlsafe_base64` and `SecureRandom.uuid` (thanks @ysbaddaden)
+* Added `File.link`, `File.symlink` and `File.symlink?` (thanks @ysbaddaden)
+* Added `Enumerable#in_groups_of` (thanks @jalyna)
+* Added `Array#zip?` (thanks @yui-knk)
+* Added `Array#permutations` and `Array#each_permutation` (thanks @jalyna and @kostya)
+* Added `IO#gets(limit : Int)` and `IO#gets(delimiter : Char, limit : Int)`
+* Added `Iterator#compact_map`, `Iterator#take_while` and `Iterator#skip_while` (thanks @PragTob)
+* Added `StringLiteral#to_i` macro method
+* Added `Crypto::Bcrypt` (thanks @akaufmann)
+* Added `Time.epoch_ms` and `Time#epoch_ms`
+* Added `BitArray#toggle` and `BitArray#invert` (thanks @will)
+* Fixed `IO#reopen` swapped semantic (thanks @technorama)
+* Many bug fixes and improvements
+
+## 0.7.5 (2015-07-30)
+
+* **(breaking change)** `0` is not a prefix for octal numbers anymore. Use `0o`
+* **(breaking change)** Renamed `MissingKey` to `KeyError`
+* **(breaking change)** Renamed `IndexOutOfBounds` to `IndexError`
+* Fixed all exception-handling related bugs.
+* Allow nested and multiline ternary expressions (thanks @daviswahl)
+* Allow assigning to `_` (underscore), give error when trying to read from it
+* Macros can now also receive the following nodes: `And`, `Or`, `Case`, `RangeLiteral` and `StringInterpolation`. `And` and `Or` have `left` and `right` methods.
+* Added `-e` option to `hierarchy` command to filter types by a regex
+* Added `-v` as an alias of `--version`
+* Added `-h` as an alias of `--help`
+* Added `Array#transpose` (thanks @rhysd)
+* Added `Benchmark#ips` (thanks @will)
+* Added `Hash#merge(&block)` and `Hash#merge!(&block)` (thanks @yui-knk)
+* Added `Hash#invert` (thanks @yui-knk)
+* Added `Bool#^` (thanks @yui-knk)
+* Added `Enumerable#drop`, `Enumerable#drop_while` and `Enumerable#take_while` (thanks @PragTob)
+* Added `Enumerable#none?` (thanks @yui-knk)
+* Added `Set#subset?`, `Set#superset?` and `Set#intersects?` (thanks @yui-knk)
+* Added `Set#new(Enumerable)` (thanks @yui-knk)
+* Added `String#succ` (thanks @porras and @Exilor)
+* Added `Array#*` (thanks @porras)
+* Added `Char#===(Int)` and `Int#===(Char)` (thanks @will)
+* Added `StringLiteral#camelcase` and `StringLiteral#underscore` in macros
+* Added `Expressions#expressions` in macros
+* Added `Cast#obj` and `Cast#to` in macros
+* Added `ASTNode#class_name` in macros (thanks @yui-knk)
+* Added `Array#push`/`Array#<<` and `Array#unshift` in macros (thanks @ysbaddaden)
+* Added `Def#visibility` in macros (thanks @ysbaddaden)
+* Added `String#codepoints` and `String#each_codepoint` (thanks @jhass)
+* `Char#to_i(base)` now supports bases from 2 to 36
+# `Set#|` now correctly accepts a set of a possible different type (thanks @yui-knk)
+* Flush `STDERR` on exit (thanks @jbbarth)
+* `HTTP::Client` methods accept an optional block, which will yield an `HTTP::Response` with a non-nil `body_io` property to consume the response's IO
+* Document `URI`, `UDPSocket` (thanks @davydovanton)
+* Improved `URI` class (thanks @will)
+* Define `$~` in `String#gsub` and `String#scan`
+* Define `$?` in `Process.run`
+* Lots of bug fixes and small improvements
+
 ## 0.7.4 (2015-06-23)
 
 * Added Float module and remainder (thanks @wmoxam)

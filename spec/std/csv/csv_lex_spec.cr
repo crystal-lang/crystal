@@ -36,6 +36,16 @@ describe CSV do
       lexer.expect_eof
     end
 
+    it "lexes two columns with two rows with \r\n" do
+      lexer = CSV::Lexer.new("hello,world\r\nfoo,bar")
+      lexer.expect_cell "hello"
+      lexer.expect_cell "world"
+      lexer.expect_newline
+      lexer.expect_cell "foo"
+      lexer.expect_cell "bar"
+      lexer.expect_eof
+    end
+
     it "lexes two empty columns" do
       lexer = CSV::Lexer.new(",")
       lexer.expect_cell ""

@@ -319,7 +319,7 @@ class Markdown::Parser
           one_backtick = !one_backtick
         end
       when '!'
-        if pos + 1 < bytesize && str[pos + 1] == '['.ord
+        if pos + 1 < bytesize && str[pos + 1] === '['
           link = check_link str, (pos + 2), bytesize
           if link
             @renderer.text line.byte_slice(cursor, pos - cursor)
@@ -398,7 +398,7 @@ class Markdown::Parser
     return nil unless bracket_count == 0
     bracket_idx = pos
 
-    return nil unless str[bracket_idx + 1] == '('.ord
+    return nil unless str[bracket_idx + 1] === '('
 
     paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
     return nil unless paren_idx

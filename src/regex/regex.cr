@@ -4,7 +4,13 @@ class Regex
   @[Flags]
   enum Options
     IGNORE_CASE = 1
-    MULTILINE = 4
+    # PCRE native PCRE_MULTILINE flag is 2, and PCRE_DOTALL is 4 ;
+    # - PCRE_DOTALL changes the "." meaning,
+    # - PCRE_MULTILINE changes "^" and "$" meanings)
+    # Ruby modifies this meaning to have essentially one unique "m"
+    # flag that activates both behviours, so here we do the same by
+    # mapping MULTILINE to PCRE_MULTILINE | PCRE_DOTALL
+    MULTILINE = 6
     EXTENDED = 8
     # :nodoc:
     ANCHORED      = 16

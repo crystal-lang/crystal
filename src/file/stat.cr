@@ -1,5 +1,3 @@
-require "time"
-
 lib LibC
   ifdef darwin
     struct Stat

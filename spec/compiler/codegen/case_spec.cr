@@ -82,4 +82,22 @@ describe "Code gen: case" do
       end
       ").to_i.should eq(2)
   end
+
+  it "codegens case when constant bug (#1028)" do
+    run(%(
+      struct Nil
+        def ===(other)
+          self.is_a?(Reference) && other.is_a?(Reference)
+        end
+      end
+
+      A = nil
+      case nil
+      when A
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
 end

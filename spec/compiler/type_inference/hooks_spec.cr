@@ -81,7 +81,9 @@ describe "Type inference: hooks" do
       ), "macro 'extended' must not have arguments"
   end
 
-  it "types initializer in inherited" do
+  # TODO: this should probably work, but we need the two-phase type inference,
+  # first to define methods, then to type/execute initializers and other expressions
+  pending "types initializer in inherited" do
     assert_type(%(
       abstract class Foo
         macro inherited
@@ -116,6 +118,6 @@ describe "Type inference: hooks" do
         include Doable
       end
       ),
-      "undefined macro method 'StringLiteral#unknown'"
+      "undefined macro method 'MacroId#unknown'"
   end
 end

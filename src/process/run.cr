@@ -22,14 +22,14 @@ def Process.run(command, args = nil, output = nil : IO | Bool, input = nil : Str
   pid = fork do
     if output == false
       null = File.new("/dev/null", "r+")
-      null.reopen(STDOUT)
+      STDOUT.reopen(null)
     elsif fork_output
-      fork_output.reopen(STDOUT)
+      STDOUT.reopen(fork_output)
     end
 
     if process_input && fork_input
       process_input.close
-      fork_input.reopen(STDIN)
+      STDIN.reopen(fork_input)
     end
 
     LibC.execvp(command, argv.buffer)

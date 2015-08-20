@@ -51,7 +51,7 @@ describe "Code gen: def" do
   end
 
   it "builds infinite recursive function" do
-    build "def foo; foo; end; foo"
+    codegen "def foo; foo; end; foo"
   end
 
   it "unifies all calls to same def" do
@@ -522,9 +522,19 @@ describe "Code gen: def" do
   end
 
   it "doesn't crash on private def as last expression" do
-    build(%(
+    codegen(%(
       private def foo
       end
       ))
+  end
+
+  it "uses previous argument in default value (#1062)" do
+    run(%(
+      def foo(x = 123, y = x + 456)
+        x + y
+      end
+
+      foo
+      )).to_i.should eq(123 * 2 + 456)
   end
 end

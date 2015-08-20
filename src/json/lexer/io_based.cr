@@ -1,3 +1,4 @@
+# :nodoc:
 class JSON::Lexer::IOBased < JSON::Lexer
   def initialize(io)
     super()

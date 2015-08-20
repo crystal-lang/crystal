@@ -142,6 +142,7 @@ class Crystal::Def
       end
     else
       new_args = [] of ASTNode
+      body = [] of ASTNode
 
       # Append variables that are already covered
       0.upto(args_length - 1) do |index|
@@ -165,15 +166,17 @@ class Crystal::Def
             new_args.push Var.new(arg.name)
             expansion.args.push arg.clone
           else
-            new_args.push default_value
+            body << Assign.new(Var.new(arg.name), default_value.clone)
+            new_args.push Var.new(arg.name)
           end
         end
       end
 
       call = Call.new(nil, name, new_args)
       call.is_expansion = true
+      body << call
 
-      expansion.body = call
+      expansion.body = Expressions.new(body)
     end
 
     expansion

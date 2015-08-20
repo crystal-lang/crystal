@@ -128,10 +128,10 @@ def parse(string, wants_doc = false)
   parser.parse
 end
 
-def build(code)
+def codegen(code)
   node = parse code
   result = infer_type node
-  result.program.build result.node, single_module: false
+  result.program.codegen result.node, single_module: false
 end
 
 class Crystal::SpecRunOutput

@@ -14,10 +14,19 @@
 struct Symbol
   include Comparable(Symbol)
 
+  # Compares symbol with other based on `String#<=>` method. Returns -1, 0
+  # or +1 depending on whether symbol is less than, equal to, or greater than
+  # other_symbol.
+  # See `String#<=>` for more information.
   def <=>(other : Symbol)
     to_s <=> other.to_s
   end
 
+  # Returns the symbol literal representation as a string.
+  #
+  # ```
+  # :crystal.inspect # => ":crystal"
+  # ```
   def inspect(io : IO)
     io << ":"
 
@@ -29,11 +38,21 @@ struct Symbol
     end
   end
 
+  # Appends the symbol's name to the passed IO.
+  #
+  # ```
+  # :crystal.to_s # => "crystal"
+  # ```
   def to_s(io : IO)
     io << to_s
   end
 
   # Determines if a string needs to be quoted to be used for a symbol.
+  #
+  # ```
+  # Symbol.needs_quotes? "string"      # => false
+  # Symbol.needs_quotes? "long string" # => true
+  # ```
   def self.needs_quotes?(string)
     case string
     when "+", "-", "*", "/", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"

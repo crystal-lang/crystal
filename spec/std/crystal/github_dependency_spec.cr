@@ -16,9 +16,12 @@ module Crystal
         dependency.name.should eq("name")
       end
 
-      it "raises error with invalid GitHub project definition" do
-        expect_raises ProjectError, /Invalid GitHub repository definition: invalid-repo/ do
-          GitHubDependency.new("invalid-repo")
+      ["space /you", "space/ you", "/hello/bello",
+        "invalid-repo", "  owner/repo", "owner/repo "].each do |project|
+        it "raises error with invalid GitHub project definition #{project}" do
+          expect_raises ProjectError, "Invalid GitHub repository definition: #{project}" do
+            GitHubDependency.new(project)
+          end
         end
       end
 

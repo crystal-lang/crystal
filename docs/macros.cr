@@ -77,6 +77,22 @@ module Macros
   abstract class ASTNode
     # Returns this node as a `MacroId`. Useful when you need an identifier
     # out of a `StringLiteral`, `SymbolLiteral`, `Var` or `Call`.
+    #
+    # ```
+    # macro define_method(name, content)
+    #   def {{name.id}}
+    #     {{content}}
+    #   end
+    # end
+    #
+    # define_method :foo, 1
+    # define_method "bar", 2
+    # define_method baz, 3
+    #
+    # puts foo #=> prints 1
+    # puts bar #=> prints 2
+    # puts baz #=> prints 3
+    # ```
     def id : MacroId
     end
 
@@ -91,6 +107,18 @@ module Macros
     #
     # puts test # prints "foo" (including the double quotes)
     def stringify : StringLiteral
+    end
+
+    # Returns a `StringLiteral` that contains this node's name.
+    #
+    # ```
+    # macro test
+    #   {{ "foo".class_name }}
+    # end
+    #
+    # puts test #=> prints StringLiteral
+    # ```
+    def class_name : StringLiteral
     end
 
     # Returns true if this node's textual representation is the same as
@@ -294,6 +322,10 @@ module Macros
 
     # Similar to `String#strip`.
     def strip : StringLiteral
+    end
+
+    # Similar to `String#to_i`.
+    def to_i(base = 10)
     end
 
     # Similar to `String#tr`.
@@ -657,7 +689,7 @@ module Macros
     end
 
     # Returns the body of this method.
-    def body : MacroId
+    def body : ASTNode
     end
 
     # Returns the arguments of this method.
@@ -667,6 +699,10 @@ module Macros
     # Returns the receiver (for example `self`) of this method definition,
     # or `Nop` if not specified.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns the visibility of this def: `:public`, `:protected` or `:private`.
+    def visibility : SymbolLiteral
     end
   end
 
@@ -1003,7 +1039,7 @@ module Macros
     def instance_vars : ArrayLiteral(MetaVar)
     end
 
-    # Returns the instance variables of this type, if any.
+    # Returns the direct superclass of this type.
     def superclass : TypeNode | NilLiteral
     end
 

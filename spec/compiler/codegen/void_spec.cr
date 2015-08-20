@@ -65,7 +65,7 @@ describe "Code gen: void" do
   end
 
   it "codegens no return assignment" do
-    build("
+    codegen("
       lib LibC
         fun exit : NoReturn
       end
@@ -76,7 +76,7 @@ describe "Code gen: void" do
   end
 
   it "allows passing void as argument to method" do
-    build(%(
+    codegen(%(
       lib LibC
         fun foo
       end

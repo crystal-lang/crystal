@@ -18,6 +18,7 @@ class OpenSSL::SSL::Socket
   end
 
   def read(slice : Slice(UInt8), count)
+    return 0 if count == 0
     LibSSL.ssl_read(@ssl, slice.pointer(count), count)
   end
 

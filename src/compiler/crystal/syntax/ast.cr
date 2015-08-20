@@ -55,7 +55,7 @@ module Crystal
     end
 
     macro def class_desc : String
-      {{@type.name.split("::").last.id.stringify }}
+      {{@type.name.split("::").last.id.stringify}}
     end
   end
 
@@ -244,7 +244,7 @@ module Crystal
 
   # An array literal.
   #
-  #  '[' ( expression ( ',' expression )* ) ']'
+  #  '[' [ expression [ ',' expression ]* ] ']'
   #
   class ArrayLiteral < ASTNode
     property :elements
@@ -1254,9 +1254,8 @@ module Crystal
   class While < ASTNode
     property :cond
     property :body
-    property :run_once
 
-    def initialize(@cond, body = nil, @run_once = false)
+    def initialize(@cond, body = nil)
       @body = Expressions.from body
     end
 
@@ -1266,10 +1265,10 @@ module Crystal
     end
 
     def clone_without_location
-      While.new(@cond.clone, @body.clone, @run_once)
+      While.new(@cond.clone, @body.clone)
     end
 
-    def_equals_and_hash @cond, @body, @run_once
+    def_equals_and_hash @cond, @body
   end
 
   # Until expression.
@@ -1281,9 +1280,8 @@ module Crystal
   class Until < ASTNode
     property :cond
     property :body
-    property :run_once
 
-    def initialize(@cond, body = nil, @run_once = false)
+    def initialize(@cond, body = nil)
       @body = Expressions.from body
     end
 
@@ -1293,10 +1291,10 @@ module Crystal
     end
 
     def clone_without_location
-      Until.new(@cond.clone, @body.clone, @run_once)
+      Until.new(@cond.clone, @body.clone)
     end
 
-    def_equals_and_hash @cond, @body, @run_once
+    def_equals_and_hash @cond, @body
   end
 
   class Generic < ASTNode
@@ -1891,13 +1889,11 @@ module Crystal
 
   # if inside a macro
   #
-  #     {% 'if' cond }
+  #     {% 'if' cond %}
   #       then
-  #     [
-  #     {% 'else' }
+  #     {% 'else' %}
   #       else
-  #     ]
-  #     %{ 'end' }
+  #     {% 'end' %}
   class MacroIf < ASTNode
     property :cond
     property :then
@@ -1923,9 +1919,9 @@ module Crystal
 
   # for inside a macro:
   #
-  #    {- for x1, x2, ... , xn in exp }
+  #    {% for x1, x2, ... , xn in exp %}
   #      body
-  #    {- end }
+  #    {% end %}
   class MacroFor < ASTNode
     property vars
     property exp

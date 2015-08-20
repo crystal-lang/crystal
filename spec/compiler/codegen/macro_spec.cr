@@ -680,7 +680,7 @@ describe "Code gen: macro" do
   end
 
   it "transforms hooks (bug)" do
-    build(%(
+    codegen(%(
       module GC
         def self.add_finalizer(object : T)
           object.responds_to?(:finalize)
@@ -1132,5 +1132,15 @@ describe "Code gen: macro" do
 
       foo hello
       )).to_string.should eq(%(hello"))
+  end
+
+  it "expands macro def with return (#1040)" do
+    run(%(
+      macro def a : Int32
+        return 123
+      end
+
+      a
+      )).to_i.should eq(123)
   end
 end

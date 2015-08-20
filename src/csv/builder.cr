@@ -32,7 +32,7 @@ class CSV::Builder
       @io << '"'
       value.each_byte do |byte|
         case byte
-        when '"'.ord
+        when '"'
           @io << %("")
         else
           @io.write_byte byte

@@ -77,6 +77,14 @@ class FileDescriptorIO
     LibC.isatty(fd) == 1
   end
 
+  def reopen(other : FileDescriptorIO)
+    if LibC.dup2(other.fd, self.fd) == -1
+      raise Errno.new("Could not reopen file descriptor")
+    end
+
+    other
+  end
+
   def to_fd_io
     self
   end

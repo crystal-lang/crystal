@@ -442,9 +442,6 @@ module Crystal
       end
     end
 
-    def type_assign_helper(var_name, target, value)
-    end
-
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
@@ -559,6 +556,11 @@ module Crystal
 
       node.bind_to value
       var.bind_to node
+    end
+
+    def type_assign(target : Underscore, value, node)
+      value.accept self
+      node.bind_to value
     end
 
     def type_assign(target, value, node)
@@ -1377,7 +1379,11 @@ module Crystal
     end
 
     def visit(node : Underscore)
-      node.raise "can't use underscore as generic type argument"
+      if @in_type_args == 0
+        node.raise "can't read from _"
+      else
+        node.raise "can't use underscore as generic type argument"
+      end
     end
 
     def visit(node : IsA)
@@ -1549,11 +1555,11 @@ module Crystal
       attach_doc type, node
 
       pushing_type(type) do
-        node.body.accept self
-
         if created_new_type
           run_hooks(superclass.metaclass, type, :inherited, node)
         end
+
+        node.body.accept self
       end
 
       if created_new_type
@@ -1827,6 +1833,7 @@ module Crystal
 
       call_convention = check_call_convention_attributes node
       check_valid_attributes node, ValidFunDefAttributes, "fun"
+      node.doc ||= attributes_doc()
 
       args = node.args.map do |arg|
         restriction = arg.restriction.not_nil!
@@ -2570,7 +2577,7 @@ module Crystal
         node.type = t1.integer? && t2.float? ? t2 : scope
       when "==", "<", "<=", ">", ">=", "!="
         node.type = @mod.bool
-      when "%", "<<", ">>", "|", "&", "^", "unsafe_mod"
+      when "%", "<<", ">>", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
         node.type = scope
       else
         raise "Bug: unknown binary operator #{typed_def.name}"

@@ -88,7 +88,7 @@ describe "Type inference: yield with scope" do
   end
 
   it "doesn't explode if specifying &block but never using it (#181)" do
-    build(%(
+    codegen(%(
       class A
         def a(&block)
           with self yield

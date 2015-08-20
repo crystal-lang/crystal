@@ -22,14 +22,66 @@ struct String::Formatter
   end
 
   private def consume_percent
+    case next_char
+    when '{'
+      next_char
+      consume_substitution
+    when '<'
+      next_char
+      consume_formatted_substitution
+    else
+      flags = consume_flags
+      consume_type flags
+    end
+  end
+
+  private def consume_substitution
+    key = consume_substitution_key '}'
+    arg = current_arg
+    if arg.is_a?(Hash)
+      @io << arg[key]
+    else
+      raise ArgumentError.new "one hash required"
+    end
+  end
+
+  private def consume_formatted_substitution
+    key = consume_substitution_key '>'
     next_char
+    arg = current_arg
+    if arg.is_a?(Hash)
+      target_arg = arg[key]
+    else
+      raise ArgumentError.new "one hash required"
+    end
     flags = consume_flags
-    flags = consume_width(flags)
-    flags = consume_precision(flags)
-    consume_type(flags)
+    consume_type flags, target_arg, true
+  end
+
+  private def consume_substitution_key(end_char)
+    String.build do |io|
+      loop do
+        case current_char
+        when '\0'
+          raise ArgumentError.new "malformed name - unmatched parenthesis"
+        when end_char
+          break
+        else
+          io << current_char
+        end
+        next_char
+      end
+    end
   end
 
   private def consume_flags
+    flags = consume_format_flags
+    flags = consume_width(flags)
+    flags = consume_precision(flags)
+    flags
+  end
+
+  private def consume_format_flags
     flags = Flags.new
     while true
       case current_char
@@ -76,14 +128,14 @@ struct String::Formatter
   end
 
   private def consume_number
-    num = current_char.ord - '0'.ord
+    num = current_char - '0'
     length = 1
     next_char
     while true
       case char = current_char
       when '0' .. '9'
         num *= 10
-        num += char.ord - '0'.ord
+        num += char - '0'
         length += 1
       else
         break
@@ -93,43 +145,44 @@ struct String::Formatter
     {num, length}
   end
 
-  private def consume_type(flags)
+  private def consume_type(flags, arg = nil, arg_specified = false)
     case char = current_char
     when 's'
-      string flags
+      string flags, arg, arg_specified
     when 'b'
       flags.base = 2
-      int flags
+      int flags, arg, arg_specified
     when 'o'
       flags.base = 8
-      int flags
+      int flags, arg, arg_specified
     when 'd', 'i'
       flags.base = 10
-      int flags
+      int flags, arg, arg_specified
     when 'x', 'X'
       flags.base = 16
       flags.type = char
-      int flags
+      int flags, arg, arg_specified
     when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
       flags.type = char
-      float flags
+      float flags, arg, arg_specified
     when '%'
       char '%'
     else
-      raise ArgumentError.new("malformed format string - %#{char}")
+      raise ArgumentError.new("malformed format string - %#{char.inspect}")
     end
   end
 
-  def string(flags)
-    arg = next_arg
+  def string(flags, arg, arg_specified)
+    arg = next_arg unless arg_specified
 
     pad arg.to_s.length, flags if flags.left_padding?
     @io << arg
     pad arg.to_s.length, flags if flags.right_padding?
   end
 
-  def int(flags)
-    arg = next_arg
+  def int(flags, arg, arg_specified)
+    arg = next_arg unless arg_specified
+
     if arg.responds_to?(:to_i)
       int = arg.is_a?(Int) ? arg : arg.to_i
 
@@ -160,8 +213,9 @@ struct String::Formatter
   end
 
   # We don't actually format the float ourselves, we delegate to sprintf
-  def float(flags)
-    arg = next_arg
+  def float(flags, arg, arg_specified)
+    arg = next_arg unless arg_specified
+
     if arg.responds_to?(:to_f)
       float = arg.is_a?(Float) ? arg : arg.to_f
 

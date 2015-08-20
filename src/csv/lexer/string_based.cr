@@ -22,7 +22,7 @@ class CSV::Lexer::StringBased < CSV::Lexer
         end_pos = @reader.pos
         check_last_empty_column
         break
-      when '\n', '\0'
+      when '\r', '\n', '\0'
         end_pos = @reader.pos
         break
       when '"'

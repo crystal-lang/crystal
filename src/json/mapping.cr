@@ -1,4 +1,60 @@
-class Object
+# The `JSON::Mapping` module defines a single macro, `json_mapping`, that
+# defines how an object is mapped to JSON.
+#
+# This module is automatically included by `Object` when you `require "json"`.
+#
+# ### Example
+#
+# ```
+# require "json"
+#
+# class Location
+#   json_mapping({
+#     lat: Float64,
+#     lng: Float64,
+#   })
+# end
+#
+# class House
+#   json_mapping({
+#     address: String,
+#     location: {type: Location, nilable: true},
+#   })
+# end
+#
+# house = House.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
+# house.address  #=> "Crystal Road 1234"
+# house.location #=> #&lt;Location:0x10cd93d80 @lat=12.3, @lng=34.5>
+# house.to_json  #=> %({"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}})
+# ```
+#
+# ### Usage
+#
+# `json_mapping` must receive a hash literal whose keys will define Crystal properties.
+#
+# The value of each key can be a single type (never a union type). Primitive types (numbers, string, boll and nil)
+# are support, as well as custom objects which must either use `json_mapping` or define a `new` method
+# that accepts a `JSON::PullParser` and returns an object from it.
+#
+# The value can also be another hash literal with the following options:
+# * type: (required) the single type described above
+# * key: the property name in the JSON document (as opposed to the property name in the Crystal code)
+# * nilable: if true, the property can be `Nil`
+# * emit_null: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
+# * converter: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods.
+#
+# The mapping also automatically defines Crystal properties (getters and setters) for each
+# of the keys. It doesn't define a constructor accepting those arguments, but you can provide
+# an overload.
+#
+# The macro basically defines a constructor accepting a `JSON::PullParser` that reads from
+# it and initializes this type's instance variables. It also defines a `to_json(IO)` method
+# by invoking `to_json(IO)` on each of the properties (unless a converter is specified, in
+# which case `to_json(value, IO)` is invoked).
+module JSON::Mapping
+  # Defines a JSON mapping. If `strict` is true, uknown properties in the JSON
+  # document will raise a parse exception. The default is `false`, so uknown properties
+  # are silently ignored.
   macro json_mapping(properties, strict = false)
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) %}
@@ -84,4 +140,8 @@ class Object
       end
     end
   end
+end
+
+class Object
+  include JSON::Mapping
 end

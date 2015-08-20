@@ -20,10 +20,14 @@ module BufferedIOMixin
   abstract def unbuffered_close
   abstract def unbuffered_rewind
 
-  def gets(delimiter : Char)
+  def gets(delimiter : Char, limit : Int)
     if delimiter.ord >= 128
       return super
     end
+
+    raise ArgumentError.new "negative limit" if limit < 0
+
+    limit = Int32::MAX if limit < 0
 
     delimiter_byte = delimiter.ord.to_u8
 
@@ -36,18 +40,32 @@ module BufferedIOMixin
       return nil
     end
 
-    endl = @in_buffer_rem.index(delimiter_byte)
-    if endl
-      string = String.new(@in_buffer_rem[0, endl + 1])
-      @in_buffer_rem += (endl + 1)
+    index = @in_buffer_rem.index(delimiter_byte)
+    if index
+      # If we find it past the limit, limit the result
+      if index > limit
+        index = limit
+      else
+        index += 1
+      end
+
+      string = String.new(@in_buffer_rem[0, index])
+      @in_buffer_rem += index
       return string
     end
 
-    # We didn't find the delimiter, so we append to a StringIO until we find it.
+    # We didn't find the delimiter, so we append to a StringIO until we find it,
+    # or we reach the limit
     String.build do |buffer|
       loop do
-        buffer.write @in_buffer_rem
-        @in_buffer_rem += @in_buffer_rem.length
+        available = Math.min(@in_buffer_rem.length, limit)
+        buffer.write @in_buffer_rem, available
+        @in_buffer_rem += available
+        limit -= available
+
+        if limit == 0
+          break
+        end
 
         fill_buffer if @in_buffer_rem.empty?
 
@@ -59,10 +77,15 @@ module BufferedIOMixin
           end
         end
 
-        endl = @in_buffer_rem.index(delimiter_byte)
-        if endl
-          buffer.write @in_buffer_rem, endl + 1
-          @in_buffer_rem += (endl + 1)
+        index = @in_buffer_rem.index(delimiter_byte)
+        if index
+          if index > limit
+            index = limit
+          else
+            index += 1
+          end
+          buffer.write @in_buffer_rem, index
+          @in_buffer_rem += index
           break
         end
       end
@@ -80,31 +103,31 @@ module BufferedIOMixin
     end
   end
 
-  def read_char
+  def read_char_with_bytesize
     return super unless @in_buffer_rem.length >= 4
 
     first = @in_buffer_rem[0].to_u32
     if first < 0x80
       @in_buffer_rem += 1
-      return first.chr
+      return first.chr, 1
     end
 
     second = (@in_buffer_rem[1] & 0x3f).to_u32
     if first < 0xe0
       @in_buffer_rem += 2
-      return ((first & 0x1f) << 6 | second).chr
+      return ((first & 0x1f) << 6 | second).chr, 2
     end
 
     third = (@in_buffer_rem[2] & 0x3f).to_u32
     if first < 0xf0
       @in_buffer_rem += 3
-      return ((first & 0x0f) << 12 | (second << 6) | third).chr
+      return ((first & 0x0f) << 12 | (second << 6) | third).chr, 3
     end
 
     fourth = (@in_buffer_rem[3] & 0x3f).to_u32
     if first < 0xf8
       @in_buffer_rem += 4
-      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr
+      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4
     end
 
     raise InvalidByteSequenceError.new
@@ -136,6 +159,21 @@ module BufferedIOMixin
     end
 
     total_read
+  end
+
+  def read(length : Int)
+    raise ArgumentError.new "negative length" if length < 0
+
+    fill_buffer if @in_buffer_rem.empty?
+
+    # If we have enough content in the buffer, use it
+    if length <= @in_buffer_rem.length
+      string = String.new(@in_buffer_rem[0, length])
+      @in_buffer_rem += length
+      return string
+    end
+
+    super
   end
 
   def write(slice : Slice(UInt8), count)
@@ -179,7 +217,7 @@ module BufferedIOMixin
     out_buffer[@out_count] = byte
     @out_count += 1
 
-    if flush_on_newline? && byte == '\n'.ord
+    if flush_on_newline? && byte === '\n'
       flush
     end
   end

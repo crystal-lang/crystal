@@ -75,4 +75,13 @@ describe "IO" do
     IO.copy(src, dst).should eq(string.bytesize)
     dst.to_s.should eq(string)
   end
+
+  it "reopens" do
+    File.open("#{__DIR__}/data/test_file.txt") do |file1|
+      File.open("#{__DIR__}/data/test_file.ini") do |file2|
+        file2.reopen(file1)
+        file2.gets.should eq("Hello World\n")
+      end
+    end
+  end
 end

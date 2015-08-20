@@ -1,23 +1,56 @@
+# The Base64 module provides for the encoding (`encode`, `strict_encode`,
+# `urlsafe_encode`) and decoding (`decode`, `strict_decode`, `urlsafe_decode`)
+# of binary data using a Base64 representation.
+#
+# ###Example
+#
+# A simple encoding and decoding.
+#
+#     require "base64"
+#     enc   = Base64.encode("Send reinforcements")
+#                         # => "U2VuZCByZWluZm9yY2VtZW50cw==\n"
+#     plain = Base64.decode(enc)
+#                         # => "Send reinforcements"
+#
+# The purpose of using base64 to encode data is that it translates any binary
+# data into purely printable characters.
 module Base64
   extend self
 
   class Error < Exception; end
 
+  # :nodoc:
   CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  # :nodoc:
   CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+  # :nodoc:
   LINE_SIZE = 60
+  # :nodoc:
   PAD = '='.ord.to_u8
+  # :nodoc:
   NL = '\n'.ord.to_u8
+  # :nodoc:
   NR = '\r'.ord.to_u8
 
   class Error < Exception; end
 
-  def encode64(data)
+  # Returns the Base64-encoded version of `data`.
+  # This method complies with RFC 2045.
+  # Line feeds are added to every 60 encoded characters.
+  #
+  #     require "base64"
+  #     puts Base64.encode("Now is the time for all good coders\nto learn Crystal")
+  #
+  # Generates:
+  #
+  #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
+  #     Q3J5c3RhbA==
+  def encode(data)
     slice = data.to_slice
-    String.new(encode_size(slice.length, true)) do |buf|
+    String.new(encode_size(slice.length, new_lines: true)) do |buf|
       inc = 0
       appender = buf.appender
-      to_base64(slice, CHARS_STD, true) do |byte|
+      to_base64(slice, CHARS_STD, pad: true) do |byte|
         appender << byte
         inc += 1
         if inc >= LINE_SIZE
@@ -33,41 +66,57 @@ module Base64
     end
   end
 
-  def strict_encode64(data)
+  # Returns the Base64-encoded version of `data` with no newlines.
+  # This method complies with RFC 4648.
+  #
+  #     require "base64"
+  #     puts Base64.strict_encode("Now is the time for all good coders\nto learn Crystal")
+  #
+  # Generates:
+  #
+  #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
+  def strict_encode(data)
+    strict_encode data, CHARS_STD, pad: true
+  end
+
+  # :nodoc:
+  def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_STD, true) { |byte| appender << byte }
+      to_base64(slice, alphabet, pad: pad) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
   end
 
-  def urlsafe_encode64(data)
+  # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
+  # This method complies with "Base 64 Encoding with URL and Filename Safe
+  # Alphabet" in RFC 4648.
+  #
+  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  #
+  # The `padding` parameter defaults to false. When true, enough `=` characters
+  # are added to make the output divisible by 3.
+  def urlsafe_encode(data, padding = false)
     slice = data.to_slice
     String.new(encode_size(slice.length)) do |buf|
       appender = buf.appender
-      to_base64(slice, CHARS_SAFE, false) { |byte| appender << byte }
+      to_base64(slice, CHARS_SAFE, pad: padding) { |byte| appender << byte }
       count = appender.count
       {count, count}
     end
   end
 
-  def decode64(data)
+  # Returns the Base64-decoded version of `data`.
+  # This will decode either the normal or urlsafe alphabets.
+  def decode(data)
     slice = data.to_slice
     String.new(decode_size(slice.length)) do |buf|
       appender = buf.appender
-      from_base64(slice) { |byte| appender << byte }
+      from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
       {appender.count, 0}
     end
-  end
-
-  def strict_decode64(str)
-    decode64(str)
-  end
-
-  def urlsafe_decode64(str)
-    decode64(str)
   end
 
   private def encode_size(str_size, new_lines = false)
@@ -112,7 +161,7 @@ module Base64
     end
   end
 
-  private def from_base64(data)
+  private def from_base64(data, decode_table)
     len = data.length
     dt = DECODE_TABLE.buffer
     cstr = data.pointer(len)
@@ -148,7 +197,8 @@ module Base64
     end
   end
 
-  private macro next_decoded_value
+  # :nodoc:
+  macro next_decoded_value
     sym = cstr.value
     res = dt[sym]
     cstr += 1
@@ -158,6 +208,7 @@ module Base64
     res
   end
 
+  # :nodoc:
   DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.chr
     when 'A'..'Z'   then (i - 0x41).to_i8

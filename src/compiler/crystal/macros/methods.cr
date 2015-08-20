@@ -14,6 +14,8 @@ module Crystal
         interpret_argless_method("id", args) { MacroId.new(to_macro_id) }
       when "stringify"
         interpret_argless_method("stringify", args) { stringify }
+      when "class_name"
+        interpret_argless_method("class_name", args) { class_name }
       when "=="
         BoolLiteral.new(self == args.first)
       when "!="
@@ -21,7 +23,7 @@ module Crystal
       when "!"
         BoolLiteral.new(!truthy?)
       else
-        raise "undefined macro method '#{class_desc}##{method}'"
+        raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
       end
     end
 
@@ -52,6 +54,10 @@ module Crystal
 
     def stringify
       StringLiteral.new(to_s)
+    end
+
+    def class_name
+      StringLiteral.new(class_desc)
     end
   end
 
@@ -330,11 +336,29 @@ module Crystal
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
+      when "to_i"
+        case args.length
+        when 0
+          value = @value.to_i64?
+        when 1
+          arg = args.first
+          raise "argument to StringLiteral#to_i must be a number, not #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
+
+          value = @value.to_i64?(arg.to_number)
+        else
+          raise "wrong number of arguments for to_i (#{args.length} for 0, 1)"
+        end
+
+        if value
+          NumberLiteral.new(value)
+        else
+          raise "StringLiteral#to_i: #{@value} is not an integer"
+        end
       when "tr"
         interpret_two_args_method(method, args) do |first, second|
           raise "first arguent to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
           raise "second arguent to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
-          StringLiteral.new(value.tr(first.value, second.value))
+          StringLiteral.new(@value.tr(first.value, second.value))
         end
       when "underscore"
         interpret_argless_method(method, args) { StringLiteral.new(@value.underscore) }
@@ -452,6 +476,22 @@ module Crystal
           end
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
+        end
+      when "unshift"
+        case args.length
+        when 1
+          elements.unshift(args.first)
+          self
+        else
+          raise "wrong number of arguments for push (#{args.length} for 1)"
+        end
+      when "push", "<<"
+        case args.length
+        when 1
+          elements << args.first
+          self
+        else
+          raise "wrong number of arguments for push (#{args.length} for 1)"
         end
       else
         super
@@ -628,6 +668,8 @@ module Crystal
         ArrayLiteral.map(self.args) { |arg| arg }
       when "receiver"
         receiver || Nop.new
+      when "visibility"
+        SymbolLiteral.new(visibility ? visibility.to_s : "public")
       else
         super
       end
@@ -652,13 +694,15 @@ module Crystal
   class MacroId
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify"
+      when "==", "!=", "stringify", "class_name"
         return super
       end
 
       value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
       value = MacroId.new(value.value) if value.is_a?(StringLiteral)
       value
+    rescue UndefinedMacroMethodError
+      raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
 
     def interpret_compare(other : MacroId | StringLiteral)
@@ -669,13 +713,15 @@ module Crystal
   class SymbolLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify"
+      when "==", "!=", "stringify", "class_name"
         return super
       end
 
       value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
       value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
       value
+    rescue UndefinedMacroMethodError
+      raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
   end
 

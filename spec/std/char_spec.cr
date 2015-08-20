@@ -187,4 +187,14 @@ describe "Char" do
   it "does bytes" do
     '\u{FF}'.bytes.should eq([195, 191])
   end
+
+  it "#===(:Int)" do
+    ('c'.ord).should eq(99)
+    ('c' === 99_u8).should be_true
+    ('c' === 99).should be_true
+    ('z' === 99).should be_false
+
+    ('酒'.ord).should eq(37202)
+    ('酒' === 37202).should be_true
+  end
 end

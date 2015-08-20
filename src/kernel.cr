@@ -6,34 +6,28 @@ PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
+# Repeatedly executes the block.
+#
+# ```
+# loop do
+#   print "Input: "
+#   line = gets
+#   break unless line
+#   # ...
+# end
+# ```
 def loop
   while true
     yield
   end
 end
 
-def gets
-  STDIN.gets
+def gets(*args)
+  STDIN.gets(*args)
 end
 
-def gets(delimiter : Char)
-  STDIN.gets(delimiter)
-end
-
-def gets(delimiter : String)
-  STDIN.gets(delimiter)
-end
-
-def read_line
-  STDIN.read_line
-end
-
-def read_line(delimiter : Char)
-  STDIN.read_line(delimiter)
-end
-
-def read_line(delimiter : String)
-  STDIN.read_line(delimiter)
+def read_line(*args)
+  STDIN.read_line(*args)
 end
 
 def print(*objects : _)
@@ -88,17 +82,39 @@ module AtExitHandlers
     @@running = true
 
     begin
-      @@handlers.try &.each &.call
+      @@handlers.try &.reverse_each &.call
     rescue handler_ex
       puts "Error running at_exit handler: #{handler_ex}"
     end
   end
 end
 
+# Registers the given `Proc` for execution when the program exits.
+# If multiple handlers are registered, they are executed in reverse order of registration.
+#
+# ```
+# def do_at_exit(str1)
+#   at_exit { print str1 }
+# end
+#
+# at_exit { puts "cruel world" }
+# do_at_exit("goodbye ")
+# exit
+# ```
+#
+# Produces:
+#
+# ```text
+# goodbye cruel world
+# ```
 def at_exit(&handler)
   AtExitHandlers.add(handler)
 end
 
+# Terminates execution immediately, returning the given status code
+# to the invoking environment.
+#
+# Registered `at_exit` procs are executed.
 def exit(status = 0)
   AtExitHandlers.run
   STDOUT.flush
@@ -106,8 +122,10 @@ def exit(status = 0)
   Process.exit(status)
 end
 
+# Terminates execution immediately, printing *message* to STDERR and
+# then calling `exit(status)`.
 def abort(message, status = 1)
-  puts message
+  STDERR.puts message if message
   exit status
 end
 

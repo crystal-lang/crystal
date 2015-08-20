@@ -25,7 +25,7 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build(node, single_module: true)[""]
+      llvm_mod = codegen(node, single_module: true)[""]
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type
@@ -48,15 +48,10 @@ module Crystal
       engine.run_function wrapper, [] of LLVM::GenericValue
     end
 
-    def build(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    def codegen(node, single_module = false, debug = false, llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, llvm_mod: llvm_mod, expose_crystal_main: expose_crystal_main
-      begin
-        node.accept visitor
-        visitor.finish
-      rescue ex
-        visitor.llvm_mod.dump
-        raise ex
-      end
+      node.accept visitor
+      visitor.finish
 
       visitor.modules
     end
@@ -451,7 +446,6 @@ module Crystal
 
     def visit(node : ClassDef)
       node.runtime_initializers.try &.each &.accept self
-
       accept node.body
       @last = llvm_nil
       false
@@ -572,7 +566,7 @@ module Crystal
         context.break_phi = nil
         context.next_phi = nil
 
-        br node.run_once ? body_block : while_block
+        br while_block
 
         position_at_end while_block
 
@@ -681,8 +675,12 @@ module Crystal
     def visit(node : Assign)
       target, value = node.target, node.value
 
-      # Initialize constants if they are used
-      if target.is_a?(Path)
+      case target
+      when Underscore
+        request_value(false) { accept value }
+        return false
+      when Path
+        # Initialize constants if they are used
         const = target.target_const.not_nil!
         initialize_const const
         @last = llvm_nil

@@ -12,9 +12,19 @@ These are the most important things in need right now:
 
 ## Contributing to the documentation
 
-The main site and official language documentation is on the `gh-pages` branch. Just check it out
-and do `rake build && jekyll serve` to browse it. We use [GitBook](https://www.gitbook.com/) for the documentation,
-check the `_gitbook` directory.
+The main site and official language documentation is on the `gh-pages` branch.
+We use [GitBook](https://www.gitbook.com/) for the documentation.
+Check the `_gitbook` directory, that's where you can edit the documentation.
+
+To get started getting the documentation working locally follow these steps (assuming you already have ruby and node/npm installed):
+
+```
+gem install bundler # if you don't have bundler already
+bundle
+npm install -g gitbook-cli
+```
+
+Then you can check it out by doing `rake build && jekyll serve` to [browse it](http://localhost:4000).
 
 The standard library documentation is on the code itself.
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
@@ -69,3 +79,10 @@ If something is missing from the language it might be that it's not yet implemen
 ## Contributing to this guide
 
 If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
+
+## Code of Conduct
+
+Please note that this project is released with a [Contributor Code of Conduct][ccoc].
+By participating in this project you agree to abide by its terms.
+
+[ccoc]: https://github.com/manastech/crystal/blob/master/CODE_OF_CONDUCT.md

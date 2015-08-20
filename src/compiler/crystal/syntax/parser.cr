@@ -62,10 +62,11 @@ module Crystal
       exps = [] of ASTNode
       exps.push exp
 
-      begin
+      loop do
         exps << parse_multi_assign
         skip_statement_end
-      end until is_end_token
+        break if is_end_token
+      end
 
       Expressions.from(exps)
     end
@@ -192,9 +193,9 @@ module Crystal
           when :unless
             atomic = parse_expression_suffix(location) { |exp| Unless.new(exp, atomic) }
           when :while
-            atomic = parse_expression_suffix(location) { |exp| While.new(exp, atomic, true) }
+            raise "trailing `while` is not supported", @token
           when :until
-            atomic = parse_expression_suffix(location) { |exp| Until.new(exp, atomic, true) }
+            raise "trailing `until` is not supported", @token
           when :rescue
             next_token_skip_space
             rescue_body = parse_expression
@@ -238,12 +239,12 @@ module Crystal
       (yield exp).at(location)
     end
 
-    def parse_op_assign_no_control(allow_ops = true)
+    def parse_op_assign_no_control(allow_ops = true, allow_suffix = true)
       check_void_expression_keyword
-      parse_op_assign(allow_ops)
+      parse_op_assign(allow_ops, allow_suffix)
     end
 
-    def parse_op_assign(allow_ops = true)
+    def parse_op_assign(allow_ops = true, allow_suffix = true)
       doc = @token.doc
       location = @token.location
 
@@ -254,6 +255,9 @@ module Crystal
         when :SPACE
           next_token
           next
+        when :IDENT
+          unexpected_token unless allow_suffix
+          break
         when :"="
           slash_is_regex!
 
@@ -384,17 +388,26 @@ module Crystal
       atomic
     end
 
+    ColonOrNewline = [:":", :NEWLINE]
+
     def parse_question_colon
-      location = @token.location
       cond = parse_range
+
       while @token.type == :"?"
+        location = @token.location
+
         check_void_value cond, location
 
         next_token_skip_space_or_newline
-        true_val = parse_range
-        check :":"
+        next_token_skip_space_or_newline if @token.type == :":"
+        true_val = parse_question_colon
+
+        check ColonOrNewline
+
         next_token_skip_space_or_newline
-        false_val = parse_range
+        next_token_skip_space_or_newline if @token.type == :":"
+        false_val = parse_question_colon
+
         cond = If.new(cond, true_val, false_val)
       end
       cond
@@ -502,7 +515,7 @@ module Crystal
 
     parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", ":\"**\""
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"!"]
+    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"[]?", :"!"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -968,6 +981,8 @@ module Crystal
         end
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
+      when :UNDERSCORE
+        node_and_next_token Underscore.new
       else
         unexpected_token_in_atomic
       end
@@ -1170,7 +1185,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign_no_control
+      cond = parse_op_assign_no_control allow_suffix: false
 
       slash_is_regex!
       skip_statement_end
@@ -1423,10 +1438,12 @@ module Crystal
 
       if @token.keyword?(:do)
         next_token_skip_statement_end
+        check_not_pipe_before_proc_literal_body
         body = parse_expressions
         check_ident :"end"
       elsif @token.type == :"{"
         next_token_skip_statement_end
+        check_not_pipe_before_proc_literal_body
         body = parse_expressions
         check :"}"
       else
@@ -1438,6 +1455,27 @@ module Crystal
       next_token_skip_space
 
       FunLiteral.new(Def.new("->", args, body))
+    end
+
+    def check_not_pipe_before_proc_literal_body
+      if @token.type == :"|"
+        location = @token.location
+        next_token_skip_space
+
+        msg = String.build do |msg|
+          msg << "unexpected token '|', proc literals specify their arguments like this: ->("
+          if @token.type == :IDENT
+            msg << @token.value.to_s << " : Type"
+            next_token_skip_space_or_newline
+            msg << ", ..." if @token.type == :","
+          else
+            msg << "arg : Type"
+          end
+          msg << ") { ... }"
+        end
+
+        raise msg, location
+      end
     end
 
     def parse_fun_literal_arg
@@ -1577,6 +1615,8 @@ module Crystal
             raise "Unterminated command"
           when :regex
             raise "Unterminated regular expression"
+          when :heredoc
+            raise "Unterminated heredoc"
           else
             raise "Unterminated string literal"
           end
@@ -2690,7 +2730,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign_no_control
+      cond = parse_op_assign_no_control allow_suffix: false
       parse_if_after_condition cond, check_end
     end
 
@@ -2723,7 +2763,7 @@ module Crystal
     def parse_unless
       next_token_skip_space_or_newline
 
-      cond = parse_op_assign_no_control
+      cond = parse_op_assign_no_control allow_suffix: false
       skip_statement_end
 
       a_then = parse_expressions
@@ -2935,7 +2975,16 @@ module Crystal
       if @token.type == :"|"
         next_token_skip_space_or_newline
         while @token.type != :"|"
-          var = Var.new(check_ident).at(@token.location)
+          case @token.type
+          when :IDENT
+            arg_name = @token.value.to_s
+          when :UNDERSCORE
+            arg_name = "_"
+          else
+            raise "expecting block argument name, not #{@token.type}", @token
+          end
+
+          var = Var.new(arg_name).at(@token.location)
           block_args << var
 
           next_token_skip_space_or_newline
@@ -3040,7 +3089,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__FILE__, :__DIR__
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{", :__LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*"
         if current_char.whitespace?
@@ -3369,7 +3418,9 @@ module Crystal
           if allow_primitives
             case @token.type
             when :NUMBER
-              types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
+              num = NumberLiteral.new(@token.value.to_s, @token.number_kind)
+              num.location = @token.location
+              types << node_and_next_token(num)
               skip_space
               return types
             end
@@ -3776,7 +3827,7 @@ module Crystal
         next_token_skip_space_or_newline
         if @token.type == :"="
           next_token_skip_space
-          check [:IDENT, :CONST]
+          check IdentOrConst
           real_name = @token.value.to_s
           next_token_skip_space
         end
@@ -4158,7 +4209,7 @@ module Crystal
 
     def can_be_assigned?(node)
       case node
-      when Var, InstanceVar, ClassVar, Path, Global
+      when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
         (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"

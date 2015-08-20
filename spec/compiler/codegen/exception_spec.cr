@@ -620,7 +620,7 @@ describe "Code gen: exception" do
   end
 
   it "codegens issue #118 (1)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       begin
@@ -633,7 +633,7 @@ describe "Code gen: exception" do
   end
 
   it "codegens issue #118 (2)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       n = nil
@@ -677,7 +677,7 @@ describe "Code gen: exception" do
   end
 
   it "doesn't codegen duplicated ensure if unreachable (#709)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       class Foo

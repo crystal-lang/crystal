@@ -360,6 +360,12 @@ describe "String" do
     (str * 10).should eq("ffffffffff")
   end
 
+  it "multiplies with negative size" do
+    expect_raises(ArgumentError, "negative argument") do
+      "f" * -1
+    end
+  end
+
   describe "downcase" do
     assert { "HELLO!".downcase.should eq("hello!") }
     assert { "HELLO MAN!".downcase.should eq("hello man!") }
@@ -1129,6 +1135,12 @@ describe "String" do
     "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
   end
 
+  it "matches with block" do
+    "FooBar".match(/oo/) do |match_data|
+      match_data[0].should eq("oo")
+    end
+  end
+
   it "has size (same as length)" do
     "テスト".size.should eq(3)
   end
@@ -1167,6 +1179,56 @@ describe "String" do
     assert { "123".rjust(5).should eq("  123") }
     assert { "12".rjust(7, '-').should eq("-----12") }
     assert { "12".rjust(7, 'あ').should eq("あああああ12") }
+  end
+
+  describe "succ" do
+    it "returns an empty string for empty strings" do
+      "".succ.should eq("")
+    end
+
+    it "returns the successor by increasing the rightmost alphanumeric (digit => digit, letter => letter with same case)" do
+      "abcd".succ.should eq("abce")
+      "THX1138".succ.should eq("THX1139")
+
+      "<<koala>>".succ.should eq("<<koalb>>")
+      "==A??".succ.should eq("==B??")
+    end
+
+    it "increases non-alphanumerics (via ascii rules) if there are no alphanumerics" do
+      "***".succ.should eq("**+")
+      "**`".succ.should eq("**a")
+    end
+
+    it "increases the next best alphanumeric (jumping over non-alphanumerics) if there is a carry" do
+      "dz".succ.should eq("ea")
+      "HZ".succ.should eq("IA")
+      "49".succ.should eq("50")
+
+      "izz".succ.should eq("jaa")
+      "IZZ".succ.should eq("JAA")
+      "699".succ.should eq("700")
+
+      "6Z99z99Z".succ.should eq("7A00a00A")
+
+      "1999zzz".succ.should eq("2000aaa")
+      "NZ/[]ZZZ9999".succ.should eq("OA/[]AAA0000")
+    end
+
+    it "adds an additional character (just left to the last increased one) if there is a carry and no character left to increase" do
+      "z".succ.should eq("aa")
+      "Z".succ.should eq("AA")
+      "9".succ.should eq("10")
+
+      "zz".succ.should eq("aaa")
+      "ZZ".succ.should eq("AAA")
+      "99".succ.should eq("100")
+
+      "9Z99z99Z".succ.should eq("10A00a00A")
+
+      "ZZZ9999".succ.should eq("AAAA0000")
+      "/[]ZZZ9999".succ.should eq("/[]AAAA0000")
+      "Z/[]ZZZ9999".succ.should eq("AA/[]AAA0000")
+    end
   end
 
   it "uses sprintf from top-level" do
@@ -1228,8 +1290,61 @@ describe "String" do
     iter.next.should eq("foo\n")
   end
 
-  # TODO: enable after 0.7.4
-  pending "gets length of \0 string" do
+  it "has yields to each_codepoint" do
+    codepoints = [] of Int32
+    "ab☃".each_codepoint do |codepoint|
+      codepoints << codepoint
+    end
+    codepoints.should eq [97, 98, 9731]
+  end
+
+  it "has the each_codepoint iterator" do
+    iter = "ab☃".each_codepoint
+    iter.next.should eq 97
+    iter.next.should eq 98
+    iter.next.should eq 9731
+  end
+
+  it "has codepoints" do
+    "ab☃".codepoints.should eq [97, 98, 9731]
+  end
+
+  it "gets length of \0 string" do
     "\0\0".length.should eq(2)
+  end
+
+  context "%" do
+    it "substitutes one placeholder" do
+      res = "change %{this}" % { "this": "nothing" }
+      res.should eq "change nothing"
+    end
+
+    it "substitutes multiple placeholder" do
+      res = "change %{this} and %{more}" % { "this": "nothing", "more": "something" }
+      res.should eq "change nothing and something"
+    end
+
+    it "throws an error when the key is not found" do
+      expect_raises KeyError do
+        "change %{this}" % { "that": "wrong key" }
+      end
+    end
+
+    it "raises if expecting hash but not given" do
+      expect_raises(ArgumentError, "one hash required") do
+        "change %{this}" % "this"
+      end
+    end
+
+    it "raises on unbalanced curly" do
+      expect_raises(ArgumentError, "malformed name - unmatched parenthesis") do
+        "change %{this" % {"this": 1}
+      end
+    end
+
+    it "applies formatting to %<...> placeholder" do
+      res = "change %<this>.2f" % { "this": 23.456 }
+      res.should eq "change 23.46"
+    end
   end
 end

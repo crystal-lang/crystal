@@ -80,12 +80,18 @@ module Crystal
         end
       end
 
-      if self_splat_index && other_splat_index && self_splat_index == other_splat_index
-        self_arg = self.def.args[self_splat_index]
-        other_arg = other.def.args[other_splat_index]
+      if self_splat_index && other_splat_index
+        if self_splat_index == other_splat_index
+          self_arg = self.def.args[self_splat_index]
+          other_arg = other.def.args[other_splat_index]
 
-        if (self_restriction = self_arg.restriction) && (other_restriction = other_arg.restriction)
-          return false unless self_restriction.is_restriction_of?(other_restriction, owner)
+          if (self_restriction = self_arg.restriction) && (other_restriction = other_arg.restriction)
+            return false unless self_restriction.is_restriction_of?(other_restriction, owner)
+          end
+        elsif self_splat_index < other_splat_index
+          return false
+        else
+          return true
         end
       end
 

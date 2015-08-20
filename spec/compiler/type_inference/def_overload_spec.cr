@@ -718,4 +718,16 @@ describe "Type inference: def overload" do
       ),
       "foo(x : Int32, *bar)"
   end
+
+  it "says `no overload matches` instead of `can't instantiate abstract class` on wrong argument in new method" do
+    assert_error %(
+      abstract class Foo
+        def self.new(x : Int)
+        end
+      end
+
+      Foo.new('a')
+      ),
+      "no overload matches"
+  end
 end

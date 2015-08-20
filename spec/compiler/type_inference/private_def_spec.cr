@@ -14,7 +14,7 @@ describe "Type inference: private def" do
                                           foo
                                         )),
       ]
-      compiler.no_build = true
+      compiler.no_codegen = true
       compiler.prelude = "empty"
       compiler.compile sources, "output"
     end
@@ -31,7 +31,7 @@ describe "Type inference: private def" do
                                         foo
                                       )),
     ]
-    compiler.no_build = true
+    compiler.no_codegen = true
     compiler.prelude = "empty"
     compiler.compile sources, "output"
   end
@@ -51,7 +51,7 @@ describe "Type inference: private def" do
                                         foo
                                       )),
     ]
-    compiler.no_build = true
+    compiler.no_codegen = true
     compiler.prelude = "empty"
     compiler.compile sources, "output"
   end
@@ -83,7 +83,7 @@ describe "Type inference: private def" do
                                           foo
                                         )),
       ]
-      compiler.no_build = true
+      compiler.no_codegen = true
       compiler.prelude = "empty"
       compiler.compile sources, "output"
     end
@@ -100,7 +100,7 @@ describe "Type inference: private def" do
                                         foo
                                       )),
     ]
-    compiler.no_build = true
+    compiler.no_codegen = true
     compiler.prelude = "empty"
     compiler.compile sources, "output"
   end

@@ -109,6 +109,19 @@ describe "Type inference: doc" do
     bar.doc.should eq("Hello")
   end
 
+  it "stores doc for def with attribute" do
+    result = infer_type %(
+      # Hello
+      @[AlwaysInline]
+      fun bar : Int32
+        1
+      end
+    ), wants_doc: true
+    program = result.program
+    bar = program.lookup_defs("bar").first
+    bar.doc.should eq("Hello")
+  end
+
   it "stores doc for abstract def" do
     result = infer_type %(
       class Foo

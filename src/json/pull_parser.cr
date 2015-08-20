@@ -1,3 +1,4 @@
+# This class allows you to consume JSON on demand, token by token.
 class JSON::PullParser
   getter kind
   getter bool_value

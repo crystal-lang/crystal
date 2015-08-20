@@ -91,6 +91,28 @@ struct Int
     end
   end
 
+  # TODO enable after 0.7.5, and remove ">>" from primitives
+  # def >>(count : Int)
+  #   if count < 0
+  #     self << count.abs
+  #   elsif count < sizeof(self) * 8
+  #     self.unsafe_shr(count)
+  #   else
+  #     self.class.zero
+  #   end
+  # end
+
+  # TODO enable after 0.7.5 and remove "<<" from primitives
+  # def <<(count : Int)
+  #   if count < 0
+  #     self >> count.abs
+  #   elsif count < sizeof(self) * 8
+  #     self.unsafe_shl(count)
+  #   else
+  #     self.class.zero
+  #   end
+  # end
+
   def abs
     self >= 0 ? self : -self
   end
@@ -117,6 +139,10 @@ struct Int
 
   def **(other)
     to_f ** other
+  end
+
+  def ===(char : Char)
+    self === char.ord
   end
 
   def bit(bit)

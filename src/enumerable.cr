@@ -124,9 +124,9 @@ module Enumerable(T)
   #
   # If *count* is bigger than the number of elements in the collection, returns an empty array.
   #
-  #     [1, 2, 3, 4, 5, 6].drop(3)  #=> [4, 5, 6]
-  def drop(count : Int)
-    raise ArgumentError.new("attempt to drop negative size") if count < 0
+  #     [1, 2, 3, 4, 5, 6].skip(3)  #=> [4, 5, 6]
+  def skip(count : Int)
+    raise ArgumentError.new("attempt to skip negative size") if count < 0
 
     array = Array(T).new
     each_with_index do |e, i|
@@ -135,11 +135,11 @@ module Enumerable(T)
     array
   end
 
-  # Drops elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
+  # Skips elements up to, but not including, the first element for which the block returns nil or false and returns an array containing the remaining elements.
   #
-  #     [1, 2, 3, 4, 5, 0].drop_while {|i| i < 3} #=> [3, 4, 5, 0]
+  #     [1, 2, 3, 4, 5, 0].skip_while {|i| i < 3} #=> [3, 4, 5, 0]
   #
-  def drop_while
+  def skip_while
     result = Array(T).new
     block_returned_false = false
     each do |x|
@@ -316,6 +316,45 @@ module Enumerable(T)
       end
     end
     h
+  end
+
+  # Returns an `Array` with chunks in the given size, eventually filled up with given value or nil.
+  #
+  #     [1, 2, 3].in_groups_of(2, 0) #=> [[1, 2], [3, 0]]
+  #     [1, 2, 3].in_groups_of(2) #=> [[1, 2], [3, nil]]
+  #
+  def in_groups_of(size: Int, filled_up_with = nil)
+    raise ArgumentError.new("size must be positive") if size <= 0
+    parts_count = (count.to_f / size).ceil.to_i
+    ary         = Array(Array(T | typeof(filled_up_with))).new(parts_count)
+    parts_count.times do |i|
+      ary << Array(T | typeof(filled_up_with)).new(size, filled_up_with)
+    end
+
+    each_with_index do |e, i|
+      ary[i / size][i % size] = e
+    end
+
+    ary
+  end
+
+  # Yields a block with the chunks in the given size.
+  #
+  #     [1, 2, 4].in_groups_of(2, 0) { |e| p e.sum }
+  #     #=> 3
+  #     #=> 4
+  #
+  def in_groups_of(size: Int, filled_up_with = nil)
+    raise ArgumentError.new("size must be positive") if size <= 0
+    ary = Array(T | typeof(filled_up_with)).new(size, filled_up_with)
+
+    each_with_index do |e, i|
+      ary[i % size] = e
+      if i % size == size - 1 || i == count - 1
+        yield ary
+        ary = Array(T | typeof(filled_up_with)).new(size, filled_up_with)
+      end
+    end
   end
 
   # Returns `true` if the collection contains *obj*, `false` otherwise.
@@ -751,7 +790,7 @@ module Enumerable(T)
 
   # Returns an array with all the elements in the collection.
   #
-  #     (1..5).to_a  #=> 1, 2, 3, 4, 5]
+  #     (1..5).to_a  #=> [1, 2, 3, 4, 5]
   #
   def to_a
     ary = [] of T

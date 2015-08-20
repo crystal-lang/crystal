@@ -216,11 +216,11 @@ abstract class JSON::Lexer
         @token.int_value = 0_i64
       end
     when '1' .. '9'
-      integer = (current_char.ord - '0'.ord).to_i64
+      integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'
         integer *= 10
-        integer += (char.ord - '0'.ord)
+        integer += char - '0'
         char = next_char
       end
 
@@ -243,7 +243,7 @@ abstract class JSON::Lexer
     char = next_char
     while '0' <= char <= '9'
       integer *= 10
-      integer += (char.ord - '0'.ord)
+      integer += char - '0'
       divisor *= 10
       char = next_char
     end
@@ -272,7 +272,7 @@ abstract class JSON::Lexer
     if '0' <= char <= '9'
       while '0' <= char <= '9'
         exponent *= 10
-        exponent += (char.ord - '0'.ord)
+        exponent += char - '0'
         char = next_char
       end
     else

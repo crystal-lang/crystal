@@ -51,12 +51,16 @@ module Crystal
         parser.parse_to_def(target_def)
       end
 
+      expected_type = target_def.type
+
       type_visitor = TypeVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
       generated_nodes.accept type_visitor
 
-      if generated_nodes.type != target_def.type
-        target_def.raise "expected '#{target_def.name}' to return #{target_def.type}, not #{generated_nodes.type}"
+      target_def.bind_to generated_nodes
+
+      if target_def.type != expected_type
+        target_def.raise "expected '#{target_def.name}' to return #{expected_type}, not #{target_def.type}"
       end
 
       target_def.body = generated_nodes
@@ -653,7 +657,8 @@ module Crystal
             return @last = NumberLiteral.new(scope.tuple_types.length)
           end
         when "@type"
-          return @last = TypeNode.new(@scope.instance_type)
+          target = @scope == @mod.class_type ? @scope : @scope.instance_type
+          return @last = TypeNode.new(target)
         when "@constants"
           scope = @scope.try &.instance_type
           return @last = TypeNode.constants(scope)

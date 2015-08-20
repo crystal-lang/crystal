@@ -288,7 +288,7 @@ describe "Code gen: pointer" do
   end
 
   it "can use typedef pointer value get and set (#630)" do
-    build(%(
+    codegen(%(
       lib LibFoo
         type MyObj = Int32*
         fun foo : MyObj

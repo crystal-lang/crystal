@@ -223,7 +223,7 @@ describe "Code gen: struct" do
   end
 
   it "builds struct setter with fun type (1)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
@@ -238,7 +238,7 @@ describe "Code gen: struct" do
   end
 
   it "builds struct setter with fun type (2)" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       lib LibC
@@ -306,5 +306,18 @@ describe "Code gen: struct" do
       point = LibFoo::Point.new x: 1, y: 2
       point.to_s
       )).to_string.should eq("LibFoo::Point(@x=1, @y=2)")
+  end
+
+  it "can access instance var from the outside (#1092)" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      f = LibFoo::Foo.new x: 123
+      f.@x
+      )).to_i.should eq(123)
   end
 end

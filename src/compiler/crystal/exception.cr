@@ -10,6 +10,8 @@ module Crystal
       to_s_with_source(nil, io)
     end
 
+    abstract def to_s_with_source(source, io)
+
     def to_s_with_source(source)
       String.build do |io|
         to_s_with_source source, io
@@ -370,5 +372,8 @@ module Crystal
   end
 
   class FrozenTypeException < TypeException
+  end
+
+  class UndefinedMacroMethodError < TypeException
   end
 end

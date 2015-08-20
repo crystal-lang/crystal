@@ -33,8 +33,9 @@ module HTTP
     cstr = line.to_unsafe
     bytesize = line.bytesize
 
-    # Get the colon index
+    # Get the colon index and name
     colon_index = cstr.to_slice(bytesize).index(':'.ord) || 0
+    name = line.byte_slice(0, colon_index)
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
@@ -44,13 +45,14 @@ module HTTP
 
     # Get where the header value ends (chomp line)
     right_index = bytesize
-    if right_index > 1 && cstr[right_index - 2] == '\r'.ord && cstr[right_index - 1] == '\n'.ord
+    if middle_index >= right_index
+      return {name, ""}
+    elsif right_index > 1 && cstr[right_index - 2] === '\r' && cstr[right_index - 1] === '\n'
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord
+    elsif right_index > 0 && cstr[right_index - 1] === '\n'
       right_index -= 1
     end
 
-    name = line.byte_slice(0, colon_index)
     value = line.byte_slice(middle_index, right_index - middle_index)
 
     {name, value}
@@ -82,7 +84,7 @@ module HTTP
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
       return true
-    when "close"
+    when "close", "upgrade"
       return false
     end
 

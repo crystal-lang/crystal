@@ -66,4 +66,21 @@ describe "Code gen: hooks" do
       $x
       ").to_i.should eq(2)
   end
+
+  it "does inherited macro before class body" do
+    run("
+      $x = 123
+      class Foo
+        macro inherited
+          $y = $x
+        end
+      end
+
+      class Bar < Foo
+        $x += 1
+      end
+
+      $y
+      ").to_i.should eq(123)
+  end
 end

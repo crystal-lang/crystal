@@ -206,7 +206,7 @@ describe "Code gen: module" do
   end
 
   it "declares proc with module type and invoke it with two different types that return themselves" do
-    build(%(
+    codegen(%(
       module Moo
         def moo
           1
@@ -228,7 +228,7 @@ describe "Code gen: module" do
   end
 
   it "codegens proc of a module that was never included" do
-    build(%(
+    codegen(%(
       module Moo
       end
 
@@ -253,5 +253,24 @@ describe "Code gen: module" do
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
       )).to_i.should eq(3)
+  end
+
+  it "invokes method on yielded module that has no instances (#1079)" do
+    run(%(
+      require "prelude"
+
+      module Mod
+      end
+
+      def foo
+        ptr = Pointer(Mod).malloc(1_u64)
+        yield ptr.value
+        123
+      rescue
+        456
+      end
+
+      foo { |x| x.coco }
+      )).to_i.should eq(456)
   end
 end

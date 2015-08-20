@@ -257,4 +257,60 @@ describe "Type inference: splat" do
       Bar.new.foo 1
       )) { int32 }
   end
+
+  it "splats arg and splat against splat (1) (#1042)" do
+    assert_type(%(
+      def foo(a: Bool, *b: Int32)
+        1
+      end
+
+      def foo(*b: Int32)
+        'a'
+      end
+
+      foo(true, 3, 4, 5)
+      )) { int32 }
+  end
+
+  it "splats arg and splat against splat (2) (#1042)" do
+    assert_type(%(
+      def foo(a: Bool, *b: Int32)
+        1
+      end
+
+      def foo(*b: Int32)
+        'a'
+      end
+
+      foo(3, 4, 5)
+      )) { char }
+  end
+
+  it "gives correct error when forwarding splat" do
+    assert_error %(
+      def foo(x : Int)
+      end
+
+      def bar(*args)
+        foo *args
+      end
+
+      bar 'a', 1
+      ),
+      "wrong number of arguments for 'foo' (2 for 1)"
+  end
+
+  it "gives correct error when forwarding splat (2)" do
+    assert_error %(
+      def foo(x : Int, y : Int, z : Int, w : Int)
+      end
+
+      def bar(*args)
+        foo 'a', *args
+      end
+
+      bar 1, "a", 1.7
+      ),
+      "no overload matches 'foo' with types Char, Int32, String, Float64"
+  end
 end

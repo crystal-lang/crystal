@@ -159,4 +159,19 @@ describe "JSON serialization" do
       ({} of Nil => Nil).to_pretty_json.should eq(%({}))
     end
   end
+
+  it "generates an array with JSON::Builder" do
+    result = String.build do |io|
+      io.json_array do |array|
+        array.push 1
+        array.push do
+          io.json_array do |array2|
+            array2 << 2
+            array2 << 3
+          end
+        end
+      end
+    end
+    result.should eq("[1,[2,3]]")
+  end
 end

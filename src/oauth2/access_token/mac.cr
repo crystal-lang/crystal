@@ -8,7 +8,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_key
   property issued_at
 
-  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.to_i)
+  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.epoch)
     super(access_token, expires_in, refresh_token, scope)
   end
 
@@ -17,7 +17,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   end
 
   def authenticate(request : HTTP::Request, ssl)
-    ts = Time.now.to_i
+    ts = Time.now.epoch
     nonce = "#{ts - @issued_at}:#{SecureRandom.hex}"
     method = request.method
     uri = request.uri.full_path
@@ -38,7 +38,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
              when "hmac-sha-256" then :sha256
              else raise "unsupported algorithm: #{mac_algorithm}"
              end
-    Base64.strict_encode64 OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
+    Base64.strict_encode OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
   end
 
   def to_json(io)

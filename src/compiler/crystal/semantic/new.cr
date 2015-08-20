@@ -3,7 +3,13 @@ module Crystal
     def define_new(scope, arg_types)
       instance_type = scope.instance_type
       if instance_type.abstract && !instance_type.is_a?(VirtualType)
-        raise "can't instantiate abstract class #{scope}"
+        # If the type defines `new` methods it means that the types or arguments didn't match
+        new_defs = scope.lookup_defs("new")
+        if new_defs.empty?
+          raise "can't instantiate abstract class #{scope}"
+        else
+          raise_matches_not_found scope, "new"
+        end
       end
 
       original_instance_type = instance_type

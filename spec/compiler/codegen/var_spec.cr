@@ -108,7 +108,7 @@ describe "Code gen: var" do
   end
 
   it "codegens assignment that can never be reached" do
-    build(%(
+    codegen(%(
       require "prelude"
 
       if 1 == 1 && (x = nil)
@@ -125,5 +125,12 @@ describe "Code gen: var" do
       typeof(a = "hello")
       a.to_i
       )).to_i.should eq(123)
+  end
+
+  it "assigns to underscore" do
+    run(%(
+      _ = (b = 2)
+      b
+      )).to_i.should eq(2)
   end
 end

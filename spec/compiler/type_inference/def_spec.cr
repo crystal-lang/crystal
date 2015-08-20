@@ -313,4 +313,36 @@ describe "Type inference: def" do
       ),
       "compile-time type is Foo+"
   end
+
+  it "gives correct error for wrong number of arguments for program call inside type (#1024)" do
+    assert_error %(
+      def foo
+      end
+
+      class Foo
+        def self.bar
+          foo 1
+        end
+      end
+
+      Foo.bar
+      ),
+      "wrong number of arguments for 'foo' (1 for 0)"
+  end
+
+  it "gives correct error for wrong number of arguments for program call inside type (2) (#1024)" do
+    assert_error %(
+      def foo(x : String)
+      end
+
+      class Foo
+        def self.bar
+          foo 1
+        end
+      end
+
+      Foo.bar
+      ),
+      "no overload matches 'foo'"
+  end
 end

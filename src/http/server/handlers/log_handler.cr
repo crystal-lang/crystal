@@ -19,6 +19,6 @@ class HTTP::LogHandler < HTTP::Handler
     millis = elapsed.total_milliseconds
     return "#{millis.round(2)}ms" if millis >= 1
 
-    "#{(millis * 1000).round(2)}ns"
+    "#{(millis * 1000).round(2)}µs"
   end
 end

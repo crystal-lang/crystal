@@ -10,6 +10,30 @@ class BadSortingClass
 end
 
 describe "Array" do
+  describe "new" do
+    it "creates with default value" do
+      ary = Array.new(5, 3)
+      ary.should eq([3, 3, 3, 3, 3])
+    end
+
+    it "creates with default value in block" do
+      ary = Array.new(5) { |i| i * 2 }
+      ary.should eq([0, 2, 4, 6, 8])
+    end
+
+    it "raises on negative count" do
+      expect_raises(ArgumentError, "negative array size") do
+        Array.new(-1, 3)
+      end
+    end
+
+    it "raises on negative capacity" do
+      expect_raises(ArgumentError, "negative array size") do
+        Array(Int32).new(-1)
+      end
+    end
+  end
+
   describe "==" do
     it "compares empty" do
       ([] of Int32).should eq([] of Int32)
@@ -59,8 +83,18 @@ describe "Array" do
     (Tuple.new.to_a + [1, 2]).should eq([1, 2])
   end
 
-  it "does -" do
-    ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
+  describe "-" do
+    it "does it" do
+      ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5])
+    end
+
+    it "does with larger array coming second" do
+      ([4, 2] - [1, 2, 3]).should eq([4])
+    end
+  end
+
+  it "does *" do
+    ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
   end
 
   describe "[]" do
@@ -392,16 +426,6 @@ describe "Array" do
 
     it "gives nil when empty" do
       ([] of Int32).first?.should be_nil
-    end
-  end
-
-  describe "flat_map" do
-    it "does example 1" do
-      [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
-    end
-
-    it "does example 2" do
-      [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
     end
   end
 
@@ -902,6 +926,30 @@ describe "Array" do
     end
   end
 
+  describe "zip?" do
+    describe "when a block is provided" do
+      describe "and length of an arg is less than receiver" do
+        it "yields pairs of self's elements and passed array (with nil)" do
+          a, b, r = [1, 2, 3], [4, 5], ""
+          a.zip?(b) { |x, y| r += "#{x}:#{y}," }
+          r.should eq("1:4,2:5,3:,")
+        end
+      end
+    end
+
+    describe "when no block is provided" do
+      describe "and the arrays have different typed elements" do
+        describe "and length of an arg is less than receiver" do
+          it "returns an array of paired elements (tuples with nil)" do
+            a, b = [1, 2, 3], ["a", "b"]
+            r = a.zip?(b)
+            r.should eq([{1, "a"}, {2, "b"}, {3, nil}])
+          end
+        end
+      end
+    end
+  end
+
   it "does compact_map" do
     a = [1, 2, 3, 4, 5]
     b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
@@ -1058,5 +1106,26 @@ describe "Array" do
       expect_raises(IndexError){ [[1], [1, 2]].transpose }
       expect_raises(IndexError){ [[1, 2], [1]].transpose }
     end
+  end
+
+  describe "permutation" do
+    assert { [1, 2, 2].permutations.should eq([[1,2,2],[1,2,2],[2,1,2],[2,2,1],[2,1,2],[2,2,1]]) }
+    assert { [1, 2, 3].permutations.should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
+    assert { [1, 2, 3].permutations(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].permutations(2).should eq([[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]) }
+    assert { [1, 2, 3].permutations(3).should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
+    assert { [1, 2, 3].permutations(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].permutations(4).should eq([] of Array(Int32)) }
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].permutations(-1) } }
+
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].each_permutation(2) do |perm|
+        sums << perm.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([3, 4, 3, 5, 4, 5])
+    end
+
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) {} } }
   end
 end

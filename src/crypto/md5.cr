@@ -240,17 +240,7 @@ class Crypto::MD5
     end
 
     def hex
-      String.new(32) do |buffer|
-        0.upto(15) do |i|
-          buffer[i * 2] = to_hex((@digest[i]) >> 4)
-          buffer[i * 2 + 1] = to_hex(@digest[i] & 0x0f)
-        end
-        {32, 32}
-      end
-    end
-
-    def to_hex(c)
-      ((c < 10 ? 48_u8 : 87_u8) + c)
+      @digest.to_slice.hexstring
     end
   end
 end

@@ -280,8 +280,9 @@ module Spec
         if %failed
           raise %ex
         else
+          %ex_to_s = %ex.to_s
           backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "expected {{klass.id}}, got #{ %ex.class } with backtrace:\n#{backtrace}"
+          fail "expected {{klass.id}}, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}"
         end
       end
     end
