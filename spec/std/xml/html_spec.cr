@@ -4,7 +4,7 @@ require "xml"
 describe XML do
     
     it "parses HTML" do
-        doc = XML.parseHTML(%(\
+        doc = XML.parse_html(%(\
           <!doctype html>
           <html>
           <head>
