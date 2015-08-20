@@ -76,9 +76,9 @@ lib LibC
   S_IFSOCK = 0o140000
   S_IFMT   = 0o170000
 
-  fun stat(path : UInt8*, stat : Stat*) : Int32
-  fun lstat(path : UInt8*, stat : Stat *) : Int32
-  fun fstat(fileno : Int32, stat : Stat*) : Int32
+  fun stat(path : Char*, stat : Stat*) : Int
+  fun lstat(path : Char*, stat : Stat *) : Int
+  fun fstat(fileno : Int, stat : Stat*) : Int
 end
 
 class File

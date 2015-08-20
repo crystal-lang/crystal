@@ -1,25 +1,29 @@
 @[Link("pthread")]
 @[Link("gc")]
 lib LibGC
+  alias Int = LibC::Int
+  alias SizeT = LibC::SizeT
+  alias Word = LibC::ULong
+
   fun init = GC_init
-  fun malloc = GC_malloc(size : UInt32) : Void*
-  fun malloc_atomic = GC_malloc_atomic(size : UInt32) : Void*
-  fun realloc = GC_realloc(ptr : Void*, size : UInt32) : Void*
+  fun malloc = GC_malloc(size : SizeT) : Void*
+  fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
+  fun realloc = GC_realloc(ptr : Void*, size : SizeT) : Void*
   fun free = GC_free(ptr : Void*)
-  fun collect_a_little = GC_collect_a_little : Int32
+  fun collect_a_little = GC_collect_a_little : Int
   fun collect = GC_gcollect
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
-  fun set_handle_fork = GC_set_handle_fork(value : Int32)
+  fun set_handle_fork = GC_set_handle_fork(value : Int)
 
   type Finalizer = Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
-  fun invoke_finalizers = GC_invoke_finalizers : Int32
+  fun invoke_finalizers = GC_invoke_finalizers : Int
 
-  fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : LibC::SizeT*, free_bytes : LibC::SizeT*, unmapped_bytes : LibC::SizeT*, bytes_since_gc : LibC::SizeT*, total_bytes : LibC::SizeT*)
-  fun set_max_heap_size = GC_set_max_heap_size(LibC::SizeT)
+  fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : Word*, free_bytes : Word*, unmapped_bytes : Word*, bytes_since_gc : Word*, total_bytes : Word*)
+  fun set_max_heap_size = GC_set_max_heap_size(Word)
 
   fun get_start_callback = GC_get_start_callback : Void*
   fun set_start_callback = GC_set_start_callback(callback : ->)
@@ -34,24 +38,24 @@ end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
 lib LibPThread
-  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : Int32
-  fun join = GC_pthread_join(thread : Thread, value : Void**) : Int32
-  fun detach = GC_pthread_detach(thread : Thread) : Int32
+  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
+  fun join = GC_pthread_join(thread : Thread, value : Void**) : LibC::Int
+  fun detach = GC_pthread_detach(thread : Thread) : LibC::Int
 end
 
 # :nodoc:
 fun __crystal_malloc(size : UInt32) : Void*
-  LibGC.malloc(size)
+  LibGC.malloc(LibC::SizeT.cast(size))
 end
 
 # :nodoc:
 fun __crystal_malloc_atomic(size : UInt32) : Void*
-  LibGC.malloc_atomic(size)
+  LibGC.malloc_atomic(LibC::SizeT.cast(size))
 end
 
 # :nodoc:
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  LibGC.realloc(ptr, size)
+  LibGC.realloc(ptr, LibC::SizeT.cast(size))
 end
 
 module GC

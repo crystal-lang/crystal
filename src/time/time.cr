@@ -1,10 +1,10 @@
 lib LibC
   struct TimeZone
-    tz_minuteswest : Int32
-    tz_dsttime     : Int32
+    tz_minuteswest : Int
+    tz_dsttime     : Int
   end
 
-  fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int32
+  fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
 end
 
 struct Time

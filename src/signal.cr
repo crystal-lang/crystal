@@ -1,7 +1,7 @@
 lib LibC
-  fun signal(sig : Int32, handler : Int32 ->)
+  alias SigT = Int32 ->
+  fun signal(sig : Int, handler : SigT) : SigT
 end
-
 
 ifdef darwin
   enum Signal

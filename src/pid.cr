@@ -1,6 +1,6 @@
 lib LibC
-  fun getpid : Int32
-  fun getppid : Int32
+  fun getpid : PidT
+  fun getppid : PidT
 end
 
 PID = LibC.getpid

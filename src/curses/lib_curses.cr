@@ -2,23 +2,27 @@
 lib LibCurses
   type Window = Void*
 
-  $lines = LINES : Int32
-  $cols = COLS : Int32
+  alias Int = LibC::Int
+  alias Char = LibC::Char
+  alias Chtype = LibC::UInt
+
+  $lines = LINES : Int
+  $cols = COLS : Int
 
   fun initscr : Window
   fun printw(...)
   fun refresh
-  fun getch : Int32
-  fun cbreak : Int32
-  fun move(x : Int32, y : Int32) : Int32
-  fun wmove(w : Window, x : Int32, y : Int32) : Int32
-  fun addstr(s : UInt8*) : Int32
-  fun waddstr(w : Window, s : UInt8*) : Int32
-  fun newwin(height : Int32, width : Int32, top : Int32, left : Int32) : Window
-  fun box(w : Window, v : Int32, h : Int32) : Int32
+  fun getch : Int
+  fun cbreak : Int
+  fun move(x : Int, y : Int) : Int
+  fun wmove(w : Window, x : Int, y : Int) : Int
+  fun addstr(s : Char*) : Int
+  fun waddstr(w : Window, s : Char*) : Int
+  fun newwin(height : Int, width : Int, top : Int, left : Int) : Window
+  fun box(w : Window, v : Chtype, h : Chtype) : Int
   fun endwin
 
   fun delwin(window : Window)
   fun wrefresh(window : Window)
-  fun wgetch(window : Window) : Int32
+  fun wgetch(window : Window) : Int
 end

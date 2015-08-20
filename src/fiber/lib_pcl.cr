@@ -1,9 +1,11 @@
 @[Link("pcl")]
 lib LibPcl
+  alias Int = LibC::Int
+
   type Coroutine = Void*
 
-  fun co_thread_init : Int32
-  fun co_create(func : (Void* ->), data : Void*, stack : Void*, size : Int32) : Coroutine
+  fun co_thread_init : Int
+  fun co_create(func : (Void* ->), data : Void*, stack : Void*, size : Int) : Coroutine
   fun co_call(cr : Coroutine)
   fun co_resume
   fun co_current : Coroutine

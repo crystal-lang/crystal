@@ -1,4 +1,51 @@
 lib LibC
+  alias UInt16T = UShort
+  alias SocklenT = UInt
+
+  ifdef darwin
+    struct Addrinfo
+      flags : Int
+      family : Int
+      socktype : Int
+      protocol : Int
+      addrlen : SocklenT
+      canonname : Char*
+      addr : SockAddr*
+      next : Addrinfo*
+    end
+  else
+    struct Addrinfo
+      flags : Int
+      family : Int
+      socktype : Int
+      protocol : Int
+      addrlen : SocklenT
+      addr : SockAddr*
+      canonname : Char*
+      next : Addrinfo*
+    end
+  end
+
+  fun freeaddrinfo(addr : Addrinfo*) : Void
+  fun gai_strerror(code : Int) : Char*
+  fun getaddrinfo(name : Char*, service : Char*, hints : Addrinfo*, pai : Addrinfo**) : Int
+
+  AI_PASSIVE = 0x0001
+  AI_CANONNAME = 0x0002
+  AI_NUMERICHOST = 0x0004
+  AI_V4MAPPED = 0x0008
+  AI_ALL = 0x0010
+  AI_ADDRCONFIG = 0x0020
+
+  NI_MAXHOST = 1025
+  NI_MAXSERV = 32
+
+  NI_NUMERICHOST = 1
+  NI_NUMERICSERV = 2
+  NI_NOFQDN = 4
+  NI_NAMEREQD = 8
+  NI_DGRAM = 16
+
   ifdef darwin
     struct SockAddrIn
       len : UInt8
@@ -31,18 +78,13 @@ lib LibC
 
     alias AddressFamilyType = UInt8
 
-    AF_UNSPEC = 0_u8
-    AF_UNIX = 1_u8
-    AF_INET = 2_u8
-    AF_INET6 = 30_u8
+    AF_UNSPEC = 0
+    AF_UNIX = 1
+    AF_INET = 2
+    AF_INET6 = 30
 
     SOL_SOCKET = 0xffff
     SO_REUSEADDR = 0x0004
-
-    fun socket(domain : UInt8, t : Int32, protocol : Int32) : Int32
-    fun socketpair(domain : UInt8, t : Int32, protocol : Int32, sockets : StaticArray(Int32, 2)*) : Int32
-    fun inet_pton(af : UInt8, src : UInt8*, dst : Void*) : Int32
-    fun inet_ntop(af : UInt8, src : Void*, dst : UInt8*, size : Int32) : UInt8*
   else
     struct SockAddrIn
       family : UInt16
@@ -71,37 +113,36 @@ lib LibC
 
     alias AddressFamilyType = UInt16
 
-    AF_UNSPEC = 0_u16
-    AF_UNIX = 1_u16
-    AF_INET = 2_u16
-    AF_INET6 = 10_u16
+    AF_UNSPEC = 0
+    AF_UNIX = 1
+    AF_INET = 2
+    AF_INET6 = 10
 
     SOL_SOCKET = 1
     SO_REUSEADDR = 2
-
-    fun socket(domain : UInt16, t : Int32, protocol : Int32) : Int32
-    fun socketpair(domain : UInt16, t : Int32, protocol : Int32, sockets : StaticArray(Int32, 2)*) : Int32
-    fun inet_pton(af : UInt16, src : UInt8*, dst : Void*) : Int32
-    fun inet_ntop(af : UInt16, src : Void*, dst : UInt8*, size : Int32) : UInt8*
   end
 
   struct HostEnt
-    name : UInt8*
-    aliases : UInt8**
+    name : Char*
+    aliases : Char**
     addrtype : Int32
     length : Int32
-    addrlist : UInt8**
+    addrlist : Char**
   end
 
-  fun htons(n : Int32) : Int16
-  fun bind(fd : Int32, addr : SockAddr*, addr_len : Int32) : Int32
-  fun listen(fd : Int32, backlog : Int32) : Int32
-  fun accept(fd : Int32, addr : SockAddr*, addr_len : Int32*) : Int32
-  fun connect(fd : Int32, addr : SockAddr*, addr_len : Int32) : Int32
-  fun gethostbyname(name : UInt8*) : HostEnt*
-  fun getsockname(fd : Int32, addr : SockAddr*, addr_len : Int32*) : Int32
-  fun getpeername(fd : Int32, addr : SockAddr*, addr_len : Int32*) : Int32
-  fun setsockopt(sock : Int32, level : Int32, opt : Int32, optval : Void*, optlen : Int32) : Int32
+  fun socket(domain : Int, t : Int, protocol : Int) : Int
+  fun socketpair(domain : Int, t : Int, protocol : Int, sockets : StaticArray(Int, 2)*) : Int
+  fun inet_pton(af : Int, src : Char*, dst : Void*) : Int
+  fun inet_ntop(af : Int, src : Void*, dst : Char*, size : SocklenT) : Char*
+  fun htons(n : UInt16T) : UInt16T
+  fun bind(fd : Int, addr : SockAddr*, addr_len : SocklenT) : Int
+  fun listen(fd : Int, backlog : Int) : Int
+  fun accept(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
+  fun connect(fd : Int, addr : SockAddr*, addr_len : SocklenT) : Int
+  fun gethostbyname(name : Char*) : HostEnt*
+  fun getsockname(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
+  fun getpeername(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
+  fun setsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT) : Int
 
   SOCK_STREAM = 1
   SOCK_DGRAM = 2

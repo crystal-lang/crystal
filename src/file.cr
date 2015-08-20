@@ -1,9 +1,9 @@
 lib LibC
-  fun access(filename : UInt8*, how : Int32) : Int32
-  fun link(oldpath : UInt8*, newpath : UInt8*) : Int32
-  fun rename(oldname : UInt8*, newname : UInt8*) : Int32
-  fun symlink(oldpath : UInt8*, newpath : UInt8*) : Int32
-  fun unlink(filename : UInt8*) : Int32
+  fun access(filename : Char*, how : Int) : Int
+  fun link(oldpath : Char*, newpath : Char*) : Int
+  fun rename(oldname : Char*, newname : Char*) : Int
+  fun symlink(oldpath : Char*, newpath : Char*) : Int
+  fun unlink(filename : Char*) : Int
 
   F_OK = 0
   X_OK = 1 << 0

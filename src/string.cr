@@ -1,8 +1,8 @@
 lib LibC
-  fun atof(str : UInt8*) : Float64
-  fun strtof(str : UInt8*, endp : UInt8**) : Float32
-  fun strlen(s : UInt8*) : Int32
-  fun snprintf(str : UInt8*, n : Int32, format : UInt8*, ...) : Int32
+  fun atof(str : Char*) : Double
+  fun strtof(str : Char*, endp : Char**) : Float
+  fun strlen(s : Char*) : SizeT
+  fun snprintf(str : Char*, n : SizeT, format : Char*, ...) : Int
 end
 
 # A String represents an immutable sequence of UTF-8 characters.

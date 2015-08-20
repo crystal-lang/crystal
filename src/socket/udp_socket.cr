@@ -48,7 +48,7 @@ class UDPSocket < IPSocket
   def bind(host, port)
     getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP) do |ai|
       optval = 1
-      LibC.setsockopt(fd, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
+      LibC.setsockopt(fd, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, (pointerof(optval) as Void*), LibC::SocklenT.cast(sizeof(Int32)))
 
       if LibC.bind(fd, ai.addr, ai.addrlen) != 0
         next false if ai.next

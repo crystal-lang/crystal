@@ -1,5 +1,4 @@
 require "./libc"
-require "./addrinfo"
 
 class SocketError < Exception
 end
@@ -41,7 +40,7 @@ class Socket < FileDescriptorIO
   end
 
   protected def create_socket(family, stype, protocol = 0)
-    sock = LibC.socket(family, stype, protocol)
+    sock = LibC.socket(LibC::Int.cast(family), stype, protocol)
     raise Errno.new("Error opening socket") if sock <= 0
     init_close_on_exec sock
     sock
@@ -54,10 +53,6 @@ class Socket < FileDescriptorIO
     {% end %}
   end
 
-  def afamily(family)
-    LibC::AF_UNSPEC.class.cast(family)
-  end
-
   def inspect(io)
     io << "#<#{self.class}:fd #{@fd}>"
   end
@@ -65,14 +60,14 @@ class Socket < FileDescriptorIO
   def self.inet_ntop(sa : LibC::SockAddrIn6)
     ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::INET6_ADDRSTRLEN)
+    LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::SocklenT.cast(LibC::INET6_ADDRSTRLEN))
     String.new(ip_address)
   end
 
   def self.inet_ntop(sa : LibC::SockAddrIn)
     ip_address = GC.malloc_atomic(LibC::INET_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::INET_ADDRSTRLEN)
+    LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::SocklenT.cast(LibC::INET_ADDRSTRLEN))
     String.new(ip_address)
   end
 end

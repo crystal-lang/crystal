@@ -2,7 +2,7 @@ class IPSocket < Socket
   macro sockname(name, method)
     def {{name.id}}
       addr :: LibC::SockAddrIn6
-      addrlen = sizeof(LibC::SockAddrIn6)
+      addrlen = LibC::SocklenT.cast(sizeof(LibC::SockAddrIn6))
 
       if LibC.{{method.id}}(fd, pointerof(addr) as LibC::SockAddr*, pointerof(addrlen)) != 0
         raise Errno.new("{{method.id}}")
@@ -16,7 +16,7 @@ class IPSocket < Socket
         result_addr = (pointerof(addr) as LibC::SockAddrIn*).value
       end
 
-      Addr.new(family_name, LibC.htons(result_addr.port.to_i32).to_u16, Socket.inet_ntop(result_addr))
+      Addr.new(family_name, LibC.htons(LibC::UInt16T.cast(result_addr.port)).to_u16, Socket.inet_ntop(result_addr))
     end
   end
 

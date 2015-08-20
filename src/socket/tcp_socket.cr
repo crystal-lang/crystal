@@ -3,7 +3,7 @@ require "./ip_socket"
 class TCPSocket < IPSocket
   def initialize(host, port)
     getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
-      sock = create_socket(afamily(ai.family), ai.socktype, ai.protocol)
+      sock = create_socket(ai.family, ai.socktype, ai.protocol)
 
       if LibC.connect(sock, ai.addr, ai.addrlen) != 0
         LibC.close(sock)

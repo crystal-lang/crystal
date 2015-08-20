@@ -407,10 +407,6 @@ struct Int8
   def -
     0_i8 - self
   end
-
-  def self.cast(value)
-    value.to_i8
-  end
 end
 
 struct Int16
@@ -419,10 +415,6 @@ struct Int16
 
   def -
     0_i16 - self
-  end
-
-  def self.cast(value)
-    value.to_i16
   end
 end
 
@@ -433,10 +425,6 @@ struct Int32
   def -
     0 - self
   end
-
-  def self.cast(value)
-    value.to_i32
-  end
 end
 
 struct Int64
@@ -445,10 +433,6 @@ struct Int64
 
   def -
     0_i64 - self
-  end
-
-  def self.cast(value)
-    value.to_i64
   end
 end
 
@@ -459,10 +443,6 @@ struct UInt8
   def abs
     self
   end
-
-  def self.cast(value)
-    value.to_u8
-  end
 end
 
 struct UInt16
@@ -471,10 +451,6 @@ struct UInt16
 
   def abs
     self
-  end
-
-  def self.cast(value)
-    value.to_u16
   end
 end
 
@@ -485,10 +461,6 @@ struct UInt32
   def abs
     self
   end
-
-  def self.cast(value)
-    value.to_u32
-  end
 end
 
 struct UInt64
@@ -497,10 +469,6 @@ struct UInt64
 
   def abs
     self
-  end
-
-  def self.cast(value)
-    value.to_u64
   end
 end
 

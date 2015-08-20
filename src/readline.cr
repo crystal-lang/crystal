@@ -1,13 +1,15 @@
 @[Link("readline")]
 lib LibReadline
+  alias Int = LibC::Int
+
   fun readline(prompt : UInt8*) : UInt8*
   fun add_history(line : UInt8*)
 
-  alias CPP = (UInt8*, Int32, Int32) -> UInt8**
+  alias CPP = (UInt8*, Int, Int) -> UInt8**
 
   $rl_attempted_completion_function : CPP
   $rl_line_buffer : UInt8*
-  $rl_point : Int32
+  $rl_point : Int
 end
 
 private def malloc_match(match)

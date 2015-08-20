@@ -72,7 +72,7 @@ module LLVM
   end
 
   def self.to_io(chars, io)
-    io.write Slice.new(chars, LibC.strlen(chars))
+    io.write Slice.new(chars, LibC.strlen(chars).to_i32)
     LibLLVM.dispose_message(chars)
   end
 

@@ -1,5 +1,5 @@
 lib LibC
-  fun execvp(file : UInt8*, argv : UInt8**) : Int32
+  fun execvp(file : Char*, argv : Char**) : Int
 end
 
 class Process

@@ -127,10 +127,6 @@ struct Float32
     n = self
     (pointerof(n) as Int32*).value
   end
-
-  def self.cast(value)
-    value.to_f32
-  end
 end
 
 struct Float64
@@ -173,7 +169,7 @@ struct Float64
 
   def to_s
     String.new(22) do |buffer|
-      LibC.snprintf(buffer, 22, "%g", self)
+      LibC.snprintf(buffer, LibC::SizeT.cast(22), "%g", self)
       len = LibC.strlen(buffer)
       {len, len}
     end
@@ -181,16 +177,12 @@ struct Float64
 
   def to_s(io : IO)
     chars = StaticArray(UInt8, 22).new(0_u8)
-    LibC.snprintf(chars, 22, "%g", self)
+    LibC.snprintf(chars, LibC::SizeT.cast(22), "%g", self)
     io.write(chars.to_slice, LibC.strlen(chars.buffer))
   end
 
   def hash
     n = self
     (pointerof(n) as Int64*).value
-  end
-
-  def self.cast(value)
-    value.to_f64
   end
 end

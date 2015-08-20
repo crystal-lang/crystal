@@ -1,8 +1,8 @@
 lib LibC
-  $environ : UInt8**
-  fun getenv(name : UInt8*) : UInt8*?
-  fun setenv(name : UInt8*, value : UInt8*, overwrite : Int32) : Int32
-  fun unsetenv(name : UInt8*) : Int32
+  $environ : Char**
+  fun getenv(name : Char*) : Char*?
+  fun setenv(name : Char*, value : Char*, overwrite : Int) : Int
+  fun unsetenv(name : Char*) : Int
 end
 
 module ENV

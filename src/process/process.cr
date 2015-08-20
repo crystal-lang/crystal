@@ -1,16 +1,16 @@
 lib LibC
   @[ReturnsTwice]
-  fun fork : Int32
-  fun getpgid(pid : Int32) : Int32
-  fun kill(pid : Int32, signal : Int32) : Int32
-  fun getpid : Int32
-  fun getppid : Int32
-  fun exit(status : Int32) : NoReturn
+  fun fork : PidT
+  fun getpgid(pid : PidT) : PidT
+  fun kill(pid : PidT, signal : Int) : Int
+  fun getpid : PidT
+  fun getppid : PidT
+  fun exit(status : Int) : NoReturn
 
   ifdef x86_64
-    ClockT = UInt64
+    alias ClockT = UInt64
   else
-    ClockT = UInt32
+    alias ClockT = UInt32
   end
 
   SC_CLK_TCK = 3
@@ -23,10 +23,7 @@ lib LibC
   end
 
   fun times(buffer : Tms*) : ClockT
-  fun sysconf(name : Int32) : Int64
-
-  fun sleep(seconds : UInt32) : UInt32
-  fun usleep(useconds : UInt32) : UInt32
+  fun sysconf(name : Int) : Long
 end
 
 class Process
