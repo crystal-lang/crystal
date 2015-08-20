@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.15.2" data-basepath="../.." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.15.2" data-basepath="../.." data-revision="Thu Aug 20 2015 20:27:01 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1981,7 +1981,12 @@
 <li><code>NoReturn</code>: similar to <code>Void</code>, but the compiler understands that no code can be executed after that invocation.</li>
 </ul>
 <p>Refer to the <a href="type_grammar.html">type gammar</a> for the notation used in fun types.</p>
-<p><strong>Note:</strong> The C <code>char</code> type is <code>UInt8</code> in Crystal, so a <code>char*</code> or a <code>const char*</code> is <code>UInt8*</code>. The <code>Char</code> type in Crystal is a unicode codepoint so it is represented by four bytes, making it similar to an <code>Int32</code>, not to an <code>UInt8</code>.</p>
+<p>The standard library defines the <a href="https://github.com/manastech/crystal/blob/master/src/libc.cr" target="_blank">LibC</a> lib with aliases for common C types, like <code>int</code>, <code>short</code>, <code>size_t</code>. Use them in bindings like this:</p>
+<pre><code class="lang-ruby">lib <span class="hljs-constant">MyLib</span>
+  fun my_fun(some_size <span class="hljs-symbol">:</span> <span class="hljs-constant">LibC::SizeT</span>)
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p><strong>Note:</strong> The C <code>char</code> type is <code>UInt8</code> in Crystal, so a <code>char*</code> or a <code>const char*</code> is <code>UInt8*</code>. The <code>Char</code> type in Crystal is a unicode codepoint so it is represented by four bytes, making it similar to an <code>Int32</code>, not to an <code>UInt8</code>. There&apos;s also the alias <code>LibC::Char</code> if in doubt.</p>
 
                     
                     </section>
