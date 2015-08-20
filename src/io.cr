@@ -44,25 +44,23 @@ lib LibC
   EWOULDBLOCK = 140
   EAGAIN      = 11
 
-  fun fcntl(fd : Int32, cmd : FCNTL, ...) : Int32
-  fun getchar : Char
-  fun putchar(c : Char) : Char
-  fun puts(str : UInt8*) : Int32
-  fun printf(str : UInt8*, ...) : Char
-  fun system(str : UInt8*) : Int32
-  fun execl(path : UInt8*, arg0 : UInt8*, ...) : Int32
-  fun waitpid(pid : Int32, stat_loc : Int32*, options : Int32) : Int32
-  fun open(path : UInt8*, oflag : Int32, ...) : Int32
-  fun dup2(fd : Int32, fd2 : Int32) : Int32
-  fun read(fd : Int32, buffer : UInt8*, nbyte : LibC::SizeT) : LibC::SSizeT
-  fun write(fd : Int32, buffer : UInt8*, nbyte : LibC::SizeT) : LibC::SSizeT
-  fun pipe(filedes : Int32[2]*) : Int32
-  fun select(nfds : Int32, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : TimeVal*) : Int32
-
-  # In fact lseek's offset is off_t, but it matches the definition of size_t
-  fun lseek(fd : Int32, offset : LibC::SizeT, whence : Int32) : Int32
-  fun close(fd : Int32) : Int32
-  fun isatty(fd : Int32) : Int32
+  fun fcntl(fd : Int, cmd : FCNTL, ...) : Int
+  fun getchar : Int
+  fun putchar(c : Int) : Int
+  fun puts(str : Char*) : Int
+  fun printf(str : Char*, ...) : Int
+  fun system(str : Char*) : Int
+  fun execl(path : Char*, arg0 : Char*, ...) : Int
+  fun waitpid(pid : PidT, stat_loc : Int*, options : Int) : PidT
+  fun open(path : Char*, oflag : Int, ...) : Int
+  fun dup2(fd : Int, fd2 : Int) : Int
+  fun read(fd : Int, buffer : Char*, nbyte : SizeT) : SSizeT
+  fun write(fd : Int, buffer : Char*, nbyte : SizeT) : SSizeT
+  fun pipe(filedes : Int[2]*) : Int
+  fun select(nfds : Int, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : TimeVal*) : Int
+  fun lseek(fd : Int, offset  : OffT, whence : Int) : OffT
+  fun close(fd : Int) : Int
+  fun isatty(fd : Int) : Int
 end
 
 module IO

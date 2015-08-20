@@ -20,6 +20,8 @@ lib LibC
 
   alias PtrDiffT = SSizeT
   alias TimeT = SSizeT
+  alias PidT = Int
+  alias OffT = SizeT
 
   ifdef darwin
     alias ModeT = UInt16
