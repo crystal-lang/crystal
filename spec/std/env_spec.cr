@@ -12,7 +12,7 @@ describe "ENV" do
   end
 
   it "set and gets" do
-    ENV["FOO"] = "1"
+    (ENV["FOO"] = "1").should eq("1")
     ENV["FOO"].should eq("1")
     ENV["FOO"]?.should eq("1")
   end

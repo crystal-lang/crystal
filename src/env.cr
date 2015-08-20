@@ -37,8 +37,13 @@ module ENV
 
   # Sets the value for environment variable named `key` as `value`.
   # Overwrites existing environment variable if already present.
+  # Returns `value` if successful, otherwise raises an exception.
   def self.[]=(key : String, value : String)
-    LibC.setenv key, value, 1
+    if LibC.setenv(key, value, 1) == 0
+      value
+    else
+      raise Errno.new("Error setting environment variable \"#{key}\"")
+    end
   end
 
   # Returns `true` if the environment variable named `key` exists and `false`
