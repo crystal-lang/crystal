@@ -6,7 +6,7 @@ include Crystal
 
 def processed_context_visitor(code, cursor_location)
   compiler = Compiler.new
-  compiler.no_build = true
+  compiler.no_codegen = true
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ContextVisitor.new(cursor_location)

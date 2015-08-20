@@ -185,7 +185,7 @@ USAGE
       exit 1
     end
 
-    config, result = compile_no_build command, options
+    config, result = compile_no_codegen command, options
 
     file = File.expand_path(file)
 
