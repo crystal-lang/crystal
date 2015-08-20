@@ -51,58 +51,58 @@ class MatchData
 
   # Return the position of the first character of the `n`th match.
   #
-  # When `n` is `0`, uses the match of the entire `Regex`. Otherwise, uses the
-  # match of the `n`th capture group.
+  # When `n` is `0` or not given, uses the match of the entire `Regex`.
+  # Otherwise, uses the match of the `n`th capture group.
   #
   # ```
   # "Crystal".match(/r/) { |md| md.begin(0) }       #=> 1
   # "Crystal".match(/r(ys)/) { |md| md.begin(1) }   #=> 2
   # "クリスタル".match(/リ(ス)/) { |md| md.begin(0) } #=> 1
   # ```
-  def begin(n)
+  def begin(n = 0)
     byte_index_to_char_index byte_begin(n)
   end
 
   # Return the position of the next character after the match.
   #
-  # When `n` is `0`, uses the match of the entire `Regex`. Otherwise, uses the
-  # match of the `n`th capture group.
+  # When `n` is `0` or not given, uses the match of the entire `Regex`.
+  # Otherwise, uses the match of the `n`th capture group.
   #
   # ```
   # "Crystal".match(/r/) { |md| md.end(0) }       #=> 2
   # "Crystal".match(/r(ys)/) { |md| md.end(1) }   #=> 4
   # "クリスタル".match(/リ(ス)/) { |md| md.end(0) } #=> 3
   # ```
-  def end(n)
+  def end(n = 0)
     byte_index_to_char_index byte_end(n)
   end
 
   # Return the position of the first byte of the `n`th match.
   #
-  # When `n` is `0`, uses the match of the entire `Regex`. Otherwise, uses the
-  # match of the `n`th capture group.
+  # When `n` is `0` or not given, uses the match of the entire `Regex`.
+  # Otherwise, uses the match of the `n`th capture group.
   #
   # ```
   # "Crystal".match(/r/) { |md| md.byte_begin(0) }       #=> 1
   # "Crystal".match(/r(ys)/) { |md| md.byte_begin(1) }   #=> 4
   # "クリスタル".match(/リ(ス)/) { |md| md.byte_begin(0) } #=> 3
   # ```
-  def byte_begin(n)
+  def byte_begin(n = 0)
     check_index_out_of_bounds n
     @ovector[n * 2]
   end
 
   # Return the position of the next byte after the match.
   #
-  # When `n` is `0`, uses the match of the entire `Regex`. Otherwise, uses the
-  # match of the `n`th capture group.
+  # When `n` is `0` or not given, uses the match of the entire `Regex`.
+  # Otherwise, uses the match of the `n`th capture group.
   #
   # ```
   # "Crystal".match(/r/) { |md| md.byte_end(0) }       #=> 2
   # "Crystal".match(/r(ys)/) { |md| md.byte_end(1) }   #=> 4
   # "クリスタル".match(/リ(ス)/) { |md| md.byte_end(0) } #=> 9
   # ```
-  def byte_end(n)
+  def byte_end(n = 0)
     check_index_out_of_bounds n
     @ovector[n * 2 + 1]
   end
