@@ -1,5 +1,6 @@
 require "./type"
 require "./parser_options"
+require "./html_parser_options"
 require "./save_options"
 
 @[Link("xml2")]
@@ -86,6 +87,8 @@ lib LibXML
   fun xmlTextReaderLocatorLineNumber(XMLTextReaderLocator) : Int32
 
   fun xmlReadMemory(buffer : UInt8*, size : Int32, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : DocPtr
+  
+  fun htmlReadMemory(buffer : UInt8*, size : Int32, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : DocPtr
 
   alias InputReadCallback = (Void*, UInt8*, Int32) -> Int32
   alias InputCloseCallback = (Void*) -> Int32
