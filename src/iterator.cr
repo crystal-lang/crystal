@@ -88,6 +88,14 @@ module Iterator(T)
     Stop::INSTANCE
   end
 
+  def self.of(element : T)
+    Singleton(T).new(element)
+  end
+
+  def self.of(&block : -> T)
+    SingletonProc(T).new(block)
+  end
+
   # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
   # are no more elements.
   abstract def next
@@ -95,33 +103,58 @@ module Iterator(T)
   # Rewinds the iterator to its original state.
   abstract def rewind
 
-  def each
-    self
+  def chain(other : Iterator(U))
+    Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
   def compact_map(&func : T -> U)
     CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
 
-  def map(&func : T -> U)
-    Map(typeof(self), T, U).new(self, func)
+  def cons(n)
+    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
+    Cons(typeof(self), T).new(self, n)
   end
 
-  def select(&func : T -> U)
-    Select(typeof(self), T, U).new(self, func)
+  def cycle
+    Cycle(typeof(self), T).new(self)
+  end
+
+  def cycle(n : Int)
+    CycleN(typeof(self), T, typeof(n)).new(self, n)
+  end
+
+  def each
+    self
+  end
+
+  def each
+    while true
+      value = self.next
+      break if value.is_a?(Stop)
+      yield value
+    end
+  end
+
+  def each_slice(n)
+    slice(n)
+  end
+
+  def in_groups_of(size : Int, filled_up_with = nil)
+    raise ArgumentError.new("size must be positive") if size <= 0
+    InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
+  end
+
+  def map(&func : T -> U)
+    Map(typeof(self), T, U).new(self, func)
   end
 
   def reject(&func : T -> U)
     Reject(typeof(self), T, U).new(self, func)
   end
 
-  def take(n)
-    raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
-    Take(typeof(self), T).new(self, n)
-  end
-
-  def take_while(&func : T -> U)
-    TakeWhile(typeof(self), T, U).new(self, func)
+  def select(&func : T -> U)
+    Select(typeof(self), T, U).new(self, func)
   end
 
   def skip(n)
@@ -133,21 +166,22 @@ module Iterator(T)
     SkipWhile(typeof(self), T, U).new(self, func)
   end
 
-  def zip(other : Iterator(U))
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  def slice(n)
+    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
+    Slice(typeof(self), T).new(self, n)
   end
 
-  def cycle
-    Cycle(typeof(self), T).new(self)
+  def take(n)
+    raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
+    Take(typeof(self), T).new(self, n)
   end
 
-  def cycle(n : Int)
-    CycleN(typeof(self), T, typeof(n)).new(self, n)
+  def take_while(&func : T -> U)
+    TakeWhile(typeof(self), T, U).new(self, func)
   end
 
-  def in_groups_of(size : Int, filled_up_with = nil)
-    raise ArgumentError.new("size must be positive") if size <= 0
-    InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
+  def tap(&block : T ->)
+    Tap(typeof(self), T).new(self, block)
   end
 
   def uniq
@@ -166,44 +200,8 @@ module Iterator(T)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
   end
 
-  def slice(n)
-    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
-
-    Slice(typeof(self), T).new(self, n)
-  end
-
-  def each_slice(n)
-    slice(n)
-  end
-
-  def cons(n)
-    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
-
-    Cons(typeof(self), T).new(self, n)
-  end
-
-  def chain(other : Iterator(U))
-    Chain(typeof(self), typeof(other), T, U).new(self, other)
-  end
-
-  def tap(&block : T ->)
-    Tap(typeof(self), T).new(self, block)
-  end
-
-  def self.of(element : T)
-    Singleton(T).new(element)
-  end
-
-  def self.of(&block : -> T)
-    SingletonProc(T).new(block)
-  end
-
-  def each
-    while true
-      value = self.next
-      break if value.is_a?(Stop)
-      yield value
-    end
+  def zip(other : Iterator(U))
+    Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
 
   # IteratorWrapper eliminates some boilerplate when defining an Iterator that wraps another iterator.
@@ -627,6 +625,7 @@ module Iterator(T)
   end
 
   # :nodoc:
+
   struct Singleton(T)
     include Iterator(T)
 
@@ -641,7 +640,6 @@ module Iterator(T)
       self
     end
   end
-
   # :nodoc:
   struct SingletonProc(T)
     include Iterator(T)
