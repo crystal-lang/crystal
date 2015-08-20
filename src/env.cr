@@ -5,7 +5,20 @@ lib LibC
   fun unsetenv(name : UInt8*) : Int32
 end
 
+# `ENV` is a hash-like accessor for environment variables.
+#
+# __Note:__ All keys and values are strings. You must take care to cast other types
+# at runtime, e.g. integer port numbers.
+#
+# ### Example
+#
+#     # Set env var PORT to a default if not already set
+#     ENV["PORT"] ||= "5000"
+#     # Later use that env var.
+#     puts ENV["PORT"].to_i
 module ENV
+  # Retrieves the value for environment variable named `key` as a `String`.
+  # Raises `KeyError` if the named variable does not exist.
   def self.[](key : String)
     value = self[key]?
     if value
@@ -15,19 +28,27 @@ module ENV
     end
   end
 
+  # Retrieves the value for environment variable named `key` as a `String?`.
+  # Returns `nil` if the named variable does not exist.
   def self.[]?(key : String)
     str = LibC.getenv key
     str ? String.new(str) : nil
   end
 
+  # Sets the value for environment variable named `key` as `value`.
+  # Overwrites existing environment variable if already present.
   def self.[]=(key : String, value : String)
     LibC.setenv key, value, 1
   end
 
+  # Returns `true` if the environment variable named `key` exists and `false`
+  # if it doesn't.
   def self.has_key?(key : String)
     !!LibC.getenv(key)
   end
 
+  # Removes the environment variable named `key`. Returns the previous value if
+  # the environment variable existed, otherwise returns `nil`.
   def self.delete(key : String)
     if value = self[key]?
       LibC.unsetenv(key)
@@ -37,6 +58,12 @@ module ENV
     end
   end
 
+  # Iterates over all `KEY=VALUE` pairs of environment variables, yielding both
+  # the `key` and `value`.
+  #
+  #     ENV.each do |key, value|
+  #       puts "#{key} => #{value}"
+  #     end
   def self.each
     environ_ptr = LibC.environ
     while environ_ptr
@@ -52,6 +79,7 @@ module ENV
     end
   end
 
+  # Writes the contents of the environment to `io`.
   def self.inspect(io)
     io << "{"
     found_one = false
