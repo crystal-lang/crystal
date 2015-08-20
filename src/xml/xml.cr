@@ -19,7 +19,7 @@ module XML
       )
   end
 
-  def self.parseHTML(string: String, options = HTMLParserOptions.default : HTMLParserOptions)
+  def self.parse_html(string: String, options = HTMLParserOptions.default : HTMLParserOptions)
       from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 
