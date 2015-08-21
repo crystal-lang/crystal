@@ -104,3 +104,53 @@ describe StringScanner, "#[]?" do
     s["something"]?.should be_nil
   end
 end
+
+describe StringScanner, "#string" do
+  assert { StringScanner.new("foo").string.should eq("foo") }
+end
+
+describe StringScanner, "#offset" do
+  it "returns the current position" do
+    s = StringScanner.new("this is a string")
+    s.offset.should eq(0)
+    s.scan(/\w+/)
+    s.offset.should eq(4)
+  end
+end
+
+describe StringScanner, "#offset=" do
+  it "sets the current position" do
+    s = StringScanner.new("this is a string")
+    s.offset = 5
+    s.scan(/\w+/).should eq("is")
+  end
+
+  it "raises on negative positions" do
+    s = StringScanner.new("this is a string")
+    expect_raises(IndexError) { s.offset = -2 }
+  end
+end
+
+describe StringScanner, "#inspect" do
+  it "has information on the scanner" do
+    s = StringScanner.new("this is a string")
+    s.inspect.should eq(%(#<StringScanner 0/16 "this " >))
+    s.scan(/\w+\s/)
+    s.inspect.should eq(%(#<StringScanner 5/16 "s is " >))
+    s.scan(/\w+\s/)
+    s.inspect.should eq(%(#<StringScanner 8/16 "s a s" >))
+    s.scan(/\w+\s\w+/)
+    s.inspect.should eq(%(#<StringScanner 16/16 "tring" >))
+  end
+end
+
+describe StringScanner, "#peek" do
+  it "shows the next len characters without advancing the offset" do
+    s = StringScanner.new("this is a string")
+    s.offset.should eq(0)
+    s.peek(4).should eq("this")
+    s.offset.should eq(0)
+    s.peek(7).should eq("this is")
+    s.offset.should eq(0)
+  end
+end

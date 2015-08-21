@@ -30,6 +30,16 @@
 class StringScanner
   def initialize(@str)
     @offset = 0
+    @length = @str.length
+  end
+
+  # Returns the current position of the scan offset.
+  getter offset
+
+  # Sets the position of the scan offset.
+  def offset=(position : Int)
+    raise IndexError.new unless position >= 0
+    @offset = position
   end
 
   # Tries to match with pattern at the current position. If there's a match,
@@ -100,7 +110,18 @@ class StringScanner
   #     s.scan(/(\w+\s?){4}/)  # => "this is a string"
   #     s.eos?                 # => true
   def eos?
-    @offset >= @str.length
+    @offset >= @length
+  end
+
+  # Returns the string being scanned.
+  def string
+    @str
+  end
+
+  # Extracts a string corresponding to string[offset,`len`], without advancing
+  # the scan offset.
+  def peek(len)
+    @str[@offset, len]
   end
 
   # Returns the remainder of the string after the scan offset.
@@ -109,6 +130,17 @@ class StringScanner
   #     s.scan(/(\w+\s?){2}/)  # => "this is "
   #     s.rest                 # => "a string"
   def rest
-    @str[@offset, @str.length - @offset]
+    @str[@offset, @length - @offset]
+  end
+
+  # Writes a representation of the scanner.
+  #
+  # Includes the current position of the offset, the total size of the string,
+  # and five characters near the current position.
+  def inspect(io : IO)
+    io << "#<StringScanner "
+    io << @offset.to_s << "/" << @length.to_s
+    start = Math.min( Math.max(@offset-2, 0), @length-5)
+    io << " \"" << @str[start, 5] << "\" >"
   end
 end
