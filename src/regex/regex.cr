@@ -20,6 +20,7 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
   end
 
+  getter options
   getter source
 
   def initialize(source, @options = Options::None : Options)
@@ -135,10 +136,6 @@ class Regex
     end
 
     lookup
-  end
-
-  def options
-    @options
   end
 
   def to_s(io : IO)
