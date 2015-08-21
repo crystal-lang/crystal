@@ -25,6 +25,17 @@ struct StaticArray(T, N)
     new { value }
   end
 
+  def ==(other : self)
+    length == other.length && each_with_index do |e, i|
+      return false unless e == other[i]
+    end
+    true
+  end
+
+  def ==(other)
+    false
+  end
+
   def each
     N.times do |i|
       yield buffer[i]
