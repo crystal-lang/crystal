@@ -34,30 +34,60 @@ class Regex
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
-  def name_table
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT,     out name_count)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
-    table_pointer = Pointer(UInt8).null
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer) as Pointer(Int32))
-    name_table = table_pointer.to_slice(name_entry_size*name_count)
-
-    lookup = Hash(UInt16,String).new
-
-    name_count.times do |i|
-      capture_offset = i * name_entry_size
-      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset+1].to_u16
-
-      name_offset = capture_offset + 2
-      name = String.new( (name_table + name_offset).pointer(name_entry_size-3) )
-
-      lookup[capture_number] = name
+  # Determines Regex's source validity. If it is, `nil` is returned.
+  # If it's not, a String containing the error message is returned.
+  #
+  # ```
+  # Regex.error("(foo|bar)") #=> nil
+  # Regex.error("(foo|bar") #=> "missing ) at 8"
+  # ```
+  def self.error?(source)
+    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
+    if re
+      nil
+    else
+      "#{String.new(errptr)} at #{erroffset}"
     end
-
-    lookup
   end
 
-  def options
-    @options
+  def self.escape(str)
+    String.build do |result|
+      str.each_byte do |byte|
+        case byte.chr
+        when ' ', '.', '\\', '+', '*', '?', '[',
+             '^', ']', '$', '(', ')', '{', '}',
+             '=', '!', '<', '>', '|', ':', '-'
+          result << '\\'
+          result.write_byte byte
+        else
+          result.write_byte byte
+        end
+      end
+    end
+  end
+
+  def ==(other : Regex)
+    source == other.source && options == other.options
+  end
+
+  def ===(other : String)
+    match = match(other)
+    $~ = match
+    !match.nil?
+  end
+
+  def =~(other : String)
+    match = self.match(other)
+    $~ = match
+    match.try &.begin(0)
+  end
+
+  def =~(other)
+    nil
+  end
+
+  def inspect(io : IO)
+    to_s io
   end
 
   def match(str, pos = 0, options = Regex::Options::None)
@@ -85,20 +115,30 @@ class Regex
     $~ = match
   end
 
-  def ===(other : String)
-    match = match(other)
-    $~ = match
-    !match.nil?
+  def name_table
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT,     out name_count)
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
+    table_pointer = Pointer(UInt8).null
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer) as Pointer(Int32))
+    name_table = table_pointer.to_slice(name_entry_size*name_count)
+
+    lookup = Hash(UInt16,String).new
+
+    name_count.times do |i|
+      capture_offset = i * name_entry_size
+      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset+1].to_u16
+
+      name_offset = capture_offset + 2
+      name = String.new( (name_table + name_offset).pointer(name_entry_size-3) )
+
+      lookup[capture_number] = name
+    end
+
+    lookup
   end
 
-  def =~(other : String)
-    match = self.match(other)
-    $~ = match
-    match.try &.begin(0)
-  end
-
-  def =~(other)
-    nil
+  def options
+    @options
   end
 
   def to_s(io : IO)
@@ -108,45 +148,5 @@ class Regex
     io << "i" if options.includes?(Options::IGNORE_CASE)
     io << "m" if options.includes?(Options::MULTILINE)
     io << "x" if options.includes?(Options::EXTENDED)
-  end
-
-  def inspect(io : IO)
-    to_s io
-  end
-
-  def ==(other : Regex)
-    source == other.source && options == other.options
-  end
-
-  def self.escape(str)
-    String.build do |result|
-      str.each_byte do |byte|
-        case byte.chr
-        when ' ', '.', '\\', '+', '*', '?', '[',
-             '^', ']', '$', '(', ')', '{', '}',
-             '=', '!', '<', '>', '|', ':', '-'
-          result << '\\'
-          result.write_byte byte
-        else
-          result.write_byte byte
-        end
-      end
-    end
-  end
-
-  # Determines Regex's source validity. If it is, `nil` is returned.
-  # If it's not, a String containing the error message is returned.
-  #
-  # ```
-  # Regex.error("(foo|bar)") #=> nil
-  # Regex.error("(foo|bar") #=> "missing ) at 8"
-  # ```
-  def self.error?(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
-    if re
-      nil
-    else
-      "#{String.new(errptr)} at #{erroffset}"
-    end
   end
 end
