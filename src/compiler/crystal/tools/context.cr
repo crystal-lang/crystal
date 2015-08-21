@@ -1,5 +1,6 @@
 require "../syntax/ast"
 require "../compiler"
+require "./table_print"
 require "json"
 
 module Crystal
@@ -20,7 +21,31 @@ module Crystal
     end
 
     def to_text(io)
-      to_json(io)
+      io.puts message
+
+      if (ctxs = contexts) && ctxs.length > 0
+        exprs = ctxs.first.keys
+
+        io.puts
+        TablePrint.new(io).build do
+          row do
+            cell "Expr"
+            cell "Type", colspan: ctxs.length
+          end
+          separator
+
+          exprs.each do |expr|
+            row do
+              cell expr
+              ctxs.each do |ctx|
+                cell ctx[expr].to_s, align: :center
+              end
+            end
+          end
+        end
+        io.puts
+
+      end
     end
   end
 
