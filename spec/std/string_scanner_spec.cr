@@ -40,3 +40,67 @@ describe StringScanner, "#rest" do
     s.rest.should eq("")
   end
 end
+
+describe StringScanner, "#[]" do
+  it "allows access to subgroups of the last match" do
+    s = StringScanner.new("Fri Dec 12 1975 14:39")
+    regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+    s.scan(regex).should eq("Fri Dec 12")
+    s[0].should eq("Fri Dec 12")
+    s[1].should eq("Fri")
+    s[2].should eq("Dec")
+    s[3].should eq("12")
+    s["wday"].should eq("Fri")
+    s["month"].should eq("Dec")
+    s["day"].should eq("12")
+  end
+
+  it "raises when there is no last match" do
+    s = StringScanner.new("Fri Dec 12 1975 14:39")
+    s.scan(/this is not there/)
+
+    expect_raises { s[0] }
+  end
+
+  it "raises when there is no subgroup" do
+    s = StringScanner.new("Fri Dec 12 1975 14:39")
+    regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+    s.scan(regex)
+
+    s[0].should_not be_nil
+    expect_raises { s[5] }
+    expect_raises { s["something"] }
+  end
+end
+
+describe StringScanner, "#[]?" do
+  it "allows access to subgroups of the last match" do
+    s = StringScanner.new("Fri Dec 12 1975 14:39")
+    result = s.scan(/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/)
+
+    result.should eq("Fri Dec 12")
+    s[0]?.should eq("Fri Dec 12")
+    s[1]?.should eq("Fri")
+    s[2]?.should eq("Dec")
+    s[3]?.should eq("12")
+    s["wday"]?.should eq("Fri")
+    s["month"]?.should eq("Dec")
+    s["day"]?.should eq("12")
+  end
+
+  it "returns nil when there is no last match" do
+    s = StringScanner.new("Fri Dec 12 1975 14:39")
+    s.scan(/this is not there/)
+
+    s[0]?.should be_nil
+  end
+
+  it "raises when there is no subgroup" do
+    s = StringScanner.new("Fri Dec 12 1975 14:39")
+    s.scan(/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/)
+
+    s[0].should_not be_nil
+    s[5]?.should be_nil
+    s["something"]?.should be_nil
+  end
+end

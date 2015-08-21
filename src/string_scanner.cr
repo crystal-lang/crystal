@@ -43,6 +43,7 @@ class StringScanner
   #     s.scan(/.*/)    # => nil
   def scan(re)
     match = re.match(@str, @offset, Regex::Options::ANCHORED)
+    @last_match = match
     if match
       @offset = match.end(0).to_i
       match[0]
@@ -50,6 +51,47 @@ class StringScanner
       nil
     end
   end
+
+  # Returns the `n`-th subgroup in the most recent match.
+  #
+  # Raises an exception if there was no last match or if there is no subgroup.
+  #
+  #     s = StringScanner.new("Fri Dec 12 1975 14:39")
+  #     regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+  #     s.scan(regex)  # => "Fri Dec 12"
+  #     s[0]           # => "Fri Dec 12"
+  #     s[1]           # => "Fri"
+  #     s[2]           # => "Dec"
+  #     s[3]           # => "12"
+  #     s["wday"]      # => "Fri"
+  #     s["month"]     # => "Dec"
+  #     s["day"]       # => "12"
+  def [](n)
+    @last_match.not_nil![n]
+  end
+
+  # Returns the nilable `n`-th subgroup in the most recent match.
+  #
+  # Returns `nil` if there was no last match or if there is no subgroup.
+  #
+  #     s = StringScanner.new("Fri Dec 12 1975 14:39")
+  #     regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+  #     s.scan(regex)  # => "Fri Dec 12"
+  #     s[0]?           # => "Fri Dec 12"
+  #     s[1]?           # => "Fri"
+  #     s[2]?           # => "Dec"
+  #     s[3]?           # => "12"
+  #     s[4]?           # => nil
+  #     s["wday"]?      # => "Fri"
+  #     s["month"]?     # => "Dec"
+  #     s["day"]?       # => "12"
+  #     s["year"]?      # => nil
+  #     s.scan(/more/)  # => nil
+  #     s[0]?           # => nil
+  def []?(n)
+    @last_match.try(&.[n]?)
+  end
+
 
   # Returns true if the scan offset is at the end of the string.
   #
