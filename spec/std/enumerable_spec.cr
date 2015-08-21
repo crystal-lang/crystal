@@ -207,13 +207,7 @@ describe "Enumerable" do
       end
     end
 
-    it "returns the first n elements with the optional argument" do
-      (1..5).first(2).should eq [1, 2]
-    end
-
     assert { [-1, -2, -3].first.should eq(-1) }
-    assert { [-1, -2, -3].first(1).should eq([-1]) }
-    assert { [-1, -2, -3].first(4).should eq([-1, -2, -3]) }
   end
 
   describe "first?" do

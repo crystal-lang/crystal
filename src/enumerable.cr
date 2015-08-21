@@ -236,15 +236,6 @@ module Enumerable(T)
     raise EmptyEnumerable.new
   end
 
-  # Returns an array with the first *count* elements in the collection.
-  #
-  # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
-  # include the case of calling it over an empty collection, in which case it returns an empty array (unlike the variant
-  # without a parameter).
-  def first(count : Int)
-    take(count)
-  end
-
   # Returns the first element in the collection. When the collection is empty, returns `nil`.
   def first?
     each { |e| return e }
