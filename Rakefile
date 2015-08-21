@@ -7,8 +7,12 @@ namespace :haml do
 
   def convert file, destination
     base_name = File.basename(file, '.haml') + '.html'
-    html = Haml::Engine.new(File.read(file)).render
-    File.open(File.join(destination, base_name), 'w') { |f| f.write html }
+    convert_full file, File.join(destination, base_name)
+  end
+
+  def convert_full from, to
+    html = Haml::Engine.new(File.read(from)).render
+    File.open(to, 'w') { |f| f.write html }
   end
 
   desc 'Parse haml layout files'
@@ -31,9 +35,8 @@ namespace :haml do
 
   desc 'Parse haml index files'
   task :indexes do
-    Dir.glob('**/index.haml') do |path|
-      convert path, File.dirname(path)
-    end
+    convert './index.haml', File.dirname('./index.haml')
+    convert_full './sponsors.haml', './sponsors/index.html'
 
     puts 'Parsed haml index files'
   end

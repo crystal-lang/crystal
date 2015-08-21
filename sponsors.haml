@@ -1,0 +1,56 @@
+\---
+layout: default
+\---
+
+- sponsors = [nil,
+              ["Luis Lavena", "http://blog.mmediasys.com"],
+              ["Davis Wahl"],
+              ["Hirofumi Wakasugi", "https://github.com/5t111111"],
+              ["Vladimir Tikhonov", "https://tikhonov.by/"],
+              ["Alexander Shahorsky", "http://ascrazy.me/"],
+              ["marcpmichel", "https://github.com/marcpmichel"],
+              ["flou", "https://github.com/flou"],
+              ["Max De Marzi", "http://maxdemarzi.com/"],
+              ["sremani"],
+              ["Jason Waldrip", "http://jasonwaldrip.com"],
+              ["Tobias Pfeiffer", "http://pragtob.info/"],
+              ["Nob Suzumura", "https://github.com/nob-suz"],
+              ["Frank O'Hara"],
+              ["Stephen Belanger", "http://stephenbelanger.com/"],
+              ["schaarw"],
+              ["Jesse Doyle", "https://github.com/jessedoyle"],
+              ["Sho Kusano", "http://aduca.org/"],
+              ["gottlike", "https://github.com/gottlike"],
+              ["Bruno Antunes", "https://github.com/sardaukar"],
+              ["Sergio Gil Pérez de la Manga", "http://iamserg.io/"],
+              ["classyPimp", "https://github.com/classyPimp"],
+              ["Jack Chen", "http://chen.do/"],
+              ["hiromikai_green", "https://twitter.com/hiromikai_green"],
+              ["Jan Kmet", "https://github.com/jankmet"],
+              ["Paul Götze", "https://github.com/paulgoetze"],
+              ["Tu Hoang", "http://blog.nogias.com/"],
+              ["Denis Defreyne", "http://stoneship.org/"],
+              ["Vesa Kaihlavirta", "https://github.com/vegai"],
+              ["Ryan Alyea", "https://github.com/ROFISH"],
+              ["Ayose Cazorla", "http://me.ayosec.com/"],
+              ["Yasith Fernando", "http://ghost.thekindof.me/"],
+              ["David Hofer", "https://github.com/dahofer"],
+              ["Tommaso Patrizi", "https://github.com/tommasop"],
+              ["Hidehito Nozawa", "http://qiita.com/suin"],
+              ["David Backeus", "https://github.com/dbackeus"],
+              ["Evan Hahn", "http://evanhahn.com/"],
+              ["Alex Yankee", "https://github.com/AlexYankee"],
+              ["Marshal Chen"],
+              ["nodegin"],
+              ["Martin Luder"],
+             ].compact.sort { |x, y| cmp = x.length <=> y.length; cmp == 0 ? x <=> y : -cmp }
+
+%section
+  %h1 Our sponsors
+  %ul.goals
+    - sponsors.each do |name, url|
+      - if url
+        %li
+          %a{href: url, target: :_blank}= name
+      - else
+        %li= name
