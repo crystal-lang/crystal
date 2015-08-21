@@ -623,7 +623,11 @@ module Crystal
         node.raise "can't yield from function literal"
       end
 
-      call = @call.not_nil!
+      call = @call
+      unless call
+        node.raise "can't yield outside a method"
+      end
+
       block = call.block || node.raise("no block given")
 
       # This is the case of a yield when there's a captured block

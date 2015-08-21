@@ -915,4 +915,11 @@ describe "Block inference" do
       z
       )) { int32 }
   end
+
+  it "errors if yields from top level" do
+    assert_error %(
+      yield
+      ),
+      "can't yield outside a method"
+  end
 end
