@@ -65,6 +65,8 @@ class Crystal::Call
     unbind_from @target_defs if @target_defs
     unbind_from block.break if block
 
+    block.try &.args.each &.unbind_all
+
     @target_defs = nil
 
     if block_arg = @block_arg

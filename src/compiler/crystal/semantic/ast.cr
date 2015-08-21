@@ -103,6 +103,11 @@ module Crystal
       propagate
     end
 
+    def unbind_all
+      @dependencies.try &.each &.remove_observer(self)
+      @dependencies = nil
+    end
+
     def unbind_from(nodes : Nil)
       # Nothing to do
     end
@@ -209,6 +214,7 @@ module Crystal
     property! :owner
     property! :original_owner
     property :vars
+    property :yield_vars
     property :raises
 
     property closure

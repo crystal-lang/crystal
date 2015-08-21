@@ -679,9 +679,16 @@ module Crystal
       false
     end
 
+    # We bind yield exps -> typed_def.yield_vars -> block args
+    # so when a call is recomputed we unbind the block args from the yield
+    # vars (so old instantiations don't mess the final type)
     def bind_block_args_to_yield_exps(block, node)
+      yield_vars = typed_def.yield_vars ||= block.args.map { |block| Var.new(block.name) }
+
       block.args.each_with_index do |arg, i|
-        arg.bind_to(node.exps[i]? || mod.nil_var)
+        yield_var = yield_vars[i]
+        yield_var.bind_to(node.exps[i]? || mod.nil_var)
+        arg.bind_to(yield_var)
       end
     end
 
