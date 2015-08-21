@@ -75,4 +75,21 @@ lib LibCrypto
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
+
+  struct MD5Context
+    a : UInt
+    b : UInt
+    c : UInt
+    d : UInt
+    nl : UInt
+    nh : UInt
+    data : UInt[16]
+    num : UInt
+  end
+
+  fun md5_init = MD5_Init(c : MD5Context*) : Int
+  fun md5_update = MD5_Update(c : MD5Context*, data : Void*, len : LibC::SizeT) : Int
+  fun md5_final = MD5_Final(md : UInt8*, c : MD5Context*) : Int
+  fun md5_transform = MD5_Transform(c : MD5Context*, b : UInt8*)
+  fun md5 = MD5(data : UInt8*, lengh : LibC::SizeT, md : UInt8*) : UInt8*
 end
