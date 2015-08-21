@@ -88,8 +88,9 @@ module ENV
     while environ_ptr
       environ_value = environ_ptr.value
       if environ_value
-        key_value = String.new(environ_value)
-        key, value = key_value.split '=', 2
+        key_value = String.new(environ_value).split('=', 2)
+        key = key_value[0]
+        value = key_value[1]? || ""
         yield key, value
         environ_ptr += 1
       else

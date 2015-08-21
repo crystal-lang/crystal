@@ -37,9 +37,9 @@ describe "ENV" do
   end
 
   it "does .values" do
-    [1,2].each {|i| ENV.values.should_not contain("SOMEVALUE_{i}") }
+    [1,2].each {|i| ENV.values.should_not contain("SOMEVALUE_#{i}") }
     ENV["FOO"] = "SOMEVALUE_1"
     ENV["BAR"] = "SOMEVALUE_2"
-    [1,2].each {|i| ENV.values.should contain("SOMEVALUE_{i}") }
+    [1,2].each {|i| ENV.values.should contain("SOMEVALUE_#{i}") }
   end
 end
