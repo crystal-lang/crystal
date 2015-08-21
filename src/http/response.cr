@@ -32,6 +32,10 @@ class HTTP::Response
     @body
   end
 
+  def cookies
+    @cookies ||= Cookies.from_headers(headers)
+  end
+
   def keep_alive?
     HTTP.keep_alive?(self)
   end
@@ -54,7 +58,9 @@ class HTTP::Response
 
   def to_io(io)
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
-    HTTP.serialize_headers_and_body(io, @headers, @body)
+    cookies = @cookies
+    headers = cookies ? cookies.add_response_headers(@headers) : @headers
+    HTTP.serialize_headers_and_body(io, headers, @body)
   end
 
   # :nodoc:
