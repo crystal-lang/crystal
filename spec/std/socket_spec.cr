@@ -41,6 +41,24 @@ describe "UNIXSocket" do
     end
   end
 
+  it "tests read and write timeouts" do
+    UNIXSocket.pair do |left, right|
+# BUG: shrink the socket buffers first
+      left.write_timeout = 0.0001
+      right.read_timeout = 0.0001
+      buf = ("a" * 4096).to_slice
+
+      expect_raises(IO::Timeout, "write timed out") do
+        loop { left.write buf }
+      end
+
+      expect_raises(IO::Timeout, "read timed out") do
+        loop { right.read buf }
+      end
+    end
+  end
+
+
   it "creates the socket file" do
     path = "/tmp/crystal-test-unix-sock"
 
@@ -89,7 +107,7 @@ describe "TCPSocket" do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(SocketError, /^getaddrinfo: (.+ not known|no address .+)$/i) do
+    expect_raises(SocketError, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution)$/i) do
       TCPSocket.new("localhostttttt", 12345)
     end
   end

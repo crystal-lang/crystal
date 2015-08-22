@@ -332,13 +332,10 @@ describe "File" do
       file.closed?.should be_true
     end
 
-    it "raises when closing twice" do
+    it "should not raise when closing twice" do
       file = File.new(__FILE__)
       file.close
-
-      expect_raises IO::Error, /closed stream/ do
-        file.close
-      end
+      file.close
     end
 
     it "does to_s when closed" do

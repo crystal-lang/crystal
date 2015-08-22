@@ -65,11 +65,11 @@ class UDPSocket < IPSocket
   # client = UDPSocket.new
   # client.connect "localhost", 1234
   # ```
-  def connect(host, port, dns_timeout = nil)
+  def connect(host, port, dns_timeout = nil, connect_timeout = nil)
     getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
-      unless nonblocking_connect ai
+      if err = nonblocking_connect host, port, ai, timeout: connect_timeout
         next false if ai.next
-        raise Errno.new("Error connecting UDP socket at #{host}:#{port}")
+        raise err
       end
 
       true

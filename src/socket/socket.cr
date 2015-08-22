@@ -34,8 +34,8 @@ class Socket < FileDescriptorIO
     end
   end
 
-  def initialize(fd, blocking = false, edge_triggerable = true)
-    super(fd, blocking, edge_triggerable)
+  def initialize fd, blocking = false
+    super fd, blocking
     self.sync = true
   end
 
@@ -69,6 +69,22 @@ class Socket < FileDescriptorIO
     addr = sa.addr
     LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::SocklenT.cast(LibC::INET_ADDRSTRLEN))
     String.new(ip_address)
+  end
+
+  private def nonblocking_connect host, port, ai, timeout = nil
+    loop do
+      ret = LibC.connect(@fd, ai.addr, ai.addrlen)
+      return nil if ret == 0 # success
+
+      case LibC.errno
+      when Errno::EISCONN
+        return nil # success
+      when Errno::EINPROGRESS, Errno::EALREADY
+        wait_writable(msg: "connect timed out", timeout: timeout) { |err| return err }
+      else
+        return Errno.new("Error connecting to '#{host}:#{port}'")
+      end
+    end
   end
 end
 

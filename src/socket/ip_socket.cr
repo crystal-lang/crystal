@@ -51,14 +51,14 @@ class IPSocket < Socket
     dns_req = DnsRequestCbArg.new
     dns_base = Scheduler.event_base.dns_base
 
-    # may fire immediately or on next event loop
+    # may fire immediately or on the next event loop
     req = LibEvent2.evdns_getaddrinfo(dns_base, host, port.to_s, pointerof(hints), ->(err, addr, data) {
       dreq = data as DnsRequestCbArg
 
       if err == 0
         dreq.value = addr
       else
-        dreq.value = SocketError.new("getaddrinfo: #{String.new(LibC.gai_strerror(err))}")
+        dreq.value = err
       end
     }, dns_req as Void*)
 
@@ -87,12 +87,13 @@ class IPSocket < Socket
       ensure
         LibEvent2.evutil_freeaddrinfo value
       end
-    elsif value.is_a?(Exception)
-      raise value
+    elsif value.is_a?(Int)
+      raise SocketError.new("getaddrinfo: #{String.new(LibC.gai_strerror(value))}")
     else
       raise "unknown type #{value.inspect}"
     end
 
+    # shouldn't raise
     raise SocketError.new("getaddrinfo: unspecified error") unless success
   end
 
@@ -101,20 +102,6 @@ class IPSocket < Socket
       spawn do
         sleep timeout.not_nil!
         LibEvent2.evdns_cancel_request dns_base, req
-      end
-    end
-  end
-
-  private def nonblocking_connect ai
-    loop do
-      ret = LibC.connect(@fd, ai.addr, ai.addrlen)
-      return true if ret == 0 # success
-
-      case LibC.errno
-      when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable
-      else
-        return false
       end
     end
   end

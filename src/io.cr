@@ -64,6 +64,9 @@ lib LibC
 end
 
 module IO
+  class Timeout < Exception
+  end
+
   def self.select(read_ios, write_ios = nil, error_ios = nil)
     select(read_ios, write_ios, error_ios, nil).not_nil!
   end
