@@ -971,7 +971,158 @@ class String
     end
   end
 
-  # Returns a new string where each character yielded to the given block
+  # Returns a new string where the first character is yielded to the given
+  # block and replaced by its return value.
+  #
+  # ```
+  # "hello".sub {|x| (x.ord + 1).chr } #=> "iello"
+  # "hello".sub { "hi" } #=> "hiello"
+  # ```
+  def sub(&block : Char -> _)
+    return self if empty?
+
+    String.build(bytesize) do |buffer|
+      reader = CharReader.new(self)
+      buffer << yield reader.current_char
+      reader.next_char
+      buffer.write unsafe_byte_slice(reader.pos)
+    end
+  end
+
+  # Returns a string where the first occurrence of *char* is replaced by
+  # *replacement*.
+  #
+  # ```
+  # "hello".sub('l', "lo") #=> "helolo"
+  # "hello world".sub('o', 'a') #=> "hella world"
+  # ```
+  def sub(char : Char, replacement)
+    if includes?(char)
+      String.build(bytesize) do |buffer|
+        reader = CharReader.new(self)
+        while reader.has_next?
+          if reader.current_char == char
+            buffer << replacement
+            break
+          else
+            buffer << reader.current_char
+          end
+          reader.next_char
+        end
+        reader.next_char
+        buffer.write unsafe_byte_slice(reader.pos)
+      end
+    else
+      self
+    end
+  end
+
+  # Returns a string where the first occurrence of *pattern* is replaced by
+  # the block's return value.
+  #
+  # ```
+  # "hello".sub(/./) {|s| s[0].ord.to_s + ' ' } #=> "104 ello"
+  # ```
+  def sub(pattern : Regex)
+    match = pattern.match(self)
+    return self unless match
+
+    String.build(bytesize) do |buffer|
+      buffer.write unsafe_byte_slice(0, match.byte_begin)
+      str = match[0]
+      $~ = match
+      buffer << yield str, match
+      buffer.write unsafe_byte_slice(match.byte_begin + str.bytesize)
+    end
+  end
+
+  # Returns a string where the first occurrence of *pattern* is replaced by
+  # *replacement*
+  #
+  # ```
+  # "hello".sub(/[aeiou]/, '*') #=> "h*llo"
+  # ```
+  def sub(pattern : Regex, replacement)
+    sub(pattern) { replacement }
+  end
+
+  # Returns a string where the first occurrences of the given *pattern* is replaced
+  # with the matching entry from the *hash* of replacements. If the first match
+  # is not included in the *hash*, nothing is replaced.
+  #
+  # ```
+  # "hello".sub(/(he|l|o)/, {"he": "ha", "l": "la"}) #=> "hallo"
+  # "hello".sub(/(he|l|o)/, {"l": "la"}) #=> "hello"
+  # ```
+  def sub(pattern : Regex, hash : Hash(String, _))
+    sub(pattern) {|match|
+      if hash.has_key?(match)
+        hash[match]
+      else
+        return self
+      end
+    }
+  end
+
+  # Returns a string where the first occurrences of the given *string* is replaced
+  # with the given *replacement*.
+  #
+  # ```
+  # "hello yellow".sub("ll", "dd") #=> "heddo yellow"
+  # ```
+  def sub(string : String, replacement)
+    sub(string) { replacement }
+  end
+
+  # Returns a string where the first occurrences of the given *string* is replaced
+  # with the block's value.
+  #
+  # ```
+  # "hello yellow".sub("ll") { "dd" } #=> "heddo yellow"
+  # ```
+  def sub(string : String, &block)
+    index = self.index(string)
+    return self unless index
+
+    String.build(bytesize) do |buffer|
+      buffer.write unsafe_byte_slice(0, index)
+      buffer << yield string
+      buffer.write unsafe_byte_slice(index + string.bytesize)
+    end
+  end
+
+  # Returns a string where the first char in the string matching a key in the
+  # given *hash* is replaced by the corresponding hash value.
+  #
+  # ```
+  # "hello".sub({'a' => 'b', 'l' => 'd'}) #=> "hedlo"
+  # ```
+  def sub(hash : Hash(Char, _))
+    return self if empty?
+
+    String.build(bytesize) do |buffer|
+      reader = CharReader.new(self)
+      while reader.has_next?
+        if hash.has_key?(reader.current_char)
+          buffer << hash[reader.current_char]
+          reader.next_char
+          break
+        else
+          buffer << reader.current_char
+          reader.next_char
+        end
+      end
+
+      buffer << reader.current_char
+
+      if reader.has_next?
+        reader.next_char
+        buffer.write unsafe_byte_slice(reader.pos)
+      end
+    end
+  end
+
+  # Returns a string where each character yielded to the given block
   # is replaced by the block's return value.
   #
   # ```
@@ -1050,7 +1201,7 @@ class String
     gsub(pattern) { replacement }
   end
 
-  # Returns a string where all ocurrences of the given *pattern* are replaced
+  # Returns a string where all occurrences of the given *pattern* are replaced
   # with a *hash* of replacements. If the *hash* contains the matched pattern,
   # the corresponding value is used as a replacement. Otherwise the match is
   # not included in the returned string.
@@ -1058,7 +1209,7 @@ class String
   # ```
   # # "he" and "l" are matched and replaced,
   # # but "o" is not and so is not included
-  # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
+  # "hello".gsub(/(he|l|o)/, {"he": "ha", "l": "la"}) #=> "halala"
   # ```
   def gsub(pattern : Regex, hash : Hash(String, _))
     gsub(pattern) do |match|
@@ -1112,7 +1263,7 @@ class String
   end
 
   # Returns a string where all chars in the given hash are replaced
-  # by the corresponding hash values.
+  # by the corresponding *hash* values.
   #
   # ```
   # "hello".gsub({'e' => 'a', 'l' => 'd'}) #=> "haddo"
