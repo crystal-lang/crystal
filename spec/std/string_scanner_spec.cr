@@ -19,11 +19,62 @@ describe StringScanner, "#scan" do
   end
 end
 
+describe StringScanner, "#scan_until" do
+  it "returns the string matched and advances the offset" do
+    s = StringScanner.new("test string")
+    s.scan_until(/tr/).should eq("test str")
+    s.offset.should eq(8)
+    s.scan_until(/g/ ).should eq("ing")
+  end
+
+  it "returns nil if it can't match from the offset" do
+    s = StringScanner.new("test string")
+    s.offset = 8
+    s.scan_until(/tr/).should be_nil
+  end
+end
+
+describe StringScanner, "#skip" do
+  it "advances the offset but does not returns the string matched" do
+    s = StringScanner.new("this is a string")
+
+    s.skip(/\w+\s/).should eq(5)
+    s.offset.should eq(5)
+
+    s.skip(/\d+/).should eq(nil)
+    s.offset.should eq(5)
+
+    s.skip(/\w+\s/).should eq(3)
+    s.offset.should eq(8)
+
+    s.skip(/\w+\s/).should eq(2)
+    s.offset.should eq(10)
+
+    s.skip(/\w+/).should   eq(6)
+    s.offset.should eq(16)
+  end
+end
+
+describe StringScanner, "#skip_until" do
+  it "advances the offset but does not returns the string matched" do
+    s = StringScanner.new("this is a string")
+
+    s.skip_until(/not/).should eq(nil)
+    s.offset.should eq(0)
+
+    s.skip_until(/a\s/).should eq(10)
+    s.offset.should eq(10)
+
+    s.skip_until(/ng/).should eq(6)
+    s.offset.should eq(16)
+  end
+end
+
 describe StringScanner, "#eos" do
   it "it is true when the offset is at the end" do
     s = StringScanner.new("this is a string")
     s.eos?.should eq(false)
-    s.scan(/(\w+\s?){4}/)
+    s.skip(/(\w+\s?){4}/)
     s.eos?.should eq(true)
   end
 end
