@@ -36,16 +36,23 @@
 # * `#skip`
 # * `#skip_until`
 #
+# Methods that look ahead:
+# * `#peek'
+# * `#check'
+# * `#check_until'
+#
 # Methods that deal with the position of the offset:
 # * `#offset`
 # * `#offset=`
 # * `#eos?`
+# * `#reset`
+# * `#terminate`
 #
-# Methods that deal with the last match
+# Methods that deal with the last match:
 # * `#[]`
 # * `#[]?`
 #
-# Miscellaneous methods
+# Miscellaneous methods:
 # * `#inspect`
 # * `#string`
 class StringScanner
@@ -64,8 +71,8 @@ class StringScanner
   end
 
   # Tries to match with `pattern` at the current position. If there's a match,
-  # the scanner advances the scan offset and returns the matched string.
-  # Otherwise, the scanner returns nil.
+  # the scanner advances the scan offset, the last match is saved, and it
+  # returns the matched string.  Otherwise, the scanner returns nil.
   #
   #     s = StringScanner.new("test string")
   #     s.scan(/\w+/)   # => "test"
@@ -73,28 +80,30 @@ class StringScanner
   #     s.scan(/\s\w+/) # => " string"
   #     s.scan(/.*/)    # => nil
   def scan(pattern)
-    match_and_advance(pattern, Regex::Options::ANCHORED)
+    match(pattern, advance: true, options: Regex::Options::ANCHORED)
   end
 
   # Scans the string _until_ the `pattern` is matched. Returns the substring up
-  # to and including the end of the match, and advances the scan offset.
-  # Returns `nil` if no match.
+  # to and including the end of the match, the last match is saved, and
+  # advances the scan offset.  Returns `nil` if no match.
   #
   #     s = StringScanner.new("test string")
   #     s.scan_until(/tr/)   # => "test str"
   #     s.scan_until(/tr/)   # => nil
   #     s.scan_until(/g/)    # => "ing"
   def scan_until(pattern)
-    match_and_advance(pattern, Regex::Options::None)
+    match(pattern, advance: true, options: Regex::Options::None)
   end
 
-  private def match_and_advance(pattern, options)
+  private def match(pattern, advance=true, options=Regex::Options::ANCHORED)
     match = pattern.match(@str, @offset, options)
     @last_match = match
     if match
       start = @offset
-      @offset = match.end(0).to_i
-      @str[start, @offset-start]
+      new_offset = match.end(0).to_i
+      @offset = new_offset if advance
+
+      @str[start, new_offset-start]
     else
       nil
     end
@@ -103,8 +112,9 @@ class StringScanner
   # Attempts to skip over the given `pattern` beginning with the scan offset.
   # In other words, the pattern is not anchored to the current scan offset.
   #
-  # If there's a match, the scanner advances the scan offset, and it returns
-  # the length of the skipped match. Otherwise it returns `nil` and does not
+  # If there's a match, the scanner advances the scan offset, the last match is
+  # saved, and it returns the length of the skipped match. Otherwise it returns
+  # `nil` and does not
   # advance the offset.
   #
   # This method is the same as `#scan`, but without returning the matched
@@ -118,8 +128,9 @@ class StringScanner
   # offset. In other words, the pattern is not anchored to the current scan
   # offset.
   #
-  # If there's a match, the scanner advances the scan offset, and it returns
-  # the length of the skip. Otherwise it returns `nil` and does not advance the
+  # If there's a match, the scanner advances the scan offset, the last match is
+  # saved, and it returns the length of the skip. Otherwise it returns `nil`
+  # and does not advance the
   # offset.
   #
   # This method is the same as `#scan_until`, but without returning the matched
@@ -127,6 +138,27 @@ class StringScanner
   def skip_until(pattern)
     match = scan_until(pattern)
     match.length if match
+  end
+
+  # Returns the value that `#scan` would return, without advancing the scan
+  # offset. The last match is still saved, however.
+  #
+  #     s = StringScanner.new("this is a string")
+  #     s.offset = 5
+  #     s.check(/\w+/)  # => "is"
+  #     s.check(/\w+/)  # => "is"
+  def check(pattern)
+    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+  end
+
+  # Returns the value that `#scan_until` would return, without advancing the
+  # scan offset. The last match is still saved, however.
+  #
+  #     s = StringScanner.new("test string")
+  #     s.check_until(/tr/) # => "test str"
+  #     s.check_until(/g/)  # => "test string"
+  def check_until(pattern)
+    match(pattern, advance: false, options: Regex::Options::None)
   end
 
   # Returns the `n`-th subgroup in the most recent match.
@@ -178,6 +210,18 @@ class StringScanner
   #     s.eos?                 # => true
   def eos?
     @offset >= @length
+  end
+
+  # Resets the scan offset to the beginning and clears the last match.
+  def reset
+    @last_match = nil
+    @offset = 0
+  end
+
+  # Moves the scan offset to the end of the string and clears the last match.
+  def terminate
+    @last_match = nil
+    @offset = @length
   end
 
   # Returns the string being scanned.

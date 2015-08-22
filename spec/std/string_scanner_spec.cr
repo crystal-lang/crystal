@@ -40,6 +40,7 @@ describe StringScanner, "#skip" do
 
     s.skip(/\w+\s/).should eq(5)
     s.offset.should eq(5)
+    s[0]?.should_not be_nil
 
     s.skip(/\d+/).should eq(nil)
     s.offset.should eq(5)
@@ -61,9 +62,11 @@ describe StringScanner, "#skip_until" do
 
     s.skip_until(/not/).should eq(nil)
     s.offset.should eq(0)
+    s[0]?.should be_nil
 
     s.skip_until(/a\s/).should eq(10)
     s.offset.should eq(10)
+    s[0]?.should_not be_nil
 
     s.skip_until(/ng/).should eq(6)
     s.offset.should eq(16)
@@ -76,6 +79,39 @@ describe StringScanner, "#eos" do
     s.eos?.should eq(false)
     s.skip(/(\w+\s?){4}/)
     s.eos?.should eq(true)
+  end
+end
+
+describe StringScanner, "#check" do
+  it "returns the string matched but does not advances the offset" do
+    s = StringScanner.new("this is a string")
+    s.offset = 5
+
+    s.check(/\w+\s/).should eq("is ")
+    s.offset.should eq(5)
+    s.check(/\w+\s/).should eq("is ")
+    s.offset.should eq(5)
+  end
+
+  it "returns nil if it can't match from the offset" do
+    s = StringScanner.new("test string")
+    s.check(/\d+/).should be_nil
+  end
+end
+
+describe StringScanner, "#check_until" do
+  it "returns the string matched and advances the offset" do
+    s = StringScanner.new("test string")
+    s.check_until(/tr/).should eq("test str")
+    s.offset.should eq(0)
+    s.check_until(/g/ ).should eq("test string")
+    s.offset.should eq(0)
+  end
+
+  it "returns nil if it can't match from the offset" do
+    s = StringScanner.new("test string")
+    s.offset = 8
+    s.check_until(/tr/).should be_nil
   end
 end
 
@@ -203,5 +239,31 @@ describe StringScanner, "#peek" do
     s.offset.should eq(0)
     s.peek(7).should eq("this is")
     s.offset.should eq(0)
+  end
+end
+
+describe StringScanner, "#reset" do
+  it "resets the scan offset to the beginning and clears the last match" do
+    s = StringScanner.new("this is a string")
+    s.scan_until(/str/)
+    s[0]?.should_not be_nil
+    s.offset.should_not eq(0)
+
+    s.reset
+    s[0]?.should be_nil
+    s.offset.should eq(0)
+  end
+end
+
+describe StringScanner, "#terminate" do
+  it "moves the scan offset to the end of the string and clears the last match" do
+    s = StringScanner.new("this is a string")
+    s.scan_until(/str/)
+    s[0]?.should_not be_nil
+    s.eos?.should eq(false)
+
+    s.terminate
+    s[0]?.should be_nil
+    s.eos?.should eq(true)
   end
 end
