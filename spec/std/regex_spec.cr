@@ -105,7 +105,7 @@ describe "Regex" do
     it "returns a regular expression that will match passed arguments" do
       Regex.union("penzance").should eq /penzance/
       Regex.union("skiing", "sledding").should eq /skiing|sledding/
-      Regex.union(/dogs/, /cats/i).should eq /(?-imx:dogs)|(?i-mx:cats)/
+      Regex.union(/dogs/, /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
     end
   
     it "quotes any string arguments" do
@@ -118,8 +118,9 @@ describe "Regex" do
 
     it "accepts a single Array(String | Regexp) argument" do
       Regex.union(["skiing", "sledding"]).should eq /skiing|sledding/
-      Regex.union([/dogs/, /cats/i]).should eq /(?-imx:dogs)|(?i-mx:cats)/
-      (/dogs/ + /cats/i).should eq /(?-imx:dogs)|(?i-mx:cats)/
+      Regex.union([/dogs/, /cats/i]).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+      (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+    end
     end
 
     it "combines Regex objects in the same way as Regex#+" do
