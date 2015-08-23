@@ -10,8 +10,8 @@
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
-# Ranges typically involve integers, but can be created using arbitrary objects as long as they define `succ`, to get
-# the next element in the range, and `<` and `==`, to know when the range reached the end:
+# Ranges typically involve integers, but can be created using arbitrary objects as long as they define `succ` (or `pred`
+# for `reverse_each`), to get the next element in the range, and `<` and `==`, to know when the range reached the end:
 #
 # ```
 # # Represents a string of 'x's.
@@ -110,6 +110,22 @@ struct Range(B, E)
   # ```
   def each
     ItemIterator.new(self)
+  end
+
+  # Iterates over the elements of this range in reverse order, passing each in turn to the block.
+  #
+  # ```
+  # (10...15).reverse_each {|n| print n, ' ' }
+  # # prints: 14 13 12 11 10
+  # ```
+  def reverse_each
+    yield @end if !@exclusive && !(@end < @begin)
+    current = @end
+    while @begin < current
+      current = current.pred
+      yield current
+    end
+    self
   end
 
   # Iterates over this range, passing each nth element to the block.

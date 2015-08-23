@@ -37,6 +37,18 @@ describe "Int" do
     assert { 3.odd?.should be_true }
   end
 
+  describe "succ" do
+    assert { 8.succ.should eq(9) }
+    assert { -2147483648.succ.should eq(-2147483647) }
+    assert { 2147483646.succ.should eq(2147483647) }
+  end
+
+  describe "pred" do
+    assert { 9.pred.should eq(8) }
+    assert { -2147483647.pred.should eq(-2147483648) }
+    assert { 2147483647.pred.should eq(2147483646) }
+  end
+
   describe "abs" do
     it "does for signed" do
       1_i8.abs.should eq(1_i8)
