@@ -197,10 +197,10 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
   end
 
-  # Return a String representing the optional flags applied to the Regex.
+  # Return a `Regex::Options` representing the optional flags applied to this Regex.
   #
   # ```
-  # /ab+c/ix.source #=> "IGNORE_CASE, EXTENDED"
+  # /ab+c/ix.options #=> IGNORE_CASE, EXTENDED
   # ```
   getter options
 
@@ -212,7 +212,7 @@ class Regex
   getter source
 
   # Creates a new Regex out of the given source String.
-  # 
+  #
   # ```
   # Regexp.new("^a-z+:\s+\w+") #=> /^a-z+:\s+\w+/
   # Regexp.new("cat", Regex::Options::IGNORE_CASE) #=> /cat/i
