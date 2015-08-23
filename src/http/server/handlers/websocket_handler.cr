@@ -34,10 +34,10 @@ class HTTP::WebSocketHandler < HTTP::Handler
       @current_message = StringIO.new
     end
 
-    def onmessage(&@onmessage : String ->)
+    def on_message(&@on_message : String ->)
     end
 
-    def onclose(&@onclose : String ->)
+    def on_close(&@on_close : String ->)
     end
 
     def send(message)
@@ -51,7 +51,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
         when :text
           @current_message.write(@buffer, info.length)
           if info.final?
-            if handler = @onmessage
+            if handler = @on_message
               handler.call(@current_message.to_s)
             end
             @current_message.clear
@@ -59,7 +59,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
         when :close
           @current_message.write(@buffer, info.length)
           if info.final?
-            if handler = @onclose
+            if handler = @on_close
               handler.call(@current_message.to_s)
             end
             @current_message.clear
