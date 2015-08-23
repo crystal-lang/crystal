@@ -304,6 +304,18 @@ describe "Enumerable" do
     end
   end
 
+  describe "index_by" do
+    it "creates a hash indexed by the value returned by the block" do
+      hash = ["Anna", "Ary", "Alice"].index_by {|e| e.length }
+      hash.should eq({4 => "Anna", 3 => "Ary", 5 => "Alice"})
+    end
+
+    it "overrides values if a value is returned twice" do
+      hash = ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.length }
+      hash.should eq({4 => "Anna", 3 => "Bob", 5 => "Alice"})
+    end
+  end
+
   describe "inject" do
     assert { [1, 2, 3].inject { |memo, i| memo + i }.should eq(6) }
     assert { [1, 2, 3].inject(10) { |memo, i| memo + i }.should eq(16) }
@@ -312,6 +324,11 @@ describe "Enumerable" do
       expect_raises EmptyEnumerable do
         ([] of Int32).inject { |memo, i| memo + i }
       end
+    end
+
+    it "does not raise if empty if there is a memo argument" do
+      result = ([] of Int32).inject(10) {|memo, i| memo + i}
+      result.should eq 10
     end
   end
 
@@ -331,15 +348,29 @@ describe "Enumerable" do
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
     end
+
+    it "joins with only separator" do
+      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
+    end
   end
 
-  describe "min" do
-    assert { [1, 2, 3].min.should eq(1) }
+  describe "map" do
+    it "applies the function to each element and returns a new array" do
+      result = [1, 2, 3].map { |i| i * 10 }
+      result.should eq [10, 20, 30]
+    end
 
-    it "raises if empty" do
-      expect_raises EmptyEnumerable do
-        ([] of Int32).min
-      end
+    it "leaves the original unmodified" do
+      original = [1, 2, 3]
+      original.map { |i| i * 10}
+      original.should eq [1, 2, 3]
+    end
+  end
+
+  describe "map_with_index" do
+    it "yields the element and the index" do
+      result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
+      result.should eq ["User #0: Alice", "User #1: Bob"]
     end
   end
 
@@ -353,12 +384,20 @@ describe "Enumerable" do
     end
   end
 
-  describe "minmax" do
-    assert { [1, 2, 3].minmax.should eq({1, 3}) }
+  describe "max_by" do
+    assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
+  end
+
+  describe "max_of" do
+    assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+  end
+
+  describe "min" do
+    assert { [1, 2, 3].min.should eq(1) }
 
     it "raises if empty" do
       expect_raises EmptyEnumerable do
-        ([] of Int32).minmax
+        ([] of Int32).min
       end
     end
   end
@@ -371,12 +410,14 @@ describe "Enumerable" do
     assert { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
   end
 
-  describe "max_by" do
-    assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
-  end
+  describe "minmax" do
+    assert { [1, 2, 3].minmax.should eq({1, 3}) }
 
-  describe "max_of" do
-    assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+    it "raises if empty" do
+      expect_raises EmptyEnumerable do
+        ([] of Int32).minmax
+      end
+    end
   end
 
   describe "minmax_by" do
@@ -405,6 +446,7 @@ describe "Enumerable" do
 
   describe "partition" do
     assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
+    assert { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
   end
 
   describe "reject" do
@@ -524,14 +566,5 @@ describe "Enumerable" do
     it "for array" do
       [[:a, :b], [:c, :d]].to_h.should eq({a: :b, c: :d})
     end
-  end
-
-  it "indexes by" do
-    ["foo", "hello", "goodbye", "something"].index_by(&.length).should eq({
-        3 => "foo",
-        5 => "hello",
-        7 => "goodbye",
-        9 => "something",
-      })
   end
 end

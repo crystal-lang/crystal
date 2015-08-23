@@ -358,6 +358,19 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
+
+  # Convers an Enumerable to a hash by using the value returned by the block
+  # as the hash key.
+  # Be aware, if two elements return the same value as a key one will override
+  # the other. If you want to keep all values, then you should probably use
+  # group_by instead.
+  #
+  #     ["Anna", "Ary", "Alice"].index_by {|e| e.length }
+  #     #=> {4=>"Anna", 3=>"Ary", 5=>"Alice"}
+  #     ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.length }
+  #     # => {4=>"Anna", 3=>"Bob", 5=>"Alice"}
+  #
+  #
   def index_by(&block : T -> U)
     hash = {} of U => T
     each do |elem|
@@ -798,6 +811,12 @@ module Enumerable(T)
     ary
   end
 
+  # Creates a hash out of an Enumerable where each element is a 2 element
+  # 2 element structure (for instance a Tuple or an Array)
+  #
+  #     [[:a, :b], [:c, :d]].to_h => {a: :b, c: :d}
+  #     Tuple.new({:a, 1}, {:c, 2}).to_h => {a: 1, c: 2}
+  #
   def to_h
     each_with_object(Hash(typeof(first[0]), typeof(first[1])).new) do |item, hash|
       hash[item[0]] = item[1]
