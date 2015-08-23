@@ -95,6 +95,7 @@ lib LibXML
   alias InputCloseCallback = (Void*) -> Int
 
   fun xmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : DocPtr
+  fun htmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : DocPtr
 
   fun xmlDocGetRootElement(doc : DocPtr) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
