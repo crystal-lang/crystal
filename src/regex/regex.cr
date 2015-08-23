@@ -1,5 +1,182 @@
 require "./*"
 
+# A Regex represents a regular expression, a pattern that describes the
+# contents of strings. A Regex can determine whether or not a string matches
+# its description, and extract the parts of the string that match.
+#
+# A Regex can be created using the literal syntax, in which it is delimited by
+# forward slashes (`/`):
+#
+# ```
+# /hay/ =~ "haystack"   #=> 0
+# /y/.match("haystack") #=> #<MatchData "y">
+# ```
+#
+# Interpolation works in regular expression literals just as it does in string
+# literals. Be aware that using this feature will cause an exception to be
+# raised at runtime, if the resulting string would not be a valid regular
+# expression.
+#
+# ```
+# x = "a"
+# /#{x}/.match("asdf") #=> #<MatchData "a">
+# x = "("
+# /#{x}/ #=> ArgumentError
+# ```
+#
+# When we check to see if a particular regular expression describes a string,
+# we can say that we are performing a match or matching one against the other.
+# If we find that a regular expression does describe a string, we say that it
+# matches, and we can refer to a part of the string that was described as
+# a match.
+#
+# Here `"haystack"` does not contain the pattern `/needle/`, so it doesn't match:
+#
+# ```
+# /needle/.match("haystack") #=> nil
+# ```
+#
+# Here `"haystack"` contains the pattern `/hay/`, so it matches:
+#
+# ```
+# /hay/.match("haystack")    #=> #<MatchData "hay">
+# ```
+#
+# Regex methods that perform a match usually return a truthy value if there was
+# a match and `nil` if there was no match. After performing a match, the
+# special variable `$~` will be an instance of `MatchData` if it matched, `nil`
+# otherwise.
+#
+# When matching a regular expression using `=~` (either `String#=~` or
+# `Regex#=~`), the returned value will be the index of the first match in the
+# string if the expression matched, `nil` otherwise.
+#
+# ```
+# /stack/ =~ "haystack"  #=> 3
+# "haystack" =~ /stack/  #=> 3
+# $~                     #=> #<MatchData "stack">
+# /needle/ =~ "haystack" #=> nil
+# "haystack" =~ /needle/ #=> nil
+# $~                     #=> nil
+# ```
+#
+# When matching a regular expression using `#match` (either `String#match` or
+# `Regex#match`), the returned value will be a `MatchData` if the expression
+# matched, `nil` otherwise.
+#
+# ```
+# /hay/.match("haystack")    #=> #<MatchData "hay">
+# "haystack".match(/hay/)    #=> #<MatchData "hay">
+# $~                         #=> #<MatchData "hay">
+# /needle/.match("haystack") #=> nil
+# "haystack".match(/needle/) #=> nil
+# $~                         #=> nil
+# ```
+#
+# [Regular expressions](https://en.wikipedia.org/wiki/Regular_expression)
+# have their own language for describing strings.
+#
+# Many programming languages and tools implement their own regular expression
+# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library
+# for providing regular expressions. Here give a brief summary of the most
+# basic features of regular expressions - grouping, repetition, and
+# alternation - but the feature set of PCRE extends far beyond these, and we
+# don't attempt to describe it in full here. For more information, refer to
+# the PCRE documentation, especially the
+# [full pattern syntax](http://www.pcre.org/original/doc/html/pcrepattern.html)
+# or
+# [syntax quick reference](http://www.pcre.org/original/doc/html/pcresyntax.html).
+#
+# The regular expression language can be used to match much more than just the
+# static substrings in the above examples. Certain characters, called
+# [metacharacters](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC4),
+# are given special treatment in regular expressions, and can be used to
+# describe more complex patterns. To match metacharacters literally in a
+# regular expression, they must be escaped by being preceded with a backslash
+# (`\`). `escape` will do this automatically for a given String.
+#
+# A group of characters (often called a capture group or
+# [subpattern](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC14))
+# can be identified by enclosing it in parentheses (`()`). The contents of
+# each capture group can be extracted on a successful match:
+#
+# ```
+# /a(sd)f/.match("_asdf_")  #=> #<MatchData "asdf" 1:"sd">
+# /a(sd)f/.match("_asdf_") { |md| md[1] } } #=> "sd"
+# /a(?<grp>sd)f/.match("_asdf_") #=> #<MatchData "asdf" grp:"sd">
+# /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } } #=> "sd"
+# ```
+#
+# Capture groups are indexed starting from 1. Methods that accept a capture
+# group index will usually also accept 0 to refer to the full match. Capture
+# groups can also be given names, using the `(?&lt;name&gt;...)` syntax, as in the
+# previous example.
+#
+# A character or group can be
+# [repeated](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC17)
+# or made optional using an asterisk (`*` - zero or more), a plus sign
+# (`+` - one or more), integer bounds in curly braces
+# (`{n,m}`) (at least `n`, no more than `m`), or a question mark
+# (`?`) (zero or one).
+#
+# ```
+# /fo*/.match("_f_")         #=> #<MatchData "f">
+# /fo+/.match("_f_")         #=> nil
+# /fo*/.match("_foo_")       #=> #<MatchData "foo">
+# /fo{3,}/.match("_foo_")    #=> nil
+# /fo{1,3}/.match("_foo_")   #=> #<MatchData "foo">
+# /fo*/.match("_foo_")       #=> #<MatchData "foo">
+# /fo*/.match("_foooooooo_") #=> #<MatchData "foooooooo">
+# /fo{,3}/.match("_foooo_")  #=> nil
+# /f(op)*/.match("fopopo")   #=> #<MatchData "fopop" 1: "op">
+# /foo?bar/.match("foobar")  #=> #<MatchData "foobar">
+# /foo?bar/.match("fobar")   #=> #<MatchData "fobar">
+# ```
+#
+# Alternatives can be separated using a
+# [vertical bar](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC12)
+# (`|`). Any single character can be represented by
+# [dot](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC7)
+# (`.`). When matching only one character, specific
+# alternatives can be expressed as a
+# [character class](http://www.pcre.org/original/doc/html/pcrepattern.html#SEC9),
+# enclosed in square brackets (`[]`):
+#
+# ```
+# /foo|bar/.match("foo")     #=> #<MatchData "foo">
+# /foo|bar/.match("bar")     #=> #<MatchData "bar">
+# /_(x|y)_/.match("_x_")     #=> #<MatchData "_x_" 1: "x">
+# /_(x|y)_/.match("_y_")     #=> #<MatchData "_y_" 1: "y">
+# /_(x|y)_/.match("_(x|y)_") #=> nil
+# /_(x|y)_/.match("_(x|y)_") #=> nil
+# /_._/.match("_x_")         #=> #<MatchData "_x_">
+# /_[xyz]_/.match("_x_")     #=> #<MatchData "_x_">
+# /_[a-z]_/.match("_x_")     #=> #<MatchData "_x_">
+# /_[^a-z]_/.match("_x_")    #=> nil
+# /_[^a-wy-z]_/.match("_x_") #=> #<MatchData "_x_">
+# ```
+#
+# Regular expressions can be defined with these 3
+# [optional flags](http://www.pcre.org/original/doc/html/pcreapi.html#SEC11):
+#
+# * `i`: ignore case (PCRE_CASELESS)
+# * `m`: multiline (PCRE_MULTILINE and PCRE_DOTALL)
+# * `x`: extended (PCRE_EXTENDED)
+#
+# ```
+# /asdf/ =~ "ASDF"         #=> nil
+# /asdf/i =~ "ASDF"        #=> 0
+# /asdf\nz/i =~ "ASDF\nZ"  #=> nil
+# /asdf\nz/im =~ "ASDF\nZ" #=> 0
+# ```
+#
+# PCRE supports other encodings, but Crystal strings are UTF-8 only, so Crystal
+# regular expressions are also UTF-8 only (by default).
+#
+# PCRE optionally permits named capture groups (named subpatterns) to not be
+# unique. Crystal exposes the name table of a Regex as a
+# Hash of String => Int32, and therefore requires named capture groups to have
+# unique names with a single Regex.
 class Regex
   @[Flags]
   enum Options
