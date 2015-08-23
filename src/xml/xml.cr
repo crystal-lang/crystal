@@ -19,6 +19,10 @@ module XML
       )
   end
 
+  def self.parse_html(string: String, options = HTMLParserOptions.default : HTMLParserOptions)
+      from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
+  end
+
   protected def self.from_ptr(doc : LibXML::DocPtr)
     if doc
       Node.new doc
