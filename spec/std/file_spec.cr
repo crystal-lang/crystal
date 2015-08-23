@@ -301,7 +301,7 @@ describe "File" do
     it "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq("#{home}/..badfilename")
-      File.expand_path("..").should eq(base.split("/")[0...-1].join("/"))
+      File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
       File.expand_path("~/a","~/b").should eq("#{home}/a")
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
