@@ -186,6 +186,10 @@ module Iterator(T)
     Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
+  def flatten
+    Flatten(typeof(first.first)).new(self)
+  end
+
   def tap(&block : T ->)
     Tap(typeof(self), T).new(self, block)
   end
@@ -623,6 +627,38 @@ module Iterator(T)
       @iterator_1.rewind
       @iterator_2.rewind
       @iterator_1_consumed = false
+    end
+  end
+
+  # :nodoc:
+  class Flatten(T)
+    include Iterator(T)
+
+    def initialize(@iter : Iterator(Iterator(T)))
+      @current = @iter.next
+    end
+
+    def next
+      current = @current
+      if current.is_a?(Stop)
+        stop
+      else
+        v = current.next
+        if v.is_a?(Stop)
+          @current = @iter.next
+          self.next
+        else
+          v
+        end
+      end
+    end
+
+    def rewind
+      @iter.rewind
+      @iter.each { |i| i.rewind }
+      @iter.rewind
+
+      @current = @iter.next
     end
   end
 

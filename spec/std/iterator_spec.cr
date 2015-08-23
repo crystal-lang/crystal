@@ -378,6 +378,59 @@ describe Iterator do
     iter.to_a.should eq([1, 2, 'a', 'b'])
   end
 
+  describe "flatten" do
+    it "flattens an iterator of mixed-type iterators" do
+      iter = [(1..2).each, ('a'..'b').each].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b'])
+    end
+
+    it "flattens an iterator of mixed-type elements and iterators" do
+      iter = [(1..2).each, 'a'].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a'])
+    end
+
+    it "flattens an iterator of mixed-type elements and iterators and iterators of iterators" do
+      iter = [(1..2).each, [['a', 'b'].each].each, "foo"].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq("foo")
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', "foo"])
+    end
+  end
+
   it "taps" do
     a = 0
 
