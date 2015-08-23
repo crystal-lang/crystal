@@ -13,11 +13,23 @@ describe "Regex" do
 
   it "does inspect" do
     /foo/.inspect.should eq("/foo/")
+    /foo/.inspect.should eq("/foo/")
+    /foo/imx.inspect.should eq("/foo/imx")
   end
 
   it "does to_s" do
-    /foo/.to_s.should eq("/foo/")
-    /foo/imx.to_s.should eq("/foo/imx")
+    /foo/.to_s.should eq("(?-imsx:foo)")
+    /foo/im.to_s.should eq("(?ims-x:foo)")
+    /foo/imx.to_s.should eq("(?imsx-:foo)")
+
+    "Crystal".match(/(?<bar>C)#{/(?<foo>R)/i}/).should be_truthy
+    "Crystal".match(/(?<bar>C)#{/(?<foo>R)/}/i).should be_falsey
+
+    "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/) do |md|
+      md[0].should eq("Cr")
+      md["bar"].should eq("C")
+      md["foo"].should eq("r")
+    end
   end
 
   it "doesn't crash when PCRE tries to free some memory (#771)" do

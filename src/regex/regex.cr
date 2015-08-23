@@ -327,9 +327,20 @@ class Regex
     nil
   end
 
-  # Convert to String. Same as `to_s`.
+  # Convert to String in literal format. Returns the source as a String in
+  # Regex literat format, delimited in forward slashes (`/`), with any
+  # optional flags included.
+  #
+  # ```
+  # /ab+c/ix.to_s #=> "/ab+c/ix"
+  # ```
   def inspect(io : IO)
-    to_s io
+    io << "/"
+    io << source
+    io << "/"
+    io << "i" if options.includes?(Options::IGNORE_CASE)
+    io << "m" if options.includes?(Options::MULTILINE)
+    io << "x" if options.includes?(Options::EXTENDED)
   end
 
   # Match at character index. Matches a regular expression against String
@@ -409,19 +420,30 @@ class Regex
     lookup
   end
 
-  # Convert to String. Returns the source as a String in Regex literal
-  # format, delimited in forward slashes (`/`), with any optional flags
-  # included.
+  # Convert to String in subpattern format. Produces a String which can be
+  # embedded in another Regex via interpolation, where it will be interpreted
+  # as a non-capturing subexpression in another regular expression.
   #
   # ```
-  # /ab+c/ix.to_s #=> "/ab+c/ix"
+  # re = /A*/i                 #=> /A*/i
+  # re.to_s                    #=> "(?i:A*)"
+  # "Crystal".match(/t#{re}l/) #=> #<MatchData "tal">
+  # re = /A*/                  #=> "(?:A*)"
+  # "Crystal".match(/t#{re}l/) #=> nil
   # ```
   def to_s(io : IO)
-    io << "/"
-    io << source
-    io << "/"
+    io << "(?"
     io << "i" if options.includes?(Options::IGNORE_CASE)
-    io << "m" if options.includes?(Options::MULTILINE)
+    io << "ms" if options.includes?(Options::MULTILINE)
     io << "x" if options.includes?(Options::EXTENDED)
+
+    io << "-"
+    io << "i" unless options.includes?(Options::IGNORE_CASE)
+    io << "ms" unless options.includes?(Options::MULTILINE)
+    io << "x" unless options.includes?(Options::EXTENDED)
+
+    io << ":"
+    io << source
+    io << ")"
   end
 end
