@@ -279,8 +279,11 @@ class Regex
   # re = Regex.union([/skiing/i, "sledding"])
   # re.match("Skiing")   #=> #<MatchData "Skiing">
   # re.match("sledding") #=> #<MatchData "sledding">
+  # re = Regex.union({/skiing/i, "sledding"})
+  # re.match("Skiing")   #=> #<MatchData "Skiing">
+  # re.match("sledding") #=> #<MatchData "sledding">
   # ```
-  def self.union(patterns : Array(Regex | String))
+  def self.union(patterns : Enumerable(Regex | String))
     new patterns.map { |pattern| union_part pattern }.join("|")
   end
 
@@ -296,7 +299,7 @@ class Regex
   # re.match("sledding") #=> #<MatchData "sledding">
   # ```
   def self.union(*patterns : Regex | String)
-    new patterns.map { |pattern| union_part pattern }.join("|")    
+    union patterns
   end
 
   private def self.union_part(pattern : Regex)

@@ -121,6 +121,11 @@ describe "Regex" do
       Regex.union([/dogs/, /cats/i]).should eq /(?-imsx:dogs)|(?i-msx:cats)/
       (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
     end
+
+    it "accepts a single Tuple(String | Regexp) argument" do
+      Regex.union({"skiing", "sledding"}).should eq /skiing|sledding/
+      Regex.union({/dogs/, /cats/i}).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+      (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
     end
 
     it "combines Regex objects in the same way as Regex#+" do
