@@ -1,6 +1,60 @@
 require "spec"
 
 describe "Regex" do
+  it "compare to other instances" do
+    Regex.new("foo").should eq(Regex.new("foo"))
+    Regex.new("foo").should_not eq(Regex.new("bar"))
+  end
+
+  it "does =~" do
+    (/foo/ =~ "bar foo baz").should eq(4)
+    $~.length.should eq(0)
+  end
+
+  it "does inspect" do
+    /foo/.inspect.should eq("/foo/")
+    /foo/.inspect.should eq("/foo/")
+    /foo/imx.inspect.should eq("/foo/imx")
+  end
+
+  it "does to_s" do
+    /foo/.to_s.should eq("(?-imsx:foo)")
+    /foo/im.to_s.should eq("(?ims-x:foo)")
+    /foo/imx.to_s.should eq("(?imsx-:foo)")
+
+    "Crystal".match(/(?<bar>C)#{/(?<foo>R)/i}/).should be_truthy
+    "Crystal".match(/(?<bar>C)#{/(?<foo>R)/}/i).should be_falsey
+
+    "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/) do |md|
+      md[0].should eq("Cr")
+      md["bar"].should eq("C")
+      md["foo"].should eq("r")
+    end
+  end
+
+  it "doesn't crash when PCRE tries to free some memory (#771)" do
+    expect_raises(ArgumentError) { Regex.new("foo)") }
+  end
+
+  it "escapes" do
+    Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello").should eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
+  end
+
+  it "matches ignore case" do
+    ("HeLlO" =~ /hello/).should be_nil
+    ("HeLlO" =~ /hello/i).should eq(0)
+  end
+
+  it "matches lines beginnings on ^ in multiline mode" do
+    ("foo\nbar" =~ /^bar/).should be_nil
+    ("foo\nbar" =~ /^bar/m).should eq(4)
+  end
+
+  it "matches multiline" do
+    ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
+    ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
+  end
+
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
     $~.length.should eq(2)
@@ -21,16 +75,6 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
-  it "does =~" do
-    (/foo/ =~ "bar foo baz").should eq(4)
-    $~.length.should eq(0)
-  end
-
-  it "raises if outside match range with []" do
-    "foo" =~ /foo/
-    expect_raises(IndexError) { $1 }
-  end
-
   describe "name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
@@ -42,139 +86,50 @@ describe "Regex" do
     end
   end
 
-  describe "MatchData#[]" do
-    it "raises if outside match range with []" do
-      "foo" =~ /foo/
-      expect_raises(IndexError) { $~[1] }
-    end
-
-    it "capture named group" do
-      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-      $~["g1"].should eq("oo")
-      $~["g2"].should eq("ba")
-    end
-
-    it "captures empty group" do
-      ("foo" =~ /(?<g1>z?)foo/).should eq(0)
-      $~[1].should eq("")
-      $~["g1"].should eq("")
-    end
-
-    it "raises exception on optional empty group" do
-      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
-      expect_raises(Exception) { $~[1] }
-      expect_raises(Exception) { $~["g1"] }
-    end
-
-    it "raises exception when named group doesn't exist" do
-      ("foo" =~ /foo/).should eq(0)
-      expect_raises(ArgumentError) { $~["group"] }
-    end
-  end
-
-  describe "MatchData#[]?" do
-    it "returns nil if outside match range with []" do
-      "foo" =~ /foo/
-      $~[1]?.should be_nil
-    end
-
-    it "capture named group" do
-      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-      $~["g1"]?.should eq("oo")
-      $~["g2"]?.should eq("ba")
-    end
-
-    it "capture empty group" do
-      ("foo" =~ /(?<g1>z?)foo/).should eq(0)
-      $~[1]?.should eq("")
-      $~["g1"]?.should eq("")
-    end
-
-    it "capture optional empty group" do
-      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
-      $~[1]?.should be_nil
-      $~["g1"]?.should be_nil
-    end
-
-    it "returns nil exception when named group doesn't exist" do
-      ("foo" =~ /foo/).should eq(0)
-      $~["group"]?.should be_nil
-    end
-  end
-
-  describe "MatchData#pre_match" do
-    it "returns the part of the string before the match" do
-      "Crystal".match(/yst/) { |md| md.pre_match.should eq "Cr" }
-    end
-
-    it "returns an empty string when there's nothing before" do
-      "Crystal".match(/Cryst/) { |md| md.pre_match.should eq "" }
-    end
-
-    it "works with unicode" do
-      "há日本語".match(/本/) { |md| md.pre_match.should eq "há日" }
-    end
-  end
-
-  describe "MatchData#post_match" do
-    it "returns the part of the string after the match" do
-      "Crystal".match(/yst/) { |md| md.post_match.should eq "al" }
-    end
-
-    it "returns an empty string when there's nothing after" do
-      "Crystal".match(/ystal/) { |md| md.post_match.should eq "" }
-    end
-
-    it "works with unicode" do
-      "há日本語".match(/本/) { |md| md.post_match.should eq "語" }
-    end
-  end
-
-  it "matches multiline" do
-    ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
-    ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
-  end
-
-  it "matches ignore case" do
-    ("HeLlO" =~ /hello/).should be_nil
-    ("HeLlO" =~ /hello/i).should eq(0)
-  end
-
-  it "does to_s" do
-    /foo/.to_s.should eq("/foo/")
-    /foo/imx.to_s.should eq("/foo/imx")
-
-    /f(o)(x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
-    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" lettero:"o" letterx:"x">))
-    /fox/.match("the fox").to_s.should eq(%(#<MatchData "fox">))
-    /f(o)(x)/.match("the fox").inspect.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
-    /f(o)(x)?/.match("the fort").inspect.should eq(%(#<MatchData "fo" 1:"o" 2:nil>))
-    /fox/.match("the fox").inspect.should eq(%(#<MatchData "fox">))
-  end
-
-  it "does inspect" do
-    /foo/.inspect.should eq("/foo/")
-  end
-
   it "raises exception with invalid regex" do
     expect_raises(ArgumentError) { Regex.new("+") }
   end
 
-  it "escapes" do
-    Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello").should eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
+  it "raises if outside match range with []" do
+    "foo" =~ /foo/
+    expect_raises(IndexError) { $1 }
   end
 
-  it "doesn't crash when PCRE tries to free some memory (#771)" do
-    expect_raises(ArgumentError) { Regex.new("foo)") }
-  end
+  describe ".union" do
+    it "constructs a Regex that matches things any of its arguments match" do 
+      re = Regex.union(/skiing/i, "sledding")
+      re.match("Skiing").not_nil![0].should eq "Skiing"
+      re.match("sledding").not_nil![0].should eq "sledding"
+    end
 
-  it "compare to other instances" do
-    Regex.new("foo").should eq(Regex.new("foo"))
-    Regex.new("foo").should_not eq(Regex.new("bar"))
-  end
+    it "returns a regular expression that will match passed arguments" do
+      Regex.union("penzance").should eq /penzance/
+      Regex.union("skiing", "sledding").should eq /skiing|sledding/
+      Regex.union(/dogs/, /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+    end
+  
+    it "quotes any string arguments" do
+      Regex.union("n", ".").should eq /n|\./
+    end
+  
+    it "returns a Regex with an Array(String) with special characters" do
+      Regex.union(["+","-"]).should eq /\+|\-/
+    end
 
-  it "matches lines beginnings on ^ in multiline mode" do
-    ("foo\nbar" =~ /^bar/).should be_nil
-    ("foo\nbar" =~ /^bar/m).should eq(4)
+    it "accepts a single Array(String | Regexp) argument" do
+      Regex.union(["skiing", "sledding"]).should eq /skiing|sledding/
+      Regex.union([/dogs/, /cats/i]).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+      (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+    end
+
+    it "accepts a single Tuple(String | Regexp) argument" do
+      Regex.union({"skiing", "sledding"}).should eq /skiing|sledding/
+      Regex.union({/dogs/, /cats/i}).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+      (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+    end
+
+    it "combines Regex objects in the same way as Regex#+" do
+      Regex.union(/skiing/i, /sledding/).should eq(/skiing/i + /sledding/)
+    end
   end
 end
