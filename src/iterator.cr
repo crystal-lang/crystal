@@ -78,134 +78,6 @@ module Iterator(T)
     INSTANCE = new
   end
 
-  # Shortcut for `Iterator::Stop::INSTANCE`, to signal that there are no more elements in an iterator.
-  def stop
-    Iterator.stop
-  end
-
-  # ditto
-  def self.stop
-    Stop::INSTANCE
-  end
-
-  # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
-  # are no more elements.
-  abstract def next
-
-  # Rewinds the iterator to its original state.
-  abstract def rewind
-
-  def each
-    self
-  end
-
-  def compact_map(&func : T -> U)
-    CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
-  end
-
-  def map(&func : T -> U)
-    Map(typeof(self), T, U).new(self, func)
-  end
-
-  def select(&func : T -> U)
-    Select(typeof(self), T, U).new(self, func)
-  end
-
-  def reject(&func : T -> U)
-    Reject(typeof(self), T, U).new(self, func)
-  end
-
-  def take(n)
-    raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
-    Take(typeof(self), T).new(self, n)
-  end
-
-  def take_while(&func : T -> U)
-    TakeWhile(typeof(self), T, U).new(self, func)
-  end
-
-  def skip(n)
-    raise ArgumentError.new "Attempted to skip negative size: #{n}" if n < 0
-    Skip(typeof(self), T).new(self, n)
-  end
-
-  def skip_while(&func : T -> U)
-    SkipWhile(typeof(self), T, U).new(self, func)
-  end
-
-  def zip(other : Iterator(U))
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
-  end
-
-  def cycle
-    Cycle(typeof(self), T).new(self)
-  end
-
-  def cycle(n : Int)
-    CycleN(typeof(self), T, typeof(n)).new(self, n)
-  end
-
-  def in_groups_of(size : Int, filled_up_with = nil)
-    raise ArgumentError.new("size must be positive") if size <= 0
-    InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
-  end
-
-  def uniq
-    uniq &.itself
-  end
-
-  def uniq(&func : T -> U)
-    Uniq(typeof(self), T, U).new(self, func)
-  end
-
-  def with_index(offset = 0)
-    WithIndex(typeof(self), T).new(self, offset)
-  end
-
-  def with_object(obj)
-    WithObject(typeof(self), T, typeof(obj)).new(self, obj)
-  end
-
-  def slice(n)
-    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
-
-    Slice(typeof(self), T).new(self, n)
-  end
-
-  def each_slice(n)
-    slice(n)
-  end
-
-  def cons(n)
-    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
-
-    Cons(typeof(self), T).new(self, n)
-  end
-
-  def chain(other : Iterator(U))
-    Chain(typeof(self), typeof(other), T, U).new(self, other)
-  end
-
-  def tap(&block : T ->)
-    Tap(typeof(self), T).new(self, block)
-  end
-
-  def self.of(element : T)
-    Singleton(T).new(element)
-  end
-
-  def self.of(&block : -> T)
-    SingletonProc(T).new(block)
-  end
-
-  def each
-    while true
-      value = self.next
-      break if value.is_a?(Stop)
-      yield value
-    end
-  end
-
   # IteratorWrapper eliminates some boilerplate when defining an Iterator that wraps another iterator.
   #
   # To use it, include this module in your iterator and make sure that the wrapped
@@ -226,6 +98,96 @@ module Iterator(T)
     end
   end
 
+  # Shortcut for `Iterator::Stop::INSTANCE`, to signal that there are no more elements in an iterator.
+  def stop
+    Iterator.stop
+  end
+
+  # ditto
+  def self.stop
+    Stop::INSTANCE
+  end
+
+  def self.of(element : T)
+    Singleton(T).new(element)
+  end
+
+  # :nodoc:
+  struct Singleton(T)
+    include Iterator(T)
+
+    def initialize(@element : T)
+    end
+
+    def next
+      @element
+    end
+
+    def rewind
+      self
+    end
+  end
+
+  def self.of(&block : -> T)
+    SingletonProc(T).new(block)
+  end
+
+  # :nodoc:
+  struct SingletonProc(T)
+    include Iterator(T)
+
+    def initialize(@proc : -> T)
+    end
+
+    def next
+      @proc.call
+    end
+  end
+
+  # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
+  # are no more elements.
+  abstract def next
+
+  # Rewinds the iterator to its original state.
+  abstract def rewind
+
+  def chain(other : Iterator(U))
+    Chain(typeof(self), typeof(other), T, U).new(self, other)
+  end
+
+  # :nodoc:
+  class Chain(I1, I2, T1, T2)
+    include Iterator(T1 | T2)
+
+    def initialize(@iterator_1, @iterator_2)
+      @iterator_1_consumed = false
+    end
+
+    def next
+      if @iterator_1_consumed
+        @iterator_2.next
+      else
+        value = @iterator_1.next
+        if value.is_a?(Stop)
+          @iterator_1_consumed = true
+          value = @iterator_2.next
+        end
+        value
+      end
+    end
+
+    def rewind
+      @iterator_1.rewind
+      @iterator_2.rewind
+      @iterator_1_consumed = false
+    end
+  end
+
+  def compact_map(&func : T -> U)
+    CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
+  end
+
+  # :nodoc:
   struct CompactMap(I, T, U)
     include Iterator(U)
     include IteratorWrapper
@@ -243,178 +205,38 @@ module Iterator(T)
     end
   end
 
-  # :nodoc:
-  struct Map(I, T, U)
-    include Iterator(U)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
-    end
-
-    def next
-      value = wrapped_next
-      @func.call(value)
-    end
+  def cons(n)
+    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
+    Cons(typeof(self), T).new(self, n)
   end
 
   # :nodoc:
-  struct Select(I, T, B)
-    include Iterator(T)
+  struct Cons(I, T)
+    include Iterator(Array(T))
     include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @func : T -> B)
+    def initialize(@iterator : Iterator(T), @n)
+      @values = Array(T).new(@n)
     end
 
     def next
-      while true
-        value = wrapped_next
-        if @func.call(value)
-          return value
-        end
+      loop do
+        elem = wrapped_next
+        @values << elem
+        @values.shift if @values.size > @n
+        break if @values.size == @n
       end
-    end
-  end
-
-  # :nodoc:
-  struct Reject(I, T, B)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func : T -> B)
-    end
-
-    def next
-      while true
-        value = wrapped_next
-        unless @func.call(value)
-          return value
-        end
-      end
-    end
-  end
-
-  # :nodoc:
-  class Take(I, T)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @n : Int)
-      @original = @n
-    end
-
-    def next
-      if @n > 0
-        @n -= 1
-        wrapped_next
-      else
-        stop
-      end
+      @values.dup
     end
 
     def rewind
-      @n = @original
+      @values.clear
       super
     end
   end
 
-  # :nodoc:
-  class TakeWhile(I, T, U)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func: T -> U)
-      @returned_false = false
-    end
-
-    def next
-      return stop if @returned_false == true
-      value = wrapped_next
-      if @func.call(value)
-        value
-      else
-        @returned_false = true
-        stop
-      end
-    end
-
-    def rewind
-      @returned_false = false
-      super
-    end
-  end
-
-  # :nodoc:
-  class Skip(I, T)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @n : Int)
-      @original = @n
-    end
-
-    def next
-      while @n > 0
-        @n -= 1
-        wrapped_next
-      end
-      @iterator.next
-    end
-
-    def rewind
-      @n = @original
-      super
-    end
-  end
-
-
-  # :nodoc:
-  class SkipWhile(I, T, U)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func: T -> U)
-      @returned_false = false
-    end
-
-    def next
-      while true
-        value = wrapped_next
-        return value if @returned_false == true
-        unless @func.call(value)
-          @returned_false = true
-          return value
-        end
-      end
-    end
-
-    def rewind
-      @returned_false = false
-      super
-    end
-  end
-
-  # :nodoc:
-  struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
-
-    def initialize(@iterator1, @iterator2)
-    end
-
-    def next
-      v1 = @iterator1.next
-      return stop if v1.is_a?(Stop)
-
-      v2 = @iterator2.next
-      return stop if v2.is_a?(Stop)
-
-      {v1, v2}
-    end
-
-    def rewind
-      @iterator1.rewind
-      @iterator2.rewind
-      self
-    end
+  def cycle
+    Cycle(typeof(self), T).new(self)
   end
 
   # :nodoc:
@@ -434,6 +256,10 @@ module Iterator(T)
         value
       end
     end
+  end
+
+  def cycle(n : Int)
+    CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
 
   # :nodoc:
@@ -465,6 +291,27 @@ module Iterator(T)
     end
   end
 
+  def each
+    self
+  end
+
+  def each
+    while true
+      value = self.next
+      break if value.is_a?(Stop)
+      yield value
+    end
+  end
+
+  def each_slice(n)
+    slice(n)
+  end
+
+  def in_groups_of(size : Int, filled_up_with = nil)
+    raise ArgumentError.new("size must be positive") if size <= 0
+    InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
+  end
+
   # :nodoc:
   struct InGroupsOf(I, T, N, U)
     include Iterator(Array(T | U))
@@ -486,39 +333,129 @@ module Iterator(T)
     end
   end
 
+  def map(&func : T -> U)
+    Map(typeof(self), T, U).new(self, func)
+  end
+
   # :nodoc:
-  class WithIndex(I, T)
-    include Iterator({T, Int32})
+  struct Map(I, T, U)
+    include Iterator(U)
     include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @offset, @index = offset)
+    def initialize(@iterator : Iterator(T), @func : T -> U)
     end
 
     def next
-      v = wrapped_next
-      value = {v, @index}
-      @index += 1
-      value
+      value = wrapped_next
+      @func.call(value)
+    end
+  end
+
+  def reject(&func : T -> U)
+    Reject(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  struct Reject(I, T, B)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func : T -> B)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        unless @func.call(value)
+          return value
+        end
+      end
+    end
+  end
+
+  def select(&func : T -> U)
+    Select(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  struct Select(I, T, B)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func : T -> B)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        if @func.call(value)
+          return value
+        end
+      end
+    end
+  end
+
+  def skip(n)
+    raise ArgumentError.new "Attempted to skip negative size: #{n}" if n < 0
+    Skip(typeof(self), T).new(self, n)
+  end
+
+  # :nodoc:
+  class Skip(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n : Int)
+      @original = @n
+    end
+
+    def next
+      while @n > 0
+        @n -= 1
+        wrapped_next
+      end
+      @iterator.next
     end
 
     def rewind
-      @index = @offset
+      @n = @original
       super
     end
   end
 
+  def skip_while(&func : T -> U)
+    SkipWhile(typeof(self), T, U).new(self, func)
+  end
+
   # :nodoc:
-  struct WithObject(I, T, O)
-    include Iterator({T, O})
+  class SkipWhile(I, T, U)
+    include Iterator(T)
     include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @object : O)
+    def initialize(@iterator : Iterator(T), @func: T -> U)
+      @returned_false = false
     end
 
     def next
-      v = wrapped_next
-      {v, @object}
+      while true
+        value = wrapped_next
+        return value if @returned_false == true
+        unless @func.call(value)
+          @returned_false = true
+          return value
+        end
+      end
     end
+
+    def rewind
+      @returned_false = false
+      super
+    end
+  end
+
+  def slice(n)
+    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
+    Slice(typeof(self), T).new(self, n)
   end
 
   # :nodoc:
@@ -546,29 +483,86 @@ module Iterator(T)
     end
   end
 
+  def take(n)
+    raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
+    Take(typeof(self), T).new(self, n)
+  end
+
   # :nodoc:
-  struct Cons(I, T)
-    include Iterator(Array(T))
+  class Take(I, T)
+    include Iterator(T)
     include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @n)
-      @values = Array(T).new(@n)
+    def initialize(@iterator : Iterator(T), @n : Int)
+      @original = @n
     end
 
     def next
-      loop do
-        elem = wrapped_next
-        @values << elem
-        @values.shift if @values.size > @n
-        break if @values.size == @n
+      if @n > 0
+        @n -= 1
+        wrapped_next
+      else
+        stop
       end
-      @values.dup
     end
 
     def rewind
-      @values.clear
+      @n = @original
       super
     end
+  end
+
+  def take_while(&func : T -> U)
+    TakeWhile(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  class TakeWhile(I, T, U)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func: T -> U)
+      @returned_false = false
+    end
+
+    def next
+      return stop if @returned_false == true
+      value = wrapped_next
+      if @func.call(value)
+        value
+      else
+        @returned_false = true
+        stop
+      end
+    end
+
+    def rewind
+      @returned_false = false
+      super
+    end
+  end
+
+  def tap(&block : T ->)
+    Tap(typeof(self), T).new(self, block)
+  end
+
+  # :nodoc:
+  struct Tap(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator, @proc)
+    end
+
+    def next
+      value = wrapped_next
+      @proc.call(value)
+      value
+    end
+  end
+
+  def uniq
+    uniq &.itself
   end
 
   # :nodoc:
@@ -598,74 +592,78 @@ module Iterator(T)
     end
   end
 
-  # :nodoc:
-  class Chain(I1, I2, T1, T2)
-    include Iterator(T1 | T2)
+  def uniq(&func : T -> U)
+    Uniq(typeof(self), T, U).new(self, func)
+  end
 
-    def initialize(@iterator_1, @iterator_2)
-      @iterator_1_consumed = false
-    end
-
-    def next
-      if @iterator_1_consumed
-        @iterator_2.next
-      else
-        value = @iterator_1.next
-        if value.is_a?(Stop)
-          @iterator_1_consumed = true
-          value = @iterator_2.next
-        end
-        value
-      end
-    end
-
-    def rewind
-      @iterator_1.rewind
-      @iterator_2.rewind
-      @iterator_1_consumed = false
-    end
+  def with_index(offset = 0)
+    WithIndex(typeof(self), T).new(self, offset)
   end
 
   # :nodoc:
-  struct Singleton(T)
-    include Iterator(T)
-
-    def initialize(@element : T)
-    end
-
-    def next
-      @element
-    end
-
-    def rewind
-      self
-    end
-  end
-
-  # :nodoc:
-  struct SingletonProc(T)
-    include Iterator(T)
-
-    def initialize(@proc : -> T)
-    end
-
-    def next
-      @proc.call
-    end
-  end
-
-  # :nodoc:
-  struct Tap(I, T)
-    include Iterator(T)
+  class WithIndex(I, T)
+    include Iterator({T, Int32})
     include IteratorWrapper
 
-    def initialize(@iterator, @proc)
+    def initialize(@iterator : Iterator(T), @offset, @index = offset)
     end
 
     def next
-      value = wrapped_next
-      @proc.call(value)
+      v = wrapped_next
+      value = {v, @index}
+      @index += 1
       value
+    end
+
+    def rewind
+      @index = @offset
+      super
+    end
+  end
+
+  def with_object(obj)
+    WithObject(typeof(self), T, typeof(obj)).new(self, obj)
+  end
+
+  # :nodoc:
+  struct WithObject(I, T, O)
+    include Iterator({T, O})
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @object : O)
+    end
+
+    def next
+      v = wrapped_next
+      {v, @object}
+    end
+  end
+
+  def zip(other : Iterator(U))
+    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  end
+
+  # :nodoc:
+  struct Zip(I1, I2, T1, T2)
+    include Iterator({T1, T2})
+
+    def initialize(@iterator1, @iterator2)
+    end
+
+    def next
+      v1 = @iterator1.next
+      return stop if v1.is_a?(Stop)
+
+      v2 = @iterator2.next
+      return stop if v2.is_a?(Stop)
+
+      {v1, v2}
+    end
+
+    def rewind
+      @iterator1.rewind
+      @iterator2.rewind
+      self
     end
   end
 end
