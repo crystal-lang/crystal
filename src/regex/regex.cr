@@ -176,7 +176,7 @@ require "./*"
 # PCRE optionally permits named capture groups (named subpatterns) to not be
 # unique. Crystal exposes the name table of a Regex as a
 # Hash of String => Int32, and therefore requires named capture groups to have
-# unique names with a single Regex.
+# unique names within a single Regex.
 class Regex
   @[Flags]
   enum Options
@@ -235,8 +235,8 @@ class Regex
   # If it's not, a String containing the error message is returned.
   #
   # ```
-  # Regex.error("(foo|bar)") #=> nil
-  # Regex.error("(foo|bar") #=> "missing ) at 8"
+  # Regex.error?("(foo|bar)") #=> nil
+  # Regex.error?("(foo|bar") #=> "missing ) at 8"
   # ```
   def self.error?(source)
     re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
@@ -385,7 +385,7 @@ class Regex
   # optional flags included.
   #
   # ```
-  # /ab+c/ix.to_s #=> "/ab+c/ix"
+  # /ab+c/ix.inspect #=> "/ab+c/ix"
   # ```
   def inspect(io : IO)
     io << "/"
@@ -479,9 +479,9 @@ class Regex
   #
   # ```
   # re = /A*/i                 #=> /A*/i
-  # re.to_s                    #=> "(?i:A*)"
+  # re.to_s                    #=> "(?i-msx:A*)"
   # "Crystal".match(/t#{re}l/) #=> #<MatchData "tal">
-  # re = /A*/                  #=> "(?:A*)"
+  # re = /A*/                  #=> "(?-imsx:A*)"
   # "Crystal".match(/t#{re}l/) #=> nil
   # ```
   def to_s(io : IO)
