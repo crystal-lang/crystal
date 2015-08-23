@@ -269,6 +269,59 @@ class Regex
     end
   end
 
+  # Union. Returns a Regex that matches any of `patterns`. If any pattern
+  # contains a named capture group using the same name as a named capture
+  # group in any other pattern, an ArgumentError will be raised at runtime.
+  # All capture groups in the patterns after the first one will have their
+  # indexes offset.
+  #
+  # ```
+  # re = Regex.union([/skiing/i, "sledding"])
+  # re.match("Skiing")   #=> #<MatchData "Skiing">
+  # re.match("sledding") #=> #<MatchData "sledding">
+  # ```
+  def self.union(patterns : Array(Regex | String))
+    new patterns.map { |pattern| union_part pattern }.join("|")
+  end
+
+  # Union. Returns a Regex that matches any of `patterns`. If any pattern
+  # contains a named capture group using the same name as a named capture
+  # group in any other pattern, an ArgumentError will be raised at runtime.
+  # All capture groups in the patterns after the first one will have their
+  # indexes offset.
+  #
+  # ```
+  # re = Regex.union(/skiing/i, "sledding")
+  # re.match("Skiing")   #=> #<MatchData "Skiing">
+  # re.match("sledding") #=> #<MatchData "sledding">
+  # ```
+  def self.union(*patterns : Regex | String)
+    new patterns.map { |pattern| union_part pattern }.join("|")    
+  end
+
+  private def self.union_part(pattern : Regex)
+    pattern.to_s
+  end
+
+  private def self.union_part(pattern : String)
+    escape pattern
+  end
+
+  # Union. Returns a Regex that matches either of the operands. If either
+  # operand contains a named capture groups using the same name as a named
+  # capture group in the other operand, an ArgumentError will be raised at
+  # runtime. All capture groups in the second operand will have their indexes
+  # offset.
+  #
+  # ```
+  # re = /skiing/i + /sledding/
+  # re.match("Skiing")   #=> #<MatchData "Skiing">
+  # re.match("sledding") #=> #<MatchData "sledding">
+  # ```
+  def +(other)
+    Regex.union(self, other)
+  end
+
   # Equality. Two regexes are equal if their sources and options are the same.
   #
   # ```
