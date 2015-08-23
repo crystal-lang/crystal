@@ -661,110 +661,218 @@ describe "String" do
     reversed.should eq("はちいんこ")
   end
 
-  it "gsubs char with char" do
-    replaced = "foobar".gsub('o', 'e')
-    replaced.bytesize.should eq(6)
-    replaced.should eq("feebar")
-  end
+  describe "sub" do
+    it "subs char with char" do
+      replaced = "foobar".sub('o', 'e')
+      replaced.bytesize.should eq(6)
+      replaced.should eq("feobar")
+    end
 
-  it "gsubs char with string" do
-    replaced = "foobar".gsub('o', "ex")
-    replaced.bytesize.should eq(8)
-    replaced.should eq("fexexbar")
-  end
+    it "subs char with string" do
+      replaced = "foobar".sub('o', "ex")
+      replaced.bytesize.should eq(7)
+      replaced.should eq("fexobar")
+    end
 
-  it "gsubs char with string depending on the char" do
-    replaced = "foobar".gsub do |char|
-      case char
-      when 'f'
+    it "subs char with string" do
+      replaced = "foobar".sub {|char|
+        char.should eq 'f'
         "some"
-      when 'o'
-        "thing"
-      when 'a'
-        "ex"
-      else
-        char
+      }
+      replaced.bytesize.should eq(9)
+      replaced.should eq("someoobar")
+
+      empty = ""
+      empty.sub { 'f' }.should be(empty)
+    end
+
+    it "subs with regex and block" do
+      actual = "foo booor booooz".sub(/o+/) {|str|
+        "#{str}#{str.length}"
+      }
+      actual.should eq("foo2 booor booooz")
+    end
+
+    it "subs with regex and block with group" do
+      actual = "foo booor booooz".sub(/(o+).*?(o+)/) {|str, match|
+        "#{match[1].length}#{match[2].length}"
+      }
+      actual.should eq("f23r booooz")
+    end
+
+    it "subs with regex and string" do
+      "foo boor booooz".sub(/o+/, "a").should eq("fa boor booooz")
+    end
+
+    it "subs with regex and string, returns self if no match" do
+      str = "hello"
+      str.sub(/a/, "b").should be(str)
+    end
+
+    it "subs with regex and string (utf-8)" do
+      "fここ bここr bここここz".sub(/こ+/, "そこ").should eq("fそこ bここr bここここz")
+    end
+
+    it "subs with empty string" do
+      "foo".sub("", "x").should eq("xfoo")
+    end
+
+    it "subs with empty regex" do
+      "foo".sub(//, "x").should eq("xfoo")
+    end
+
+    it "subs null character" do
+      null = "\u{0}"
+      "f\u{0}\u{0}".sub(/#{null}/, "o").should eq("fo\u{0}")
+    end
+
+    it "subs with string and string" do
+      "foo boor booooz".sub("oo", "a").should eq("fa boor booooz")
+    end
+
+    it "subs with string and string return self if no match" do
+      str = "hello"
+      str.sub("a", "b").should be(str)
+    end
+
+    it "subs with string and string (utf-8)" do
+      "fここ bここr bここここz".sub("ここ", "そこ").should eq("fそこ bここr bここここz")
+    end
+
+    it "subs with string and block" do
+      result = "foo boo".sub("oo") {|value|
+        value.should eq("oo")
+        "a"
+      }
+      result.should eq("fa boo")
+    end
+
+    it "subs with char hash" do
+      str = "hello"
+      str.sub({'e' => 'a', 'l' => 'd'}).should eq("hallo")
+
+      empty = ""
+      empty.sub({'a' => 'b'}).should be(empty)
+    end
+
+    it "subs with regex and hash" do
+      str = "hello"
+      str.sub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("hallo")
+      str.sub(/(he|l|o)/, {"l": "la"}).should be(str)
+    end
+
+    it "subs using $~" do
+      "foo".sub(/(o)/) { "x#{$1}x" }.should eq("fxoxo")
+    end
+  end
+
+  describe "gsub" do
+    it "gsubs char with char" do
+      replaced = "foobar".gsub('o', 'e')
+      replaced.bytesize.should eq(6)
+      replaced.should eq("feebar")
+    end
+
+    it "gsubs char with string" do
+      replaced = "foobar".gsub('o', "ex")
+      replaced.bytesize.should eq(8)
+      replaced.should eq("fexexbar")
+    end
+
+    it "gsubs char with string depending on the char" do
+      replaced = "foobar".gsub do |char|
+        case char
+        when 'f'
+          "some"
+        when 'o'
+          "thing"
+        when 'a'
+          "ex"
+        else
+          char
+        end
       end
+      replaced.bytesize.should eq(18)
+      replaced.should eq("somethingthingbexr")
     end
-    replaced.bytesize.should eq(18)
-    replaced.should eq("somethingthingbexr")
-  end
 
-  it "gsubs with regex and block" do
-    actual = "foo booor booooz".gsub(/o+/) do |str|
-      "#{str}#{str.length}"
+    it "gsubs with regex and block" do
+      actual = "foo booor booooz".gsub(/o+/) do |str|
+        "#{str}#{str.length}"
+      end
+      actual.should eq("foo2 booo3r boooo4z")
     end
-    actual.should eq("foo2 booo3r boooo4z")
-  end
 
-  it "gsubs with regex and block with group" do
-    actual = "foo booor booooz".gsub(/(o+).*?(o+)/) do |str, match|
-      "#{match[1].length}#{match[2].length}"
+    it "gsubs with regex and block with group" do
+      actual = "foo booor booooz".gsub(/(o+).*?(o+)/) do |str, match|
+        "#{match[1].length}#{match[2].length}"
+      end
+      actual.should eq("f23r b31z")
     end
-    actual.should eq("f23r b31z")
-  end
 
-  it "gsubs with regex and string" do
-    "foo boor booooz".gsub(/o+/, "a").should eq("fa bar baz")
-  end
-
-  it "gsubs with regex and string, returns self if no match" do
-    str = "hello"
-    str.gsub(/a/, "b").should be(str)
-  end
-
-  it "gsubs with regex and string (utf-8)" do
-    "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
-  end
-
-  it "gsubs with empty string" do
-    "foo".gsub("", "x").should eq("xfxoxox")
-  end
-
-  it "gsubs with empty regex" do
-    "foo".gsub(//, "x").should eq("xfxoxox")
-  end
-
-  it "gsubs null character" do
-    null = "\u{0}"
-    "f\u{0}\u{0}".gsub(/#{null}/, "o").should eq("foo")
-  end
-
-  it "gsubs with string and string" do
-    "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
-  end
-
-  it "gsubs with string and string return self if no match" do
-    str = "hello"
-    str.gsub("a", "b").should be(str)
-  end
-
-  it "gsubs with string and string (utf-8)" do
-    "fここ bここr bここここz".gsub("ここ", "そこ").should eq("fそこ bそこr bそこそこz")
-  end
-
-  it "gsubs with string and block" do
-    i = 0
-    result = "foo boo".gsub("oo") do |value|
-      value.should eq("oo")
-      i += 1
-      i == 1 ? "a" : "e"
+    it "gsubs with regex and string" do
+      "foo boor booooz".gsub(/o+/, "a").should eq("fa bar baz")
     end
-    result.should eq("fa be")
-  end
 
-  it "gsubs with char hash" do
-    str = "hello"
-    str.gsub({'e' => 'a', 'l' => 'd'}).should eq("haddo")
-  end
+    it "gsubs with regex and string, returns self if no match" do
+      str = "hello"
+      str.gsub(/a/, "b").should be(str)
+    end
 
-  it "gsubs with regex and hash" do
-    str = "hello"
-    str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
-  end
+    it "gsubs with regex and string (utf-8)" do
+      "fここ bここr bここここz".gsub(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
+    end
 
-  it "gsubs using $~" do
-    "foo".gsub(/(o)/) { "x#{$1}x" }.should eq("fxoxxox")
+    it "gsubs with empty string" do
+      "foo".gsub("", "x").should eq("xfxoxox")
+    end
+
+    it "gsubs with empty regex" do
+      "foo".gsub(//, "x").should eq("xfxoxox")
+    end
+
+    it "gsubs null character" do
+      null = "\u{0}"
+      "f\u{0}\u{0}".gsub(/#{null}/, "o").should eq("foo")
+    end
+
+    it "gsubs with string and string" do
+      "foo boor booooz".gsub("oo", "a").should eq("fa bar baaz")
+    end
+
+    it "gsubs with string and string return self if no match" do
+      str = "hello"
+      str.gsub("a", "b").should be(str)
+    end
+
+    it "gsubs with string and string (utf-8)" do
+      "fここ bここr bここここz".gsub("ここ", "そこ").should eq("fそこ bそこr bそこそこz")
+    end
+
+    it "gsubs with string and block" do
+      i = 0
+      result = "foo boo".gsub("oo") do |value|
+        value.should eq("oo")
+        i += 1
+        i == 1 ? "a" : "e"
+      end
+      result.should eq("fa be")
+    end
+
+    it "gsubs with char hash" do
+      str = "hello"
+      str.gsub({'e' => 'a', 'l' => 'd'}).should eq("haddo")
+    end
+
+    it "gsubs with regex and hash" do
+      str = "hello"
+      str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
+    end
+
+    it "gsubs using $~" do
+      "foo".gsub(/(o)/) { "x#{$1}x" }.should eq("fxoxxox")
+    end
+
   end
 
   it "scans using $~" do
