@@ -15,7 +15,7 @@ Command:
     browser                  open an http server to browse program file
     deps                     install project dependencies
     docs                     generate documentation
-    eval                     eval code
+    eval                     eval code from args or standard input
     hierarchy                show type hierarchy
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
