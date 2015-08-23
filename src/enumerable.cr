@@ -363,7 +363,7 @@ module Enumerable(T)
   # as the hash key.
   # Be aware, if two elements return the same value as a key one will override
   # the other. If you want to keep all values, then you should probably use
-  # group_by instead.
+  # `group_by` instead.
   #
   #     ["Anna", "Ary", "Alice"].index_by {|e| e.length }
   #     #=> {4=>"Anna", 3=>"Ary", 5=>"Alice"}
@@ -811,7 +811,7 @@ module Enumerable(T)
     ary
   end
 
-  # Creates a hash out of an Enumerable where each element is a 2 element
+  # Creates a hash out of an Enumerable where each element is a
   # 2 element structure (for instance a Tuple or an Array)
   #
   #     [[:a, :b], [:c, :d]].to_h => {a: :b, c: :d}
