@@ -25,8 +25,9 @@ struct StaticArray(T, N)
     new { value }
   end
 
-  def ==(other : self)
-    length == other.length && each_with_index do |e, i|
+  def ==(other : StaticArray)
+    return false unless length == other.length
+    each_with_index do |e, i|
       return false unless e == other[i]
     end
     true
