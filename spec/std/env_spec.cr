@@ -12,7 +12,7 @@ describe "ENV" do
   end
 
   it "set and gets" do
-    ENV["FOO"] = "1"
+    (ENV["FOO"] = "1").should eq("1")
     ENV["FOO"].should eq("1")
     ENV["FOO"]?.should eq("1")
   end
@@ -28,5 +28,18 @@ describe "ENV" do
     ENV.delete("FOO").should eq("1")
     ENV.delete("FOO").should be_nil
     ENV.has_key?("FOO").should be_false
+  end
+
+  it "does .keys" do
+    %w[FOO BAR].each {|k| ENV.keys.should_not contain(k) }
+    ENV["FOO"] = ENV["BAR"] = "1"
+    %w[FOO BAR].each {|k| ENV.keys.should contain(k) }
+  end
+
+  it "does .values" do
+    [1,2].each {|i| ENV.values.should_not contain("SOMEVALUE_#{i}") }
+    ENV["FOO"] = "SOMEVALUE_1"
+    ENV["BAR"] = "SOMEVALUE_2"
+    [1,2].each {|i| ENV.values.should contain("SOMEVALUE_#{i}") }
   end
 end
