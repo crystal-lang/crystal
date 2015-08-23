@@ -575,6 +575,15 @@ class Array(T)
     delete_if { |e| e == obj }
   end
 
+  # Deletes the element at the given index, returning that element.
+  # Raises `IndexError` if the index is out of range.
+  #
+  # ```
+  # a = ["ant", "bat", "cat", "dog"]
+  # a.delete_at(2)  #=> "cat"
+  # a               #=> ["ant", "bat", "dog"]
+  # a.delete_at(99) #=> IndexError
+  # ```
   def delete_at(index : Int)
     index = check_index_out_of_bounds index
 
@@ -585,6 +594,18 @@ class Array(T)
     elem
   end
 
+  # Deletes every element of `self` for which block evaluates to true.
+  # The array is changed after the iteration is over,
+  # not every time the block is called.
+  #
+  # ```
+  # a = ["a", "b", "b", "c"]
+  # a.delete_if { |x| x == "b" } #=> true
+  # a                            #=> ["a", "c"]
+  # a.delete_if { |x| x == "z" } #=> false
+  # ```
+  #
+  # See also: `#reject!`.
   def delete_if
     i1 = 0
     i2 = 0
