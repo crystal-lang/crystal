@@ -37,6 +37,13 @@ class HTTP::WebSocketHandler < HTTP::Handler
     def onmessage(&@onmessage : String ->)
     end
 
+    def onclose(&@onclose : String ->)
+    end
+
+    def send(message)
+      @ws.send(message)
+    end
+
     def run
       loop do
         info = @ws.receive(@buffer)
@@ -48,6 +55,15 @@ class HTTP::WebSocketHandler < HTTP::Handler
               handler.call(@current_message.to_s)
             end
             @current_message.clear
+          end
+        when :close
+          @current_message.write(@buffer, info.length)
+          if info.final?
+            if handler = @onclose
+              handler.call(@current_message.to_s)
+            end
+            @current_message.clear
+            break
           end
         end
       end

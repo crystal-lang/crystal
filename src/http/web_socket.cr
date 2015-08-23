@@ -17,6 +17,7 @@ class HTTP::WebSocket
       when OPCODE_BINARY then :binary
       when OPCODE_PING then :ping
       when OPCODE_PONG then :pong
+      when OPCODE_CLOSE then :close
       else
         raise "Invalid packet type"
       end
