@@ -1433,6 +1433,7 @@ module Crystal
             raise "duplicated argument name: #{arg.name}", location
           end
 
+          arg.location = location
           args << arg
         end
         next_token_skip_space_or_newline
