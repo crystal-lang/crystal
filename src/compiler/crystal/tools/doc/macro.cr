@@ -1,4 +1,5 @@
 require "./item"
+require "crypto/md5"
 
 class Crystal::Doc::Macro
   include Item
@@ -27,8 +28,10 @@ class Crystal::Doc::Macro
 
   def anchor
     String.build do |io|
-      CGI.escape(to_s, io)
-      io << "-macro"
+      name = self.name.chars.select { |c| c.alphanumeric? || c == '_' } .join
+      io << name << '-' unless name.empty?
+      io << "macro"
+      io << '-' << Crypto::MD5.hex_digest(to_s)
     end
   end
 
