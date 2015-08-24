@@ -132,9 +132,7 @@ class HTTP::WebSocket
   end
 
   private def generate_mask
-    Array(UInt8).new(4, 0_u8).map do
-      Random.rand(256).to_u8
-    end
+    StaticArray(UInt8, 4).new { rand(256).to_u8 }
   end
 
   def close
