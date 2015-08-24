@@ -25,11 +25,15 @@ class Crystal::Doc::Macro
     @generator.source_link(@macro)
   end
 
-  def anchor
+  def id
     String.build do |io|
-      CGI.escape(to_s, io)
+      io << to_s.gsub(' ', "")
       io << "-macro"
     end
+  end
+
+  def anchor
+    "#" + CGI.escape(id)
   end
 
   def prefix
