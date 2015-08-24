@@ -130,6 +130,7 @@ def abort(message, status = 1)
 end
 
 Signal::PIPE.ignore
+at_exit { Event::SignalHandler.close }
 
 # Background loop to cleanup unused fiber stacks
 spawn do
@@ -138,3 +139,4 @@ spawn do
     Fiber.stack_pool_collect
   end
 end
+

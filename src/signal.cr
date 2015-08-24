@@ -79,28 +79,28 @@ else
   end
 end
 
+# Signals are processed through the event loop and run in their own Fiber.
+# Signals may be lost if the event loop doesn't run before exit.
+# An uncaught exceptions in a signal handler is a fatal error.
 enum Signal
-  def trap(block : Int32 ->)
+  def trap(block : Signal ->)
     trap &block
   end
 
-  def trap(&block : Int32 ->)
-    if block.closure?
-      handlers = @@handlers ||= {} of Int32 => Int32 ->
-      handlers[value] = block
-      LibC.signal value, ->(num) do
-        @@handlers.not_nil![num]?.try &.call(num)
-      end
-    else
-      LibC.signal value, block
-    end
+  def trap(&block : Signal ->)
+    Event::SignalHandler.add_handler self, block
   end
 
   def reset
-    trap Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
+    del_handler Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
   end
 
   def ignore
-    trap Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
+    del_handler Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
+  end
+
+  private def del_handler block
+    Event::SignalHandler.del_handler self
+    LibC.signal value, block
   end
 end
