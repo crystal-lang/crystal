@@ -1,3 +1,4 @@
+require "html"
 require "./item"
 
 class Crystal::Doc::Method
@@ -51,6 +52,10 @@ class Crystal::Doc::Method
         io << "-instance-method"
       end
     end
+  end
+
+  def html_id
+    HTML.escape(id)
   end
 
   def anchor

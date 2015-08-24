@@ -1,3 +1,4 @@
+require "html"
 require "./item"
 
 class Crystal::Doc::Macro
@@ -30,6 +31,10 @@ class Crystal::Doc::Macro
       io << to_s.gsub(' ', "")
       io << "-macro"
     end
+  end
+
+  def html_id
+    HTML.escape(id)
   end
 
   def anchor
