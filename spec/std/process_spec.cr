@@ -80,6 +80,31 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
+  describe "environ" do
+    it "clears the environment" do
+      value = Process.run("env", clear_env: true) do |proc|
+        proc.output.read
+      end
+      value.should eq("")
+    end
+
+    it "sets an environment variable" do
+      env = { "FOO" => "bar" }
+      value = Process.run("env", clear_env: true, env: env) do |proc|
+        proc.output.read
+      end
+      value.should eq("FOO=bar\n")
+    end
+
+    it "deletes an environment variable" do
+      env = { "HOME" => nil }
+      value = Process.run("env | egrep '^HOME='", env: env, shell: true) do |proc|
+        proc.output.read
+      end
+      value.should eq("")
+    end
+  end
+
   describe "kill" do
     it "kills a process" do
       pid = fork { loop {} }
