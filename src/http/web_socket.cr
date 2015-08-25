@@ -51,13 +51,11 @@ class HTTP::WebSocket
     @io.write_byte(hdr1)
     @io.write_byte(hdr2)
 
-    maskArray = generate_mask
-    maskArray.each do |byte|
-      @io.write_byte byte
-    end
+    mask_array = StaticArray(UInt8, 4).new { rand(256).to_u8 }
+    @io.write mask_array.to_slice, mask_array.length
 
     data.length.times do |index|
-      mask = maskArray[index % 4]
+      mask = mask_array[index % 4]
       @io.write_byte (mask ^ data.byte_at(index).to_u8).to_u8
     end
     @io.flush
@@ -129,10 +127,6 @@ class HTTP::WebSocket
 
   private def masked?
     (@header[1] & 0x80_u8) != 0_u8
-  end
-
-  private def generate_mask
-    StaticArray(UInt8, 4).new { rand(256).to_u8 }
   end
 
   def close
