@@ -124,6 +124,11 @@ class File
       @stat.st_mode
     end
 
+    # permission bits of mode
+    def perm
+      mode & 0o7777
+    end
+
     def mtime
       time @stat.st_mtimespec
     end

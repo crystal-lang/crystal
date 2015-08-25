@@ -21,10 +21,10 @@ class File < FileDescriptorIO
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
-  def initialize(filename, mode = "r")
+  def initialize(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    fd = LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+    fd = LibC.open(filename, oflag, perm)
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
@@ -213,12 +213,12 @@ class File < FileDescriptorIO
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
-  def self.open(filename, mode = "r")
-    new filename, mode
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
+    new filename, mode, perm
   end
 
-  def self.open(filename, mode = "r")
-    file = File.new filename, mode
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
+    file = File.new filename, mode, perm
     begin
       yield file
     ensure
@@ -252,8 +252,8 @@ class File < FileDescriptorIO
     lines
   end
 
-  def self.write(filename, content)
-    File.open(filename, "w") do |file|
+  def self.write(filename, content, perm = DEFAULT_CREATE_MODE)
+    File.open(filename, "w", perm) do |file|
       file.print(content)
     end
   end
