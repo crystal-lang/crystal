@@ -29,4 +29,16 @@ class TCPSocket < IPSocket
       sock.close
     end
   end
+
+  def tcp_nodelay?
+    v = 0
+    ret = getsockopt LibC::TCP_NODELAY, v, level: LibC::IPPROTO_TCP
+    ret != 0
+  end
+
+  def tcp_nodelay= val : Bool
+    v = val ? 1 : 0
+    setsockopt LibC::TCP_NODELAY, v, level: LibC::IPPROTO_TCP
+    val
+  end
 end

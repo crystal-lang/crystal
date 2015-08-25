@@ -41,6 +41,20 @@ describe "UNIXSocket" do
     end
   end
 
+  it "tests socket options" do
+    UNIXSocket.pair do |left, right|
+      size = 12000
+      # linux returns size * 2
+      sizes = [size, size * 2]
+
+      (left.send_buffer_size = size).should eq(size)
+      sizes.should contain(left.send_buffer_size)
+
+      (left.recv_buffer_size = size).should eq(size)
+      sizes.should contain(left.recv_buffer_size)
+    end
+  end
+
   it "creates the socket file" do
     path = "/tmp/crystal-test-unix-sock"
 
@@ -56,6 +70,13 @@ describe "TCPSocket" do
       server.addr.family.should eq("AF_INET6")
       server.addr.ip_port.should eq(12345)
       server.addr.ip_address.should eq("::")
+
+      # test protocol specific socket options
+      server.reuse_address?.should be_true # defaults to true
+      (server.reuse_address = false).should be_false
+      server.reuse_address?.should be_false
+      (server.reuse_address = true).should be_true
+      server.reuse_address?.should be_true
 
       TCPSocket.open("localhost", 12345) do |client|
         # The commented lines are actually dependant on the system configuration,
@@ -73,6 +94,12 @@ describe "TCPSocket" do
 
         # sock.peeraddr.family.should eq("AF_INET6")
         # sock.peeraddr.ip_address.should eq("::ffff:127.0.0.1")
+
+        # test protocol specific socket options
+        (client.tcp_nodelay = true).should be_true
+        client.tcp_nodelay?.should be_true
+        (client.tcp_nodelay = false).should be_false
+        client.tcp_nodelay?.should be_false
 
         client << "ping"
         sock.read(4).should eq("ping")

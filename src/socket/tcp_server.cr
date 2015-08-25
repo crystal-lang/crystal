@@ -4,9 +4,9 @@ class TCPServer < TCPSocket
   def initialize(host, port, backlog = 128)
     getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
       sock = create_socket(ai.family, ai.socktype, ai.protocol)
+      super sock
 
-      optval = 1
-      LibC.setsockopt(sock, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, (pointerof(optval) as Void*), LibC::SocklenT.cast(sizeof(Int32)))
+      self.reuse_address = true
 
       if LibC.bind(sock, ai.addr as LibC::SockAddr*, ai.addrlen) != 0
         LibC.close(sock)
@@ -20,7 +20,6 @@ class TCPServer < TCPSocket
         raise Errno.new("Error listening TCP server at #{host}#{port}")
       end
 
-      super sock
 
       true
     end

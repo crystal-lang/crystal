@@ -85,6 +85,10 @@ lib LibC
 
     SOL_SOCKET = 0xffff
     SO_REUSEADDR = 0x0004
+    SO_LINGER = 0x0080
+    SO_SNDBUF = 0x1001
+    SO_RCVBUF = 0x1002
+    TCP_NODELAY = 0x01
   else
     struct SockAddrIn
       family : UInt16
@@ -120,6 +124,10 @@ lib LibC
 
     SOL_SOCKET = 1
     SO_REUSEADDR = 2
+    SO_SNDBUF = 7
+    SO_RCVBUF = 8
+    SO_LINGER = 13
+    TCP_NODELAY = 0x01
   end
 
   struct HostEnt
@@ -142,6 +150,7 @@ lib LibC
   fun gethostbyname(name : Char*) : HostEnt*
   fun getsockname(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
   fun getpeername(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
+  fun getsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT*) : Int
   fun setsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT) : Int
 
   SOCK_STREAM = 1
