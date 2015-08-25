@@ -164,9 +164,10 @@ USAGE
     line = ""
     col = ""
     format = "text"
+    compiler_options = [] of String
 
     option_parser = OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal #{command} [options] [programfile]\n\nOptions:\n    all build command options and ..."
+      opts.banner = "Usage: crystal #{command} [options] [programfile]\n\nOptions:"
       opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
         loc = cursor.split(':')
         if loc.size == 3
@@ -178,14 +179,20 @@ USAGE
       opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
         format = f
       end
+
+      opts.on("--no-color", "Disable colored output") do
+        compiler_options << "--no-color"
+      end
     end
+
+    compiler_options << options.last
 
     unless cursor_given
       puts option_parser
       exit 1
     end
 
-    config, result = compile_no_codegen command, options
+    config, result = compile_no_codegen command, compiler_options
 
     file = File.expand_path(file)
 
