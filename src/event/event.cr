@@ -11,6 +11,7 @@ module Event
   # :nodoc:
   struct Event
     def initialize(@event)
+      @freed = false
     end
 
     def add
@@ -18,12 +19,21 @@ module Event
     end
 
     def add(timeout)
-      t = to_timeval(timeout)
-      LibEvent2.event_add(@event, pointerof(t))
+      if timeout
+        t = to_timeval(timeout)
+        LibEvent2.event_add(@event, pointerof(t))
+      else
+        add
+      end
     end
 
     def free
-      LibEvent2.event_free(@event)
+      LibEvent2.event_free(@event) unless @freed
+      @freed = true
+    end
+
+    def finalize
+      free
     end
 
     private def to_timeval(time : Int)
@@ -72,6 +82,12 @@ module Event
 
     def loop_break
       LibEvent2.event_base_loopbreak(@base)
+    end
+
+    def dns_base
+      @dns_base ||= begin
+        LibEvent2.evdns_base_new(@base, 1)
+      end
     end
   end
 end

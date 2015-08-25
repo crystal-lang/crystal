@@ -4,6 +4,10 @@ class Scheduler
   @@runnables = [] of Fiber
   @@eb = Event::Base.new
 
+  def self.event_base
+    @@eb
+  end
+
   def self.reschedule
     if runnable = @@runnables.pop?
       runnable.resume
@@ -28,42 +32,33 @@ class Scheduler
     event.free
   end
 
-  def self.create_fd_events(io : FileDescriptorIO)
-    flags = LibEvent2::EventFlags::Read | LibEvent2::EventFlags::Write | LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET
-    event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      fd_io = data as FileDescriptorIO
-      if flags.includes?(LibEvent2::EventFlags::Read)
-        fd_io.resume_read
-      end
-      if flags.includes?(LibEvent2::EventFlags::Write)
-        fd_io.resume_write
-      end
-    end
-    event.add
-    event
-  end
-
-  def self.create_fd_write_event(io : FileDescriptorIO)
+  def self.create_fd_write_event(io : FileDescriptorIO, edge_triggered = false : Bool)
     flags = LibEvent2::EventFlags::Write
+    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
     event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
       fd_io = data as FileDescriptorIO
       if flags.includes?(LibEvent2::EventFlags::Write)
         fd_io.resume_write
+      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
+        fd_io.write_timed_out = true
+        fd_io.resume_write
       end
     end
-    event.add
     event
   end
 
-  def self.create_fd_read_event(io : FileDescriptorIO)
+  def self.create_fd_read_event(io : FileDescriptorIO, edge_triggered = false : Bool)
     flags = LibEvent2::EventFlags::Read
+    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
     event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
       fd_io = data as FileDescriptorIO
       if flags.includes?(LibEvent2::EventFlags::Read)
         fd_io.resume_read
+      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
+        fd_io.read_timed_out = true
+        fd_io.resume_read
       end
     end
-    event.add
     event
   end
 

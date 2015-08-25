@@ -55,8 +55,7 @@ class TCPServer < TCPSocket
       client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
       if client_fd == -1
         if LibC.errno == Errno::EAGAIN
-          readers << Fiber.current
-          Scheduler.reschedule
+          wait_readable
         else
           raise Errno.new "Error accepting socket"
         end

@@ -45,8 +45,8 @@ class UDPSocket < IPSocket
   # server = UDPSocket.new
   # server.bind "localhost", 1234
   # ```
-  def bind(host, port)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP) do |ai|
+  def bind(host, port, dns_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
       optval = 1
       LibC.setsockopt(fd, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, (pointerof(optval) as Void*), LibC::SocklenT.cast(sizeof(Int32)))
 
@@ -65,11 +65,11 @@ class UDPSocket < IPSocket
   # client = UDPSocket.new
   # client.connect "localhost", 1234
   # ```
-  def connect(host, port)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP) do |ai|
-      if LibC.connect(fd, ai.addr, ai.addrlen) != 0
+  def connect(host, port, dns_timeout = nil, connect_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
+      if err = nonblocking_connect host, port, ai, timeout: connect_timeout
         next false if ai.next
-        raise Errno.new("Error connecting UDP socket at #{host}:#{port}")
+        raise err
       end
 
       true

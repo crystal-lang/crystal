@@ -11,23 +11,34 @@ class FileDescriptorIO
   property? flush_on_newline
   property? sync
 
-  def initialize(fd, blocking = false, edge_triggerable = true)
+  # seconds to wait when reading before raising IO::Timeout
+  property read_timeout
+  # seconds to wait when writing before raising IO::Timeout
+  property write_timeout
+  # :nodoc:
+  property read_timed_out, write_timed_out # only used in event callbacks
+
+  def initialize(fd, blocking = false, edge_triggerable = false)
     @edge_triggerable = !!edge_triggerable
     @flush_on_newline = false
     @sync = false
     @closed = false
+    @read_timed_out = false
+    @write_timed_out = false
     @fd = fd
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
     @out_count = 0
+    @read_timeout = nil
+    @write_timeout = nil
+    @readers = [] of Fiber
+    @writers = [] of Fiber
 
     unless blocking
-      before = fcntl(LibC::FCNTL::F_GETFL)
-      fcntl(LibC::FCNTL::F_SETFL, before | LibC::O_NONBLOCK)
+      self.blocking = false
       if @edge_triggerable
-        @event = Scheduler.create_fd_events(self)
+        @read_event = Scheduler.create_fd_read_event(self, @edge_triggerable)
+        @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
       end
-      @readers = [] of Fiber
-      @writers = [] of Fiber
     end
   end
 
@@ -55,18 +66,24 @@ class FileDescriptorIO
     arg
   end
 
-  def fcntl cmd, arg = 0
-    r = LibC.fcntl @fd, cmd, arg
+  def self.fcntl fd, cmd, arg = 0
+    r = LibC.fcntl fd, cmd, arg
     raise Errno.new("fcntl() failed") if r == -1
     r
   end
 
+  def fcntl cmd, arg = 0
+    self.class.fcntl @fd, cmd, arg
+  end
+
+  # :nodoc:
   def resume_read
     if reader = readers.pop?
       reader.resume
     end
   end
 
+  # :nodoc:
   def resume_write
     if writer = writers.pop?
       writer.resume
@@ -99,6 +116,21 @@ class FileDescriptorIO
     close rescue nil
   end
 
+  def close
+    return if closed?
+
+    super()
+
+    @read_event.try &.free
+    @read_event = nil
+    @write_event.try &.free
+    @write_event = nil
+    Scheduler.enqueue @readers
+    @readers.clear
+    Scheduler.enqueue @writers
+    @writers.clear
+  end
+
   def closed?
     @closed
   end
@@ -125,48 +157,88 @@ class FileDescriptorIO
   private def unbuffered_read(slice : Slice(UInt8), count)
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-      if bytes_read == -1
-        if LibC.errno == Errno::EAGAIN
-          readers << Fiber.current
-          if @edge_triggerable
-            Scheduler.reschedule
-          else
-            event = Scheduler.create_fd_read_event(self)
-            Scheduler.reschedule
-            event.free
-          end
-        else
-          raise Errno.new "Error reading file"
-        end
-      else
+      if bytes_read != -1
         return bytes_read
       end
+
+      if LibC.errno == Errno::EAGAIN
+        wait_readable
+      else
+        raise Errno.new "Error reading file"
+      end
     end
+  ensure
+    add_read_event unless readers.empty?
   end
 
   private def unbuffered_write(slice : Slice(UInt8), count)
     total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-      if bytes_written == -1
+      if bytes_written != -1
+        count -= bytes_written
+        return total if count == 0
+        slice += bytes_written
+      else
         if LibC.errno == Errno::EAGAIN
-          writers << Fiber.current
-          if @edge_triggerable
-            Scheduler.reschedule
-          else
-            event = Scheduler.create_fd_write_event(self)
-            Scheduler.reschedule
-            event.free
-          end
+          wait_writable
           next
         else
           raise Errno.new "Error writing file"
         end
       end
-      count -= bytes_written
-      return total if count == 0
-      slice += bytes_written
     end
+  ensure
+    add_write_event unless writers.empty?
+  end
+
+  private def wait_readable
+    wait_readable { |err| raise err }
+  end
+
+  private def wait_readable
+    readers << Fiber.current
+    add_read_event
+    Scheduler.reschedule
+
+    if @read_timed_out
+      @read_timed_out = false
+      yield Timeout.new("read timed out")
+    end
+
+    nil
+  end
+
+  private def add_read_event
+    return if @edge_triggerable
+    event = @read_event ||= Scheduler.create_fd_read_event(self)
+    event.add @read_timeout
+    nil
+  end
+
+  private def wait_writable timeout = @write_timeout
+    wait_writable(timeout: timeout) { |err| raise err }
+  end
+
+  # msg/timeout are overridden in nonblock_connect
+  private def wait_writable msg = "write timed out", timeout = @write_timeout
+    writers << Fiber.current
+    add_write_event timeout
+    Scheduler.reschedule
+
+    if @write_timed_out
+      @write_timed_out = false
+      yield Timeout.new(msg)
+    end
+
+    nil
+  end
+
+  private def add_write_event timeout = @write_timeout
+    return if @edge_triggerable
+    event = @write_event ||= Scheduler.create_fd_write_event(self)
+    event.add timeout
+    nil
   end
 
   private def unbuffered_rewind
