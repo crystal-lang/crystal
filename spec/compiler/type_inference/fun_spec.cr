@@ -782,5 +782,15 @@ describe "Type inference: fun" do
         ),
         "as a Proc argument type"
     end
+
+    it "disallows #{type} in fun pointer" do
+      assert_error %(
+        def foo(x)
+        end
+
+        ->foo(#{type})
+        ),
+        "as a Proc argument type"
+    end
   end
 end

@@ -864,7 +864,9 @@ module Crystal
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
-          Var.new("arg#{i}", arg.type.instance_type) as ASTNode
+          arg_type = arg.type.instance_type
+          TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
+          Var.new("arg#{i}", arg_type) as ASTNode
         end
       end
 
