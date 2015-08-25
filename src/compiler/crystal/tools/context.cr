@@ -129,6 +129,11 @@ module Crystal
         node.args.each do |arg|
           add_context arg.name, arg.type
         end
+        node.vars.try do |vars|
+          vars.each do |_,var|
+            add_context var.name, var.type
+          end
+        end
         return true
       end
     end

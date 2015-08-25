@@ -208,4 +208,16 @@ describe "context" do
     foo(0i64)
     ), "a", ["Int64"]
   end
+
+  it "can get context of empty yielded block" do
+    assert_context_includes %(
+    def it_like
+      yield
+    end
+
+    it_like do
+      a = 1i64‸
+    end
+    ), "a", ["Int64"]
+  end
 end
