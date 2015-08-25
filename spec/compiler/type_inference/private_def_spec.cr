@@ -104,4 +104,24 @@ describe "Type inference: private def" do
     compiler.prelude = "empty"
     compiler.compile sources, "output"
   end
+
+  it "finds private macro in same file, invoking from another macro (#1265)" do
+    compiler = Compiler.new
+    sources = [
+      Compiler::Source.new("foo.cr", %(
+                                        private macro foo
+                                          1
+                                        end
+
+                                        macro bar
+                                          foo
+                                        end
+
+                                        bar
+                                      )),
+    ]
+    compiler.no_codegen = true
+    compiler.prelude = "empty"
+    compiler.compile sources, "output"
+  end
 end

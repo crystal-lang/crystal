@@ -598,7 +598,7 @@ class Crystal::Call
 
     macros ||= yield mod
 
-    if !macros && (location = self.location) && (filename = location.filename).is_a?(String) && (file_module = mod.file_module(filename))
+    if !macros && (location = self.location) && (filename = location.original_filename).is_a?(String) && (file_module = mod.file_module(filename))
       macros ||= yield file_module
     end
 

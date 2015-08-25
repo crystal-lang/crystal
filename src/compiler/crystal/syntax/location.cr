@@ -16,6 +16,17 @@ module Crystal
       end
     end
 
+    def original_filename
+      case filename = @filename
+      when String
+        filename
+      when VirtualFile
+        filename.expanded_location.try &.original_filename
+      else
+        nil
+      end
+    end
+
     def inspect
       to_s
     end
