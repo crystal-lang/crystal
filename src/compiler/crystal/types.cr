@@ -1537,7 +1537,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= generic_class.parents.map do |t|
+      generic_class.parents.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
@@ -1853,7 +1853,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= @module.parents.map do |t|
+      @module.parents.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
@@ -1939,7 +1939,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= @extended_class.parents.try &.map do |t|
+      @extended_class.parents.try &.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
@@ -2047,22 +2047,20 @@ module Crystal
     def parents
       # We need to repoint "self" in included generic modules to this typedef,
       # so "self" restrictions match and don't point to the typdefed type.
-      @parents ||= begin
-        typedef_parents = typedef.parents.try(&.dup) || [] of Type
+      typedef_parents = typedef.parents.try(&.dup) || [] of Type
 
-        if typedef_parents
-          typedef_parents.each_with_index do |t, i|
-            case t
-            when IncludedGenericModule
-              typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
-            when InheritedGenericClass
-              typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
-            end
+      if typedef_parents
+        typedef_parents.each_with_index do |t, i|
+          case t
+          when IncludedGenericModule
+            typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
+          when InheritedGenericClass
+            typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
           end
         end
-
-        typedef_parents
       end
+
+      typedef_parents
     end
 
     def primitive_like?

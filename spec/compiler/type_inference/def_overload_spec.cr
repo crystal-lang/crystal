@@ -730,4 +730,31 @@ describe "Type inference: def overload" do
       ),
       "no overload matches"
   end
+
+  it "finds method after including module in generic module (#1201)" do
+    assert_type(%(
+      module Bar
+        def foo
+          'a'
+        end
+      end
+
+      module Moo(T)
+      end
+
+      class Foo
+        include Moo(T)
+
+        def foo(x)
+          1
+        end
+      end
+
+      module Moo(T)
+        include Bar
+      end
+
+      Foo.new.foo
+      )) { char }
+  end
 end
