@@ -413,4 +413,13 @@ describe "Type inference: macro" do
       me
       )) { symbol }
   end
+
+  it "errors if declares macro inside if" do
+    assert_error %(
+      if 1 == 2
+        macro foo; end
+      end
+      ),
+      "can't declare macro dynamically"
+  end
 end

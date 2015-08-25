@@ -877,4 +877,13 @@ describe "Type inference: class" do
       end
       )) { |mod| mod.nil }
   end
+
+  it "errors if declares class inside if" do
+    assert_error %(
+      if 1 == 2
+        class Foo; end
+      end
+      ),
+      "can't declare class dynamically"
+  end
 end

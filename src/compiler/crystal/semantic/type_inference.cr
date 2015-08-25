@@ -79,6 +79,7 @@ module Crystal
       @in_is_a = false
       @attributes  = nil
       @lib_def_pass = 0
+      @exp_nest = 0
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -99,11 +100,6 @@ module Crystal
       @meta_vars = meta_vars
     end
 
-    def visit_any(node)
-      @unreachable = false
-      true
-    end
-
     def visit(node : ASTNode)
       true
     end
@@ -114,7 +110,24 @@ module Crystal
       false
     end
 
+    def visit_any(node)
+      @unreachable = false
+      if nesting_exp?(node)
+        @exp_nest += 1
+        # puts "~~~"
+        # pp node, node.class, "+1", @exp_nest
+      end
+
+      true
+    end
+
     def end_visit_any(node)
+      if nesting_exp?(node)
+        @exp_nest -= 1
+        # puts "~~~"
+        # pp node, node.class, "-1", @exp_nest
+      end
+
       if @attributes
         case node
         when Expressions
@@ -131,6 +144,16 @@ module Crystal
         else
           @attributes = nil
         end
+      end
+    end
+
+    def nesting_exp?(node)
+      case node
+      when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
+           Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf
+        false
+      else
+        true
       end
     end
 
@@ -568,9 +591,7 @@ module Crystal
     end
 
     def visit(node : Def)
-      if inside_block?
-        node.raise "can't declare def inside block"
-      end
+      check_outside_block_or_exp node, "declare def"
 
       check_valid_attributes node, ValidDefAttributes, "def"
       node.doc ||= attributes_doc()
@@ -598,9 +619,7 @@ module Crystal
     end
 
     def visit(node : Macro)
-      if inside_block?
-        node.raise "can't declare macro inside block"
-      end
+      check_outside_block_or_exp node, "declare macro"
 
       begin
         current_type.metaclass.add_macro node
@@ -1253,9 +1272,13 @@ module Crystal
       the_macro = node.lookup_macro
       return false unless the_macro
 
+      @exp_nest -= 1
+
       generated_nodes = expand_macro(the_macro, node) do
         @mod.expand_macro (@scope || current_type), the_macro, node
       end
+
+      @exp_nest += 1
 
       node.expanded = generated_nodes
       node.bind_to generated_nodes
@@ -1469,9 +1492,7 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      if inside_block?
-        node.raise "can't declare class inside block"
-      end
+      check_outside_block_or_exp node, "declare class"
 
       node_superclass = node.superclass
 
@@ -1612,9 +1633,7 @@ module Crystal
     end
 
     def visit(node : ModuleDef)
-      if inside_block?
-        node.raise "can't declare module inside block"
-      end
+      check_outside_block_or_exp node, "declare module"
 
       scope, name = process_type_name(node.name)
 
@@ -1648,9 +1667,7 @@ module Crystal
     def visit(node : Alias)
       return false if @lib_def_pass == 2
 
-      if inside_block?
-        node.raise "can't declare alias inside block"
-      end
+      check_outside_block_or_exp node, "declare alias"
 
       existing_type = current_type.types[node.name]?
       if existing_type
@@ -1675,9 +1692,7 @@ module Crystal
     end
 
     def visit(node : Include)
-      if inside_block?
-        node.raise "can't include inside block"
-      end
+      check_outside_block_or_exp node, "include"
 
       include_in current_type, node, :included
 
@@ -1687,9 +1702,7 @@ module Crystal
     end
 
     def visit(node : Extend)
-      if inside_block?
-        node.raise "can't extend inside block"
-      end
+      check_outside_block_or_exp node, "extend"
 
       include_in current_type.metaclass, node, :extended
 
@@ -1699,9 +1712,7 @@ module Crystal
     end
 
     def visit(node : LibDef)
-      if inside_block?
-        node.raise "can't declare lib inside block"
-      end
+      check_outside_block_or_exp node, "declare lib"
 
       link_attributes = process_link_attributes
 
@@ -1834,9 +1845,7 @@ module Crystal
     def visit(node : FunDef)
       return false if @lib_def_pass == 1
 
-      if inside_block?
-        node.raise "can't declare fun inside block"
-      end
+      check_outside_block_or_exp node, "declare fun"
 
       if node.body && !current_type.is_a?(Program)
         node.raise "can only declare fun at lib or global scope"
@@ -1965,9 +1974,7 @@ module Crystal
     def visit(node : EnumDef)
       return false if @lib_def_pass == 2
 
-      if inside_block?
-        node.raise "can't declare enum inside block"
-      end
+      check_outside_block_or_exp node, "declare enum"
 
       check_valid_attributes node, ValidEnumDefAttributes, "enum"
 
@@ -3560,6 +3567,21 @@ module Crystal
 
     def inside_block?
       @untyped_def || @block_context
+    end
+
+    def inside_exp?
+      @exp_nest > 0
+    end
+
+    def check_outside_block_or_exp(node, op)
+      if inside_block?
+        node.raise "can't #{op} inside block"
+      end
+
+      if inside_exp?
+        # pp @exp_nest
+        node.raise "can't #{op} dynamically"
+      end
     end
 
     def pushing_type(type)
