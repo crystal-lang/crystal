@@ -348,6 +348,15 @@ describe "File" do
     end
   end
 
+  describe "open with perm" do
+    filename = "#{__DIR__}/data/temp_write.txt"
+    perm = 0o600
+    File.open(filename, "w", perm) do |file|
+      file.stat.perm.should eq(perm)
+    end
+    File.delete filename
+  end
+
   it "iterates with each_char" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     i = 0
