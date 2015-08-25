@@ -1084,6 +1084,11 @@ describe "Parser" do
     node.instance_vars.should eq(Set.new(["@x"]))
   end
 
+  it "doesn't take instance vars inside macro expressions into account (#809)" do
+    node = Parser.parse("def foo; @x = 1; {{ @y }}; @x = 3; @z; end") as Def
+    node.instance_vars.should eq(Set.new(["@x", "@z"]))
+  end
+
   assert_syntax_error "def foo(x = 1, y); end",
                       "argument must have a default value"
 

@@ -970,7 +970,7 @@ module Crystal
         parse_ident_or_literal
       when :INSTANCE_VAR
         name = @token.value.to_s
-        @instance_vars.try &.add name
+        add_instance_var name
         ivar = InstanceVar.new(name)
         ivar.location = @token.location
 
@@ -2713,7 +2713,7 @@ module Crystal
         else
           raise "can't use @instance_variable here"
         end
-        @instance_vars.try &.add ivar.name
+        add_instance_var ivar.name
         uses_arg = true
       when :CLASS_VAR
         arg_name = @token.value.to_s[2 .. -1]
@@ -3210,7 +3210,7 @@ module Crystal
         ivar = InstanceVar.new(name).at(location)
         ivar_out = Out.new(ivar).at(location)
 
-        @instance_vars.try &.add name
+        add_instance_var name
 
         next_token
         ivar_out
@@ -4358,6 +4358,12 @@ module Crystal
 
       name = name.to_s
       name == "self" || @def_vars.last.includes?(name)
+    end
+
+    def add_instance_var(name)
+      return if @in_macro_expression
+
+      @instance_vars.try &.add name
     end
 
     def self.free_var_name?(name)
