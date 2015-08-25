@@ -57,6 +57,51 @@ class Socket < FileDescriptorIO
     io << "#<#{self.class}:fd #{@fd}>"
   end
 
+  def send_buffer_size
+    getsockopt LibC::SO_SNDBUF, 0
+  end
+
+  def send_buffer_size= val : Int32
+    setsockopt LibC::SO_SNDBUF, val
+    val
+  end
+
+  def recv_buffer_size
+    getsockopt LibC::SO_RCVBUF, 0
+  end
+
+  def recv_buffer_size= val : Int32
+    setsockopt LibC::SO_RCVBUF, val
+    val
+  end
+
+  def reuse_address?
+    ret = getsockopt LibC::SO_REUSEADDR, 0
+    ret != 0
+  end
+
+  def reuse_address= val : Bool
+    v = val ? 1 : 0
+    setsockopt LibC::SO_REUSEADDR, v
+    val
+  end
+
+  # returns the modified optval
+  def getsockopt optname, optval, level = LibC::SOL_SOCKET
+    optsize = LibC::SocklenT.cast(sizeof(typeof(optval)))
+    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval) as Void*), out optsize)
+    raise Errno.new("getsockopt") if ret == -1
+    optval
+  end
+
+  # optval is restricted to Int32 until sizeof works on variables
+  def setsockopt optname, optval : Int32, level = LibC::SOL_SOCKET
+    optsize = LibC::SocklenT.cast(sizeof(typeof(optval)))
+    ret = LibC.setsockopt(fd, level, optname, (pointerof(optval) as Void*), optsize)
+    raise Errno.new("setsockopt") if ret == -1
+    ret
+  end
+
   def self.inet_ntop(sa : LibC::SockAddrIn6)
     ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
