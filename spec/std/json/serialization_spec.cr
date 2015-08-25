@@ -109,6 +109,10 @@ describe "JSON serialization" do
       {foo: 1, bar: 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
 
+    it "does for Hash with newlines" do
+      {"foo\nbar" => "baz\nqux"}.to_json.should eq(%({"foo\\nbar":"baz\\nqux"}))
+    end
+
     it "does for Tuple" do
       {1, "hello"}.to_json.should eq(%([1,"hello"]))
     end

@@ -35,9 +35,8 @@ struct JSON::ObjectBuilder(T)
       @io << '\n' if @indent > 0
     end
     @indent.times { @io << "  " }
-    @io << "\""
-    name.to_s(@io)
-    @io << "\":"
+    name.to_s.to_json(@io)
+    @io << ":"
     @io << " " if @indent > 0
     yield
     @count += 1
@@ -200,6 +199,12 @@ class String
       end
     end
     io << '"'
+  end
+end
+
+struct Symbol
+  def to_json(io)
+    to_s.to_json(io)
   end
 end
 
