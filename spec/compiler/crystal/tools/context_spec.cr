@@ -220,4 +220,17 @@ describe "context" do
     end
     ), "a", ["Int64"]
   end
+
+  it "can get context of  yielded block" do
+    assert_context_keys %(
+    def foo(a)
+      b = a + 1
+      ‸
+      yield b
+    end
+
+    foo 1 do |x|
+    end
+    ), "a", "b"
+  end
 end

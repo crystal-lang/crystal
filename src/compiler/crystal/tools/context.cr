@@ -49,12 +49,33 @@ module Crystal
     end
   end
 
+  class RechableVisitor < Visitor
+    def initialize(@context_visitor)
+    end
+
+    def visit(node : Call)
+      node.target_defs.try do |defs|
+        defs.each do |typed_def|
+          next unless @context_visitor.def_with_yield.not_nil!.location == typed_def.location
+          typed_def.accept(@context_visitor)
+        end
+      end
+      true
+    end
+
+    def visit(node)
+      true
+    end
+  end
+
   class ContextVisitor < Visitor
     getter contexts
+    getter def_with_yield
 
     def initialize(@target_location)
       @contexts = Array(Hash(String, Type)).new
       @context = Hash(String, Type).new
+      @def_with_yield = nil
     end
 
     def process(result : Compiler::Result)
@@ -89,6 +110,12 @@ module Crystal
           add_context name, var.type
         end
         result.node.accept(self)
+
+        if @def_with_yield
+          @context = Hash(String, Type).new
+          result.node.accept(RechableVisitor.new(self))
+        end
+
         # TODO should apply only if user is really in some of the nodes of the main expressions
         @contexts << @context unless @context.empty?
       end
@@ -115,6 +142,15 @@ module Crystal
 
     def visit(node : Def)
       if contains_target(node)
+
+        if @def_with_yield.nil? && !node.yields.nil?
+          @def_with_yield = node
+          return false
+        end
+
+        node.args.each do |arg|
+          add_context arg.name, arg.type
+        end
         node.vars.try do |vars|
           vars.each do |name, meta_var|
             add_context name, meta_var.type
