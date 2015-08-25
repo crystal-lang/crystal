@@ -221,7 +221,7 @@ describe "context" do
     ), "a", ["Int64"]
   end
 
-  it "can get context of  yielded block" do
+  it "can get context of yielded block" do
     assert_context_keys %(
     def foo(a)
       b = a + 1
@@ -230,6 +230,25 @@ describe "context" do
     end
 
     foo 1 do |x|
+    end
+    ), "a", "b"
+  end
+
+  it "can get context of nested yielded block" do
+    assert_context_keys %(
+    def foo(a)
+      b = a + 1
+      ‸
+      yield b
+    end
+
+    def bar
+      foo 1 do |x|
+        yield x
+      end
+    end
+
+    bar do |y|
     end
     ), "a", "b"
   end
