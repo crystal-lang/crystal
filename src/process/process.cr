@@ -66,9 +66,12 @@ class Process
 
   def self.fork
     pid = LibC.fork
-    if pid == 0
+    case pid
+    when 0
       pid = nil
       Scheduler.after_fork
+    when -1
+      raise Errno.new("fork")
     end
     pid
   end
