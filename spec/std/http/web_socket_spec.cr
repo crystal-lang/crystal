@@ -145,6 +145,19 @@ describe HTTP::WebSocket do
       result.final?.should be_true
       String.new(buffer[0, 1023]).should eq("x" * 1023)
     end
+
+    it "can read a close packet" do
+      data = packet([0x88, 0x00])
+      io = PointerIO.new(pointerof(data))
+      ws = HTTP::WebSocket.new(io)
+
+      buffer = Slice(UInt8).new(64)
+      result = ws.receive(buffer)
+      result.type.should eq(:close)
+      result.length.should eq(0)
+      result.final?.should be_true
+    end
+
   end
 
   describe "send_masked" do
