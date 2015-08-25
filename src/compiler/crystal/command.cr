@@ -159,40 +159,18 @@ USAGE
   end
 
   private def self.cursor_command(command, options)
-    cursor_given = false
+    config, result = compile_no_codegen "command", options, cursor_command: true
+
+    format = config.output_format || "text"
+
     file = ""
     line = ""
     col = ""
-    format = "text"
-    compiler_options = [] of String
 
-    option_parser = OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal #{command} [options] [programfile]\n\nOptions:"
-      opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
-        loc = cursor.split(':')
-        if loc.size == 3
-          file, line, col = loc
-          cursor_given = true
-        end
-      end
-
-      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-        format = f
-      end
-
-      opts.on("--no-color", "Disable colored output") do
-        compiler_options << "--no-color"
-      end
+    loc = config.cursor_location.not_nil!.split(':')
+    if loc.size == 3
+      file, line, col = loc
     end
-
-    compiler_options << options.last
-
-    unless cursor_given
-      puts option_parser
-      exit 1
-    end
-
-    config, result = compile_no_codegen command, compiler_options
 
     file = File.expand_path(file)
 
@@ -289,8 +267,8 @@ USAGE
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false)
-    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy
+  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false, cursor_command = false)
+    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
     {config, config.compile}
@@ -310,14 +288,14 @@ USAGE
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp do
+  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
     end
   end
 
-  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false)
+  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false, cursor_command = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -325,6 +303,8 @@ USAGE
     opt_output_filename = nil
     specified_output = false
     hierarchy_exp = nil
+    cursor_location = nil
+    output_format = nil
 
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -353,6 +333,16 @@ USAGE
       if hierarchy
         opts.on("-e NAME", "Filter types by NAME regex") do |exp|
           hierarchy_exp = exp
+        end
+      end
+
+      if cursor_command
+        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+          cursor_location = cursor
+        end
+
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          output_format = f
         end
       end
 
@@ -427,7 +417,7 @@ USAGE
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if filenames.length == 0
+    if filenames.length == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
       exit 1
     end
@@ -436,7 +426,7 @@ USAGE
     original_output_filename = output_filename_from_sources(sources)
     output_filename ||= original_output_filename
 
-    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp
+    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
   end
