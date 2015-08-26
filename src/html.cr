@@ -8,7 +8,7 @@ module HTML
   }
 
   def self.escape(string: String)
-    String.build { |io| escape(string, io) }
+    string.gsub(SUBSTITUTIONS)
   end
 
   def self.escape(string: String, io: IO)
