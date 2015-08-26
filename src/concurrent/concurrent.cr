@@ -14,7 +14,9 @@ macro spawn
     begin
       {{ yield }}
     rescue %ex
-      puts "Unhandled exception: #{ %ex }"
+      STDERR.puts "Unhandled exception:"
+      %ex.inspect_with_backtrace STDERR
+      STDERR.flush
     end
   end
 
