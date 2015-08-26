@@ -92,7 +92,7 @@ module BufferedIOMixin
     end
   end
 
-  def read_byte
+  def read_byte : UInt8?
     fill_buffer if @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
       nil
@@ -103,7 +103,7 @@ module BufferedIOMixin
     end
   end
 
-  def read_char_with_bytesize
+  private def read_char_with_bytesize
     return super unless @in_buffer_rem.length >= 4
 
     first = @in_buffer_rem[0].to_u32

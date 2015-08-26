@@ -16,5 +16,6 @@ struct Char
   # '☃'.ord      #=> 9731
   # ```
   def ord : Int32
+    1
   end
 end

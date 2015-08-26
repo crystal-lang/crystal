@@ -63,7 +63,14 @@ lib LibC
   fun isatty(fd : Int) : Int
 end
 
+# The IO module is the basis for all input and output.
 module IO
+  # Raised when an IO operation times out.
+  #
+  # ```
+  # STDIN.read_timeout = 1
+  # STDIN.gets #=> IO::Timeout (after 1 second)
+  # ```
   class Timeout < Exception
   end
 
@@ -136,16 +143,47 @@ module IO
     end
   end
 
-  # Reads count bytes from this IO into slice. Returns the number of bytes read.
+  # Reads at most *count* bytes from this IO into *slice*. Returns the number of bytes read.
+  #
+  # ```
+  # io = StringIO.new "hello"
+  # slice = Slice(UInt8).new(5)
+  # io.read(slice, 4) #=> 4
+  # slice #=> [104, 101, 108, 108, 0]
+  # io.read(slice, 4) #=> 1
+  # slice #=> [111, 101, 108, 108, 0]
+  # ```
   abstract def read(slice : Slice(UInt8), count)
 
-  # Writes count bytes from slice into this IO. Returns the number of bytes written.
+  # Writes at most *count* bytes from *slice* into this IO. Returns the number of bytes written.
+  #
+  # ```
+  # io = StringIO.new
+  # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
+  # io.write(slice, 3) #=> 3
+  # io.to_s #=> "abc"
   abstract def write(slice : Slice(UInt8), count)
 
+  # Reads at most `slice.length` bytes from the IO into *slice*. Returns the number of bytes read.
+  #
+  # ```
+  # io = StringIO.new "hello"
+  # slice = Slice(UInt8).new(5)
+  # io.read(slice) #=> 5
+  # slice #=> [104, 101, 108, 108, 111]
+  # ```
   def read(slice : Slice(UInt8))
     read slice, slice.length
   end
 
+  # Writes at most *slice.length* bytes from *slice* into this IO. Returns the number of bytes written.
+  #
+  # ```
+  # io = StringIO.new
+  # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
+  # io.write(slice) #=> 4
+  # io.to_s #=> "abcd"
+  # ```
   def write(slice : Slice(UInt8))
     write slice, slice.length
   end
@@ -180,16 +218,40 @@ module IO
 
   # Writes the given object into this IO.
   # This ends up calling `to_s(io)` on the object.
+  #
+  # ```
+  # io = StringIO.new
+  # io << 1
+  # io << '-'
+  # io << "Crystal"
+  # io.to_s #=> "1-Crystal"
+  # ```
   def <<(obj)
     obj.to_s self
     self
   end
 
   # Same as `<<`
+  #
+  # ```
+  # io = StringIO.new
+  # io.print 1
+  # io.print '-'
+  # io.print "Crystal"
+  # io.to_s #=> "1-Crystal"
+  # ```
   def print(obj)
     self << obj
   end
 
+  # Writes the given objects into this IO by invoking `to_s(io)`
+  # on each of the objects.
+  #
+  # ```
+  # io = StringIO.new
+  # io.print 1, '-', "Crystal"
+  # io.to_s #=> "1-Crystal"
+  # ```
   def print(*objects : _)
     objects.each do |obj|
       print obj
@@ -199,21 +261,49 @@ module IO
 
   # Writes the given string to this IO followed by a newline character
   # unless the string already ends with one.
+  #
+  # ```
+  # io = StringIO.new
+  # io.puts "hello\n"
+  # io.puts "world"
+  # io.to_s #=> "hello\nworld\n"
+  # ```
   def puts(string : String)
     self << string
     puts unless string.ends_with?('\n')
   end
 
   # Writes the given object to this IO followed by a newline character.
+  #
+  # ```
+  # io = StringIO.new
+  # io.puts 1
+  # io.puts "Crystal"
+  # io.to_s #=> "1\nCrystal\n"
+  # ```
   def puts(obj)
     self << obj
     puts
   end
 
+  # Writes a newline character.
+  #
+  # ```
+  # io = StringIO.new
+  # io.puts
+  # io.to_s #=> "\n"
+  # ```
   def puts
     write_byte '\n'.ord.to_u8
   end
 
+  # Writes the given objects, each followed by a newline character.
+  #
+  # ```
+  # io = StringIO.new
+  # io.puts 1, '-', "Crystal"
+  # io.to_s #=> "1\n-\nCrystal\n"
+  # ```
   def puts(*objects : _)
     objects.each do |obj|
       puts obj
@@ -230,7 +320,15 @@ module IO
     nil
   end
 
-  def read_byte
+  # Reads a single byte from this IO. Returns `nil` if there is no more
+  # data to read.
+  #
+  # ```
+  # io = StringIO.new "a"
+  # io.read_byte #=> 97
+  # io.read_byte #=> nil
+  # ```
+  def read_byte # : UInt8? (TODO: uncomment after 0.7.6)
     byte :: UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
       byte
@@ -239,12 +337,20 @@ module IO
     end
   end
 
-  def read_char
+  # Reads a single `Char` from this IO. Returns `nil` if there is no
+  # more data to read.
+  #
+  # ```
+  # io = StringIO.new "あ"
+  # io.read_char #=> 'あ'
+  # io.read_char #=> nil
+  # ```
+  def read_char : Char?
     info = read_char_with_bytesize
     info ? info[0] : nil
   end
 
-  def read_char_with_bytesize
+  private def read_char_with_bytesize
     first = read_byte
     return nil unless first
 
@@ -268,18 +374,35 @@ module IO
     (byte & 0x3f).to_u32
   end
 
-  def read_fully(buffer : Slice(UInt8))
-    count = buffer.length
+  # Tries to read exactly `slice.length` bytes from this IO into `slice`.
+  # Raises `EOFError` if there aren't `slice.length` bytes of data.
+  #
+  # ```
+  # io = StringIO.new "123451234"
+  # slice = Slice(UInt8).new(5)
+  # io.read_fully(slice)
+  # slice #=> [49, 50, 51, 52, 53]
+  # io.read_fully #=> EOFError
+  # ```
+  def read_fully(slice : Slice(UInt8))
+    count = slice.length
     while count > 0
-      read_bytes = read(buffer, Math.min(count, buffer.length))
+      read_bytes = read(slice, Math.min(count, slice.length))
       raise EOFError.new if read_bytes == 0
       count -= read_bytes
-      buffer += read_bytes
+      slice += read_bytes
     end
     count
   end
 
-  def read
+  # Reads the rest of this IO data as a `String`.
+  #
+  # ```
+  # io = StringIO.new "hello world"
+  # io.read #=> "hello world"
+  # io.read #=> ""
+  # ```
+  def read : String
     buffer :: UInt8[2048]
     String.build do |str|
       while (read_bytes = read(buffer.to_slice)) > 0
@@ -288,33 +411,82 @@ module IO
     end
   end
 
-  def read(length : Int)
-    raise ArgumentError.new "negative length" if length < 0
+  # Reads at most `count` bytes from this IO as a `String`.
+  # If less than `count` bytes are read it's because the end was reached.
+  #
+  # ```
+  # io = StringIO.new "abcde"
+  # io.read(3) #=> "abc"
+  # io.read(3) #=> "ab"
+  # io.read(3) #=> ""
+  # ```
+  def read(count : Int) : String
+    raise ArgumentError.new "negative count" if count < 0
 
     buffer :: UInt8[2048]
-    String.build(length) do |str|
-      while length > 0
-        read_length = read(buffer.to_slice, Math.min(length, buffer.length))
-        break if read_length == 0
+    String.build(count) do |str|
+      while count > 0
+        read_count = read(buffer.to_slice, Math.min(count, buffer.count))
+        break if read_count == 0
 
-        str.write(buffer.to_slice, read_length)
-        length -= read_length
+        str.write(buffer.to_slice, read_count)
+        count -= read_count
       end
     end
   end
 
-  def gets
+  # Reads a line from this IO. A line is terminated by the `\n` character.
+  # Returns `nil` if called at the end of this IO.
+  #
+  # ```
+  # io = StringIO.new "hello\nworld"
+  # io.gets #=> "hello\n"
+  # io.gets #=> "world"
+  # io.gets #=> nil
+  # ```
+  def gets : String?
     gets '\n'
   end
 
-  def gets(limit : Int)
+  # Reads a line of at most `limit` bytes from this IO. A line is terminated by the `\n` character.
+  # Returns `nil` if called at the end of this IO.
+  #
+  # ```
+  # io = StringIO.new "hello\nworld"
+  # io.gets(3) #=> "hel"
+  # io.gets(3) #=> "lo\n"
+  # io.gets(3) #=> "wor"
+  # io.gets(3) #=> "ld"
+  # io.gets(3) #=> nil
+  # ```
+  def gets(limit : Int) : String?
     gets '\n', limit
   end
 
-  def gets(delimiter : Char)
+  # Reads until *delimiter* is found, or the end of the IO is reached.
+  # Returns `nil` if called at the end of this IO.
+  #
+  # ```
+  # io = StringIO.new "hello\nworld"
+  # io.gets('o') #=> "hello"
+  # io.gets('r') #=> "\nwor"
+  # io.gets('z') #=> "ld"
+  # io.gets('w') #=> nil
+  # ```
+  def gets(delimiter : Char) : String?
     gets delimiter, Int32::MAX
   end
 
+  # Reads until *delimiter* is found, `limit` bytes are read, or the end of the IO is reached.
+  # Returns `nil` if called at the end of this IO.
+  #
+  # ```
+  # io = StringIO.new "hello\nworld"
+  # io.gets('o', 3) #=> "hel"
+  # io.gets('r', 10) #=> "lo\nwor"
+  # io.gets('z', 10) #=> "ld"
+  # io.gets('w', 10) #=> nil
+  # ```
   def gets(delimiter : Char, limit : Int)
     raise ArgumentError.new "negative limit" if limit < 0
 
@@ -337,6 +509,15 @@ module IO
     buffer.to_s
   end
 
+  # Reads until *delimiter* is found or the end of the IO is reached.
+  # Returns `nil` if called at the end of this IO.
+  #
+  # ```
+  # io = StringIO.new "hello\nworld"
+  # io.gets("wo") #=> "hello\nwo"
+  # io.gets("wo") #=> "rld"
+  # io.gets("wo") #=> nil
+  # ```
   def gets(delimiter : String)
     # Empty string: read all
     if delimiter.empty?
@@ -373,6 +554,7 @@ module IO
     buffer.to_s
   end
 
+  # Same as `gets`, but raises `EOFError` if called at the end of this IO.
   def read_line(*args)
     gets(*args) || raise EOFError.new
   end
@@ -381,6 +563,13 @@ module IO
     write Slice.new(array.buffer, array.length)
   end
 
+  # Writes a single byte into this IO.
+  #
+  # ```
+  # io = StringIO.new
+  # io.write_byte 97_u8
+  # io.to_s #=> "a"
+  # ```
   def write_byte(byte : UInt8)
     x = byte
     write Slice.new(pointerof(x), 1)
@@ -420,6 +609,16 @@ module IO
     ByteIterator.new(self)
   end
 
+  # Copy all contents from *src* to *dst*.
+  #
+  # ```
+  # io = StringIO.new "hello"
+  # io2 = StringIO.new
+  #
+  # IO.copy io, io2
+  #
+  # io2.to_s #=> "hello"
+  # ```
   def self.copy(src, dst)
     buffer :: UInt8[1024]
     count = 0
