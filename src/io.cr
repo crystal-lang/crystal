@@ -63,7 +63,48 @@ lib LibC
   fun isatty(fd : Int) : Int
 end
 
-# The IO module is the basis for all input and output.
+# The IO module is the basis for all input and output in Crystal.
+#
+# This module is included by types like `File`, `Socket` and `StringIO` and
+# provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
+# `gets` and `printf`.
+#
+# The only requirement for a type including the IO module is to define
+# these two methods:
+#
+# * `read(slice : Slice(UInt8), count)`: read at most *count* bytes into *slice* and return the number of bytes read
+# * `write(slice : Slice(UInt8), count)`: write at most *count* bytes from *slice* and return the number of bytes written
+#
+# For example, this is a simple IO on top of a `Slice(UInt8)`:
+#
+# ```
+# class SimpleSliceIO
+#   include IO
+#
+#   def initialize(@slice : Slice(UInt8))
+#   end
+#
+#   def read(slice : Slice(UInt8), count)
+#     count.times { |i| slice[i] = @slice[i] }
+#     @slice += count
+#     count
+#   end
+#
+#   def write(slice : Slice(UInt8), count)
+#     count.times { |i| @slice[i] = slice[i] }
+#     @slice += count
+#     count
+#   end
+# end
+#
+# slice = Slice.new(9) { |i| ('a'.ord + i).to_u8 }
+# String.new(slice) #=> "abcdefghi"
+#
+# io = SimpleSliceIO.new(slice)
+# io.read(3) #=> "abc"
+# io.print "xyz"
+# String.new(slice) #=> "abcxyzghi"
+# ```
 module IO
   # Raised when an IO operation times out.
   #
@@ -188,10 +229,23 @@ module IO
     write slice, slice.length
   end
 
+  # Flushes buffered data, if any.
+  #
+  # IO defines this is a no-op method, but including types may override.
   def flush
   end
 
-  def self.pipe(read_blocking=false, write_blocking=false)
+  # Creates a pair of pipe endpoints (connected to each other) and returns them as a
+  # two-element tuple.
+  #
+  # ```
+  # reader, writer = IO.pipe
+  # writer.puts "hello"
+  # writer.puts "world"
+  # reader.gets #=> "hello"
+  # reader.gets #=> "world"
+  # ```
+  def self.pipe(read_blocking = false, write_blocking = false)
     if LibC.pipe(out pipe_fds) != 0
       raise Errno.new("Could not create pipe")
     end
@@ -205,7 +259,18 @@ module IO
     {r, w}
   end
 
-  def self.pipe(read_blocking=false, write_blocking=false)
+  # Creates a pair of pipe endpoints (connected to each other) and passes them
+  # to the given block. Both endpoints are closed after the block.
+  #
+  # ```
+  # IO.pipe do |reader, writer|
+  #   writer.puts "hello"
+  #   writer.puts "world"
+  #   reader.gets #=> "hello"
+  #   reader.gets #=> "world"
+  # end
+  # ```
+  def self.pipe(read_blocking = false, write_blocking = false)
     r, w = IO.pipe(read_blocking, write_blocking)
     begin
       yield r, w
@@ -315,6 +380,7 @@ module IO
     printf format_string, args
   end
 
+  # ditto
   def printf(format_string, args : Array | Tuple)
     String::Formatter.new(format_string, args, self).format
     nil
@@ -328,7 +394,7 @@ module IO
   # io.read_byte #=> 97
   # io.read_byte #=> nil
   # ```
-  def read_byte # : UInt8? (TODO: uncomment after 0.7.6)
+  def read_byte # : UInt8? # (TODO: uncomment after 0.7.6)
     byte :: UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
       byte
@@ -559,7 +625,9 @@ module IO
     gets(*args) || raise EOFError.new
   end
 
+  # Writes the bytes in the given array to this IO.
   def write(array : Array(UInt8))
+    # TODO: maybe we should remove this method? Array is heavy for IO
     write Slice.new(array.buffer, array.length)
   end
 
@@ -575,36 +643,121 @@ module IO
     write Slice.new(pointerof(x), 1)
   end
 
+  # Returns `true` if this IO is associated with a terminal device (tty), `false` otherwise.
+  #
+  # IO returns `false`, but including types may override.
+  #
+  # ```
+  # STDIN.tty?        #=> true
+  # StringIO.new.tty? #=> false
+  # ```
   def tty?
     false
   end
 
-  def each_line
-    while line = gets
+  # Invokes the given block with each *line* in this IO, where a line
+  # is defined by the arguments passed to this method, which can be the same
+  # ones as in the `gets` methods.
+  #
+  # ```
+  # io = StringIO.new("hello\nworld")
+  # io.each_line do |line|
+  #   puts line.chomp.reverse
+  # end
+  # ```
+  #
+  # Output:
+  #
+  # ```text
+  # olleh
+  # dlrow
+  # ```
+  def each_line(*args)
+    while line = gets(*args)
       yield line
     end
   end
 
-  def each_line
-    LineIterator.new(self)
+  # Returns an `Iterator` for the *lines* in this IO, where a line
+  # is defined by the arguments passed to this method, which can be the same
+  # ones as in the `gets` methods.
+  #
+  # ```
+  # io = StringIO.new("hello\nworld")
+  # iter = io.each_line
+  # iter.next #=> "hello\n"
+  # iter.next #=> "world"
+  # ```
+  def each_line(*args)
+    LineIterator.new(self, args)
   end
 
+  # Inovkes the given block with each `Char` in this IO.
+  #
+  # ```
+  # io = StringIO.new("あめ")
+  # io.each_char do |char|
+  #   puts char
+  # end
+  # ```
+  #
+  # Output:
+  #
+  # ```text
+  # あ
+  # め
+  # ```
   def each_char
     while char = read_char
       yield char
     end
   end
 
+  # Returns an `Iterator` for the chars in this IO.
+  #
+  # ```
+  # io = StringIO.new("あめ")
+  # iter = io.each_char
+  # iter.next #=> 'あ'
+  # iter.next #=> 'め'
+  # ```
   def each_char
     CharIterator.new(self)
   end
 
+  # Inovkes the given block with each byte (`UInt8`) in this IO.
+  #
+  # ```
+  # io = StringIO.new("aあ")
+  # io.each_byte do |byte|
+  #   puts byte
+  # end
+  # ```
+  #
+  # Output:
+  #
+  # ```text
+  # 97
+  # 227
+  # 129
+  # 130
+  # ```
   def each_byte
     while byte = read_byte
       yield byte
     end
   end
 
+  # Returns an `Iterator` for the bytes in this IO.
+  #
+  # ```
+  # io = StringIO.new("aあ")
+  # iter = io.each_byte
+  # iter.next #=> 97
+  # iter.next #=> 227
+  # iter.next #=> 129
+  # iter.next #=> 130
+  # ```
   def each_byte
     ByteIterator.new(self)
   end
@@ -630,14 +783,14 @@ module IO
   end
 
   # :nodoc:
-  struct LineIterator(I)
+  struct LineIterator(I, A)
     include Iterator(String)
 
-    def initialize(@io : I)
+    def initialize(@io : I, @args : A)
     end
 
     def next
-      @io.gets || stop
+      @io.gets(*@args) || stop
     end
 
     def rewind
