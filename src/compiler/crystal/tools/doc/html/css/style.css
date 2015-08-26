@@ -39,6 +39,10 @@ body {
   border-radius: 5px;
 }
 
+.type-permalink {
+  font-size: 12px;
+}
+
 hr {
   color: #ddd;
   background-color: #ddd;

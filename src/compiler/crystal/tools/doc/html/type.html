@@ -10,11 +10,14 @@
 </head>
 <body>
 
+<h1>
 <% if type.program? %>
-  <h1><%= type.full_name %></h1>
+  <%= type.full_name %>
 <% else %>
-  <h1><%= type.abstract? ? "abstract " : ""%><%= type.kind %> <%= type.full_name %></h1>
+  <%= type.abstract? ? "abstract " : ""%><%= type.kind %> <%= type.full_name %>
 <% end %>
+<span class="type-permalink">[<a href="<%= type.path_to(type) %>" class="permalink" target="_blank">permalink</a>]</span>
+</h1>
 
 <% if doc = type.formatted_doc %>
   <h2>Overview</h2>

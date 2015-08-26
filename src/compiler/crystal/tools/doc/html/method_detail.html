@@ -9,10 +9,13 @@
       <% if doc = method.formatted_doc %>
         <div class="doc"><%= doc %></div>
       <% end %>
-      <% if source_link = method.source_link %>
-        <br/>
-        <div>[<a href="<%= source_link %>" target="_blank">View source</a>]</div>
-      <% end %>
+      <br/>
+      <div>
+        <% if source_link = method.source_link %>
+          [<a href="<%= source_link %>" target="_blank">View source</a>]
+        <% end %>
+        [<a href="<%= method.anchor %>" target="_blank">Permalink</a>]
+      </div>
     </div>
     <hr/>
   <% end %>
