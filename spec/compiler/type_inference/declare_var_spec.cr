@@ -150,4 +150,13 @@ describe "Type inference: declare var" do
       ),
       "variable 'buf' already declared with type Int32"
   end
+
+  %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
+    it "disallows declaring var of type #{type}" do
+      assert_error %(
+        x :: #{type}
+        ),
+        "use a more specific type"
+    end
+  end
 end

@@ -285,6 +285,11 @@ module Crystal
         node.raise "can't declare variable of generic non-instantiated type #{type}"
       end
 
+      unless type.allowed_in_generics?
+        type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+        node.raise "can't declare variable of type #{type} yet, use a more specific type"
+      end
+
       type
     end
 
