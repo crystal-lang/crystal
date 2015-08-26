@@ -1392,6 +1392,10 @@ module Crystal
       true
     end
 
+    def allowed_in_generics?
+      false
+    end
+
     def type_desc
       "generic module"
     end
@@ -1432,6 +1436,10 @@ module Crystal
 
     def allocated=(value)
       superclass.try &.allocated = value
+    end
+
+    def allowed_in_generics?
+      false
     end
 
     def new_generic_instance(program, generic_type, type_vars)
