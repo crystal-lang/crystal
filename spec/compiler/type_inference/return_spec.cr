@@ -105,4 +105,31 @@ describe "Type inference: return" do
       Bar.new.x.foo
       )) { int32 }
   end
+
+  it "allows returning NoReturn instead of the wanted type" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      module Moo
+        def bar : Int32
+          foo
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          # Not implemented
+          LibC.exit
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { no_return }
+  end
 end
