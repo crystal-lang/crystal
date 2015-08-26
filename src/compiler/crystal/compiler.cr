@@ -4,6 +4,7 @@ require "socket"
 require "http/common"
 require "colorize"
 require "crypto/md5"
+require "math/math"
 
 module Crystal
   class Compiler
@@ -218,24 +219,20 @@ module Crystal
       end
     end
 
+    private def codegen_many_units_serial(units, target_triple, multithreaded)
+      units.each { |unit|
+        codegen_single_unit(unit, target_triple, multithreaded)
+      }
+    end
+
     private def codegen_many_units(units, target_triple, multithreaded)
-      jobs_count = 0
-
-      while unit = units.pop?
-        fork { codegen_single_unit(unit, target_triple, multithreaded) }
-
-        jobs_count += 1
-
-        if jobs_count >= @n_threads
-          LibC.waitpid(-1, out stat_loc, 0)
-          jobs_count -= 1
-        end
-      end
-
-      while jobs_count > 0
-        LibC.waitpid(-1, out stat_loc, 0)
-        jobs_count -= 1
-      end
+      # 0 units might be codegened, each_slice fails when count=0
+      task_size = Math.max(units.length / @n_threads, 1)
+      units.each_slice(task_size).map { |unit_slice|
+        fork {
+          codegen_many_units_serial(unit_slice, target_triple, multithreaded)
+        } # force strict execution with to_a
+      }.to_a.each { |pid| LibC.waitpid(pid, out stat_loc, 0) }
     end
 
     private def codegen_single_unit(unit, target_triple, multithreaded)
