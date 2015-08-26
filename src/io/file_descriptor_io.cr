@@ -1,3 +1,4 @@
+# An IO over a file descriptor.
 class FileDescriptorIO
   include BufferedIOMixin
 
@@ -11,9 +12,9 @@ class FileDescriptorIO
   property? flush_on_newline
   property? sync
 
-  # seconds to wait when reading before raising IO::Timeout
+  # Seconds to wait when reading before raising IO::Timeout
   property read_timeout
-  # seconds to wait when writing before raising IO::Timeout
+  # Seconds to wait when writing before raising IO::Timeout
   property write_timeout
   # :nodoc:
   property read_timed_out, write_timed_out # only used in event callbacks

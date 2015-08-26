@@ -1,3 +1,9 @@
+# The BufferedIOMixin enhances the IO module with input/output buffering.
+#
+# The buffering behaviour can be turned on/off with the `#sync=` method.
+#
+# Additionally, several methods, like `#gets`, are implemented in a more
+# efficient way.
 module BufferedIOMixin
   include IO
 
@@ -14,12 +20,22 @@ module BufferedIOMixin
   #   @flush_on_newline = false
   # end
 
+  # Reads at most *count* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
   abstract def unbuffered_read(slice : Slice(UInt8), count)
+
+  # Writes at most *count* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
   abstract def unbuffered_write(slice : Slice(UInt8), count)
+
+  # Flushes the wrapped IO.
   abstract def unbuffered_flush
+
+  # Closes the wrapped IO.
   abstract def unbuffered_close
+
+  # Rewinds the wrapped IO.
   abstract def unbuffered_rewind
 
+  # :nodoc:
   def gets(delimiter : Char, limit : Int)
     if delimiter.ord >= 128
       return super
@@ -92,6 +108,7 @@ module BufferedIOMixin
     end
   end
 
+  # :nodoc:
   def read_byte : UInt8?
     fill_buffer if @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
@@ -133,6 +150,7 @@ module BufferedIOMixin
     raise InvalidByteSequenceError.new
   end
 
+  # Buffered implementation of `IO#read(slice, count)`.
   def read(slice : Slice(UInt8), count)
     total_read = 0
 
@@ -161,6 +179,7 @@ module BufferedIOMixin
     total_read
   end
 
+  # :nodoc:
   def read(length : Int)
     raise ArgumentError.new "negative length" if length < 0
 
@@ -176,6 +195,7 @@ module BufferedIOMixin
     super
   end
 
+  # Buffered implementation of `IO#write(slice, count)`.
   def write(slice : Slice(UInt8), count)
     if sync?
       return unbuffered_write(slice, count).to_i
@@ -206,6 +226,7 @@ module BufferedIOMixin
     @out_count += count
   end
 
+  # :nodoc:
   def write_byte(byte : UInt8)
     if sync?
       return super
@@ -222,34 +243,45 @@ module BufferedIOMixin
     end
   end
 
+  # Turns on/off flushing the underlying IO when a newline is written.
   def flush_on_newline=(flush_on_newline)
     @flush_on_newline = !!flush_on_newline
   end
 
+  # Determines if this IO flushes automatically when a newline is written.
   def flush_on_newline?
     @flush_on_newline
   end
 
+  # Turns on/off IO buffering. When `sync` is set to `true`, no buffering
+  # will be done (that is, writing to this IO is immediately synced to the
+  # underlying IO).
   def sync=(sync)
+    # TODO: maybe instead of `sync=` we should rename this to `buffer=`,
+    # because otherwise you have to think in a reversed way.
     flush if sync && !@sync
     @sync = !!sync
   end
 
+  # Determines if this IO does buffering. If `true`, no buffering is done.
   def sync?
     @sync
   end
 
+  # Flushes any buffered data and the underlying IO.
   def flush
     unbuffered_write(Slice.new(out_buffer, BUFFER_SIZE), @out_count) if @out_count > 0
     unbuffered_flush
     @out_count = 0
   end
 
+  # Flushes and closes the underlying IO.
   def close
     flush if @out_count > 0
     unbuffered_close
   end
 
+  # Rewinds the underlying IO.
   def rewind
     unbuffered_rewind
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
