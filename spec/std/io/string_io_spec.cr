@@ -51,6 +51,15 @@ describe "StringIO" do
     io.gets('a', 3).should be_nil
   end
 
+  it "does gets with limit" do
+    io = StringIO.new("hello\nworld")
+    io.gets(3).should eq("hel")
+    io.gets(3).should eq("lo\n")
+    io.gets(3).should eq("wor")
+    io.gets(3).should eq("ld")
+    io.gets(3).should be_nil
+  end
+
   it "raises if invoking gets with negative limit" do
     io = StringIO.new("hello\nworld\n")
     expect_raises ArgumentError, "negative limit" do

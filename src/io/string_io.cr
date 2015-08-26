@@ -53,6 +53,10 @@ class StringIO
     else
       index = @bytesize - @pos
       return nil if index == 0
+
+      if index > limit
+        index = limit
+      end
     end
 
     string = String.new(@buffer + @pos, index)
