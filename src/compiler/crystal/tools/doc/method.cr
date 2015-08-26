@@ -1,3 +1,4 @@
+require "html"
 require "./item"
 
 class Crystal::Doc::Method
@@ -42,15 +43,23 @@ class Crystal::Doc::Method
     @class_method ? "def self." : "def "
   end
 
-  def anchor
+  def id
     String.build do |io|
-      CGI.escape(to_s, io)
+      io << to_s.gsub(' ', "")
       if @class_method
         io << "-class-method"
       else
         io << "-instance-method"
       end
     end
+  end
+
+  def html_id
+    HTML.escape(id)
+  end
+
+  def anchor
+    "#" + CGI.escape(id)
   end
 
   def to_s(io)
