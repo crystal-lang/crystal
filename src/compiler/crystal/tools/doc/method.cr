@@ -1,4 +1,5 @@
 require "./item"
+require "crypto/md5"
 
 class Crystal::Doc::Method
   include Item
@@ -44,12 +45,14 @@ class Crystal::Doc::Method
 
   def anchor
     String.build do |io|
-      CGI.escape(to_s, io)
+      name = self.name.chars.select { |c| c.alphanumeric? || c == '_' } .join
+      io << name << '-' unless name.empty?
       if @class_method
-        io << "-class-method"
+        io << "class-method"
       else
-        io << "-instance-method"
+        io << "instance-method"
       end
+      io << '-' << Crypto::MD5.hex_digest(to_s)
     end
   end
 
