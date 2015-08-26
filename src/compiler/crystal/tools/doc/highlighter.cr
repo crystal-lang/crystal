@@ -109,7 +109,11 @@ module Crystal::Doc::Highlighter
       when :EOF
         break
       else
-        HTML.escape(token.value.to_s.inspect_unquoted, io)
+        if delimiter_end == '/'
+          token.value.to_s(io)
+        else
+          HTML.escape(token.value.to_s.inspect_unquoted, io)
+        end
       end
     end
   end
