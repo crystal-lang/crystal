@@ -4,12 +4,14 @@ lib LibReadline
 
   fun readline(prompt : UInt8*) : UInt8*
   fun add_history(line : UInt8*)
+  fun rl_bind_key(key : Int, f : Int, Int -> Int)
 
   alias CPP = (UInt8*, Int, Int) -> UInt8**
 
   $rl_attempted_completion_function : CPP
   $rl_line_buffer : UInt8*
   $rl_point : Int
+  $rl_done : Int
 end
 
 private def malloc_match(match)
@@ -46,6 +48,20 @@ module Readline
 
   def point
     LibReadline.rl_point
+  end
+
+  def bind_key(c : Char, f : Int,Int -> Int)
+    return c.ord if !(0 <= c.ord <= 255)
+
+    LibReadline.rl_bind_key(c.ord, f)
+  end
+
+  def done
+    LibReadline.rl_done
+  end
+
+  def done=(val : Int)
+    LibReadline.rl_done = val
   end
 
   # :nodoc:
