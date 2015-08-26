@@ -227,13 +227,18 @@ USAGE
   end
 
   private def self.execute(output_filename, run_args)
-    # TODO: fix system to make output flush on newline if it's a tty
-    exit_status = LibC.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
-    if exit_status != 0
-      puts "Program terminated abnormally with error code: #{exit_status}"
-      exit 1
+    begin
+      cmd = "#{output_filename} #{run_args.map(&.inspect).join " "}"
+      status = Process.run(cmd, shell: true, input: true, output: true, error: true)
+    ensure
+      File.delete output_filename
     end
-    File.delete output_filename
+
+    if status.exit_status == 11
+      puts "Program exited because of a segmentation fault: 11"
+    end
+
+    exit status.exit_code
   end
 
   private def self.tempfile(basename)

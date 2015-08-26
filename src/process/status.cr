@@ -1,5 +1,7 @@
 # The status of a terminated process.
 class Process::Status
+  getter exit_status
+
   def initialize(@exit_status)
   end
 

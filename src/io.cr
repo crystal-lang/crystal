@@ -49,7 +49,6 @@ lib LibC
   fun putchar(c : Int) : Int
   fun puts(str : Char*) : Int
   fun printf(str : Char*, ...) : Int
-  fun system(str : Char*) : Int
   fun execl(path : Char*, arg0 : Char*, ...) : Int
   fun waitpid(pid : PidT, stat_loc : Int*, options : Int) : PidT
   fun open(path : Char*, oflag : Int, ...) : Int
