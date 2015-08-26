@@ -16,7 +16,9 @@ class Process
   #
   # By default the process is configured without input, output or error.
   def self.run(cmd : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = false : Stdio, output = false : Stdio, error = false : Stdio, chdir = nil : String?) : Process::Status
-    new(cmd, args, env, clear_env, shell, input, output, error, chdir).wait
+    status = new(cmd, args, env, clear_env, shell, input, output, error, chdir).wait
+    $? = status
+    status
   end
 
   # Executes a process, yields the block, and then waits for it to finish.
