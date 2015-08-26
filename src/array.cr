@@ -343,7 +343,8 @@ class Array(T)
 
   # Sets the given value at the given index.
   #
-  # Raises `IndexError` if the array had no previous value at the given index.
+  # Negative indices can be used to start counting from the end of the array.
+  # Raises `IndexError` if trying to set an element outside the array's range.
   #
   # ```
   # ary = [1,2,3]

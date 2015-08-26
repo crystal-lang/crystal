@@ -1,26 +1,88 @@
+# A Slice is a `Pointer` with an associated length.
+#
+# While a pointer is unsafe because no bound checks are performend when reading from and writing to it,
+# reading from and writing to a slice involve bound checks.
+# In this way, a slice is a safe alternative to Pointer.
 struct Slice(T)
   include Enumerable(T)
   include Iterable
 
+  # Returns the length of this slice.
+  #
+  # ```
+  # Slice(UInt8).new(3).length #=> 3
+  # ```
   getter length
 
+  # Creates a slice to the given *pointer*, bounded by the given *length*. This
+  # method does not allocate heap memory.
+  #
+  # ```
+  # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
+  #
+  # slice = Slice.new(ptr, 3)
+  # slice.length      #=> 3
+  # slice             #=> [97, 98, 99]
+  #
+  # String.new(slice) #=> "abc"
+  # ```
   def initialize(@pointer : Pointer(T), @length : Int32)
   end
 
+  # Allocates `length * sizeof(T)` bytes of heap memory initialized to zero
+  # and returns a slice pointing to that memory.
+  #
+  # The memory is allocated by the `GC`, so when there are
+  # no pointers to this memory, it will be automatically freed.
+  #
+  # ```
+  # slice = Slice(UInt8).new(3)
+  # slice #=> [0, 0, 0]
+  # ```
   def self.new(length : Int32)
     pointer = Pointer(T).malloc(length)
     new(pointer, length)
   end
 
+  # Allocates `length * sizeof(T)` bytes of heap memory initialized to the value
+  # returned by the block (which is invoked once with each index in the range `0...length`)
+  # and returns a slice pointing to that memory.
+  #
+  # The memory is allocated by the `GC`, so when there are
+  # no pointers to this memory, it will be automatically freed.
+  #
+  # ```
+  # slice = Slice.new(3) { |i| i + 10 }
+  # slice #=> [10, 11, 12]
+  # ```
   def self.new(length : Int32)
     pointer = Pointer.malloc(length) { |i| yield i }
     new(pointer, length)
   end
 
+  # Allocates `length * sizeof(T)` bytes of heap memory initialized to *value*
+  # and returns a slice pointing to that memory.
+  #
+  # The memory is allocated by the `GC`, so when there are
+  # no pointers to this memory, it will be automatically freed.
+  #
+  # ```
+  # slice = Slice.new(3, 10)
+  # slice #=> [10, 10, 10]
+  # ```
   def self.new(length : Int32, value : T)
     new(length) { value }
   end
 
+  # Returns a new slice that i *offset* elements apart from this slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice #=> [10, 11, 12, 13, 14]
+  #
+  # slice2 = slice + 2
+  # slice2 #=> [12, 13, 14]
+  # ```
   def +(offset : Int)
     unless 0 <= offset <= length
       raise IndexError.new
@@ -29,10 +91,35 @@ struct Slice(T)
     Slice.new(@pointer + offset, @length - offset)
   end
 
+  # Returns the element at the given *index*.
+  #
+  # Negative indices can be used to start counting from the end of the slice.
+  # Raises `IndexError` if trying to access an element outside the slice's range.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice[0]  #=> 10
+  # slice[4]  #=> 14
+  # slice[-1] #=> 14
+  # slice[5]  #=> IndexError
+  # ```
   def [](index : Int)
     at(index)
   end
 
+  # Sets the given value at the given index.
+  #
+  # Negative indices can be used to start counting from the end of the slice.
+  # Raises `IndexError` if trying to set an element outside the slice's range.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice[0] = 20
+  # slice[-1] = 30
+  # slice #=> [20, 11, 12, 13, 30]
+  #
+  # slice[4] = 1 #=> IndexError
+  # ```
   def []=(index : Int, value : T)
     index += length if index < 0
     unless 0 <= index < length
@@ -42,6 +129,18 @@ struct Slice(T)
     @pointer[index] = value
   end
 
+  # Returns a new slice that starts at *start* elements from this slice's start,
+  # and of *count* length.
+  #
+  # Raises `IndexError` if the new slice falls outside this slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice #=> [10, 11, 12, 13, 14]
+  #
+  # slice2 = slice[1, 3]
+  # slice2 #=> [11, 12, 13]
+  # ```
   def [](start, count)
     unless 0 <= start <= @length
       raise IndexError.new
