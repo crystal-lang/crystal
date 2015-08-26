@@ -214,18 +214,13 @@ class Process
 end
 
 def system(command : String) : Bool
-  process = Process.new("/bin/sh", input: nil, output: true, error: true)
-  process.input.print command
-  process.input.close
-  status = process.wait
+  status = Process.run(command, shell: true, input: true, output: true, error: true)
   $? = status
   status.success?
 end
 
 def `(command) : String
-  process = Process.new("/bin/sh", input: nil, output: nil, error: true)
-  process.input.print command
-  process.input.close
+  process = Process.new(command, shell: true, input: true, output: nil, error: true)
   output = process.output.read
   status = process.wait
   $? = status

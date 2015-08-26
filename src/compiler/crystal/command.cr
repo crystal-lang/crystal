@@ -228,17 +228,16 @@ USAGE
 
   private def self.execute(output_filename, run_args)
     begin
-      cmd = "#{output_filename} #{run_args.map(&.inspect).join " "}"
-      status = Process.run(cmd, shell: true, input: true, output: true, error: true)
+      system("#{output_filename} #{run_args.map(&.inspect).join " "}")
     ensure
       File.delete output_filename
     end
 
-    if status.exit_status == 11
+    if $?.exit_status == 11
       puts "Program exited because of a segmentation fault: 11"
     end
 
-    exit status.exit_code
+    exit $?.exit_code
   end
 
   private def self.tempfile(basename)
