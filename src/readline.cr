@@ -25,6 +25,7 @@ module Readline
   extend self
 
   alias CompletionProc = String -> Array(String)?
+  alias KeyBindingProc = LibReadline::Int, LibReadline::Int -> LibReadline::Int
 
   def readline(prompt = "", add_history = false)
     line = LibReadline.readline(prompt)
@@ -50,18 +51,17 @@ module Readline
     LibReadline.rl_point
   end
 
-  def bind_key(c : Char, f : Int,Int -> Int)
-    return c.ord if !(0 <= c.ord <= 255)
-
+  def bind_key(c : Char, f : KeyBindingProc)
+    raise ArgumentError.new "not a valid ASCII character: '#{c}'" if !(0 <= c.ord <= 255)
     LibReadline.rl_bind_key(c.ord, f)
   end
 
   def done
-    LibReadline.rl_done
+    LibReadline.rl_done != LibReadline::Int.cast(0)
   end
 
-  def done=(val : Int)
-    LibReadline.rl_done = val
+  def done=(val : Bool)
+    LibReadline.rl_done = val.hash
   end
 
   # :nodoc:
