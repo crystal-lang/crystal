@@ -63,6 +63,23 @@ class Crystal::Doc::Type
     @type.abstract
   end
 
+  def parents_of?(type)
+    if type
+      type.full_name.starts_with?(full_name)
+    end
+  end
+
+  def current?(type)
+    return false unless type
+    return true if type.full_name == full_name
+
+    while type = type.container
+      return true if type.full_name == full_name
+    end
+
+    false
+  end
+
   private def type_mapping_values(type)
     values = type.mapping.values
     if values.any? &.is_a?(TypeOf)
@@ -90,6 +107,10 @@ class Crystal::Doc::Type
 
   def locations
     @generator.relative_locations(@type)
+  end
+
+  def repository_name
+    @generator.repository_name
   end
 
   def program?
@@ -348,7 +369,11 @@ class Crystal::Doc::Type
   end
 
   def path_from(type)
-    type.path_to(self)
+    if type
+      type.path_to(self)
+    else
+      path
+    end
   end
 
   def path_to(filename : String)
@@ -356,7 +381,7 @@ class Crystal::Doc::Type
   end
 
   def path_to(type : Type)
-    path_to type.path
+    path_to(type.path)
   end
 
   def link_from(type : Type)
@@ -614,11 +639,25 @@ class Crystal::Doc::Type
       superclass = superclass.superclass
     end
     String.build do |io|
-      hierarchy.reverse.each_with_index do |type, index|
-        io << %(<div style="padding-left: ) <<  (index * 20) << %(px">)
+      io << %(<ul class="superclass-hierarchy">)
+      hierarchy.each do |type|
+        io << %(<li class="superclass">)
         type_to_html type, io
-        io << "</div>"
+        io << "</li>"
       end
+      io << "</ul>"
     end
+  end
+
+  def html_id
+    "#{@generator.repository_name}/" + (
+      if program?
+        "toplevel"
+      elsif container = container()
+        "#{container.dir}/#{name}"
+      else
+        "#{name}"
+      end
+    )
   end
 end

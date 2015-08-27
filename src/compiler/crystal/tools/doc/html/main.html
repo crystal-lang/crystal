@@ -2,9 +2,19 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta id="repository-name" content="<%= repository_name %>">
   <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="js/type.js"></script>
+  <title>README - <%= repository_name %></title>
 </head>
 <body>
+
+<div id="types-list">
+<%= ListItemsTemplate.new(types, nil) %>
+</div>
+
+<div id="main-content">
 <%= body %>
+</div>
 </body>
 </html>

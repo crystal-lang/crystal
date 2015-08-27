@@ -1,15 +1,11 @@
 require "ecr/macros"
 
 module Crystal::Doc
-  record TypeTemplate, type do
+  record TypeTemplate, type, types do
     ecr_file "#{__DIR__}/html/type.html"
   end
 
-  record ListTemplate, types do
-    ecr_file "#{__DIR__}/html/list.html"
-  end
-
-  record ListItemsTemplate, types do
+  record ListItemsTemplate, types, current_type do
     ecr_file "#{__DIR__}/html/list_items.html"
   end
 
@@ -25,12 +21,8 @@ module Crystal::Doc
     ecr_file "#{__DIR__}/html/other_types.html"
   end
 
-  record MainTemplate, body do
+  record MainTemplate, body, types, repository_name do
     ecr_file "#{__DIR__}/html/main.html"
-  end
-
-  struct IndexTemplate
-    ecr_file "#{__DIR__}/html/index.html"
   end
 
   struct JsTypeTemplate

@@ -165,7 +165,7 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
   end
 
   def method_link(method, text)
-    %(<a href="#{method.type.path_from(@type)}{method.anchor}">#{text}</a>)
+    %(<a href="#{method.type.path_from(@type)}#{method.anchor}">#{text}</a>)
   end
 
   def lookup_method(type, name, args)

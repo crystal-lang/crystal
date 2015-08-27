@@ -1,9 +1,9 @@
 <ul>
   <% types.each do |type| %>
-    <li>
-      <a href="<%= type.path %>" target="main"><%= type.name %></a>
+  <li class="<%= (type.program? || type.types.empty?) ? "" : ("parent" + (type.parents_of?(current_type) ? " open" : "")) %> <%= type.current?(current_type) ? "current" : "" %>" data-id="<%= type.html_id %>">
+      <a href="<%= type.path_from(current_type) %>"><%= type.name %></a>
       <% unless type.program? || type.types.empty? %>
-        <%= ListItemsTemplate.new(type.types) %>
+        <%= ListItemsTemplate.new(type.types, current_type) %>
       <% end %>
     </li>
   <% end %>

@@ -2,22 +2,31 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta id="repository-name" content="<%= type.repository_name %>">
   <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
-  <script type="text/javascript">
-    var pathToIndex = "<%= type.path_to "index.html" %>"
-  </script>
   <script type="text/javascript" src="<%= type.path_to "js/type.js" %>"></script>
+  <title><%= type.full_name %> - <%= type.repository_name %></title>
 </head>
 <body>
 
-<h1>
+<div id="types-list">
+<%= ListItemsTemplate.new(types, type) %>
+</div>
+
+<div id="main-content">
+<h1 class="type-name">
 <% if type.program? %>
   <%= type.full_name %>
 <% else %>
-  <%= type.abstract? ? "abstract " : ""%><%= type.kind %> <%= type.full_name %>
+  <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name %>
 <% end %>
 <span class="type-permalink">[<a href="<%= type.path_to(type) %>" class="permalink" target="_blank">permalink</a>]</span>
 </h1>
+
+<% if type.superclass %>
+  <%= type.superclass_hierarchy %>
+<% end %>
+
 
 <% if doc = type.formatted_doc %>
   <h2>Overview</h2>
@@ -28,11 +37,6 @@
 <% if type.alias? %>
   <h2>Alias Definition</h2>
   <code><%= type.formatted_alias_definition %></code>
-<% end %>
-
-<% if type.superclass %>
-  <h2>Superclass hierarchy</h2>
-  <%= type.superclass_hierarchy %>
 <% end %>
 
 <%= OtherTypesTemplate.new("Included Modules", type, type.included_modules) %>
@@ -58,16 +62,18 @@
   <% else %>
     <h2>Constant Summary</h2>
   <% end %>
-  <ul>
+  <dl>
     <% type.constants.each do |const| %>
-      <li class="entry-const">
+      <dt class="entry-const">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
-        <% if doc = const.formatted_doc %>
-          <div class="doc"><%= doc %></div>
-        <% end %>
-      </li>
+      </dt>
+      <% if doc = const.formatted_doc %>
+      <dd class="entry-const-doc">
+        <%= doc %>
+      </dd>
+      <% end %>
     <% end %>
-  </ul>
+  </dl>
 <% end %>
 
 <%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
@@ -77,6 +83,7 @@
 <%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
 <%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>
 <%= MethodDetailTemplate.new("Macro Detail", type.macros) %>
+</div>
 
 </body>
 </html>
