@@ -44,6 +44,7 @@ class UNIXServer < UNIXSocket
   ensure
     if path = @path
       File.delete(path) if File.exists?(path)
+      @path = nil
     end
   end
 end
