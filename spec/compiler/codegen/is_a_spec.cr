@@ -602,4 +602,22 @@ describe "Codegen: is_a?" do
       Foo(Int32).is_a?(Foo.class)
       )).to_b.should be_true
   end
+
+  it "says false for GenericChild(Base).is_a?(GenericBase(Child)) (#1294)" do
+    run(%(
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class GenericBase(T)
+      end
+
+      class GenericChild(T) < GenericBase(T)
+      end
+
+      GenericChild(Base).new.is_a?(GenericBase(Child))
+      )).to_b.should be_false
+  end
 end

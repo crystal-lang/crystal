@@ -234,4 +234,26 @@ describe "Restrictions" do
             (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar),
            ) }
   end
+
+  it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
+    assert_error %(
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class GenericBase(T)
+      end
+
+      class GenericChild(T) < GenericBase(T)
+      end
+
+      def foo(x : GenericBase(Child))
+      end
+
+      foo GenericChild(Base).new
+      ),
+      "no overload matches"
+  end
 end

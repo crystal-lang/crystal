@@ -457,7 +457,8 @@ module Crystal
 
       mapping.each do |name, node|
         typevar_type = TypeLookup.lookup(extending_class, node)
-        unless other.type_vars[name].type.is_restriction_of?(typevar_type, owner)
+        other_type = other.type_vars[name].type.devirtualize
+        unless typevar_type.implements?(other_type)
           return nil
         end
       end
@@ -480,7 +481,7 @@ module Crystal
         if m = @mapping[class_type_var]?
           t = TypeLookup.lookup(extending_class, m)
           restricted = t.restrict other_type_var, context
-          return nil unless restricted
+          return nil unless restricted && t == restricted
 
           if other_type_var.is_a?(Path) && other_type_var.names.length == 1
             context.set_free_var(other_type_var.names.first, restricted)
