@@ -5,9 +5,13 @@ os:
 sudo: required
 services:
   - docker
-env:
-  - ARCH=i386 ARCH_CMD=linux32
-  - ARCH=x86_64 ARCH_CMD=linux64
+matrix:
+  include:
+    - env: ARCH=i386 ARCH_CMD=linux32
+      os: linux
+    - env: ARCH=x86_64 ARCH_CMD=linux64
+      os: linux
+    - os: osx
 before_install: |
   case $TRAVIS_OS_NAME in
     linux)
@@ -55,7 +59,3 @@ notifications:
       - "%{repository_slug}#%{commit} (%{branch} - %{commit_subject}): %{message} %{build_url}"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
-matrix:
-  exclude:
-    - os: osx
-      env: ARCH=i386 ARCH_CMD=linux32
