@@ -288,6 +288,8 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
+      struct Nil; def to_i; 0; end; end
+
       def foo(x)
         begin
           return 0 if 1 == 1

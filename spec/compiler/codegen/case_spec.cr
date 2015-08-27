@@ -53,7 +53,8 @@ describe "Code gen: case" do
 
   it "codegens case with class" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
+
       struct Int32
         def foo
           self

@@ -558,7 +558,7 @@ describe "Code gen: block" do
 
   it "can use self inside a block called from dispatch" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
 
       class Foo
         def do; yield; end

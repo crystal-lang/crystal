@@ -67,6 +67,8 @@ describe "Code gen: union type" do
     run("
       require \"prelude\"
 
+      struct Nil; def to_i; 0; end; end
+
       struct Char
         def to_i
           ord

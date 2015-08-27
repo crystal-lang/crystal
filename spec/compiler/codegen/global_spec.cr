@@ -10,10 +10,23 @@ describe "Code gen: global" do
   end
 
   it "codegens global when not initialized" do
-    run("require \"nil\"; $foo.to_i").to_i.should eq(0)
+    run(%(
+      struct Nil; def to_i; 0; end; end
+      $foo.to_i
+      )).to_i.should eq(0)
   end
 
   it "codegens global when not initialized" do
-    run("require \"nil\"; def foo; $foo = 2 if 1 == 2; end; foo; $foo.to_i").to_i.should eq(0)
+    run(%(
+      struct Nil; def to_i; 0; end; end
+
+      def foo
+        $foo = 2 if 1 == 2
+      end
+
+      foo
+
+      $foo.to_i
+      )).to_i.should eq(0)
   end
 end

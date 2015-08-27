@@ -34,12 +34,15 @@ describe "Code gen: and" do
   end
 
   it "codegens and with primitive type other than bool" do
-    run("require \"nil\"; (nil && 2).to_i").to_i.should eq(0)
+    run(%(
+      struct Nil; def to_i; 0; end; end
+      (nil && 2).to_i
+      )).to_i.should eq(0)
   end
 
   it "codegens and with nilable as left node 1" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
       class Object; def to_i; -1; end; end
       a = Reference.new
       a = nil
@@ -75,7 +78,7 @@ describe "Code gen: and" do
 
   it "codegens and with nil union as left node 2" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
       a = 1
       a = nil
       (a && 2).to_i
@@ -144,7 +147,7 @@ describe "Code gen: and" do
 
   it "codegens and with bool union as left node 4" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
       struct Bool; def to_i; 1; end; end
       a = 2
       a = true

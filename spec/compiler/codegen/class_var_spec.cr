@@ -17,7 +17,7 @@ describe "Codegen: class var" do
 
   it "codegens class var as nil" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
 
       class Foo
         def self.foo
@@ -45,7 +45,7 @@ describe "Codegen: class var" do
 
   it "codegens class var as nil if assigned for the first time inside method" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
 
       class Foo
         def self.foo
@@ -67,7 +67,7 @@ describe "Codegen: class var" do
 
   it "codegens class var of program as nil" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
       @@foo.to_i
       ").to_i.should eq(0)
   end
