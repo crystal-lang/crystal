@@ -390,10 +390,7 @@ class Crystal::Call
           mod.push_def_macro typed_def
         else
           if typed_def_return_type = typed_def.return_type
-            self_type = match_owner.instance_type
-            root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
-            return_type = TypeLookup.lookup(root_type, typed_def_return_type, match_owner.instance_type)
-            typed_def.freeze_type = return_type
+            check_return_type(typed_def, typed_def_return_type, match, match_owner)
           end
 
           check_recursive_splat_call match.def, typed_def_args do
@@ -418,6 +415,13 @@ class Crystal::Call
     end
 
     typed_defs
+  end
+
+  def check_return_type(typed_def, typed_def_return_type, match, match_owner)
+    self_type = match_owner.instance_type
+    root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
+    return_type = TypeLookup.lookup(root_type, typed_def_return_type, match_owner.instance_type)
+    typed_def.freeze_type = return_type
   end
 
   def check_tuple_indexer(owner, def_name, args, arg_types)
