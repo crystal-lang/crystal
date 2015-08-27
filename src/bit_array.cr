@@ -14,7 +14,7 @@
 #     0.upto(5) { |i| a[i*2] = true }
 #     ba                    # => "BitArray[101010101010]"
 #     ba[2]                 # => true
-class BitArray
+struct BitArray
   include Enumerable(Bool)
 
   # The number of bits the BitArray stores
