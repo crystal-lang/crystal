@@ -74,12 +74,21 @@ abstract class JSON::Lexer
   end
 
   private def skip_whitespace
-    while current_char.whitespace?
+    while whitespace?(current_char)
       if current_char == '\n'
         @line_number += 1
         @column_number = 0
       end
       next_char
+    end
+  end
+
+  private def whitespace?(char)
+    case char
+    when ' ', '\t', '\n', '\r'
+      true
+    else
+      false
     end
   end
 
