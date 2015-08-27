@@ -9,9 +9,6 @@ class FileDescriptorIO
   private getter! readers
   private getter! writers
 
-  property? flush_on_newline
-  property? sync
-
   # Seconds to wait when reading before raising IO::Timeout
   property read_timeout
   # Seconds to wait when writing before raising IO::Timeout
