@@ -74,6 +74,18 @@ describe "Type inference: lib" do
       "out can only be used with lib funs"
   end
 
+  it "reports error if using out with an already declared variable" do
+    assert_error %(
+      lib Lib
+        fun foo(x : Int32*)
+      end
+
+      x = Pointer(Int32).malloc(1_u64)
+      Lib.foo out x
+      ),
+      "variable 'x' is already defined, `out` must be used to define a variable, use another name"
+  end
+
   it "reports redefinition of fun with different signature" do
     assert_error "
       lib LibC

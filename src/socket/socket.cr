@@ -89,7 +89,7 @@ class Socket < FileDescriptorIO
   # returns the modified optval
   def getsockopt optname, optval, level = LibC::SOL_SOCKET
     optsize = LibC::SocklenT.cast(sizeof(typeof(optval)))
-    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval) as Void*), out optsize)
+    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval) as Void*), pointerof(optsize))
     raise Errno.new("getsockopt") if ret == -1
     optval
   end

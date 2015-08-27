@@ -233,7 +233,7 @@ module Crystal
       end
 
       while jobs_count > 0
-        LibC.waitpid(-1, out stat_loc, 0)
+        LibC.waitpid(-1, out stat_loc_2, 0)
         jobs_count -= 1
       end
     end

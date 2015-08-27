@@ -258,8 +258,11 @@ module Crystal
     def visit(node : Out)
       case exp = node.exp
       when Var
+        if @meta_vars.has_key?(exp.name)
+          exp.raise "variable '#{exp.name}' is already defined, `out` must be used to define a variable, use another name"
+        end
+
         # We declare out variables
-        # TODO: check that the out variable didn't exist before
         @meta_vars[exp.name] = new_meta_var(exp.name)
         @vars[exp.name] = new_meta_var(exp.name)
       when InstanceVar
