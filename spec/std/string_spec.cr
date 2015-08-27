@@ -536,6 +536,15 @@ describe "String" do
     assert { "".empty?.should be_true }
   end
 
+  describe "blank?" do
+    assert { "#{0xa0.chr}".blank?.should be_true }
+    assert { "\t\n".blank?.should be_true }
+    assert { " ".blank?.should be_true }
+    assert { "a".blank?.should be_false }
+    assert { "a ".blank?.should be_false }
+    assert { "".blank?.should be_true }
+  end
+
   describe "index" do
     describe "by char" do
       assert { "foo".index('o').should eq(1) }
