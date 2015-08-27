@@ -1,6 +1,6 @@
 # An IO over a file descriptor.
 class FileDescriptorIO
-  include BufferedIOMixin
+  include BufferedIO
 
   SEEK_SET = 0
   SEEK_CUR = 1
