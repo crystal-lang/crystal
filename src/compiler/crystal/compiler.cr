@@ -290,13 +290,16 @@ module Crystal
     private def system(command)
       puts command if verbose?
 
-      success = ::system(command)
-      unless success
+      process = Process.new("/bin/sh", input: nil, output: true, error: true)
+      process.input.print command
+      process.input.close
+      status = process.wait
+
+      unless status.success?
         print colorize("Error: ").red.bold
-        puts colorize("execution of command failed with code: #{$?.exit_code}: `#{command}`").bright
-        exit 3
+        puts colorize("execution of command failed with code: #{status.exit_code}: `#{command}`").bright
+        exit status.exit_code
       end
-      success
     end
 
     private def timing(label)
