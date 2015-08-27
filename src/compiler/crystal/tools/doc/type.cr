@@ -64,20 +64,19 @@ class Crystal::Doc::Type
   end
 
   def parents_of?(type)
-    if type
-      type.full_name.starts_with?(full_name)
-    end
-  end
-
-  def current?(type)
     return false unless type
-    return true if type.full_name == full_name
 
     while type = type.container
       return true if type.full_name == full_name
     end
 
     false
+  end
+
+  def current?(type)
+    return false unless type
+
+    parents_of?(type) || type.full_name == full_name
   end
 
   private def type_mapping_values(type)

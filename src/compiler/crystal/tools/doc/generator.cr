@@ -51,7 +51,7 @@ class Crystal::Doc::Generator
     Dir.mkdir_p "#{@dir}/js"
 
     write_template "#{@dir}/css/style.css", StyleTemplate.new
-    write_template "#{@dir}/js/type.js", JsTypeTemplate.new
+    write_template "#{@dir}/js/doc.js", JsTypeTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)

@@ -41,6 +41,24 @@ h1.type-name {
   background-color: #2E1052;
 }
 
+#types-list #search-box {
+  padding: 5px;
+}
+
+#types-list input {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px;
+  font: inherit;
+  font-family: inherit;
+  line-height: 1.2;
+  width: 100%;
+  border: 0;
+  border-radius: 50px;
+  outline: 0;
+}
+
 #types-list ul {
   margin: 0;
   padding: 0;
@@ -50,6 +68,10 @@ h1.type-name {
 #types-list li {
   display: block;
   position: relative;
+}
+
+#types-list li.hide {
+  display: none;
 }
 
 #types-list a {

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var repositoryName = document.getElementById('repository-name').getAttribute('content');
   var typesList = document.getElementById('types-list');
+  var searchInput = document.getElementById('search-input');
   var parents = document.querySelectorAll('#types-list li.parent');
 
   for(var i = 0; i < parents.length; i++) {
@@ -20,10 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if(e.target.tagName.toLowerCase() == 'li') {
         if(e.target.className.match(/open/)) {
           sessionStorage.removeItem(e.target.getAttribute('data-id'));
-          e.target.className = e.target.className.replace(/ open/, '');
+          e.target.className = e.target.className.replace(/ +open/g, '');
         } else {
           sessionStorage.setItem(e.target.getAttribute('data-id'), '1');
-          e.target.className += ' open';
+          if(e.target.className.indexOf('open') == -1) {
+            e.target.className += ' open';
+          }
         }
       }
     });
@@ -32,6 +35,31 @@ document.addEventListener('DOMContentLoaded', function() {
       _parent.className += ' open';
     }
   };
+
+  var searchTimeout;
+  searchInput.addEventListener('keyup', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+      var text = searchInput.value;
+      var types = document.querySelectorAll('#types-list li');
+      var words = text.toLowerCase().split(/\s+/).filter(function(word) {
+        return word.length > 0;
+      });
+      var regexp = new RegExp(words.join('|'));
+      console.debug(words);
+
+      for(var i = 0; i < types.length; i++) {
+        var type = types[i];
+        if(words.length == 0 || regexp.exec(type.getAttribute('data-name'))) {
+          type.className = type.className.replace(/ +hide/g, '');
+        } else {
+          if(type.className.indexOf('hide') == -1) {
+            type.className += ' hide';
+          }
+        }
+      }
+    }, 200);
+  });
 
   typesList.onscroll = function() {
     var y = typesList.scrollTop;

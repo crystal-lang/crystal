@@ -26,7 +26,7 @@ module Crystal::Doc
   end
 
   struct JsTypeTemplate
-    ecr_file "#{__DIR__}/html/js/type.js"
+    ecr_file "#{__DIR__}/html/js/doc.js"
   end
 
   struct StyleTemplate
