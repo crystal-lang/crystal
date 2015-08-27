@@ -290,10 +290,7 @@ module Crystal
         node.raise "can't declare variable of generic non-instantiated type #{type}"
       end
 
-      unless type.allowed_in_generics?
-        type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
-        node.raise "can't declare variable of type #{type} yet, use a more specific type"
-      end
+      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a Proc argument type")
 
       type
     end
@@ -845,10 +842,7 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      return if type.allowed_in_generics?
-
-      type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
-      node.raise "can't use #{type} as a Proc argument type yet, use a more specific type"
+      Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
     end
 
     def visit(node : FunPointer)

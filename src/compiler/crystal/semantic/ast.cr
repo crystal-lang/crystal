@@ -2,6 +2,13 @@ require "../syntax/ast"
 require "simple_hash"
 
 module Crystal
+  def self.check_type_allowed_in_generics(node, type, msg)
+    return if type.allowed_in_generics?
+
+    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+    node.raise "#{msg} yet, use a more specific type"
+  end
+
   class ASTNode
     property! type
     property! dependencies
@@ -391,13 +398,7 @@ module Crystal
               end
             end
           else
-            unless node_type.allowed_in_generics?
-              if node_type.is_a?(UnionType)
-                node_type = node_type.union_types.find { |t| !t.allowed_in_generics? }
-              end
-              node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
-            end
-
+            Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
             type_var = node_type.virtual_type
           end
         end
