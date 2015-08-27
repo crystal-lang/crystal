@@ -247,7 +247,7 @@ module Crystal
       If.new(node.cond, node.else, node.then).transform(self).at(node)
     end
 
-    # Convert unless to while:
+    # Convert until to while:
     #
     # From:
     #
