@@ -6,18 +6,11 @@ class Event::SignalHandler
   end
 
   def self.del_handler signal
-    inst = @@instance
-    if inst
-      inst.del_handler signal
-    end
+    @@instance.try &.del_handler(signal)
   end
 
-  def self.instance
-    @@instance ||= begin
-      inst = new
-      spawn { inst.run }
-      inst
-    end
+  def self.after_fork
+    @@instance.try &.after_fork
   end
 
   # finish processing signals
@@ -26,39 +19,63 @@ class Event::SignalHandler
     @@instance = nil
   end
 
-  record CallbackEvent, callback, event
+  private def self.instance
+    @@instance ||= new
+  end
 
   def initialize
-    @channel = Channel(Signal).new(32)
-    @callbacks = Hash(Signal, CallbackEvent).new
+    @callbacks = Hash(Signal, (Signal -> Void)).new
+    @pipes = IO.pipe
+    @@write_pipe = @pipes[1]
+
+    spawn_reader
   end
 
   # :nodoc:
   def run
-    while sig = @channel.receive
-      handle_signal sig
+    read_pipe = @pipes[0]
+    sig = 0
+    slice = Slice(UInt8).new pointerof(sig) as Pointer(UInt8), sizeof(typeof(sig))
+
+    loop do
+     bytes = read_pipe.read slice
+     break if bytes == 0
+     raise "bad read #{bytes} : #{slice.length}" if bytes != slice.length
+     handle_signal Signal.new(sig)
     end
   end
 
+  def after_fork
+    close
+    @pipes = IO.pipe
+    @@write_pipe = @pipes[1]
+    spawn_reader
+  end
+
   def close
-     @channel.close
+    @pipes[0].close
+    @pipes[1].close
   end
 
   def add_handler signal : Signal, callback
-    event = Scheduler.create_signal_event signal, @channel
-    @callbacks[signal] = CallbackEvent.new callback, event
+    @callbacks[signal] = callback
+
+    LibC.signal signal.value, ->(sig) do
+      slice = Slice(UInt8).new pointerof(sig) as Pointer(UInt8), sizeof(typeof(sig))
+      @@write_pipe.not_nil!.write slice
+      nil
+    end
   end
 
   def del_handler signal : Signal
-    if cbe = @callbacks[signal]?
-      cbe.event.free
+    if callback = @callbacks[signal]?
       @callbacks.delete signal
     end
   end
 
   private def handle_signal sig
-    if cbe = @callbacks[sig]?
-      cbe.callback.call sig
+    if callback = @callbacks[sig]?
+      callback.call sig
     else
       raise "missing #{sig} callback"
     end
@@ -67,6 +84,10 @@ class Event::SignalHandler
     STDERR.puts "FATAL ERROR: uncaught signal exception, exiting"
     STDERR.flush
     LibC._exit 1
+  end
+
+  private def spawn_reader
+    spawn { run }
   end
 end
 

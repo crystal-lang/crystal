@@ -1,5 +1,6 @@
 lib LibC
   alias SigT = Int32 ->
+
   fun signal(sig : Int, handler : SigT) : SigT
 end
 
@@ -92,7 +93,16 @@ enum Signal
   end
 
   def reset
-    del_handler Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
+    case self
+    when CHLD
+      # don't ignore by default.  send events to a waitpid service
+      trap do
+        Event::SignalChildHandler.instance.trigger
+        nil
+      end
+    else
+      del_handler Proc(Int32, Void).new(Pointer(Void).new(0_u64), Pointer(Void).null)
+    end
   end
 
   def ignore
@@ -104,3 +114,4 @@ enum Signal
     LibC.signal value, block
   end
 end
+
