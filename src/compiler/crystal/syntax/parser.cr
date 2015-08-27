@@ -3214,6 +3214,11 @@ module Crystal
 
         next_token
         ivar_out
+      when :UNDERSCORE
+        underscore = Underscore.new.at(location)
+        var_out = Out.new(underscore).at(location)
+        next_token
+        var_out
       else
         raise "expecting variable or instance variable after out"
       end

@@ -86,6 +86,16 @@ describe "Type inference: lib" do
       "variable 'x' is already defined, `out` must be used to define a variable, use another name"
   end
 
+  it "allows invoking out with underscore " do
+    assert_type(%(
+      lib Lib
+        fun foo(x : Int32*) : Float64
+      end
+
+      Lib.foo out _
+      )) { float64 }
+  end
+
   it "reports redefinition of fun with different signature" do
     assert_error "
       lib LibC

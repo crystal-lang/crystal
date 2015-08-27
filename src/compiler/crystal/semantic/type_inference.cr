@@ -272,6 +272,8 @@ module Crystal
         if @is_initialize
           @vars[exp.name] = MetaVar.new(exp.name)
         end
+      when Underscore
+        # Nothing to do
       else
         node.raise "Bug: unexpected out exp: #{exp}"
       end
