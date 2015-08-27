@@ -9,10 +9,7 @@ macro redefine_main(name = main)
     {{yield LibCrystalMain.__crystal_main(argc, argv)}}
     0
   rescue ex
-    puts "#{ex} (#{ex.class})"
-    ex.backtrace.each do |frame|
-      puts frame
-    end
+    ex.inspect_with_backtrace STDERR
     1
   ensure
     AtExitHandlers.run

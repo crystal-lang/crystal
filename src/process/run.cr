@@ -121,8 +121,7 @@ class Process
 
         LibC.execvp(cmd, argv)
       rescue ex
-        ex.inspect(STDERR)
-        STDERR.flush
+        ex.inspect_with_backtrace STDERR
       ensure
         LibC._exit 127
       end

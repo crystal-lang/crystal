@@ -98,6 +98,20 @@ class Exception
     end
   end
 
+  def inspect_with_backtrace
+    String.build do |io|
+      inspect_with_backtrace io
+    end
+  end
+
+  def inspect_with_backtrace(io : IO)
+    io << "#{self} (#{self.class})"
+    backtrace.each do |frame|
+      io << frame
+    end
+    io.flush
+  end
+
   def self.unescape_linux_backtrace_frame(frame)
     frame.gsub(/_(\d|A|B|C|D|E|F)(\d|A|B|C|D|E|F)_/) do |match|
       first = match[1].to_i(16) * 16
