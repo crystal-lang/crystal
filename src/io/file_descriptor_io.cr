@@ -94,7 +94,7 @@ class FileDescriptorIO
   end
 
   def tell
-    LibC.lseek(@fd, LibC::SizeT.zero, LibC::SEEK_CUR)
+    LibC.lseek(@fd, LibC::SizeT.zero, SEEK_CUR)
   end
 
   def stat
