@@ -213,8 +213,7 @@ module Crystal
       end
 
       timing("Codegen (clang)") do
-        quoted_object_names = object_names.map { |name| %("#{name}") }.join " "
-        system "#{CC} -o #{output_filename} #{quoted_object_names} #{@link_flags} #{lib_flags}"
+        system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
       end
     end
 
@@ -287,18 +286,14 @@ module Crystal
       end
     end
 
-    private def system(command)
+    private def system(command, args=nil)
       puts command if verbose?
 
-      process = Process.new("/bin/sh", input: nil, output: true, error: true)
-      process.input.print command
-      process.input.close
-      status = process.wait
-
-      unless status.success?
+      success = ::system(command, args)
+      unless success
         print colorize("Error: ").red.bold
-        puts colorize("execution of command failed with code: #{status.exit_code}: `#{command}`").bright
-        exit status.exit_code
+        puts colorize("execution of command failed with code: #{$?.exit_code}: `#{command}`").bright
+        exit $?.exit_code
       end
     end
 

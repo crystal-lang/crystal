@@ -80,6 +80,31 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
+  it "disallows passing arguments to nowhere" do
+    expect_raises ArgumentError, /args.+@/ do
+      Process.run("foo bar", {"baz"}, shell: true)
+    end
+  end
+
+  it "looks up programs in the $PATH with a shell" do
+    proc = Process.run("uname", {"-a"}, shell: true, output: false)
+    proc.exit_code.should eq(0)
+  end
+
+  it "allows passing huge argument lists to a shell" do
+    proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: nil)
+    output = proc.output.read
+    proc.wait
+    output.should eq "a b\n"
+  end
+
+  it "does not run shell code in the argument list" do
+    proc = Process.new("echo", {"`echo hi`"}, shell: true, output: nil)
+    output = proc.output.read
+    proc.wait
+    output.should eq "`echo hi`\n"
+  end
+
   describe "environ" do
     it "clears the environment" do
       value = Process.run("env", clear_env: true) do |proc|
