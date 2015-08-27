@@ -43,8 +43,9 @@ module Base64
   #
   # Generates:
   #
-  #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
-  #     Q3J5c3RhbA==
+  # ```text
+  # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g
+  # ```
   def encode(data)
     slice = data.to_slice
     String.new(encode_size(slice.length, new_lines: true)) do |buf|
@@ -74,7 +75,9 @@ module Base64
   #
   # Generates:
   #
-  #     Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
+  # ```text
+  # Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==
+  # ```
   def strict_encode(data)
     strict_encode data, CHARS_STD, pad: true
   end

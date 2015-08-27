@@ -1,3 +1,4 @@
+# A fixed-length, stack allocated array.
 struct StaticArray(T, N)
   include Enumerable(T)
 

@@ -215,12 +215,37 @@ class Process
   end
 end
 
+# Executes the given command in a subshell.
+# Standard input, output and error are inherited.
+# Returns `true` if the command gives zero exit code, `false` otherwise.
+# The special `$?` variable is set to a `Process::Status` associated with this execution.
+#
+# Example:
+#
+# ```
+# system("echo *")
+# ```
+#
+# Produces:
+#
+# ```text
+# LICENSE Projectfile Readme.md spec src
+# ```
 def system(command : String) : Bool
   status = Process.run(command, shell: true, input: true, output: true, error: true)
   $? = status
   status.success?
 end
 
+# Returns the standard output of executing *command* in a subshell.
+# Standard input, and error are inherited.
+# The special `$?` variable is set to a `Process::Status` associated with this execution.
+#
+# Example:
+#
+# ```
+# `echo *` #=> "LICENSE Projectfile Readme.md spec src\n"
+# ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)
   output = process.output.read
