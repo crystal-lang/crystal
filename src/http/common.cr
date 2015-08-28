@@ -71,6 +71,13 @@ module HTTP
   end
 
   def self.serialize_headers_and_body(io, headers, body)
+    if body
+      headers ||= Headers.new
+      unless headers.has_key?("Content-length")
+        body = body.read unless body.is_a? String
+        headers["Content-length"] = body.size.to_s
+      end
+    end
     if headers
       headers.each do |name, values|
         values.each do |value|
