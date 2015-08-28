@@ -28,7 +28,6 @@
 <% else %>
   <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name %>
 <% end %>
-<span class="type-permalink">[<a href="<%= type.path_to(type) %>" class="permalink" target="_blank">permalink</a>]</span>
 </h1>
 
 <% if type.superclass %>
