@@ -1,27 +1,52 @@
 require "./common"
 
+module HTTP
+  class InvalidResponse < Exception
+    def initialize(message = "Invalid HTTP::Response")
+      super(message)
+    end
+  end
+end
+
 class HTTP::Response
   getter version
   getter status_code
   getter status_message
   getter headers
-  getter! body_io
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
+  def initialize(@status_code, body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1")
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
-    if (body = @body)
+    if @status_code / 100 == 1 || @status_code == 204 || @status_code == 304
+      if body
+        raise ArgumentError.new("status #{status_code} should not have a body")
+      end
+    else
+      body = "" unless body
+    end
+
+    if body.is_a? String
+      @body_io = StringIO.new(body)
       @headers["Content-length"] = body.bytesize.to_s
+    else
+      @body_io = body
     end
   end
 
+  def body_io
+    @body_io || EmptyContent.new
+  end
+  
   def body
-    @body || ""
+    if body_io.pos != 0
+      raise ArgumentError.new("cannot use #body after a read on #body_io")
+    end
+    body_io.read
   end
 
   def body?
-    @body
+    !!@body_io
   end
 
   def keep_alive?
@@ -46,37 +71,27 @@ class HTTP::Response
 
   def to_io(io)
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
-    HTTP.serialize_headers_and_body(io, @headers, @body)
+    HTTP.serialize_headers_and_body(io, @headers, @body_io)
   end
-
+  
   def self.from_io(io)
     line = io.gets
     if line
       http_version, status_code, status_message = line.split(3)
       status_code = status_code.to_i
       status_message = status_message.chomp
+      shouldnt_have_body = (status_code / 100 == 1 || status_code == 204 || status_code == 304)
 
       HTTP.parse_headers_and_body(io) do |headers, body|
-        return new status_code, body.try &.read, headers, status_message, http_version
+        if shouldnt_have_body && body
+          raise InvalidResponse.new("status #{status_code} should not have a body")
+        end
+        
+        return new status_code, body, headers, status_message, http_version
       end
     end
 
-    raise "unexpected end of http response"
-  end
-
-  def self.from_io(io, &block)
-    line = io.gets
-    if line
-      http_version, status_code, status_message = line.split(3)
-      status_code = status_code.to_i
-      status_message = status_message.chomp
-
-      HTTP.parse_headers_and_body(io) do |headers, body|
-        return yield new status_code, nil, headers, status_message, http_version, body
-      end
-    end
-
-    raise "unexpected end of http response"
+    raise InvalidResponse.new("unexpected end of http response")
   end
 
   def self.default_status_message_for(status_code)

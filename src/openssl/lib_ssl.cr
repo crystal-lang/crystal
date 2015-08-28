@@ -36,7 +36,8 @@ lib LibSSL
 
   @[Raises]
   fun ssl_shutdown = SSL_shutdown(handle : SSL) : Int
-
+  
+  fun ssl_get_shutdown = SSL_get_shutdown(handle : SSL) : Int
   fun ssl_free = SSL_free(handle : SSL)
   fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int
   fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int

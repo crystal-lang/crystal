@@ -53,9 +53,13 @@ end
 describe "BufferedIO" do
   it "does gets" do
     io = BufferedIOWrapper.new(StringIO.new("hello\nworld\n"))
+    io.eof?.should be_false
     io.gets.should eq("hello\n")
+    io.eof?.should be_false
     io.gets.should eq("world\n")
+    io.eof?.should be_true
     io.gets.should be_nil
+    io.eof?.should be_true
   end
 
   it "does gets with big line" do

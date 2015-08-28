@@ -32,6 +32,14 @@ class OpenSSL::SSL::Socket
     rescue IO::Error
     end
   end
+  
+  def closed?
+    LibSSL.ssl_get_shutdown(@ssl) != 0
+  end
+  
+  def eof?
+    closed?
+  end
 
   def self.open_client(io, context = Context.default)
     ssl_sock = new(io, :client, context)
