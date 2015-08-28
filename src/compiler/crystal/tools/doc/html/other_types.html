@@ -1,6 +1,8 @@
 <% unless other_types.empty? %>
   <h2><%= title %></h2>
+  <ul class="other-types-list">
   <% other_types.each_with_index do |other_type, i| %>
-    <%= other_type.link_from(type) %><% unless i + 1 == other_types.length %>,<% end %>
+    <li class="other-type"><%= other_type.link_from(type) %></li>
   <% end %>
+  </ul>
 <% end %>
