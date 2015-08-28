@@ -63,7 +63,7 @@ class Event::SignalHandler
       raise "missing #{sig} callback"
     end
   rescue ex
-    ex.inspect STDERR
+    ex.inspect_with_backtrace STDERR
     STDERR.puts "FATAL ERROR: uncaught signal exception, exiting"
     STDERR.flush
     LibC._exit 1
