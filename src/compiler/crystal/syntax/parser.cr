@@ -4144,7 +4144,7 @@ module Crystal
         when :CONST
           location = @token.location
           constant_name = @token.value.to_s
-          doc = @token.doc
+          member_doc = @token.doc
 
           next_token_skip_space
           if @token.type == :"="
@@ -4163,7 +4163,7 @@ module Crystal
           end
 
           arg = Arg.new(constant_name, constant_value).at(location)
-          arg.doc = doc
+          arg.doc = member_doc
 
           members << arg
         when :IDENT
