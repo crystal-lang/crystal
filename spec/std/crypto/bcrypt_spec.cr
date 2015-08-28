@@ -8,7 +8,7 @@ describe "Bcrypt" do
     end
   end
 
-  it "raises if cost is to high" do 
+  it "raises if cost is to high" do
     expect_raises ArgumentError, /Invalid cost size/ do
       Crypto::Bcrypt.digest("secret", 32)
     end
@@ -47,4 +47,12 @@ describe "Bcrypt" do
     hash = Crypto::Bcrypt.digest("secret", 5)
     Crypto::Bcrypt.verify("Secret", hash).should be_false
   end
+
+  it "check the speed" do
+    time = Time.now
+    Crypto::Bcrypt.digest("secret")
+    time = Time.now - time
+    (time.to_f < 0.07).should be_true # at least faster than ruby ;)
+  end
+
 end
