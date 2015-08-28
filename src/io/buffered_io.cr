@@ -152,6 +152,10 @@ module BufferedIO
 
   # Buffered implementation of `IO#read(slice, count)`.
   def read(slice : Slice(UInt8), count)
+    if sync?
+      return unbuffered_read(slice, count).to_i
+    end
+
     total_read = 0
 
     while count > 0
