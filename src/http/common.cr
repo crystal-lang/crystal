@@ -9,6 +9,8 @@ module HTTP
           body = FixedLengthContent.new(io, content_length.to_i)
         elsif headers["Transfer-encoding"]? == "chunked"
           body = ChunkedContent.new(io)
+        elsif !io.eof?
+          body = UntilEofContent.new(io)
         end
 
         yield headers, body

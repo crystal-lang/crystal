@@ -60,6 +60,21 @@ module HTTP
     end
   end
   
+  class UntilEofContent < Content
+    include IO
+
+    def initialize(@io)
+    end
+    
+    def read(slice : Slice(UInt8), count)
+      @io.read(slice, count)
+    end
+    
+    def write(slice : Slice(UInt8), count)
+      raise IO::Error.new "Can't write to UntilEofContent"
+    end
+  end
+  
   class EmptyContent < Content
     include IO
 

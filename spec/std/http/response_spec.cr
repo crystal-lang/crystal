@@ -43,6 +43,16 @@ module HTTP
       response.body.read.should eq("")
     end
 
+    it "parses response with body but without Content-length" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\n\r\nhelloworld"))
+      response.version.should eq("HTTP/1.1")
+      response.status_code.should eq(200)
+      response.status_message.should eq("OK")
+      response.headers.length.should eq(0)
+      response.body?.should be_true
+      response.body.read.should eq("helloworld")
+    end
+
     it "parses response with duplicated headers" do
       response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: a=b\r\nSet-Cookie: c=d\r\n\r\nhelloworld"))
       response.headers.get("Set-Cookie").should eq(["a=b", "c=d"])
