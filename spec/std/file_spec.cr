@@ -354,6 +354,13 @@ describe "File" do
     File.delete filename
   end
   
+  it "clears the read buffer after a seek" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.read(5).should eq("Hello")
+    file.seek(1)
+    file.read(4).should eq("ello")
+  end
+  
   it "returns the current read position with tell" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.tell().should eq(0)
