@@ -110,6 +110,18 @@ module HTTP
       response.body_io.read(3).should eq("hel")
       response.body_io.read.should eq("lo")
     end
+    
+    it "raises when trying to fetch the body after an IO read" do
+      error = nil
+      begin
+        response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhelloworld"))
+        response.body_io.read(3)
+        response.body
+      rescue ex
+        error = ex
+      end
+      error.should be_a(ArgumentError)
+    end
 
     it "builds default not found" do
       response = Response.not_found

@@ -39,6 +39,9 @@ class HTTP::Response
   end
   
   def body
+    if body_io.pos != 0
+      raise ArgumentError.new("cannot use #body after a read on #body_io")
+    end
     body_io.read
   end
 

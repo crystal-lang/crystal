@@ -3,6 +3,7 @@ class StringIO
 
   getter buffer
   getter bytesize
+  getter pos
 
   def initialize(capacity = 64)
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
