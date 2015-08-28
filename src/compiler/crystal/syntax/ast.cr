@@ -1062,7 +1062,6 @@ module Crystal
 
     def accept_children(visitor)
       obj.accept visitor
-      name.accept visitor
     end
 
     def clone_without_location

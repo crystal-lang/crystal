@@ -788,8 +788,15 @@ module Crystal
         when 'e'
           case next_char
           when 's'
-            if next_char == 'c' && next_char == 'u' && next_char == 'e'
-              return check_ident_or_keyword(:rescue, start)
+            case next_char
+            when 'c'
+              if next_char == 'u' && next_char == 'e'
+                return check_ident_or_keyword(:rescue, start)
+              end
+            when 'p'
+              if next_char == 'o' && next_char == 'n' && next_char == 'd' && next_char == 's' && next_char == '_' && next_char == 't' && next_char == 'o' && next_char == '?'
+                return check_ident_or_keyword(:responds_to?, start)
+              end
             end
           when 't'
             if next_char == 'u' && next_char == 'r' && next_char == 'n'

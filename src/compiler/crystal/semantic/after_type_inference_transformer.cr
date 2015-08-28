@@ -616,7 +616,7 @@ module Crystal
     def transform(node : RespondsTo)
       super
       reset_last_status
-      transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name.value)
+      transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name)
     end
 
     def transform_is_a_or_responds_to(node)

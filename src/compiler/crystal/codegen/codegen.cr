@@ -892,7 +892,7 @@ module Crystal
     end
 
     def visit(node : RespondsTo)
-      codegen_type_filter node, &.filter_by_responds_to(node.name.value)
+      codegen_type_filter node, &.filter_by_responds_to(node.name)
     end
 
     def codegen_type_filter(node)
