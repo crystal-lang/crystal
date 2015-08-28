@@ -119,6 +119,11 @@ module BufferedIO
       b
     end
   end
+  
+  def eof?
+    fill_buffer if @in_buffer_rem.empty?
+    @in_buffer_rem.empty?
+  end
 
   private def read_char_with_bytesize
     return super unless @in_buffer_rem.length >= 4
