@@ -103,7 +103,7 @@ module Crypto::Bcrypt
     bf = Blowfish.new
     bf.salted_expand_key(sl, key)
 
-    1.upto(1 << cost.to_i) do |i|
+    1.upto(1_u32 << cost.to_i) do |i|
       bf.expand_key(key)
       bf.expand_key(salt)
     end
