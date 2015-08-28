@@ -84,45 +84,6 @@ class FileDescriptorIO
     end
   end
 
-  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
-  #
-  # ```
-  # file = File.new("testfile")
-  # file.read(3) #=> "abc"
-  # file.seek(1, IO::Seek::Set)
-  # file.read(2) #=> "bc"
-  # file.seek(-1, IO::Seek::Current)
-  # file.read(1) #=> "c"
-  # ```
-  def seek(offset, whence = Seek::Set : Seek)
-    check_open
-
-    flush
-    seek_value = LibC.lseek(@fd, LibC::OffT.cast(offset), whence.to_i)
-    if seek_value == -1
-      raise Errno.new "Unable to seek"
-    end
-
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-  end
-
-  # Returns the current offset (in bytes) of this IO.
-  #
-  # ```
-  # file = File.new("testfile")
-  # file.tell    #=> 0
-  # file.read(3) #=> "abc"
-  # file.tell    #=> 3
-  # ```
-  def tell
-    check_open
-
-    seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
-    raise Errno.new "Unable to tell" if seek_value == -1
-
-    seek_value - @in_buffer_rem.length
-  end
-
   def stat
     if LibC.fstat(@fd, out stat) != 0
       raise Errno.new("Unable to get stat")
