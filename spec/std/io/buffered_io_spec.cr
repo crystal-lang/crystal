@@ -251,6 +251,7 @@ describe "BufferedIO" do
 
     io.write_byte 1_u8
 
+    str.rewind
     str.read_byte.should eq(1_u8)
   end
 end
