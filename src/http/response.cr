@@ -27,19 +27,23 @@ class HTTP::Response
     end
 
     if body.is_a? String
-      @body = StringIO.new(body)
+      @body_io = StringIO.new(body)
       @headers["Content-length"] = body.bytesize.to_s
     else
-      @body = body
+      @body_io = body
     end
   end
 
+  def body_io
+    @body_io || EmptyContent.new
+  end
+  
   def body
-    @body || EmptyContent.new
+    body_io.read
   end
 
   def body?
-    !!@body
+    !!@body_io
   end
 
   def keep_alive?
@@ -64,7 +68,7 @@ class HTTP::Response
 
   def to_io(io)
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
-    HTTP.serialize_headers_and_body(io, @headers, @body)
+    HTTP.serialize_headers_and_body(io, @headers, @body_io)
   end
   
   def self.from_io(io)

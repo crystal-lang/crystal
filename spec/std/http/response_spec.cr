@@ -11,7 +11,7 @@ module HTTP
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("5")
       response.body?.should be_true
-      response.body.read.should eq("hello")
+      response.body.should eq("hello")
     end
 
     it "parses response with body without \\r" do
@@ -22,7 +22,7 @@ module HTTP
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("5")
       response.body?.should be_true
-      response.body.read.should eq("hello")
+      response.body.should eq("hello")
     end
 
     it "parses response with empty body" do
@@ -31,7 +31,7 @@ module HTTP
       response.status_message.should eq("Not Found")
       response.headers["content-length"].should eq("0")
       response.body?.should be_true
-      response.body.read.should eq("")
+      response.body.should eq("")
     end
 
     it "parses response without body" do
@@ -40,7 +40,7 @@ module HTTP
       response.status_message.should eq("Continue")
       response.headers.length.should eq(0)
       response.body?.should be_false
-      response.body.read.should eq("")
+      response.body.should eq("")
     end
 
     it "parses response with body but without Content-length" do
@@ -50,7 +50,7 @@ module HTTP
       response.status_message.should eq("OK")
       response.headers.length.should eq(0)
       response.body?.should be_true
-      response.body.read.should eq("helloworld")
+      response.body.should eq("helloworld")
     end
 
     it "parses response with duplicated headers" do
@@ -60,7 +60,7 @@ module HTTP
 
     it "parses response with chunked body" do
       response = Response.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n"))
-      response.body.read.should eq("abcde0123456789")
+      response.body.should eq("abcde0123456789")
       io.gets.should be_nil
     end
 
@@ -102,6 +102,13 @@ module HTTP
         end
       end
       errors.should eq(4)
+    end
+    
+    it "allows reading the body as an IO" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhelloworld"))
+      response.body?.should be_true
+      response.body_io.read(3).should eq("hel")
+      response.body_io.read.should eq("lo")
     end
 
     it "builds default not found" do
