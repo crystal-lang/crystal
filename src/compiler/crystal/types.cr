@@ -778,7 +778,7 @@ module Crystal
         including_types.each do |including_type|
           add_to_including_types(including_type, all_types)
         end
-        program.union_of(all_types)
+        program.type_merge_union_of(all_types)
       else
         nil
       end
@@ -800,6 +800,10 @@ module Crystal
 
     def raw_including_types
       @including_types
+    end
+
+    def filter_by_responds_to(name)
+      including_types.try &.filter_by_responds_to(name)
     end
 
     def passed_by_value?
