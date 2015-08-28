@@ -353,6 +353,15 @@ describe "File" do
     end
     File.delete filename
   end
+  
+  it "returns the current read position with tell" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.tell().should eq(0)
+    file.read(5).should eq("Hello")
+    file.tell().should eq(5)
+    file.sync = true
+    file.tell().should eq(5)
+  end
 
   it "iterates with each_char" do
     file = File.new("#{__DIR__}/data/test_file.txt")
