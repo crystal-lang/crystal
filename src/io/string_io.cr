@@ -83,6 +83,10 @@ class StringIO
   def empty?
     @bytesize == 0
   end
+  
+  def eof?
+    @pos == @bytesize
+  end
 
   def rewind
     @pos = 0

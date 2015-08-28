@@ -4,14 +4,18 @@ describe "StringIO" do
   it "writes" do
     io = StringIO.new
     io.write Slice.new("hello".cstr, 3)
+    io.eof?.should be_false
     io.read.should eq("hel")
+    io.eof?.should be_true
   end
 
   it "writes big" do
     s = "hi" * 100
     io = StringIO.new
     io.write Slice.new(s.cstr, s.bytesize)
+    io.eof?.should be_false
     io.read.should eq(s)
+    io.eof?.should be_true
   end
 
   it "appends to another buffer" do
@@ -30,9 +34,13 @@ describe "StringIO" do
 
   it "reads each line" do
     io = StringIO.new("foo\r\nbar\r\n")
+    io.eof?.should be_false
     io.gets.should eq("foo\r\n")
+    io.eof?.should be_false
     io.gets.should eq("bar\r\n")
+    io.eof?.should be_true
     io.gets.should eq(nil)
+    io.eof?.should be_true
   end
 
   it "gets with char as delimiter" do
