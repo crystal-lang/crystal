@@ -91,10 +91,11 @@ class FileDescriptorIO
   def seek(amount, whence = SEEK_SET)
     flush
     LibC.lseek(@fd, LibC::SizeT.cast(amount), whence)
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
   end
 
   def tell
-    LibC.lseek(@fd, LibC::SizeT.zero, LibC::SEEK_CUR)
+    LibC.lseek(@fd, LibC::SizeT.zero, SEEK_CUR) - @in_buffer_rem.length
   end
 
   def stat
