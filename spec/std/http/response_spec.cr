@@ -93,15 +93,11 @@ module HTTP
     end
 
     it "raises when creating 1xx, 204 or 304 with body" do
-      errors = 0
       [100, 101, 204, 304].each do |status|
-        begin
+        expect_raises ArgumentError do
           Response.new(status, "hello")
-        rescue ArgumentError
-          errors += 1
         end
       end
-      errors.should eq(4)
     end
     
     it "allows reading the body as an IO" do
@@ -112,15 +108,11 @@ module HTTP
     end
     
     it "raises when trying to fetch the body after an IO read" do
-      error = nil
-      begin
-        response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhelloworld"))
-        response.body_io.read(3)
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhelloworld"))
+      response.body_io.read(3)
+      expect_raises ArgumentError do
         response.body
-      rescue ex
-        error = ex
       end
-      error.should be_a(ArgumentError)
     end
 
     it "builds default not found" do
