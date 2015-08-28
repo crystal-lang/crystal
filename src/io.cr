@@ -105,6 +105,20 @@ end
 # String.new(slice) #=> "abcxyzghi"
 # ```
 module IO
+  # Argument to a `seek` operation.
+  enum Seek
+    # Seeks to an absolute location
+    Set    = 0
+
+    # Seeks to a location relative to the current location
+    # in the stream
+    Current = 1
+
+    # Seeks to a location relative to the end of the stream
+    # (you probably want a negative value for the amount)
+    End    = 2
+  end
+
   # Raised when an IO operation times out.
   #
   # ```

@@ -23,7 +23,7 @@ lib LibC
   alias PtrDiffT = SSizeT
   alias TimeT = SSizeT
   alias PidT = Int
-  alias OffT = SizeT
+  alias OffT = SSizeT
 
   ifdef darwin
     alias ModeT = UInt16

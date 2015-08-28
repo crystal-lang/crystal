@@ -2,10 +2,6 @@
 class FileDescriptorIO
   include BufferedIO
 
-  SEEK_SET = 0
-  SEEK_CUR = 1
-  SEEK_END = 2
-
   private getter! readers
   private getter! writers
 
@@ -88,14 +84,43 @@ class FileDescriptorIO
     end
   end
 
-  def seek(amount, whence = SEEK_SET)
+  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  #
+  # ```
+  # file = File.new("testfile")
+  # file.read(3) #=> "abc"
+  # file.seek(1, IO::Seek::Set)
+  # file.read(2) #=> "bc"
+  # file.seek(-1, IO::Seek::Current)
+  # file.read(1) #=> "c"
+  # ```
+  def seek(offset, whence = Seek::Set : Seek)
+    check_open
+
     flush
-    LibC.lseek(@fd, LibC::SizeT.cast(amount), whence)
+    seek_value = LibC.lseek(@fd, LibC::OffT.cast(offset), whence.to_i)
+    if seek_value == -1
+      raise Errno.new "Unable to seek"
+    end
+
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
   end
 
+  # Returns the current offset (in bytes) of this IO.
+  #
+  # ```
+  # file = File.new("testfile")
+  # file.tell    #=> 0
+  # file.read(3) #=> "abc"
+  # file.tell    #=> 3
+  # ```
   def tell
-    LibC.lseek(@fd, LibC::SizeT.zero, SEEK_CUR) - @in_buffer_rem.length
+    check_open
+
+    seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
+    raise Errno.new "Unable to tell" if seek_value == -1
+
+    seek_value - @in_buffer_rem.length
   end
 
   def stat
@@ -246,9 +271,7 @@ class FileDescriptorIO
   end
 
   private def unbuffered_close
-    if closed?
-      raise IO::Error.new "closed stream"
-    end
+    check_open
 
     if LibC.close(@fd) != 0
       raise Errno.new("Error closing file")
@@ -263,5 +286,11 @@ class FileDescriptorIO
 
   private def unbuffered_flush
     # Nothing
+  end
+
+  private def check_open
+    if closed?
+      raise IO::Error.new "closed stream"
+    end
   end
 end
