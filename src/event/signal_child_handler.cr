@@ -20,9 +20,18 @@ class Event::SignalChildHandler
   end
 
   def trigger
-    while (pid = LibC.waitpid(-1, out exit_code, LibC::WNOHANG)) != -1
-      status = Process::Status.new exit_code
-      send_pending pid, status
+    loop do
+      pid = LibC.waitpid(-1, out exit_code, LibC::WNOHANG)
+      case pid
+      when 0
+        return nil
+      when -1
+        raise Errno.new("waitpid") unless LibC.errno == Errno::ECHILD
+        return nil
+      else
+        status = Process::Status.new exit_code
+        send_pending pid, status
+      end
     end
   end
 
