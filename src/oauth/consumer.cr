@@ -12,7 +12,7 @@ class OAuth::Consumer
     with_new_http_client(nil, nil, {"oauth_callback": oauth_callback}) do |client|
       response = client.post @request_token_uri
       handle_response(response) do
-        RequestToken.from_response(response.body)
+        RequestToken.from_response(response.body.read)
       end
     end
   end
@@ -34,7 +34,7 @@ class OAuth::Consumer
     with_new_http_client(request_token.token, request_token.secret, extra_params) do |client|
       response = client.post @access_token_uri
       handle_response(response) do
-        AccessToken.from_response(response.body)
+        AccessToken.from_response(response.body.read)
       end
     end
   end

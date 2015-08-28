@@ -59,4 +59,22 @@ module HTTP
       raise IO::Error.new "Can't write to ChunkedContent"
     end
   end
+  
+  class EmptyContent < Content
+    include IO
+
+    def initialize
+    end
+    
+    def read(slice : Slice(UInt8), count)
+      0
+    end
+    
+    def write(slice : Slice(UInt8), count)
+      raise IO::Error.new "Can't write to EmptyContent"
+    end
+    
+    def close
+    end
+  end
 end
