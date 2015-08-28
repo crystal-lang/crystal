@@ -658,6 +658,8 @@ module Crystal
             else
               atomic = args ? (Call.new atomic, name, args, named_args: named_args, name_column_number: name_column_number) : (Call.new atomic, name, name_column_number: name_column_number)
             end
+            atomic.at(location)
+            atomic
           end
         when :"[]"
           check_void_value atomic, location
