@@ -1,5 +1,5 @@
 module HTTP
-  def self.parse_headers_and_body(io)
+  def self.parse_headers_and_body(io, mandatory_body = false)
     headers = Headers.new
 
     while line = io.gets
@@ -9,6 +9,8 @@ module HTTP
           body = FixedLengthContent.new(io, content_length.to_i)
         elsif headers["Transfer-encoding"]? == "chunked"
           body = ChunkedContent.new(io)
+        elsif mandatory_body
+          body = UnknownLengthContent.new(io)
         end
 
         yield headers, body

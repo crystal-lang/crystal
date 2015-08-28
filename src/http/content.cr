@@ -25,6 +25,21 @@ module HTTP
       raise IO::Error.new "Can't write to FixedLengthContent"
     end
   end
+  
+  class UnknownLengthContent < Content
+    include IO
+
+    def initialize(@io)
+    end
+
+    def read(slice : Slice(UInt8), count)
+      @io.read(slice, count)
+    end
+
+    def write(slice : Slice(UInt8), count)
+      raise IO::Error.new "Can't write to UnknownLengthContent"
+    end
+  end
 
   class ChunkedContent < Content
     include IO
