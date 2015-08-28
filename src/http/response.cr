@@ -48,20 +48,20 @@ class HTTP::Response
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
     HTTP.serialize_headers_and_body(io, @headers, @body)
   end
+  
+  # :nodoc:
+  def consume_body_io
+    if io = @body_io
+      @body = io.read
+      @body_io = nil
+    end
+  end
 
   def self.from_io(io)
-    line = io.gets
-    if line
-      http_version, status_code, status_message = line.split(3)
-      status_code = status_code.to_i
-      status_message = status_message.chomp
-
-      HTTP.parse_headers_and_body(io) do |headers, body|
-        return new status_code, body.try &.read, headers, status_message, http_version
-      end
+    from_io(io) do |response|
+      response.consume_body_io
+      return response
     end
-
-    raise "unexpected end of http response"
   end
 
   def self.from_io(io, &block)
