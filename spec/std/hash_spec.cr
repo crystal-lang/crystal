@@ -556,6 +556,16 @@ describe "Hash" do
         v == 'b' # this is true for the first kv pair
       end
     end
+
+    it "returns true if the hash contains at least one kv pair and no block is given" do
+      hash = {a: 'b'}
+      result = hash.any?
+      result.should be_true
+
+      hash = {} of Symbol => Char
+      result = hash.any?
+      result.should be_false
+    end
   end
 
   describe "inject" do

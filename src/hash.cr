@@ -427,6 +427,10 @@ class Hash(K, V)
     false
   end
 
+  def any?
+    !empty?
+  end
+
   def inject(memo)
     each do |k, v|
       memo = yield(memo, k, v)
