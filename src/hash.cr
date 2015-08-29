@@ -413,6 +413,31 @@ class Hash(K, V)
     hash
   end
 
+  def all?
+    each do |k, v|
+      return false unless yield(k, v)
+    end
+    true
+  end
+
+  def any?
+    each do |k, v|
+      return true if yield(k, v)
+    end
+    false
+  end
+
+  def any?
+    !empty?
+  end
+
+  def inject(memo)
+    each do |k, v|
+      memo = yield(memo, k, v)
+    end
+    memo
+  end
+
   protected def find_entry(key)
     index = bucket_index key
     entry = @buckets[index]
