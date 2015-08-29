@@ -748,7 +748,7 @@ module Crystal
       elsif @token.type == :SPACE
         next_token
         name = parse_responds_to_name
-        next_token_skip_space_or_newline
+        next_token_skip_space
       end
 
       RespondsTo.new(atomic, name)

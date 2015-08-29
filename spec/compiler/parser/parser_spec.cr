@@ -742,6 +742,7 @@ describe "Parser" do
   it_parses "foo.is_a? Const", IsA.new("foo".call, "Const".path)
   it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo")
   it_parses "foo.responds_to? :foo", RespondsTo.new("foo".call, "foo")
+  it_parses "if foo.responds_to? :foo\nx = 1\nend", If.new(RespondsTo.new("foo".call, "foo"), Assign.new("x".var, 1.int32))
 
   it_parses "is_a?(Const)", IsA.new("self".var, "Const".path)
   it_parses "responds_to?(:foo)", RespondsTo.new("self".var, "foo")
