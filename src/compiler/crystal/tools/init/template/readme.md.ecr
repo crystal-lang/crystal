@@ -1,28 +1,34 @@
 # <%= config.name %>
 
-TODO: Write a description here for library
+TODO: Write a description here
 
 ## Installation
 
-Add it to `Projectfile`
+<% if config.skeleton_type == "lib" %>
+Add this line to your application's `Projectfile`:
 
 ```crystal
 deps do
   github "[your-github-name]/<%= config.name %>"
 end
 ```
+<% else %>
+TODO: Write installation instructions here
+<% end %>
 
 ## Usage
 
+<% if config.skeleton_type == "lib" %>
 ```crystal
 require "<%= config.name %>"
 ```
+<% end %>
 
-TODO: Write usage here for library
+TODO: Write usage instructions here
 
 ## Development
 
-TODO: Write instructions for development
+TODO: Write development instructions here
 
 ## Contributing
 
