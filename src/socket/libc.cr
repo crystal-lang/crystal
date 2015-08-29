@@ -85,11 +85,16 @@ lib LibC
 
     SOL_SOCKET = 0xffff
     SO_REUSEADDR = 0x0004
+    SO_KEEPALIVE = 0x0008
     SO_LINGER = 0x0080
     SO_SNDBUF = 0x1001
     SO_RCVBUF = 0x1002
     TCP_NODELAY = 0x01
+    TCP_KEEPIDLE = 0x10 # aka TCP_KEEPALIVE
+    TCP_KEEPINTVL = 0x101
+    TCP_KEEPCNT = 0x102
   else
+
     struct SockAddrIn
       family : UInt16
       port : Int16
@@ -126,8 +131,12 @@ lib LibC
     SO_REUSEADDR = 2
     SO_SNDBUF = 7
     SO_RCVBUF = 8
+    SO_KEEPALIVE = 9
     SO_LINGER = 13
-    TCP_NODELAY = 0x01
+    TCP_NODELAY = 1
+    TCP_KEEPIDLE = 4 # aka TCP_KEEPALIVE
+    TCP_KEEPINTVL = 5
+    TCP_KEEPCNT = 6
   end
 
   struct HostEnt
@@ -136,6 +145,17 @@ lib LibC
     addrtype : Int32
     length : Int32
     addrlist : Char**
+  end
+
+  enum Shutdown
+    READ = 0
+    WRITE = 1
+    RDWR = 2
+  end
+
+  struct Linger
+    on : Int
+    secs : Int
   end
 
   fun socket(domain : Int, t : Int, protocol : Int) : Int
@@ -152,6 +172,7 @@ lib LibC
   fun getpeername(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
   fun getsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT*) : Int
   fun setsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT) : Int
+  fun shutdown(sock : Int, how : Shutdown) : Int
 
   SOCK_STREAM = 1
   SOCK_DGRAM = 2

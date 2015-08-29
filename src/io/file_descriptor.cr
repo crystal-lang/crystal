@@ -249,8 +249,14 @@ class IO::FileDescriptor
   private def unbuffered_close
     return if @closed
 
+    err = nil
     if LibC.close(@fd) != 0
-      raise Errno.new("Error closing file")
+      case LibC.errno
+      when Errno::EINTR, Errno::EINPROGRESS
+        # ignore 
+      else
+        err = Errno.new("Error closing file")
+      end
     end
 
     @closed = true
@@ -263,6 +269,8 @@ class IO::FileDescriptor
     @readers.clear
     Scheduler.enqueue @writers
     @writers.clear
+
+    raise err if err
   end
 
   private def unbuffered_flush
