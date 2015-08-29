@@ -534,7 +534,7 @@ describe "Hash" do
   describe "any?" do
     it "passes key and value into block" do
       hash = {a: 'b'}
-      hash.all? do |k, v|
+      hash.any? do |k, v|
         k.should eq(:a)
         v.should eq('b')
       end
