@@ -256,4 +256,23 @@ describe "Restrictions" do
       ),
       "no overload matches"
   end
+
+  it "allows passing recursive type to free var (#1076)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      alias NestedParams = Nil | Foo(NestedParams)
+
+      class Bar(X)
+      end
+
+      def bar(other : Bar(Y))
+        'a'
+      end
+
+      h1 = Bar(NestedParams).new
+      bar(h1)
+      )) { char }
+  end
 end
