@@ -1,8 +1,13 @@
 language: ruby
+sudo: false
+cache:
+  directories:
+    - vendor/bundle
+    - $HOME/.npm
 before_install: |
   npm install -g gitbook-cli
-  bundle install
-script: test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "gh-pages" && ./travis-build.sh
+  bundle install --deployment --jobs=3 --retry=3
+script: test $TRAVIS_PULL_REQUEST != "false" || test $TRAVIS_BRANCH != "gh-pages" || ./travis-build.sh
 env:
   global:
     secure: R5ChjypUD0E9jHzdpSqKqnEeg80VBBzXoK34AUWjk7UOsTx3XBWuIm/Q9Ms4wnWoN2GLGOMp18KfAwenYCsOOkeFO/ugVgG5hGApfEpFdyv0KSyrSFc4Sf5k+c203+aDOlmuUfsCJ1X/bFFA0pz/KyeX+YxzTso20BqqNZCRD+o=
