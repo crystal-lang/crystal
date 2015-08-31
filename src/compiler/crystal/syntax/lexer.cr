@@ -1775,6 +1775,16 @@ module Crystal
         return @token
       end
 
+      if current_char == '\\' && peek_next_char == '%'
+        beginning_of_line = false
+        next_char
+        next_char
+        @token.type = :MACRO_LITERAL
+        @token.value = "%"
+        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        return @token
+      end
+
       if current_char == '{'
         case next_char
         when '{'
@@ -1812,7 +1822,6 @@ module Crystal
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
         return @token
       end
-
 
       if current_char == '%' && ident_start?(peek_next_char)
         char = next_char
@@ -1853,7 +1862,7 @@ module Crystal
 
       char = current_char
 
-      until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (whitespace && !delimiter_state && char == 'e')
+      until char == '{' || char == '\0' || (char == '\\' && ((peek = peek_next_char) == '{' || peek == '%')) || (whitespace && !delimiter_state && char == 'e')
         case char
         when '\n'
           @line_number += 1
