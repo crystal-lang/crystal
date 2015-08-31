@@ -1,12 +1,16 @@
 require "fiber"
 require "./*"
 
-def sleep(seconds : Int | Float)
+def sleep(seconds : Number)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
   end
 
   Scheduler.sleep(seconds)
+end
+
+def sleep(time : TimeSpan)
+  sleep(time.total_seconds)
 end
 
 macro spawn
