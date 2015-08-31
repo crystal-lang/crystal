@@ -1,8 +1,8 @@
-# The Macros module is a ficticious module used to document macros
+# The Macros module is a fictitious module used to document macros
 # and macro methods.
 #
 # You can invoke a **fixed subset** of methods on AST nodes at compile-time. These methods
-# are documented on the classes in this module. Additionaly, methods of the
+# are documented on the classes in this module. Additionally, methods of the
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Macros
   # Outputs the current macro's buffer to the standard output. Useful for debugging
@@ -541,7 +541,7 @@ module Macros
     end
   end
 
-  # A ficticious node representing a variable or instance
+  # A fictitious node representing a variable or instance
   # variable, together with type information.
   class MetaVar < ASTNode
     # Returns the name of this variable.
@@ -900,7 +900,7 @@ module Macros
   # class MagicConstant < ASTNode
   # end
 
-  # A ficticious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a MacroId
