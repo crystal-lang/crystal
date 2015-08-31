@@ -5,10 +5,6 @@ class FileDescriptorIO
   private getter! readers
   private getter! writers
 
-  # Seconds to wait when reading before raising IO::Timeout
-  property read_timeout
-  # Seconds to wait when writing before raising IO::Timeout
-  property write_timeout
   # :nodoc:
   property read_timed_out, write_timed_out # only used in event callbacks
 
@@ -34,6 +30,36 @@ class FileDescriptorIO
         @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
       end
     end
+  end
+
+  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  def read_timeout=(read_timeout : Number)
+    @read_timeout = read_timeout.to_f
+  end
+
+  # ditto
+  def read_timeout=(read_timeout : TimeSpan)
+    self.read_timeout = read_timeout.total_seconds
+  end
+
+  # Sets no timeout on read operations, so an `IO::Timeout` will never be raised.
+  def read_timeout=(read_timeout : Nil)
+    @read_timeout = nil
+  end
+
+  # Set the number of seconds to wait when writing before raising an `IO::Timeout`.
+  def write_timeout=(write_timeout : Number)
+    @write_timeout = write_timeout.to_f
+  end
+
+  # ditto
+  def write_timeout=(write_timeout : TimeSpan)
+    self.write_timeout = write_timeout.total_seconds
+  end
+
+  # Sets no timeout on write operations, so an `IO::Timeout` will never be raised.
+  def write_timeout=(write_timeout : Nil)
+    @write_timeout = nil
   end
 
   def blocking
