@@ -238,21 +238,26 @@ h1.type-name {
 }
 
 .methods-inherited {
+  padding-right: 10%;
+  line-height: 1.5em;
+}
+
+.methods-inherited h3 {
   margin-bottom: 4px;
 }
 
-.method-inherited {
+.methods-inherited a {
   display: inline-block;
   text-decoration: none;
   color: #47266E;
 }
 
-.method-inherited a:hover {
+.methods-inherited a:hover {
   text-decoration: underline;
   color: #6C518B;
 }
 
-.method-inherited.tooltip span {
+.methods-inherited .tooltip span {
   background: #D5CAE3;
   color: #47266E;
   padding: 4px 8px;
