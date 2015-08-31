@@ -242,6 +242,7 @@ h1.type-name {
 }
 
 .method-inherited {
+  display: inline-block;
   text-decoration: none;
   color: #47266E;
 }
@@ -249,6 +250,14 @@ h1.type-name {
 .method-inherited a:hover {
   text-decoration: underline;
   color: #6C518B;
+}
+
+.method-inherited.tooltip span {
+  background: #D5CAE3;
+  color: #47266E;
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin: -4px -8px;
 }
 
 pre {
@@ -264,6 +273,18 @@ pre {
 
 code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+}
+
+.tooltip span {
+  position: absolute;
+  opacity: 0;
+  display: none;
+  pointer-events: none;
+}
+
+.tooltip:hover span {
+  display: inline-block;
+  opacity: 1;
 }
 
 .c {

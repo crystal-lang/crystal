@@ -1,7 +1,9 @@
-<% methods = ancestor.instance_methods %>
-<% unless methods.empty? %>
+<% method_groups = ancestor.instance_methods.group_by { |method| method.name } %>
+<% unless method_groups.empty? %>
   <h3 class="methods-inherited">Methods inherited from <%= ancestor.kind %> <code><a href="<%= type.path_to(ancestor) %>"><%= ancestor.full_name %></a></code></h3>
-  <% methods.each_with_index do |method, i| %>
-    <code><a href="<%= type.path_to(ancestor) %><%= method.anchor %>" class="method-inherited" title="<%= HTML.escape(method.name + method.args_to_s) %>"><%= method.name %></a></code><%= ", " if i != methods.length - 1 %>
+  <% method_groups.each_with_index do |method_name, methods, i| %>
+    <a href="<%= type.path_to(ancestor) %><%= methods[0].anchor %>" class="method-inherited tooltip">
+      <span><%= methods.map { |method| method.name + method.args_to_s } .join("<br/>") %></span>
+    <%= method_name %></a><%= ", " if i != method_groups.length - 1 %>
   <% end %>
 <% end %>
