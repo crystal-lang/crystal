@@ -35,22 +35,13 @@ class HTTP::WebSocket
   end
 
   def send(data)
-    hdr1 = 0x81_u8
-    hdr2 = data.length.to_u8
-
-    @io.write_byte(hdr1)
-    @io.write_byte(hdr2)
-
+    write_header(data.length)
     @io.print data
     @io.flush
   end
 
   def send_masked(data)
-    hdr1 = 0x81_u8
-    hdr2 = data.length.to_u8 | MASK_BIT
-
-    @io.write_byte(hdr1)
-    @io.write_byte(hdr2)
+    write_header(data.length, true)
 
     mask_array = StaticArray(UInt8, 4).new { rand(256).to_u8 }
     @io.write mask_array.to_slice, mask_array.length
@@ -60,6 +51,21 @@ class HTTP::WebSocket
       @io.write_byte (mask ^ data.byte_at(index).to_u8).to_u8
     end
     @io.flush
+  end
+  
+  private def write_header(length, masked = false)
+    @io.write_byte(0x81_u8)
+  
+    mask = masked ? MASK_BIT : 0
+    if length <= 125
+      @io.write_byte(length.to_u8 | mask)
+    elsif length <= UInt16::MAX
+      @io.write_byte(126_u8 | mask)
+      1.downto(0) { |i| @io.write_byte((length >> i * 8).to_u8) }
+    else
+      @io.write_byte(127_u8 | mask)
+      3.downto(0) { |i| @io.write_byte((length >> i * 8).to_u8) }
+    end
   end
 
   def receive(buffer : Slice(UInt8))
