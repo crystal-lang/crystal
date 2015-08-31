@@ -1,14 +1,29 @@
+# A CSV lexer lets you consume a CSV token by token. You can use this to efficiently
+# parse a CSV without the need to allocate intermediate arrays.
+#
+# ```
+# lexer = CSV::Lexer.new "one,two\nthree"
+# lexer.next_token #=> CSV::Token(@kind=Cell, @value="one")
+# lexer.next_token #=> CSV::Token(@kind=Cell, @value="two")
+# lexer.next_token #=> CSV::Token(@kind=Newline, @value="two")
+# lexer.next_token #=> CSV::Token(@kind=Cell, @value="three")
+# lexer.next_token #=> CSV::Token(@kind=Eof, @value="three")
+# ```
 abstract class CSV::Lexer
+  # Creates a CSV lexer from a string.
   def self.new(string : String)
     StringBased.new(string)
   end
 
+  # Creates a CSV lexer from an IO.
   def self.new(io : IO)
     IOBased.new(io)
   end
 
+  # Returns the current `Token`.
   getter token
 
+  # :nodoc:
   def initialize
     @token = Token.new
     @buffer = StringIO.new
@@ -21,19 +36,23 @@ abstract class CSV::Lexer
   private abstract def next_char_no_column_increment
   private abstract def current_char
 
+  # Rewinds this lexer to its beginning.
+  abstract def rewind
+
+  # Returns the next `Token` in this CSV.
   def next_token
     if @last_empty_column
       @last_empty_column = false
-      @token.kind = :cell
+      @token.kind = Token::Kind::Cell
       @token.value = ""
       return @token
     end
 
     case current_char
     when '\0'
-      @token.kind = :eof
+      @token.kind = Token::Kind::Eof
     when ','
-      @token.kind = :cell
+      @token.kind = Token::Kind::Cell
       @token.value = ""
       check_last_empty_column
     when '\r'
@@ -44,20 +63,20 @@ abstract class CSV::Lexer
         when '\n'
           case next_char
           when '\0'
-            :eof
+            Token::Kind::Eof
           else
-            :newline
+            Token::Kind::Newline
           end
         else
-          :newline
+          Token::Kind::Newline
         end
     when '\n'
-      @token.kind = next_char == '\0' ? :eof : :newline
+      @token.kind = next_char == '\0' ? Token::Kind::Eof : Token::Kind::Newline
     when '"'
-      @token.kind = :cell
+      @token.kind = Token::Kind::Cell
       @token.value = consume_quoted_cell
     else
-      @token.kind = :cell
+      @token.kind = Token::Kind::Cell
       @token.value = consume_unquoted_cell
     end
     @token
