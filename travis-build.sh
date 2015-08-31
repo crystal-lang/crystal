@@ -1,6 +1,6 @@
 rev=$(git rev-parse --short HEAD)
 
-rake docs docs:tidy
+bundle exec rake docs docs:tidy
 
 git config --global user.email "bcardiff@manas.com.ar"
 git config --global user.name "Travis on behalf Brian J. Cardiff"
@@ -10,5 +10,5 @@ git fetch upstream
 git reset upstream/gh-pages
 
 git add -A .
-git commit -m "rebuild docs at ${rev}"
+git commit -m "rebuild docs at ${rev} [ci skip]" docs/
 git push -q upstream HEAD:gh-pages
