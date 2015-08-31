@@ -104,6 +104,18 @@ class Crystal::Doc::Type
     end
   end
 
+  def ancestors
+    @type.ancestors.map do |ancestor|
+      case ancestor
+      when InheritedGenericClass
+        ancestor = ancestor.extended_class
+      when IncludedGenericModule
+        ancestor = ancestor.module
+      end
+      @generator.type(ancestor)
+    end
+  end
+
   def locations
     @generator.relative_locations(@type)
   end

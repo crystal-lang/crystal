@@ -237,6 +237,20 @@ h1.type-name {
   color: #624288;
 }
 
+.methods-inherited {
+  margin-bottom: 4px;
+}
+
+.method-inherited {
+  text-decoration: none;
+  color: #47266E;
+}
+
+.method-inherited a:hover {
+  text-decoration: underline;
+  color: #6C518B;
+}
+
 pre {
   padding: 10px 20px;
   margin-top: 4px;
