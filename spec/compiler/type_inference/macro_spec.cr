@@ -422,4 +422,32 @@ describe "Type inference: macro" do
       ),
       "can't declare macro dynamically"
   end
+
+  it "allows declaring class with macro if" do
+    assert_type(%(
+      {% if true %}
+        class Foo; end
+      {% end %}
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "allows declaring class with macro for" do
+    assert_type(%(
+      {% for i in 0..0 %}
+        class Foo; end
+      {% end %}
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "allows declaring class with macro expression" do
+    assert_type(%(
+      {{ `echo "class Foo; end"` }}
+
+      Foo.new
+      )) { types["Foo"] }
+  end
 end
