@@ -888,13 +888,13 @@ module Crystal
 
     def end_visit(node : Fun)
       if inputs = node.inputs
-        types = inputs.map &.type.instance_type
+        types = inputs.map &.type.instance_type.virtual_type
       else
         types = [] of Type
       end
 
       if output = node.output
-        types << output.type.instance_type
+        types << output.type.instance_type.virtual_type
       else
         types << mod.void
       end

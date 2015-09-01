@@ -631,4 +631,44 @@ describe "Code gen: fun" do
       bar.call(B.new)
       )).to_i.should eq(2)
   end
+
+  it "uses alias of proc with virtual type (#1347)" do
+    run(%(
+      require "prelude"
+
+      class A
+        def foo
+          1
+        end
+      end
+
+      class B < A
+        def foo
+          2
+        end
+      end
+
+      module Foo
+        alias Callback = A ->
+        @@callbacks = Hash(String, Callback).new
+        def self.add(name, &block : Callback)
+          @@callbacks[name] = block
+        end
+
+        def self.call
+          @@callbacks.each_value(&.call(B.new))
+        end
+      end
+
+      $x = 0
+
+      Foo.add("foo") do |a|
+        $x = a.foo
+      end
+
+      Foo.call
+
+      $x
+      )).to_i.should eq(2)
+  end
 end
