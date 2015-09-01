@@ -1002,4 +1002,24 @@ describe "Code gen: exception" do
       b
       )).to_i.should eq(1)
   end
+
+  it "executes ensure of calling method when doing break inside block (#1233)" do
+    run(%(
+      require "prelude"
+
+      $a = 0
+
+      def foo
+        yield
+      ensure
+        $a = 123
+      end
+
+      foo do
+        break
+      end
+
+      $a
+      )).to_i.should eq(123)
+  end
 end

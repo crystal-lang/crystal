@@ -2489,7 +2489,7 @@ module Crystal
 
     def end_visit(node : Break)
       if target_block = block
-        node.target = target_block
+        node.target = target_block.call.not_nil!
 
         target_block.break.bind_to(node.exp || mod.nil_var)
 

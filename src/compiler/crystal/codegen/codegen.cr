@@ -608,7 +608,7 @@ module Crystal
 
       if break_phi = context.break_phi
         old_last = @last
-        execute_ensures_until(node.target as Block)
+        execute_ensures_until(node.target as Call)
         @last = old_last
 
         break_phi.add @last, node_type

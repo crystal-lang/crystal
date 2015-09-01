@@ -519,6 +519,7 @@ module Crystal
     property :after_vars
     property :context
     property :fun_literal
+    property :call
 
     @visited = false
 
