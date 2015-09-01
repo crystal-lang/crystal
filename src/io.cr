@@ -71,8 +71,8 @@ end
 # The only requirement for a type including the IO module is to define
 # these two methods:
 #
-# * `read(slice : Slice(UInt8), count)`: read at most *count* bytes into *slice* and return the number of bytes read
-# * `write(slice : Slice(UInt8), count)`: write at most *count* bytes from *slice* and return the number of bytes written
+# * `read(slice : Slice(UInt8))`: read at most *slice.length* bytes into *slice* and return the number of bytes read
+# * `write(slice : Slice(UInt8))`: write at most *slice.length* bytes from *slice* and return the number of bytes written
 #
 # For example, this is a simple IO on top of a `Slice(UInt8)`:
 #
@@ -83,15 +83,15 @@ end
 #   def initialize(@slice : Slice(UInt8))
 #   end
 #
-#   def read(slice : Slice(UInt8), count)
-#     count.times { |i| slice[i] = @slice[i] }
-#     @slice += count
+#   def read(slice : Slice(UInt8))
+#     slice.length.times { |i| slice[i] = @slice[i] }
+#     @slice += slice.length
 #     count
 #   end
 #
-#   def write(slice : Slice(UInt8), count)
-#     count.times { |i| @slice[i] = slice[i] }
-#     @slice += count
+#   def write(slice : Slice(UInt8))
+#     slice.length.times { |i| @slice[i] = slice[i] }
+#     @slice += slice.length
 #     count
 #   end
 # end
@@ -197,38 +197,17 @@ module IO
     end
   end
 
-  # Reads at most *count* bytes from this IO into *slice*. Returns the number of bytes read.
+  # Reads at most *slice.length* bytes from this IO into *slice*. Returns the number of bytes read.
   #
   # ```
   # io = StringIO.new "hello"
-  # slice = Slice(UInt8).new(5)
-  # io.read(slice, 4) #=> 4
-  # slice #=> [104, 101, 108, 108, 0]
-  # io.read(slice, 4) #=> 1
-  # slice #=> [111, 101, 108, 108, 0]
+  # slice = Slice(UInt8).new(4)
+  # io.read(slice) #=> 4
+  # slice #=> [104, 101, 108, 108]
+  # io.read(slice) #=> 1
+  # slice #=> [111, 101, 108, 108]
   # ```
-  abstract def read(slice : Slice(UInt8), count)
-
-  # Writes at most *count* bytes from *slice* into this IO. Returns the number of bytes written.
-  #
-  # ```
-  # io = StringIO.new
-  # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
-  # io.write(slice, 3) #=> 3
-  # io.to_s #=> "abc"
-  abstract def write(slice : Slice(UInt8), count)
-
-  # Reads at most `slice.length` bytes from the IO into *slice*. Returns the number of bytes read.
-  #
-  # ```
-  # io = StringIO.new "hello"
-  # slice = Slice(UInt8).new(5)
-  # io.read(slice) #=> 5
-  # slice #=> [104, 101, 108, 108, 111]
-  # ```
-  def read(slice : Slice(UInt8))
-    read slice, slice.length
-  end
+  abstract def read(slice : Slice(UInt8))
 
   # Writes at most *slice.length* bytes from *slice* into this IO. Returns the number of bytes written.
   #
@@ -237,10 +216,7 @@ module IO
   # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
   # io.write(slice) #=> 4
   # io.to_s #=> "abcd"
-  # ```
-  def write(slice : Slice(UInt8))
-    write slice, slice.length
-  end
+  abstract def write(slice : Slice(UInt8))
 
   # Flushes buffered data, if any.
   #
@@ -465,10 +441,9 @@ module IO
   # ```
   def read_fully(slice : Slice(UInt8))
     count = slice.length
-    while count > 0
-      read_bytes = read(slice, Math.min(count, slice.length))
+    while slice.length > 0
+      read_bytes = read slice
       raise EOFError.new if read_bytes == 0
-      count -= read_bytes
       slice += read_bytes
     end
     count
@@ -485,7 +460,7 @@ module IO
     buffer :: UInt8[2048]
     String.build do |str|
       while (read_bytes = read(buffer.to_slice)) > 0
-        str.write(buffer.to_slice, read_bytes)
+        str.write buffer.to_slice[0, read_bytes]
       end
     end
   end
@@ -505,11 +480,11 @@ module IO
     buffer :: UInt8[2048]
     String.build(count) do |str|
       while count > 0
-        read_count = read(buffer.to_slice, Math.min(count, buffer.count))
-        break if read_count == 0
+        read_length = read buffer.to_slice[0, Math.min(count, buffer.length)]
+        break if read_length == 0
 
-        str.write(buffer.to_slice, read_count)
-        count -= read_count
+        str.write buffer.to_slice[0, read_length]
+        count -= read_length
       end
     end
   end
@@ -789,7 +764,7 @@ module IO
     buffer :: UInt8[1024]
     count = 0
     while (len = src.read(buffer.to_slice).to_i32) > 0
-      dst.write(buffer.to_slice, len)
+      dst.write buffer.to_slice[0, len]
       count += len
     end
     len < 0 ? len : count

@@ -41,25 +41,22 @@ class StringIO
     io
   end
 
-  # :nodoc:
-  def read(slice : Slice(UInt8), count)
-    check_open
-
-    return 0 if @pos >= @bytesize
-
+  def read(slice : Slice(UInt8))
+    count = slice.length
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
     @pos += count
     count
   end
 
-  # :nodoc:
-  def write(slice : Slice(UInt8), count)
+  def write(slice : Slice(UInt8))
     check_open
+
+    count = slice.length
 
     return count if count < 0
 
-    new_bytesize = @pos + count
+    new_bytesize = bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
     end

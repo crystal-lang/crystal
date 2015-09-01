@@ -44,7 +44,7 @@ class HTTP::WebSocket
     write_header(data.length, true)
 
     mask_array = StaticArray(UInt8, 4).new { rand(256).to_u8 }
-    @io.write mask_array.to_slice, mask_array.length
+    @io.write mask_array.to_slice
 
     data.length.times do |index|
       mask = mask_array[index % 4]
@@ -52,10 +52,10 @@ class HTTP::WebSocket
     end
     @io.flush
   end
-  
+
   private def write_header(length, masked = false)
     @io.write_byte(0x81_u8)
-  
+
     mask = masked ? MASK_BIT : 0
     if length <= 125
       @io.write_byte(length.to_u8 | mask)
@@ -102,7 +102,7 @@ class HTTP::WebSocket
       type = @type
     end
 
-    read = @io.read(buffer, Math.min(@remaining, buffer.length))
+    read = @io.read buffer[0, Math.min(@remaining, buffer.length)]
     @remaining -= read
 
     # Unmask payload, if needed

@@ -22,14 +22,16 @@ class SimpleStringIO
     io
   end
 
-  def read(slice : Slice(UInt8), count)
+  def read(slice : Slice(UInt8))
+    count = slice.length
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
     @pos += count
     count
   end
 
-  def write(slice : Slice(UInt8), count)
+  def write(slice : Slice(UInt8))
+    count = slice.length
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
@@ -298,6 +300,17 @@ describe IO do
         str.read_line
       end
     end
+
+    it "does read_fully" do
+      str = SimpleStringIO.new("hello")
+      slice = Slice(UInt8).new(4)
+      str.read_fully(slice)
+      String.new(slice).should eq("hell")
+
+      expect_raises(IO::EOFError) do
+        str.read_fully(slice)
+      end
+    end
   end
 
   describe "write operations" do
@@ -361,35 +374,6 @@ describe IO do
       io = SimpleStringIO.new
       io.printf "Hello %d", [123]
       io.read.should eq("Hello 123")
-    end
-  end
-
-  describe "iterators" do
-    it "does each_line" do
-      io = SimpleStringIO.new "foo\nbar\nbaz"
-      iter = io.each_line
-      iter.next.should eq("foo\n")
-      iter.next.should eq("bar\n")
-      iter.next.should eq("baz")
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does each_char" do
-      io = SimpleStringIO.new "すごい"
-      iter = io.each_char
-      iter.next.should eq('す')
-      iter.next.should eq('ご')
-      iter.next.should eq('い')
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does each_byte" do
-      io = SimpleStringIO.new "す"
-      iter = io.each_byte
-      iter.next.should eq(227)
-      iter.next.should eq(129)
-      iter.next.should eq(153)
-      iter.next.should be_a(Iterator::Stop)
     end
   end
 end

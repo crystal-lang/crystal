@@ -14,14 +14,15 @@ module HTTP
       @remaining = length
     end
 
-    def read(slice : Slice(UInt8), count)
+    def read(slice : Slice(UInt8))
+      count = slice.length
       count = Math.min(count, @remaining)
-      bytes_read = @io.read(slice, count)
+      bytes_read = @io.read slice[0, count]
       @remaining -= bytes_read
       bytes_read
     end
 
-    def write(slice : Slice(UInt8), count)
+    def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to FixedLengthContent"
     end
   end
@@ -33,11 +34,12 @@ module HTTP
       @chunk_remaining = io.gets.not_nil!.to_i(16)
     end
 
-    def read(slice : Slice(UInt8), count)
+    def read(slice : Slice(UInt8))
+      count = slice.length
       total_read = 0
       while @chunk_remaining > 0 && count > 0
         to_read = Math.min(count, @chunk_remaining)
-        bytes_read = @io.read(slice, to_read)
+        bytes_read = @io.read slice[0, to_read]
         slice += bytes_read
         total_read += bytes_read
         count -= bytes_read
@@ -55,7 +57,7 @@ module HTTP
       total_read
     end
 
-    def write(slice : Slice(UInt8), count)
+    def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to ChunkedContent"
     end
   end

@@ -165,7 +165,8 @@ class FileDescriptorIO
     self
   end
 
-  private def unbuffered_read(slice : Slice(UInt8), count)
+  private def unbuffered_read(slice : Slice(UInt8))
+    count = slice.length
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_read != -1
@@ -182,7 +183,8 @@ class FileDescriptorIO
     add_read_event unless readers.empty?
   end
 
-  private def unbuffered_write(slice : Slice(UInt8), count)
+  private def unbuffered_write(slice : Slice(UInt8))
+    count = slice.length
     total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))

@@ -178,7 +178,7 @@ struct Float64
   def to_s(io : IO)
     chars = StaticArray(UInt8, 22).new(0_u8)
     LibC.snprintf(chars, LibC::SizeT.cast(22), "%g", self)
-    io.write(chars.to_slice, LibC.strlen(chars.buffer))
+    io.write chars.to_slice[0, LibC.strlen(chars.buffer).to_i]
   end
 
   def hash
