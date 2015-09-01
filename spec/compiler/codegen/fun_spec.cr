@@ -608,4 +608,27 @@ describe "Code gen: fun" do
       foo
       )).to_i.should eq(123)
   end
+
+  it "gets proc pointer using virtual type (#1337)" do
+    run(%(
+      class A
+        def foo
+          1
+        end
+      end
+
+      class B < A
+        def foo
+          2
+        end
+      end
+
+      def foo(a : A)
+        a.foo
+      end
+
+      bar = ->foo(A)
+      bar.call(B.new)
+      )).to_i.should eq(2)
+  end
 end

@@ -870,7 +870,7 @@ module Crystal
           arg.accept self
           arg_type = arg.type.instance_type
           TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
-          Var.new("arg#{i}", arg_type) as ASTNode
+          Var.new("arg#{i}", arg_type.virtual_type) as ASTNode
         end
       end
 
