@@ -34,6 +34,7 @@ GEM
     pygments.rb (0.5.1)
       posix-spawn (~> 0.3.6)
       yajl-ruby (~> 1.1.0)
+    rake (10.4.2)
     rdiscount (1.6.8)
     redcarpet (2.2.2)
     ref (1.0.5)
@@ -55,6 +56,10 @@ DEPENDENCIES
   less
   liquid (= 2.5.0)
   maruku (= 0.6.1)
+  rake
   rdiscount (= 1.6.8)
   redcarpet (= 2.2.2)
   therubyracer
+
+BUNDLED WITH
+   1.10.6
