@@ -1,6 +1,6 @@
 # On Mac OSX using Homebrew
 
-To easily install Crystall on Mac you can use our [Homebrew](http://brew.sh/) [tap](https://github.com/Homebrew/homebrew/wiki/brew-tap)
+To easily install Crystall on Mac you can use our [Homebrew](http://brew.sh/) [tap](https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/brew-tap.md)
 
 ```
 brew tap manastech/crystal
