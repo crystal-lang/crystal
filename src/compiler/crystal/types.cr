@@ -2285,7 +2285,14 @@ module Crystal
                       else
                         @program.class_type
                       end
-      super(@program, @program, name || "#{@instance_type}:Class", super_class)
+      unless name
+        if instance_type.module?
+          name = "#{@instance_type}:Module"
+        else
+          name = "#{@instance_type}:Class"
+        end
+      end
+      super(@program, @program, name, super_class)
     end
 
     def allocated
