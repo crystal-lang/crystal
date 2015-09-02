@@ -127,21 +127,6 @@ class FileDescriptorIO
     close rescue nil
   end
 
-  def close
-    return if closed?
-
-    super()
-
-    @read_event.try &.free
-    @read_event = nil
-    @write_event.try &.free
-    @write_event = nil
-    Scheduler.enqueue @readers
-    @readers.clear
-    Scheduler.enqueue @writers
-    @writers.clear
-  end
-
   def closed?
     @closed
   end
@@ -260,7 +245,7 @@ class FileDescriptorIO
   end
 
   private def unbuffered_close
-    check_open
+    return if @closed
 
     if LibC.close(@fd) != 0
       raise Errno.new("Error closing file")
@@ -268,9 +253,14 @@ class FileDescriptorIO
 
     @closed = true
 
-    if event = @event
-      event.free
-    end
+    @read_event.try &.free
+    @read_event = nil
+    @write_event.try &.free
+    @write_event = nil
+    Scheduler.enqueue @readers
+    @readers.clear
+    Scheduler.enqueue @writers
+    @writers.clear
   end
 
   private def unbuffered_flush
