@@ -179,7 +179,7 @@ struct TimeFormat
     # Internal helper wethod: Figure how many weeks into the year
     private def week_of_year(time: Time, firstweekday: Number) : Number
       day_of_week = time.day_of_week.value
-      day_of_week = 7 if day_of_week == 0
+      day_of_week = 7 if day_of_week == 0 && firstweekday == 1
       week_num = 0
 
       if firstweekday == 1
