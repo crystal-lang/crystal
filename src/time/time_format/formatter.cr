@@ -176,18 +176,8 @@ struct TimeFormat
       {negative, hours, minutes}
     end
 
-    # Compute week of the year, monday is the first day of the week
-    def week_of_year_monday_1_7
-      io << Formatter.iso8601_week_of_year(time, 1)
-    end
-
-    # Compute week of the year, sunday is the first day of the week
-    def week_of_year_sunday_0_6
-      io << Formatter.iso8601_week_of_year(time, 0)
-    end
-
     # Internal helper wethod: Figure how many weeks into the year
-    def self.week_of_year(time, firstweekday)
+    private def week_of_year(time: Time, firstweekday: Number) : Number
       day_of_week = TimeFormat.new("%w").format(time).to_i
       week_num = 0
 
@@ -207,7 +197,7 @@ struct TimeFormat
     end
 
     # Compute week number according to ISO 8601
-    def self.iso8601_week_of_year(time, firstweekday)
+    private def iso8601_week_of_year(time: Time, firstweekday: Number) : Number
       #	If the week (Monday to Sunday) containing January 1
       #	has four or more days in the new year, then it is week 1;
       #	otherwise it is the highest numbered week of the previous
@@ -216,7 +206,7 @@ struct TimeFormat
       weeknum = 0
 
       # Get week number
-      weeknum = Formatter.week_of_year(time, firstweekday)
+      weeknum = week_of_year(time, firstweekday)
 
       # What day of the week does January 1 fall on?
       day_of_week_format = firstweekday == 0 ? TimeFormat.new("%w") : TimeFormat.new("%u")
@@ -243,7 +233,7 @@ struct TimeFormat
       when 5, 6, 0 # Friday, Saturday, Sunday
         if weeknum == 0
           # get week number of last week of last year
-          weeknum = Formatter.iso8601_week_of_year(Time.new(31, 11, time.year - 1), firstweekday)
+          weeknum = iso8601_week_of_year(Time.new(31, 11, time.year - 1), firstweekday)
         end
       end
 
@@ -266,9 +256,19 @@ struct TimeFormat
         end
       end
 
-      weeknum = weeknum - 1 if firstweekday == 0
+      weeknum -= 1 if firstweekday == 0
 
       weeknum
+    end
+
+    # Compute week of the year, monday is the first day of the week
+    def week_of_year_monday_1_7
+      io << iso8601_week_of_year(time, 1)
+    end
+
+    # Compute week of the year, sunday is the first day of the week
+    def week_of_year_sunday_0_6
+      io << iso8601_week_of_year(time, 0)
     end
 
     def char(char)
