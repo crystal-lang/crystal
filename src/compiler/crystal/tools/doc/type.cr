@@ -301,6 +301,8 @@ class Crystal::Doc::Type
             next
           end
 
+          next unless @generator.must_include?(subclass)
+
           subclasses << @generator.type(subclass)
         end
         subclasses.sort_by! &.full_name.downcase
