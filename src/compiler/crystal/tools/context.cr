@@ -4,9 +4,31 @@ require "./table_print"
 require "json"
 
 module Crystal
-  class Type
+  class PrettyTypeNameJsonConverter
+    def self.to_json(hash, io)
+      io.json_object do |obj|
+        hash.each do |key, value|
+          obj.field(key) do
+            io << '"'
+            pretty_type_name(value, io)
+            io << '"'
+          end
+        end
+      end
+    end
+
+    def self.pretty_type_name(type, io)
+      if type.is_a?(UnionType)
+        type.to_s_with_options(io, skip_union_parens = true)
+      else
+        type.to_s(io)
+      end
+    end
+  end
+
+  class HashStringType < Hash(String, Type)
     def to_json(io)
-      self.to_s.to_json(io)
+      PrettyTypeNameJsonConverter.to_json(self, io)
     end
   end
 
@@ -14,7 +36,7 @@ module Crystal
     json_mapping({
       status:           {type: String},
       message:          {type: String},
-      contexts:         {type: Array(Hash(String, Type)), nilable: true},
+      contexts:         {type: Array(HashStringType), nilable: true},
     })
 
     def initialize(@status, @message)
@@ -38,7 +60,9 @@ module Crystal
             row do
               cell expr
               ctxs.each do |ctx|
-                cell ctx[expr].to_s, align: :center
+                cell align: :center do |io|
+                  PrettyTypeNameJsonConverter.pretty_type_name(ctx[expr], io)
+                end
               end
             end
           end
@@ -75,8 +99,8 @@ module Crystal
     getter def_with_yield
 
     def initialize(@target_location)
-      @contexts = Array(Hash(String, Type)).new
-      @context = Hash(String, Type).new
+      @contexts = Array(HashStringType).new
+      @context = HashStringType.new
       @def_with_yield = nil
     end
 
@@ -107,14 +131,14 @@ module Crystal
       end
 
       if @contexts.empty?
-        @context = Hash(String, Type).new
+        @context = HashStringType.new
         result.program.vars.each do |name, var|
           add_context name, var.type
         end
         result.node.accept(self)
 
         if @def_with_yield
-          @context = Hash(String, Type).new
+          @context = HashStringType.new
           result.node.accept(RechableVisitor.new(self))
         end
 
@@ -136,7 +160,7 @@ module Crystal
     end
 
     def visit_and_append_context(node, &block)
-      @context = Hash(String, Type).new
+      @context = HashStringType.new
       yield
       node.accept(self)
       @contexts << @context unless @context.empty?

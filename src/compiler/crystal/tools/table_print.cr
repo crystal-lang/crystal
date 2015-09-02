@@ -80,6 +80,10 @@ module Crystal
       column_for_last_cell.will_render(cell)
     end
 
+    def cell(align = :left, colspan = 1)
+      cell(String::Builder.build { |io| yield io }, align, colspan)
+    end
+
     protected def render
       @data.each_with_index do |data_row, i|
         @io << '\n' if i != 0

@@ -199,6 +199,43 @@ describe "context" do
     ), "a", ["(String | Int64)"]
   end
 
+  it "can display text output" do
+    run_context_tool(%(
+    a = if rand() > 0
+      1i64
+    else
+      "foo"
+    end
+    ‸
+    0
+    )) do |result|
+      String::Builder.build do |io|
+        result.to_text(io)
+      end.should eq %(1 possible context found
+
+| Expr | Type           |
+-------------------------
+| a    | String | Int64 |
+)
+    end
+  end
+
+  it "can display json output" do
+    run_context_tool(%(
+    a = if rand() > 0
+      1i64
+    else
+      "foo"
+    end
+    ‸
+    0
+    )) do |result|
+      String::Builder.build do |io|
+        result.to_json(io)
+      end.should eq %({"status":"ok","message":"1 possible context found","contexts":[{"a":"String | Int64"}]})
+    end
+  end
+
   it "can get context of empty def" do
     assert_context_includes %(
     def foo(a)
