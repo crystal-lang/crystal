@@ -1,4 +1,5 @@
 module HTTP
+  # :nodoc:
   abstract class Content
     def close
       buffer :: UInt8[1024]
@@ -7,6 +8,7 @@ module HTTP
     end
   end
 
+  # :nodoc:
   class FixedLengthContent < Content
     include IO
 
@@ -27,6 +29,7 @@ module HTTP
     end
   end
 
+  # :nodoc:
   class ChunkedContent < Content
     include IO
 
