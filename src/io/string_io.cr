@@ -41,7 +41,8 @@ class StringIO
     io
   end
 
-  def read(slice : Slice(UInt8))
+  # :nodoc:
+  def read(slice : Slice(UInt8), wait : Wait)
     count = slice.length
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)

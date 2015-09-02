@@ -22,7 +22,8 @@ class SimpleStringIO
     io
   end
 
-  def read(slice : Slice(UInt8))
+  # :nodoc:
+  def read(slice : Slice(UInt8), wait : Wait)
     count = slice.length
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
@@ -80,6 +81,59 @@ describe IO do
     it "times out" do
       with_pipe do |read, write|
         IO.select({read}, nil, nil, 0.00001).should be_nil
+      end
+    end
+  end
+
+  describe "read_partial" do
+    it "doesn't block on first read" do
+      IO.pipe do |read, write|
+        write.puts "hello"
+
+        read.read_timeout = 1
+        read.read_partial(100).should eq("hello\n")
+
+        read.read_timeout = 0.0001
+        expect_raises(IO::Timeout) do
+          read.read_partial(100)
+        end
+      end
+    end
+
+    it "raises EOFError" do
+      IO.pipe do |read, write|
+        write.puts "hello"
+        write.close
+
+        read.read_timeout = 0.0001
+        read.read_nonblock(100).should eq("hello\n")
+        expect_raises(IO::EOFError) do
+          read.read_nonblock(100)
+        end
+      end
+    end
+  end
+
+  describe "read_nonblock" do
+    it "doesn't block" do
+      IO.pipe do |read, write|
+        write.puts "hello"
+        read.read_timeout = 1
+        read.read_nonblock(100).should eq("hello\n")
+        read.read_nonblock(100).should eq("")
+      end
+    end
+
+    it "raises EOFError" do
+      IO.pipe do |read, write|
+        write.puts "hello"
+        write.close
+        read.read_timeout = 0.0001
+
+        read.read_nonblock(100).should eq("hello\n")
+        expect_raises(IO::EOFError) do
+          read.read_nonblock(100)
+        end
       end
     end
   end

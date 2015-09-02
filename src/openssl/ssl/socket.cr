@@ -17,7 +17,8 @@ class OpenSSL::SSL::Socket
     LibSSL.ssl_free(@ssl)
   end
 
-  def read(slice : Slice(UInt8))
+  # :nodoc:
+  def read(slice : Slice(UInt8), wait : Wait)
     count = slice.length
     return 0 if count == 0
     LibSSL.ssl_read(@ssl, slice.pointer(count), count)

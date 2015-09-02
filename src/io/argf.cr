@@ -9,7 +9,7 @@ class IO::ARGF
     @read_from_stdin = false
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Slice(UInt8), wait : Wait)
     count = slice.length
     first_initialize unless @initialized
 

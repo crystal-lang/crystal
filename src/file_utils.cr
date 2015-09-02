@@ -16,12 +16,18 @@ module FileUtils
     buf2 :: UInt8[1024]
 
     while true
-      read1 = stream1.read buf1.to_slice
-      read2 = stream2.read buf2.to_slice
+      read1 = cmp_read stream1, buf1.to_slice
+      read2 = cmp_read stream2, buf2.to_slice
 
       return false if read1 != read2
       return false if buf1.buffer.memcmp(buf2.buffer, read1) != 0
       return true if read1 == 0
     end
+  end
+
+  private def cmp_read io, slice
+    io.read slice
+  rescue IO::EOFError
+    0
   end
 end

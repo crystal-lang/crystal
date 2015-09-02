@@ -14,10 +14,10 @@ module HTTP
       @remaining = length
     end
 
-    def read(slice : Slice(UInt8))
+    def read(slice : Slice(UInt8), wait : Wait)
       count = slice.length
       count = Math.min(count, @remaining)
-      bytes_read = @io.read slice[0, count]
+      bytes_read = @io.read slice[0, count], wait
       @remaining -= bytes_read
       bytes_read
     end
