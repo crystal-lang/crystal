@@ -627,8 +627,15 @@ module Macros
   # end
 
   # Assign expression.
-  # class Assign < ASTNode
-  # end
+  class Assign < ASTNode
+    # Returns the target assigned to.
+    def target : ASTNode
+    end
+
+    # Returns the value that is being assigned.
+    def value : ASTNode
+    end
+  end
 
   # Assign expression.
   # class MultiAssign < ASTNode
@@ -740,11 +747,31 @@ module Macros
   # class Require < ASTNode
   # end
 
-  # class When < ASTNode
-  # end
+  # A `when` inside a `case`
+  class When < ASTNode
+    # Returns the conditions of this `when`.
+    def conds : ArrayLiteral
+    end
 
-  # class Case < ASTNode
-  # end
+    # Returns the body of this `when`.
+    def body : ASTNode
+    end
+  end
+
+  # A `case` expression
+  class Case < ASTNode
+    # Returns the condition (target) of this `case`.
+    def cond : ASTNode
+    end
+
+    # Returns the `when`s of this `case`.
+    def whens : ArrayLiteral(When)
+    end
+
+    # Returns the `else` of this `case`.
+    def else : ArrayLiteral(When)
+    end
+  end
 
   # class ImplicitObj < ASTNode
   # end

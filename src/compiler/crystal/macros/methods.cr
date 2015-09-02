@@ -680,11 +680,11 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "name"
-        MacroId.new(name)
+        interpret_argless_method(method, args) { MacroId.new(name) }
       when "default_value"
-        default_value || Nop.new
+        interpret_argless_method(method, args) { default_value || Nop.new }
       when "restriction"
-        restriction || Nop.new
+        interpret_argless_method(method, args) { restriction || Nop.new }
       else
         super
       end
@@ -872,18 +872,20 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "name"
-        MacroId.new(name)
+        interpret_argless_method(method, args) { MacroId.new(name) }
       when "args"
-        ArrayLiteral.map(self.args) { |arg| arg }
+        interpret_argless_method(method, args) { ArrayLiteral.map(self.args) { |arg| arg } }
       when "receiver"
-        obj || Nop.new
+        interpret_argless_method(method, args) { obj || Nop.new }
       when "block"
-        self.block || Nop.new
+        interpret_argless_method(method, args) { self.block || Nop.new }
       when "named_args"
-        if named_args = self.named_args
-          ArrayLiteral.map(named_args) { |arg| arg }
-        else
-          Nop.new
+        interpret_argless_method(method, args) do
+          if named_args = self.named_args
+            ArrayLiteral.map(named_args) { |arg| arg }
+          else
+            Nop.new
+          end
         end
       else
         super
@@ -903,9 +905,50 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "name"
-        MacroId.new(name)
+        interpret_argless_method(method, args) { MacroId.new(name) }
       when "value"
-        value
+        interpret_argless_method(method, args) { value }
+      else
+        super
+      end
+    end
+  end
+
+  class Case
+    def interpret(method, args, block, interpreter)
+      case method
+      when "cond"
+        interpret_argless_method(method, args) { cond || Nop.new }
+      when "whens"
+        interpret_argless_method(method, args) { ArrayLiteral.map whens, &.itself }
+      when "else"
+        interpret_argless_method(method, args) { self.else || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class When
+    def interpret(method, args, block, interpreter)
+      case method
+      when "conds"
+        interpret_argless_method(method, args) { ArrayLiteral.new(conds) }
+      when "body"
+        interpret_argless_method(method, args) { body }
+      else
+        super
+      end
+    end
+  end
+
+  class Assign
+    def interpret(method, args, block, interpreter)
+      case method
+      when "target"
+        interpret_argless_method(method, args) { target }
+      when "value"
+        interpret_argless_method(method, args) { value }
       else
         super
       end
@@ -928,9 +971,9 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "obj"
-        obj
+        interpret_argless_method(method, args) { obj }
       when "to"
-        to
+        interpret_argless_method(method, args) { to }
       else
         super
       end

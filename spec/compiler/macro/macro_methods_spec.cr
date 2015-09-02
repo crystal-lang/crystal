@@ -711,6 +711,40 @@ describe "macro methods" do
     end
   end
 
+  describe "case methods" do
+    case_node = Case.new(NumberLiteral.new(1), [When.new([NumberLiteral.new(2), NumberLiteral.new(3)] of ASTNode, NumberLiteral.new(4))], NumberLiteral.new(5))
+
+    it "executes cond" do
+      assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+    end
+
+    it "executes whens" do
+      assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
+    end
+
+    it "executes when conds" do
+      assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
+    end
+
+    it "executes when body" do
+      assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
+    end
+
+    it "executes else" do
+      assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+    end
+  end
+
+  describe "assign methods" do
+    it "executes target" do
+      assert_macro "x", %({{x.target}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "foo"
+    end
+
+    it "executes value" do
+      assert_macro "x", %({{x.value}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "2"
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"
