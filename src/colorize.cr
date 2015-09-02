@@ -1,4 +1,12 @@
-class Object
+def with_color
+  "".colorize
+end
+
+def with_color(color : Symbol)
+  "".colorize(color)
+end
+
+module Colorize::ObjectExtensions
   def colorize
     Colorize::Object.new(self)
   end
@@ -8,12 +16,8 @@ class Object
   end
 end
 
-def with_color
-  "".colorize
-end
-
-def with_color(color : Symbol)
-  "".colorize(color)
+class Object
+  include Colorize::ObjectExtensions
 end
 
 struct Colorize::Object(T)
