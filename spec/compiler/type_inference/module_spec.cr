@@ -724,4 +724,13 @@ describe "Type inference: module" do
       ),
       "can't declare module dynamically"
   end
+
+  it "uses :Module name for modules in errors" do
+    assert_error %(
+      module A; end
+
+      A.new
+      ),
+      "undefined method 'new' for A:Module"
+  end
 end

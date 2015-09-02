@@ -17,6 +17,7 @@ module HTTP
     typeof(Client.new("host").basic_auth("username", "password"))
     typeof(Client.new("host").before_request { |req| HTTP::Response.ok("text/plain", "OK") })
     typeof(Client.new("host").close)
+    typeof(Client.get(URI.parse("http://www.example.com")))
 
     it "raises if URI is missing scheme" do
       expect_raises(ArgumentError) do

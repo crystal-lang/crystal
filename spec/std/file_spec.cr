@@ -376,6 +376,14 @@ describe "File" do
     file.tell().should eq(5)
   end
 
+  it "can navigate with pos" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.pos = 3
+    file.read(2).should eq("lo")
+    file.pos -= 4
+    file.read(4).should eq("ello")
+  end
+
   it "raises if invoking tell with a closed file" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.close

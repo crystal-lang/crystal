@@ -150,7 +150,7 @@ module Crystal
     def nesting_exp?(node)
       case node
       when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
-           Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf
+           Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression
         false
       else
         true
@@ -870,7 +870,7 @@ module Crystal
           arg.accept self
           arg_type = arg.type.instance_type
           TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
-          Var.new("arg#{i}", arg_type) as ASTNode
+          Var.new("arg#{i}", arg_type.virtual_type) as ASTNode
         end
       end
 
@@ -888,13 +888,13 @@ module Crystal
 
     def end_visit(node : Fun)
       if inputs = node.inputs
-        types = inputs.map &.type.instance_type
+        types = inputs.map &.type.instance_type.virtual_type
       else
         types = [] of Type
       end
 
       if output = node.output
-        types << output.type.instance_type
+        types << output.type.instance_type.virtual_type
       else
         types << mod.void
       end
@@ -1458,7 +1458,7 @@ module Crystal
     def end_visit(node : RespondsTo)
       node.type = mod.bool
       if needs_type_filters? && (var = get_expression_var(node.obj))
-        @type_filters = TypeFilters.new var, RespondsToTypeFilter.new(node.name.value)
+        @type_filters = TypeFilters.new var, RespondsToTypeFilter.new(node.name)
       end
     end
 
@@ -2489,7 +2489,7 @@ module Crystal
 
     def end_visit(node : Break)
       if target_block = block
-        node.target = target_block
+        node.target = target_block.call.not_nil!
 
         target_block.break.bind_to(node.exp || mod.nil_var)
 

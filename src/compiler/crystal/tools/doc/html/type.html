@@ -28,7 +28,6 @@
 <% else %>
   <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name %>
 <% end %>
-<span class="type-permalink">[<a href="<%= type.path_to(type) %>" class="permalink" target="_blank">permalink</a>]</span>
 </h1>
 
 <% if type.superclass %>
@@ -87,6 +86,12 @@
 <%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
 <%= MethodSummaryTemplate.new("Instance Method Summary", type.instance_methods) %>
 <%= MethodSummaryTemplate.new("Macro Summary", type.macros) %>
+
+<div class="methods-inherited">
+  <% type.ancestors.each do |ancestor| %>
+    <%= MethodsInheritedTemplate.new(type, ancestor) %>
+  <% end %>
+</div>
 
 <%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
 <%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>

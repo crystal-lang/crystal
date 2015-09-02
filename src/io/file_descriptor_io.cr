@@ -5,10 +5,6 @@ class FileDescriptorIO
   private getter! readers
   private getter! writers
 
-  # Seconds to wait when reading before raising IO::Timeout
-  property read_timeout
-  # Seconds to wait when writing before raising IO::Timeout
-  property write_timeout
   # :nodoc:
   property read_timed_out, write_timed_out # only used in event callbacks
 
@@ -34,6 +30,36 @@ class FileDescriptorIO
         @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
       end
     end
+  end
+
+  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  def read_timeout=(read_timeout : Number)
+    @read_timeout = read_timeout.to_f
+  end
+
+  # ditto
+  def read_timeout=(read_timeout : TimeSpan)
+    self.read_timeout = read_timeout.total_seconds
+  end
+
+  # Sets no timeout on read operations, so an `IO::Timeout` will never be raised.
+  def read_timeout=(read_timeout : Nil)
+    @read_timeout = nil
+  end
+
+  # Set the number of seconds to wait when writing before raising an `IO::Timeout`.
+  def write_timeout=(write_timeout : Number)
+    @write_timeout = write_timeout.to_f
+  end
+
+  # ditto
+  def write_timeout=(write_timeout : TimeSpan)
+    self.write_timeout = write_timeout.total_seconds
+  end
+
+  # Sets no timeout on write operations, so an `IO::Timeout` will never be raised.
+  def write_timeout=(write_timeout : Nil)
+    @write_timeout = nil
   end
 
   def blocking
@@ -82,45 +108,6 @@ class FileDescriptorIO
     if writer = writers.pop?
       writer.resume
     end
-  end
-
-  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
-  #
-  # ```
-  # file = File.new("testfile")
-  # file.read(3) #=> "abc"
-  # file.seek(1, IO::Seek::Set)
-  # file.read(2) #=> "bc"
-  # file.seek(-1, IO::Seek::Current)
-  # file.read(1) #=> "c"
-  # ```
-  def seek(offset, whence = Seek::Set : Seek)
-    check_open
-
-    flush
-    seek_value = LibC.lseek(@fd, LibC::OffT.cast(offset), whence.to_i)
-    if seek_value == -1
-      raise Errno.new "Unable to seek"
-    end
-
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-  end
-
-  # Returns the current offset (in bytes) of this IO.
-  #
-  # ```
-  # file = File.new("testfile")
-  # file.tell    #=> 0
-  # file.read(3) #=> "abc"
-  # file.tell    #=> 3
-  # ```
-  def tell
-    check_open
-
-    seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
-    raise Errno.new "Unable to tell" if seek_value == -1
-
-    seek_value - @in_buffer_rem.length
   end
 
   def stat
@@ -178,7 +165,8 @@ class FileDescriptorIO
     self
   end
 
-  private def unbuffered_read(slice : Slice(UInt8), count)
+  private def unbuffered_read(slice : Slice(UInt8))
+    count = slice.length
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_read != -1
@@ -195,7 +183,8 @@ class FileDescriptorIO
     add_read_event unless readers.empty?
   end
 
-  private def unbuffered_write(slice : Slice(UInt8), count)
+  private def unbuffered_write(slice : Slice(UInt8))
+    count = slice.length
     total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))

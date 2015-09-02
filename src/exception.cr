@@ -105,9 +105,9 @@ class Exception
   end
 
   def inspect_with_backtrace(io : IO)
-    io << "#{self} (#{self.class})"
+    io << self << " (" << self.class << ")\n"
     backtrace.each do |frame|
-      io << frame
+      io.puts frame
     end
     io.flush
   end

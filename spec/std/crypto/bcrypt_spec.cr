@@ -8,9 +8,9 @@ describe "Bcrypt" do
     end
   end
 
-  it "raises if cost is to high" do 
+  it "raises if cost is to high" do
     expect_raises ArgumentError, /Invalid cost size/ do
-      Crypto::Bcrypt.digest("secret", 32)
+      Crypto::Bcrypt.digest("secret", 64)
     end
   end
 

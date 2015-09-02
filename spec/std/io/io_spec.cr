@@ -22,14 +22,16 @@ class SimpleStringIO
     io
   end
 
-  def read(slice : Slice(UInt8), count)
+  def read(slice : Slice(UInt8))
+    count = slice.length
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
     @pos += count
     count
   end
 
-  def write(slice : Slice(UInt8), count)
+  def write(slice : Slice(UInt8))
+    count = slice.length
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
@@ -51,7 +53,91 @@ class SimpleStringIO
   end
 end
 
+private def with_pipe
+  read, write = IO.pipe
+  yield read, write
+ensure
+  read.close if read rescue nil
+  write.close if write rescue nil
+end
+
 describe IO do
+  describe ".select" do
+    it "returns the available readable ios" do
+      with_pipe do |read, write|
+        write.puts "hey"
+        write.close
+        IO.select({read}).includes?(read).should be_true
+      end
+    end
+
+    it "returns the available writable ios" do
+      with_pipe do |read, write|
+        IO.select(nil, {write}).includes?(write).should be_true
+      end
+    end
+
+    it "times out" do
+      with_pipe do |read, write|
+        IO.select({read}, nil, nil, 0.00001).should be_nil
+      end
+    end
+  end
+
+  describe "IO iterators" do
+    it "iterates by line" do
+      io = StringIO.new("hello\nbye\n")
+      lines = io.each_line
+      lines.next.should eq("hello\n")
+      lines.next.should eq("bye\n")
+      lines.next.should be_a(Iterator::Stop)
+
+      lines.rewind
+      lines.next.should eq("hello\n")
+    end
+
+    it "iterates by char" do
+      io = StringIO.new("abあぼ")
+      chars = io.each_char
+      chars.next.should eq('a')
+      chars.next.should eq('b')
+      chars.next.should eq('あ')
+      chars.next.should eq('ぼ')
+      chars.next.should be_a(Iterator::Stop)
+
+      chars.rewind
+      chars.next.should eq('a')
+    end
+
+    it "iterates by byte" do
+      io = StringIO.new("ab")
+      bytes = io.each_byte
+      bytes.next.should eq('a'.ord)
+      bytes.next.should eq('b'.ord)
+      bytes.next.should be_a(Iterator::Stop)
+
+      bytes.rewind
+      bytes.next.should eq('a'.ord)
+    end
+  end
+
+  it "copies" do
+    string = "abあぼ"
+    src = StringIO.new(string)
+    dst = StringIO.new
+    IO.copy(src, dst).should eq(string.bytesize)
+    dst.to_s.should eq(string)
+  end
+
+  it "reopens" do
+    File.open("#{__DIR__}/../data/test_file.txt") do |file1|
+      File.open("#{__DIR__}/../data/test_file.ini") do |file2|
+        file2.reopen(file1)
+        file2.gets.should eq("Hello World\n")
+      end
+    end
+  end
+
   describe "read operations" do
     it "does gets" do
       io = SimpleStringIO.new("hello\nworld\n")
@@ -214,6 +300,17 @@ describe IO do
         str.read_line
       end
     end
+
+    it "does read_fully" do
+      str = SimpleStringIO.new("hello")
+      slice = Slice(UInt8).new(4)
+      str.read_fully(slice)
+      String.new(slice).should eq("hell")
+
+      expect_raises(IO::EOFError) do
+        str.read_fully(slice)
+      end
+    end
   end
 
   describe "write operations" do
@@ -277,35 +374,6 @@ describe IO do
       io = SimpleStringIO.new
       io.printf "Hello %d", [123]
       io.read.should eq("Hello 123")
-    end
-  end
-
-  describe "iterators" do
-    it "does each_line" do
-      io = SimpleStringIO.new "foo\nbar\nbaz"
-      iter = io.each_line
-      iter.next.should eq("foo\n")
-      iter.next.should eq("bar\n")
-      iter.next.should eq("baz")
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does each_char" do
-      io = SimpleStringIO.new "すごい"
-      iter = io.each_char
-      iter.next.should eq('す')
-      iter.next.should eq('ご')
-      iter.next.should eq('い')
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "does each_byte" do
-      io = SimpleStringIO.new "す"
-      iter = io.each_byte
-      iter.next.should eq(227)
-      iter.next.should eq(129)
-      iter.next.should eq(153)
-      iter.next.should be_a(Iterator::Stop)
     end
   end
 end

@@ -608,7 +608,7 @@ module Crystal
 
       if break_phi = context.break_phi
         old_last = @last
-        execute_ensures_until(node.target as Block)
+        execute_ensures_until(node.target as Call)
         @last = old_last
 
         break_phi.add @last, node_type
@@ -892,7 +892,7 @@ module Crystal
     end
 
     def visit(node : RespondsTo)
-      codegen_type_filter node, &.filter_by_responds_to(node.name.value)
+      codegen_type_filter node, &.filter_by_responds_to(node.name)
     end
 
     def codegen_type_filter(node)

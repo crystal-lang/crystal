@@ -3,7 +3,10 @@ require "spec"
 describe "StringIO" do
   it "writes" do
     io = StringIO.new
+    io.bytesize.should eq(0)
     io.write Slice.new("hello".cstr, 3)
+    io.bytesize.should eq(3)
+    io.rewind
     io.read.should eq("hel")
   end
 
@@ -11,7 +14,16 @@ describe "StringIO" do
     s = "hi" * 100
     io = StringIO.new
     io.write Slice.new(s.cstr, s.bytesize)
+    io.rewind
     io.read.should eq(s)
+  end
+
+  it "reads byte" do
+    io = StringIO.new("abc")
+    io.read_byte.should eq('a'.ord)
+    io.read_byte.should eq('b'.ord)
+    io.read_byte.should eq('c'.ord)
+    io.read_byte.should be_nil
   end
 
   it "appends to another buffer" do
@@ -83,6 +95,7 @@ describe "StringIO" do
   it "writes and reads" do
     io = StringIO.new
     io << "foo" << "bar"
+    io.rewind
     io.gets.should eq("foobar")
   end
 
@@ -100,5 +113,96 @@ describe "StringIO" do
     s = "h" * (10 * 1024)
     str = StringIO.new(s)
     str.read(11 * 1024).should eq(s)
+  end
+
+  it "writes after reading" do
+    io = StringIO.new("abcdefghi")
+    io.read(3)
+    io.print("xyz")
+    io.rewind
+    io.read.should eq("abcxyzghi")
+  end
+
+  it "has a size" do
+    StringIO.new("foo").size.should eq(3)
+  end
+
+  it "can tell" do
+    io = StringIO.new("foo")
+    io.tell.should eq(0)
+    io.read(2)
+    io.tell.should eq(2)
+  end
+
+  it "can seek set" do
+    io = StringIO.new("abcdef")
+    io.seek(3)
+    io.tell.should eq(3)
+    io.read(1).should eq("d")
+  end
+
+  it "raises if seek set is negative" do
+    io = StringIO.new("abcdef")
+    expect_raises(ArgumentError, "negative pos") do
+      io.seek(-1)
+    end
+  end
+
+  it "can seek past the end" do
+    io = StringIO.new("abc")
+    io.seek(6)
+    io.read.should eq("")
+    io.print("xyz")
+    io.rewind
+    io.read.should eq("abc\u{0}\u{0}\u{0}xyz")
+  end
+
+  it "can seek current" do
+    io = StringIO.new("abcdef")
+    io.seek(2)
+    io.seek(1, IO::Seek::Current)
+    io.read(1).should eq("d")
+  end
+
+  it "raises if seek current leads to negative value" do
+    io = StringIO.new("abcdef")
+    io.seek(2)
+    expect_raises(ArgumentError, "negative pos") do
+      io.seek(-3, IO::Seek::Current)
+    end
+  end
+
+  it "can seek from the end" do
+    io = StringIO.new("abcdef")
+    io.seek(-2, IO::Seek::End)
+    io.read(1).should eq("e")
+  end
+
+  it "can be closed" do
+    io = StringIO.new("abc")
+    io.close
+    io.closed?.should be_true
+
+    expect_raises(IO::Error, "closed stream") { io.read }
+    expect_raises(IO::Error, "closed stream") { io.print "hi" }
+    expect_raises(IO::Error, "closed stream") { io.seek(1) }
+    expect_raises(IO::Error, "closed stream") { io.gets }
+    expect_raises(IO::Error, "closed stream") { io.read_byte }
+  end
+
+  it "seeks with pos and pos=" do
+    io = StringIO.new("abcdef")
+    io.pos = 4
+    io.read(1).should eq("e")
+    io.pos -= 2
+    io.read(1).should eq("d")
+  end
+
+  it "clears" do
+    io = StringIO.new("abc")
+    io.read(1)
+    io.clear
+    io.pos.should eq(0)
+    io.read.should eq("")
   end
 end

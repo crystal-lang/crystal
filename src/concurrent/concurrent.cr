@@ -1,7 +1,7 @@
 require "fiber"
 require "./*"
 
-def sleep(seconds : Int | Float)
+def sleep(seconds : Number)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
   end
@@ -9,12 +9,18 @@ def sleep(seconds : Int | Float)
   Scheduler.sleep(seconds)
 end
 
+def sleep(time : TimeSpan)
+  sleep(time.total_seconds)
+end
+
 macro spawn
   %fiber = Fiber.new do
     begin
       {{ yield }}
     rescue %ex
-      puts "Unhandled exception: #{ %ex }"
+      STDERR.puts "Unhandled exception:"
+      %ex.inspect_with_backtrace STDERR
+      STDERR.flush
     end
   end
 

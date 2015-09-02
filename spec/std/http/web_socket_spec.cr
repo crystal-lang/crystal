@@ -157,7 +157,25 @@ describe HTTP::WebSocket do
       result.length.should eq(0)
       result.final?.should be_true
     end
+  end
 
+  describe "send" do
+     it "sends long data with correct header" do
+       length = UInt16::MAX.to_u64 + 1
+       big_string = "a" * length
+       io = StringIO.new
+       ws = HTTP::WebSocket.new(io)
+       ws.send(big_string)
+       bytes = io.to_slice
+       bytes.length.should eq(6 + length) # 2 bytes header, 4 bytes length, UInt16 + 1 bytes content
+       bytes[1].should eq(127)
+       received_length = 0
+       4.times { |i| received_length <<= 8; received_length += bytes[2 + i] }
+       received_length.should eq(length)
+       length.times do |i|
+         bytes[6 + i].should eq('a'.ord)
+       end
+     end
   end
 
   describe "send_masked" do
@@ -175,6 +193,24 @@ describe HTTP::WebSocket do
       (bytes[4] ^ bytes[8]).should eq('l'.ord)
       (bytes[5] ^ bytes[9]).should eq('l'.ord)
       (bytes[2] ^ bytes[10]).should eq('o'.ord)
+    end
+
+    it "sends long data with correct header" do
+      length = UInt16::MAX.to_u64 + 1
+      big_string = "a" * length
+      io = StringIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.send_masked(big_string)
+      bytes = io.to_slice
+      bytes.length.should eq(length + 10) # 2 bytes header, 4 bytes length, 4 bytes mask, UInt16::MAX + 1 bytes content
+      bytes[1].bit(7).should eq(1) # For mask bit
+      (bytes[1] - 128).should eq(127)
+      received_length = 0
+      4.times { |i| received_length <<= 8; received_length += bytes[2 + i] }
+      received_length.should eq(length)
+      length.times do |i|
+        (bytes[10 + i] ^ bytes[6 + (i % 4)]).should eq('a'.ord)
+      end
     end
   end
 end

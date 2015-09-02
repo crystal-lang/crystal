@@ -14,10 +14,17 @@ ch2 = generator(1.5)
 ch3 = generator(5)
 
 loop do
-  case ch = Channel.select(ch1, ch2, ch3)
-  when ch3
+  index, value = Channel.select(ch1.receive_op, ch2.receive_op, ch3.receive_op)
+  case index
+  when 0
+    int = value as typeof(ch1.receive)
+    puts "Int: #{int}"
+  when 1
+    float = value as typeof(ch2.receive)
+    puts "Float: #{float}"
+  when 2
     break
   else
-    puts ch.receive
+    raise "BUG: Channel.select returned invalid index #{index}"
   end
 end

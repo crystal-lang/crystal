@@ -350,7 +350,7 @@ describe "Parser" do
   it_parses "foo &.[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]", 0.int32)))
   it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
   it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
-  it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo".symbol)))
+  it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
   it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
   it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
 
@@ -739,7 +739,13 @@ describe "Parser" do
 
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
   it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Union.new(["Foo".path, "Bar".path] of ASTNode))
-  it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
+  it_parses "foo.is_a? Const", IsA.new("foo".call, "Const".path)
+  it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo")
+  it_parses "foo.responds_to? :foo", RespondsTo.new("foo".call, "foo")
+  it_parses "if foo.responds_to? :foo\nx = 1\nend", If.new(RespondsTo.new("foo".call, "foo"), Assign.new("x".var, 1.int32))
+
+  it_parses "is_a?(Const)", IsA.new("self".var, "Const".path)
+  it_parses "responds_to?(:foo)", RespondsTo.new("self".var, "foo")
 
   it_parses "/foo/", regex("foo")
   it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)

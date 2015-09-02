@@ -214,6 +214,7 @@ module Crystal
       end
 
       ident_type ||= context.type_lookup.lookup_type other
+
       if ident_type
         restrict ident_type, context
       elsif single_name
@@ -543,13 +544,28 @@ module Crystal
       remove_alias.is_restriction_of?(other, owner)
     end
 
+    def restrict(other  : Path, context)
+      other_type = context.type_lookup.lookup_type other
+      if other_type
+        if other_type == self
+          return self
+        end
+      else
+        single_name = other.names.length == 1
+        if single_name
+          if Parser.free_var_name?(other.names.first)
+            return context.set_free_var(other.names.first, self)
+          else
+            other.raise "undefined constant #{other}"
+          end
+        end
+      end
+
+      remove_alias.restrict(other, context)
+    end
+
     def restrict(other, context)
       return self if self == other
-
-      if other.is_a?(Path)
-        other_type = context.type_lookup.lookup_type other
-        return self if self == other_type
-      end
 
       remove_alias.restrict(other, context)
     end

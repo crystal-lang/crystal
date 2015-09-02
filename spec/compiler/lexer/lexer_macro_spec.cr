@@ -490,7 +490,7 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  it "lexes macro var inside string" do
+  it "lexes macro var inside string, inside interpolation" do
     lexer = Lexer.new(%(" %var " end))
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
@@ -506,6 +506,25 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_LITERAL)
     token.value.should eq(%( " ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "doesn't lex macro var if escaped" do
+    lexer = Lexer.new(%(" \\%var " end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%(" ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("%")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%(var " ))
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)

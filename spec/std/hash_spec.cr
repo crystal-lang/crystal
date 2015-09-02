@@ -503,4 +503,87 @@ describe "Hash" do
       results.should eq [9, 19, 26]
     end
   end
+
+  describe "all?" do
+    it "passes key and value into block" do
+      hash = {a: 'b'}
+      hash.all? do |k, v|
+        k.should eq(:a)
+        v.should eq('b')
+      end
+    end
+
+    it "returns true if the block evaluates truthy for every kv pair" do
+      hash = {a: 'b', c: 'd'}
+      result = hash.all? { |k, v| v < 'e' ? "truthy" : nil }
+      result.should be_true
+      hash[:d] = 'e'
+      result = hash.all? { |k, v| v < 'e' ? "truthy" : nil }
+      result.should be_false
+    end
+
+    it "evaluates the block for only for as many kv pairs as necessary" do
+      hash = {a: 'b', c: 'd'}
+      hash.all? do |k, v|
+        raise Exception.new("continued iterating") if v == 'd'
+        v == 'a' # this is false for the first kv pair
+      end
+    end
+  end
+
+  describe "any?" do
+    it "passes key and value into block" do
+      hash = {a: 'b'}
+      hash.any? do |k, v|
+        k.should eq(:a)
+        v.should eq('b')
+      end
+    end
+
+    it "returns true if the block evaluates truthy for at least one kv pair" do
+      hash = {a: 'b', c: 'd'}
+      result = hash.any? { |k, v| v > 'b' ? "truthy" : nil }
+      result.should be_true
+      hash[:d] = 'e'
+      result = hash.any? { |k, v| v > 'e' ? "truthy" : nil }
+      result.should be_false
+    end
+
+    it "evaluates the block for only for as many kv pairs as necessary" do
+      hash = {a: 'b', c: 'd'}
+      hash.any? do |k, v|
+        raise Exception.new("continued iterating") if v == 'd'
+        v == 'b' # this is true for the first kv pair
+      end
+    end
+
+    it "returns true if the hash contains at least one kv pair and no block is given" do
+      hash = {a: 'b'}
+      result = hash.any?
+      result.should be_true
+
+      hash = {} of Symbol => Char
+      result = hash.any?
+      result.should be_false
+    end
+  end
+
+  describe "inject" do
+    it "passes memo, key and value into block" do
+      hash = {a: 'b'}
+      hash.inject(:memo) do |memo, k, v|
+        memo.should eq(:memo)
+        k.should eq(:a)
+        v.should eq('b')
+      end
+    end
+
+    it "reduces the hash to the accumulated value of memo" do
+      hash = {a: 'b', c: 'd', e: 'f'}
+      result = hash.inject("") do |memo, k, v|
+        memo + v
+      end
+      result.should eq("bdf")
+    end
+  end
 end

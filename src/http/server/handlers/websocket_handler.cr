@@ -49,7 +49,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
         info = @ws.receive(@buffer)
         case info.type
         when :text
-          @current_message.write(@buffer, info.length)
+          @current_message.write @buffer[0, info.length]
           if info.final?
             if handler = @on_message
               handler.call(@current_message.to_s)
@@ -57,7 +57,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
             @current_message.clear
           end
         when :close
-          @current_message.write(@buffer, info.length)
+          @current_message.write @buffer[0, info.length]
           if info.final?
             if handler = @on_close
               handler.call(@current_message.to_s)

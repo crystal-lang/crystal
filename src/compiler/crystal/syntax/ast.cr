@@ -396,6 +396,7 @@ module Crystal
   class Block < ASTNode
     property :args
     property :body
+    property :call
 
     def initialize(@args = [] of Var, body = nil)
       @body = Expressions.from body
@@ -444,6 +445,9 @@ module Crystal
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
       @name_length = nil
+      if block = @block
+        block.call = self
+      end
     end
 
     def self.new(obj, name, arg : ASTNode)
@@ -1062,7 +1066,6 @@ module Crystal
 
     def accept_children(visitor)
       obj.accept visitor
-      name.accept visitor
     end
 
     def clone_without_location

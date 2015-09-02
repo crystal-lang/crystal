@@ -100,4 +100,34 @@ describe "Codegen: responds_to?" do
       foo.responds_to?(:foo)
       )).to_b.should be_true
   end
+
+  it "works with module" do
+    run(%(
+      module Moo
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      ptr = Pointer(Moo).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value = Foo.new
+
+      moo = ptr.value
+      moo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
 end

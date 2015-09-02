@@ -581,6 +581,8 @@ module Crystal
 
           if @token.value == :is_a?
             atomic = parse_is_a(atomic).at(location)
+          elsif @token.value == :responds_to?
+            atomic = parse_responds_to(atomic).at(location)
           else
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
 
@@ -656,8 +658,8 @@ module Crystal
             else
               atomic = args ? (Call.new atomic, name, args, named_args: named_args, name_column_number: name_column_number) : (Call.new atomic, name, name_column_number: name_column_number)
             end
-
-            atomic = check_special_call(atomic).at(location)
+            atomic.at(location)
+            atomic
           end
         when :"[]"
           check_void_value atomic, location
@@ -734,24 +736,30 @@ module Crystal
       IsA.new(atomic, type)
     end
 
-    def check_special_call(atomic)
-      if atomic.is_a?(Call) && (atomic_obj = atomic.obj)
-        case atomic.name
-        when "responds_to?"
-          if atomic.args.length != 1
-            raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
-          end
-          arg = atomic.args[0]
-          unless arg.is_a?(SymbolLiteral)
-            raise "'responds_to?' argument must be a Symbol literal"
-          end
-          if atomic.block
-            raise "'responds_to?' can't receive a block"
-          end
-          atomic = RespondsTo.new(atomic_obj, arg)
-        end
+    def parse_responds_to(atomic)
+      next_token
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        name = parse_responds_to_name
+        next_token_skip_space_or_newline
+        check :")"
+        next_token_skip_space
+      elsif @token.type == :SPACE
+        next_token
+        name = parse_responds_to_name
+        next_token_skip_space
       end
-      atomic
+
+      RespondsTo.new(atomic, name)
+    end
+
+    def parse_responds_to_name
+      if @token.type != :SYMBOL
+        unexpected_token msg: "expected name or symbol"
+      end
+
+      @token.value.to_s
     end
 
     def parse_atomic
@@ -1226,6 +1234,8 @@ module Crystal
 
         if @token.value == :is_a?
           call = parse_is_a(obj).at(location)
+        elsif @token.value == :responds_to?
+          call = parse_responds_to(obj).at(location)
         elsif @token.type == :"["
           call = parse_atomic_method_suffix obj, location
 
@@ -1273,8 +1283,6 @@ module Crystal
               exp = parse_op_assign
               call.name = "#{call.name}="
               call.args << exp
-            else
-              call = check_special_call(call)
             end
           end
         end
@@ -2869,6 +2877,15 @@ module Crystal
       location = @token.location
       doc = @token.doc
 
+      case @token.value
+      when :is_a?
+        obj = Var.new("self").at(location)
+        return parse_is_a(obj)
+      when :responds_to?
+        obj = Var.new("self").at(location)
+        return parse_responds_to(obj)
+      end
+
       name = @token.value.to_s
       name_column_number = @token.column_number
 
@@ -4127,7 +4144,7 @@ module Crystal
         when :CONST
           location = @token.location
           constant_name = @token.value.to_s
-          doc = @token.doc
+          member_doc = @token.doc
 
           next_token_skip_space
           if @token.type == :"="
@@ -4146,7 +4163,7 @@ module Crystal
           end
 
           arg = Arg.new(constant_name, constant_value).at(location)
-          arg.doc = doc
+          arg.doc = member_doc
 
           members << arg
         when :IDENT

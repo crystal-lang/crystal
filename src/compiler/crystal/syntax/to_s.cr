@@ -1114,9 +1114,7 @@ module Crystal
 
     def visit(node : RespondsTo)
       node.obj.accept self
-      @str << ".responds_to?("
-      node.name.accept self
-      @str << ")"
+      @str << ".responds_to?(" << node.name << ")"
       false
     end
 
