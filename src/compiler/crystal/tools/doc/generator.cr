@@ -1,4 +1,6 @@
 class Crystal::Doc::Generator
+  getter program
+
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type

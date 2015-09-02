@@ -105,15 +105,18 @@ class Crystal::Doc::Type
   end
 
   def ancestors
-    @type.ancestors.map do |ancestor|
+    ancestors = [] of self
+    @type.ancestors.each do |ancestor|
       case ancestor
       when InheritedGenericClass
         ancestor = ancestor.extended_class
       when IncludedGenericModule
         ancestor = ancestor.module
       end
-      @generator.type(ancestor)
+      ancestors << @generator.type(ancestor)
+      break if ancestor == @generator.program.object
     end
+    ancestors
   end
 
   def locations
