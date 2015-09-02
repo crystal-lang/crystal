@@ -6,6 +6,24 @@ private def packet(bytes)
   slice.pointer(bytes.length)
 end
 
+private def assert_text_packet(packet, length, final = false)
+  assert_packet packet, HTTP::WebSocket::Opcode::TEXT, length, final: final
+end
+
+private def assert_ping_packet(packet, length, final = false)
+  assert_packet packet, HTTP::WebSocket::Opcode::PING, length, final: final
+end
+
+private def assert_close_packet(packet, length, final = false)
+  assert_packet packet, HTTP::WebSocket::Opcode::CLOSE, length, final: final
+end
+
+private def assert_packet(packet, opcode, length, final = false)
+  packet.opcode.should eq(opcode)
+  packet.length.should eq(length)
+  packet.final.should eq(final)
+end
+
 describe HTTP::WebSocket do
   describe "receive" do
     it "can read a small text packet" do
@@ -15,9 +33,7 @@ describe HTTP::WebSocket do
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(5)
-      result.final?.should be_true
+      assert_text_packet result, 5, final: true
       String.new(buffer[0, result.length]).should eq("Hello")
     end
 
@@ -31,15 +47,11 @@ describe HTTP::WebSocket do
 
       2.times do
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(3)
-        result.final?.should be_false
+        assert_text_packet result, 3, final: false
         String.new(buffer).should eq("Hel")
 
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(2)
-        result.final?.should be_true
+        assert_text_packet result, 2, final: true
         String.new(buffer[0, 2]).should eq("lo")
       end
     end
@@ -54,15 +66,11 @@ describe HTTP::WebSocket do
 
       2.times do
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(3)
-        result.final?.should be_false
+        assert_text_packet result, 3, final: false
         String.new(buffer).should eq("Hel")
 
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(2)
-        result.final?.should be_true
+        assert_text_packet result, 2, final: true
         String.new(buffer[0, 2]).should eq("lo")
       end
     end
@@ -78,15 +86,11 @@ describe HTTP::WebSocket do
 
       2.times do
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(3)
-        result.final?.should be_false
+        assert_text_packet result, 3, final: false
         String.new(buffer[0, 3]).should eq("Hel")
 
         result = ws.receive(buffer)
-        result.type.should eq(:text)
-        result.length.should eq(2)
-        result.final?.should be_true
+        assert_text_packet result, 2, final: true
         String.new(buffer[0, 2]).should eq("lo")
       end
     end
@@ -98,9 +102,7 @@ describe HTTP::WebSocket do
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
-      result.type.should eq(:ping)
-      result.length.should eq(5)
-      result.final?.should be_true
+      assert_ping_packet result, 5, final: true
       String.new(buffer[0, result.length]).should eq("Hello")
     end
 
@@ -114,21 +116,15 @@ describe HTTP::WebSocket do
       buffer = Slice(UInt8).new(64)
 
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(3)
-      result.final?.should be_false
+      assert_text_packet result, 3, final: false
       String.new(buffer[0, 3]).should eq("Hel")
 
       result = ws.receive(buffer)
-      result.type.should eq(:ping)
-      result.length.should eq(5)
-      result.final?.should be_true
+      assert_ping_packet result, 5, final: true
       String.new(buffer[0, result.length]).should eq("Hello")
 
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(2)
-      result.final?.should be_true
+      assert_text_packet result, 2, final: true
       String.new(buffer[0, 2]).should eq("lo")
     end
 
@@ -140,9 +136,7 @@ describe HTTP::WebSocket do
       buffer = Slice(UInt8).new(2048)
 
       result = ws.receive(buffer)
-      result.type.should eq(:text)
-      result.length.should eq(1023)
-      result.final?.should be_true
+      assert_text_packet result, 1023, final: true
       String.new(buffer[0, 1023]).should eq("x" * 1023)
     end
 
@@ -153,9 +147,7 @@ describe HTTP::WebSocket do
 
       buffer = Slice(UInt8).new(64)
       result = ws.receive(buffer)
-      result.type.should eq(:close)
-      result.length.should eq(0)
-      result.final?.should be_true
+      assert_close_packet result, 0, final: true
     end
   end
 
