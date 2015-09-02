@@ -70,6 +70,9 @@ struct TimeFormat
         when 'U'
           # Week of year, Sunday is first day of week
           week_of_year_monday_1_7
+        when 'V'
+          # Week of year according ISO 8601
+          iso8601_week_of_year
         when 'w'
           day_of_week_sunday_0_6
         when 'W'
