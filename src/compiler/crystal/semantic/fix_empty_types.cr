@@ -25,8 +25,8 @@ module Crystal
 
     def visit(node : FunLiteral)
       node.def.body.accept self
-      unless node.def.body.type?
-        node.def.body.type = @mod.no_return
+      unless node.def.type?
+        node.def.type = @mod.no_return
       end
       false
     end

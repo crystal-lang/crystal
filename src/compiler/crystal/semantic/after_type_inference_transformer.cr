@@ -464,17 +464,14 @@ module Crystal
     end
 
     def transform(node : FunLiteral)
-      super
-
-      node.def.body = node.def.body.transform(self)
-
       body = node.def.body
-      if !body.type? && !body.is_a?(Return)
+      if node.def.no_returns? && !body.type?
         node.def.body = untyped_expression(body)
         rebind_node node.def, node.def.body
         node.update
+      else
+        node.def.body = node.def.body.transform(self)
       end
-
       node
     end
 

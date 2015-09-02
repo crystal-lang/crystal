@@ -229,6 +229,8 @@ describe "Code gen: module" do
 
   it "codegens proc of a module that was never included" do
     codegen(%(
+      require "prelude"
+
       module Moo
       end
 
