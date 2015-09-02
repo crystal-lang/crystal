@@ -99,6 +99,15 @@ struct Enum
     {% end %}
   end
 
+  # Returns the enum member that has the given value, or `nil` if
+  # no such member exists.
+  macro def self.from_value(value) : self | Nil
+    {% for member in @constants %}
+      return {{member}} if {{member}}.value == value
+    {% end %}
+    nil
+  end
+
   # macro def self.to_h : Hash(String, self)
   #   {
   #     {% for member in @constants %}
