@@ -4,24 +4,6 @@ require "../../../../src/compiler/crystal/**"
 
 include Crystal
 
-module Crystal
-  class Location
-    def top_location
-      f = filename
-      if f.is_a?(VirtualFile)
-        loc = f.expanded_location
-        if loc
-          loc.top_location
-        else
-          nil
-        end
-      else
-        self
-      end
-    end
-  end
-end
-
 def processed_implementation_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
@@ -50,9 +32,11 @@ def assert_implementations(code)
   code = code.gsub('‸', "").gsub('༓', "")
 
   if cursor_location
-    visitor, _ = processed_implementation_visitor(code, cursor_location)
+    visitor, result = processed_implementation_visitor(code, cursor_location)
 
-    visitor.locations.map(&.top_location.to_s).sort.should eq(expected_locations.map(&.to_s))
+    result_location = result.implementations.not_nil!.map{ |e| Location.new(e.line.not_nil!, e.column.not_nil!, e.filename.not_nil!).to_s }.sort
+
+    result_location.should eq(expected_locations.map(&.to_s))
   else
     raise "no cursor found in spec"
   end
@@ -228,5 +212,49 @@ describe "implementations" do
     exp.column.should eq(9)
     exp.macro.should eq("foo")
     exp.filename.should eq(".")
+  end
+
+  it "can display text output" do
+    visitor, result = processed_implementation_visitor(%(
+      macro foo
+        def bar
+        end
+      end
+
+      macro baz
+        foo
+      end
+
+      baz
+      bar
+    ), Location.new(12, 9, "."))
+
+    String::Builder.build do |io|
+      result.to_text(io)
+    end.should eq %(1 implementation found
+.:11:7
+ ~> macro baz: .:8:9
+ ~> macro foo: .:3:9
+)
+  end
+
+  it "can display json output" do
+    _, result = processed_implementation_visitor(%(
+      macro foo
+        def bar
+        end
+      end
+
+      macro baz
+        foo
+      end
+
+      baz
+      bar
+    ), Location.new(12, 9, "."))
+
+    String::Builder.build do |io|
+      result.to_json(io)
+    end.should eq %({"status":"ok","message":"1 implementation found","implementations":[{"line":11,"column":7,"filename":".","expands":{"line":8,"column":9,"filename":".","macro":"baz","expands":{"line":3,"column":9,"filename":".","macro":"foo"}}}]})
   end
 end
