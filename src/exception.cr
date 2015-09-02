@@ -167,7 +167,7 @@ end
 #
 # ```
 # h = {"foo" => "bar"}
-# h["baz"] #=> KeyError: Missing hash value: "baz"
+# h["baz"] #=> KeyError: Missing hash key: "baz"
 # ```
 class KeyError < Exception
 end
