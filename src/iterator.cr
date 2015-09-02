@@ -235,12 +235,18 @@ module Iterator(T)
     end
   end
 
-  # Calls block for each element of enum repeatedly forever.
+  # Returns an iterator that repeatedly returns the elements of the original
+  # iterator forever starting back at the beginning when the end was reached.
   #
-  # ```
-  # a = ["a", "b", "c"]
-  # a.cycle { |x| puts x }  # print, a, b, c, a, b, c,.. forever.
-  # ```
+  #     iter = ["a", "b", "c"].each.cycle
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     # and so an and so on
   def cycle
     Cycle(typeof(self), T).new(self)
   end
@@ -264,12 +270,18 @@ module Iterator(T)
     end
   end
 
-  # Calls block for each element of enum repeatedly n times.
+  # Returns an iterator that repeatedly returns the elements of the original
+  # iterator starting back at the beginning when the end was reached,
+  # but only n times.
   #
-  # ```
-  # a = ["a", "b", "c"]
-  # a.cycle(2) { |x| puts x }  # print, a, b, c, a, b, c.
-  # ```
+  #     iter = ["a", "b", "c"].each.cycle(2)
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => Iterator::Stop::INSTANCE
   def cycle(n : Int)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
@@ -310,10 +322,9 @@ module Iterator(T)
   # Calls the given block once for each element, passing that element
   # as a parameter.
   #
-  # ```
-  # a = [ "a", "b", "c" ]
-  # a.each {|x| print x, " " } # => "a b c"
-  # ```
+  #     iter = [ "a", "b", "c" ].each
+  #     iter.each {|x| print x, " " } # Prints "a b c"
+  #
   def each
     while true
       value = self.next
@@ -322,14 +333,16 @@ module Iterator(T)
     end
   end
 
-  # Iterates the given block for each slice of `n` elements.
+  # Returns an iterator that then returns slices of n elements of the initial
+  # iterator.
   #
-  # ```
-  # (1..9).each_slice(3) { |a| p a }
-  # # => [1, 2, 3]
-  # # => [4, 5, 6]
-  # # => [7, 8, 9]
-  # ```
+  #
+  #     iter = (1..9).each.each_slice(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [4, 5, 6]
+  #     iter.next # => [7, 8, 9]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def each_slice(n)
     slice(n)
   end
@@ -360,12 +373,16 @@ module Iterator(T)
     end
   end
 
-  # Returns a new array with the results of running block once for
-  # every element in enum.
+  # Returns an iterator that applies the given block to the next element and
+  # returns the result.
   #
-  # ```
-  # [1, 2, 3].map &.*(2) # => [2, 4, 6]
-  # ```
+  #
+  #     iter = [1, 2, 3].each.map &.*(2)
+  #     iter.next # => 2
+  #     iter.next # => 4
+  #     iter.next # => 6
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def map(&func : T -> U)
     Map(typeof(self), T, U).new(self, func)
   end
@@ -384,8 +401,13 @@ module Iterator(T)
     end
   end
 
-  # Returns an array for all elements of enum for which the given
-  # block returns false.
+  # Returns an iterator that only returns elements for which the the passed in
+  # block returns a falsey value.
+  #
+  #     iter = [1, 2, 3].each.reject &.odd?
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def reject(&func : T -> U)
     Reject(typeof(self), T, U).new(self, func)
   end
@@ -408,8 +430,14 @@ module Iterator(T)
     end
   end
 
-  # Returns an array containing all elements of enum for which the
-  # given block returns a true value.
+  # Returns an iterator that only returns elements for which the the passed
+  # in block returns a truthy value.
+  #
+  #     iter = [1, 2, 3].each.select &.odd?
+  #     iter.next # => 1
+  #     iter.next # => 3
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def select(&func : T -> U)
     Select(typeof(self), T, U).new(self, func)
   end
@@ -521,11 +549,14 @@ module Iterator(T)
   end
 
 
-  # Returns first `n` elements from enum.
+  # Returns an iterator that only returns the first n elements of the
+  # initial iterator.
   #
-  # ```
-  # ["a", "b", "c"].take 2 # => ["a", "b"]
-  # ```
+  #     iter = ["a", "b", "c"].each.take 2
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def take(n)
     raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
     Take(typeof(self), T).new(self, n)
@@ -604,14 +635,29 @@ module Iterator(T)
     end
   end
 
-  # Returns uniq elements from enum.
+  # Returns an iterator that only returns unique values of the original
+  # iterator.
   #
-  # ```
-  # ["a", "b", "c"].uniq      # => ["a", "b", "c"]
-  # ["a", "b", "c", "c"].uniq # => ["a", "b", "c"]
-  # ```
+  #     iter = [1, 2, 1].each.uniq
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def uniq
     uniq &.itself
+  end
+
+  # Returns an iterator that only returns unique values of the original
+  # iterator. The provided block is applied to the elements to determine the
+  # value to be checked for uniqueness.
+  #
+  #     iter = [["a", "a"], ["b", "a"], ["a", "c"]].uniq &.first
+  #     iter.next # => ["a", "a"]
+  #     iter.next # => ["b", "a"]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def uniq(&func : T -> U)
+    Uniq(typeof(self), T, U).new(self, func)
   end
 
   # :nodoc:
@@ -639,20 +685,6 @@ module Iterator(T)
       @hash.clear
       super
     end
-  end
-
-  # Returns uniq elements from enum. It will use the return value of
-  # the block for comparison.
-  #
-  # ```
-  # [["a", "a"], ["b", "a"], ["c", "a"]].uniq &.first
-  # # => [["a", "a"], ["b", "a"], ["c", "a"]]
-  #
-  # [["a", "a"], ["b", "a"], ["c", "a"]].uniq &.last
-  # # => [["a", "a"]]
-  # ```
-  def uniq(&func : T -> U)
-    Uniq(typeof(self), T, U).new(self, func)
   end
 
   def with_index(offset = 0)
@@ -698,16 +730,17 @@ module Iterator(T)
     end
   end
 
-  # Takes one element from enum and merges corresponding elements from
-  # each args. This generates a sequence of n-element arrays with tuples,
-  # where n is one more than the count of arguments:
+  # Returns an iterator that returns the elements of this iterator and the given
+  # one pairwise as tupels.
   #
-  # ```
-  # a = [ 4, 5, 6 ]
-  # b = [ 7, 8, 9 ]
+  #    iter1 = [4, 5, 6].each
+  #    iter2 = [7, 8, 9].each
+  #    iter = iter1.zip(iter2)
+  #    iter.next # => {4, 7}
+  #    iter.next # => {5, 8}
+  #    iter.next # => {6, 9}
+  #    iter.next # => Iterator::Stop::INSTANCE
   #
-  # a.zip(b) # => [{4, 7}, {5, 8}, {6, 9}]
-  # ```
   def zip(other : Iterator(U))
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end
