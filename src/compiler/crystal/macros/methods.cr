@@ -16,6 +16,10 @@ module Crystal
         interpret_argless_method("stringify", args) { stringify }
       when "class_name"
         interpret_argless_method("class_name", args) { class_name }
+      when "raise"
+        interpret_one_arg_method(method, args) do |arg|
+          raise arg.to_s
+        end
       when "=="
         BoolLiteral.new(self == args.first)
       when "!="

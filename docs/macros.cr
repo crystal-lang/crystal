@@ -151,6 +151,11 @@ module Macros
     # ```
     def is_a?(name) : BoolLiteral
     end
+
+    # Gives a compile-time error with the given message. This will
+    # highlight this node in the error message.
+    def raise(message) : NoReturn
+    end
   end
 
   # The empty node. Similar to a `NilLiteral` but its textual representation

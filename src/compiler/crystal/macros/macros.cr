@@ -437,6 +437,8 @@ module Crystal
 
           begin
             @last = receiver.interpret(node.name, args, node.block, self)
+          rescue ex : Crystal::Exception
+            node.raise ex.message, inner: ex
           rescue ex
             node.raise ex.message
           end
