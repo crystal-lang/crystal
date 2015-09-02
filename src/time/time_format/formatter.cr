@@ -178,7 +178,8 @@ struct TimeFormat
 
     # Internal helper wethod: Figure how many weeks into the year
     private def week_of_year(time: Time, firstweekday: Number) : Number
-      day_of_week = TimeFormat.new("%w").format(time).to_i
+      day_of_week = time.day_of_week.value
+      day_of_week = 7 if day_of_week == 0 && firstweekday == 1
       week_num = 0
 
       if firstweekday == 1
@@ -189,8 +190,7 @@ struct TimeFormat
         end
       end
 
-      day_of_year = TimeFormat.new("%j").format(time).to_i
-      week_num = ((day_of_year + 7 - day_of_week) / 7)
+      week_num = ((time.day_of_year + 7 - day_of_week) / 7)
       week_num = 0 if week_num < 0
 
       week_num
@@ -209,9 +209,10 @@ struct TimeFormat
       weeknum = week_of_year(time, firstweekday)
 
       # What day of the week does January 1 fall on?
-      day_of_week_format = firstweekday == 0 ? TimeFormat.new("%w") : TimeFormat.new("%u")
+      day_of_week = time.day_of_week.value
+      day_of_week = 7 if day_of_week == 0 && firstweekday == 1
 
-      jan1day = day_of_week_format.format(time).to_i - (TimeFormat.new("%j").format(time).to_i % 7)
+      jan1day = day_of_week - (time.day_of_year % 7)
       jan1day += 7 if jan1day < 0
 
       # If Jan 1 was a Monday through Thursday, it was in
@@ -233,7 +234,7 @@ struct TimeFormat
       when 5, 6, 0 # Friday, Saturday, Sunday
         if weeknum == 0
           # get week number of last week of last year
-          weeknum = iso8601_week_of_year(Time.new(31, 11, time.year - 1), firstweekday)
+          weeknum = iso8601_week_of_year(Time.new(time.year - 1, 12, 31), firstweekday)
         end
       end
 
@@ -248,7 +249,8 @@ struct TimeFormat
         #	30  31
         #	31
 
-        wday = TimeFormat.new("%w").format(time).to_i
+        wday = time.day_of_week.value
+        wday = 7 if wday == 0 && firstweekday == 1
         mday = time.day
 
         if (wday == 1 && (mday >= 29 && mday <= 31)) || (wday == 2 && (mday == 30 || mday == 31)) || (wday == 3 &&  mday == 31)
