@@ -11,12 +11,12 @@ class HTTP::Response
   def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
-    if @status_code / 100 == 1 || @status_code == 204 || @status_code == 304
+    if Response.mandatory_body?(@status_code)
+      @body = "" unless @body || @body_io
+    else
       if @body || @body_io
         raise ArgumentError.new("status #{status_code} should not have a body")
       end
-    else
-      @body = "" unless @body || @body_io
     end
 
     if (body = @body)
@@ -64,6 +64,10 @@ class HTTP::Response
       @body_io = nil
     end
   end
+  
+  def self.mandatory_body?(status_code)
+    !(status_code / 100 == 1 || status_code == 204 || status_code == 304)
+  end
 
   def self.from_io(io)
     from_io(io) do |response|
@@ -78,7 +82,7 @@ class HTTP::Response
       http_version, status_code, status_message = line.split(3)
       status_code = status_code.to_i
       status_message = status_message.chomp
-      mandatory_body = !(status_code / 100 == 1 || status_code == 204 || status_code == 304)
+      mandatory_body = mandatory_body?(status_code)
 
       HTTP.parse_headers_and_body(io, mandatory_body) do |headers, body|
         return yield new status_code, nil, headers, status_message, http_version, body
