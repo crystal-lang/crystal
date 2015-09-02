@@ -29,17 +29,18 @@ module HTTP
     end
   end
   
+  # :nodoc:
   class UnknownLengthContent < Content
     include IO
 
     def initialize(@io)
     end
 
-    def read(slice : Slice(UInt8), count)
-      @io.read(slice, count)
+    def read(slice : Slice(UInt8))
+      @io.read(slice)
     end
 
-    def write(slice : Slice(UInt8), count)
+    def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to UnknownLengthContent"
     end
   end
