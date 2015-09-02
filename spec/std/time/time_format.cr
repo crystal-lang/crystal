@@ -13,7 +13,7 @@ describe TimeFormat do
         time_format.format(Time.new(2012,  4, 12)).should eq("14")
         time_format.format(Time.new(2012,  4, 13)).should eq("14")
         time_format.format(Time.new(2012,  4, 14)).should eq("14")
-        time_format.format(Time.new(2012,  4, 15)).should eq("14")
+        time_format.format(Time.new(2012,  4, 15)).should eq("15")
         time_format.format(Time.new(2012,  4, 16)).should eq("15")
         time_format.format(Time.new(2014,  9,  2)).should eq("35")
         time_format.format(Time.new(1991, 11, 23)).should eq("46")
