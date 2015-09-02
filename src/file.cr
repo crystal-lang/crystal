@@ -149,7 +149,11 @@ class File < FileDescriptorIO
 
   def self.file?(path)
     if LibC.stat(path, out stat) != 0
-      return false
+      if LibC.errno == Errno::ENOENT
+        return false
+      else
+        raise Errno.new("stat")
+      end
     end
     File::Stat.new(stat).file?
   end
@@ -263,7 +267,11 @@ class File < FileDescriptorIO
   # Returns true if the pointed file is a symlink.
   def self.symlink?(filename)
     if LibC.lstat(filename, out stat) != 0
-      false
+      if LibC.errno == Errno::ENOENT
+        return false
+      else
+        raise Errno.new("stat")
+      end
     end
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
