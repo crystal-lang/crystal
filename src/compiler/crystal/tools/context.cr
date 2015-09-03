@@ -107,6 +107,7 @@ module Crystal
             if loc = typed_def.location
               if loc.filename == typed_def.end_location.try(&.filename) && contains_target(typed_def)
                 visit_and_append_context(typed_def) do
+                  yield
                   add_context "self", type
                   if type.is_a?(InstanceVarContainer)
                     type.instance_vars.values.each do |ivar|
@@ -122,14 +123,31 @@ module Crystal
     end
 
     def process_type(type)
+      process_type(type) { }
+    end
+
+    def process_type(type, &block)
       if type.is_a?(ContainedType)
         type.types.values.each do |inner_type|
           process_type(inner_type)
         end
       end
 
-      process_instance_defs type.metaclass
-      process_instance_defs type
+      if type.is_a?(GenericType)
+        type_vars = type.type_vars
+        type.generic_types.each do |type_vars_args, instanced_types|
+          process_type(instanced_types) do
+            type_vars.each.zip(type_vars_args.each).each do |e|
+              generic_arg_name, generic_arg_type = e
+                # TODO handle generic_arg_type that are not types but ASTNode
+                add_context generic_arg_name, generic_arg_type if generic_arg_type.is_a?(Type)
+            end
+          end
+        end
+      else
+        process_instance_defs type.metaclass, &block
+        process_instance_defs type, &block
+      end
     end
 
     def process(result : Compiler::Result)

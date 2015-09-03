@@ -327,4 +327,26 @@ describe "context" do
     Bar.new("s")
     ), "self", "@ivar", "ivar"
   end
+
+  it "can get context in generic class" do
+    assert_context_keys %(
+    class Foo(T, S)
+      def foo(a)
+        ‸
+      end
+    end
+
+    Foo(String, Char).new.foo(1)
+    ), "T", "S", "self", "a"
+
+    assert_context_includes %(
+    class Foo(T, S)
+      def foo(a)
+        ‸
+      end
+    end
+
+    Foo(String, Char).new.foo(1)
+    ), "T", ["String"]
+  end
 end
