@@ -90,9 +90,23 @@ module Crystal
       @locations = [] of Location
     end
 
+    def process_type(type)
+      if type.is_a?(DefInstanceContainer)
+        type.def_instances.values.try do |typed_defs|
+          typed_defs.each do |typed_def|
+            typed_def.accept(self)
+          end
+        end
+      end
+    end
+
     def process(result : Compiler::Result)
       result.program.def_instances.each_value do |typed_def|
         typed_def.accept(self)
+      end
+
+      result.program.types.values.each do |type|
+        process_type type.metaclass
       end
 
       result.node.accept(self)

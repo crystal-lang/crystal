@@ -257,4 +257,18 @@ describe "implementations" do
       result.to_json(io)
     end.should eq %({"status":"ok","message":"1 implementation found","implementations":[{"line":11,"column":7,"filename":".","expands":{"line":8,"column":9,"filename":".","macro":"baz","expands":{"line":3,"column":9,"filename":".","macro":"foo"}}}]})
   end
+
+  it "find implementation in class methods" do
+    assert_implementations %(
+    ༓def foo
+    end
+
+    class Bar
+      def self.bar
+        f‸oo
+      end
+    end
+
+    Bar.bar)
+  end
 end
