@@ -1511,16 +1511,6 @@ module Crystal
       end
       program.union_of instances
     end
-
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
-      super
-      io << "("
-      type_vars.each_with_index do |type_var, i|
-        io << ", " if i > 0
-        type_var.to_s(io)
-      end
-      io << ")"
-    end
   end
 
   class GenericClassInstanceType < Type
