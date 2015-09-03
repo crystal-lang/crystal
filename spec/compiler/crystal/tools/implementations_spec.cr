@@ -294,4 +294,36 @@ describe "implementations" do
     Bar(B).new.bar
     )
   end
+
+  it "find implementation in generic class methods" do
+    assert_implementations %(
+    ༓def foo
+    end
+
+    class Bar(T)
+      def self.bar
+        f‸oo
+      end
+    end
+
+    Bar(Nil).bar
+    )
+  end
+
+  it "find implementation inside a module class" do
+    assert_implementations %(
+    ༓def foo
+    end
+
+    module Baz
+      class Bar(T)
+        def self.bar
+          f‸oo
+        end
+      end
+    end
+
+    Baz::Bar(Nil).bar
+    )
+  end
 end

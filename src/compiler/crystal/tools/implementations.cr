@@ -91,6 +91,14 @@ module Crystal
     end
 
     def process_type(type)
+      if type.is_a?(ContainedType)
+        type.types.values.each do |inner_type|
+          process_type(inner_type)
+        end
+      end
+
+      process_type type.metaclass if type.metaclass != type
+
       if type.is_a?(DefInstanceContainer)
         type.def_instances.values.try do |typed_defs|
           typed_defs.each do |typed_def|
@@ -113,7 +121,6 @@ module Crystal
 
       result.program.types.values.each do |type|
         process_type type
-        process_type type.metaclass
       end
 
       result.node.accept(self)
