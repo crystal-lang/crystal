@@ -365,4 +365,28 @@ describe "context" do
     Baz::Bar::Foo.bar_foo(1)
     ), "self", "a"
   end
+
+  it "use type filters from is_a?" do
+    assert_context_includes %(
+    def foo(c)
+      if c.is_a?(String)
+        ‸
+      end
+    end
+
+    foo(1 < 0 ? nil : "s")
+    ), "c", ["String"]
+  end
+
+  it "use type filters from if var" do
+    assert_context_includes %(
+    def foo(c)
+      if c
+        ‸
+      end
+    end
+
+    foo(1 < 0 ? nil : "s")
+    ), "c", ["String"]
+  end
 end

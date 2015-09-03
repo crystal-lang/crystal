@@ -237,6 +237,39 @@ module Crystal
       contains_target(node)
     end
 
+    # TODO handle type filters of case statements
+
+    def visit(node : If)
+      if contains_target(node)
+        # TODO handle conditions in expressions
+        case cond = node.cond
+        when Var
+          filters = TypeFilters.truthy(cond)
+        when IsA
+          if (obj = cond.obj).is_a?(Var)
+            filters = TypeFilters.new(obj, SimpleTypeFilter.new(cond.const.type))
+          end
+        end
+
+        if filters
+          # make a copy of the current context
+          current_context = {} of String => MetaVar
+          @context.each do |name, type|
+            current_context[name] = MetaVar.new(name, type)
+          end
+
+          # restrict the whole context
+          filters.each do |name, filter|
+            filtered_var = current_context[name]
+            filtered_var.bind_to(current_context[name].filtered_by(filter))
+            add_context name, filtered_var.type
+          end
+        end
+
+        return true
+      end
+    end
+
     def visit(node)
       contains_target(node)
     end
