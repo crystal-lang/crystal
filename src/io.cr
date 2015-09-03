@@ -280,7 +280,7 @@ module IO
   # io << "Crystal"
   # io.to_s #=> "1-Crystal"
   # ```
-  def <<(obj)
+  def <<(obj) : self
     obj.to_s self
     self
   end
@@ -294,8 +294,9 @@ module IO
   # io.print "Crystal"
   # io.to_s #=> "1-Crystal"
   # ```
-  def print(obj)
+  def print(obj) : Nil
     self << obj
+    nil
   end
 
   # Writes the given objects into this IO by invoking `to_s(io)`
@@ -306,7 +307,7 @@ module IO
   # io.print 1, '-', "Crystal"
   # io.to_s #=> "1-Crystal"
   # ```
-  def print(*objects : _)
+  def print(*objects : _) : Nil
     objects.each do |obj|
       print obj
     end
@@ -322,9 +323,10 @@ module IO
   # io.puts "world"
   # io.to_s #=> "hello\nworld\n"
   # ```
-  def puts(string : String)
+  def puts(string : String) : Nil
     self << string
     puts unless string.ends_with?('\n')
+    nil
   end
 
   # Writes the given object to this IO followed by a newline character.
@@ -335,7 +337,7 @@ module IO
   # io.puts "Crystal"
   # io.to_s #=> "1\nCrystal\n"
   # ```
-  def puts(obj)
+  def puts(obj) : Nil
     self << obj
     puts
   end
@@ -347,8 +349,9 @@ module IO
   # io.puts
   # io.to_s #=> "\n"
   # ```
-  def puts
+  def puts : Nil
     write_byte '\n'.ord.to_u8
+    nil
   end
 
   # Writes the given objects, each followed by a newline character.
@@ -358,19 +361,19 @@ module IO
   # io.puts 1, '-', "Crystal"
   # io.to_s #=> "1\n-\nCrystal\n"
   # ```
-  def puts(*objects : _)
+  def puts(*objects : _) : Nil
     objects.each do |obj|
       puts obj
     end
     nil
   end
 
-  def printf(format_string, *args)
+  def printf(format_string, *args) : Nil
     printf format_string, args
   end
 
   # ditto
-  def printf(format_string, args : Array | Tuple)
+  def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter.new(format_string, args, self).format
     nil
   end
