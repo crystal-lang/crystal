@@ -326,4 +326,22 @@ describe "implementations" do
     Baz::Bar(Nil).bar
     )
   end
+
+  it "find implementation inside contained class' class method" do
+    assert_implementations %(
+    ༓def foo
+
+    end
+
+    class Bar(T)
+      class Foo
+        def self.bar_foo
+          f‸oo
+        end
+      end
+    end
+
+    Bar::Foo.bar_foo
+    )
+  end
 end

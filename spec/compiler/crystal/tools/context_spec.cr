@@ -349,4 +349,20 @@ describe "context" do
     Foo(String, Char).new.foo(1)
     ), "T", ["String"]
   end
+
+  it "can get context in contained class' class method" do
+    assert_context_keys %(
+    module Baz
+      class Bar(T)
+        class Foo
+          def self.bar_foo(a)
+            ‸
+          end
+        end
+      end
+    end
+
+    Baz::Bar::Foo.bar_foo(1)
+    ), "self", "a"
+  end
 end
