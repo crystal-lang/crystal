@@ -98,6 +98,12 @@ module Crystal
           end
         end
       end
+
+      if type.is_a?(GenericType)
+        type.generic_types.values.each do |instanced_type|
+          process_type(instanced_type)
+        end
+      end
     end
 
     def process(result : Compiler::Result)
@@ -106,6 +112,7 @@ module Crystal
       end
 
       result.program.types.values.each do |type|
+        process_type type
         process_type type.metaclass
       end
 

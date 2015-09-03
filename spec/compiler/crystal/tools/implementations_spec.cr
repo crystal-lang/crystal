@@ -271,4 +271,27 @@ describe "implementations" do
 
     Bar.bar)
   end
+
+  it "find implementation in generic class" do
+    assert_implementations %(
+    class A
+      ༓def self.foo
+      end
+    end
+
+    class B
+      ༓def self.foo
+      end
+    end
+
+    class Bar(T)
+      def bar
+        T.f‸oo
+      end
+    end
+
+    Bar(A).new.bar
+    Bar(B).new.bar
+    )
+  end
 end
