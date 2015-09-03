@@ -100,13 +100,7 @@ module Crystal
       @def_with_yield = nil
     end
 
-    def process_type(type)
-      if type.is_a?(ContainedType)
-        type.types.values.each do |inner_type|
-          process_type(inner_type)
-        end
-      end
-
+    def process_instance_defs(type)
       if type.is_a?(DefInstanceContainer)
         type.def_instances.values.try do |typed_defs|
           typed_defs.each do |typed_def|
@@ -125,6 +119,17 @@ module Crystal
           end
         end
       end
+    end
+
+    def process_type(type)
+      if type.is_a?(ContainedType)
+        type.types.values.each do |inner_type|
+          process_type(inner_type)
+        end
+      end
+
+      process_instance_defs type.metaclass
+      process_instance_defs type
     end
 
     def process(result : Compiler::Result)

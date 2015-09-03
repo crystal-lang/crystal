@@ -303,4 +303,16 @@ describe "context" do
     Foo::Bar.new.bar("foo")
     ), "o", ["String"]
   end
+
+  it "can get context inside class methods" do
+    assert_context_includes %(
+    class Bar
+      def self.bar(o)
+        ‸
+      end
+    end
+
+    Bar.bar("foo")
+    ), "o", ["String"]
+  end
 end
