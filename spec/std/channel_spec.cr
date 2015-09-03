@@ -189,12 +189,24 @@ describe BufferedChannel do
   end
 
   it "can be closed from different fiber" do
-    ch = BufferedChannel(Int32).new
-    received = false
-    spawn { expect_raises(ChannelClosed) { ch.receive }; received = true }
-    Scheduler.yield
+    ch        = BufferedChannel(Int32).new
+    listening = false
+    received  = false
+
+    spawn { expect_raises(ChannelClosed) { listening = true; ch.receive }; received = true }
+
+    10.times do # Workaround #1311
+      Scheduler.yield
+      break if listening
+    end
+    listening.should be_true
+
     ch.close
-    Scheduler.yield
+
+    10.times do # Workaround #1311
+      Scheduler.yield
+      break if received
+    end
     received.should be_true
   end
 
