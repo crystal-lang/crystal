@@ -289,4 +289,18 @@ describe "context" do
     end
     ), "a", "b"
   end
+
+  it "can get context inside a module" do
+    assert_context_includes %(
+    module Foo
+      class Bar
+        def bar(o)
+          ‸
+        end
+      end
+    end
+
+    Foo::Bar.new.bar("foo")
+    ), "o", ["String"]
+  end
 end
