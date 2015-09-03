@@ -315,4 +315,16 @@ describe "context" do
     Bar.bar("foo")
     ), "o", ["String"]
   end
+
+  it "can get context inside initialize" do
+    assert_context_keys %(
+    class Bar
+      def initialize(@ivar)
+        ‸
+      end
+    end
+
+    Bar.new("s")
+    ), "self", "@ivar", "ivar"
+  end
 end
