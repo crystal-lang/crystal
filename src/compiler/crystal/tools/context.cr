@@ -18,11 +18,7 @@ module Crystal
     end
 
     def self.pretty_type_name(type, io)
-      if type.is_a?(UnionType)
-        type.to_s_with_options(io, skip_union_parens = true)
-      else
-        type.to_s(io)
-      end
+      type.to_s_with_options(io, true)
     end
   end
 
