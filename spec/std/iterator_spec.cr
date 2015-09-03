@@ -49,6 +49,15 @@ describe Iterator do
     end
   end
 
+  describe "compact_map" do
+    it "does not return nil values" do
+      iter = [1, nil, 2, nil].each.compact_map {|e| e.try &.*(2)}
+      iter.next.should eq 2
+      iter.next.should eq 4
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
   describe "cons" do
     it "conses" do
       iter = (1..5).each.cons(3)
@@ -101,6 +110,32 @@ describe Iterator do
     it "does not cycle provided a negative size" do
       iter = (1..2).each.cycle(-1)
       iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
+  describe "each" do
+    it "yields the individual elements to the block" do
+      iter = ["a", "b", "c"].each
+      concatinated = ""
+      iter.each {|e| concatinated += e}
+      concatinated.should eq "abc"
+    end
+  end
+
+  describe "each_slice" do
+    it "gets all the slices of the size n" do
+      iter = (1..9).each.each_slice(3)
+      iter.next.should eq [1, 2, 3]
+      iter.next.should eq [4, 5, 6]
+      iter.next.should eq [7, 8, 9]
+      iter.next.should be_a Iterator::Stop
+    end
+
+    it "also works if it does not add up" do
+      iter = (1..4).each.each_slice(3)
+      iter.next.should eq [1, 2, 3]
+      iter.next.should eq [4]
+      iter.next.should be_a Iterator::Stop
     end
   end
 
