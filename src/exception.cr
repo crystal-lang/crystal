@@ -67,6 +67,12 @@ def caller
       fname_buffer = fname_buffer.realloc(fname_size)
     end
     backtrace << "#{fname} +#{offset} [#{pc}]"
+    ifdef i686
+      # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
+      # The unwind info is corrupted when `makecontext` is used.
+      # Stop the backtrace here. There is nothing interest beyond this point anyway.
+      break if fname == "makecontext"
+    end
   end
   backtrace
 end
