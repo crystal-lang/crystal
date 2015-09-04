@@ -149,7 +149,7 @@ end
 # Raised when the arguments are wrong and there isn't a more specific `Exception` class.
 #
 # ```
-# [1, 2, 3].first(-4) #=> ArgumentError: attempt to take negative size
+# [1, 2, 3].take(-4) #=> ArgumentError: attempt to take negative size
 # ```
 class ArgumentError < Exception
   def initialize(message = "Argument error")
