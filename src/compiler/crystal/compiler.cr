@@ -396,7 +396,7 @@ module Crystal
       end
 
       def object_name
-        "#{@output_dir}/#{@name}.o"
+        Crystal.relative_filename("#{@output_dir}/#{@name}.o")
       end
 
       def bc_name
