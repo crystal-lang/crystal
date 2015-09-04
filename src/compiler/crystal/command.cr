@@ -12,16 +12,24 @@ Usage: crystal [command] [switches] [program file] [--] [arguments]
 Command:
     init                     generate new crystal project
     build                    compile program file
-    browser                  open an http server to browse program file
     deps                     install project dependencies
     docs                     generate documentation
     eval                     eval code from args or standard input
-    hierarchy                show type hierarchy
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
-    types                    show type of main variables
+    tool                     run a tool
     --help, -h               show this help
     --version, -v            show version
+USAGE
+
+  COMMANDS_USAGE = <<-USAGE
+Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
+
+Tool:
+    browser                  open an http server to browse program file
+    hierarchy                show type hierarchy
+    types                    show type of main variables
+    --help, -h               show this help
 USAGE
 
   VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
@@ -42,9 +50,6 @@ USAGE
         when "build".starts_with?(command)
           options.shift
           build options
-        when "browser" == command
-          options.shift
-          browser options
         when "deps".starts_with?(command)
           options.shift
           deps options
@@ -54,18 +59,15 @@ USAGE
         when "eval".starts_with?(command)
           options.shift
           eval options
-        when "hierarchy".starts_with?(command)
-          options.shift
-          hierarchy options
         when "run".starts_with?(command)
           options.shift
           run_command options
         when "spec/".starts_with?(command)
           options.shift
           run_specs options
-        when "types".starts_with?(command)
+        when "tool".starts_with?(command)
           options.shift
-          types options
+          tool options
         when "--help" == command, "-h" == command
           puts USAGE
           exit
@@ -93,6 +95,31 @@ USAGE
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/manastech/crystal/issues"
   end
 
+  private def self.tool(options)
+    tool = options.first?
+    if tool
+      case
+      when "browser".starts_with?(tool)
+        options.shift
+        browser options
+      when "hierarchy".starts_with?(tool)
+        options.shift
+        hierarchy options
+      when "types".starts_with?(tool)
+        options.shift
+        types options
+      when "--help" == tool, "-h" == tool
+        puts COMMANDS_USAGE
+        exit
+      else
+        error "unknown tool: #{tool}"
+      end
+    else
+      puts COMMANDS_USAGE
+      exit
+    end
+  end
+
   private def self.init(options)
     Init.run(options)
   end
@@ -103,7 +130,7 @@ USAGE
   end
 
   private def self.browser(options)
-    config, result = compile_no_codegen "browser", options
+    config, result = compile_no_codegen "tool browser", options
     Browser.open result.original_node
   end
 
@@ -132,7 +159,7 @@ USAGE
   end
 
   private def self.hierarchy(options)
-    config, result = compile_no_codegen "hierarchy", options, hierarchy: true
+    config, result = compile_no_codegen "tool hierarchy", options, hierarchy: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
   end
 
@@ -215,7 +242,7 @@ USAGE
   end
 
   private def self.types(options)
-    config, result = compile_no_codegen "types", options
+    config, result = compile_no_codegen "tool types", options
     Crystal.print_types result.original_node
   end
 
