@@ -153,6 +153,7 @@ module BufferedIO
   # Buffered implementation of `IO#read(slice)`.
   def read(slice : Slice(UInt8))
     count = slice.length
+    return 0 if count == 0
 
     if @in_buffer_rem.empty?
       # If we are asked to read more than the buffer's size,

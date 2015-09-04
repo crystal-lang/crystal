@@ -3,11 +3,14 @@ require "spec"
 class BufferedIOWrapper(T)
   include BufferedIO
 
+  getter called_unbuffered_read
+
   def initialize(@io : T)
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
     @out_count = 0
     @flush_on_newline = false
     @sync = false
+    @called_unbuffered_read = false
   end
 
   def self.new(io)
@@ -18,6 +21,7 @@ class BufferedIOWrapper(T)
   end
 
   private def unbuffered_read(slice : Slice(UInt8))
+    @called_unbuffered_read = true
     @io.read(slice)
   end
 
@@ -253,5 +257,12 @@ describe "BufferedIO" do
 
     str.rewind
     str.read_byte.should eq(1_u8)
+  end
+
+  it "shouldn't call unbuffered read if reading to an empty slice" do
+    str = StringIO.new("foo")
+    io = BufferedIOWrapper.new(str)
+    io.read(Slice(UInt8).new(0))
+    io.called_unbuffered_read.should be_false
   end
 end
