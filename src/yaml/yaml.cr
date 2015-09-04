@@ -2,6 +2,7 @@ require "./*"
 
 module YAML
   alias Type = String | Hash(Type, Type) | Array(Type) | Nil
+  alias EventKind = LibYAML::EventType
 
   def self.load(data)
     parser = YAML::Parser.new(data)
