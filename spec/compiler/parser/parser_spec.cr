@@ -1195,5 +1195,9 @@ describe "Parser" do
   assert_syntax_error "while 1 == 1 a; end", "unexpected token"
   assert_syntax_error "case 1 == 1 a; when 2; end", "unexpected token"
   assert_syntax_error "case 1 == 1; when 2 a; end", "unexpected token"
+
+  assert_syntax_error %(class Foo; require "bar"; end), "can't require inside type declarations"
+  assert_syntax_error %(module Foo; require "bar"; end), "can't require inside type declarations"
+  assert_syntax_error %(def foo; require "bar"; end), "can't require inside def"
 end
 

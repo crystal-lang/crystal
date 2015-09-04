@@ -8,6 +8,7 @@ module Crystal
 
     property visibility
     property def_nest
+    property type_nest
     getter? wants_doc
 
     def self.parse(str, def_vars = [Set(String).new])
@@ -24,6 +25,7 @@ module Crystal
       @uses_block_arg = false
       @assigns_special_var = false
       @def_nest = 0
+      @type_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
@@ -1303,6 +1305,8 @@ module Crystal
     end
 
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
+      @type_nest += 1
+
       doc ||= @token.doc
 
       next_token_skip_space_or_newline
@@ -1327,6 +1331,8 @@ module Crystal
       next_token_skip_space
 
       raise "Bug: ClassDef name can only be a Path" unless name.is_a?(Path)
+
+      @type_nest -= 1
 
       class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
       class_def.doc = doc
@@ -1366,6 +1372,8 @@ module Crystal
     end
 
     def parse_module_def
+      @type_nest += 1
+
       location = @token.location
       doc = @token.doc
 
@@ -1384,6 +1392,8 @@ module Crystal
       next_token_skip_space
 
       raise "Bug: ModuleDef name can only be a Path" unless name.is_a?(Path)
+
+      @type_nest -= 1
 
       module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.doc = doc
@@ -1889,6 +1899,9 @@ module Crystal
     end
 
     def parse_require
+      raise "can't require inside def", @token if @def_nest > 0
+      raise "can't require inside type declarations", @token if @type_nest > 0
+
       next_token_skip_space
       check :DELIMITER_START
       string = parse_string_without_interpolation { "interpolation not allowed in require" }

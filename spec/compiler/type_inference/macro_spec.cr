@@ -450,4 +450,30 @@ describe "Type inference: macro" do
       Foo.new
       )) { types["Foo"] }
   end
+
+  it "errors if requires inside class through macro expansion" do
+    assert_error %(
+      macro req
+        require "bar"
+      end
+
+      class Foo
+        req
+      end
+      ),
+      "can't require inside type declarations"
+  end
+
+  it "errors if requires inside if through macro expansion" do
+    assert_error %(
+      macro req
+        require "bar"
+      end
+
+      if 1 == 2
+        req
+      end
+      ),
+      "can't require dynamically"
+  end
 end

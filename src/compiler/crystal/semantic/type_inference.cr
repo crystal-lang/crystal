@@ -112,21 +112,13 @@ module Crystal
 
     def visit_any(node)
       @unreachable = false
-      if nesting_exp?(node)
-        @exp_nest += 1
-        # puts "~~~"
-        # pp node, node.class, "+1", @exp_nest
-      end
+      @exp_nest += 1 if nesting_exp?(node)
 
       true
     end
 
     def end_visit_any(node)
-      if nesting_exp?(node)
-        @exp_nest -= 1
-        # puts "~~~"
-        # pp node, node.class, "-1", @exp_nest
-      end
+      @exp_nest -= 1 if nesting_exp?(node)
 
       if @attributes
         case node
@@ -1342,7 +1334,11 @@ module Crystal
         node.raise "expanding macro", ex
       end
 
-      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys), inside_def: !!@typed_def)
+      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+                                                inside_def: !!@typed_def,
+                                                inside_type: !current_type.is_a?(Program),
+                                                inside_exp: @exp_nest > 0,
+                                                )
 
       if node_doc = node.doc
         generated_nodes.accept PropagateDocVisitor.new(node_doc)
