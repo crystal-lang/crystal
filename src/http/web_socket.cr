@@ -94,7 +94,7 @@ class HTTP::WebSocket
 
   private def read_opcode
     raw_opcode = @header[0] & 0x0f_u8
-    parsed_opcode = Opcode.from_value(raw_opcode)
+    parsed_opcode = Opcode.from_value?(raw_opcode)
     unless parsed_opcode
       raise "Invalid packet opcode: #{raw_opcode}"
     end

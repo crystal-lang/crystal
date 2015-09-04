@@ -75,11 +75,18 @@ describe Enum do
     end
   end
 
+  it "does from_value?" do
+    SpecEnum.from_value?(0).should eq(SpecEnum::One)
+    SpecEnum.from_value?(1).should eq(SpecEnum::Two)
+    SpecEnum.from_value?(2).should eq(SpecEnum::Three)
+    SpecEnum.from_value?(3).should be_nil
+  end
+
   it "does from_value" do
     SpecEnum.from_value(0).should eq(SpecEnum::One)
     SpecEnum.from_value(1).should eq(SpecEnum::Two)
     SpecEnum.from_value(2).should eq(SpecEnum::Three)
-    SpecEnum.from_value(3).should be_nil
+    expect_raises { SpecEnum.from_value(3) }
   end
 
   it "has hash" do
