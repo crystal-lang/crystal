@@ -18,12 +18,12 @@ Bigger the project, harder to find the definition.
 
 So if you have *program.cr* with the following code:
 
-{% highlight ruby %}
-def add(a, b)     # line 1
+{% highlight ruby linenos %}
+def add(a, b)
   a + b
 end
 
-add(1, 2)         # line 5
+add(1, 2)
 {% endhighlight ruby %}
 
 <pre class="code">
@@ -42,19 +42,19 @@ If you use [Atom](https://atom.io) download them and just press `⌘⌥i` / `ctr
 
 This tools does not only will be allow you avoid `def foo` vs `def self.foo` string matching hell, but will point which are the real candidates of a method call.
 
-{% highlight ruby %}
+{% highlight ruby linenos %}
 class A
-  def foo         # line 2
+  def foo
   end
 end
 
 class B
-  def foo         # line 7
+  def foo
   end
 end
 
 def use_foo(o)
-  o.foo           # line 12, put the cursor in this #foo call
+  o.foo           # put the cursor in this #foo call
 end
 
 use_foo(A.new)
@@ -66,13 +66,13 @@ use_foo(B.new)    # if removed, line 7 won't be an implementation of line 12
 
 A snippet is worth a thousand words.
 
-{% highlight ruby %}
+{% highlight ruby linenos %}
 class Person
-  property name   # line 2
+  property name
 end
 
 p = Person.new
-p.name = "John"   # line 6, put the cursor in over #name= call
+p.name = "John"   # put the cursor in over #name= call
 {% endhighlight ruby %}
 
 <pre class="code">
@@ -86,7 +86,6 @@ $ crystal tool implementations --cursor program.cr:6:6 program.cr
 And you know how *object.cr* looks like?
 
 {% highlight ruby %}
-# and inside crystal object.cr
 class Object
   # ...
   macro setter(*names)
@@ -117,12 +116,14 @@ Another neat tool that will help you avoid all thouse run with `pp var` or `pp t
 
 <img src="/images/tools/context.png" width="417" height="176" class="center"/>
 
-The tool is available in command line manner as the previous one.
+Like in the previous tool, the program itself is never executed. All the information shown cames from the same build process that generates the binary.
 
-{% highlight ruby %}
+The tool is available in command line manner. 
+
+{% highlight ruby linenos %}
 a = "a string"
 b = 1
-# line 3
+
 {% endhighlight ruby %}
 
 <pre class="code">

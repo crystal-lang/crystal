@@ -69,3 +69,12 @@
 .highlight .vg{color:#272822}
 .highlight .vi{color:#272822}
 .highlight .il{color:#8cd0d3}
+
+.highlight .lineno {
+  border-right: 1px solid #8C8C8C;
+  color: #8C8C8C;
+  padding-right: 15px;
+  width: 17px;
+  display: inline-block;
+  text-align: right;
+}
