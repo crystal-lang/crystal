@@ -25,7 +25,7 @@ module Crystal::Doc::Highlighter
       when :SPACE
         io << token.value
       when :COMMENT
-        highlight html_escape(token.value.to_s), "c", io
+        highlight HTML.escape(token.value.to_s), "c", io
       when :NUMBER
         highlight token, "n", io
       when :CHAR
@@ -33,7 +33,7 @@ module Crystal::Doc::Highlighter
       when :SYMBOL
         sym = token.value.to_s
         if Symbol.needs_quotes?(sym)
-          highlight html_escape(%(:#{sym.inspect})), "n", io
+          highlight HTML.escape(%(:#{sym.inspect})), "n", io
         else
           highlight ":#{sym}", "n", io
         end
@@ -109,7 +109,11 @@ module Crystal::Doc::Highlighter
       when :EOF
         break
       else
-        io << html_escape(token.value.to_s.inspect_unquoted)
+        if delimiter_end == '/'
+          token.value.to_s(io)
+        else
+          HTML.escape(token.value.to_s.inspect_unquoted, io)
+        end
       end
     end
   end
@@ -128,9 +132,5 @@ module Crystal::Doc::Highlighter
 
   private def end_highlight_klass(io)
     io << %(</span>)
-  end
-
-  private def html_escape(string)
-    string.gsub('<', "&lt;")
   end
 end

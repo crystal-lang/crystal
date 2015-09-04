@@ -4,6 +4,10 @@ class Scheduler
   @@runnables = [] of Fiber
   @@eb = Event::Base.new
 
+  def self.event_base
+    @@eb
+  end
+
   def self.reschedule
     if runnable = @@runnables.pop?
       runnable.resume
@@ -14,57 +18,60 @@ class Scheduler
 
   @@loop_fiber = Fiber.new { @@eb.run_loop }
 
+  def self.after_fork
+    @@eb.reinit
+  end
+
   def self.sleep(time)
-    @@eb.add_timer_event time, LibEvent2::Callback.new do |s, flags, data|
+    event = @@eb.new_event(-1, LibEvent2::EventFlags::None, Fiber.current) do |s, flags, data|
       fiber = data as Fiber
       fiber.resume
-    end, Fiber.current as Void*
+    end
+    event.add(time)
+    reschedule
+    event.free
   end
 
-  def self.create_fd_events(io : FileDescriptorIO)
-    flags = LibEvent2::EventFlags::Read | LibEvent2::EventFlags::Write | LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET
-    event = LibEvent2.event_new(@@eb, io.fd, flags, LibEvent2::Callback.new do |s, flags, data|
-      fd_io = data as FileDescriptorIO
-      if flags.includes?(LibEvent2::EventFlags::Read)
-        fd_io.resume_read
-      end
-      if flags.includes?(LibEvent2::EventFlags::Write)
-        fd_io.resume_write
-      end
-    end, io as Void*)
-
-    LibEvent2.event_add(event, nil)
-    event
-  end
-
-  def self.create_fd_write_event(io : FileDescriptorIO)
+  def self.create_fd_write_event(io : FileDescriptorIO, edge_triggered = false : Bool)
     flags = LibEvent2::EventFlags::Write
-    event = LibEvent2.event_new(@@eb, io.fd, flags, LibEvent2::Callback.new do |s, flags, data|
+    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
+    event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
       fd_io = data as FileDescriptorIO
       if flags.includes?(LibEvent2::EventFlags::Write)
         fd_io.resume_write
+      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
+        fd_io.write_timed_out = true
+        fd_io.resume_write
       end
-    end, io as Void*)
-
-    LibEvent2.event_add(event, nil)
+    end
     event
   end
 
-  def self.create_fd_read_event(io : FileDescriptorIO)
+  def self.create_fd_read_event(io : FileDescriptorIO, edge_triggered = false : Bool)
     flags = LibEvent2::EventFlags::Read
-    event = LibEvent2.event_new(@@eb, io.fd, flags, LibEvent2::Callback.new do |s, flags, data|
+    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
+    event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
       fd_io = data as FileDescriptorIO
       if flags.includes?(LibEvent2::EventFlags::Read)
         fd_io.resume_read
+      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
+        fd_io.read_timed_out = true
+        fd_io.resume_read
       end
-    end, io as Void*)
-
-    LibEvent2.event_add(event, nil)
+    end
     event
   end
 
-  def self.destroy_fd_events(event)
-    LibEvent2.event_free(event)
+  def self.create_signal_event signal : Signal, chan
+    flags = LibEvent2::EventFlags::Signal | LibEvent2::EventFlags::Persist
+    event = @@eb.new_event(Int32.cast(signal.to_i), flags, chan) do |s, flags, data|
+      ch = data as BufferedChannel(Signal)
+      sig = Signal.new(s)
+      ch.send sig
+      nil
+    end
+    event.add
+    event
   end
 
   def self.yield

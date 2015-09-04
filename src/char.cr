@@ -240,6 +240,16 @@ struct Char
     (ord + 1).chr
   end
 
+  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  #
+  # ```
+  # 'b'.succ #=> 'a'
+  # 'ぃ'.succ #=> 'あ'
+  # ```
+  def pred
+    (ord - 1).chr
+  end
+
   # Returns true if this char is an ASCII control character.
   #
   # ```
@@ -493,7 +503,7 @@ struct Char
         chars[i] = byte
         i += 1
       end
-      io.write chars.to_slice, i
+      io.write chars.to_slice[0, i]
     end
   end
 

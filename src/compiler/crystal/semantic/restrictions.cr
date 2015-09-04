@@ -214,6 +214,7 @@ module Crystal
       end
 
       ident_type ||= context.type_lookup.lookup_type other
+
       if ident_type
         restrict ident_type, context
       elsif single_name
@@ -309,10 +310,10 @@ module Crystal
           if restricted
             types << restricted
             discarded << type
-            break
           end
         end
       end
+
       program.type_merge_union_of(types)
     end
 
@@ -457,7 +458,8 @@ module Crystal
 
       mapping.each do |name, node|
         typevar_type = TypeLookup.lookup(extending_class, node)
-        unless other.type_vars[name].type.is_restriction_of?(typevar_type, owner)
+        other_type = other.type_vars[name].type.devirtualize
+        unless typevar_type.implements?(other_type)
           return nil
         end
       end
@@ -480,7 +482,7 @@ module Crystal
         if m = @mapping[class_type_var]?
           t = TypeLookup.lookup(extending_class, m)
           restricted = t.restrict other_type_var, context
-          return nil unless restricted
+          return nil unless restricted && t == restricted
 
           if other_type_var.is_a?(Path) && other_type_var.names.length == 1
             context.set_free_var(other_type_var.names.first, restricted)
@@ -542,13 +544,28 @@ module Crystal
       remove_alias.is_restriction_of?(other, owner)
     end
 
+    def restrict(other  : Path, context)
+      other_type = context.type_lookup.lookup_type other
+      if other_type
+        if other_type == self
+          return self
+        end
+      else
+        single_name = other.names.length == 1
+        if single_name
+          if Parser.free_var_name?(other.names.first)
+            return context.set_free_var(other.names.first, self)
+          else
+            other.raise "undefined constant #{other}"
+          end
+        end
+      end
+
+      remove_alias.restrict(other, context)
+    end
+
     def restrict(other, context)
       return self if self == other
-
-      if other.is_a?(Path)
-        other_type = context.type_lookup.lookup_type other
-        return self if self == other_type
-      end
 
       remove_alias.restrict(other, context)
     end
@@ -562,6 +579,13 @@ module Crystal
 
     def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
+      restricted ? self : nil
+    end
+  end
+
+  class GenericClassInstanceMetaclassType
+    def restrict(other : Metaclass, context)
+      restricted = instance_type.restrict(other.name, context)
       restricted ? self : nil
     end
   end

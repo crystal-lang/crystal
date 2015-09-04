@@ -9,9 +9,25 @@ module XML
         Box(IO).unbox(ctx).read Slice.new(buffer, len)
         len
       },
-      ->(ctx) {
-        0
+      ->(ctx) { 0 },
+      Box(IO).box(io),
+      nil,
+      nil,
+      options,
+      )
+  end
+
+  def self.parse_html(string : String, options = HTMLParserOptions.default : HTMLParserOptions)
+    from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
+  end
+
+  def self.parse_html(io : IO, options = HTMLParserOptions.default : HTMLParserOptions)
+    from_ptr LibXML.htmlReadIO(
+      ->(ctx, buffer, len) {
+        Box(IO).unbox(ctx).read Slice.new(buffer, len)
+        len
       },
+      ->(ctx) { 0 },
       Box(IO).box(io),
       nil,
       nil,

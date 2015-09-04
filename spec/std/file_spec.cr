@@ -301,7 +301,7 @@ describe "File" do
     it "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq("#{home}/..badfilename")
-      File.expand_path("..").should eq(base.split("/")[0...-1].join("/"))
+      File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
       File.expand_path("~/a","~/b").should eq("#{home}/a")
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
@@ -332,13 +332,10 @@ describe "File" do
       file.closed?.should be_true
     end
 
-    it "raises when closing twice" do
+    it "should not raise when closing twice" do
       file = File.new(__FILE__)
       file.close
-
-      expect_raises IO::Error, /closed stream/ do
-        file.close
-      end
+      file.close
     end
 
     it "does to_s when closed" do
@@ -346,6 +343,51 @@ describe "File" do
       file.close
       file.to_s.should eq("#<File:#{__FILE__} (closed)>")
     end
+  end
+
+  describe "open with perm" do
+    filename = "#{__DIR__}/data/temp_write.txt"
+    perm = 0o600
+    File.open(filename, "w", perm) do |file|
+      file.stat.perm.should eq(perm)
+    end
+    File.delete filename
+  end
+
+  it "clears the read buffer after a seek" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.read(5).should eq("Hello")
+    file.seek(1)
+    file.read(4).should eq("ello")
+  end
+
+  it "raises if invoking seek with a closed file" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.close
+    expect_raises(IO::Error, "closed stream") { file.seek(1) }
+  end
+
+  it "returns the current read position with tell" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.tell().should eq(0)
+    file.read(5).should eq("Hello")
+    file.tell().should eq(5)
+    file.sync = true
+    file.tell().should eq(5)
+  end
+
+  it "can navigate with pos" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.pos = 3
+    file.read(2).should eq("lo")
+    file.pos -= 4
+    file.read(4).should eq("ello")
+  end
+
+  it "raises if invoking tell with a closed file" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    file.close
+    expect_raises(IO::Error, "closed stream") { file.tell }
   end
 
   it "iterates with each_char" do

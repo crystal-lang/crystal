@@ -40,6 +40,10 @@ module Crystal
     property :ensure_exception_handler
   end
 
+  class Call
+    property :ensure_exception_handler
+  end
+
   class Def
     property :ensure_exception_handler
 

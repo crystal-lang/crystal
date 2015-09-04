@@ -8,6 +8,7 @@ module Crystal
 
     property visibility
     property def_nest
+    property type_nest
     getter? wants_doc
 
     def self.parse(str, def_vars = [Set(String).new])
@@ -24,6 +25,7 @@ module Crystal
       @uses_block_arg = false
       @assigns_special_var = false
       @def_nest = 0
+      @type_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
@@ -585,6 +587,8 @@ module Crystal
 
           if @token.value == :is_a?
             atomic = parse_is_a(atomic).at(location)
+          elsif @token.value == :responds_to?
+            atomic = parse_responds_to(atomic).at(location)
           else
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
             end_location = token_end_location
@@ -662,8 +666,8 @@ module Crystal
               atomic = args ? (Call.new atomic, name, args, named_args: named_args, name_column_number: name_column_number) : (Call.new atomic, name, name_column_number: name_column_number)
             end
             atomic.end_location = call_args.try(&.end_location) || block.try(&.end_location) || end_location
-
-            atomic = check_special_call(atomic).at(location)
+            atomic.at(location)
+            atomic
           end
         when :"[]"
           check_void_value atomic, location
@@ -740,24 +744,30 @@ module Crystal
       IsA.new(atomic, type)
     end
 
-    def check_special_call(atomic)
-      if atomic.is_a?(Call) && (atomic_obj = atomic.obj)
-        case atomic.name
-        when "responds_to?"
-          if atomic.args.length != 1
-            raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
-          end
-          arg = atomic.args[0]
-          unless arg.is_a?(SymbolLiteral)
-            raise "'responds_to?' argument must be a Symbol literal"
-          end
-          if atomic.block
-            raise "'responds_to?' can't receive a block"
-          end
-          atomic = RespondsTo.new(atomic_obj, arg)
-        end
+    def parse_responds_to(atomic)
+      next_token
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        name = parse_responds_to_name
+        next_token_skip_space_or_newline
+        check :")"
+        next_token_skip_space
+      elsif @token.type == :SPACE
+        next_token
+        name = parse_responds_to_name
+        next_token_skip_space
       end
-      atomic
+
+      RespondsTo.new(atomic, name)
+    end
+
+    def parse_responds_to_name
+      if @token.type != :SYMBOL
+        unexpected_token msg: "expected name or symbol"
+      end
+
+      @token.value.to_s
     end
 
     def parse_atomic
@@ -811,6 +821,7 @@ module Crystal
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
+        @wants_regex = false
         node_and_next_token Global.new(@token.value.to_s)
       when :"$~", :"$?"
         location = @token.location
@@ -975,18 +986,22 @@ module Crystal
         parse_ident_or_literal
       when :INSTANCE_VAR
         name = @token.value.to_s
-        @instance_vars.try &.add name
+        add_instance_var name
         ivar = InstanceVar.new(name)
+        ivar.location = @token.location
         ivar.end_location = token_end_location
+        @wants_regex = false
         next_token_skip_space
+
         if @token.type == :"::"
           next_token_skip_space
           ivar_type = parse_single_type
-          DeclareVar.new(ivar, ivar_type)
+          DeclareVar.new(ivar, ivar_type).at(ivar.location)
         else
           ivar
         end
       when :CLASS_VAR
+        @wants_regex = false
         node_and_next_token ClassVar.new(@token.value.to_s)
       when :UNDERSCORE
         node_and_next_token Underscore.new
@@ -1234,6 +1249,8 @@ module Crystal
 
         if @token.value == :is_a?
           call = parse_is_a(obj).at(location)
+        elsif @token.value == :responds_to?
+          call = parse_responds_to(obj).at(location)
         elsif @token.type == :"["
           call = parse_atomic_method_suffix obj, location
 
@@ -1281,8 +1298,6 @@ module Crystal
               exp = parse_op_assign
               call.name = "#{call.name}="
               call.args << exp
-            else
-              call = check_special_call(call)
             end
           end
         end
@@ -1305,6 +1320,8 @@ module Crystal
     end
 
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
+      @type_nest += 1
+
       doc ||= @token.doc
 
       next_token_skip_space_or_newline
@@ -1330,6 +1347,8 @@ module Crystal
       next_token_skip_space
 
       raise "Bug: ClassDef name can only be a Path" unless name.is_a?(Path)
+
+      @type_nest -= 1
 
       class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
       class_def.doc = doc
@@ -1370,6 +1389,8 @@ module Crystal
     end
 
     def parse_module_def
+      @type_nest += 1
+
       location = @token.location
       doc = @token.doc
 
@@ -1389,6 +1410,8 @@ module Crystal
       next_token_skip_space
 
       raise "Bug: ModuleDef name can only be a Path" unless name.is_a?(Path)
+
+      @type_nest -= 1
 
       module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.doc = doc
@@ -1447,6 +1470,7 @@ module Crystal
             raise "duplicated argument name: #{arg.name}", location
           end
 
+          arg.location = location
           args << arg
         end
         next_token_skip_space_or_newline
@@ -1911,6 +1935,9 @@ module Crystal
     end
 
     def parse_require
+      raise "can't require inside def", @token if @def_nest > 0
+      raise "can't require inside type declarations", @token if @type_nest > 0
+
       next_token_skip_space
       check :DELIMITER_START
       string = parse_string_without_interpolation { "interpolation not allowed in require" }
@@ -2756,7 +2783,7 @@ module Crystal
         else
           raise "can't use @instance_variable here"
         end
-        @instance_vars.try &.add ivar.name
+        add_instance_var ivar.name
         uses_arg = true
       when :CLASS_VAR
         arg_name = @token.value.to_s[2 .. -1]
@@ -2917,6 +2944,15 @@ module Crystal
       end_location = token_end_location
       doc = @token.doc
 
+      case @token.value
+      when :is_a?
+        obj = Var.new("self").at(location)
+        return parse_is_a(obj)
+      when :responds_to?
+        obj = Var.new("self").at(location)
+        return parse_responds_to(obj)
+      end
+
       name = @token.value.to_s
       name_column_number = @token.column_number
 
@@ -2985,7 +3021,7 @@ module Crystal
             if @token.type == :"::"
               next_token_skip_space_or_newline
               declared_type = parse_single_type
-              declare_var = DeclareVar.new(Var.new(name), declared_type)
+              declare_var = DeclareVar.new(Var.new(name).at(location), declared_type).at(location)
               push_var declare_var
               declare_var
             elsif (!force_call && is_var)
@@ -3272,10 +3308,15 @@ module Crystal
         ivar = InstanceVar.new(name).at(location)
         ivar_out = Out.new(ivar).at(location)
 
-        @instance_vars.try &.add name
+        add_instance_var name
 
         next_token
         ivar_out
+      when :UNDERSCORE
+        underscore = Underscore.new.at(location)
+        var_out = Out.new(underscore).at(location)
+        next_token
+        var_out
       else
         raise "expecting variable or instance variable after out"
       end
@@ -4199,7 +4240,7 @@ module Crystal
         when :CONST
           location = @token.location
           constant_name = @token.value.to_s
-          doc = @token.doc
+          member_doc = @token.doc
 
           next_token_skip_space
           if @token.type == :"="
@@ -4218,7 +4259,7 @@ module Crystal
           end
 
           arg = Arg.new(constant_name, constant_value).at(location)
-          arg.doc = doc
+          arg.doc = member_doc
 
           members << arg
         when :IDENT
@@ -4436,6 +4477,12 @@ module Crystal
 
       name = name.to_s
       name == "self" || @def_vars.last.includes?(name)
+    end
+
+    def add_instance_var(name)
+      return if @in_macro_expression
+
+      @instance_vars.try &.add name
     end
 
     def self.free_var_name?(name)

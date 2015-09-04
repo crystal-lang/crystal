@@ -78,127 +78,6 @@ module Iterator(T)
     INSTANCE = new
   end
 
-  # Shortcut for `Iterator::Stop::INSTANCE`, to signal that there are no more elements in an iterator.
-  def stop
-    Iterator.stop
-  end
-
-  # ditto
-  def self.stop
-    Stop::INSTANCE
-  end
-
-  # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
-  # are no more elements.
-  abstract def next
-
-  # Rewinds the iterator to its original state.
-  abstract def rewind
-
-  def each
-    self
-  end
-
-  def compact_map(&func : T -> U)
-    CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
-  end
-
-  def map(&func : T -> U)
-    Map(typeof(self), T, U).new(self, func)
-  end
-
-  def select(&func : T -> U)
-    Select(typeof(self), T, U).new(self, func)
-  end
-
-  def reject(&func : T -> U)
-    Reject(typeof(self), T, U).new(self, func)
-  end
-
-  def take(n)
-    Take(typeof(self), T).new(self, n)
-  end
-
-  def take_while(&func : T -> U)
-    TakeWhile(typeof(self), T, U).new(self, func)
-  end
-
-  def skip(n)
-    Skip(typeof(self), T).new(self, n)
-  end
-
-  def skip_while(&func : T -> U)
-    SkipWhile(typeof(self), T, U).new(self, func)
-  end
-
-  def zip(other : Iterator(U))
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
-  end
-
-  def cycle
-    Cycle(typeof(self), T).new(self)
-  end
-
-  def cycle(n : Int)
-    CycleN(typeof(self), T, typeof(n)).new(self, n)
-  end
-
-  def uniq
-    uniq &.itself
-  end
-
-  def uniq(&func : T -> U)
-    Uniq(typeof(self), T, U).new(self, func)
-  end
-
-  def with_index(offset = 0)
-    WithIndex(typeof(self), T).new(self, offset)
-  end
-
-  def with_object(obj)
-    WithObject(typeof(self), T, typeof(obj)).new(self, obj)
-  end
-
-  def slice(n)
-    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
-
-    Slice(typeof(self), T).new(self, n)
-  end
-
-  def each_slice(n)
-    slice(n)
-  end
-
-  def cons(n)
-    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
-
-    Cons(typeof(self), T).new(self, n)
-  end
-
-  def chain(other : Iterator(U))
-    Chain(typeof(self), typeof(other), T, U).new(self, other)
-  end
-
-  def tap(&block : T ->)
-    Tap(typeof(self), T).new(self, block)
-  end
-
-  def self.of(element : T)
-    Singleton(T).new(element)
-  end
-
-  def self.of(&block : -> T)
-    SingletonProc(T).new(block)
-  end
-
-  def each
-    while true
-      value = self.next
-      break if value.is_a?(Stop)
-      yield value
-    end
-  end
-
   # IteratorWrapper eliminates some boilerplate when defining an Iterator that wraps another iterator.
   #
   # To use it, include this module in your iterator and make sure that the wrapped
@@ -219,354 +98,71 @@ module Iterator(T)
     end
   end
 
-  struct CompactMap(I, T, U)
-    include Iterator(U)
-    include IteratorWrapper
+  # Shortcut for `Iterator::Stop::INSTANCE`, to signal that there are no more elements in an iterator.
+  def stop
+    Iterator.stop
+  end
 
-    def initialize(@iterator : Iterator(T), @func)
-    end
+  # ditto
+  def self.stop
+    Stop::INSTANCE
+  end
 
-    def next
-      while true
-        value = wrapped_next
-        mapped_value = @func.call(value)
-
-        return mapped_value unless mapped_value.is_a?(Nil)
-      end
-    end
+  def self.of(element : T)
+    Singleton(T).new(element)
   end
 
   # :nodoc:
-  struct Map(I, T, U)
-    include Iterator(U)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
-    end
-
-    def next
-      value = wrapped_next
-      @func.call(value)
-    end
-  end
-
-  # :nodoc:
-  struct Select(I, T, B)
+  struct Singleton(T)
     include Iterator(T)
-    include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @func : T -> B)
+    def initialize(@element : T)
     end
 
     def next
-      while true
-        value = wrapped_next
-        if @func.call(value)
-          return value
-        end
-      end
-    end
-  end
-
-  # :nodoc:
-  struct Reject(I, T, B)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func : T -> B)
-    end
-
-    def next
-      while true
-        value = wrapped_next
-        unless @func.call(value)
-          return value
-        end
-      end
-    end
-  end
-
-  # :nodoc:
-  class Take(I, T)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @n : Int)
-      @original = @n
-    end
-
-    def next
-      if @n > 0
-        @n -= 1
-        wrapped_next
-      else
-        stop
-      end
+      @element
     end
 
     def rewind
-      @n = @original
-      super
-    end
-  end
-
-  # :nodoc:
-  class TakeWhile(I, T, U)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func: T -> U)
-      @returned_false = false
-    end
-
-    def next
-      return stop if @returned_false == true
-      value = wrapped_next
-      if @func.call(value)
-        value
-      else
-        @returned_false = true
-        stop
-      end
-    end
-
-    def rewind
-      @returned_false = false
-      super
-    end
-  end
-
-  # :nodoc:
-  class Skip(I, T)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @n : Int)
-      @original = @n
-    end
-
-    def next
-      while @n > 0
-        @n -= 1
-        wrapped_next
-      end
-      @iterator.next
-    end
-
-    def rewind
-      @n = @original
-      super
-    end
-  end
-
-
-  # :nodoc:
-  class SkipWhile(I, T, U)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func: T -> U)
-      @returned_false = false
-    end
-
-    def next
-      while true
-        value = wrapped_next
-        return value if @returned_false == true
-        unless @func.call(value)
-          @returned_false = true
-          return value
-        end
-      end
-    end
-
-    def rewind
-      @returned_false = false
-      super
-    end
-  end
-
-  # :nodoc:
-  struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
-
-    def initialize(@iterator1, @iterator2)
-    end
-
-    def next
-      v1 = @iterator1.next
-      return stop if v1.is_a?(Stop)
-
-      v2 = @iterator2.next
-      return stop if v2.is_a?(Stop)
-
-      {v1, v2}
-    end
-
-    def rewind
-      @iterator1.rewind
-      @iterator2.rewind
       self
     end
   end
 
+  def self.of(&block : -> T)
+    SingletonProc(T).new(block)
+  end
+
   # :nodoc:
-  struct Cycle(I, T)
+  struct SingletonProc(T)
     include Iterator(T)
-    include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T))
+    def initialize(@proc : -> T)
     end
 
     def next
-      value = @iterator.next
-      if value.is_a?(Stop)
-        @iterator.rewind
-        @iterator.next
-      else
-        value
-      end
+      @proc.call
     end
   end
 
-  # :nodoc:
-  class CycleN(I, T, N)
-    include Iterator(T)
-    include IteratorWrapper
+  # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
+  # are no more elements.
+  abstract def next
 
-    def initialize(@iterator : Iterator(T), @n : N)
-      @count = 0
-    end
+  # Rewinds the iterator to its original state.
+  abstract def rewind
 
-    def next
-      value = @iterator.next
-      if value.is_a?(Stop)
-        @count += 1
-        return stop if @count >= @n
-
-        @iterator.rewind
-        @iterator.next
-      else
-        value
-      end
-    end
-
-    def rewind
-      @count = 0
-      super
-    end
-  end
-
-  # :nodoc:
-  class WithIndex(I, T)
-    include Iterator({T, Int32})
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @offset, @index = offset)
-    end
-
-    def next
-      v = wrapped_next
-      value = {v, @index}
-      @index += 1
-      value
-    end
-
-    def rewind
-      @index = @offset
-      super
-    end
-  end
-
-  # :nodoc:
-  struct WithObject(I, T, O)
-    include Iterator({T, O})
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @object : O)
-    end
-
-    def next
-      v = wrapped_next
-      {v, @object}
-    end
-  end
-
-  # :nodoc:
-  struct Slice(I, T)
-    include Iterator(Array(T))
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @n)
-    end
-
-    def next
-      values = Array(T).new(@n)
-      @n.times do
-        value = @iterator.next
-        break if value.is_a?(Stop)
-
-        values << value
-      end
-
-      if values.empty?
-        stop
-      else
-        values
-      end
-    end
-  end
-
-  # :nodoc:
-  struct Cons(I, T)
-    include Iterator(Array(T))
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @n)
-      @values = Array(T).new(@n)
-    end
-
-    def next
-      loop do
-        elem = wrapped_next
-        @values << elem
-        @values.shift if @values.size > @n
-        break if @values.size == @n
-      end
-      @values.dup
-    end
-
-    def rewind
-      @values.clear
-      super
-    end
-  end
-
-  # :nodoc:
-  struct Uniq(I, T, U)
-    include Iterator(T)
-    include IteratorWrapper
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
-      @hash = {} of T => Bool
-    end
-
-    def next
-      while true
-        value = wrapped_next
-        transformed = @func.call value
-
-        unless @hash[transformed]?
-          @hash[transformed] = true
-          return value
-        end
-      end
-    end
-
-    def rewind
-      @hash.clear
-      super
-    end
+  # Returns an iterator that returns elements from the original iterator until
+  # it is exhausted and then returns the elements of the second iterator.
+  #
+  #     iter = (1..2).each.chain(('a'..'b').each)
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => 'a'
+  #     iter.next # => 'b'
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def chain(other : Iterator(U))
+    Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
   # :nodoc:
@@ -597,32 +193,517 @@ module Iterator(T)
     end
   end
 
-  # :nodoc:
-  struct Singleton(T)
-    include Iterator(T)
-
-    def initialize(@element : T)
-    end
-
-    def next
-      @element
-    end
-
-    def rewind
-      self
-    end
+  # Return an iterator that applies the given function to the element and then
+  # returns it unless it is nil. If the returned value would be nil it instead
+  # returns the next non nil value.
+  #
+  #     iter = [1, nil, 2, nil].each.compact_map {|e| e.try &.*(2)}
+  #     iter.next # => 2
+  #     iter.next # => 4
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def compact_map(&func : T -> U)
+    CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
 
   # :nodoc:
-  struct SingletonProc(T)
-    include Iterator(T)
+  struct CompactMap(I, T, U)
+    include Iterator(U)
+    include IteratorWrapper
 
-    def initialize(@proc : -> T)
+    def initialize(@iterator : Iterator(T), @func)
     end
 
     def next
-      @proc.call
+      while true
+        value = wrapped_next
+        mapped_value = @func.call(value)
+
+        return mapped_value unless mapped_value.is_a?(Nil)
+      end
     end
+  end
+
+  # Returns an iterator that returns consecutive chunks of the size *n*.
+  #
+  #     iter = (1..5).each.cons(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [2, 3, 4]
+  #     iter.next # => [3, 4, 5]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def cons(n)
+    raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
+    Cons(typeof(self), T).new(self, n)
+  end
+
+  # :nodoc:
+  struct Cons(I, T)
+    include Iterator(Array(T))
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n)
+      @values = Array(T).new(@n)
+    end
+
+    def next
+      loop do
+        elem = wrapped_next
+        @values << elem
+        @values.shift if @values.size > @n
+        break if @values.size == @n
+      end
+      @values.dup
+    end
+
+    def rewind
+      @values.clear
+      super
+    end
+  end
+
+  # Returns an iterator that repeatedly returns the elements of the original
+  # iterator forever starting back at the beginning when the end was reached.
+  #
+  #     iter = ["a", "b", "c"].each.cycle
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     # and so an and so on
+  def cycle
+    Cycle(typeof(self), T).new(self)
+  end
+
+  # :nodoc:
+  struct Cycle(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T))
+    end
+
+    def next
+      value = @iterator.next
+      if value.is_a?(Stop)
+        @iterator.rewind
+        @iterator.next
+      else
+        value
+      end
+    end
+  end
+
+  # Returns an iterator that repeatedly returns the elements of the original
+  # iterator starting back at the beginning when the end was reached,
+  # but only n times.
+  #
+  #     iter = ["a", "b", "c"].each.cycle(2)
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => Iterator::Stop::INSTANCE
+  def cycle(n : Int)
+    CycleN(typeof(self), T, typeof(n)).new(self, n)
+  end
+
+  # :nodoc:
+  class CycleN(I, T, N)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n : N)
+      @count = 0
+    end
+
+    def next
+      return stop if @count >= @n
+      value = @iterator.next
+      if value.is_a?(Stop)
+        @count += 1
+        return stop if @count >= @n
+
+        @iterator.rewind
+        @iterator.next
+      else
+        value
+      end
+    end
+
+    def rewind
+      @count = 0
+      super
+    end
+  end
+
+  def each
+    self
+  end
+
+  # Calls the given block once for each element, passing that element
+  # as a parameter.
+  #
+  #     iter = [ "a", "b", "c" ].each
+  #     iter.each {|x| print x, " " } # Prints "a b c"
+  #
+  def each
+    while true
+      value = self.next
+      break if value.is_a?(Stop)
+      yield value
+    end
+  end
+
+  # Returns an iterator that then returns slices of n elements of the initial
+  # iterator.
+  #
+  #     iter = (1..9).each.each_slice(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [4, 5, 6]
+  #     iter.next # => [7, 8, 9]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def each_slice(n)
+    slice(n)
+  end
+
+  # Returns an iterator that chunks the iterator's elements in arrays of *size*
+  # filling up the remaining elements if no element remains with nil or a given
+  # optional parameter.
+  #
+  #     iter = (1..3).each.in_groups_of(2)
+  #     iter.next # => [1, 2]
+  #     iter.next # => [3, nil]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  #     iter = (1..3).each.in_groups_of(2, 'z')
+  #     iter.next # => [1, 2]
+  #     iter.next # => [3, 'z']
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def in_groups_of(size : Int, filled_up_with = nil)
+    raise ArgumentError.new("size must be positive") if size <= 0
+    InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
+  end
+
+  # :nodoc:
+  struct InGroupsOf(I, T, N, U)
+    include Iterator(Array(T | U))
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @size : N, @filled_up_with : U)
+    end
+
+    def next
+      value = wrapped_next
+      array = Array(T | U).new(@size)
+      array << value
+      (@size - 1).times do
+        new_value = @iterator.next
+        new_value = @filled_up_with if new_value.is_a?(Stop)
+        array << new_value
+      end
+      array
+    end
+  end
+
+  # Returns an iterator that applies the given block to the next element and
+  # returns the result.
+  #
+  #
+  #     iter = [1, 2, 3].each.map &.*(2)
+  #     iter.next # => 2
+  #     iter.next # => 4
+  #     iter.next # => 6
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def map(&func : T -> U)
+    Map(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  struct Map(I, T, U)
+    include Iterator(U)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func : T -> U)
+    end
+
+    def next
+      value = wrapped_next
+      @func.call(value)
+    end
+  end
+
+  # Returns an iterator that only returns elements for which the the passed in
+  # block returns a falsey value.
+  #
+  #     iter = [1, 2, 3].each.reject &.odd?
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def reject(&func : T -> U)
+    Reject(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  struct Reject(I, T, B)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func : T -> B)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        unless @func.call(value)
+          return value
+        end
+      end
+    end
+  end
+
+  # Returns an iterator that only returns elements for which the the passed
+  # in block returns a truthy value.
+  #
+  #     iter = [1, 2, 3].each.select &.odd?
+  #     iter.next # => 1
+  #     iter.next # => 3
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def select(&func : T -> U)
+    Select(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  struct Select(I, T, B)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func : T -> B)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        if @func.call(value)
+          return value
+        end
+      end
+    end
+  end
+
+  # Returns an iterator that skips the first *n* elements and only returns
+  # the elements after that.
+  #
+  #     iter = (1..3).each.skip(2)
+  #     iter.next # -> 3
+  #     iter.next # -> Iterator::Stop::INSTANCE
+  #
+  def skip(n)
+    raise ArgumentError.new "Attempted to skip negative size: #{n}" if n < 0
+    Skip(typeof(self), T).new(self, n)
+  end
+
+  # :nodoc:
+  class Skip(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n : Int)
+      @original = @n
+    end
+
+    def next
+      while @n > 0
+        @n -= 1
+        wrapped_next
+      end
+      @iterator.next
+    end
+
+    def rewind
+      @n = @original
+      super
+    end
+  end
+
+  # Returns an iterator that only starts to return elements once the given block
+  # has returned falsey value for one element.
+  #
+  #     iter = [1, 2, 3, 4, 0].each.skip_while { |i| i < 3}
+  #     iter.next # => 3
+  #     iter.next # => 4
+  #     iter.next # => 0
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def skip_while(&func : T -> U)
+    SkipWhile(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  class SkipWhile(I, T, U)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func: T -> U)
+      @returned_false = false
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        return value if @returned_false == true
+        unless @func.call(value)
+          @returned_false = true
+          return value
+        end
+      end
+    end
+
+    def rewind
+      @returned_false = false
+      super
+    end
+  end
+
+  # Returns an iterator that returns slices of n elements of the initial
+  # iterator.
+  #
+  #     iter = (1..9).each.slice(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [4, 5, 6]
+  #     iter.next # => [7, 8, 9]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def slice(n)
+    raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
+    Slice(typeof(self), T).new(self, n)
+  end
+
+  # :nodoc:
+  struct Slice(I, T)
+    include Iterator(Array(T))
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n)
+    end
+
+    def next
+      values = Array(T).new(@n)
+      @n.times do
+        value = @iterator.next
+        break if value.is_a?(Stop)
+
+        values << value
+      end
+
+      if values.empty?
+        stop
+      else
+        values
+      end
+    end
+  end
+
+
+  # Returns an iterator that only returns the first n elements of the
+  # initial iterator.
+  #
+  #     iter = ["a", "b", "c"].each.take 2
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def take(n)
+    raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
+    Take(typeof(self), T).new(self, n)
+  end
+
+  # :nodoc:
+  class Take(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n : Int)
+      @original = @n
+    end
+
+    def next
+      if @n > 0
+        @n -= 1
+        wrapped_next
+      else
+        stop
+      end
+    end
+
+    def rewind
+      @n = @original
+      super
+    end
+  end
+
+  # Returns an iterator that returns elements while the given block returns a
+  # truthy value.
+  #
+  #     iter = (1..5).each.take_while {|i| i <3 }
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def take_while(&func : T -> U)
+    TakeWhile(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  class TakeWhile(I, T, U)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func: T -> U)
+      @returned_false = false
+    end
+
+    def next
+      return stop if @returned_false == true
+      value = wrapped_next
+      if @func.call(value)
+        value
+      else
+        @returned_false = true
+        stop
+      end
+    end
+
+    def rewind
+      @returned_false = false
+      super
+    end
+  end
+
+  # Returns an iterator that calls the given block with the next element of the
+  # iterator when calling `next`, still returning the original element.
+  #
+  #     a = 0
+  #     iter = (1..3).each.tap { |x| a += x}
+  #     iter.next # => 1
+  #     a         # => 1
+  #     iter.next # => 2
+  #     a         # => 3
+  #     iter.next # => 3
+  #     a         # => 6
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def tap(&block : T ->)
+    Tap(typeof(self), T).new(self, block)
   end
 
   # :nodoc:
@@ -637,6 +718,156 @@ module Iterator(T)
       value = wrapped_next
       @proc.call(value)
       value
+    end
+  end
+
+  # Returns an iterator that only returns unique values of the original
+  # iterator.
+  #
+  #     iter = [1, 2, 1].each.uniq
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def uniq
+    uniq &.itself
+  end
+
+  # Returns an iterator that only returns unique values of the original
+  # iterator. The provided block is applied to the elements to determine the
+  # value to be checked for uniqueness.
+  #
+  #     iter = [["a", "a"], ["b", "a"], ["a", "c"]].uniq &.first
+  #     iter.next # => ["a", "a"]
+  #     iter.next # => ["b", "a"]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def uniq(&func : T -> U)
+    Uniq(typeof(self), T, U).new(self, func)
+  end
+
+  # :nodoc:
+  struct Uniq(I, T, U)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @func : T -> U)
+      @hash = {} of T => Bool
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        transformed = @func.call value
+
+        unless @hash[transformed]?
+          @hash[transformed] = true
+          return value
+        end
+      end
+    end
+
+    def rewind
+      @hash.clear
+      super
+    end
+  end
+
+  # Returns an iterator that returns a tuple of the element and its index.
+  #
+  #     iter = (1..3).each.with_index
+  #     iter.next # => {1, 0}
+  #     iter.next # => {2, 1}
+  #     iter.next # => {3, 2}
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def with_index(offset = 0)
+    WithIndex(typeof(self), T).new(self, offset)
+  end
+
+  # :nodoc:
+  class WithIndex(I, T)
+    include Iterator({T, Int32})
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @offset, @index = offset)
+    end
+
+    def next
+      v = wrapped_next
+      value = {v, @index}
+      @index += 1
+      value
+    end
+
+    def rewind
+      @index = @offset
+      super
+    end
+  end
+
+  # Returns an iterator that returns a tuple of the element and a given object.
+  #
+  #     iter = (1..3).each.with_object("a")
+  #     iter.next # => {1, "a"}
+  #     iter.next # => {2, "a"}
+  #     iter.next # => {3, "a"}
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def with_object(obj)
+    WithObject(typeof(self), T, typeof(obj)).new(self, obj)
+  end
+
+  # :nodoc:
+  struct WithObject(I, T, O)
+    include Iterator({T, O})
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @object : O)
+    end
+
+    def next
+      v = wrapped_next
+      {v, @object}
+    end
+  end
+
+  # Returns an iterator that returns the elements of this iterator and the given
+  # one pairwise as tupels.
+  #
+  #    iter1 = [4, 5, 6].each
+  #    iter2 = [7, 8, 9].each
+  #    iter = iter1.zip(iter2)
+  #    iter.next # => {4, 7}
+  #    iter.next # => {5, 8}
+  #    iter.next # => {6, 9}
+  #    iter.next # => Iterator::Stop::INSTANCE
+  #
+  def zip(other : Iterator(U))
+    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  end
+
+  # :nodoc:
+  struct Zip(I1, I2, T1, T2)
+    include Iterator({T1, T2})
+
+    def initialize(@iterator1, @iterator2)
+    end
+
+    def next
+      v1 = @iterator1.next
+      return stop if v1.is_a?(Stop)
+
+      v2 = @iterator2.next
+      return stop if v2.is_a?(Stop)
+
+      {v1, v2}
+    end
+
+    def rewind
+      @iterator1.rewind
+      @iterator2.rewind
+      self
     end
   end
 end

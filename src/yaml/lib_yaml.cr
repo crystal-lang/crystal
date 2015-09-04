@@ -1,11 +1,13 @@
 @[Link("yaml")]
 lib LibYAML
+  alias Int = LibC::Int
+
   PARSER_SIZE = 480
   type Parser = Void*
 
   struct VersionDirective
-    major : Int32
-    minor : Int32
+    major : Int
+    minor : Int
   end
 
   struct TagDirective
@@ -42,11 +44,11 @@ lib LibYAML
     version_directive : VersionDirective*
     tag_directive_start : TagDirective*
     tag_directive_end : TagDirective*
-    implicit : Int32
+    implicit : Int
   end
 
   struct DocumentEndEvent
-    implicit : Int32
+    implicit : Int
   end
 
   struct AliasEvent
@@ -57,23 +59,23 @@ lib LibYAML
     anchor : UInt8*
     tag : UInt8*
     value : UInt8*
-    length : UInt64
-    plain_implicit : Int32
-    quoted_implicit : Int32
+    length : LibC::SizeT
+    plain_implicit : Int
+    quoted_implicit : Int
     style : ScalarStyle
   end
 
   struct SequenceStartEvent
     anchor : UInt8*
     tag : UInt8*
-    implicit : Int32
+    implicit : Int
     style : SequenceStyle
   end
 
   struct MappingStartEvent
     anchor : UInt8*
     tag : UInt8*
-    implicit : Int32
+    implicit : Int
     style : MappingStyle
   end
 
@@ -102,9 +104,9 @@ lib LibYAML
   end
 
   struct Mark
-    index : UInt64
-    line : UInt64
-    column : UInt64
+    index : LibC::SizeT
+    line : LibC::SizeT
+    column : LibC::SizeT
   end
 
   struct Event
@@ -114,9 +116,9 @@ lib LibYAML
     end_mark : Mark
   end
 
-  fun yaml_parser_initialize(parser : Parser*) : Int32
-  fun yaml_parser_set_input_string(parser : Parser*, input : UInt8*, length : Int32)
-  fun yaml_parser_parse(parser : Parser*, event : Event*) : Int32
+  fun yaml_parser_initialize(parser : Parser*) : Int
+  fun yaml_parser_set_input_string(parser : Parser*, input : UInt8*, length : LibC::SizeT)
+  fun yaml_parser_parse(parser : Parser*, event : Event*) : Int
   fun yaml_parser_delete(parser : Parser*)
   fun yaml_event_delete(event : Event*)
 end

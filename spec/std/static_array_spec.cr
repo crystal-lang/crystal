@@ -45,6 +45,25 @@ describe "StaticArray" do
     a[2].should eq(2)
   end
 
+  describe "==" do
+    it "compares empty" do
+      (StaticArray(Int32, 0).new(0)).should eq(StaticArray(Int32, 0).new(0))
+      (StaticArray(Int32, 1).new(0)).should_not eq(StaticArray(Int32, 0).new(0))
+      (StaticArray(Int32, 0).new(0)).should_not eq(StaticArray(Int32, 1).new(0))
+    end
+
+    it "compares elements" do
+      a = StaticArray(Int32, 3).new { |i| i * 2 }
+      a.should eq(StaticArray(Int32, 3).new { |i| i * 2 })
+      a.should_not eq(StaticArray(Int32, 3).new { |i| i * 3 })
+    end
+
+    it "compares other" do
+      (StaticArray(Int32, 0).new(0)).should_not eq(nil)
+      (StaticArray(Int32, 3).new(0)).should eq(StaticArray(Int8, 3).new(0_i8))
+    end
+  end
+
   describe "values_at" do
     it "returns the given indexes" do
       StaticArray(Int32, 4).new { |i| i + 1 }.values_at(1, 0, 2).should eq({2, 1, 3})

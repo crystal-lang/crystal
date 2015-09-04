@@ -1,18 +1,15 @@
 require "./ip_socket"
 
 class TCPSocket < IPSocket
-  def initialize(host, port)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
-      sock = LibC.socket(afamily(ai.family), ai.socktype, ai.protocol)
-      raise Errno.new("Error opening socket") if sock <= 0
+  def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP, timeout: dns_timeout) do |ai|
+      super(create_socket(ai.family, ai.socktype, ai.protocol))
 
-      if LibC.connect(sock, ai.addr, ai.addrlen) != 0
-        LibC.close(sock)
+      if err = nonblocking_connect host, port, ai, timeout: connect_timeout
+        close
         next false if ai.next
-        raise Errno.new("Error connecting to '#{host}:#{port}'")
+        raise err
       end
-
-      super sock
 
       true
     end
@@ -29,5 +26,17 @@ class TCPSocket < IPSocket
     ensure
       sock.close
     end
+  end
+
+  def tcp_nodelay?
+    v = 0
+    ret = getsockopt LibC::TCP_NODELAY, v, level: LibC::IPPROTO_TCP
+    ret != 0
+  end
+
+  def tcp_nodelay= val : Bool
+    v = val ? 1 : 0
+    setsockopt LibC::TCP_NODELAY, v, level: LibC::IPPROTO_TCP
+    val
   end
 end

@@ -7,6 +7,30 @@ def assert_type_to_s(expected)
 end
 
 describe "types to_s of" do
+  it "does for type contained in generic class" do
+    result = infer_type(%(
+      class Bar(T)
+        class Foo
+        end
+      end
+    ))
+    result.program.types["Bar"].types["Foo"].to_s.should eq("Bar::Foo")
+  end
+
+  it "does for type contained in generic module" do
+    result = infer_type(%(
+      module Bar(T)
+        class Foo
+        end
+      end
+    ))
+    result.program.types["Bar"].types["Foo"].to_s.should eq("Bar::Foo")
+  end
+
+  it "non-instantiated array" do
+    assert_type_to_s "Array(T)" { array }
+  end
+
   it "array of simple types" do
     assert_type_to_s "Array(Int32)" { array_of(int32) }
   end

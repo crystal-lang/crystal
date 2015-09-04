@@ -4,8 +4,9 @@ require "../syntax/transformer"
 
 module Crystal
   class Program
-    def normalize(node)
+    def normalize(node, inside_exp = false)
       normalizer = Normalizer.new(self)
+      normalizer.exp_nest = 1 if inside_exp
       node = normalizer.normalize(node)
       puts node if ENV["SSA"]? == "1"
       node
@@ -14,10 +15,12 @@ module Crystal
 
   class Normalizer < Transformer
     getter program
+    property exp_nest
 
     def initialize(@program)
       @dead_code = false
       @current_def = nil
+      @exp_nest = 0
     end
 
     def normalize(node)
@@ -26,9 +29,12 @@ module Crystal
 
     def before_transform(node)
       @dead_code = false
+      @exp_nest += 1 if nesting_exp?(node)
     end
 
     def after_transform(node)
+      @exp_nest -= 1 if nesting_exp?(node)
+
       case node
       when Return, Break, Next
         @dead_code = true
@@ -36,6 +42,15 @@ module Crystal
        # Skip
       else
         @dead_code = false
+      end
+    end
+
+    def nesting_exp?(node)
+      case node
+      when Expressions, VisibilityModifier, MacroFor, MacroIf, MacroExpression, Require, IfDef
+        false
+      else
+        true
       end
     end
 
@@ -67,12 +82,12 @@ module Crystal
     def transform(node : MultiAssign)
       # From:
       #
-      #     a, b = 1
+      #     a, b = [1, 2]
       #
       #
       # To:
       #
-      #     temp = 1
+      #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
       if node.values.length == 1
@@ -247,7 +262,7 @@ module Crystal
       If.new(node.cond, node.else, node.then).transform(self).at(node)
     end
 
-    # Convert unless to while:
+    # Convert until to while:
     #
     # From:
     #
@@ -281,6 +296,10 @@ module Crystal
     # Transform require to its source code.
     # The source code can be a Nop if the file was already required.
     def transform(node : Require)
+      if @exp_nest > 0
+        node.raise "can't require dynamically"
+      end
+
       location = node.location
       filenames = @program.find_in_path(node.string, location.try &.filename)
       if filenames

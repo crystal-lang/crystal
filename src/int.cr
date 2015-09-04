@@ -91,27 +91,50 @@ struct Int
     end
   end
 
-  # TODO enable after 0.7.5, and remove ">>" from primitives
-  # def >>(count : Int)
-  #   if count < 0
-  #     self << count.abs
-  #   elsif count < sizeof(self) * 8
-  #     self.unsafe_shr(count)
-  #   else
-  #     self.class.zero
-  #   end
-  # end
+  # Returns the result of shifting this number's bits *count* positions to the right.
+  # Also known as arithmetic right shift.
+  #
+  # * If *count* is greater than the number of bits of this integer, returns 0
+  # * If *count* is negative, a left shift is performed
+  #
+  # ```
+  # 8000 >> 1   #=> 4000
+  # 8000 >> 2   #=> 2000
+  # 8000 >> 32  #=> 0
+  # 8000 >> -1  #=> 16000
+  #
+  # -8000 >> 1  #=> -4000
+  # ```
+  def >>(count : Int)
+    if count < 0
+      self << count.abs
+    elsif count < sizeof(self) * 8
+      self.unsafe_shr(count)
+    else
+      self.class.zero
+    end
+  end
 
-  # TODO enable after 0.7.5 and remove "<<" from primitives
-  # def <<(count : Int)
-  #   if count < 0
-  #     self >> count.abs
-  #   elsif count < sizeof(self) * 8
-  #     self.unsafe_shl(count)
-  #   else
-  #     self.class.zero
-  #   end
-  # end
+  # Returns the result of shifting this number's bits *count* positions to the left.
+  #
+  # * If *count* is greater than the number of bits of this integer, returns 0
+  # * If *count* is negative, a right shift is performed
+  #
+  # ```
+  # 8000 << 1  #=> 4000
+  # 8000 << 2  #=> 2000
+  # 8000 << 32 #=> 0
+  # 8000 << -1 #=> 16000
+  # ```
+  def <<(count : Int)
+    if count < 0
+      self >> count.abs
+    elsif count < sizeof(self) * 8
+      self.unsafe_shl(count)
+    else
+      self.class.zero
+    end
+  end
 
   def abs
     self >= 0 ? self : -self
@@ -175,6 +198,10 @@ struct Int
 
   def succ
     self + 1
+  end
+
+  def pred
+    self - 1
   end
 
   def times(&block : self -> )
@@ -384,10 +411,6 @@ struct Int8
   def -
     0_i8 - self
   end
-
-  def self.cast(value)
-    value.to_i8
-  end
 end
 
 struct Int16
@@ -396,10 +419,6 @@ struct Int16
 
   def -
     0_i16 - self
-  end
-
-  def self.cast(value)
-    value.to_i16
   end
 end
 
@@ -410,10 +429,6 @@ struct Int32
   def -
     0 - self
   end
-
-  def self.cast(value)
-    value.to_i32
-  end
 end
 
 struct Int64
@@ -422,10 +437,6 @@ struct Int64
 
   def -
     0_i64 - self
-  end
-
-  def self.cast(value)
-    value.to_i64
   end
 end
 
@@ -436,10 +447,6 @@ struct UInt8
   def abs
     self
   end
-
-  def self.cast(value)
-    value.to_u8
-  end
 end
 
 struct UInt16
@@ -448,10 +455,6 @@ struct UInt16
 
   def abs
     self
-  end
-
-  def self.cast(value)
-    value.to_u16
   end
 end
 
@@ -462,10 +465,6 @@ struct UInt32
   def abs
     self
   end
-
-  def self.cast(value)
-    value.to_u32
-  end
 end
 
 struct UInt64
@@ -474,10 +473,6 @@ struct UInt64
 
   def abs
     self
-  end
-
-  def self.cast(value)
-    value.to_u64
   end
 end
 

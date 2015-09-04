@@ -71,7 +71,7 @@ describe "JSON::Lexer" do
   it_lexes "]", :"]"
   it_lexes ",", :","
   it_lexes ":", :":"
-  it_lexes " \n\t\r\v :", :":"
+  it_lexes " \n\t\r :", :":"
   it_lexes "true", :true
   it_lexes "false", :false
   it_lexes "null", :null

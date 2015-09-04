@@ -2,6 +2,13 @@ require "../syntax/ast"
 require "simple_hash"
 
 module Crystal
+  def self.check_type_allowed_in_generics(node, type, msg)
+    return if type.allowed_in_generics?
+
+    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+    node.raise "#{msg} yet, use a more specific type"
+  end
+
   class ASTNode
     property! type
     property! dependencies
@@ -21,7 +28,7 @@ module Crystal
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
-      if (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
+      if !type.no_return? && (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
         if !freeze_type.includes_type?(type.program.nil) && type.includes_type?(type.program.nil)
           # This means that an instance variable become nil
           if self.is_a?(MetaInstanceVar) && (nil_reason = self.nil_reason)
@@ -101,6 +108,11 @@ module Crystal
       set_type_from(map_type(new_type), from)
       @dirty = true
       propagate
+    end
+
+    def unbind_all
+      @dependencies.try &.each &.remove_observer(self)
+      @dependencies = nil
     end
 
     def unbind_from(nodes : Nil)
@@ -209,6 +221,7 @@ module Crystal
     property! :owner
     property! :original_owner
     property :vars
+    property :yield_vars
     property :raises
 
     property closure
@@ -385,13 +398,7 @@ module Crystal
               end
             end
           else
-            unless node_type.allowed_in_generics?
-              if node_type.is_a?(UnionType)
-                node_type = node_type.union_types.find { |t| !t.allowed_in_generics? }
-              end
-              node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
-            end
-
+            Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
             type_var = node_type.virtual_type
           end
         end
@@ -512,6 +519,7 @@ module Crystal
     property :after_vars
     property :context
     property :fun_literal
+    property :call
 
     @visited = false
 

@@ -210,6 +210,9 @@ describe "Parser" do
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", "b".call)]
   it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new(Expressions.new(["a".var] of ASTNode), "/", "b".call)]
   it_parses "_ = 1", Assign.new(Underscore.new, 1.int32)
+  it_parses "@foo/2", Call.new("@foo".instance_var, "/", 2.int32)
+  it_parses "@@foo/2", Call.new("@@foo".class_var, "/", 2.int32)
+  it_parses "$foo/2", Call.new(Global.new("$foo"), "/", 2.int32)
 
   it_parses "!1", Call.new(1.int32, "!")
   it_parses "- 1", Call.new(1.int32, "-")
@@ -357,7 +360,7 @@ describe "Parser" do
   it_parses "foo &.[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]", 0.int32)))
   it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
   it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
-  it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo".symbol)))
+  it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
   it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
   it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
 
@@ -746,7 +749,13 @@ describe "Parser" do
 
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
   it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Union.new(["Foo".path, "Bar".path] of ASTNode))
-  it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
+  it_parses "foo.is_a? Const", IsA.new("foo".call, "Const".path)
+  it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo")
+  it_parses "foo.responds_to? :foo", RespondsTo.new("foo".call, "foo")
+  it_parses "if foo.responds_to? :foo\nx = 1\nend", If.new(RespondsTo.new("foo".call, "foo"), Assign.new("x".var, 1.int32))
+
+  it_parses "is_a?(Const)", IsA.new("self".var, "Const".path)
+  it_parses "responds_to?(:foo)", RespondsTo.new("self".var, "foo")
 
   it_parses "/foo/", regex("foo")
   it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
@@ -806,6 +815,7 @@ describe "Parser" do
   it_parses "foo(out x); x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
   it_parses "foo out @x; @x", [Call.new(nil, "foo", Out.new("@x".instance_var)), "@x".instance_var]
   it_parses "foo(out @x); @x", [Call.new(nil, "foo", Out.new("@x".instance_var)), "@x".instance_var]
+  it_parses "foo out _", Call.new(nil, "foo", Out.new(Underscore.new))
 
   it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
   it_parses "{a: 1, b: 2}", HashLiteral.new([HashLiteral::Entry.new("a".symbol, 1.int32), HashLiteral::Entry.new("b".symbol, 2.int32)])
@@ -1091,6 +1101,11 @@ describe "Parser" do
     node.instance_vars.should eq(Set.new(["@x"]))
   end
 
+  it "doesn't take instance vars inside macro expressions into account (#809)" do
+    node = Parser.parse("def foo; @x = 1; {{ @y }}; @x = 3; @z; end") as Def
+    node.instance_vars.should eq(Set.new(["@x", "@z"]))
+  end
+
   assert_syntax_error "def foo(x = 1, y); end",
                       "argument must have a default value"
 
@@ -1190,6 +1205,10 @@ describe "Parser" do
   assert_syntax_error "while 1 == 1 a; end", "unexpected token"
   assert_syntax_error "case 1 == 1 a; when 2; end", "unexpected token"
   assert_syntax_error "case 1 == 1; when 2 a; end", "unexpected token"
+
+  assert_syntax_error %(class Foo; require "bar"; end), "can't require inside type declarations"
+  assert_syntax_error %(module Foo; require "bar"; end), "can't require inside type declarations"
+  assert_syntax_error %(def foo; require "bar"; end), "can't require inside def"
 
   describe "end locations" do
     assert_end_location "nil"

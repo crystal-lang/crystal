@@ -715,4 +715,22 @@ describe "Type inference: module" do
       z.call(Bar(Int32).new)
       )) { char }
   end
+
+  it "errors if declares module inside if" do
+    assert_error %(
+      if 1 == 2
+        module Foo; end
+      end
+      ),
+      "can't declare module dynamically"
+  end
+
+  it "uses :Module name for modules in errors" do
+    assert_error %(
+      module A; end
+
+      A.new
+      ),
+      "undefined method 'new' for A:Module"
+  end
 end

@@ -1,8 +1,11 @@
 class Crystal::Doc::Generator
+  getter program
+
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @is_crystal_repository = false
+    @repo_name = ""
     compute_repository
   end
 
@@ -21,12 +24,11 @@ class Crystal::Doc::Generator
 
   def generate_docs(program_type, types)
     copy_files
-    generate_list types
-    generate_types_docs types, @dir
-    generate_readme program_type
+    generate_types_docs types, @dir, types
+    generate_readme program_type, types
   end
 
-  def generate_readme(program_type)
+  def generate_readme(program_type, types)
     if File.file?("README.md")
       filename = "README.md"
     elsif File.file?("Readme.md")
@@ -43,23 +45,18 @@ class Crystal::Doc::Generator
       Markdown.parse body, MarkdownDocRenderer.new(program_type, io)
     end
 
-    write_template "#{@dir}/main.html", MainTemplate.new(body)
+    write_template "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
   end
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
     Dir.mkdir_p "#{@dir}/js"
 
-    write_template "#{@dir}/index.html", IndexTemplate.new
     write_template "#{@dir}/css/style.css", StyleTemplate.new
-    write_template "#{@dir}/js/type.js", JsTypeTemplate.new
+    write_template "#{@dir}/js/doc.js", JsTypeTemplate.new
   end
 
-  def generate_list(types)
-    write_template "#{@dir}/list.html", ListTemplate.new(types)
-  end
-
-  def generate_types_docs(types, dir)
+  def generate_types_docs(types, dir, all_types)
     types.each do |type|
       if type.program?
         filename = "#{dir}/toplevel.html"
@@ -67,7 +64,7 @@ class Crystal::Doc::Generator
         filename = "#{dir}/#{type.name}.html"
       end
 
-      write_template filename, TypeTemplate.new(type)
+      write_template filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 
@@ -75,7 +72,7 @@ class Crystal::Doc::Generator
       if subtypes && !subtypes.empty?
         dirname = "#{dir}/#{type.name}"
         Dir.mkdir_p dirname
-        generate_types_docs subtypes, dirname
+        generate_types_docs subtypes, dirname, all_types
       end
     end
   end
@@ -245,6 +242,7 @@ class Crystal::Doc::Generator
         rev = `git rev-parse HEAD`.chomp
 
         @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
+        @repo_name = "github.com/#{user}/#{repo}"
 
         if user == "manastech" && repo == "crystal"
           @is_crystal_repository = true
@@ -311,5 +309,9 @@ class Crystal::Doc::Generator
       locations << RelativeLocation.new(filename, url)
     end
     locations
+  end
+
+  def repository_name
+    @repo_name ? @repo_name : ""
   end
 end

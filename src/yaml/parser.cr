@@ -5,7 +5,7 @@ class YAML::Parser
     @anchors = {} of String => YAML::Type
 
     LibYAML.yaml_parser_initialize(@parser)
-    LibYAML.yaml_parser_set_input_string(@parser, content, content.bytesize)
+    LibYAML.yaml_parser_set_input_string(@parser, content, LibC::SizeT.cast(content.bytesize))
 
     next_event
     raise "Expected STREAM_START" unless @event.type == LibYAML::EventType::STREAM_START

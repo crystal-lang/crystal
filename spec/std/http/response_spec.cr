@@ -35,12 +35,27 @@ module HTTP
       response.body.should eq("hello")
     end
 
-    it "parses response without body" do
+    it "parses response with body but without content-length" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\n\r\nhelloworld"))
+      response.status_code.should eq(200)
+      response.status_message.should eq("OK")
+      response.headers.length.should eq(0)
+      response.body.should eq("helloworld")
+    end
+
+    it "parses response with empty body but without content-length" do
       response = Response.from_io(StringIO.new("HTTP/1.1 404 Not Found\r\n\r\n"))
       response.status_code.should eq(404)
       response.status_message.should eq("Not Found")
       response.headers.length.should eq(0)
       response.body.should eq("")
+    end
+
+    it "parses response without body" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 100 Continue\r\n\r\n"))
+      response.status_code.should eq(100)
+      response.status_message.should eq("Continue")
+      response.headers.length.should eq(0)
       response.body?.should be_nil
     end
 
@@ -59,6 +74,26 @@ module HTTP
       Response.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n")) do |response|
         response.body_io.read.should eq("abcde0123456789")
         io.gets.should be_nil
+      end
+    end
+
+    it "sets content length even without body" do
+      response = Response.new(200)
+      response.headers["Content-Length"].should eq("0")
+    end
+
+    it "doesn't sets content length for 1xx, 204 or 304" do
+      [100, 101, 204, 304].each do |status|
+        response = Response.new(status)
+        response.headers.length.should eq(0)
+      end
+    end
+
+    it "raises when creating 1xx, 204 or 304 with body" do
+      [100, 101, 204, 304].each do |status|
+        expect_raises ArgumentError do
+          Response.new(status, "hello")
+        end
       end
     end
 

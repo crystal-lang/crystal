@@ -1,46 +1,53 @@
 @[Link("gmp")]
 lib LibGMP
+  alias Int = LibC::Int
+  alias Long = LibC::Long
+  alias ULong = LibC::ULong
+  alias SizeT = LibC::SizeT
+  alias Double = LibC::Double
+  alias BitcntT = ULong
+
   struct MPZ
     _mp_alloc : Int32
     _mp_size  : Int32
-    _mp_d     : LibC::ULong*
+    _mp_d     : ULong*
   end
 
   ## Initialization
 
   fun init = __gmpz_init(x : MPZ*)
-  fun init2 = __gmpz_init2(x : MPZ*, bits : LibC::ULong)
-  fun init_set_ui = __gmpz_init_set_ui(rop : MPZ*, op : LibC::ULong)
-  fun init_set_si = __gmpz_init_set_si(rop : MPZ*, op : LibC::Long)
-  fun init_set_str = __gmpz_init_set_str(rop : MPZ*, str : UInt8*, base : Int32)
+  fun init2 = __gmpz_init2(x : MPZ*, bits : BitcntT)
+  fun init_set_ui = __gmpz_init_set_ui(rop : MPZ*, op : ULong)
+  fun init_set_si = __gmpz_init_set_si(rop : MPZ*, op : Long)
+  fun init_set_str = __gmpz_init_set_str(rop : MPZ*, str : UInt8*, base : Int)
 
   ## I/O
 
-  fun set_ui = __gmpz_set_ui(rop : MPZ*, op : LibC::ULong)
-  fun set_si = __gmpz_set_si(rop : MPZ*, op : LibC::Long)
-  fun set_str = __gmpz_set_str(rop : MPZ*, str : UInt8*, base : Int32) : Int32
-  fun get_str = __gmpz_get_str(str : UInt8*, base : Int32, op : MPZ*) : UInt8*
-  fun get_si = __gmpz_get_si(op : MPZ*) : LibC::Long
-  fun get_d = __gmpz_get_d(op : MPZ*) : Float64
+  fun set_ui = __gmpz_set_ui(rop : MPZ*, op : ULong)
+  fun set_si = __gmpz_set_si(rop : MPZ*, op : Long)
+  fun set_str = __gmpz_set_str(rop : MPZ*, str : UInt8*, base : Int) : Int
+  fun get_str = __gmpz_get_str(str : UInt8*, base : Int, op : MPZ*) : UInt8*
+  fun get_si = __gmpz_get_si(op : MPZ*) : Long
+  fun get_d = __gmpz_get_d(op : MPZ*) : Double
 
   ## Arithmetic
 
   fun add = __gmpz_add(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun add_ui = __gmpz_add_ui(rop : MPZ*, op1 : MPZ*, op2 : LibC::ULong)
+  fun add_ui = __gmpz_add_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   fun sub = __gmpz_sub(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun sub_ui = __gmpz_sub_ui(rop : MPZ*, op1 : MPZ*, op2 : LibC::ULong)
-  fun ui_sub = __gmpz_ui_sub(rop : MPZ*, op1 : LibC::ULong, op2 : MPZ*)
+  fun sub_ui = __gmpz_sub_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
+  fun ui_sub = __gmpz_ui_sub(rop : MPZ*, op1 : ULong, op2 : MPZ*)
 
   fun mul = __gmpz_mul(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun mul_si = __gmpz_mul_si(rop : MPZ*, op1 : MPZ*, op2 : LibC::Long)
-  fun mul_ui = __gmpz_mul_ui(rop : MPZ*, op1 : MPZ*, op2 : LibC::ULong)
+  fun mul_si = __gmpz_mul_si(rop : MPZ*, op1 : MPZ*, op2 : Long)
+  fun mul_ui = __gmpz_mul_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   fun fdiv_q = __gmpz_fdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : LibC::ULong)
+  fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   fun fdiv_r = __gmpz_fdiv_r(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
-  fun fdiv_r_ui = __gmpz_fdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : LibC::ULong)
+  fun fdiv_r_ui = __gmpz_fdiv_r_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
@@ -52,18 +59,18 @@ lib LibGMP
   fun xor = __gmpz_xor(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun com = __gmpz_com(rop : MPZ*, op : MPZ*)
 
-  fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : Int32)
-  fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : Int32)
+  fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : BitcntT)
+  fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : BitcntT)
 
   ## Comparison
 
-  fun cmp = __gmpz_cmp(op1 : MPZ*, op2 : MPZ*) : Int32
-  fun cmp_si = __gmpz_cmp_si(op1 : MPZ*, op2 : LibC::Long) : Int32
-  fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : LibC::ULong) : Int32
+  fun cmp = __gmpz_cmp(op1 : MPZ*, op2 : MPZ*) : Int
+  fun cmp_si = __gmpz_cmp_si(op1 : MPZ*, op2 : Long) : Int
+  fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
 
   ## Memory
 
-  fun set_memory_functions = __gmp_set_memory_functions(malloc : LibC::SizeT -> Void*, realloc : Void*, LibC::SizeT, LibC::SizeT -> Void*, free : Void*, LibC::SizeT ->)
+  fun set_memory_functions = __gmp_set_memory_functions(malloc : SizeT -> Void*, realloc : Void*, SizeT, SizeT -> Void*, free : Void*, SizeT ->)
 end
 
 LibGMP.set_memory_functions(

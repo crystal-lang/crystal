@@ -34,20 +34,40 @@ class HTTP::WebSocketHandler < HTTP::Handler
       @current_message = StringIO.new
     end
 
-    def onmessage(&@onmessage : String ->)
+    def on_message(&@on_message : String ->)
+    end
+
+    def on_close(&@on_close : String ->)
+    end
+
+    def send(message)
+      @ws.send(message)
+    end
+
+    def send_masked(message)
+      @ws.send_masked(message)
     end
 
     def run
       loop do
         info = @ws.receive(@buffer)
-        case info.type
-        when :text
-          @current_message.write(@buffer, info.length)
-          if info.final?
-            if handler = @onmessage
+        case info.opcode
+        when WebSocket::Opcode::TEXT
+          @current_message.write @buffer[0, info.length]
+          if info.final
+            if handler = @on_message
               handler.call(@current_message.to_s)
             end
             @current_message.clear
+          end
+        when WebSocket::Opcode::CLOSE
+          @current_message.write @buffer[0, info.length]
+          if info.final
+            if handler = @on_close
+              handler.call(@current_message.to_s)
+            end
+            @current_message.clear
+            break
           end
         end
       end

@@ -166,6 +166,16 @@ module Spec
   def self.run_after_each_hooks
     @@after_each.try &.each &.call
   end
+
+  # :nodoc
+  def self.run
+    start_time = Time.now
+    at_exit do
+      elapsed_time = Time.now - start_time
+      Spec::RootContext.print_results(elapsed_time)
+      exit 1 unless Spec::RootContext.succeeded
+    end
+  end
 end
 
 require "./*"
@@ -192,10 +202,4 @@ end
 
 Signal::INT.trap { Spec.abort! }
 
-redefine_main do |main|
-  time = Time.now
-  {{main}}
-  elapsed_time = Time.now - time
-  Spec::RootContext.print_results(elapsed_time)
-  exit 1 unless Spec::RootContext.succeeded
-end
+Spec.run

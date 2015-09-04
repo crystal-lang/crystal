@@ -17,7 +17,7 @@ Command:
     browser                  open an http server to browse program file
     deps                     install project dependencies
     docs                     generate documentation
-    eval                     eval code
+    eval                     eval code from args or standard input
     hierarchy                show type hierarchy
     context                  show context for given location
     implementations          show implementations for given call in location
@@ -275,13 +275,17 @@ USAGE
   end
 
   private def self.execute(output_filename, run_args)
-    # TODO: fix system to make output flush on newline if it's a tty
-    exit_status = LibC.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
-    if exit_status != 0
-      puts "Program terminated abnormally with error code: #{exit_status}"
-      exit 1
+    begin
+      status = Process.run(output_filename, args: run_args, input: true, output: true, error: true)
+    ensure
+      File.delete output_filename
     end
-    File.delete output_filename
+
+    if status.exit_status == 11
+      puts "Program exited because of a segmentation fault: 11"
+    end
+
+    exit status.exit_code
   end
 
   private def self.tempfile(basename)

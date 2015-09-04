@@ -4,16 +4,15 @@ class UNIXServer < UNIXSocket
   def initialize(@path : String, socktype =  Socket::Type::STREAM : Socket::Type, backlog = 128)
     File.delete(path) if File.exists?(path)
 
-    sock = LibC.socket(LibC::AF_UNIX, socktype.value, 0)
-    raise Errno.new("Error opening socket") if sock <= 0
+    sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
 
     addr = LibC::SockAddrUn.new
-    addr.family = LibC::AF_UNIX
+    addr.family = typeof(addr.family).cast(LibC::AF_UNIX)
     if path.bytesize + 1 > addr.path.length
       raise "Path length exceeds the maximum size of #{addr.path.length - 1} bytes"
     end
     addr.path.buffer.copy_from(path.cstr, path.bytesize + 1)
-    if LibC.bind(sock, pointerof(addr) as LibC::SockAddr*, sizeof(LibC::SockAddrUn)) != 0
+    if LibC.bind(sock, (pointerof(addr) as LibC::SockAddr*), LibC::SocklenT.cast(sizeof(LibC::SockAddrUn))) != 0
       LibC.close(sock)
       raise Errno.new("Error binding UNIX server at #{path}")
     end
@@ -45,6 +44,7 @@ class UNIXServer < UNIXSocket
   ensure
     if path = @path
       File.delete(path) if File.exists?(path)
+      @path = nil
     end
   end
 end

@@ -41,28 +41,30 @@ class Crystal::Def
     new_args = [] of Arg
 
     # Args before splat index
-    0.upto(Math.min(args_length, splat_index) - 1) do |index|
-      new_args << args[index].clone
+    if splat_index == -1
+      before_length = 0
+    else
+      before_length = Math.min(args_length, splat_index)
+      before_length.times do |index|
+        new_args << args[index].clone
+      end
     end
 
     # Splat arg
     if splat_index == -1
       splat_length = 0
-      offset = 0
     else
       splat_length = args_length - (args.length - 1)
-      offset = splat_index + splat_length
+      splat_length = 0 if splat_length < 0
+      splat_length.times do |index|
+        new_args << Arg.new("_arg#{index}")
+      end
     end
 
-    splat_length.times do |index|
-      new_args << Arg.new("_arg#{index}")
-    end
-
-    # Args after splat index
     base = splat_index + 1
-    min_length = Math.min(args_length, args.length)
-    base.upto(min_length - 1) do |index|
-      new_args << args[index].clone
+    after_length = args_length - before_length - splat_length
+    after_length.times do |i|
+      new_args << args[base + i].clone
     end
 
     if named_args

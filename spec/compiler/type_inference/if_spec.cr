@@ -41,4 +41,13 @@ describe "Type inference: if" do
       end
       ") { |mod| union_of(int32, mod.nil) }
   end
+
+  it "errors if requires inside if" do
+    assert_error %(
+      if 1 == 2
+        require "foo"
+      end
+      ),
+      "can't require dynamically"
+  end
 end

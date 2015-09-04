@@ -1,6 +1,6 @@
-STDIN = FileDescriptorIO.new(0, blocking: LibC.isatty(0) == 0, edge_triggerable: ifdef darwin; false; else; true; end)
-STDOUT = (FileDescriptorIO.new(1, blocking: LibC.isatty(1) == 0, edge_triggerable: ifdef darwin; false; else; true; end)).tap { |f| f.flush_on_newline = true }
-STDERR = FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0, edge_triggerable: ifdef darwin; false; else; true; end)
+STDIN = FileDescriptorIO.new(0, blocking: LibC.isatty(0) == 0)
+STDOUT = (FileDescriptorIO.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
+STDERR = FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0)
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
@@ -22,46 +22,57 @@ def loop
   end
 end
 
+# Reads a line from STDIN. See `IO#gets`.
 def gets(*args)
   STDIN.gets(*args)
 end
 
+# Reads a line from STDIN. See `IO#read_line`.
 def read_line(*args)
   STDIN.read_line(*args)
 end
 
+# Prints objects to STDIN. See `IO#print`.
 def print(*objects : _)
   STDOUT.print *objects
 end
 
+# Prints objects to STDIN and then invokes `STDIN.flush`. See `IO#print`.
 def print!(*objects : _)
   print *objects
   STDOUT.flush
   nil
 end
 
+# Prints a formatted string to STDIN. See `IO#printf`.
 def printf(format_string, *args)
   printf format_string, args
 end
 
+# ditto
 def printf(format_string, args : Array | Tuple)
   STDOUT.printf format_string, args
 end
 
-def sprintf(format_string, *args)
+# Returns a formatted string. See `IO#printf`.
+def sprintf(format_string, *args) : String
   sprintf format_string, args
 end
 
-def sprintf(format_string, args : Array | Tuple)
+# ditto
+def sprintf(format_string, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
     String::Formatter.new(format_string, args, str).format
   end
 end
 
+# Prints objects to STDOUT, each followed by a newline. See `IO#puts`.
 def puts(*objects)
   STDOUT.puts *objects
 end
 
+# Prints *obj* to STDOUT by invoking `inspect(io)` on it, and followed
+# by a newline.
 def p(obj)
   obj.inspect(STDOUT)
   puts
@@ -130,6 +141,7 @@ def abort(message, status = 1)
 end
 
 Signal::PIPE.ignore
+at_exit { Event::SignalHandler.close }
 
 # Background loop to cleanup unused fiber stacks
 spawn do
@@ -138,3 +150,4 @@ spawn do
     Fiber.stack_pool_collect
   end
 end
+

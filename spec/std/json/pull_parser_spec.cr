@@ -37,7 +37,7 @@ class JSON::PullParser
   end
 
   def assert(value : String)
-    kind.should eq(:object_key)
+    kind.should eq(:string)
     string_value.should eq(value)
     read_next
     yield

@@ -6,22 +6,22 @@ struct OpenSSL::BIO
     crystal_bio = LibCrypto::BioMethod.new
     crystal_bio.name = "Crystal BIO".cstr
 
-    crystal_bio.bwrite = -> (bio : LibCrypto::Bio*, data : UInt8*, len : Int32) do
+    crystal_bio.bwrite = LibCrypto::BioMethodWrite.new do |bio, data, len|
       io = Box(IO).unbox(bio.value.ptr)
       io.write Slice.new(data, len)
       len
     end
 
-    crystal_bio.bread = -> (bio : LibCrypto::Bio*, buffer : UInt8*, len : Int32) do
+    crystal_bio.bread = LibCrypto::BioMethodRead.new do |bio, buffer, len|
       io = Box(IO).unbox(bio.value.ptr)
       io.flush
       io.read(Slice.new(buffer, len)).to_i
     end
 
-    crystal_bio.ctrl = -> (bio : LibCrypto::Bio*, cmd : Int32, num : Int64, ptr : Void*) do
+    crystal_bio.ctrl = LibCrypto::BioMethodCtrl.new do |bio, cmd, num, ptr|
       io = Box(IO).unbox(bio.value.ptr)
 
-      case cmd
+      val = case cmd
       when LibCrypto::CTRL_FLUSH
         io.flush
         1
@@ -31,15 +31,19 @@ struct OpenSSL::BIO
         STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
         0
       end
+      LibCrypto::Long.cast(val)
     end
 
-    crystal_bio.create = -> (bio : LibCrypto::Bio*) do
+    crystal_bio.create = LibCrypto::BioMethodCreate.new do |bio|
       bio.value.shutdown = 1
       bio.value.init = 1
       bio.value.num = -1
     end
 
-    crystal_bio.destroy = -> (bio : LibCrypto::Bio*) { bio.value.ptr = Pointer(Void).null; 1 }
+    crystal_bio.destroy = LibCrypto::BioMethodDestroy.new do |bio|
+      bio.value.ptr = Pointer(Void).null;
+      1
+    end
 
     crystal_bio
   end

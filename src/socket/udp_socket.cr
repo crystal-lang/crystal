@@ -36,9 +36,7 @@ require "./ip_socket"
 # ```
 class UDPSocket < IPSocket
   def initialize(family = Socket::Family::INET : Socket::Family)
-    super LibC.socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP).tap do |sock|
-      raise Errno.new("Error opening socket") if sock <= 0
-    end
+    super create_socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP)
   end
 
   # Creates a UDP socket from the given address.
@@ -47,10 +45,9 @@ class UDPSocket < IPSocket
   # server = UDPSocket.new
   # server.bind "localhost", 1234
   # ```
-  def bind(host, port)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP) do |ai|
-      optval = 1
-      LibC.setsockopt(fd, LibC::SOL_SOCKET, LibC::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
+  def bind(host, port, dns_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
+      self.reuse_address = true
 
       if LibC.bind(fd, ai.addr, ai.addrlen) != 0
         next false if ai.next
@@ -67,11 +64,11 @@ class UDPSocket < IPSocket
   # client = UDPSocket.new
   # client.connect "localhost", 1234
   # ```
-  def connect(host, port)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP) do |ai|
-      if LibC.connect(fd, ai.addr, ai.addrlen) != 0
+  def connect(host, port, dns_timeout = nil, connect_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
+      if err = nonblocking_connect host, port, ai, timeout: connect_timeout
         next false if ai.next
-        raise Errno.new("Error connecting UDP socket at #{host}:#{port}")
+        raise err
       end
 
       true

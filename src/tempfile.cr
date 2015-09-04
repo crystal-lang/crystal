@@ -1,5 +1,5 @@
 lib LibC
-  fun mkstemp(result : UInt8*) : Int32
+  fun mkstemp(result : Char*) : Int
 end
 
 class Tempfile < FileDescriptorIO

@@ -233,7 +233,7 @@ module Crystal
       end
 
       while jobs_count > 0
-        LibC.waitpid(-1, out stat_loc, 0)
+        LibC.waitpid(-1, out stat_loc_2, 0)
         jobs_count -= 1
       end
     end
@@ -290,13 +290,16 @@ module Crystal
     private def system(command)
       puts command if verbose?
 
-      success = ::system(command)
-      unless success
+      process = Process.new("/bin/sh", input: nil, output: true, error: true)
+      process.input.print command
+      process.input.close
+      status = process.wait
+
+      unless status.success?
         print colorize("Error: ").red.bold
-        puts colorize("execution of command failed with code: #{$?.exit}: `#{command}`").bright
-        exit 3
+        puts colorize("execution of command failed with code: #{status.exit_code}: `#{command}`").bright
+        exit status.exit_code
       end
-      success
     end
 
     private def timing(label)

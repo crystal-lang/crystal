@@ -92,14 +92,20 @@ class Array(T)
   # ary[0][0] = 2
   # puts ary #=> [[2], [2], [2]]
   # ```
-  def initialize(size, value : T)
+  def initialize(size : Int, value : T)
     if size < 0
       raise ArgumentError.new("negative array size: #{size}")
     end
 
     @length = size.to_i
-    @capacity = Math.max(size, 3)
-    @buffer = Pointer(T).malloc(size, value)
+
+    if size == 0
+      @capacity = 3
+      @buffer = Pointer(T).malloc(@capacity)
+    else
+      @capacity = size.to_i
+      @buffer = Pointer(T).malloc(size, value)
+    end
   end
 
   # Creates a new Array of the given size and invokes the
@@ -114,7 +120,7 @@ class Array(T)
   # ary[0][0] = 2
   # puts ary #=> [[2], [1], [1]]
   # ```
-  def self.new(size, &block : Int32 -> T)
+  def self.new(size : Int, &block : Int32 -> T)
     Array(T).build(size) do |buffer|
       size.times do |i|
         buffer[i] = yield i
@@ -337,7 +343,8 @@ class Array(T)
 
   # Sets the given value at the given index.
   #
-  # Raises `IndexError` if the array had no previous value at the given index.
+  # Negative indices can be used to start counting from the end of the array.
+  # Raises `IndexError` if trying to set an element outside the array's range.
   #
   # ```
   # ary = [1,2,3]
@@ -569,6 +576,15 @@ class Array(T)
     delete_if { |e| e == obj }
   end
 
+  # Deletes the element at the given index, returning that element.
+  # Raises `IndexError` if the index is out of range.
+  #
+  # ```
+  # a = ["ant", "bat", "cat", "dog"]
+  # a.delete_at(2)  #=> "cat"
+  # a               #=> ["ant", "bat", "dog"]
+  # a.delete_at(99) #=> IndexError
+  # ```
   def delete_at(index : Int)
     index = check_index_out_of_bounds index
 
@@ -579,6 +595,18 @@ class Array(T)
     elem
   end
 
+  # Deletes every element of `self` for which block evaluates to true.
+  # The array is changed after the iteration is over,
+  # not every time the block is called.
+  #
+  # ```
+  # a = ["a", "b", "b", "c"]
+  # a.delete_if { |x| x == "b" } #=> true
+  # a                            #=> ["a", "c"]
+  # a.delete_if { |x| x == "z" } #=> false
+  # ```
+  #
+  # See also: `#reject!`.
   def delete_if
     i1 = 0
     i2 = 0
@@ -806,17 +834,17 @@ class Array(T)
   # Returns an `Array` with all possible permutations of the given *size*.
   #
   #     a = [1, 2, 3]
-  #     a.permutation    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutation(1) #=> [[1],[2],[3]]
-  #     a.permutation(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-  #     a.permutation(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  #     a.permutation(0) #=> [[]]
-  #     a.permutation(4) #=> []
+  #     a.permutations    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutations(1) #=> [[1],[2],[3]]
+  #     a.permutations(2) #=> [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+  #     a.permutations(3) #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  #     a.permutations(0) #=> [[]]
+  #     a.permutations(4) #=> []
   #
   def permutations(size = length : Int)
     ary = [] of Array(T)
-    each_permutation(size) do |perm|
-      ary << perm
+    each_permutation(size) do |a|
+      ary << a
     end
     ary
   end
@@ -825,7 +853,7 @@ class Array(T)
   #
   #     a = [1, 2, 3]
   #     sums = [] of Int32
-  #     a.permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
+  #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
   def each_permutation(size = length : Int)
@@ -842,19 +870,14 @@ class Array(T)
       stop = true
       i = size - 1
       while i >= 0
-        cycles[i] -= 1
-        if cycles[i] == 0
+        ci = (cycles[i] -= 1)
+        if ci == 0
           e = pool[i]
-          j = i + 1
-          while j < n
-            pool[j - 1] = pool[j]
-            j += 1
-          end
+          (i + 1).upto(n - 1) { |j| pool[j - 1] = pool[j] }
           pool[n - 1] = e
           cycles[i] = n - i
         else
-          j = cycles[i]
-          pool.swap i, -j
+          pool.swap i, -ci
           yield pool[0, size]
           stop = false
           break
@@ -864,6 +887,169 @@ class Array(T)
 
       return self if stop
     end
+  end
+
+  def combinations(size = length : Int)
+    ary = [] of Array(T)
+    each_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_combination(size = length : Int)
+    n = self.size
+    return self if size > n
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    copy = self.dup
+    pool = self.dup
+
+    indices = (0...size).to_a
+    yield pool[0, size]
+
+    while true
+      stop = true
+      i = size - 1
+      while i >= 0
+        if indices[i] != i + n - size
+          stop = false
+          break
+        end
+        i -= 1
+      end
+
+      return self if stop
+
+      indices[i] += 1
+      pool[i] = copy[indices[i]]
+
+      (i + 1).upto(size - 1) do |j|
+        indices[j] = indices[j - 1] + 1
+        pool[j] = copy[indices[j]]
+      end
+
+      yield pool[0, size]
+    end
+  end
+
+  # Returns a new array that is a one-dimensional flattening of self (recursively).
+  #
+  # That is, for every element that is an array, extract its elements into the new array
+  #
+  # ```
+  # s = [ 1, 2, 3 ]           #=> [1, 2, 3]
+  # t = [ 4, 5, 6, [7, 8] ]   #=> [4, 5, 6, [7, 8]]
+  # a = [ s, t, 9, 10 ]       #=> [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
+  # a.flatten                 #=> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  # ```
+  def flatten
+    FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
+  end
+
+  def repeated_combinations(size = length : Int)
+    ary = [] of Array(T)
+    each_repeated_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_combination(size = length : Int)
+    n = self.size
+    return self if size > n && n == 0
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    copy = self.dup
+    indices = Array.new(size, 0)
+    pool = indices.map { |i| copy[i] }
+
+    yield pool[0, size]
+
+    while true
+      stop = true
+
+      i = size - 1
+      while i >= 0
+        if indices[i] != n - 1
+          stop = false
+          break
+        end
+        i -= 1
+      end
+      return self if stop
+
+      ii = indices[i] + 1
+      tmp = copy[ii]
+      indices.fill(i, size - i) { ii }
+      pool.fill(i, size - i) { tmp }
+
+      yield pool[0, size]
+    end
+  end
+
+  def self.product(arrays)
+    result = [] of Array(typeof(arrays.first.first))
+    each_product(arrays) do |product|
+      result << product
+    end
+    result
+  end
+
+  def self.product(*arrays : Array)
+    product(arrays.to_a)
+  end
+
+  def self.each_product(arrays)
+    pool = arrays.map &.first
+    lens = arrays.map &.length
+    return if lens.any? &.==(0)
+    n = arrays.size
+    indices = Array.new(n, 0)
+    yield pool[0, n]
+
+    while true
+      i = n - 1
+      indices[i] += 1
+
+      while indices[i] >= lens[i]
+        indices[i] = 0
+        pool[i] = arrays[i][indices[i]]
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+      end
+      pool[i] = arrays[i][indices[i]]
+      yield pool[0, n]
+    end
+  end
+
+  def self.each_product(*arrays : Array)
+    each_product(arrays.to_a) do |result|
+      yield result
+    end
+  end
+
+  def repeated_permutations(size = length : Int)
+    ary = [] of Array(T)
+    each_repeated_permutation(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_permutation(size = length : Int)
+    n = self.size
+    return self if size != 0 && n == 0
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    if size == 0
+      yield([] of T)
+    else
+      Array.each_product(Array.new(size, self)) { |r| yield r }
+    end
+
+    self
   end
 
   def pop
@@ -984,6 +1170,35 @@ class Array(T)
       end
     end
     nil
+  end
+
+  def rotate!(n = 1)
+    return self if length == 0
+    n %= length if n.abs >= length
+    n += length if n < 0
+    return self if n == 0
+    if n <= length / 2
+      tmp = self[0..n]
+      @buffer.move_from(@buffer + n, length - n)
+      (@buffer + length - n).copy_from(tmp.buffer, n)
+    else
+      tmp = self[n..-1]
+      (@buffer + length - n).move_from(@buffer, n)
+      @buffer.copy_from(tmp.buffer, length - n)
+    end
+    self
+  end
+
+  def rotate(n = 1)
+    return self if length == 0
+    n %= length if n.abs >= length
+    n += length if n < 0
+    return self if n == 0
+    res = Array(T).new(length)
+    res.buffer.copy_from(@buffer + n, length - n)
+    (res.buffer + length - n).copy_from(@buffer, n)
+    res.length = length
+    res
   end
 
   def sample
@@ -1385,6 +1600,33 @@ class Array(T)
     def rewind
       @index = @array.length - 1
       self
+    end
+  end
+
+  # :nodoc:
+  struct FlattenHelper(T)
+    def self.flatten(ary)
+      result = [] of T
+      flatten ary, result
+      result
+    end
+
+    def self.flatten(ary : Array, result)
+      ary.each do |elem|
+        flatten elem, result
+      end
+    end
+
+    def self.flatten(other : T, result)
+      result << other
+    end
+
+    def self.element_type(ary)
+      if ary.is_a?(Array)
+        element_type(ary.first)
+      else
+        ary
+      end
     end
   end
 end

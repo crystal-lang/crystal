@@ -345,4 +345,13 @@ describe "Type inference: def" do
       ),
       "no overload matches 'foo'"
   end
+
+  it "errors if declares def inside if" do
+    assert_error %(
+      if 1 == 2
+        def foo; end
+      end
+      ),
+      "can't declare def dynamically"
+  end
 end

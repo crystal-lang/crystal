@@ -37,6 +37,18 @@ describe "Int" do
     assert { 3.odd?.should be_true }
   end
 
+  describe "succ" do
+    assert { 8.succ.should eq(9) }
+    assert { -2147483648.succ.should eq(-2147483647) }
+    assert { 2147483646.succ.should eq(2147483647) }
+  end
+
+  describe "pred" do
+    assert { 9.pred.should eq(8) }
+    assert { -2147483647.pred.should eq(-2147483648) }
+    assert { 2147483647.pred.should eq(2147483646) }
+  end
+
   describe "abs" do
     it "does for signed" do
       1_i8.abs.should eq(1_i8)
@@ -138,6 +150,21 @@ describe "Int" do
     assert { (~1).should eq(-2) }
     assert { (~1_u32).should eq(4294967294) }
   end
+
+  # TODO: enable after 0.7.6
+  # describe ">>" do
+  #   assert { (8000 >> 1).should eq(4000) }
+  #   assert { (8000 >> 2).should eq(2000) }
+  #   assert { (8000 >> 32).should eq(0) }
+  #   assert { (8000 >> -1).should eq(16000) }
+  # end
+
+  # describe "<<" do
+  #   assert { (8000 << 1).should eq(16000) }
+  #   assert { (8000 << 2).should eq(32000) }
+  #   assert { (8000 << 32).should eq(0) }
+  #   assert { (8000 << -1).should eq(4000) }
+  # end
 
   describe "to" do
     it "does upwards" do

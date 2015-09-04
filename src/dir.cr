@@ -95,6 +95,7 @@ class Dir
     unless @dir
       raise Errno.new("Error opening directory '#{@path}'")
     end
+    @closed = false
   end
 
   # Alias for `new(path)`
@@ -164,7 +165,11 @@ class Dir
 
   # Closes the directory stream.
   def close
-    LibC.closedir(@dir)
+    return if @closed
+    if LibC.closedir(@dir) != 0
+      raise Errno.new("closedir")
+    end
+    @closed = true
   end
 
   def self.working_directory

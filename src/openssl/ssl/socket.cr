@@ -17,12 +17,14 @@ class OpenSSL::SSL::Socket
     LibSSL.ssl_free(@ssl)
   end
 
-  def read(slice : Slice(UInt8), count)
+  def read(slice : Slice(UInt8))
+    count = slice.length
     return 0 if count == 0
     LibSSL.ssl_read(@ssl, slice.pointer(count), count)
   end
 
-  def write(slice : Slice(UInt8), count)
+  def write(slice : Slice(UInt8))
+    count = slice.length
     LibSSL.ssl_write(@ssl, slice.pointer(count), count)
   end
 

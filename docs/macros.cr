@@ -1,8 +1,8 @@
-# The Macros module is a ficticious module used to document macros
+# The Macros module is a fictitious module used to document macros
 # and macro methods.
 #
 # You can invoke a **fixed subset** of methods on AST nodes at compile-time. These methods
-# are documented on the classes in this module. Additionaly, methods of the
+# are documented on the classes in this module. Additionally, methods of the
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Macros
   # Outputs the current macro's buffer to the standard output. Useful for debugging
@@ -150,6 +150,11 @@ module Macros
     # test "hi" #=> prints "Didn't get a number literal"
     # ```
     def is_a?(name) : BoolLiteral
+    end
+
+    # Gives a compile-time error with the given message. This will
+    # highlight this node in the error message.
+    def raise(message) : NoReturn
     end
   end
 
@@ -541,7 +546,7 @@ module Macros
     end
   end
 
-  # A ficticious node representing a variable or instance
+  # A fictitious node representing a variable or instance
   # variable, together with type information.
   class MetaVar < ASTNode
     # Returns the name of this variable.
@@ -627,8 +632,15 @@ module Macros
   # end
 
   # Assign expression.
-  # class Assign < ASTNode
-  # end
+  class Assign < ASTNode
+    # Returns the target assigned to.
+    def target : ASTNode
+    end
+
+    # Returns the value that is being assigned.
+    def value : ASTNode
+    end
+  end
 
   # Assign expression.
   # class MultiAssign < ASTNode
@@ -740,11 +752,31 @@ module Macros
   # class Require < ASTNode
   # end
 
-  # class When < ASTNode
-  # end
+  # A `when` inside a `case`
+  class When < ASTNode
+    # Returns the conditions of this `when`.
+    def conds : ArrayLiteral
+    end
 
-  # class Case < ASTNode
-  # end
+    # Returns the body of this `when`.
+    def body : ASTNode
+    end
+  end
+
+  # A `case` expression
+  class Case < ASTNode
+    # Returns the condition (target) of this `case`.
+    def cond : ASTNode
+    end
+
+    # Returns the `when`s of this `case`.
+    def whens : ArrayLiteral(When)
+    end
+
+    # Returns the `else` of this `case`.
+    def else : ArrayLiteral(When)
+    end
+  end
 
   # class ImplicitObj < ASTNode
   # end
@@ -900,7 +932,7 @@ module Macros
   # class MagicConstant < ASTNode
   # end
 
-  # A ficticious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a MacroId

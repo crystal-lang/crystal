@@ -43,7 +43,7 @@ describe "Type inference: nilable instance var" do
       p.value = Baz.new
       p.value.foo + 1
       ),
-      "instance variable '@foo' of Baz was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "instance variable '@foo' of Baz was not initialized in all of the 'initialize' methods, rendering '@foo' of Foo nilable"
   end
 
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do
@@ -157,5 +157,34 @@ describe "Type inference: nilable instance var" do
       Foo.new.foo + 1
       ),
       "'self' was used before initializing instance variable '@foo', rendering it nilable"
+  end
+
+  it "finds type that doesn't initialize instance var (#1222)" do
+    assert_error %(
+      class Base
+        def initialize
+          @x = 0
+        end
+      end
+
+      class Unreferenced < Base
+        def initialize
+          # missing super
+        end
+      end
+
+      class Derived < Base
+        def initialize
+          super
+        end
+
+        def use_x
+          @x + 100
+        end
+      end
+
+      Derived.new.use_x
+      ),
+      "instance variable '@x' of Unreferenced was not initialized in all of the 'initialize' methods, rendering '@x' of Derived nilable (Base is the common supertype that defines it)"
   end
 end

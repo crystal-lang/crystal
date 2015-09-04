@@ -166,6 +166,10 @@ module Crystal
       self == type
     end
 
+    def instance_of?(type)
+      self == type
+    end
+
     def remove_typedef
       self
     end
@@ -199,6 +203,10 @@ module Crystal
 
     def allocated=(value)
       false
+    end
+
+    def devirtualize
+      self
     end
 
     def implements?(other_type : Type)
@@ -251,6 +259,10 @@ module Crystal
 
     def add_def_instance(key, typed_def)
       raise "Bug: #{self} doesn't implement add_def_instance"
+    end
+
+    def instance_var_owner(var_name)
+      raise "Bug: #{self} doesn't implement instance_var_owner"
     end
 
     def types
@@ -442,10 +454,10 @@ module Crystal
     end
 
     def to_s(io)
-      to_s_with_options(io, false)
+      to_s_with_options(io)
     end
 
-    abstract def to_s_with_options(io : IO, skip_union_parens : Bool)
+    abstract def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
   end
 
   abstract class ContainedType < Type
@@ -467,7 +479,7 @@ module Crystal
 
     def append_full_name(io)
       if @container && !@container.is_a?(Program)
-        @container.to_s(io)
+        @container.to_s_with_options(io, generic_args: false)
         io << "::"
       end
       io << @name
@@ -477,7 +489,7 @@ module Crystal
       String.build { |io| append_full_name(io) }
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       append_full_name(io)
     end
   end
@@ -583,7 +595,7 @@ module Crystal
         if item.is_restriction_of?(ex_item, self)
           if ex_item.is_restriction_of?(item, self)
             list[i] = item
-            a_def.previous = ex_item.def
+            a_def.previous = ex_item
             return ex_item.def
           else
             list.insert(i, item)
@@ -766,7 +778,7 @@ module Crystal
         including_types.each do |including_type|
           add_to_including_types(including_type, all_types)
         end
-        program.union_of(all_types)
+        program.type_merge_union_of(all_types)
       else
         nil
       end
@@ -788,6 +800,10 @@ module Crystal
 
     def raw_including_types
       @including_types
+    end
+
+    def filter_by_responds_to(name)
+      including_types.try &.filter_by_responds_to(name)
     end
 
     def passed_by_value?
@@ -992,6 +1008,14 @@ module Crystal
 
     def owns_instance_var?(name)
       owned_instance_vars.includes?(name) || superclass.try &.owns_instance_var?(name)
+    end
+
+    def instance_var_owner(name)
+      if owned_instance_vars.includes?(name)
+        self
+      else
+        superclass.try &.instance_var_owner(name)
+      end
     end
 
     def remove_instance_var(name)
@@ -1249,7 +1273,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "NoReturn"
     end
   end
@@ -1263,7 +1287,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "Void"
     end
   end
@@ -1372,6 +1396,10 @@ module Crystal
       true
     end
 
+    def allowed_in_generics?
+      false
+    end
+
     def type_desc
       "generic module"
     end
@@ -1385,14 +1413,16 @@ module Crystal
       @including_types
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       super
-      io << "("
-      type_vars.each_with_index do |type_var, i|
-        io << ", " if i > 0
-        type_var.to_s(io)
+      if generic_args
+        io << "("
+        type_vars.each_with_index do |type_var, i|
+          io << ", " if i > 0
+          type_var.to_s(io)
+        end
+        io << ")"
       end
-      io << ")"
     end
   end
 
@@ -1412,6 +1442,10 @@ module Crystal
 
     def allocated=(value)
       superclass.try &.allocated = value
+    end
+
+    def allowed_in_generics?
+      false
     end
 
     def new_generic_instance(program, generic_type, type_vars)
@@ -1480,14 +1514,16 @@ module Crystal
       program.union_of instances
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       super
-      io << "("
-      type_vars.each_with_index do |type_var, i|
-        io << ", " if i > 0
-        type_var.to_s(io)
+      if generic_args
+        io << "("
+        type_vars.each_with_index do |type_var, i|
+          io << ", " if i > 0
+          type_var.to_s(io)
+        end
+        io << ")"
       end
-      io << ")"
     end
   end
 
@@ -1517,7 +1553,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= generic_class.parents.map do |t|
+      generic_class.parents.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
@@ -1594,14 +1630,14 @@ module Crystal
       false
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       generic_class.append_full_name(io)
       io << "("
       i = 0
       type_vars.each_value do |type_var|
         io << ", " if i > 0
         if type_var.is_a?(Var)
-          type_var.type.to_s_with_options(io, true)
+          type_var.type.to_s_with_options(io, skip_union_parens: true)
         else
           type_var.to_s(io)
         end
@@ -1787,11 +1823,11 @@ module Crystal
       tuple_types.any? { |tuple_type| tuple_type.includes_type?(type) || tuple_type.has_in_type_vars?(type) }
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "{"
       @tuple_types.each_with_index do |tuple_type, i|
         io << ", " if i > 0
-        tuple_type.to_s_with_options(io, true)
+        tuple_type.to_s_with_options(io, skip_union_parens: true)
       end
       io << "}"
     end
@@ -1828,8 +1864,12 @@ module Crystal
     delegate has_def?, @module
     delegate metaclass, @module
 
+    def instance_of?(type)
+      type == @module
+    end
+
     def parents
-      @parents ||= @module.parents.map do |t|
+      @module.parents.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
@@ -1841,7 +1881,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       @module.to_s(io)
       io << "("
       @including_class.to_s(io)
@@ -1867,6 +1907,10 @@ module Crystal
 
     def type_vars
       mapping.keys
+    end
+
+    def instance_of?(type)
+      type == @extended_class
     end
 
     delegate depth, @extended_class
@@ -1911,7 +1955,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= @extended_class.parents.try &.map do |t|
+      @extended_class.parents.try &.map do |t|
         case t
         when IncludedGenericModule
           IncludedGenericModule.new(program, t.module, self, t.mapping)
@@ -1923,7 +1967,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       @extended_class.to_s(io)
       io << "("
       @extending_class.to_s(io)
@@ -2019,22 +2063,20 @@ module Crystal
     def parents
       # We need to repoint "self" in included generic modules to this typedef,
       # so "self" restrictions match and don't point to the typdefed type.
-      @parents ||= begin
-        typedef_parents = typedef.parents.try(&.dup) || [] of Type
+      typedef_parents = typedef.parents.try(&.dup) || [] of Type
 
-        if typedef_parents
-          typedef_parents.each_with_index do |t, i|
-            case t
-            when IncludedGenericModule
-              typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
-            when InheritedGenericClass
-              typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
-            end
+      if typedef_parents
+        typedef_parents.each_with_index do |t, i|
+          case t
+          when IncludedGenericModule
+            typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
+          when InheritedGenericClass
+            typedef_parents[i] = InheritedGenericClass.new(program, t.extended_class, t.mapping, self)
           end
         end
-
-        typedef_parents
       end
+
+      typedef_parents
     end
 
     def primitive_like?
@@ -2247,7 +2289,14 @@ module Crystal
                       else
                         @program.class_type
                       end
-      super(@program, @program, name || "#{@instance_type}:Class", super_class)
+      unless name
+        if instance_type.module?
+          name = "#{@instance_type}:Module"
+        else
+          name = "#{@instance_type}:Class"
+        end
+      end
+      super(@program, @program, name, super_class)
     end
 
     def allocated
@@ -2280,7 +2329,7 @@ module Crystal
       instance_type.virtual_type!.metaclass
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << @name
     end
   end
@@ -2297,7 +2346,12 @@ module Crystal
     end
 
     def parents
-      @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
+      @parents ||= begin
+        parents = [] of Type
+        parents << instance_type.generic_class.metaclass
+        parents << (instance_type.superclass.try(&.metaclass) || @program.class_type)
+        parents
+      end
     end
 
     delegate add_def, instance_type.generic_class.metaclass
@@ -2314,7 +2368,7 @@ module Crystal
       instance_type
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       instance_type.to_s(io)
       io << ":Class"
     end
@@ -2422,7 +2476,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "(" unless skip_union_parens
       @union_types.each_with_index do |union_type, i|
         io << " | " if i > 0
@@ -2452,7 +2506,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       not_nil_type.to_s(io)
       io << "?"
     end
@@ -2489,7 +2543,7 @@ module Crystal
       @union_types.last.remove_typedef as FunInstanceType
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "("
       @union_types.last.to_s(io)
       io << ")"
@@ -2511,7 +2565,7 @@ module Crystal
       @union_types.last.remove_typedef as PointerInstanceType
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       @union_types.last.to_s(io)
       io << "?"
     end
@@ -2556,6 +2610,10 @@ module Crystal
     def virtual_lookup(type)
       type
     end
+
+    def devirtualize
+      base_type
+    end
   end
 
   class VirtualType < Type
@@ -2589,6 +2647,29 @@ module Crystal
     delegate implements?, base_type
     delegate covariant?, base_type
     delegate ancestors, base_type
+
+    def filter_by_responds_to(name)
+      filtered = base_type.filter_by_responds_to(name)
+      return filtered.virtual_type if filtered
+
+      result = [] of Type
+      collect_filtered_by_responds_to(name, base_type, result)
+      program.type_merge_union_of(result)
+    end
+
+    def collect_filtered_by_responds_to(name, type, result)
+      type.subclasses.each do |subclass|
+        unless subclass.is_a?(GenericClassType)
+          filtered = subclass.filter_by_responds_to(name)
+          if filtered
+            result << subclass.virtual_type
+            next
+          end
+        end
+
+        collect_filtered_by_responds_to(name, subclass, result)
+      end
+    end
 
     def has_instance_var_in_initialize?(name)
       if base_type.abstract
@@ -2681,7 +2762,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       base_type.to_s(io)
       io << "+"
     end
@@ -2740,7 +2821,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       instance_type.to_s(io)
       io << ":Class"
     end
@@ -2833,7 +2914,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool)
+    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "("
       len = fun_types.length
       fun_types.each_with_index do |fun_type, i|

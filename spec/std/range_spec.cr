@@ -52,6 +52,52 @@ describe "Range" do
     (1...2).to_a.should eq([1])
   end
 
+  describe "each" do
+    it "gives correct values with inclusive range" do
+      range = -1..3
+      arr = [] of Int32
+      range.each { |x| arr << x }
+      arr.should eq([-1, 0, 1, 2, 3])
+    end
+
+    it "gives correct values with exclusive range" do
+      range = 'a'...'c'
+      arr = [] of Char
+      range.each { |x| arr << x }
+      arr.should eq(['a', 'b'])
+    end
+
+    it "is empty with empty inclusive range" do
+      range = 0..-1
+      any = false
+      range.each { any = true }
+      any.should eq(false)
+    end
+  end
+
+  describe "reverse_each" do
+    it "gives correct values with inclusive range" do
+      range = 'a'..'c'
+      arr = [] of Char
+      range.reverse_each { |x| arr << x }
+      arr.should eq(['c', 'b', 'a'])
+    end
+
+    it "gives correct values with exclusive range" do
+      range = -1...3
+      arr = [] of Int32
+      range.reverse_each { |x| arr << x }
+      arr.should eq([2, 1, 0, -1])
+    end
+
+    it "is empty with empty inclusive range" do
+      range = 0..-1
+      any = false
+      range.reverse_each { any = true }
+      any.should eq(false)
+    end
+  end
+
   describe "each iterator" do
     it "does next with inclusive range" do
       a = 1..3

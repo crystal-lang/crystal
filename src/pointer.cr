@@ -396,7 +396,8 @@ struct Pointer(T)
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
-  # to the value returned by the block and returns a pointer to the first byte from that memory.
+  # to the value returned by the block (which is invoked once with each index in the range `0...size`)
+  # and returns a pointer to the first byte from that memory.
   # The memory is allocated by the `GC`, so when there are
   # no pointers to this memory, it will be automatically freed.
   #

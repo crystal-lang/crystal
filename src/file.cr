@@ -1,9 +1,9 @@
 lib LibC
-  fun access(filename : UInt8*, how : Int32) : Int32
-  fun link(oldpath : UInt8*, newpath : UInt8*) : Int32
-  fun rename(oldname : UInt8*, newname : UInt8*) : Int32
-  fun symlink(oldpath : UInt8*, newpath : UInt8*) : Int32
-  fun unlink(filename : UInt8*) : Int32
+  fun access(filename : Char*, how : Int) : Int
+  fun link(oldpath : Char*, newpath : Char*) : Int
+  fun rename(oldname : Char*, newname : Char*) : Int
+  fun symlink(oldpath : Char*, newpath : Char*) : Int
+  fun unlink(filename : Char*) : Int
 
   F_OK = 0
   X_OK = 1 << 0
@@ -21,10 +21,10 @@ class File < FileDescriptorIO
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
-  def initialize(filename, mode = "r")
-    oflag = open_flag(mode)
+  def initialize(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
+    oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    fd = LibC.open(filename, oflag, DEFAULT_CREATE_MODE)
+    fd = LibC.open(filename, oflag, perm)
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
@@ -73,6 +73,61 @@ class File < FileDescriptorIO
   end
 
   getter path
+
+  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  #
+  # ```
+  # file = File.new("testfile")
+  # file.read(3) #=> "abc"
+  # file.seek(1, IO::Seek::Set)
+  # file.read(2) #=> "bc"
+  # file.seek(-1, IO::Seek::Current)
+  # file.read(1) #=> "c"
+  # ```
+  def seek(offset, whence = Seek::Set : Seek)
+    check_open
+
+    flush
+    seek_value = LibC.lseek(@fd, LibC::OffT.cast(offset), whence.to_i)
+    if seek_value == -1
+      raise Errno.new "Unable to seek"
+    end
+
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+  end
+
+  # Same as `pos`.
+  def tell
+    pos
+  end
+
+  # Returns the current position (in bytes) in this File.
+  #
+  # ```
+  # io = StringIO.new "hello"
+  # io.pos     #=> 0
+  # io.read(2) #=> "he"
+  # io.pos     #=> 2
+  # ```
+  def pos
+    check_open
+
+    seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
+    raise Errno.new "Unable to tell" if seek_value == -1
+
+    seek_value - @in_buffer_rem.length
+  end
+
+  # Sets the current position (in bytes) in this File.
+  #
+  # ```
+  # io = StringIO.new "hello"
+  # io.pos = 3
+  # io.read #=> "lo"
+  # ```
+  def pos=(value)
+    seek value
+  end
 
   def self.stat(path)
     if LibC.stat(path, out stat) != 0
@@ -213,12 +268,12 @@ class File < FileDescriptorIO
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
-  def self.open(filename, mode = "r")
-    new filename, mode
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
+    new filename, mode, perm
   end
 
-  def self.open(filename, mode = "r")
-    file = File.new filename, mode
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
+    file = File.new filename, mode, perm
     begin
       yield file
     ensure
@@ -252,8 +307,8 @@ class File < FileDescriptorIO
     lines
   end
 
-  def self.write(filename, content)
-    File.open(filename, "w") do |file|
+  def self.write(filename, content, perm = DEFAULT_CREATE_MODE)
+    File.open(filename, "w", perm) do |file|
       file.print(content)
     end
   end

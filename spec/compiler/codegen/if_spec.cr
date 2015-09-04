@@ -150,6 +150,9 @@ describe "Code gen: if" do
   it "codegens if with nested if that raises" do
     run("
       require \"prelude\"
+
+      struct Nil; def to_i; 0; end; end
+
       block = 1 || nil
       if 1 == 2
         if block

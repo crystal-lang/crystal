@@ -226,50 +226,6 @@ describe "Type inference: generic class" do
       )) { int32.metaclass }
   end
 
-  it "creates pointer of unspecified generic type (1)" do
-    assert_type(%(
-      class Foo(T)
-      end
-
-      p = Pointer(Foo).malloc(1_u64)
-      p.value = Foo(Int32).new
-      p.value = Foo(Float64).new
-      p.value
-      )) { types["Foo"] }
-  end
-
-  it "creates pointer of unspecified generic type (2)" do
-    assert_type(%(
-      class Foo(T)
-        def initialize(@x : T)
-        end
-
-        def x
-          @x
-        end
-      end
-
-      p = Pointer(Foo).malloc(1_u64)
-      p.value = Foo.new(1)
-      p.value = Foo.new('a')
-      p.value.x
-      )) { union_of int32, char }
-  end
-
-  it "creates pointer of unspecified generic type with inherited class" do
-    assert_type(%(
-      class Foo(T)
-      end
-
-      class Bar(T) < Foo(T)
-      end
-
-      p = Pointer(Foo).malloc(1_u64)
-      p.value = Bar(Int32).new
-      p.value
-      )) { types["Foo"] }
-  end
-
   it "allows T::Type with T a generic type" do
     assert_type(%(
       class MyType
@@ -493,5 +449,31 @@ describe "Type inference: generic class" do
       Tuple(32)
       ),
       "argument to Tuple must be a type, not 32"
+  end
+
+  it "disallow using a non-instantiated generic type as a generic type argument" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar(T)
+      end
+
+      Bar(Foo)
+      ),
+      "use a more specific type"
+  end
+
+  it "disallow using a non-instantiated module type as a generic type argument" do
+    assert_error %(
+      module Moo(T)
+      end
+
+      class Bar(T)
+      end
+
+      Bar(Moo)
+      ),
+      "use a more specific type"
   end
 end

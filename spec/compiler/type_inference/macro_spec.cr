@@ -413,4 +413,67 @@ describe "Type inference: macro" do
       me
       )) { symbol }
   end
+
+  it "errors if declares macro inside if" do
+    assert_error %(
+      if 1 == 2
+        macro foo; end
+      end
+      ),
+      "can't declare macro dynamically"
+  end
+
+  it "allows declaring class with macro if" do
+    assert_type(%(
+      {% if true %}
+        class Foo; end
+      {% end %}
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "allows declaring class with macro for" do
+    assert_type(%(
+      {% for i in 0..0 %}
+        class Foo; end
+      {% end %}
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "allows declaring class with macro expression" do
+    assert_type(%(
+      {{ `echo "class Foo; end"` }}
+
+      Foo.new
+      )) { types["Foo"] }
+  end
+
+  it "errors if requires inside class through macro expansion" do
+    assert_error %(
+      macro req
+        require "bar"
+      end
+
+      class Foo
+        req
+      end
+      ),
+      "can't require inside type declarations"
+  end
+
+  it "errors if requires inside if through macro expansion" do
+    assert_error %(
+      macro req
+        require "bar"
+      end
+
+      if 1 == 2
+        req
+      end
+      ),
+      "can't require dynamically"
+  end
 end

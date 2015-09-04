@@ -1,6 +1,7 @@
 lib LibTermios
   alias Cc = Char
   alias Tcflag = UInt64
+  alias Int = LibC::Int
 
   struct Struct
     iflag : Tcflag
@@ -165,9 +166,9 @@ lib LibTermios
 
   end
 
-  fun cfmakeraw(termios_p : LibTermios::Struct*) : Int32
-  fun tcgetattr(fd : Int32, termios_p : LibTermios::Struct*) : Int32
-  fun tcsetattr(fd : Int32, optional_actions : OptionalActions, termios_p : LibTermios::Struct*) : Int32
+  fun cfmakeraw(termios_p : LibTermios::Struct*)
+  fun tcgetattr(fd : Int, termios_p : LibTermios::Struct*) : Int
+  fun tcsetattr(fd : Int, optional_actions : OptionalActions, termios_p : LibTermios::Struct*) : Int
 end
 
 module IO

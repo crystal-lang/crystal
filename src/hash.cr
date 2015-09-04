@@ -84,7 +84,7 @@ class Hash(K, V)
       if block = @block
         block.call(self, key)
       else
-        raise KeyError.new "Missing hash value: #{key.inspect}"
+        raise KeyError.new "Missing hash key: #{key.inspect}"
       end
     end
   end
@@ -196,8 +196,8 @@ class Hash(K, V)
     ValueIterator(K, V).new(self, @first)
   end
 
-  def each_with_index
-    i = 0
+  def each_with_index(offset = 0)
+    i = offset
     each do |key, value|
       yield key, value, i
       i += 1
@@ -411,6 +411,31 @@ class Hash(K, V)
       hash[v] = k
     end
     hash
+  end
+
+  def all?
+    each do |k, v|
+      return false unless yield(k, v)
+    end
+    true
+  end
+
+  def any?
+    each do |k, v|
+      return true if yield(k, v)
+    end
+    false
+  end
+
+  def any?
+    !empty?
+  end
+
+  def inject(memo)
+    each do |k, v|
+      memo = yield(memo, k, v)
+    end
+    memo
   end
 
   protected def find_entry(key)

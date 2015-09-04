@@ -2,19 +2,38 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta id="repository-name" content="<%= type.repository_name %>">
   <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
-  <script type="text/javascript">
-    var pathToIndex = "<%= type.path_to "index.html" %>"
-  </script>
-  <script type="text/javascript" src="<%= type.path_to "js/type.js" %>"></script>
+  <script type="text/javascript" src="<%= type.path_to "js/doc.js" %>"></script>
+  <title><%= type.full_name %> - <%= type.repository_name %></title>
 </head>
 <body>
 
+<div id="types-list">
+  <div id="search-box">
+    <input type="search" id="search-input" placeholder="Search...">
+  </div>
+
+  <ul>
+    <li><a href="<%= type.path_to("index.html") %>">README</a></li>
+  </ul>
+
+  <%= ListItemsTemplate.new(types, type) %>
+</div>
+
+<div id="main-content">
+<h1 class="type-name">
 <% if type.program? %>
-  <h1><%= type.full_name %></h1>
+  <%= type.full_name %>
 <% else %>
-  <h1><%= type.abstract? ? "abstract " : ""%><%= type.kind %> <%= type.full_name %></h1>
+  <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span> <%= type.full_name %>
 <% end %>
+</h1>
+
+<% if type.superclass %>
+  <%= type.superclass_hierarchy %>
+<% end %>
+
 
 <% if doc = type.formatted_doc %>
   <h2>Overview</h2>
@@ -25,11 +44,6 @@
 <% if type.alias? %>
   <h2>Alias Definition</h2>
   <code><%= type.formatted_alias_definition %></code>
-<% end %>
-
-<% if type.superclass %>
-  <h2>Superclass hierarchy</h2>
-  <%= type.superclass_hierarchy %>
 <% end %>
 
 <%= OtherTypesTemplate.new("Included Modules", type, type.included_modules) %>
@@ -55,25 +69,34 @@
   <% else %>
     <h2>Constant Summary</h2>
   <% end %>
-  <ul>
+  <dl>
     <% type.constants.each do |const| %>
-      <li class="entry-const">
+      <dt class="entry-const">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
-        <% if doc = const.formatted_doc %>
-          <div class="doc"><%= doc %></div>
-        <% end %>
-      </li>
+      </dt>
+      <% if doc = const.formatted_doc %>
+      <dd class="entry-const-doc">
+        <%= doc %>
+      </dd>
+      <% end %>
     <% end %>
-  </ul>
+  </dl>
 <% end %>
 
 <%= MethodSummaryTemplate.new(type.program? ? "Method Summary" : "Class Method Summary", type.class_methods) %>
 <%= MethodSummaryTemplate.new("Instance Method Summary", type.instance_methods) %>
 <%= MethodSummaryTemplate.new("Macro Summary", type.macros) %>
 
+<div class="methods-inherited">
+  <% type.ancestors.each do |ancestor| %>
+    <%= MethodsInheritedTemplate.new(type, ancestor) %>
+  <% end %>
+</div>
+
 <%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
 <%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>
 <%= MethodDetailTemplate.new("Macro Detail", type.macros) %>
+</div>
 
 </body>
 </html>

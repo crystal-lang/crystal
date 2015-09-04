@@ -52,13 +52,13 @@ describe Time do
   it "initialize with .epoch" do
     seconds = 1439404155
     time = Time.epoch(seconds)
-    time.should eq(Time.new(2015, 8, 12, 18, 29, 15))
+    time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
     time.epoch.should eq(seconds)
   end
 
   it "initialize with .epoch_ms" do
     milliseconds = 1439404155000
-    time = Time.epoch_ms(milliseconds, kind: Time::Kind::Utc)
+    time = Time.epoch_ms(milliseconds)
     time.should eq(Time.new(2015, 8, 12, 18, 29, 15, kind: Time::Kind::Utc))
     time.epoch_ms.should eq(milliseconds)
   end

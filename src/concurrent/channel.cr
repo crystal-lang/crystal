@@ -43,27 +43,93 @@ abstract class Channel(T)
     to_s(io)
   end
 
-  def self.select(*channels)
-    loop do
-      ready_channel = channels.find &.ready?
-      return ready_channel if ready_channel
-
-      channels.each &.wait
-      Scheduler.reschedule
-      channels.each &.unwait
-    end
-  end
-
-  protected def wait
+  def wait_for_receive
     @receivers << Fiber.current
   end
 
-  protected def unwait
+  def unwait_for_receive
     @receivers.delete Fiber.current
+  end
+
+  def wait_for_send
+    @senders << Fiber.current
+  end
+
+  def unwait_for_send
+    @senders.delete Fiber.current
   end
 
   protected def raise_if_closed
     raise ChannelClosed.new if @closed
+  end
+
+  def self.select(*ops : SendOp | ReceiveOp)
+    select ops
+  end
+
+  def self.select(ops : Tuple | Array)
+    loop do
+      ops.each_with_index do |op, index|
+        if op.ready?
+          result = op.execute
+          return index, result
+        end
+      end
+
+      ops.each &.wait
+      Scheduler.reschedule
+      ops.each &.unwait
+    end
+  end
+
+  def send_op(value : T)
+    SendOp.new(self, value)
+  end
+
+  def receive_op
+    ReceiveOp.new(self)
+  end
+
+  struct ReceiveOp(T)
+    def initialize(@channel : Channel(T))
+    end
+
+    def ready?
+      !@channel.empty?
+    end
+
+    def execute
+      @channel.receive
+    end
+
+    def wait
+      @channel.wait_for_receive
+    end
+
+    def unwait
+      @channel.unwait_for_receive
+    end
+  end
+
+  struct SendOp(T)
+    def initialize(@channel : Channel(T), @value : T)
+    end
+
+    def ready?
+      !@channel.full?
+    end
+
+    def execute
+      @channel.send(@value)
+    end
+
+    def wait
+      @channel.wait_for_send
+    end
+
+    def unwait
+      @channel.unwait_for_send
+    end
   end
 end
 
@@ -106,10 +172,6 @@ class BufferedChannel(T) < Channel(T)
 
   def empty?
     @queue.empty?
-  end
-
-  def ready?
-    !empty?
   end
 end
 
@@ -159,7 +221,11 @@ class UnbufferedChannel(T) < Channel(T)
     end
   end
 
-  def ready?
-    @has_value
+  def empty?
+    !@has_value
+  end
+
+  def full?
+    @has_value || @receivers.empty?
   end
 end

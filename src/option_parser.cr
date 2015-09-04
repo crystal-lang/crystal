@@ -1,3 +1,27 @@
+# `OptionParser` is a class for command-line options processing. It supports:
+#
+# * Short and long modifier style options (example: `-h`, `--help`)
+# * Passing arguments to the flags (example: `-f filename.txt`)
+# * Automatic help message generation
+#
+# Run `crystal` for an example of a CLI built with `OptionParser`.
+#
+# Short example:
+#
+#     require "option_parser"
+#
+#     upcase = false
+#     destination = "World"
+#
+#     OptionParser.parse! do |parser|
+#       parser.banner = "Usage: salute [arguments]"
+#       parser.on("-u", "--upcase", "Upcases the sallute") { upcase = true }
+#       parser.on("-t NAME", "--to=NAME", "Specifies the name to salute") { |name| destination = name }
+#       parser.on("-h", "--help", "Show this help") { puts parser }
+#     end
+#
+#     destination = destination.upcase if upcase
+#     puts "Hello #{destination}!"
 class OptionParser
   class Exception < ::Exception
   end
@@ -17,6 +41,7 @@ class OptionParser
   # :nodoc:
   record Handler, flag, block
 
+  # Creates a new parser, with its configuration specified in the block, and uses it to parse the passed `args`.
   def self.parse(args)
     parser = OptionParser.new
     yield parser
@@ -24,39 +49,69 @@ class OptionParser
     parser
   end
 
+  # Creates a new parser, with its configuration specified in the block, and uses it to parse the arguments passed to the program.
   def self.parse!
     parse(ARGV) { |parser| yield parser }
   end
 
+  # Creates a new parser.
   def initialize
     @flags = [] of String
     @handlers = [] of Handler
   end
 
+  # Creates a new parser, with its configuration specified in the block.
   def self.new
     new.tap { |parser| yield parser }
   end
 
+  # Establishes the initial message for the help printout. Typically, you want to write here the name of your program,
+  # and a one-line template of its invocation.
+  #
+  # Example:
+  #
+  #     parser.banner = "Usage: crystal [command] [switches] [program file] [--] [arguments]"
+  #
   setter banner
 
+  # Establishes a handler for a flag.
+  #
+  # Flags can (but don't have to) start with a dash. They can also have an optional argument, which will get passed to
+  # the block. Each flag has a description, which will be used for the help message.
+  #
+  # Examples of valid flags:
+  #
+  # * `-a`, `-B`
+  # * `--something-longer`
+  # * `-f FILE`, `--file FILE`, `--file=FILE`  (these will yield the passed value to the block as a string)
   def on(flag, description, &block : String ->)
     append_flag flag.to_s, description
     @handlers << Handler.new(flag, block)
   end
 
+  # Establishes a handler for a pair of short and long flags.
+  #
+  # See the other definition of `on` for examples.
   def on(short_flag, long_flag, description, &block : String ->)
     append_flag "#{short_flag}, #{long_flag}", description
     @handlers << Handler.new(short_flag, block)
     @handlers << Handler.new(long_flag, block)
   end
 
+  # Adds a separator, with an optional header message, that will be used to print the help.
+  #
+  # This way, you can group the different options in an easier to read way.
   def separator(message = "")
     @flags << message.to_s
   end
 
+  # Sets a handler for arguments that didn't match any of the setup options.
+  #
+  # You typically use this to get the main arguments (not modifiers) that your program expects (for example, filenames)
   def unknown_args(&@unknown_args : Array(String), Array(String) -> )
   end
 
+  # Returns all the setup options, formatted in a help message.
   def to_s(io : IO)
     if banner = @banner
       io << banner
@@ -76,10 +131,12 @@ class OptionParser
     end
   end
 
+  # Parses the passed `args`, running the handlers associated to each option.
   def parse(args)
     ParseTask.new(args, @flags, @handlers, @unknown_args).parse
   end
 
+  # Parses the passed the arguments passed to the program, running the handlers associated to each option.
   def parse!
     parse ARGV
   end

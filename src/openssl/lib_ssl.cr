@@ -2,6 +2,8 @@ require "./lib_crypto"
 
 @[Link("ssl")]
 lib LibSSL
+  alias Int = LibC::Int
+
   type SSLMethod = Void*
   type SSLContext = Void*
   type SSL = Void*
@@ -21,22 +23,22 @@ lib LibSSL
   fun ssl_new = SSL_new(context : SSLContext) : SSL
 
   @[Raises]
-  fun ssl_connect = SSL_connect(handle : SSL) : Int32
+  fun ssl_connect = SSL_connect(handle : SSL) : Int
 
   @[Raises]
-  fun ssl_accept = SSL_accept(handle : SSL) : Int32
+  fun ssl_accept = SSL_accept(handle : SSL) : Int
 
   @[Raises]
-  fun ssl_write = SSL_write(handle : SSL, text : UInt8*, length : Int32) : Int32
+  fun ssl_write = SSL_write(handle : SSL, text : UInt8*, length : Int) : Int
 
   @[Raises]
-  fun ssl_read = SSL_read(handle : SSL, buffer : UInt8*, read_size : Int32) : Int32
+  fun ssl_read = SSL_read(handle : SSL, buffer : UInt8*, read_size : Int) : Int
 
   @[Raises]
-  fun ssl_shutdown = SSL_shutdown(handle : SSL) : Int32
+  fun ssl_shutdown = SSL_shutdown(handle : SSL) : Int
 
   fun ssl_free = SSL_free(handle : SSL)
-  fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int32
-  fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int32
+  fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int
+  fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
 end

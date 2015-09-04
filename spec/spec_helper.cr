@@ -159,10 +159,13 @@ def run(code, filename = nil)
   # the program and run it, printing the last
   # expression and using that to compare the result.
   if code.includes?(%(require "prelude"))
-    ast = Parser.parse(code)
-    assign = Assign.new(Var.new("__tempvar"), ast)
+    ast = Parser.parse(code) as Expressions
+    last = ast.expressions.last
+    assign = Assign.new(Var.new("__tempvar"), last)
     call = Call.new(nil, "print!", Var.new("__tempvar"))
-    code = Expressions.new([assign, call]).to_s
+    exps = Expressions.new([assign, call] of ASTNode)
+    ast.expressions[-1] = exps
+    code = ast.to_s
 
     output_filename = Crystal.tempfile("crystal-spec-output")
 

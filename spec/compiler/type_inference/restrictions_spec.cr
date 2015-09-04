@@ -192,4 +192,87 @@ describe "Restrictions" do
       1.5 / Foo(Int32).new
       )) { char }
   end
+
+  it "works with generic class metaclass vs. generic instance class metaclass" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo(x : Foo(Int32).class)
+        1
+      end
+
+      foo Foo(Int32)
+      )) { int32 }
+  end
+
+  it "works with generic class metaclass vs. generic class metaclass" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo(x : Foo.class)
+        1
+      end
+
+      foo Foo(Int32)
+      )) { int32 }
+  end
+
+  it "works with union against unions of generics" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo(x : Foo | Int32)
+        x
+      end
+
+      foo(Foo(Int32).new || Foo(Float64).new)
+      )) { union_of(
+            (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar),
+            (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar),
+           ) }
+  end
+
+  it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
+    assert_error %(
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class GenericBase(T)
+      end
+
+      class GenericChild(T) < GenericBase(T)
+      end
+
+      def foo(x : GenericBase(Child))
+      end
+
+      foo GenericChild(Base).new
+      ),
+      "no overload matches"
+  end
+
+  it "allows passing recursive type to free var (#1076)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      alias NestedParams = Nil | Foo(NestedParams)
+
+      class Bar(X)
+      end
+
+      def bar(other : Bar(Y))
+        'a'
+      end
+
+      h1 = Bar(NestedParams).new
+      bar(h1)
+      )) { char }
+  end
 end

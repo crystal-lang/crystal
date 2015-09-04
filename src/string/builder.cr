@@ -27,11 +27,12 @@ class String::Builder
     io
   end
 
-  def read(slice : Slice(UInt8), count)
+  def read(slice : Slice(UInt8))
     raise "Not implemented"
   end
 
-  def write(slice : Slice(UInt8), count)
+  def write(slice : Slice(UInt8))
+    count = slice.length
     new_bytesize = real_bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))

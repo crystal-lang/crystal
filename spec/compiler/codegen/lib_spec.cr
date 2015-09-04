@@ -162,4 +162,14 @@ describe "Code gen: lib" do
       Thing
       ))
   end
+
+  it "allows invoking out with underscore " do
+    codegen(%(
+      lib Lib
+        fun foo(x : Int32*) : Float64
+      end
+
+      Lib.foo out _
+      ))
+  end
 end

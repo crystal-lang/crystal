@@ -27,7 +27,8 @@ describe "Codegen: while" do
 
   it "codegens while with declared var 1" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
+
       while 1 == 2
         a = 2
       end
@@ -37,7 +38,8 @@ describe "Codegen: while" do
 
   it "codegens while with declared var 2" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
+
       while 1 == 1
         a = 2
         if 1 == 1
@@ -51,7 +53,8 @@ describe "Codegen: while" do
 
   it "codegens while with declared var 3" do
     run("
-      require \"nil\"
+      struct Nil; def to_i; 0; end; end
+
       while 1 == 1
         a = 1
         if a

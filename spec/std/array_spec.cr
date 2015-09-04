@@ -570,6 +570,25 @@ describe "Array" do
     [1, 2, 3].product(['a', 'b']).should eq([{1,'a'}, {1,'b'}, {2,'a'}, {2,'b'}, {3,'a'}, {3,'b'}])
   end
 
+  describe "push" do
+    it "adds one element to the array" do
+      a = ["a", "b"]
+      a.push("c")
+      a.should eq ["a", "b", "c"]
+    end
+
+    it "returns the array" do
+      a = ["a", "b"]
+      a.push("c").should eq ["a", "b", "c"]
+    end
+
+    it "has the << alias" do
+      a = ["a", "b"]
+      a << "c"
+      a.should eq ["a", "b", "c"]
+    end
+  end
+
   it "does replace" do
     a = [1, 2, 3]
     b = [1]
@@ -1108,7 +1127,43 @@ describe "Array" do
     end
   end
 
-  describe "permutation" do
+  describe "rotate" do
+    it "rotate!" do
+      a = [1, 2, 3]
+      a.rotate!; a.should eq([2, 3, 1])
+      a.rotate!; a.should eq([3, 1, 2])
+      a.rotate!; a.should eq([1, 2, 3])
+      a.rotate!; a.should eq([2, 3, 1])
+      a.rotate!.should eq(a)
+    end
+
+    it "rotate" do
+      a = [1, 2, 3]
+      a.rotate.should eq([2, 3, 1])
+      a.should eq([1, 2, 3])
+      a.rotate.should eq([2, 3, 1])
+    end
+
+    assert { a = [1, 2, 3]; a.rotate!(0); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate!(1); a.should eq([2, 3, 1]) }
+    assert { a = [1, 2, 3]; a.rotate!(2); a.should eq([3, 1, 2]) }
+    assert { a = [1, 2, 3]; a.rotate!(3); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate!(4); a.should eq([2, 3, 1]) }
+    assert { a = [1, 2, 3]; a.rotate!(3001); a.should eq([2, 3, 1]) }
+    assert { a = [1, 2, 3]; a.rotate!(-1); a.should eq([3, 1, 2]) }
+    assert { a = [1, 2, 3]; a.rotate!(-3001); a.should eq([3, 1, 2]) }
+
+    assert { a = [1, 2, 3]; a.rotate(0).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(1).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(2).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(3).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(4).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(3001).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(-1).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    assert { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+  end
+
+  describe "permutations" do
     assert { [1, 2, 2].permutations.should eq([[1,2,2],[1,2,2],[2,1,2],[2,2,1],[2,1,2],[2,2,1]]) }
     assert { [1, 2, 3].permutations.should eq([[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]) }
     assert { [1, 2, 3].permutations(1).should eq([[1],[2],[3]]) }
@@ -1126,6 +1181,161 @@ describe "Array" do
       sums.should eq([3, 4, 3, 5, 4, 5])
     end
 
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_permutation(3) do |perm|
+        perm.map! &.+(1)
+        sums << perm.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([9, 9, 9, 9, 9, 9])
+    end
+
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) {} } }
+  end
+
+  describe "combinations" do
+    assert { [1, 2, 2].combinations.should eq([[1,2,2]]) }
+    assert { [1, 2, 3].combinations.should eq([[1,2,3]]) }
+    assert { [1, 2, 3].combinations(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].combinations(2).should eq([[1, 2], [1, 3], [2, 3]]) }
+    assert { [1, 2, 3].combinations(3).should eq([[1, 2, 3]]) }
+    assert { [1, 2, 3].combinations(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].combinations(4).should eq([] of Array(Int32)) }
+    assert { [1,2,3,4].combinations(3).should eq([[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]) }
+    assert { [1,2,3,4].combinations(2).should eq([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) }
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].combinations(-1) } }
+
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].each_combination(2) do |comb|
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([3, 4, 5])
+    end
+
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_combination(3) do |comb|
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([9])
+    end
+
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) {} } }
+  end
+
+  describe "repeated_combinations" do
+    assert { [1, 2, 2].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 2], [1, 2, 2], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]) }
+    assert { [1, 2, 3].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
+    assert { [1, 2, 3].repeated_combinations(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].repeated_combinations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]) }
+    assert { [1, 2, 3].repeated_combinations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
+    assert { [1, 2, 3].repeated_combinations(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].repeated_combinations(-1) } }
+
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].each_repeated_combination(2) do |comb|
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([2, 3, 4, 4, 5, 6])
+    end
+
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_repeated_combination(3) do |comb|
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
+    end
+
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_combination(-1) {} } }
+  end
+
+  describe "repeated_permutations" do
+    assert { [1, 2, 2].repeated_permutations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 1], [1, 2, 2], [1, 2, 2], [1, 2, 1], [1, 2, 2], [1, 2, 2], [2, 1, 1], [2, 1, 2], [2, 1, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 1, 1], [2, 1, 2], [2, 1, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2]]) }
+    assert { [1, 2, 3].repeated_permutations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
+    assert { [1, 2, 3].repeated_permutations(1).should eq([[1],[2],[3]]) }
+    assert { [1, 2, 3].repeated_permutations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3], [3, 1], [3, 2], [3, 3]]) }
+    assert { [1, 2, 3].repeated_permutations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
+    assert { [1, 2, 3].repeated_permutations(0).should eq([[] of Int32]) }
+    assert { [1, 2, 3].repeated_permutations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 1], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 1], [1, 1, 3, 2], [1, 1, 3, 3], [1, 2, 1, 1], [1, 2, 1, 2], [1, 2, 1, 3], [1, 2, 2, 1], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 1], [1, 2, 3, 2], [1, 2, 3, 3], [1, 3, 1, 1], [1, 3, 1, 2], [1, 3, 1, 3], [1, 3, 2, 1], [1, 3, 2, 2], [1, 3, 2, 3], [1, 3, 3, 1], [1, 3, 3, 2], [1, 3, 3, 3], [2, 1, 1, 1], [2, 1, 1, 2], [2, 1, 1, 3], [2, 1, 2, 1], [2, 1, 2, 2], [2, 1, 2, 3], [2, 1, 3, 1], [2, 1, 3, 2], [2, 1, 3, 3], [2, 2, 1, 1], [2, 2, 1, 2], [2, 2, 1, 3], [2, 2, 2, 1], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 1], [2, 2, 3, 2], [2, 2, 3, 3], [2, 3, 1, 1], [2, 3, 1, 2], [2, 3, 1, 3], [2, 3, 2, 1], [2, 3, 2, 2], [2, 3, 2, 3], [2, 3, 3, 1], [2, 3, 3, 2], [2, 3, 3, 3], [3, 1, 1, 1], [3, 1, 1, 2], [3, 1, 1, 3], [3, 1, 2, 1], [3, 1, 2, 2], [3, 1, 2, 3], [3, 1, 3, 1], [3, 1, 3, 2], [3, 1, 3, 3], [3, 2, 1, 1], [3, 2, 1, 2], [3, 2, 1, 3], [3, 2, 2, 1], [3, 2, 2, 2], [3, 2, 2, 3], [3, 2, 3, 1], [3, 2, 3, 2], [3, 2, 3, 3], [3, 3, 1, 1], [3, 3, 1, 2], [3, 3, 1, 3], [3, 3, 2, 1], [3, 3, 2, 2], [3, 3, 2, 3], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]]) }
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].repeated_permutations(-1) } }
+
+    it "accepts a block" do
+      sums = [] of Int32
+      [1, 2, 3].each_repeated_permutation(2) do |a|
+        sums << a.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([2, 3, 4, 3, 4, 5, 4, 5, 6])
+    end
+
+    it "yielding dup of arrays" do
+      sums = [] of Int32
+      [1, 2, 3].each_repeated_permutation(3) do |a|
+        a.map! &.+(1)
+        sums << a.sum
+      end.should eq([1, 2, 3])
+      sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
+    end
+
+    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_permutation(-1) {} } }
+  end
+
+  describe "Array.each_product" do
+    it "single array" do
+      res = [] of Array(Int32)
+      Array.each_product([[1]]) { |r| res << r }
+      res.should eq([[1]])
+    end
+
+    it "2 arrays" do
+      res = [] of Array(Int32)
+      Array.each_product([[1, 2], [3, 4]]) { |r| res << r }
+      res.should eq([[1, 3], [1, 4], [2, 3], [2, 4]])
+    end
+
+    it "2 arrays different types" do
+      res = [] of Array(Int32 | Char)
+      Array.each_product([[1, 2], ['a', 'b']]) { |r| res << r }
+      res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+
+    it "more arrays" do
+      res = [] of Array(Int32)
+      Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
+      res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+    end
+
+    it "with splat" do
+      res = [] of Array(Int32 | Char)
+      Array.each_product([1, 2], ['a', 'b']) { |r| res << r }
+      res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+  end
+
+  describe "Array.product" do
+    it "with array" do
+      Array.product([[1, 2], ['a', 'b']]).should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+
+    it "with splat" do
+      Array.product([1, 2], ['a', 'b']).should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+  end
+
+  it "doesn't overflow buffer with Array.new(size, value) (#1209)" do
+    a = Array.new(1, 1_i64)
+    b = Array.new(1, 1_i64)
+    b << 2_i64 << 3_i64
+    a.should eq([1])
+    b.should eq([1, 2, 3])
+  end
+
+  it "flattens" do
+    [[1, 'a'], [[[[true], "hi"]]]].flatten.should eq([1, 'a', true, "hi"])
   end
 end

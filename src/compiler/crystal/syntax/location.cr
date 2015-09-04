@@ -24,6 +24,21 @@ module Crystal
       to_s(io)
     end
 
+    def original_filename
+      case filename = @filename
+      when String
+        filename
+      when VirtualFile
+        filename.expanded_location.try &.original_filename
+      else
+        nil
+      end
+    end
+
+    def inspect
+      to_s
+    end
+
     def to_s(io)
       io << filename << ":" << line_number << ":" << column_number
     end

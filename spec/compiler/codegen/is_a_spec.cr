@@ -509,14 +509,115 @@ describe "Codegen: is_a?" do
       )).to_b.should be_true
   end
 
-  it "doesn't skip assignment when used in combination with .is_a? (#1121)" do
+  it "doesn't skip assignment when used in combination with .is_a? (true case, then) (#1121)" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
+        b + 1
+      else
+        a
+      end
+      )).to_i.should eq(124)
+  end
+
+  it "doesn't skip assignment when used in combination with .is_a? (true case, else) (#1121)" do
+    run(%(
+      a = 123
+      if (b = a).is_a?(Int32)
+        a + 2
+      else
+        b
+      end
+      )).to_i.should eq(125)
+  end
+
+  it "doesn't skip assignment when used in combination with .is_a? (false case) (#1121)" do
+    run(%(
+      a = 123
+      if (b = a).is_a?(Char)
+        b
+      else
+        b + 1
+      end
+      )).to_i.should eq(124)
+  end
+
+  it "doesn't skip assignment when used in combination with .is_a? and && (#1121)" do
+    run(%(
+      a = 123
+      if (1 == 1) && (b = a).is_a?(Char)
         b
       else
         a
       end
+      b ? b + 1 : 0
+      )).to_i.should eq(124)
+  end
+
+  it "transforms then if condition is always truthy" do
+    run(%(
+      def foo
+        123 && 456
+      end
+
+      if 1.is_a?(Int32)
+        foo
+      else
+        999
+      end
+      )).to_i.should eq(456)
+  end
+
+  it "transforms else if condition is always falsey" do
+    run(%(
+      def foo
+        123 && 456
+      end
+
+      if 1.is_a?(Char)
+        999
+      else
+        foo
+      end
+      )).to_i.should eq(456)
+  end
+
+  it "resets truthy state after visiting nodes (bug)" do
+    run(%(
+      require "prelude"
+
+      a = 123
+      if !1.is_a?(Int32)
+        a = 456
+      end
+      a
       )).to_i.should eq(123)
+  end
+
+  it "does is_a? with generic class metaclass" do
+    run(%(
+      class Foo(T)
+      end
+
+      Foo(Int32).is_a?(Foo.class)
+      )).to_b.should be_true
+  end
+
+  it "says false for GenericChild(Base).is_a?(GenericBase(Child)) (#1294)" do
+    run(%(
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class GenericBase(T)
+      end
+
+      class GenericChild(T) < GenericBase(T)
+      end
+
+      GenericChild(Base).new.is_a?(GenericBase(Child))
+      )).to_b.should be_false
   end
 end

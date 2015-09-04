@@ -1,12 +1,12 @@
 lib LibC
   ifdef linux
     @[ThreadLocal]
-    $errno : Int32
+    $errno : Int
   else
-    $errno : Int32
+    $errno : Int
   end
 
-  fun strerror(errnum : Int32) : UInt8*
+  fun strerror(errnum : Int) : Char*
 end
 
 class Errno < Exception

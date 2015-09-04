@@ -173,6 +173,20 @@ describe "Type inference: doc" do
     foo.locations.length.should eq(1)
   end
 
+  it "stores doc for enum and doesn't mix with value" do
+    result = infer_type %(
+      # Hello
+      enum Foo
+        # World
+        World
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+    foo.doc.should eq("Hello")
+    foo.locations.length.should eq(1)
+  end
+
   it "stores doc for enum with @[Flags]" do
     result = infer_type %(
       # Hello

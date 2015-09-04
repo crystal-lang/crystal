@@ -50,4 +50,84 @@ describe "Codegen: responds_to?" do
       Foo(Int32).new.responds_to?(:bar)
       )).to_b.should be_false
   end
+
+  it "works with virtual type" do
+    run(%(
+      class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          1
+        end
+      end
+
+      foo = Bar.new || Foo.new
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with two virtual types" do
+    run(%(
+      class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar2 < Bar
+      end
+
+      class Other
+      end
+
+      class Sub < Other
+        def foo
+          3
+        end
+      end
+
+      class Sub2 < Sub
+        def foo
+          4
+        end
+      end
+
+      foo = Sub2.new || Bar.new || Bar2.new || Sub.new || Sub2.new
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with module" do
+    run(%(
+      module Moo
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      ptr = Pointer(Moo).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value = Foo.new
+
+      moo = ptr.value
+      moo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
 end

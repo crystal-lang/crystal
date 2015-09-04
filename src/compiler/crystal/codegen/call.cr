@@ -143,7 +143,7 @@ class Crystal::CodeGenVisitor
       if arg.is_a?(Out)
         has_out = true
         case exp = arg.exp
-        when Var
+        when Var, Underscore
           # For out arguments we reserve the space. After the call
           # we move the value to the variable.
           call_arg = alloca(llvm_type(arg.type))
@@ -230,6 +230,7 @@ class Crystal::CodeGenVisitor
         context.reset_closure
 
         target_def = node.target_def
+        node.ensure_exception_handler = current_ensure_exception_handler
         target_def.ensure_exception_handler = current_ensure_exception_handler
 
         alloca_vars target_def.vars, target_def

@@ -1,14 +1,16 @@
+# The status of a terminated process.
 class Process::Status
-  property pid
-  property exit
-  property input
-  property output
+  getter exit_status
 
-  def initialize(@pid)
+  def initialize(@exit_status)
+  end
+
+  def exit_code
+    @exit_status >> 8
   end
 
   def success?
-    @exit == 0
+    exit_code == 0
   end
 end
 

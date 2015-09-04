@@ -1,16 +1,16 @@
 lib LibC
   @[ReturnsTwice]
-  fun fork : Int32
-  fun getpgid(pid : Int32) : Int32
-  fun kill(pid : Int32, signal : Int32) : Int32
-  fun getpid : Int32
-  fun getppid : Int32
-  fun exit(status : Int32) : NoReturn
+  fun fork : PidT
+  fun getpgid(pid : PidT) : PidT
+  fun kill(pid : PidT, signal : Int) : Int
+  fun getpid : PidT
+  fun getppid : PidT
+  fun exit(status : Int) : NoReturn
 
   ifdef x86_64
-    ClockT = UInt64
+    alias ClockT = UInt64
   else
-    ClockT = UInt32
+    alias ClockT = UInt32
   end
 
   SC_CLK_TCK = 3
@@ -23,13 +23,10 @@ lib LibC
   end
 
   fun times(buffer : Tms*) : ClockT
-  fun sysconf(name : Int32) : Int64
-
-  fun sleep(seconds : UInt32) : UInt32
-  fun usleep(useconds : UInt32) : UInt32
+  fun sysconf(name : Int) : Long
 end
 
-module Process
+class Process
   def self.exit(status = 0)
     LibC.exit(status)
   end
@@ -69,7 +66,13 @@ module Process
 
   def self.fork
     pid = LibC.fork
-    pid = nil if pid == 0
+    case pid
+    when 0
+      pid = nil
+      Scheduler.after_fork
+    when -1
+      raise Errno.new("fork")
+    end
     pid
   end
 
@@ -78,7 +81,7 @@ module Process
       raise Errno.new("Error during waitpid")
     end
 
-    exit_code >> 8
+    exit_code
   end
 
   record Tms, utime, stime, cutime, cstime

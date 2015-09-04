@@ -231,7 +231,7 @@ describe "Type inference: fun" do
       ->(f : Foo) do
         {Foo.new(f.x), 0}
       end
-      )) { fun_of(types["Foo"], tuple_of([no_return, int32])) }
+      )) { fun_of(types["Foo"], no_return) }
   end
 
   it "allows implicit cast of fun to return void in non-generic restriction" do
@@ -782,5 +782,25 @@ describe "Type inference: fun" do
         ),
         "as a Proc argument type"
     end
+
+    it "disallows #{type} in fun pointer" do
+      assert_error %(
+        def foo(x)
+        end
+
+        ->foo(#{type})
+        ),
+        "as a Proc argument type"
+    end
+  end
+
+  it "..." do
+    assert_type(%(
+      def foo
+        ->{ a = 1; return 0 }.call
+      end
+
+      foo
+      )) { int32 }
   end
 end

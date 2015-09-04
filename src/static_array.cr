@@ -1,3 +1,4 @@
+# A fixed-length, stack allocated array.
 struct StaticArray(T, N)
   include Enumerable(T)
 
@@ -23,6 +24,18 @@ struct StaticArray(T, N)
   # ```
   def self.new(value : T)
     new { value }
+  end
+
+  def ==(other : StaticArray)
+    return false unless length == other.length
+    each_with_index do |e, i|
+      return false unless e == other[i]
+    end
+    true
+  end
+
+  def ==(other)
+    false
   end
 
   def each

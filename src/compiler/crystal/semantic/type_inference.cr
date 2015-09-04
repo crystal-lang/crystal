@@ -79,6 +79,7 @@ module Crystal
       @in_is_a = false
       @attributes  = nil
       @lib_def_pass = 0
+      @exp_nest = 0
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -99,11 +100,6 @@ module Crystal
       @meta_vars = meta_vars
     end
 
-    def visit_any(node)
-      @unreachable = false
-      true
-    end
-
     def visit(node : ASTNode)
       true
     end
@@ -114,7 +110,16 @@ module Crystal
       false
     end
 
+    def visit_any(node)
+      @unreachable = false
+      @exp_nest += 1 if nesting_exp?(node)
+
+      true
+    end
+
     def end_visit_any(node)
+      @exp_nest -= 1 if nesting_exp?(node)
+
       if @attributes
         case node
         when Expressions
@@ -131,6 +136,16 @@ module Crystal
         else
           @attributes = nil
         end
+      end
+    end
+
+    def nesting_exp?(node)
+      case node
+      when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
+           Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression
+        false
+      else
+        true
       end
     end
 
@@ -235,8 +250,11 @@ module Crystal
     def visit(node : Out)
       case exp = node.exp
       when Var
+        if @meta_vars.has_key?(exp.name)
+          exp.raise "variable '#{exp.name}' is already defined, `out` must be used to define a variable, use another name"
+        end
+
         # We declare out variables
-        # TODO: check that the out variable didn't exist before
         @meta_vars[exp.name] = new_meta_var(exp.name)
         @vars[exp.name] = new_meta_var(exp.name)
       when InstanceVar
@@ -246,6 +264,8 @@ module Crystal
         if @is_initialize
           @vars[exp.name] = MetaVar.new(exp.name)
         end
+      when Underscore
+        # Nothing to do
       else
         node.raise "Bug: unexpected out exp: #{exp}"
       end
@@ -261,6 +281,8 @@ module Crystal
       if type.is_a?(GenericClassType)
         node.raise "can't declare variable of generic non-instantiated type #{type}"
       end
+
+      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a Proc argument type")
 
       type
     end
@@ -568,9 +590,7 @@ module Crystal
     end
 
     def visit(node : Def)
-      if inside_block?
-        node.raise "can't declare def inside block"
-      end
+      check_outside_block_or_exp node, "declare def"
 
       check_valid_attributes node, ValidDefAttributes, "def"
       node.doc ||= attributes_doc()
@@ -598,9 +618,7 @@ module Crystal
     end
 
     def visit(node : Macro)
-      if inside_block?
-        node.raise "can't declare macro inside block"
-      end
+      check_outside_block_or_exp node, "declare macro"
 
       begin
         current_type.metaclass.add_macro node
@@ -623,7 +641,11 @@ module Crystal
         node.raise "can't yield from function literal"
       end
 
-      call = @call.not_nil!
+      call = @call
+      unless call
+        node.raise "can't yield outside a method"
+      end
+
       block = call.block || node.raise("no block given")
 
       # This is the case of a yield when there's a captured block
@@ -675,9 +697,16 @@ module Crystal
       false
     end
 
+    # We bind yield exps -> typed_def.yield_vars -> block args
+    # so when a call is recomputed we unbind the block args from the yield
+    # vars (so old instantiations don't mess the final type)
     def bind_block_args_to_yield_exps(block, node)
+      yield_vars = typed_def.yield_vars ||= block.args.map { |block| Var.new(block.name) }
+
       block.args.each_with_index do |arg, i|
-        arg.bind_to(node.exps[i]? || mod.nil_var)
+        yield_var = yield_vars[i]
+        yield_var.bind_to(node.exps[i]? || mod.nil_var)
+        arg.bind_to(yield_var)
       end
     end
 
@@ -805,10 +834,7 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      return if type.allowed_in_generics?
-
-      type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
-      node.raise "can't use #{type} as a Proc argument type yet, use a more specific type"
+      Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
     end
 
     def visit(node : FunPointer)
@@ -834,7 +860,9 @@ module Crystal
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
-          Var.new("arg#{i}", arg.type.instance_type) as ASTNode
+          arg_type = arg.type.instance_type
+          TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
+          Var.new("arg#{i}", arg_type.virtual_type) as ASTNode
         end
       end
 
@@ -852,13 +880,13 @@ module Crystal
 
     def end_visit(node : Fun)
       if inputs = node.inputs
-        types = inputs.map &.type.instance_type
+        types = inputs.map &.type.instance_type.virtual_type
       else
         types = [] of Type
       end
 
       if output = node.output
-        types << output.type.instance_type
+        types << output.type.instance_type.virtual_type
       else
         types << mod.void
       end
@@ -1242,9 +1270,13 @@ module Crystal
       the_macro = node.lookup_macro
       return false unless the_macro
 
+      @exp_nest -= 1
+
       generated_nodes = expand_macro(the_macro, node) do
         @mod.expand_macro (@scope || current_type), the_macro, node
       end
+
+      @exp_nest += 1
 
       node.expanded = generated_nodes
       node.bind_to generated_nodes
@@ -1302,7 +1334,11 @@ module Crystal
         node.raise "expanding macro", ex
       end
 
-      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys), inside_def: !!@typed_def)
+      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+                                                inside_def: !!@typed_def,
+                                                inside_type: !current_type.is_a?(Program),
+                                                inside_exp: @exp_nest > 0,
+                                                )
 
       if node_doc = node.doc
         generated_nodes.accept PropagateDocVisitor.new(node_doc)
@@ -1418,7 +1454,7 @@ module Crystal
     def end_visit(node : RespondsTo)
       node.type = mod.bool
       if needs_type_filters? && (var = get_expression_var(node.obj))
-        @type_filters = TypeFilters.new var, RespondsToTypeFilter.new(node.name.value)
+        @type_filters = TypeFilters.new var, RespondsToTypeFilter.new(node.name)
       end
     end
 
@@ -1458,9 +1494,7 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      if inside_block?
-        node.raise "can't declare class inside block"
-      end
+      check_outside_block_or_exp node, "declare class"
 
       node_superclass = node.superclass
 
@@ -1601,9 +1635,7 @@ module Crystal
     end
 
     def visit(node : ModuleDef)
-      if inside_block?
-        node.raise "can't declare module inside block"
-      end
+      check_outside_block_or_exp node, "declare module"
 
       scope, name = process_type_name(node.name)
 
@@ -1637,9 +1669,7 @@ module Crystal
     def visit(node : Alias)
       return false if @lib_def_pass == 2
 
-      if inside_block?
-        node.raise "can't declare alias inside block"
-      end
+      check_outside_block_or_exp node, "declare alias"
 
       existing_type = current_type.types[node.name]?
       if existing_type
@@ -1664,9 +1694,7 @@ module Crystal
     end
 
     def visit(node : Include)
-      if inside_block?
-        node.raise "can't include inside block"
-      end
+      check_outside_block_or_exp node, "include"
 
       include_in current_type, node, :included
 
@@ -1676,9 +1704,7 @@ module Crystal
     end
 
     def visit(node : Extend)
-      if inside_block?
-        node.raise "can't extend inside block"
-      end
+      check_outside_block_or_exp node, "extend"
 
       include_in current_type.metaclass, node, :extended
 
@@ -1688,9 +1714,7 @@ module Crystal
     end
 
     def visit(node : LibDef)
-      if inside_block?
-        node.raise "can't declare lib inside block"
-      end
+      check_outside_block_or_exp node, "declare lib"
 
       link_attributes = process_link_attributes
 
@@ -1823,9 +1847,7 @@ module Crystal
     def visit(node : FunDef)
       return false if @lib_def_pass == 1
 
-      if inside_block?
-        node.raise "can't declare fun inside block"
-      end
+      check_outside_block_or_exp node, "declare fun"
 
       if node.body && !current_type.is_a?(Program)
         node.raise "can only declare fun at lib or global scope"
@@ -1954,9 +1976,7 @@ module Crystal
     def visit(node : EnumDef)
       return false if @lib_def_pass == 2
 
-      if inside_block?
-        node.raise "can't declare enum inside block"
-      end
+      check_outside_block_or_exp node, "declare enum"
 
       check_valid_attributes node, ValidEnumDefAttributes, "enum"
 
@@ -2465,7 +2485,7 @@ module Crystal
 
     def end_visit(node : Break)
       if target_block = block
-        node.target = target_block
+        node.target = target_block.call.not_nil!
 
         target_block.break.bind_to(node.exp || mod.nil_var)
 
@@ -2577,7 +2597,7 @@ module Crystal
         node.type = t1.integer? && t2.float? ? t2 : scope
       when "==", "<", "<=", ">", ">=", "!="
         node.type = @mod.bool
-      when "%", "<<", ">>", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
+      when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
         node.type = scope
       else
         raise "Bug: unknown binary operator #{typed_def.name}"
@@ -3549,6 +3569,21 @@ module Crystal
 
     def inside_block?
       @untyped_def || @block_context
+    end
+
+    def inside_exp?
+      @exp_nest > 0
+    end
+
+    def check_outside_block_or_exp(node, op)
+      if inside_block?
+        node.raise "can't #{op} inside block"
+      end
+
+      if inside_exp?
+        # pp @exp_nest
+        node.raise "can't #{op} dynamically"
+      end
     end
 
     def pushing_type(type)

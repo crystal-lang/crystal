@@ -3,7 +3,7 @@ class HTTP::ErrorHandler < HTTP::Handler
     begin
       call_next(request)
     rescue ex : Exception
-      Response.error("text/plain", "ERROR: #{ex.message}\n#{ex.backtrace.join '\n'}\n")
+      Response.error("text/plain", "ERROR: #{ex.inspect_with_backtrace}\n")
     end
   end
 end

@@ -151,11 +151,11 @@ struct BigInt < Int
   end
 
   def >>(other : Int)
-    BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other.to_i32) }
+    BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, LibGMP::BitcntT.cast(other)) }
   end
 
   def <<(other : Int)
-    BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other.to_i32) }
+    BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, LibGMP::BitcntT.cast(other)) }
   end
 
   def inspect
@@ -172,7 +172,7 @@ struct BigInt < Int
 
   def to_s(io)
     str = to_cstr
-    io.write Slice.new(str, LibC.strlen(str))
+    io.write Slice.new(str, LibC.strlen(str).to_i)
   end
 
   def to_s(base : Int)

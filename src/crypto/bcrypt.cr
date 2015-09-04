@@ -7,7 +7,7 @@ module Crypto::Bcrypt
   extend self
 
   MIN_COST = 4
-  MAX_COST = 31
+  MAX_COST = 63
   DEFAULT_COST = 10
   ENCODED_SALT_SIZE = 22
   MIN_HASH_SIZE = 59
@@ -95,15 +95,15 @@ module Crypto::Bcrypt
       end
     end
 
-    Bcrypt::Base64.encode(slice)
+    Crypto::Bcrypt::Base64.encode(slice)
   end
 
   private def setup(key, cost, salt)
-    sl = Bcrypt::Base64.decode(salt)
+    sl = Crypto::Bcrypt::Base64.decode(salt)
     bf = Blowfish.new
     bf.salted_expand_key(sl, key)
 
-    1.upto(1 << cost.to_i) do |i|
+    1.upto(1_u64 << cost.to_i) do |i|
       bf.expand_key(key)
       bf.expand_key(salt)
     end

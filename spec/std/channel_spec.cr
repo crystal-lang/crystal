@@ -44,12 +44,14 @@ describe UnbufferedChannel do
     (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
   end
 
-  it "gets ready when there is a sender" do
+  it "gets not full when there is a sender" do
     ch = UnbufferedChannel(Int32).new
-    ch.ready?.should be_false
+    ch.full?.should be_true
+    ch.empty?.should be_true
     spawn { ch.send 123 }
     Scheduler.yield
-    ch.ready?.should be_true
+    ch.empty?.should be_false
+    ch.full?.should be_true
     ch.receive.should eq(123)
   end
 
@@ -57,16 +59,16 @@ describe UnbufferedChannel do
     ch1 = UnbufferedChannel(Int32).new
     ch2 = UnbufferedChannel(Int32).new
     spawn { ch1.send 123 }
-    Channel.select(ch1, ch2).should eq(ch1)
+    Channel.select(ch1.receive_op, ch2.receive_op).should eq({0, 123})
   end
 
-  it "can send an receive nil" do
+  it "can send and receive nil" do
     ch = UnbufferedChannel(Nil).new
     spawn { ch.send nil }
     Scheduler.yield
-    ch.ready?.should be_true
+    ch.empty?.should be_false
     ch.receive.should be_nil
-    ch.ready?.should be_false
+    ch.empty?.should be_true
   end
 
   it "can be closed" do
@@ -150,25 +152,25 @@ describe BufferedChannel do
 
   it "gets ready with data" do
     ch = BufferedChannel(Int32).new
-    ch.ready?.should be_false
+    ch.empty?.should be_true
     ch.send 123
-    ch.ready?.should be_true
+    ch.empty?.should be_false
   end
 
   it "works with select" do
     ch1 = BufferedChannel(Int32).new
     ch2 = BufferedChannel(Int32).new
     spawn { ch1.send 123 }
-    Channel.select(ch1, ch2).should eq(ch1)
+    Channel.select(ch1.receive_op, ch2.receive_op).should eq({0, 123})
   end
 
-  it "can send an receive nil" do
+  it "can send and receive nil" do
     ch = BufferedChannel(Nil).new
     spawn { ch.send nil }
     Scheduler.yield
-    ch.ready?.should be_true
+    ch.empty?.should be_false
     ch.receive.should be_nil
-    ch.ready?.should be_false
+    ch.empty?.should be_true
   end
 
   it "can be closed" do

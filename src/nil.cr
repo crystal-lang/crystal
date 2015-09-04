@@ -82,11 +82,6 @@ struct Nil
     0
   end
 
-  # Returns zero.
-  def to_i
-    0
-  end
-
   # Returns an empty string.
   def to_s
     ""

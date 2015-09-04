@@ -24,9 +24,14 @@ module Crystal
     run_init_project("lib", "example", "tmp/example", "John Smith")
     run_init_project("app", "example_app", "tmp/example_app", "John Smith")
     run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith")
+    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith")
 
     describe_file "example-lib/src/example-lib.cr" do |file|
       file.should contain("Example::Lib")
+    end
+
+    describe_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
+      file.should contain("CamelExample::CamelLib")
     end
 
     describe_file "example/.gitignore" do |gitignore|
@@ -56,8 +61,26 @@ deps do
 end
 ```})
 
+      readme.should contain(%{TODO: Write a description here})
+      readme.should_not contain(%{TODO: Write installation instructions here})
       readme.should contain(%{require "example"})
       readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example/fork )})
+      readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
+    end
+
+    describe_file "example_app/README.md" do |readme|
+      readme.should contain("# example")
+
+      readme.should_not contain(%{```crystal
+deps do
+  github "[your-github-name]/example"
+end
+```})
+
+      readme.should contain(%{TODO: Write a description here})
+      readme.should contain(%{TODO: Write installation instructions here})
+      readme.should_not contain(%{require "example"})
+      readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example_app/fork )})
       readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
     end
 

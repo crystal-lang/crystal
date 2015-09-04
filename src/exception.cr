@@ -67,6 +67,12 @@ def caller
       fname_buffer = fname_buffer.realloc(fname_size)
     end
     backtrace << "#{fname} +#{offset} [#{pc}]"
+    ifdef i686
+      # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
+      # The unwind info is corrupted when `makecontext` is used.
+      # Stop the backtrace here. There is nothing interest beyond this point anyway.
+      break if fname == "makecontext"
+    end
   end
   backtrace
 end
@@ -96,6 +102,20 @@ class Exception
     if @message
       io << @message
     end
+  end
+
+  def inspect_with_backtrace
+    String.build do |io|
+      inspect_with_backtrace io
+    end
+  end
+
+  def inspect_with_backtrace(io : IO)
+    io << self << " (" << self.class << ")\n"
+    backtrace.each do |frame|
+      io.puts frame
+    end
+    io.flush
   end
 
   def self.unescape_linux_backtrace_frame(frame)
@@ -129,7 +149,7 @@ end
 # Raised when the arguments are wrong and there isn't a more specific `Exception` class.
 #
 # ```
-# [1, 2, 3].first(-4) #=> ArgumentError: attempt to take negative size
+# [1, 2, 3].take(-4) #=> ArgumentError: attempt to take negative size
 # ```
 class ArgumentError < Exception
   def initialize(message = "Argument error")
@@ -153,7 +173,7 @@ end
 #
 # ```
 # h = {"foo" => "bar"}
-# h["baz"] #=> KeyError: Missing hash value: "baz"
+# h["baz"] #=> KeyError: Missing hash key: "baz"
 # ```
 class KeyError < Exception
 end

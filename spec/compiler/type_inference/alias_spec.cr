@@ -192,4 +192,13 @@ describe "type inference: alias" do
       Foo.new.bar
       )) { int32 }
   end
+
+  it "errors if declares alias inside if" do
+    assert_error %(
+      if 1 == 2
+        alias Foo = Int32
+      end
+      ),
+      "can't declare alias dynamically"
+  end
 end

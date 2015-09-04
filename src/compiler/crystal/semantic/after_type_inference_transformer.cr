@@ -45,6 +45,30 @@ module Crystal
     def initialize(@program)
       @transformed = Set(typeof(object_id)).new
       @def_nest_count = 0
+      @last_is_truthy = false
+      @last_is_falsey = false
+    end
+
+    def after_transform(node)
+      case node
+      when And, Or, If, RespondsTo, IsA, Assign
+        # Nothing
+      when BoolLiteral
+        if node.value
+          @last_is_truthy = true
+        else
+          @last_is_falsey = true
+        end
+      when NilLiteral
+        @last_is_falsey = true
+      else
+        reset_last_status
+      end
+    end
+
+    def reset_last_status
+      @last_is_truthy = false
+      @last_is_falsey = false
     end
 
     def transform(node : Def)
@@ -114,6 +138,8 @@ module Crystal
     end
 
     def transform(node : Assign)
+      reset_last_status
+
       target = node.target
 
       # This is the case of an instance variable initializer
@@ -438,17 +464,14 @@ module Crystal
     end
 
     def transform(node : FunLiteral)
-      super
-
-      node.def.body = node.def.body.transform(self)
-
       body = node.def.body
-      if !body.type? && !body.is_a?(Return)
+      if node.def.no_returns? && !body.type?
         node.def.body = untyped_expression(body)
         rebind_node node.def, node.def.body
         node.update
+      else
+        node.def.body = node.def.body.transform(self)
       end
-
       node
     end
 
@@ -513,6 +536,8 @@ module Crystal
       node.cond = node.cond.transform(self)
 
       node_cond = node.cond
+      cond_is_truthy, cond_is_falsey = @last_is_truthy, @last_is_falsey
+      reset_last_status
 
       if node_cond.no_returns?
         return node_cond
@@ -535,17 +560,27 @@ module Crystal
         return replace_if_with_branch(node, node.else)
       end
 
+      if cond_is_truthy
+        node.then = node.then.transform(self)
+        return replace_if_with_branch(node, node.then)
+      end
+
+      if cond_is_falsey
+        node.else = node.else.transform(self)
+        return replace_if_with_branch(node, node.else)
+      end
+
       node.then = node.then.transform(self)
+      then_is_truthy, then_is_falsey = @last_is_truthy, @last_is_falsey
+
       node.else = node.else.transform(self)
+      else_is_truthy, else_is_falsey = @last_is_truthy, @last_is_falsey
 
-      if node_cond.is_a?(Assign)
-        if node_cond.value.true_literal?
-          return replace_if_with_branch(node, node.then)
-        end
+      reset_last_status
 
-        if node_cond.value.false_literal?
-          return replace_if_with_branch(node, node.else)
-        end
+      if node.binary == :and
+        @last_is_falsey = then_is_falsey
+        @last_is_truthy = then_is_truthy
       end
 
       node
@@ -553,7 +588,7 @@ module Crystal
 
     def replace_if_with_branch(node, branch)
       exp_nodes = [node.cond] of ASTNode
-      exp_nodes << branch unless branch.nop?
+      exp_nodes << branch
 
       exp = Expressions.new(exp_nodes)
       if branch
@@ -567,7 +602,7 @@ module Crystal
 
     def transform(node : IsA)
       super
-
+      reset_last_status
       if replacement = node.syntax_replacement
         replacement.transform(self)
       else
@@ -577,7 +612,8 @@ module Crystal
 
     def transform(node : RespondsTo)
       super
-      transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name.value)
+      reset_last_status
+      transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name)
     end
 
     def transform_is_a_or_responds_to(node)
@@ -587,6 +623,7 @@ module Crystal
         filtered_type = yield obj_type
 
         if obj_type == filtered_type
+          @last_is_truthy = true
           if var?(obj)
             return true_literal
           else
@@ -597,6 +634,7 @@ module Crystal
         end
 
         unless filtered_type
+          @last_is_falsey = true
           if var?(obj)
             return false_literal
           else

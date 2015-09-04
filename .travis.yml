@@ -1,14 +1,19 @@
 language: c
-os:
-  - linux
-  - osx
+sudo: required
+services:
+  - docker
+matrix:
+  include:
+    - env: ARCH=i386 ARCH_CMD=linux32
+      os: linux
+    - env: ARCH=x86_64 ARCH_CMD=linux64
+      os: linux
+    - os: osx
 before_install: |
   case $TRAVIS_OS_NAME in
     linux)
-      curl http://dist.crystal-lang.org/apt/setup.sh | sudo bash
-      sudo apt-get -q update
+      docker pull jhass/crystal-build-$ARCH
       ;;
-
     osx)
       brew update
       brew tap manastech/crystal
@@ -16,26 +21,31 @@ before_install: |
   esac
 install: |
   case $TRAVIS_OS_NAME in
-    linux)
-      sudo apt-get install libgmp3-dev crystal
-      sudo sed -i -e 's/.*LIBRARY_PATH.*/export LIBRARY_PATH=\"$INSTALL_DIR\/embedded\/lib${LIBRARY_PATH:\+:$LIBRARY_PATH}\"/' /opt/crystal/bin/crystal
-      curl "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-linux-x86_64.tar.gz" | tar xz -C /tmp
-      curl "http://crystal-lang.s3.amazonaws.com/pcl/libpcl-1.12-1-linux-x86_64.tar.gz" | tar xz -C /tmp
-      export LIBRARY_PATH=/opt/crystal/embedded/lib:/tmp/libpcl-1.12-1/lib
-      ;;
-
     osx)
       brew install gmp libevent crystal-lang
       curl "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-darwin-x86_64.tar.gz" | tar xz -C /tmp
-      export LIBRARY_PATH=/usr/local/opt/crystal-lang/embedded/lib
+      export LIBRARY_PATH="/usr/local/opt/crystal-lang/embedded/lib"
+      export PATH="/tmp/llvm-3.5.0-1/bin:$PATH"
       ;;
   esac
-  export PATH=/tmp/llvm-3.5.0-1/bin:$PATH
-  export CRYSTAL_CONFIG_VERSION=ci
-  export CRYSTAL_CACHE_DIR=/tmp/crystal
-script:
-  - make crystal spec
-  - find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
+script: |
+  set -e
+  case $TRAVIS_OS_NAME in
+    linux)
+      docker run -v $(pwd):/mnt -w /mnt jhass/crystal-build-$ARCH $ARCH_CMD make crystal spec CRYSTAL_CONFIG_VERSION="ci" LIBRARY_PATH="/opt/crystal/embedded/lib/"
+      docker run -v $(pwd):/mnt -w /mnt jhass/crystal-build-$ARCH $ARCH_CMD /bin/bash -c 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen' CRYSTAL_CONFIG_VERSION="ci" LIBRARY_PATH="/opt/crystal/embedded/lib/"
+      ;;
+    osx)
+      export CRYSTAL_CONFIG_VERSION="ci"
+      export CRYSTAL_CACHE_DIR="/tmp/crystal"
+      make crystal spec
+      find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
+      ;;
+  esac
+branches:
+  only:
+    - master
+    - gh-pages
 notifications:
   irc:
     channels:
@@ -46,7 +56,3 @@ notifications:
       - "%{repository_slug}#%{commit} (%{branch} - %{commit_subject}): %{message} %{build_url}"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
-branches:
-  only:
-    - master
-    - gh-pages

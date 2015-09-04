@@ -54,7 +54,7 @@ module Crystal
         char.add_def Def.new(op, [Arg.new("other", type: char)], binary)
       end
 
-      %w(<< >> unsafe_shl unsafe_shr | & ^ unsafe_div unsafe_mod).each do |op|
+      %w(unsafe_shl unsafe_shr | & ^ unsafe_div unsafe_mod).each do |op|
         ints.each do |another_int|
           int.add_def Def.new(op, [Arg.new("other", type: another_int)], binary)
         end
