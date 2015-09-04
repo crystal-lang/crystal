@@ -1,3 +1,5 @@
+require "json"
+
 module Crystal
   def self.tempfile(basename)
     Dir.mkdir_p Config.cache_dir
@@ -27,7 +29,9 @@ Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 
 Tool:
     browser                  open an http server to browse program file
+    context                  show context for given location
     hierarchy                show type hierarchy
+    implementations          show implementations for given call in location
     types                    show type of main variables
     --help, -h               show this help
 USAGE
@@ -102,9 +106,15 @@ USAGE
       when "browser".starts_with?(tool)
         options.shift
         browser options
+      when "context".starts_with?(tool)
+        options.shift
+        context options
       when "hierarchy".starts_with?(tool)
         options.shift
         hierarchy options
+      when "implementations".starts_with?(tool)
+        options.shift
+        implementations options
       when "types".starts_with?(tool)
         options.shift
         types options
@@ -161,6 +171,44 @@ USAGE
   private def self.hierarchy(options)
     config, result = compile_no_codegen "tool hierarchy", options, hierarchy: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
+  end
+
+  private def self.implementations(options)
+    cursor_command("implementations", options) do |location, config, result|
+      result = ImplementationsVisitor.new(location).process(result)
+    end
+  end
+
+  private def self.context(options)
+    cursor_command("context", options) do |location, config, result|
+      result = ContextVisitor.new(location).process(result)
+    end
+  end
+
+  private def self.cursor_command(command, options)
+    config, result = compile_no_codegen command, options, cursor_command: true
+
+    format = config.output_format || "text"
+
+    file = ""
+    line = ""
+    col = ""
+
+    loc = config.cursor_location.not_nil!.split(':')
+    if loc.size == 3
+      file, line, col = loc
+    end
+
+    file = File.expand_path(file)
+
+    result = yield Location.new(line.to_i, col.to_i, file), config, result
+
+    case format
+    when "json"
+      result.to_json(STDOUT)
+    else
+      result.to_text(STDOUT)
+    end
   end
 
   private def self.run_command(options)
@@ -246,8 +294,8 @@ USAGE
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false)
-    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy
+  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false, cursor_command = false)
+    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
     {config, config.compile}
@@ -271,14 +319,14 @@ USAGE
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp do
+  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
     end
   end
 
-  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false)
+  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false, cursor_command = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -286,6 +334,8 @@ USAGE
     opt_output_filename = nil
     specified_output = false
     hierarchy_exp = nil
+    cursor_location = nil
+    output_format = nil
 
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -314,6 +364,16 @@ USAGE
       if hierarchy
         opts.on("-e NAME", "Filter types by NAME regex") do |exp|
           hierarchy_exp = exp
+        end
+      end
+
+      if cursor_command
+        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+          cursor_location = cursor
+        end
+
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          output_format = f
         end
       end
 
@@ -388,7 +448,7 @@ USAGE
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if filenames.length == 0
+    if filenames.length == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
       exit 1
     end
@@ -397,7 +457,7 @@ USAGE
     original_output_filename = output_filename_from_sources(sources)
     output_filename ||= original_output_filename
 
-    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp
+    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
   end

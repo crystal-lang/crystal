@@ -965,6 +965,10 @@ module Crystal
       @token
     end
 
+    def token_end_location
+      @token_end_location ||= Location.new(@line_number, @column_number - 1, @filename)
+    end
+
     def slash_is_regex!
       @slash_is_regex = true
     end
@@ -2262,6 +2266,7 @@ module Crystal
       @token.location = nil
       @token.passed_backslash_newline = false
       @token.doc_buffer = nil unless @token.type == :SPACE || @token.type == :NEWLINE
+      @token_end_location = nil
     end
 
     def next_token_skip_space

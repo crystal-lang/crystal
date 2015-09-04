@@ -2,18 +2,31 @@ module Crystal
   # Base class for nodes in the grammar.
   abstract class ASTNode
     property location
+    property end_location
 
     def at(@location : Location?)
       self
     end
 
     def at(node : ASTNode)
-      at node.location
+      @location = node.location
+      @end_location = node.end_location
+      self
+    end
+
+    def at_end(node : ASTNode)
+      @end_location = node.end_location
+      self
+    end
+
+    def at_end(@end_location : Location?)
+      self
     end
 
     def clone
       clone = clone_without_location
       clone.location = location
+      clone.end_location = end_location
       clone.attributes = attributes
       clone
     end
@@ -107,6 +120,10 @@ module Crystal
 
     def last
       @expressions.last
+    end
+
+    def end_location
+      @end_location || @expressions.last?.try &.end_location
     end
 
     def accept_children(visitor)
@@ -485,6 +502,16 @@ module Crystal
       clone
     end
 
+    def name_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number, loc.filename)
+    end
+
+    def name_end_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number + name_length, loc.filename)
+    end
+
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global
   end
 
@@ -620,6 +647,10 @@ module Crystal
       @value.accept visitor
     end
 
+    def end_location
+      @end_location || value.end_location
+    end
+
     def clone_without_location
       Assign.new(@target.clone, @value.clone)
     end
@@ -641,6 +672,10 @@ module Crystal
     def accept_children(visitor)
       @targets.each &.accept visitor
       @values.each &.accept visitor
+    end
+
+    def end_location
+      @end_location || @values.last.end_location
     end
 
     def ==(other : self)
@@ -733,6 +768,10 @@ module Crystal
     def accept_children(visitor)
       @left.accept visitor
       @right.accept visitor
+    end
+
+    def end_location
+      @end_location || @right.end_location
     end
 
     def_equals_and_hash left, right
@@ -1484,6 +1523,10 @@ module Crystal
       @exp.try &.accept visitor
     end
 
+    def end_location
+      @end_location || @exp.try(&.end_location)
+    end
+
     def_equals_and_hash exp
   end
 
@@ -1521,6 +1564,10 @@ module Crystal
       Yield.new(@exps.clone, @scope.clone)
     end
 
+    def end_location
+      @end_location || @exps.last?.try(&.end_location)
+    end
+
     def_equals_and_hash @exps, @scope
   end
 
@@ -1538,6 +1585,10 @@ module Crystal
       Include.new(@name)
     end
 
+    def end_location
+      @end_location || @name.end_location
+    end
+
     def_equals_and_hash name
   end
 
@@ -1553,6 +1604,10 @@ module Crystal
 
     def clone_without_location
       Extend.new(@name)
+    end
+
+    def end_location
+      @end_location || @name.end_location
     end
 
     def_equals_and_hash name
@@ -1797,6 +1852,10 @@ module Crystal
 
     def clone_without_location
       Cast.new(@obj.clone, @to.clone)
+    end
+
+    def end_location
+      @end_location || @to.end_location
     end
 
     def_equals_and_hash @obj, @to
