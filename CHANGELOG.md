@@ -8,6 +8,8 @@
 * **(breaking change)** Changed API of `Channel#select` toward a thread-safe one.
 * **(breaking change)** The two methods that IO must implement are now `read(slice : Slice(UInt8))` and `write(slice : Slice(UInt8))`.
 * New beautiful, searchable and more functional API docs. Thanks @rosylilly for the initial design, and @BlaxPirit for some improvements.
+* CLI: Moved `browser, `hierarchy` and `types` to `crystal tool ...`
+* Added `crystal tool context` and `crystal tool implementations` for IDEs (thanks @bcardiff!!)
 # `Int#>>(amount)` nad `Int#<<(amount)` now give zero when `amount` is greater than the number of bits of the integer representation.
 * Added `\%` escape sequence inside macros.
 * Added aliases for the many C types (thanks @BlaxPirit)
@@ -26,6 +28,7 @@
 * Added `Hash#all?`, `Hash#any?` and `Hash#inject` (thanks @jreinert)
 * Added `File#pos` and `File#pos=`
 * Added `Enum.from_value` and `Enum.from_value?`
+* Added `Deque` (thanks @BlaxPirit)
 * Added lots of methods to `StringScanner`, and documented it, making it usable (thanks @will)
 * `StringIO` now quacks like a `File`.
 * Allow sending masked data through a `WebSocket`, and sending long data (thanks @kumpelblase2)
@@ -39,6 +42,7 @@
 * `sleep` and IO timeouts can receive `TimeSpan` as arguments (thanks @BlaxPirit)
 * Handle `HTTP::Response` without content-length (thanks @lbguilherme)
 # Added docs for OptionParser, ENV, Regex, Enumerable, Iterator and some Array methods (thanks @porras, @will, @bjmllr, @PragTob, @decioferreira)
+* Lots of bug fixes and small improvements
 
 ## 0.7.6 (2015-08-13)
 
