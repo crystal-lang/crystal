@@ -13,6 +13,7 @@ class FileDescriptorIO
     @flush_on_newline = false
     @sync = false
     @closed = false
+    @read_eof = false
     @read_timed_out = false
     @write_timed_out = false
     @fd = fd
@@ -74,6 +75,7 @@ class FileDescriptorIO
       flags |= LibC::O_NONBLOCK
     end
     fcntl(LibC::FCNTL::F_SETFL, flags)
+    value
   end
 
   def close_on_exec?
@@ -150,16 +152,25 @@ class FileDescriptorIO
     self
   end
 
-  private def unbuffered_read(slice : Slice(UInt8))
+  private def unbuffered_read(slice : Slice(UInt8), wait = true : Bool)
+    return 0 if @read_eof
+
     count = slice.length
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
-      if bytes_read != -1
-        return bytes_read
+      return bytes_read if bytes_read > 0
+
+      if bytes_read == 0 # future reads will return -1 when NONBLOCK is set (we would lose track of EOF)
+        @read_eof = true
+        return 0
       end
 
       if LibC.errno == Errno::EAGAIN
-        wait_readable
+        if wait
+          wait_readable
+        else
+          return 0
+        end
       else
         raise Errno.new "Error reading file"
       end

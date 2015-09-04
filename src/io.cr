@@ -119,6 +119,13 @@ module IO
     End    = 2
   end
 
+  # :nodoc:
+  enum Wait
+    Never
+    Once
+    UntilFinished
+  end
+
   # Raised when an IO operation times out.
   #
   # ```
@@ -207,7 +214,7 @@ module IO
   # io.read(slice) #=> 1
   # slice #=> [111, 101, 108, 108]
   # ```
-  abstract def read(slice : Slice(UInt8))
+  abstract def read(slice : Slice(UInt8), wait : Wait)
 
   # Writes at most *slice.length* bytes from *slice* into this IO. Returns the number of bytes written.
   #
@@ -444,11 +451,8 @@ module IO
   # ```
   def read_fully(slice : Slice(UInt8))
     count = slice.length
-    while slice.length > 0
-      read_bytes = read slice
-      raise EOFError.new if read_bytes == 0
-      slice += read_bytes
-    end
+    read_bytes = read slice
+    raise EOFError.new if read_bytes != count
     count
   end
 
@@ -462,8 +466,12 @@ module IO
   def read : String
     buffer :: UInt8[2048]
     String.build do |str|
-      while (read_bytes = read(buffer.to_slice)) > 0
-        str.write buffer.to_slice[0, read_bytes]
+      begin
+        while (read_bytes = read(buffer.to_slice)) > 0
+          str.write buffer.to_slice[0, read_bytes]
+        end
+      rescue EOFError
+        # ignore
       end
     end
   end
@@ -478,18 +486,61 @@ module IO
   # io.read(3) #=> ""
   # ```
   def read(count : Int) : String
+    read count, Wait::UntilFinished
+  end
+
+  def read_partial(count : Int) : String
+    read count, Wait::Once
+  end
+
+  def read_nonblock(count : Int) : String
+    read count, Wait::Never
+  end
+
+  # :nodoc:
+  def read(count : Int, wait : Wait) : String
     raise ArgumentError.new "negative count" if count < 0
 
-    buffer :: UInt8[2048]
-    String.build(count) do |str|
-      while count > 0
-        read_length = read buffer.to_slice[0, Math.min(count, buffer.length)]
-        break if read_length == 0
+    slice = Slice(UInt8).new count
+    read_length = read slice, wait
+    String.new slice[0, read_length]
+  end
 
-        str.write buffer.to_slice[0, read_length]
-        count -= read_length
-      end
-    end
+  # Reads at most `slice.count` from this IO and returns the number of bytes read in to `slice`.
+  # Always reads `slice.count` bytes unless the io is closed or reaches EOF.
+  def read(slice : Slice(UInt8))
+    read slice, Wait::UntilFinished
+  end
+
+  # Reads at most `slice.count` bytes from the I/O stream.
+  # It blocks only if IO has no data immediately available.
+  # It doesn't block if some data available.
+  #
+  # read_partial is designed for streams such as pipe, socket, tty, etc.
+  # It blocks only when no data immediately available.
+  # This means that it blocks only when following all conditions hold.
+  # * the byte buffer in the IO object is empty.
+  # * the content of the stream is empty.
+  # * the stream is not reached to EOF.
+  #
+  # When read_partial blocks, it waits data or EOF on the stream.
+  # If some data is reached, readpartial returns with the data. If EOF is reached, read_partial raises IO::EOFError.
+  # When read_partial doesn't blocks, it returns or raises immediately.
+  # If the byte buffer is not empty, it returns the data in the buffer.
+  # Otherwise if the stream has some content, it returns the data in the stream.
+  # Otherwise if the stream is reached to EOF, it raises IO::EOFError.
+  def read_partial(slice : Slice(UInt8))
+    read slice, Wait::Once
+  end
+
+  # Reads at most maxlen bytes from ios using the read(2) system call.
+  # Nonblock (the default) must be set for this call to work correctly.
+  #
+  # read_nonblock causes IO::EOFError on EOF.
+  #
+  # This method is similar to read_partial except it will never block.
+  def read_nonblock(slice : Slice(UInt8))
+    read slice, Wait::Never
   end
 
   # Reads a line from this IO. A line is terminated by the `\n` character.
@@ -753,6 +804,11 @@ module IO
     ByteIterator.new(self)
   end
 
+  # :nodoc:
+  protected def raise_if_eof
+    raise EOFError.new if @read_eof
+  end
+
   # Copy all contents from *src* to *dst*.
   #
   # ```
@@ -764,11 +820,18 @@ module IO
   # io2.to_s #=> "hello"
   # ```
   def self.copy(src, dst)
+    src.raise_if_eof
+
     buffer :: UInt8[1024]
     count = 0
-    while (len = src.read(buffer.to_slice).to_i32) > 0
-      dst.write buffer.to_slice[0, len]
-      count += len
+    len = 0
+    begin
+      while (len = src.read(buffer.to_slice).to_i32) > 0
+        dst.write buffer.to_slice[0, len]
+        count += len
+      end
+    rescue IO::EOFError
+      # ignore
     end
     len < 0 ? len : count
   end

@@ -21,7 +21,7 @@ module BufferedIO
   # end
 
   # Reads at most *slice.length* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
-  abstract def unbuffered_read(slice : Slice(UInt8))
+  abstract def unbuffered_read(slice : Slice(UInt8), wait : Bool)
 
   # Writes at most *slice.length* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
   abstract def unbuffered_write(slice : Slice(UInt8))
@@ -150,50 +150,45 @@ module BufferedIO
     raise InvalidByteSequenceError.new
   end
 
-  # Buffered implementation of `IO#read(slice)`.
-  def read(slice : Slice(UInt8))
+
+  # Buffered implementation of `IO#read(slice, wait)`.
+  def read(slice : Slice(UInt8), wait : Wait)
+    raise_if_eof
+
     count = slice.length
     total_read = 0
+
+    wait_cur = case wait
+    when Wait::Never
+      false
+    else
+      true
+    end
 
     while count > 0
       if @in_buffer_rem.empty?
         # If we are asked to read more than the buffer's size,
         # read directly into the slice.
         if count >= BUFFER_SIZE
-          to_read = unbuffered_read(slice[0, count]).to_i
+          to_read = unbuffered_read(slice[0, count], wait_cur).to_i
           total_read += to_read
           break
         else
-          fill_buffer
-          break if @in_buffer_rem.empty?
+          fill_buffer wait: wait_cur
+          break if @in_buffer_rem.empty? # EOF
         end
       end
-
       to_read = Math.min(count, @in_buffer_rem.length)
       slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
       @in_buffer_rem += to_read
       count -= to_read
       slice += to_read
       total_read += to_read
+
+      wait_cur = false if wait == Wait::Once && total_read > 0
     end
 
     total_read
-  end
-
-  # :nodoc:
-  def read(length : Int)
-    raise ArgumentError.new "negative length" if length < 0
-
-    fill_buffer if @in_buffer_rem.empty?
-
-    # If we have enough content in the buffer, use it
-    if length <= @in_buffer_rem.length
-      string = String.new(@in_buffer_rem[0, length])
-      @in_buffer_rem += length
-      return string
-    end
-
-    super
   end
 
   # Buffered implementation of `IO#write(slice)`.
@@ -290,9 +285,9 @@ module BufferedIO
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
   end
 
-  private def fill_buffer
+  private def fill_buffer wait = true : Bool
     in_buffer = in_buffer()
-    length = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE)).to_i
+    length = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE), wait: wait).to_i
     @in_buffer_rem = Slice.new(in_buffer, length)
   end
 

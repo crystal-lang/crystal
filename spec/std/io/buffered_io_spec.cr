@@ -17,7 +17,7 @@ class BufferedIOWrapper(T)
     io
   end
 
-  private def unbuffered_read(slice : Slice(UInt8))
+  private def unbuffered_read(slice : Slice(UInt8), wait = true)
     @io.read(slice)
   end
 
@@ -186,7 +186,7 @@ describe "BufferedIO" do
 
   it "raises argument error if reads negative length" do
     io = BufferedIOWrapper.new(StringIO.new("hello world"))
-    expect_raises(ArgumentError, "negative length") do
+    expect_raises(ArgumentError, "negative count") do
       io.read(-1)
     end
   end

@@ -4,7 +4,7 @@ struct PointerIO
   def initialize(@pointer : UInt8**)
   end
 
-  def read(slice : Slice(UInt8))
+  def read(slice : Slice(UInt8), wait : Wait)
     count = slice.length
     slice.copy_from(@pointer.value, count)
     @pointer.value += count
