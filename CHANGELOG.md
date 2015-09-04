@@ -8,12 +8,12 @@
 * **(breaking change)** Changed API of `Channel#select` toward a thread-safe one.
 * **(breaking change)** The two methods that IO must implement are now `read(slice : Slice(UInt8))` and `write(slice : Slice(UInt8))`.
 * New beautiful, searchable and more functional API docs. Thanks @rosylilly for the initial design, and @BlaxPirit for some improvements.
-* CLI: Moved `browser, `hierarchy` and `types` to `crystal tool ...`
+* CLI: Moved `browser`, `hierarchy` and `types` to `crystal tool ...`
 * Added `crystal tool context` and `crystal tool implementations` for IDEs (thanks @bcardiff!!)
-# `Int#>>(amount)` nad `Int#<<(amount)` now give zero when `amount` is greater than the number of bits of the integer representation.
+* `Int#>>(amount)` and `Int#<<(amount)` now give zero when `amount` is greater than the number of bits of the integer representation.
 * Added `\%` escape sequence inside macros.
 * Added aliases for the many C types (thanks @BlaxPirit)
-# Added `Iterator#in_groups_of` (thanks @PragTob)
+* Added `Iterator#in_groups_of` (thanks @PragTob)
 * Added optional `offset` argument to `Hash#each_with_index` (thanks @sergey-kucher)
 * Added `Array#combinations`, `Array#each_combination`, `Array#repeated_combinations`, `Array#each_repeated_combination`, `Array#repeated_permutations`, `Array#each_repeated_permutation`, `Array.product` and `Array.each_product` (thanks @kostya)
 * Added `Array#rotate` and `Array#rotate!` (thanks @kostya)
