@@ -71,7 +71,7 @@ class Crystal::Call
       actual_type = mod.pointer_of(actual_type) if self.args[i].is_a?(Out)
       unless actual_type.compatible_with?(expected_type) || actual_type.is_implicitly_converted_in_c_to?(expected_type)
         implicit_call = try_to_unsafe(self_arg) do |ex|
-          if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")
+          if to_unsafe_lookup_failed?(ex)
             arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
 
             if expected_type.is_a?(FunInstanceType) &&
@@ -107,7 +107,7 @@ class Crystal::Call
         if self_arg_type
           unless self_arg_type.nil_type? || self_arg_type.primitive_like?
             implicit_call = try_to_unsafe(self_arg) do |ex|
-              if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")
+              if to_unsafe_lookup_failed?(ex)
                 self_arg.raise "argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
               else
                 self_arg.raise ex.message, ex
@@ -133,6 +133,10 @@ class Crystal::Call
 
   def check_not_lib_out_args
     args.find(&.is_a?(Out)).try &.raise "out can only be used with lib funs"
+  end
+
+  def to_unsafe_lookup_failed?(ex)
+    ex.message.try(&.includes?("undefined method 'to_unsafe'")) || ex.message.try(&.includes?("has no field 'to_unsafe'"))
   end
 
   def try_to_unsafe(self_arg)

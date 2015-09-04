@@ -495,4 +495,19 @@ it "errors if unknown named arg" do
       LibC.foo
       )) { tuple_of([int32, int32] of TypeVar) }
   end
+
+  it "doesn't try to invoke unsafe for c struct/union (#1362)" do
+    assert_error %(
+      lib LibFoo
+        struct Bar
+        end
+
+        fun foo(x : Bar*)
+      end
+
+      bar = LibFoo::Bar.new
+      LibFoo.foo(bar)
+      ),
+      "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
+  end
 end
