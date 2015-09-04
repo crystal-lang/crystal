@@ -988,6 +988,18 @@ class Array(T)
     end
   end
 
+  def self.product(arrays)
+    result = [] of Array(typeof(arrays.first.first))
+    each_product(arrays) do |product|
+      result << product
+    end
+    result
+  end
+
+  def self.product(*arrays : Array)
+    product(arrays.to_a)
+  end
+
   def self.each_product(arrays)
     pool = arrays.map &.first
     lens = arrays.map &.length
@@ -1009,6 +1021,12 @@ class Array(T)
       end
       pool[i] = arrays[i][indices[i]]
       yield pool[0, n]
+    end
+  end
+
+  def self.each_product(*arrays : Array)
+    each_product(arrays.to_a) do |result|
+      yield result
     end
   end
 

@@ -1309,6 +1309,22 @@ describe "Array" do
       Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
       res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
     end
+
+    it "with splat" do
+      res = [] of Array(Int32 | Char)
+      Array.each_product([1, 2], ['a', 'b']) { |r| res << r }
+      res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+  end
+
+  describe "Array.product" do
+    it "with array" do
+      Array.product([[1, 2], ['a', 'b']]).should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+
+    it "with splat" do
+      Array.product([1, 2], ['a', 'b']).should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
   end
 
   it "doesn't overflow buffer with Array.new(size, value) (#1209)" do
