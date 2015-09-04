@@ -1,3 +1,9 @@
+require "socket"
+require "http"
+require "base64"
+require "openssl"
+require "uri"
+
 class HTTP::WebSocket
   enum Opcode : UInt8
     CONTINUATION   = 0x0
@@ -9,6 +15,7 @@ class HTTP::WebSocket
   end
 
   MASK_BIT      = 128_u8
+  VERSION       = 13
 
   record PacketInfo, opcode, length, final
 
@@ -133,5 +140,58 @@ class HTTP::WebSocket
   end
 
   def close
+  end
+
+  # Opens a new websocket to the target host. This will also handle the handshake
+  # and will raise an exception if the handshake did not complete successfully.
+  #
+  # ```
+  # WebSocket.open("websocket.example.com", "/chat")              # Creates a new WebSocket to `websocket.example.com`
+  # WebSocket.open("websocket.example.com", "/chat", ssl = true)  # Creates a new WebSocket with SSL to `ẁebsocket.example.com`
+  # ```
+  def self.open(host, path, port = nil, ssl = false)
+    port = port || (ssl ? 443 : 80)
+    socket = TCPSocket.new(host, port)
+    socket = OpenSSL::SSL::Socket.new(socket) if ssl
+
+    headers = HTTP::Headers.new
+    headers["Host"] = "#{host}:#{port}"
+    headers["Connection"] = "Upgrade"
+    headers["Upgrade"] = "websocket"
+    headers["Sec-WebSocket-Version"] = VERSION.to_s
+    headers["Sec-WebSocket-Key"] = Base64.encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
+
+    path = "/" if path.empty?
+    handshake = HTTP::Request.new("GET", path, headers)
+    handshake.to_io(socket)
+    handshake_response = HTTP::Response.from_io(socket)
+    unless handshake_response.status_code == 101
+      raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}")
+    end
+
+    new(socket)
+  end
+
+  # Opens a new websocket using the information provided by the URI. This will also handle the handshake
+  # and will raise an exception if the handshake did not complete successfully. This method will also raise
+  # an exception if the URI is missing the host and/or the path.
+  #
+  # Please note that the scheme will only be used to identify if SSL should be used or not. Therefore, schemes
+  # apart from `wss` and `https` will be treated as the default which is `ws`.
+  #
+  # ```
+  # WebSocket.open(URI.parse("ws://websocket.example.com/chat"))        # Creates a new WebSocket to `websocket.example.com`
+  # WebSocket.open(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with SSL to `websocket.example.com`
+  # WebSocket.open(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
+  # ```
+  def self.open(uri : URI)
+    if host = uri.host
+      if path = uri.path
+        ssl = uri.scheme == "https" || uri.scheme == "wss"
+        return open(host, path, uri.port, ssl)
+      end
+    end
+
+    raise ArgumentError.new("No host or path specified which are required.")
   end
 end
