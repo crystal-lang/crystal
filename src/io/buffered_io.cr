@@ -153,31 +153,22 @@ module BufferedIO
   # Buffered implementation of `IO#read(slice)`.
   def read(slice : Slice(UInt8))
     count = slice.length
-    total_read = 0
 
-    while count > 0
-      if @in_buffer_rem.empty?
-        # If we are asked to read more than the buffer's size,
-        # read directly into the slice.
-        if count >= BUFFER_SIZE
-          to_read = unbuffered_read(slice[0, count]).to_i
-          total_read += to_read
-          break
-        else
-          fill_buffer
-          break if @in_buffer_rem.empty?
-        end
+    if @in_buffer_rem.empty?
+      # If we are asked to read more than the buffer's size,
+      # read directly into the slice.
+      if count >= BUFFER_SIZE
+        return unbuffered_read(slice[0, count]).to_i
+      else
+        fill_buffer
+        return 0 if @in_buffer_rem.empty?
       end
-
-      to_read = Math.min(count, @in_buffer_rem.length)
-      slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
-      @in_buffer_rem += to_read
-      count -= to_read
-      slice += to_read
-      total_read += to_read
     end
 
-    total_read
+    to_read = Math.min(count, @in_buffer_rem.length)
+    slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
+    @in_buffer_rem += to_read
+    to_read
   end
 
   # :nodoc:

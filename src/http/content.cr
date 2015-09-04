@@ -28,7 +28,7 @@ module HTTP
       raise IO::Error.new "Can't write to FixedLengthContent"
     end
   end
-  
+
   # :nodoc:
   class UnknownLengthContent < Content
     include IO
@@ -55,25 +55,21 @@ module HTTP
 
     def read(slice : Slice(UInt8))
       count = slice.length
-      total_read = 0
-      while @chunk_remaining > 0 && count > 0
-        to_read = Math.min(count, @chunk_remaining)
-        bytes_read = @io.read slice[0, to_read]
-        slice += bytes_read
-        total_read += bytes_read
-        count -= bytes_read
-        @chunk_remaining -= bytes_read
+      return 0 if @chunk_remaining == 0 || count == 0
+
+      to_read = Math.min(count, @chunk_remaining)
+      bytes_read = @io.read slice[0, to_read]
+      @chunk_remaining -= bytes_read
+      if @chunk_remaining == 0
+        @io.read(2) # Read \r\n
+        @chunk_remaining = @io.gets.not_nil!.to_i(16)
+
         if @chunk_remaining == 0
           @io.read(2) # Read \r\n
-          @chunk_remaining = @io.gets.not_nil!.to_i(16)
-
-          if @chunk_remaining == 0
-            @io.read(2) # Read \r\n
-            break
-          end
         end
       end
-      total_read
+
+      bytes_read
     end
 
     def write(slice : Slice(UInt8))
