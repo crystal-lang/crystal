@@ -1,0 +1,166 @@
+---
+layout: post
+title: Crystal tools
+summary: Tools for Atom and everybody
+thumbnail: ⚒
+author: bcardiff
+---
+
+Crystal compiler does a lot of work in order to allow the programmer be more expressive, productive, and ...lazy.
+
+Since 0.7.7 the compiler comes with some initials tools that will help the programmer know what the compiler is understanding from the code and to navigate through in a more interesting way.
+
+# Go to implementations tool
+
+When compiling a method call, the compiler knows exactly which method definition will be called. But, when the programmer is viewing the source code, there was no way (other than string search) to reach the method definition.
+
+Bigger the project, harder to find the definition.
+
+So if you have *program.cr* with the following code:
+
+{% highlight ruby %}
+def add(a, b)     # line 1
+  a + b
+end
+
+add(1, 2)         # line 5
+{% endhighlight ruby %}
+
+<pre class="code">
+$ crystal tool implementations --cursor program.cr:5:1 program.cr
+1 implementation found
+/path/to/program.cr:1:1
+</pre>
+
+You can pass `--format json` to make a computer friendly output and build something to integrate it to you favorite text editor. This is used in then [crystal-tools atom package](https://atom.io/packages/crystal-tools) and it just looks awesome. Every location is just clickable.
+
+<img src="/images/tools/implementations.png" width="461" height="166" class="center"/>
+
+If you use [Atom](https://atom.io) download them and just press `⌘⌥i` / `ctrl-alt-i` while your cursor is over the `add` in line 5.
+
+## Multiple implementations
+
+This tools does not only will be allow you avoid `def foo` vs `def self.foo` string matching hell, but will point which are the real candidates of a method call.
+
+{% highlight ruby %}
+class A
+  def foo         # line 2
+  end
+end
+
+class B
+  def foo         # line 7
+  end
+end
+
+def use_foo(o)
+  o.foo           # line 12, put the cursor in this #foo call
+end
+
+use_foo(A.new)
+use_foo(B.new)    # if removed, line 7 won't be an implementation of line 12
+{% endhighlight ruby %}
+
+
+## Down a macro hole
+
+A snippet is worth a thousand words.
+
+{% highlight ruby %}
+class Person
+  property name   # line 2
+end
+
+p = Person.new
+p.name = "John"   # line 6, put the cursor in over #name= call
+{% endhighlight ruby %}
+
+<pre class="code">
+$ crystal tool implementations --cursor program.cr:6:6 program.cr
+1 implementation found
+/path/to/program.cr:2:3
+ ~> macro property: /path/to/crystal-src/object.cr:365:5
+ ~> macro setter: /path/to/crystal-src/object.cr:324:9
+</pre>
+
+And you know how *object.cr* looks like?
+
+{% highlight ruby %}
+# and inside crystal object.cr
+class Object
+  # ...
+  macro setter(*names)
+    {% raw %}{% for name in names %}
+      {% if name.is_a?(DeclareVar) %}
+        def {{name.var.id}}=(@{{name.var.id}} : {{name.type}}) # line 324
+        end
+      {% else %}
+        def {{name.id}}=(@{{name.id}})
+        end
+      {% end %}
+    {% end %}{% endraw %}
+  end
+  # ...
+  macro property(*names)
+    getter {% raw %}{{*names}}{% endraw %}
+    setter {% raw %}{{*names}}{% endraw %}   # line 365
+  end
+  # ...
+end
+{% endhighlight ruby %}
+
+*I love this!*
+
+# Reveal context tool
+
+Another neat tool that will help you avoid all thouse run with `pp var` or `pp typeof(var)` is the context tool. Just position your cursor somewhere `⌘⌥c` / `ctrl-alt-c` and you will all variables type information.
+
+<img src="/images/tools/context.png" width="417" height="176" class="center"/>
+
+The tool is available in command line manner as the previous one.
+
+{% highlight ruby %}
+a = "a string"
+b = 1
+# line 3
+{% endhighlight ruby %}
+
+<pre class="code">
+$ crystal tool context --cursor program.cr:3:1 program.cr
+1 possible context found
+
+| Expr | Type   |
+-----------------
+| a    | String |
+| b    | Int32  |
+</pre>
+
+It's interesting thou to see all the overload a `def` holds.
+
+<img src="/images/tools/context2.png" width="436" height="179" class="center"/>
+
+# Final notes
+
+## Work in progress
+
+It's work in progress :-). We want more tools, and to make them robust enough for everyone. We think they are ready enough for you to enjoy them, and help us making them better.
+
+## Next steps
+
+The crystal-tools atom package will probably get `crystal spec` support so it will be easier to run single file/single spec from the editor.
+
+Another desired tool is to get all caller for a given method. Kind of dual tool of implementations that will answere the question, who is using this code?
+
+## Green compile status is a requirement
+
+Since this tools were built on top of crystal compiler, with all it's type inference and compiler phases, if the code does not compile you won't be able to run any tool.
+
+## Main program
+
+All samples presented here were programs in a single file but the tools do work in larger project. For this to happen the tools need to know the main file to compile. This was the last argument of the commands. The `--cursor` argument specifies where the text cursor is located in the editor.
+
+For single file programs the main program is just it. For larger programs is not that easy. You as a developer will know which file to compile.
+
+The crystal-tools atom package will use all the specs as main program. If this is not what you need to can change from the settings page which file to compile among other things.
+
+... towards an event better crystal programming experience. ❤
