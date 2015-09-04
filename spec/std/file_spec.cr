@@ -327,11 +327,22 @@ describe "File" do
     end
   end
 
-  it "writes" do
-    filename = "#{__DIR__}/data/temp_write.txt"
-    File.write(filename, "hello")
-    File.read(filename).strip.should eq("hello")
-    File.delete(filename)
+  describe "write" do
+    it "can write to a file" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello")
+      File.read(filename).strip.should eq("hello")
+      File.delete(filename)
+    end
+
+    it "raises if trying to write to a file not opened for writing" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello")
+      expect_raises(IO::Error, "File not open for writing") do
+        File.open(filename) { |file| file << "hello" }
+      end
+      File.delete(filename)
+    end
   end
 
   it "does to_s" do

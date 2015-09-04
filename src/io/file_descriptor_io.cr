@@ -181,6 +181,8 @@ class FileDescriptorIO
         if LibC.errno == Errno::EAGAIN
           wait_writable
           next
+        elsif LibC.errno == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
         else
           raise Errno.new "Error writing file"
         end
