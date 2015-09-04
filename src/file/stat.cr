@@ -194,6 +194,10 @@ class File
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_ISGID
     end
 
+    def symlink?
+      (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
+    end
+
     def socket?
       (@stat.st_mode & LibC::S_IFMT) == LibC::S_IFSOCK
     end

@@ -152,6 +152,8 @@ describe "File" do
     stat.chardev?.should be_false
     stat.directory?.should be_false
     stat.file?.should be_true
+    stat.symlink?.should be_false
+    stat.socket?.should be_false
   end
 
   it "gets stat for this directory" do
@@ -160,6 +162,8 @@ describe "File" do
     stat.chardev?.should be_false
     stat.directory?.should be_true
     stat.file?.should be_false
+    stat.symlink?.should be_false
+    stat.socket?.should be_false
   end
 
   it "gets stat for a character device" do
@@ -168,6 +172,18 @@ describe "File" do
     stat.chardev?.should be_true
     stat.directory?.should be_false
     stat.file?.should be_false
+    stat.symlink?.should be_false
+    stat.socket?.should be_false
+  end
+
+  it "gets stat for a symlink" do
+    stat = File.lstat("#{__DIR__}/data/symlink.txt")
+    stat.blockdev?.should be_false
+    stat.chardev?.should be_false
+    stat.directory?.should be_false
+    stat.file?.should be_false
+    stat.symlink?.should be_true
+    stat.socket?.should be_false
   end
 
   it "gets stat for open file" do
@@ -177,6 +193,8 @@ describe "File" do
       stat.chardev?.should be_false
       stat.directory?.should be_false
       stat.file?.should be_true
+      stat.symlink?.should be_false
+      stat.socket?.should be_false
     end
   end
 
