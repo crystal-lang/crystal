@@ -71,6 +71,7 @@ module Crystal
 
   class RechableVisitor < Visitor
     def initialize(@context_visitor)
+      @visited_typed_defs = Set(typeof(object_id)).new
     end
 
     def visit(node : Call)
@@ -83,6 +84,12 @@ module Crystal
         end
       end
       true
+    end
+
+    def visit(node : Def)
+      should_visit = !@visited_typed_defs.includes?(node.object_id)
+      @visited_typed_defs << node.object_id if should_visit
+      return should_visit
     end
 
     def visit(node)
