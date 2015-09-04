@@ -59,6 +59,8 @@ lib LibC
     MAP_ANON = 0x0020
   end
 
+  MAP_FAILED = Pointer(Void).new(SizeT.cast(-1))
+
   fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : SSizeT) : Void*
   fun munmap(addr : Void*, len : SizeT)
 
