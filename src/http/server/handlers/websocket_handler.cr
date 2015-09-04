@@ -44,6 +44,10 @@ class HTTP::WebSocketHandler < HTTP::Handler
       @ws.send(message)
     end
 
+    def send_masked(message)
+      @ws.send_masked(message)
+    end
+
     def run
       loop do
         info = @ws.receive(@buffer)
