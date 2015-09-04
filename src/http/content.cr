@@ -17,8 +17,7 @@ module HTTP
     end
 
     def read(slice : Slice(UInt8))
-      count = slice.length
-      count = Math.min(count, @remaining)
+      count = Math.min(slice.length, @remaining)
       bytes_read = @io.read slice[0, count]
       @remaining -= bytes_read
       bytes_read
@@ -57,7 +56,8 @@ module HTTP
       count = slice.length
       return 0 if @chunk_remaining == 0 || count == 0
 
-      to_read = Math.min(count, @chunk_remaining)
+      to_read = Math.min(slice.length, @chunk_remaining)
+
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read
       if @chunk_remaining == 0
