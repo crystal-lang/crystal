@@ -1,25 +1,201 @@
+html, body {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: "Lucida Sans", "Lucida Grande", Verdana, Arial, sans-serif;
+  color: #333;
+}
+
+a {
+  color: #263F6C;
+}
+
+a:visited {
+  color: #112750;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 30px 0;
+}
+
+h1.type-name {
+  color: #47266E;
+}
+
+#types-list, #main-content {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: auto;
+}
+
+#types-list {
+  left: 0;
+  width: 20%;
+  background-color: #2E1052;
+}
+
+#types-list #search-box {
+  padding: 5px;
+}
+
+#types-list input {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px;
+  font: inherit;
+  font-family: inherit;
+  line-height: 1.2;
+  width: 100%;
+  border: 0;
+  border-radius: 50px;
+  outline: 0;
+}
+
+#types-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none outside;
+}
+
+#types-list li {
+  display: block;
+  position: relative;
+}
+
+#types-list li.hide {
+  display: none;
+}
+
+#types-list a {
+  display: block;
+  padding: 5px 15px 5px 30px;
+  text-decoration: none;
+  color: #fff;
+}
+
+#types-list .current > a,
+#types-list a:hover {
+  color: #866BA6;
+}
+
+#types-list li ul {
+  overflow: hidden;
+  height: 0;
+  max-height: 0;
+  transition: 1s ease-in-out;
+}
+
+
+#types-list li.parent {
+  padding-left: 30px;
+}
+
+#types-list li.parent::before {
+  box-sizing: border-box;
+  content: "▼";
+  display: block;
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  color: white;
+  font-size: 8px;
+  line-height: 30px;
+  transform: rotateZ(-90deg);
+  cursor: pointer;
+  transition: .2s linear;
+}
+
+
+#types-list li.parent > a {
+  padding-left: 0;
+}
+
+#types-list li.parent.open::before {
+  transform: rotateZ(0);
+}
+
+#types-list li.open > ul {
+  height: auto;
+  max-height: 1000em;
+}
+
+#main-content {
+  padding: 0 30px 30px 30px;
+  left: 20%;
+  right: 0;
+}
+
+.kind {
+  font-size: 60%;
+  color: #866BA6;
+}
+
+.superclass-hierarchy {
+  margin: -15px 0 30px 0;
+  padding: 0;
+  list-style: none outside;
+  font-size: 80%;
+}
+
+.superclass-hierarchy .superclass {
+  display: inline-block;
+  margin: 0 7px 0 0;
+  padding: 0;
+}
+
+.superclass-hierarchy .superclass + .superclass::before {
+  content: "<";
+  margin-right: 7px;
+}
+
+.other-types-list li {
+  display: inline-block;
+}
+
+.other-types-list,
+.list-summary {
+  margin: 0 0 30px 0;
+  padding: 0;
+  list-style: none outside;
+}
+
+.entry-const {
+  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
 
 .entry-summary {
   padding-bottom: 4px;
 }
 
+.superclass-hierarchy .superclass a,
+.other-type a,
 .entry-summary .signature {
   padding: 4px 8px;
   margin-bottom: 4px;
   display: inline-block;
-  background: #f8f8f8;
-  color: #05a;
+  background-color: #f8f8f8;
+  color: #47266E;
   border: 1px solid #f0f0f0;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
+  text-decoration: none;
+  border-radius: 3px;
 }
 
+.superclass-hierarchy .superclass a:hover,
+.other-type a:hover,
 .entry-summary .signature:hover {
-  background: #CFEBFF;
-  border-color: #A4CCDA;
+  background: #D5CAE3;
+  border-color: #624288;
 }
 
 .entry-summary .summary {
@@ -30,22 +206,63 @@ body {
   text-decoration: none;
 }
 
-.entry-detail .signature {
-  padding: 6px 10px;
-  margin-bottom: 10px;
-  display: inline-block;
-  background: #E8F4FF;
-  border: 1px solid #d8d8e5
-  border-radius: 5px;
+.entry-detail {
+  padding: 30px 0;
 }
 
-hr {
-  color: #ddd;
-  background-color: #ddd;
-  height: 1px;
-  border: 0;
-  margin-top: 20px;
+.entry-detail .signature {
+  position: relative;
+  padding: 5px 15px;
   margin-bottom: 10px;
+  display: block;
+  border-radius: 5px;
+  background-color: #f8f8f8;
+  color: #47266E;
+  border: 1px solid #f0f0f0;
+  transition: .2s ease-in-out;
+}
+
+.entry-detail:target .signature {
+  background-color: #D5CAE3;
+  border: 1px solid #624288;
+}
+
+.entry-detail .signature .method-permalink {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 5px 15px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #624288;
+}
+
+.methods-inherited {
+  padding-right: 10%;
+  line-height: 1.5em;
+}
+
+.methods-inherited h3 {
+  margin-bottom: 4px;
+}
+
+.methods-inherited a {
+  display: inline-block;
+  text-decoration: none;
+  color: #47266E;
+}
+
+.methods-inherited a:hover {
+  text-decoration: underline;
+  color: #6C518B;
+}
+
+.methods-inherited .tooltip span {
+  background: #D5CAE3;
+  color: #47266E;
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin: -4px -8px;
 }
 
 pre {
@@ -57,6 +274,22 @@ pre {
   color: #333;
   background: #f7f7f7;
   font-size: 14px;
+}
+
+code {
+  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+}
+
+.tooltip span {
+  position: absolute;
+  opacity: 0;
+  display: none;
+  pointer-events: none;
+}
+
+.tooltip:hover span {
+  display: inline-block;
+  opacity: 1;
 }
 
 .c {
