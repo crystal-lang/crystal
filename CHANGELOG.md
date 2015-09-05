@@ -41,7 +41,7 @@
 * Some improvements to `crystal init` for the "app" case (thanks @krisleech)
 * `sleep` and IO timeouts can receive `TimeSpan` as arguments (thanks @BlaxPirit)
 * Handle `HTTP::Response` without content-length (thanks @lbguilherme)
-# Added docs for OptionParser, ENV, Regex, Enumerable, Iterator and some Array methods (thanks @porras, @will, @bjmllr, @PragTob, @decioferreira)
+* Added docs for OptionParser, ENV, Regex, Enumerable, Iterator and some Array methods (thanks @porras, @will, @bjmllr, @PragTob, @decioferreira)
 * Lots of bug fixes and small improvements
 
 ## 0.7.6 (2015-08-13)
