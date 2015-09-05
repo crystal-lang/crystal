@@ -147,26 +147,6 @@ module Spec
     @@fail_fast
   end
 
-  def self.before_each(&block)
-    before_each = @@before_each ||= [] of ->
-    before_each << block
-  end
-
-  def self.after_each(&block)
-    after_each = @@after_each ||= [] of ->
-    after_each << block
-  end
-
-  # :nodoc:
-  def self.run_before_each_hooks
-    @@before_each.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_each_hooks
-    @@after_each.try &.each &.call
-  end
-
   # :nodoc
   def self.run
     start_time = Time.now
