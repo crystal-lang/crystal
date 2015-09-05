@@ -490,8 +490,8 @@ USAGE
     # This is for the case where the main command is wrong
     @@color = false if ARGV.includes?("--no-color")
 
-    print colorize("Error: ").red.bold
-    puts colorize(msg).toggle(@@color).bold
+    STDERR.print colorize("Error: ").red.bold
+    STDERR.puts colorize(msg).toggle(@@color).bold
     exit 1
   end
 
