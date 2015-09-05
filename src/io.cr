@@ -386,7 +386,7 @@ module IO
   # io.read_byte #=> 97
   # io.read_byte #=> nil
   # ```
-  def read_byte # : UInt8? # (TODO: uncomment after 0.7.6)
+  def read_byte : UInt8?
     byte :: UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
       byte
@@ -544,7 +544,7 @@ module IO
   # io.gets('z', 10) #=> "ld"
   # io.gets('w', 10) #=> nil
   # ```
-  def gets(delimiter : Char, limit : Int)
+  def gets(delimiter : Char, limit : Int) : String?
     raise ArgumentError.new "negative limit" if limit < 0
 
     buffer = String::Builder.new
@@ -575,7 +575,7 @@ module IO
   # io.gets("wo") #=> "rld"
   # io.gets("wo") #=> nil
   # ```
-  def gets(delimiter : String)
+  def gets(delimiter : String) : String?
     # Empty string: read all
     if delimiter.empty?
       return read
@@ -612,7 +612,7 @@ module IO
   end
 
   # Same as `gets`, but raises `EOFError` if called at the end of this IO.
-  def read_line(*args)
+  def read_line(*args) : String?
     gets(*args) || raise EOFError.new
   end
 
@@ -642,7 +642,7 @@ module IO
   # STDIN.tty?        #=> true
   # StringIO.new.tty? #=> false
   # ```
-  def tty?
+  def tty? : Bool
     false
   end
 
