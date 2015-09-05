@@ -94,4 +94,8 @@ class YAML::Parser
   private def unexpected_event
     raise "Unexpected event: #{@pull_parser.kind}"
   end
+
+  private def raise(msg)
+    ::raise ParseException.new(msg, @pull_parser.line_number, @pull_parser.column_number)
+  end
 end

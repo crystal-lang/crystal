@@ -7,7 +7,7 @@ class YAML::PullParser
     LibYAML.yaml_parser_set_input_string(@parser, content, LibC::SizeT.cast(content.bytesize))
 
     read_next
-    raise "Expected STREAM_START" unless @event.type == LibYAML::EventType::STREAM_START
+    parse_exception "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START
   end
 
   def kind
@@ -15,7 +15,8 @@ class YAML::PullParser
   end
 
   def value
-    String.new(@event.data.scalar.value)
+    ptr = @event.data.scalar.value
+    ptr ? String.new(ptr) : nil
   end
 
   def anchor
@@ -53,12 +54,103 @@ class YAML::PullParser
     kind
   end
 
+  def read_stream
+    read_stream_start
+    yield
+    read_stream_end
+  end
+
+  def read_document
+    read_document_start
+    yield
+    read_document_end
+  end
+
+  def read_sequence
+    read_sequence_start
+    yield
+    read_sequence_end
+  end
+
+  def read_mapping
+    read_mapping_start
+    yield
+    read_mapping_end
+  end
+
+  def read_alias
+    expect_kind EventKind::ALIAS
+    anchor = alias_anchor
+    read_next
+    anchor
+  end
+
+  def read_scalar
+    expect_kind EventKind::SCALAR
+    value = self.value.not_nil!
+    read_next
+    value
+  end
+
+  def read_stream_start
+    read EventKind::STREAM_START
+  end
+
+  def read_stream_end
+    read EventKind::STREAM_END
+  end
+
+  def read_document_start
+    read EventKind::DOCUMENT_START
+  end
+
+  def read_document_end
+    read EventKind::DOCUMENT_END
+  end
+
+  def read_sequence_start
+    read EventKind::SEQUENCE_START
+  end
+
+  def read_sequence_end
+    read EventKind::SEQUENCE_END
+  end
+
+  def read_mapping_start
+    read EventKind::MAPPING_START
+  end
+
+  def read_mapping_end
+    read EventKind::MAPPING_END
+  end
+
+  def read(expected_kind)
+    expect_kind expected_kind
+    read_next
+  end
+
+  def line_number
+    @event.start_mark.line
+  end
+
+  def column_number
+    @event.start_mark.column
+  end
+
   def close
     LibYAML.yaml_parser_delete(@parser)
     LibYAML.yaml_event_delete(pointerof(@event))
   end
 
+  private def expect_kind(kind)
+    parse_exception "expected #{kind} but was #{self.kind}" unless kind == self.kind
+  end
+
   private def read_anchor(anchor)
     anchor ? String.new(anchor) : nil
+  end
+
+  private def parse_exception(msg)
+    raise ParseException.new(msg, line_number, column_number)
   end
 end

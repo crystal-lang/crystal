@@ -1,6 +1,16 @@
 require "./*"
 
 module YAML
+  # Exception thrown on a YAML parse error.
+  class ParseException < Exception
+    getter line_number
+    getter column_number
+
+    def initialize(message, @line_number, @column_number)
+      super "#{message} at #{@line_number}:#{@column_number}"
+    end
+  end
+
   alias Type = String | Hash(Type, Type) | Array(Type) | Nil
   alias EventKind = LibYAML::EventType
 
