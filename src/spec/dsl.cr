@@ -39,6 +39,14 @@ module Spec::DSL
     Spec::RootContext.report(:pending, description, file, line)
   end
 
+  def before_each(&block)
+    Spec.before_each(&block)
+  end
+
+  def after_each(&block)
+    Spec.after_each(&block)
+  end
+
   def assert(file = __FILE__, line = __LINE__)
     it("assert", file, line) { yield }
   end

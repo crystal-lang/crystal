@@ -83,3 +83,23 @@ describe "Spec matchers" do
     end
   end
 end
+
+describe "before and after hooks" do
+  thing = 0
+
+  before_each do
+    thing += 2
+  end
+
+  after_each do
+    thing -= 1
+  end
+
+  it "increments the variable by 2 before" do
+    thing.should eq(2)
+  end
+
+  it "decrements the variable by 1 after" do
+    thing.should eq(3)
+  end
+end
