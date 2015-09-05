@@ -6,7 +6,7 @@ There are four unsigned integer types: [UInt8](http://crystal-lang.org/api/UInt8
 
 An integer literal is an optional `+` or `-` sign, followed by
 a sequence of digits and underscores, optionally followed by a suffix.
-If no suffix is present, the literal's type is the lowest betwen `Int32`, `Int64` and `UInt64`
+If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
 in which the number fits:
 
 ```ruby
