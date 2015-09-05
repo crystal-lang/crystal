@@ -940,4 +940,18 @@ describe "Block inference" do
       x
       )) { nilable(pointer_of(union_of(int32, float64))) }
   end
+
+  it "errors on recursive yield" do
+    assert_error %(
+      def foo
+        yield
+
+        foo do
+        end
+      end
+
+      foo {}
+      ),
+      "recursive block expansion"
+  end
 end

@@ -681,6 +681,10 @@ module Crystal
       bind_block_args_to_yield_exps block, node
 
       unless block.visited
+        # When we yield, we are no longer inside `untyped_def`, so we un-nest
+        untyped_def = @untyped_def
+        untyped_def.block_nest -= 1 if untyped_def
+
         call.bubbling_exception do
           if node_scope = node.scope
             block.scope = node_scope.type
@@ -689,6 +693,9 @@ module Crystal
             block.accept call.parent_visitor.not_nil!
           end
         end
+
+        # And now we are back inside `untyped_def`
+        untyped_def.block_nest += 1 if untyped_def
       end
 
       node.bind_to block

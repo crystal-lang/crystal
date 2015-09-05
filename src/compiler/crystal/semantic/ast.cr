@@ -235,6 +235,9 @@ module Crystal
     property :visibility
     getter :special_vars
 
+    property :block_nest
+    @block_nest = 0
+
     def macro_owner=(@macro_owner)
     end
 

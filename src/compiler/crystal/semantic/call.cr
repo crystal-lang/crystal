@@ -402,7 +402,19 @@ class Crystal::Call
               visitor.call = self
               visitor.scope = lookup_self_type
               visitor.type_lookup = match.context.type_lookup
+
+              yields_to_block = block && !match.def.uses_block_arg
+
+              if yields_to_block
+                raise_if_block_too_nested
+                match.def.block_nest += 1
+              end
+
               typed_def.body.accept visitor
+
+              if yields_to_block
+                match.def.block_nest -= 1
+              end
 
               if visitor.is_initialize
                 visitor.bind_initialize_instance_vars(owner)
@@ -415,6 +427,17 @@ class Crystal::Call
     end
 
     typed_defs
+  end
+
+  def raise_if_block_too_nested
+    # When we visit this def's body, we nest. If we are nesting
+    # over and over again, and there's a block, it means this will go on forever
+    #
+    # TODO Ideally this should check `> 1`, but the algorithm isn't precise. However,
+    # manually nested blocks don't nest this deep.
+    if match.def.block_nest > 15
+      raise "recursive block expansion: blocks that yield are always inlined, and this call leads to an infinite inlining"
+    end
   end
 
   def check_return_type(typed_def, typed_def_return_type, match, match_owner)
