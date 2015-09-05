@@ -406,7 +406,7 @@ class Crystal::Call
               yields_to_block = block && !match.def.uses_block_arg
 
               if yields_to_block
-                raise_if_block_too_nested
+                raise_if_block_too_nested(match.def.block_nest)
                 match.def.block_nest += 1
               end
 
@@ -429,13 +429,13 @@ class Crystal::Call
     typed_defs
   end
 
-  def raise_if_block_too_nested
+  def raise_if_block_too_nested(block_nest)
     # When we visit this def's body, we nest. If we are nesting
     # over and over again, and there's a block, it means this will go on forever
     #
     # TODO Ideally this should check `> 1`, but the algorithm isn't precise. However,
     # manually nested blocks don't nest this deep.
-    if match.def.block_nest > 15
+    if block_nest > 15
       raise "recursive block expansion: blocks that yield are always inlined, and this call leads to an infinite inlining"
     end
   end
