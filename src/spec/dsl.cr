@@ -16,7 +16,7 @@ module Spec::DSL
     Spec.formatter.before_example description
 
     begin
-      Spec.run_before_each_hooks
+      Spec::RootContext.run_before_each_hooks
       yield
       Spec::RootContext.report(:success, description, file, line)
     rescue ex : Spec::AssertionFailed
@@ -26,7 +26,7 @@ module Spec::DSL
       Spec::RootContext.report(:error, description, file, line, ex)
       Spec.abort! if Spec.fail_fast?
     ensure
-      Spec.run_after_each_hooks
+      Spec::RootContext.run_after_each_hooks
     end
   end
 
@@ -40,11 +40,11 @@ module Spec::DSL
   end
 
   def before_each(&block)
-    Spec.before_each(&block)
+    Spec::RootContext.before_each(&block)
   end
 
   def after_each(&block)
-    Spec.after_each(&block)
+    Spec::RootContext.after_each(&block)
   end
 
   def assert(file = __FILE__, line = __LINE__)

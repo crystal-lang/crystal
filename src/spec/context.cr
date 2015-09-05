@@ -8,6 +8,9 @@ module Spec
 
   # :nodoc:
   class RootContext < Context
+    getter before_each
+    getter after_each
+
     def initialize
       @results = {
         success: [] of Result,
@@ -15,6 +18,8 @@ module Spec
         error: [] of Result,
         pending: [] of Result,
       }
+      @before_each = [] of ->
+      @after_each = [] of ->
     end
 
     def parent
@@ -143,6 +148,22 @@ module Spec
       @@contexts_stack.any?(&.matches?(pattern, line)) || description =~ pattern
     end
 
+    def self.before_each(&block)
+      @@contexts_stack.last.before_each << block
+    end
+
+    def self.after_each(&block)
+      @@contexts_stack.last.after_each << block
+    end
+
+    def self.run_before_each_hooks
+      @@contexts_stack.map(&.before_each).flatten().each(&.call)
+    end
+
+    def self.run_after_each_hooks
+      @@contexts_stack.map(&.after_each).flatten().each(&.call)
+    end
+
     def matches?(pattern, line)
       false
     end
@@ -154,8 +175,12 @@ module Spec
     getter description
     getter file
     getter line
+    getter before_each
+    getter after_each
 
     def initialize(@description : String, @file, @line, @parent)
+      @before_each = [] of ->
+      @after_each = [] of ->
     end
 
     def report(result)

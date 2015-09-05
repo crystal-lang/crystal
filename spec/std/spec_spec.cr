@@ -84,22 +84,48 @@ describe "Spec matchers" do
   end
 end
 
-describe "before and after hooks" do
-  thing = 0
+call_tracker = [] of String
 
+describe "before and after hooks" do
   before_each do
-    thing += 2
+    call_tracker.push("before_each")
   end
 
   after_each do
-    thing -= 1
+    call_tracker.push("after_each")
   end
 
-  it "increments the variable by 2 before" do
-    thing.should eq(2)
+  it "calls before" do
+    call_tracker.should eq(["before_each"])
   end
 
   it "decrements the variable by 1 after" do
-    thing.should eq(3)
+    call_tracker.should eq(["before_each", "after_each", "before_each"])
+  end
+end
+
+describe "before and after hooks in another context" do
+  it "should not call the before and after hooks" do
+    call_tracker.should eq(["before_each", "after_each", "before_each", "after_each"])
+  end
+end
+
+global_call_tracker = [] of String
+
+before_each do
+  global_call_tracker.push("global_before_each")
+end
+
+after_each do
+  global_call_tracker.push("global_after_each")
+end
+
+describe "before and after hooks in a nested context" do
+  it "should call the before global hook" do
+    global_call_tracker.should eq(["global_before_each"])
+  end
+
+  it "should call the after global hook" do
+    global_call_tracker.should eq(["global_before_each", "global_after_each", "global_before_each"])
   end
 end
