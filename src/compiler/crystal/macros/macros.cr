@@ -654,22 +654,9 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@length"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(TupleInstanceType)
-            return @last = NumberLiteral.new(scope.tuple_types.length)
-          end
         when "@type"
           target = @scope == @mod.class_type ? @scope : @scope.instance_type
           return @last = TypeNode.new(target)
-        when "@constants"
-          scope = @scope.try &.instance_type
-          return @last = TypeNode.constants(scope)
-        when "@enum_flags"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(EnumType)
-            return @last = BoolLiteral.new(scope.flags?)
-          end
         end
 
         node.raise "unknown macro instance var: '#{node.name}'"

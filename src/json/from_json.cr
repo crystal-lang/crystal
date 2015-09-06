@@ -82,7 +82,7 @@ def Tuple.new(pull : JSON::PullParser)
   {% if true %}
     pull.read_begin_array
     value = Tuple.new(
-      {% for i in 0 ... @length %}
+      {% for i in 0 ... @type.length %}
         (self[{{i}}].new(pull)),
       {% end %}
     )

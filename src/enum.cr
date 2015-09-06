@@ -60,12 +60,12 @@ struct Enum
 
   # Appends a String representation of this enum member to the given IO. See `to_s`.
   macro def to_s(io : IO) : Nil
-    {% if @enum_flags %}
+    {% if @type.has_attribute?("Flags") %}
       if value == 0
         io << "None"
       else
         found = false
-        {% for member in @constants %}
+        {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{member}}.value != 0 && (value & {{member}}.value) == {{member}}.value
               io << ", " if found
@@ -98,11 +98,11 @@ struct Enum
   # Color.new(10).to_s #=> "10"
   # ```
   macro def to_s : String
-    {% if @enum_flags %}
+    {% if @type.has_attribute?("Flags") %}
       String.build { |io| to_s(io) }
     {% else %}
       case value
-      {% for member in @constants %}
+      {% for member in @type.constants %}
       when {{member}}.value
         {{member.stringify}}
       {% end %}
@@ -243,10 +243,10 @@ struct Enum
   # Color.names #=> ["Red", "Green", "Blue"]
   # ```
   macro def self.names : Array(String)
-    {% if @enum_flags %}
-      {{ @constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
+    {% if @type.has_attribute?("Flags") %}
+      {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
-      {{ @constants.map &.stringify }}
+      {{ @type.constants.map &.stringify }}
     {% end %}
   end
 
@@ -256,10 +256,10 @@ struct Enum
   # Color.values #=> [Color::Red, Color::Green, Color::Blue]
   # ```
   macro def self.values : Array(self)
-    {% if @enum_flags %}
-      {{ @constants.select { |e| e.stringify != "None" && e.stringify != "All" } }}
+    {% if @type.has_attribute?("Flags") %}
+      {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" } }}
     {% else %}
-      {{ @constants }}
+      {{ @type.constants }}
     {% end %}
   end
 
@@ -273,7 +273,7 @@ struct Enum
   # Color.from_value?(3) #=> nil
   # ```
   macro def self.from_value?(value) : self | Nil
-    {% for member in @constants %}
+    {% for member in @type.constants %}
       return {{member}} if {{member}}.value == value
     {% end %}
     nil
@@ -294,7 +294,7 @@ struct Enum
 
   # macro def self.to_h : Hash(String, self)
   #   {
-  #     {% for member in @constants %}
+  #     {% for member in @type.constants %}
   #       {{member.stringify}} => {{member}},
   #     {% end %}
   #   }
@@ -322,7 +322,7 @@ struct Enum
   # ```
   macro def self.parse?(string) : self ?
     case string.downcase
-    {% for member in @constants %}
+    {% for member in @type.constants %}
       when {{member.stringify.downcase}}
         {{member}}
     {% end %}

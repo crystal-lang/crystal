@@ -739,7 +739,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar-Baz")
   end
 
-  it "gets enum members with @constants" do
+  it "gets enum members with @type.constants" do
     run(%(
       enum Color
         Red
@@ -747,15 +747,15 @@ describe "Code gen: macro" do
         Blue
 
         def self.red
-          {{@constants[0]}}
+          {{@type.constants[0]}}
         end
 
         def self.green
-          {{@constants[1]}}
+          {{@type.constants[1]}}
         end
 
         def self.blue
-          {{@constants[2]}}
+          {{@type.constants[2]}}
         end
       end
 

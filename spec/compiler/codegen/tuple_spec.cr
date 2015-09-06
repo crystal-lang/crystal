@@ -103,7 +103,7 @@ describe "Code gen: tuple" do
     run(%(
       struct Tuple
         def my_length
-          {{ @length }}
+          {{ @type.length }}
         end
       end
 

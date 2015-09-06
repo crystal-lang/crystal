@@ -127,7 +127,7 @@ struct Tuple
   # tuple.at(3) { 10 }        #=> 10
   # ```
   def at(index : Int)
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       return self[{{i}}] if {{i}} == index
     {% end %}
     yield
@@ -160,7 +160,7 @@ struct Tuple
   # 'x'
   # ```
   def each
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       yield self[{{i}}]
     {% end %}
     self
@@ -187,7 +187,7 @@ struct Tuple
   # t1 == t3            #=> false
   # ```
   def ==(other : self)
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       return false unless self[{{i}}] == other[{{i}}]
     {% end %}
     true
@@ -225,7 +225,7 @@ struct Tuple
   #
   # See `Object#<=>`.
   def <=>(other : self)
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       cmp = self[{{i}}] <=> other[{{i}}]
       return cmp unless cmp == 0
     {% end %}
@@ -247,7 +247,7 @@ struct Tuple
   # see `object#hash`.
   def hash
     hash = 31 * length
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       hash = 31 * hash + self[{{i}}].hash
     {% end %}
     hash
@@ -262,7 +262,7 @@ struct Tuple
   def clone
     {% if true %}
       Tuple.new(
-        {% for i in 0 ... @length %}
+        {% for i in 0 ... @type.length %}
           self[{{i}}].clone,
         {% end %}
       )
@@ -290,7 +290,7 @@ struct Tuple
   # {'a', 'b'}.length #=> 2
   # ```
   def length
-    {{@length}}
+    {{@type.length}}
   end
 
   # Returns a tuple containing the types of this tuple.
@@ -329,7 +329,7 @@ struct Tuple
   def map
     {% if true %}
       Tuple.new(
-        {% for i in 0 ... @length %}
+        {% for i in 0 ... @type.length %}
           (yield self[{{i}}]),
         {% end %}
       )
@@ -357,7 +357,7 @@ struct Tuple
   # empty.first? #=> nil
   # ```
   def first?
-    {% if @length == 0 %}
+    {% if @type.length == 0 %}
       nil
     {% else %}
       self[0]
@@ -373,7 +373,7 @@ struct Tuple
   # ```
   def last
     {% if true %}
-      self[{{@length - 1}}]
+      self[{{@type.length - 1}}]
     {% end %}
   end
 
@@ -388,10 +388,10 @@ struct Tuple
   # empty.last? #=> nil
   # ```
   def last?
-    {% if @length == 0 %}
+    {% if @type.length == 0 %}
       nil
     {% else %}
-      self[{{@length - 1}}]
+      self[{{@type.length - 1}}]
     {% end %}
   end
 
