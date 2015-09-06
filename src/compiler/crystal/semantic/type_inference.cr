@@ -1272,15 +1272,26 @@ module Crystal
     end
 
     def expand_macro(node)
-      return false if node.obj || node.name == "super"
+      obj = node.obj
+      case obj
+      when Path
+        macro_scope = resolve_ident(obj)
+        return false unless macro_scope.is_a?(Type)
 
-      the_macro = node.lookup_macro
+        the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args.length, node.named_args)
+      when Nil
+        return false if node.name == "super" || node.name == "previous_def"
+        the_macro = node.lookup_macro
+      else
+        return false
+      end
+
       return false unless the_macro
 
       @exp_nest -= 1
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro (@scope || current_type), the_macro, node
+        @mod.expand_macro (macro_scope || @scope || current_type), the_macro, node
       end
 
       @exp_nest += 1

@@ -1143,4 +1143,28 @@ describe "Code gen: macro" do
       a
       )).to_i.should eq(123)
   end
+
+  it "expands macro as class method" do
+    run(%(
+      class Foo
+        macro bar
+          1
+        end
+      end
+
+      Foo.bar
+      )).to_i.should eq(1)
+  end
+
+  it "expands macro as class method and accesses @type" do
+    run(%(
+      class Foo
+        macro bar
+          {{@type.stringify}}
+        end
+      end
+
+      Foo.bar
+      )).to_string.should eq("Foo")
+  end
 end
