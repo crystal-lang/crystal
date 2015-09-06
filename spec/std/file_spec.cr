@@ -454,4 +454,29 @@ describe "File" do
     file.rewind
     file.read.should eq(content)
   end
+
+  describe "flock" do
+    it "exlusively locks a file" do
+      File.open(__FILE__) do |file1|
+        File.open(__FILE__) do |file2|
+          file1.flock_exclusive do
+# BUG: check for EWOULDBLOCK when exception filters are implemented
+            expect_raises(Errno) do
+              file2.flock_exclusive(blocking: false) { }
+            end
+          end
+        end
+      end
+    end
+
+    it "shared locks a file" do
+      File.open(__FILE__) do |file1|
+        File.open(__FILE__) do |file2|
+          file1.flock_shared do
+            file2.flock_shared(blocking: false) { }
+          end
+        end
+      end
+    end
+  end
 end
