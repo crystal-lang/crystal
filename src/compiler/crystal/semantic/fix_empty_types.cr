@@ -50,6 +50,10 @@ module Crystal
     end
 
     def end_visit(node : Call)
+      if expanded = node.expanded
+        expanded.accept self
+      end
+
       # If the block doesn't have a type, it's a no-return.
       block = node.block
       if block && !block.type?

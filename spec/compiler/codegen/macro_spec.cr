@@ -1143,4 +1143,24 @@ describe "Code gen: macro" do
       a
       )).to_i.should eq(123)
   end
+
+  it "fixes empty types of macro expansions (#1379)" do
+    run(%(
+      macro lala(exp)
+        {{exp}}
+      end
+
+      def foo
+        bar do
+          return 123
+        end
+      end
+
+      def bar
+        return yield
+      end
+
+      lala foo
+      )).to_i.should eq(123)
+  end
 end
