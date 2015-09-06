@@ -73,6 +73,8 @@ class YAML::Parser
 
   def parse_mapping
     mapping = {} of YAML::Type => YAML::Type
+    anchor mapping, @pull_parser.mapping_anchor
+
     loop do
       case @pull_parser.read_next
       when EventKind::MAPPING_END
