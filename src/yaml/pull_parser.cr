@@ -56,26 +56,30 @@ class YAML::PullParser
 
   def read_stream
     read_stream_start
-    yield
+    value = yield
     read_stream_end
+    value
   end
 
   def read_document
     read_document_start
-    yield
+    value = yield
     read_document_end
+    value
   end
 
   def read_sequence
     read_sequence_start
-    yield
+    value = yield
     read_sequence_end
+    value
   end
 
   def read_mapping
     read_mapping_start
-    yield
+    value = yield
     read_mapping_end
+    value
   end
 
   def read_alias
@@ -124,9 +128,40 @@ class YAML::PullParser
     read EventKind::MAPPING_END
   end
 
+  def read_null_or
+    if kind == EventKind::SCALAR && (value = self.value).nil? || (value && value.empty?)
+      read_next
+      nil
+    else
+      yield
+    end
+  end
+
   def read(expected_kind)
     expect_kind expected_kind
     read_next
+  end
+
+  def skip
+    case kind
+    when EventKind::SCALAR
+      read_next
+    when EventKind::ALIAS
+      read_next
+    when EventKind::SEQUENCE_START
+      read_next
+      while kind != EventKind::SEQUENCE_END
+        skip
+      end
+      read_next
+    when EventKind::MAPPING_START
+      read_next
+      while kind != EventKind::MAPPING_END
+        skip
+        skip
+      end
+      read_next
+    end
   end
 
   def line_number
