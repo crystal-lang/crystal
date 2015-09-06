@@ -47,7 +47,7 @@ module Macros
   # The `run` macro is useful when the subset of available macro methods
   # are not enough for your purposes and you need something more powerful.
   # With `run` you can read files at compile time, connect to the internet
-  # or to a datbase.
+  # or to a database.
   #
   # A simple example:
   #
