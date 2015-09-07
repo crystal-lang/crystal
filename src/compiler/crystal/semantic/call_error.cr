@@ -42,28 +42,7 @@ class Crystal::Call
     end
 
     # Check if it's the case of an abstract def
-    if !matches || (matches.try &.empty?)
-      signature = CallSignature.new(def_name, args.map(&.type), block, named_args)
-      defs.each do |a_def|
-        if a_def.abstract
-          context = MatchContext.new(owner, a_def.owner)
-          match = MatchesLookup.match_def(signature, DefWithMetadata.new(a_def), context)
-          if match
-            if a_def.owner == owner
-              owner.all_subclasses.each do |subclass|
-                submatches = subclass.lookup_matches(signature)
-                if submatches.empty?
-                  raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{subclass}"
-                end
-              end
-              raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
-            else
-              raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
-            end
-          end
-        end
-      end
-    end
+    check_abstract_def_error(owner, matches, defs, def_name)
 
     obj = @obj
 
@@ -246,6 +225,33 @@ class Crystal::Call
     raise message, owner_trace
   end
 
+  def check_abstract_def_error(owner, matches, defs, def_name)
+    if !matches || (matches.try &.empty?)
+      signature = CallSignature.new(def_name, args.map(&.type), block, named_args)
+      if defs.all? &.abstract
+        defs.each do |a_def|
+          if a_def.abstract
+            context = MatchContext.new(owner, a_def.owner)
+            match = MatchesLookup.match_def(signature, DefWithMetadata.new(a_def), context)
+            if match
+              if a_def.owner == owner
+                owner.all_subclasses.each do |subclass|
+                  submatches = subclass.lookup_matches(signature)
+                  if submatches.empty?
+                    raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{subclass}"
+                  end
+                end
+                raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+              else
+                raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
   def append_matches(owner, defs, str, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       str << "\n - "
@@ -257,6 +263,10 @@ class Crystal::Call
         str << colorize(" (did you mean this one?)").yellow.bold
       end
     end
+  end
+
+  def def_full_name(owner, a_def)
+    String.build { |io| append_def_full_name(owner, a_def, io) }
   end
 
   def append_def_full_name(owner, a_def, str)

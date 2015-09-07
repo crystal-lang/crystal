@@ -8,7 +8,7 @@ describe "Type inference: abstract def" do
       end
 
       Foo.new.foo
-      ), "abstract def Foo#foo must be implemented by Foo"
+      ), "abstract `def Foo#foo()` must be implemented by Foo"
   end
 
   it "errors if using abstract def on subclass" do
@@ -27,7 +27,7 @@ describe "Type inference: abstract def" do
       end
 
       (Bar.new || Baz.new).foo
-      ), "abstract def Foo#foo must be implemented by Baz"
+      ), "abstract `def Foo#foo()` must be implemented by Baz"
   end
 
   it "works on abstract method on abstract class" do
@@ -91,7 +91,7 @@ describe "Type inference: abstract def" do
       p = Pointer(Foo).malloc(1_u64)
       p.value = Baz.new
       p.value.foo
-      ), "abstract def Bar#foo must be implemented by Baz"
+      ), "abstract `def Bar#foo()` must be implemented by Baz"
   end
 
   it "says wrong number of arguments even if method is abstract" do
@@ -103,5 +103,22 @@ describe "Type inference: abstract def" do
       Foo.new.foo(1)
       ),
       "wrong number of arguments"
+  end
+
+  it "gives correct error when no overload matches, when an abstract method is implemented (#1406)" do
+    assert_error %(
+      class Foo
+        abstract def foo(x : Int32)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+          1
+        end
+      end
+
+      Bar.new.foo(1 || 'a')
+      ),
+      "no overload matches"
   end
 end
