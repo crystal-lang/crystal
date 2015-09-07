@@ -46,10 +46,10 @@ module Benchmark
             compare = sprintf "%5.2f× slower", item.slower
           end
 
-          printf "%s %8.2f (± %5.2f) %s\n",
+          printf "%s %8.2f (± %4.2f%%) %s\n",
             item.label.rjust(max_label),
             item.mean,
-            item.stddev,
+            item.relative_stddev,
             compare
         end
       end
@@ -109,7 +109,7 @@ module Benchmark
 
     class Entry
       # Label of the benchmark
-      property label  :: String
+      property label :: String
 
       # Code to be benchmarked
       property action :: ->
@@ -129,6 +129,9 @@ module Benchmark
 
       # Statistcal standard deviation from calculation stage
       property! stddev :: Float
+
+      # Relative standard deviation as a percentage
+      property! relative_stddev :: Float
 
       # Multiple slower than the fastest entry
       property! slower :: Float
@@ -153,6 +156,7 @@ module Benchmark
         @mean = samples.sum.to_f / size.to_f
         @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
         @stddev = Math.sqrt(variance)
+        @relative_stddev = 100.0 * (stddev / mean)
       end
     end
   end

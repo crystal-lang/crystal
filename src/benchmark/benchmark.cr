@@ -12,11 +12,12 @@ require "./**"
 # end
 # ```
 #
-# This generates the following output:
+# This generates the following output showing the mean iterations per second,
+# the standard deviation relative to the mean, and a comparison:
 #
 # ```text
-#   short sleep    91.82 (±  1.11)  8.72× slower
-# shorter sleep   800.98 (±  4.72)       fastest
+#   short sleep    91.82 (± 2.51%)  8.72× slower
+# shorter sleep   800.98 (± 1.10%)       fastest
 # ```
 #
 # `Benchmark::IPS` defaults to 2 seconds of warmup time and 5 seconds of
