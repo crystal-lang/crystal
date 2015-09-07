@@ -455,6 +455,10 @@ module Macros
     def first : ASTNode | NilLiteral
     end
 
+    # Similar to `Enumerable#includes?(obj)`.
+    def includes?(node : ASTNode) : BoolLiteral
+    end
+
     # Similar to `Enumerable#join`
     def join(separator) : StringLiteral
     end

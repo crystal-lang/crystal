@@ -487,6 +487,11 @@ describe "macro methods" do
     it "executes push" do
       assert_macro "", %({% x = [1]; x.push(2); x << 3 %}{{x}}), [] of ASTNode, %([1, 2, 3])
     end
+
+    it "executes includes?" do
+      assert_macro "", %({{ [1, 2, 3].includes?(1) }}), [] of ASTNode, %(true)
+      assert_macro "", %({{ [1, 2, 3].includes?(4) }}), [] of ASTNode, %(false)
+    end
   end
 
   describe "hash methods" do

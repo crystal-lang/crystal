@@ -427,6 +427,10 @@ module Crystal
         end
       when "first"
         interpret_argless_method(method, args) { elements.first? || NilLiteral.new }
+      when "includes?"
+        interpret_one_arg_method(method, args) do |arg|
+          BoolLiteral.new(elements.includes?(arg))
+        end
       when "join"
         interpret_one_arg_method(method, args) do |arg|
           StringLiteral.new(elements.map(&.to_macro_id).join arg.to_macro_id)
