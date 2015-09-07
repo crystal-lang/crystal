@@ -22,6 +22,44 @@ def loop
   end
 end
 
+
+# Returns an iterator that returns `nil` forever. Useful in conjunction
+# with other *Iterator* methods such as `with_index`:
+#
+# ```
+# loop.with_index do |i|
+#   print i
+#   break if i == 3
+# end
+# ```
+def loop
+  LoopIterator.new
+end
+
+# :nodoc:
+struct LoopIterator
+  include Iterator(Int64)
+
+  def next
+  end
+
+  def rewind
+    self
+  end
+
+  def each_with_index(offset=0)
+    super(offset) do |_, i|
+      yield i
+    end
+  end
+
+  def with_index(offset=0)
+    each_with_index(offset) do |i|
+      yield i
+    end
+  end
+end
+
 # Reads a line from STDIN. See `IO#gets`.
 def gets(*args)
   STDIN.gets(*args)

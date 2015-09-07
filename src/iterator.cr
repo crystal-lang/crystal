@@ -870,6 +870,14 @@ module Iterator(T)
     WithIndex(typeof(self), T).new(self, offset)
   end
 
+  # Yields each item of the iterator to the given block alongside with its
+  # index, see `Enumerable#each_with_index`
+  def with_index(offset = 0)
+    each_with_index(offset) do |e, i|
+      yield e, i
+    end
+  end
+
   # :nodoc:
   class WithIndex(I, T)
     include Iterator({T, Int32})
