@@ -1,3 +1,5 @@
+require "fiber_safe_mutex"
+
 # The Singleton module implements the Singleton pattern.
 #
 ### Usage
@@ -11,10 +13,9 @@
 #
 # foo = Foo.instance
 # ```
-
 module Singleton
   macro included
-    @@mutex = Mutex.new
+    @@mutex = FiberSafeMutex.new
 
     # Instantiate the object if it doesn't exist.  Always returns the same object.
     def self.instance
@@ -25,8 +26,7 @@ module Singleton
 
     # Return the already instantiated object.  Returns nil otherwise.
     def self.instance?
-      inst = @@instance
-      inst ? inst : nil
+      @@instance
     end
   end
 
