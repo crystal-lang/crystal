@@ -386,6 +386,10 @@ describe "Enumerable" do
         ([] of Int32).max
       end
     end
+
+    it "returns nil if empty" do
+      ([] of Int32).max?.should be_nil
+    end
   end
 
   describe "max_by" do
@@ -403,6 +407,10 @@ describe "Enumerable" do
       expect_raises EmptyEnumerable do
         ([] of Int32).min
       end
+    end
+
+    it "returns nil if empty" do
+      ([] of Int32).min?.should be_nil
     end
   end
 
