@@ -46,9 +46,9 @@ module Benchmark
             compare = sprintf "%5.2f× slower", item.slower
           end
 
-          printf "%s %8.2f (± %4.2f%%) %s\n",
+          printf "%s %s (±%5.2f%%) %s\n",
             item.label.rjust(max_label),
-            item.mean,
+            item.human_mean,
             item.relative_stddev,
             compare
         end
@@ -157,6 +157,20 @@ module Benchmark
         @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
         @stddev = Math.sqrt(variance)
         @relative_stddev = 100.0 * (stddev / mean)
+      end
+
+      def human_mean
+        pair = case Math.log10(mean)
+               when 0..3
+                 {mean, ' '}
+               when 3..6
+                 {mean/1_000, 'k'}
+               when 6..9
+                 {mean/1_000_000, 'M'}
+               else
+                 {mean/1_000_000_000, 'G'}
+               end
+        "#{pair[0].round(2).to_s.rjust(6)}#{pair[1]}"
       end
     end
   end
