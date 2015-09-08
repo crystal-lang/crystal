@@ -1808,18 +1808,26 @@ module Crystal
 
       if comment || (!delimiter_state && current_char == '#')
         comment = true
+        char = current_char
+        char = next_char if current_char == '#'
         while true
-          case next_char
+          case char
           when '\n'
             comment = false
             beginning_of_line = true
             whitespace = true
+            next_char
+            @line_number += 1
+            @column_number = 1
+            @token.line_number = @line_number
+            @token.column_number = @column_number
             break
           when '{'
             break
           when '\0'
             raise "unterminated macro"
           end
+          char = next_char
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)

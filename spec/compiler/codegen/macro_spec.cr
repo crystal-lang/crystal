@@ -1187,4 +1187,15 @@ describe "Code gen: macro" do
       Foo.bar
       )).to_string.should eq("Foo")
   end
+
+  it "codegens macro with comment (bug) (#1396)" do
+    run(%(
+      macro my_macro
+        # {{ 1 }}
+        {{ 1 }}
+      end
+
+      my_macro
+      )).to_i.should eq(1)
+  end
 end
