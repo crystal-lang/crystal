@@ -52,3 +52,25 @@ describe Benchmark::IPS::Entry, "#calculate_stats" do
     e.stddev.should   eq(2.0)
   end
 end
+
+private def h_mean(mean)
+  create_entry.tap {|e| e.mean = mean }.human_mean
+end
+
+describe Benchmark::IPS::Entry, "#human_mean" do
+  assert { h_mean(1.23456789012345).should eq("  1.23 ") }
+  assert { h_mean(12.3456789012345).should eq(" 12.35 ") }
+  assert { h_mean(123.456789012345).should eq("123.46 ") }
+
+  assert { h_mean(1234.56789012345).should eq("  1.23k") }
+  assert { h_mean(12345.6789012345).should eq(" 12.35k") }
+  assert { h_mean(123456.789012345).should eq("123.46k") }
+
+  assert { h_mean(1234567.89012345).should eq("  1.23M") }
+  assert { h_mean(12345678.9012345).should eq(" 12.35M") }
+  assert { h_mean(123456789.012345).should eq("123.46M") }
+
+  assert { h_mean(1234567890.12345).should eq("  1.23G") }
+  assert { h_mean(12345678901.2345).should eq(" 12.35G") }
+  assert { h_mean(123456789012.345).should eq("123.46G") }
+end
