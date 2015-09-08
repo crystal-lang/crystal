@@ -42,6 +42,31 @@ This is because when you invoke `add`, it is instantiated with the types of the 
 
 The only difference is that the first error message is a little more clear, but both definitions are safe in that you will get a compile time error anyway. So, in general, it's preferable not to specify type restrictions and almost only use them to define different method overloads. This results in more generic, reusable code. For example, if we define a class that has a `+` method but isn't a `Number`, we can use the `add` method that doesn't have type restrictions, but we can't use the `add` method that has restrictions.
 
+```ruby
+# A class that has a + method but isn't a Number
+class Six
+  def +(other)
+    6 + other
+  end
+end
+
+# add method without type restrictions
+def add(x, y)
+  x + y
+end
+
+# OK
+add Six.new, 10
+
+# add method with type restrictions
+def restricted_add(x : Number, y : Number)
+  x + y
+end
+
+# Error: no overload matches 'restricted_add' with types Six, Int32
+restricted_add Six.new, 10
+```
+
 Refer to the [type grammar](type_grammar.html) for the notation used in type restrictions.
 
 ## self restriction
