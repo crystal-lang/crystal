@@ -12,6 +12,23 @@ describe HTTP::Headers do
     headers["foo"].should eq("bar")
   end
 
+  it "it allows indifferent access for underscore and dash separated keys" do
+    headers = HTTP::Headers{"foo_bar": "bar", "foobar-foo": "baz"}
+    headers["foo-bar"].should eq("bar")
+    headers["foobar_foo"].should eq("baz")
+  end
+
+  it "serializes underscore or dash separated headers correctly" do
+    headers = HTTP::Headers{"FOO_BAR": "bar", "foobar-foo": "baz"}
+    serialized = String.build do |io|
+      headers.each do |name, values|
+        io << name << ": " << values.first << ";"
+      end
+    end
+
+    serialized.should eq("Foo-Bar: bar;Foobar-Foo: baz;")
+  end
+
   it "is gets with []?" do
     headers = HTTP::Headers.new
     headers["foo"]?.should be_nil
