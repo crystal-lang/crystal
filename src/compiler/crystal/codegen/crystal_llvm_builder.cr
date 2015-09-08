@@ -54,6 +54,10 @@ module Crystal
       @builder.insert_block
     end
 
+    def to_unsafe
+      @builder.to_unsafe
+    end
+
     macro method_missing(name, args, block)
       return llvm_nil if @end
 

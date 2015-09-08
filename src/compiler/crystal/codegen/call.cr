@@ -372,6 +372,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
+    set_current_debug_location node if @debug
+
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
       @last = builder.invoke func, call_args, invoke_out_block, rescue_block
@@ -389,7 +391,6 @@ class Crystal::CodeGenVisitor
     end
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
-    emit_debug_metadata node, @last if @debug
 
     if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)

@@ -150,6 +150,10 @@ struct LLVM::Builder
     switch
   end
 
+  def set_current_debug_location(line, column, scope, inlined_at = nil)
+    LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  end
+
   def to_unsafe
     @unwrap
   end

@@ -96,6 +96,7 @@ class Crystal::CodeGenVisitor
 
         accept target_def.body
 
+        set_current_debug_location target_def.end_location if @debug
         codegen_return target_def.body.type?
 
         br_from_alloca_to_entry

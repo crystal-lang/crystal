@@ -109,6 +109,8 @@ module Crystal
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
       @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
+      emit_main_def_debug_metadata(@main, "??") if @debug
+
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
 
@@ -151,10 +153,6 @@ module Crystal
       @needs_value = true
 
       @empty_md_list = metadata([] of Int32)
-
-      @subprograms = {} of LLVM::Module => Array(LLVM::Value?)
-      @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
-
       @unused_fun_defs = [] of FunDef
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
@@ -232,12 +230,12 @@ module Crystal
       end
 
       @modules.each do |name, mod|
-        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
-        mod.verify if env_verify
-
         if @debug
           add_compile_unit_metadata(mod, name == "" ? "main" : name)
         end
+
+        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
+        mod.verify if env_verify
       end
     end
 
@@ -673,6 +671,7 @@ module Crystal
     end
 
     def visit(node : Assign)
+      set_current_debug_location node if @debug
       target, value = node.target, node.value
 
       case target
@@ -732,7 +731,6 @@ module Crystal
             end
 
       store_instruction = assign ptr, target_type, value.type, @last
-      emit_debug_metadata node, store_instruction if @debug
 
       false
     end
