@@ -44,40 +44,40 @@ USAGE
     command = options.first?
 
     if command
-      if File.file?(command)
+      case
+      when "init".starts_with?(command)
+        options.shift
+        init options
+      when "build".starts_with?(command)
+        options.shift
+        build options
+      when "deps".starts_with?(command)
+        options.shift
+        deps options
+      when "docs".starts_with?(command)
+        options.shift
+        docs options
+      when "eval".starts_with?(command)
+        options.shift
+        eval options
+      when "run".starts_with?(command)
+        options.shift
         run_command options
+      when "spec/".starts_with?(command)
+        options.shift
+        run_specs options
+      when "tool".starts_with?(command)
+        options.shift
+        tool options
+      when "--help" == command, "-h" == command
+        puts USAGE
+        exit
+      when "--version" == command, "-v" == command
+        puts "Crystal #{Crystal.version_string}"
+        exit
       else
-        case
-        when "init".starts_with?(command)
-          options.shift
-          init options
-        when "build".starts_with?(command)
-          options.shift
-          build options
-        when "deps".starts_with?(command)
-          options.shift
-          deps options
-        when "docs".starts_with?(command)
-          options.shift
-          docs options
-        when "eval".starts_with?(command)
-          options.shift
-          eval options
-        when "run".starts_with?(command)
-          options.shift
+        if File.file?(command)
           run_command options
-        when "spec/".starts_with?(command)
-          options.shift
-          run_specs options
-        when "tool".starts_with?(command)
-          options.shift
-          tool options
-        when "--help" == command, "-h" == command
-          puts USAGE
-          exit
-        when "--version" == command, "-v" == command
-          puts "Crystal #{Crystal.version_string}"
-          exit
         else
           error "unknown command: #{command}"
         end
