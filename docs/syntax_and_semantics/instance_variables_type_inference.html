@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Tue Sep 08 2015 21:03:53 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1940,7 +1940,7 @@
 
 john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
 john.name <span class="hljs-comment">#=&gt; &quot;John&quot;</span>
-john.name.length <span class="hljs-comment">#=&gt; 4</span>
+john.name.size <span class="hljs-comment">#=&gt; 4</span>
 </code></pre>
 <p>Since we invoked <code>Person.new</code> with a <code>String</code> argument, the compiler makes <code>@name</code> be a <code>String</code> too.</p>
 <p>If we had invoked <code>Person.new</code> with another type, <code>@name</code> would have taken a different type:</p>
@@ -1981,15 +1981,15 @@ one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1<
 <pre><code class="lang-ruby">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
 one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
 
-<span class="hljs-comment"># Error: undefined method &apos;length&apos; for Int32</span>
-john.name.length
+<span class="hljs-comment"># Error: undefined method &apos;size&apos; for Int32</span>
+john.name.size
 
 <span class="hljs-comment"># Error: no overload matches &apos;String#+&apos; with types Int32</span>
 john.name + <span class="hljs-number">3</span>
 </code></pre>
 <p>The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:</p>
 <pre><code class="lang-ruby">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name.length
+john.name.size
 one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
 </code></pre>
 <p>Gives this compile-time error:</p>
@@ -2000,9 +2000,9 @@ one = Person.new 1
 
 instantiating &apos;Person#initialize(Int32)&apos;
 
-in foo.cr:12: undefined method &apos;length&apos; for Int32
+in foo.cr:12: undefined method &apos;size&apos; for Int32
 
-john.name.length
+john.name.size
           ^~~~~~
 </code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead and put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&apos;s name like if it were a <code>String</code>.</p>
 <p>If you do want to have different <code>Person</code> types, one with <code>@name</code> being an <code>Int32</code> and one with <code>@name</code> being a <code>String</code>, you must use <a href="generics.html">generics</a>.</p>
@@ -2036,8 +2036,8 @@ john.address = <span class="hljs-string">&quot;Argentina&quot;</span>
             @age : Int32
             @address : String?
 </code></pre><p>You can see <code>@address</code> is <code>String?</code>, which is a short form notation of <code>String | Nil</code>. This means that the following gives a compile time error:</p>
-<pre><code class="lang-ruby"><span class="hljs-comment"># Error: undefined method &apos;length&apos; for Nil</span>
-john.address.length
+<pre><code class="lang-ruby"><span class="hljs-comment"># Error: undefined method &apos;size&apos; for Nil</span>
+john.address.size
 </code></pre>
 <p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
 <h2 id="catch-all-initialization">Catch-all initialization</h2>

@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.7.5" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.7.5" data-basepath=".." data-revision="Tue Sep 08 2015 21:03:53 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1956,7 +1956,7 @@
 <pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
 
 box = <span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>)
-box.value.length <span class="hljs-comment"># Error: undefined method &apos;length&apos; for Int32</span>
+box.value.size <span class="hljs-comment"># Error: undefined method &apos;size&apos; for Int32</span>
 </code></pre>
 <p>In cases like this where we want each instance to have a unique type for <code>@value</code>. This is in general necessary when dealing with a collection of objects. Imagine if all arrays and hashes had their types mixed, it would be pretty annoying to deal with them.</p>
 <p>You can make a class generic based on one or more type variables. For example:</p>
@@ -1973,7 +1973,7 @@ box.value.length <span class="hljs-comment"># Error: undefined method &apos;leng
 <pre><code class="lang-ruby"><span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>)
 
 box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">String</span>).new(<span class="hljs-string">&quot;hello&quot;</span>)
-box.value.length <span class="hljs-comment">#=&gt; 5</span>
+box.value.size <span class="hljs-comment">#=&gt; 5</span>
 </code></pre>
 <p>The above now works, because <code>MyBox</code> is now not a single type, but a family of types identified with a <code>T</code> type: <code>MyBox(Int32)</code> is a different type than <code>MyBox(String)</code>, and their <code>@value</code> variable is not shared. If we run the <code>hierarchy</code> command again, we get:</p>
 <pre><code>+- generic class MyBox(T)

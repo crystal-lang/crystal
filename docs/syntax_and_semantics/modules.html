@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.7.4" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.7.4" data-basepath=".." data-revision="Tue Sep 08 2015 21:03:53 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1944,14 +1944,14 @@
 <p>Library authors are advised to put their definitions inside a module to avoid name clashes. The standard library usually doesn&apos;t have a namespace as its types and methods are very common, to avoid writing long names.</p>
 <p>To use a module as a partial type you use <code>include</code> or <code>extend</code>.</p>
 <p>An <code>include</code> makes a type include methods defined in that module as instance methods:</p>
-<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">ItemsLength</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>length
-    items.length
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">ItemsSize</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>size
+    items.size
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Items</span></span>
-  <span class="hljs-keyword">include</span> <span class="hljs-constant">ItemsLength</span>
+  <span class="hljs-keyword">include</span> <span class="hljs-constant">ItemsSize</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>items
     [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
@@ -1959,22 +1959,22 @@
 <span class="hljs-keyword">end</span>
 
 items = <span class="hljs-constant">Items</span>.new
-items.length <span class="hljs-comment">#=&gt; 3</span>
+items.size <span class="hljs-comment">#=&gt; 3</span>
 </code></pre>
-<p>In the above example, it is as if we pasted the <code>length</code> method from the module into the <code>Items</code> class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are <strong>prepended</strong> to this list. When a method is not found in a type it is looked up in this list. When you invoke <code>super</code>, the first type in this ancestors list is used.</p>
+<p>In the above example, it is as if we pasted the <code>size</code> method from the module into the <code>Items</code> class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are <strong>prepended</strong> to this list. When a method is not found in a type it is looked up in this list. When you invoke <code>super</code>, the first type in this ancestors list is used.</p>
 <p>A <code>module</code> can include other modules, so when a method is not found in it it will be looked up in the included modules.</p>
 <p>An <code>extend</code> makes a type include methods defined in that module as class methods:</p>
-<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">SomeLength</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>length
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">SomeSize</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>size
     <span class="hljs-number">3</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Items</span></span>
-  extend <span class="hljs-constant">SomeLength</span>
+  extend <span class="hljs-constant">SomeSize</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-constant">Items</span>.length <span class="hljs-comment">#=&gt; 3</span>
+<span class="hljs-constant">Items</span>.size <span class="hljs-comment">#=&gt; 3</span>
 </code></pre>
 <p>Both <code>include</code> and <code>extend</code> make constants defined in the module available to the including/extending type.</p>
 <p>Both of them can be used at the top level to avoid writing a namespace over and over (although the chances of name clashes increase):</p>

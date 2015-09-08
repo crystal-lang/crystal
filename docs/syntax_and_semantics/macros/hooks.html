@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.14.2" data-basepath="../.." data-revision="Thu Jun 25 2015 14:29:58 GMT-0300 (ART)">
+    <div class="book" data-level="4.14.2" data-basepath="../.." data-revision="Tue Sep 08 2015 21:03:53 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1952,7 +1952,7 @@
 </code></pre>
 <p>Example of <code>method_missing</code>:</p>
 <pre><code class="lang-ruby">macro method_missing(name, args, block)
-  print <span class="hljs-string">&quot;Got &quot;</span>, {{name.id.stringify}}, <span class="hljs-string">&quot; with &quot;</span>, {{args.length}}, <span class="hljs-string">&quot; arguments&quot;</span>, <span class="hljs-string">&apos;\n&apos;</span>
+  print <span class="hljs-string">&quot;Got &quot;</span>, {{name.id.stringify}}, <span class="hljs-string">&quot; with &quot;</span>, {{args.size}}, <span class="hljs-string">&quot; arguments&quot;</span>, <span class="hljs-string">&apos;\n&apos;</span>
 <span class="hljs-keyword">end</span>
 
 foo          <span class="hljs-comment"># Prints: Got foo with 0 arguments</span>
