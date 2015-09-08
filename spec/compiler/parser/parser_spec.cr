@@ -951,9 +951,6 @@ describe "Parser" do
 
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
-  it_parses "undef foo", Undef.new("foo")
-  it_parses "undef foo\nfoo", [Undef.new("foo"), "foo".call]
-
   it_parses "@[Foo]", Attribute.new("Foo")
   it_parses "@[Foo()]", Attribute.new("Foo")
   it_parses "@[Foo(1)]", Attribute.new("Foo", [1.int32] of ASTNode)

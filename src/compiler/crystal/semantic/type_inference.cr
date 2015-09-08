@@ -630,12 +630,6 @@ module Crystal
       false
     end
 
-    def visit(node : Undef)
-      unless current_type.undef(node.name)
-        node.raise "undefined method #{node.name} for #{current_type.type_desc} #{current_type}"
-      end
-    end
-
     def visit(node : Yield)
       if @fun_literal_context
         node.raise "can't yield from function literal"

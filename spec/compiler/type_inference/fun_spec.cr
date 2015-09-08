@@ -262,19 +262,6 @@ describe "Type inference: fun" do
     result.node.type.should be_a(NilableFunType)
   end
 
-  it "undefs fun" do
-    assert_error %(
-      fun foo : Int32
-        1
-      end
-
-      undef foo
-
-      foo
-      ),
-      "undefined local variable or method 'foo'"
-  end
-
   it "allows passing NoReturn type for any return type (1)" do
     assert_type("
       lib LibC

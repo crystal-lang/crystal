@@ -971,8 +971,6 @@ module Crystal
           parse_instance_sizeof
         when :typeof
           parse_typeof
-        when :undef
-          parse_undef
         when :private
           parse_visibility_modifier :private
         when :protected
@@ -3674,13 +3672,6 @@ module Crystal
 
     def make_tuple_type(types)
       Generic.new(Path.global("Tuple"), types)
-    end
-
-    def parse_undef
-      next_token_skip_space
-      name = check_ident
-      next_token_skip_space
-      Undef.new name
     end
 
     def parse_visibility_modifier(modifier)

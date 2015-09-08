@@ -1613,19 +1613,6 @@ module Crystal
     def_equals_and_hash name
   end
 
-  class Undef < ASTNode
-    property :name
-
-    def initialize(@name)
-    end
-
-    def clone_without_location
-      Undef.new(@name)
-    end
-
-    def_equals_and_hash name
-  end
-
   class LibDef < ASTNode
     property :name
     property :body

@@ -438,10 +438,6 @@ module Crystal
       node
     end
 
-    def transform(node : Undef)
-      node
-    end
-
     def transform(node : LibDef)
       node.body = node.body.transform(self)
       node

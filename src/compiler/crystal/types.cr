@@ -309,10 +309,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def"
     end
 
-    def undef(def_name)
-      raise "Bug: #{self} doesn't implement undef"
-    end
-
     def lookup_defs(name)
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
@@ -609,18 +605,6 @@ module Crystal
       end
       list << item
       nil
-    end
-
-    def undef(def_name)
-      found_list = @defs.try &.delete def_name
-      return false unless found_list
-
-      found_list.each do |item|
-        a_def = item.def
-        a_def.dead = true if a_def.is_a?(External)
-      end
-
-      true
     end
 
     def add_macro(a_def)
