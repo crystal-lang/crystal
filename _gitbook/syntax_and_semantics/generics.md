@@ -47,7 +47,7 @@ The above makes it impossible to deal with a single box of a fixed type:
 MyBox.new(1)
 
 box = MyBox.new("hello")
-box.value.length # Error: undefined method 'length' for Int32
+box.value.size # Error: undefined method 'size' for Int32
 ```
 
 In cases like this where we want each instance to have a unique type for `@value`. This is in general necessary when dealing with a collection of objects. Imagine if all arrays and hashes had their types mixed, it would be pretty annoying to deal with them.
@@ -71,7 +71,7 @@ Then you instantiate it like this:
 MyBox(Int32).new(1)
 
 box = MyBox(String).new("hello")
-box.value.length #=> 5
+box.value.size #=> 5
 ```
 
 The above now works, because `MyBox` is now not a single type, but a family of types identified with a `T` type: `MyBox(Int32)` is a different type than `MyBox(String)`, and their `@value` variable is not shared. If we run the `hierarchy` command again, we get:

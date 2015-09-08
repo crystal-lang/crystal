@@ -52,7 +52,7 @@ is just a temporary implementation.
 
 Did you know that [String](https://github.com/manastech/crystal/blob/master/src/string.cr)
 is implemented in Crystal itself? There's just very small magic to make it have the
-length and pointer to the chars buffers, but everything else is built on top of that.
+size and pointer to the chars buffers, but everything else is built on top of that.
 
 ### Symbols
 

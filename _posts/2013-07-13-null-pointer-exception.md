@@ -58,7 +58,7 @@ def make_box(n)
   end
 end
 
-n = ARGV.length
+n = ARGV.size
 box = make_box(n)
 puts box.value
 {% endhighlight %}
@@ -140,12 +140,12 @@ Nil trace:
 
   std/file.cr:40
 
-        length > 0 ? String.from_cstr(buffer) : nil
+        size > 0 ? String.from_cstr(buffer) : nil
         ^
 
   std/file.cr:40
 
-        length > 0 ? String.from_cstr(buffer) : nil
+        size > 0 ? String.from_cstr(buffer) : nil
                                                 ^
 </pre>
 

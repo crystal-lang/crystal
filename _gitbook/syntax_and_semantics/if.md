@@ -69,7 +69,7 @@ a = 1
 if some_condition
   a = "hello"
   # a :: String
-  a.length
+  a.size
 end
 # a :: String | Int32
 ```

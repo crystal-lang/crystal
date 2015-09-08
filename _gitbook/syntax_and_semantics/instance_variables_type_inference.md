@@ -15,7 +15,7 @@ end
 
 john = Person.new "John"
 john.name #=> "John"
-john.name.length #=> 4
+john.name.size #=> 4
 ```
 
 Since we invoked `Person.new` with a `String` argument, the compiler makes `@name` be a `String` too.
@@ -79,8 +79,8 @@ In this case, the compiler will consider any usage of `@name` as always being ei
 john = Person.new "John"
 one = Person.new 1
 
-# Error: undefined method 'length' for Int32
-john.name.length
+# Error: undefined method 'size' for Int32
+john.name.size
 
 # Error: no overload matches 'String#+' with types Int32
 john.name + 3
@@ -90,7 +90,7 @@ The compiler will even give an error if you first use a variable assuming it has
 
 ```ruby
 john = Person.new "John"
-john.name.length
+john.name.size
 one = Person.new 1
 ```
 
@@ -104,9 +104,9 @@ one = Person.new 1
 
 instantiating 'Person#initialize(Int32)'
 
-in foo.cr:12: undefined method 'length' for Int32
+in foo.cr:12: undefined method 'size' for Int32
 
-john.name.length
+john.name.size
           ^~~~~~
 ```
 
@@ -154,8 +154,8 @@ The hierarchy graph now shows:
 You can see `@address` is `String?`, which is a short form notation of `String | Nil`. This means that the following gives a compile time error:
 
 ```ruby
-# Error: undefined method 'length' for Nil
-john.address.length
+# Error: undefined method 'size' for Nil
+john.address.size
 ```
 
 To deal with `Nil`, and generally with union types, you have several options: use an [if var](if_var.html), [if var.is_a?](if_varis_a.html), [case](case.html) and [is_a?](is_a.html).

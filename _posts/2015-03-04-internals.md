@@ -164,7 +164,7 @@ is very similar to what would be generated in C.
 
 ### Tuple
 
-A Tuple is a fixed-length, immutable sequence of values, where the types at each position are known at compile time.
+A Tuple is a fixed-size, immutable sequence of values, where the types at each position are known at compile time.
 
 {% highlight ruby %}
 x = {1, true}
@@ -190,7 +190,7 @@ puts ptr.value #=> {21, 205, 91, 7}
 
 ### StaticArray
 
-A StaticArray is a fixed-length, mutable sequence of values of a same type, allocated on the stack and passed by value.
+A StaticArray is a fixed-size, mutable sequence of values of a same type, allocated on the stack and passed by value.
 The prelude includes safe ways to create them, but since we are using a bare-bones prelude an unsafe (will be initialized
 to data containing garbage) way to create them is this:
 

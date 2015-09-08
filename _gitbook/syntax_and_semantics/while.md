@@ -22,7 +22,7 @@ while some_condition
   # a :: Int32 | String
   a = "hello"
   # a :: String
-  a.length
+  a.size
 end
 # a :: Int32 | String
 ```

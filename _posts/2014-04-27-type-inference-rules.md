@@ -93,14 +93,14 @@ you can assign multiple times to a variable:
 a = 1       # a is Int32
 a.abs       # ok, Int32 has a method 'abs'
 a = "hello" # a is now String
-a.length    # ok, String has a method 'length'
+a.size    # ok, String has a method 'size'
 {% endhighlight ruby %}
 
 To achieve this, the compiler remembers which expression was the last one assigned
 to a variable. In the above example, after the first line the compiler knows that
 ```a``` has type ```Int32```, so a call to ```abs``` is valid. In the third line we assign
 a ```String``` to it, so the compiler remembers this and, on the fourth line, it's perfectly
-valid to invoke ```length``` on it.
+valid to invoke ```size``` on it.
 
 Additionally, the compiler remembers that both an ```Int32``` and a ```String``` were
 assigned to ```a```. When generating LLVM code, the compiler will represent ```a```
@@ -136,13 +136,13 @@ if some_condition
   a.abs
 else
   a = "hello"
-  a.length
+  a.size
 end
-a.length
+a.size
 {% endhighlight ruby %}
 
 In Ruby, the only line that can fail at runtime is the last one. The first call to ```abs```
-will never fail, as an ```Int32``` was assigned to ```a```. The first call to ```length``` will
+will never fail, as an ```Int32``` was assigned to ```a```. The first call to ```size``` will
 also never fail, as a ```String``` was assigned to ```a```. However, after the ```if```, ```a``` can
 either be an ```Int32``` or a ```String```.
 
@@ -151,8 +151,8 @@ inside an ```if```'s then or else branch, the compiler knows that it will contin
 ends or until it is assigned a new expression. When an ```if``` ends, the compiler will let ```a```
 have the type of the last expressions that it was assigned to in each branch.
 
-The last line in Crystal will give a compiler error: "undefined method 'length' for Int32".
-That's because even though ```String``` has a ```length``` method, ```Int32``` doesn't.
+The last line in Crystal will give a compiler error: "undefined method 'size' for Int32".
+That's because even though ```String``` has a ```size``` method, ```Int32``` doesn't.
 
 In designing the language we had two choices: make the above a compile-time error (like now) or just make
 it a runtime error (like in Ruby). We believe it's better to make it a compile-time error. In some
@@ -201,7 +201,7 @@ while some_condition
   a           # here a is actually Int32 or String
   a = false   # here a is Bool
   a = "hello" # here a is String
-  a.length    # ok, a is String
+  a.size    # ok, a is String
 end
 a             # here a is Int32 or String
 {% endhighlight ruby %}
@@ -268,7 +268,7 @@ The compiler knows about ```NoReturn```. For example, take a look at the followi
 a = some_int
 if a == 1
   a = "hello"
-  puts a.length # ok
+  puts a.size # ok
   raise "Boom!"
 else
   a = 2

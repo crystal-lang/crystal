@@ -28,7 +28,7 @@ Example of `method_missing`:
 
 ```ruby
 macro method_missing(name, args, block)
-  print "Got ", {{name.id.stringify}}, " with ", {{args.length}}, " arguments", '\n'
+  print "Got ", {{name.id.stringify}}, " with ", {{args.size}}, " arguments", '\n'
 end
 
 foo          # Prints: Got foo with 0 arguments

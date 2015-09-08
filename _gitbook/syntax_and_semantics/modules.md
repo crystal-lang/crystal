@@ -23,14 +23,14 @@ To use a module as a partial type you use `include` or `extend`.
 An `include` makes a type include methods defined in that module as instance methods:
 
 ```ruby
-module ItemsLength
-  def length
-    items.length
+module ItemsSize
+  def size
+    items.size
   end
 end
 
 class Items
-  include ItemsLength
+  include ItemsSize
 
   def items
     [1, 2, 3]
@@ -38,27 +38,27 @@ class Items
 end
 
 items = Items.new
-items.length #=> 3
+items.size #=> 3
 ```
 
-In the above example, it is as if we pasted the `length` method from the module into the `Items` class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are **prepended** to this list. When a method is not found in a type it is looked up in this list. When you invoke `super`, the first type in this ancestors list is used.
+In the above example, it is as if we pasted the `size` method from the module into the `Items` class. The way this really works is by making each type have a list of ancestors, or parents. By default this list starts with the superclass. As modules are included they are **prepended** to this list. When a method is not found in a type it is looked up in this list. When you invoke `super`, the first type in this ancestors list is used.
 
 A `module` can include other modules, so when a method is not found in it it will be looked up in the included modules.
 
 An `extend` makes a type include methods defined in that module as class methods:
 
 ```ruby
-module SomeLength
-  def length
+module SomeSize
+  def size
     3
   end
 end
 
 class Items
-  extend SomeLength
+  extend SomeSize
 end
 
-Items.length #=> 3
+Items.size #=> 3
 ```
 
 Both `include` and `extend` make constants defined in the module available to the including/extending type.
