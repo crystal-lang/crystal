@@ -13,7 +13,7 @@ module Crystal
 
     def infer_type_intermediate(node)
       node.accept TypeVisitor.new(self)
-      expand_def_macros
+      expand_macro_defs
       fix_empty_types node
       after_type_inference node
     end

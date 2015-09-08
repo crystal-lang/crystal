@@ -12,14 +12,14 @@ module Crystal
       macro_expander.expand scope, node
     end
 
-    def expand_def_macros
+    def expand_macro_defs
       until @def_macros.empty?
         def_macro = @def_macros.pop
-        expand_def_macro def_macro
+        expand_macro_def def_macro
       end
     end
 
-    def expand_def_macro(target_def)
+    def expand_macro_def(target_def)
       the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
       the_macro.location = target_def.location
 
@@ -55,6 +55,7 @@ module Crystal
 
       type_visitor = TypeVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
+      type_visitor.types << owner
       generated_nodes.accept type_visitor
 
       target_def.bind_to generated_nodes

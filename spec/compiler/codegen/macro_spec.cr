@@ -1198,4 +1198,22 @@ describe "Code gen: macro" do
       my_macro
       )).to_i.should eq(1)
   end
+
+  it "correctly resolves constant inside block in macro def" do
+    run(%(
+      def foo
+        yield
+      end
+
+      class Foo
+        Const = 123
+
+        macro def self.bar : Int32
+          foo { Const }
+        end
+      end
+
+      Foo.bar
+      )).to_i.should eq(123)
+  end
 end
