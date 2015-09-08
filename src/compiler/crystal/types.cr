@@ -449,6 +449,10 @@ module Crystal
       self
     end
 
+    def generic_nest
+      0
+    end
+
     def inspect(io)
       to_s(io)
     end
@@ -1541,11 +1545,13 @@ module Crystal
     getter type_vars
     getter subclasses
     property allocated
+    getter generic_nest
 
-    def initialize(@program, generic_class, @type_vars)
+    def initialize(@program, generic_class, @type_vars, generic_nest = nil)
       @generic_class = generic_class
       @subclasses = [] of Type
       @allocated = false
+      @generic_nest = generic_nest || (1 + @type_vars.values.max_of { |node| node.type?.try(&.generic_nest) || 0 })
     end
 
     def after_initialize
@@ -1776,9 +1782,10 @@ module Crystal
     getter tuple_types
 
     def initialize(program, @tuple_types)
+      generic_nest = 1 + (@tuple_types.empty? ? 0 : @tuple_types.max_of(&.generic_nest))
       var = Var.new("T", self)
       var.bind_to var
-      super(program, program.tuple, {"T" => var} of String => ASTNode)
+      super(program, program.tuple, {"T" => var} of String => ASTNode, generic_nest)
     end
 
     def tuple_indexer(index)
@@ -2308,6 +2315,7 @@ module Crystal
     end
 
     delegate :abstract, instance_type
+    delegate :generic_nest, instance_type
 
     def class_var_owner
       instance_type
@@ -2359,6 +2367,7 @@ module Crystal
     delegate macros, instance_type.generic_class.metaclass
     delegate type_vars, instance_type
     delegate :abstract, instance_type
+    delegate generic_nest, instance_type
 
     def metaclass?
       true
@@ -2400,6 +2409,10 @@ module Crystal
 
     def parents
       nil
+    end
+
+    def generic_nest
+      @union_types.max_of &.generic_nest
     end
 
     def includes_type?(other_type)

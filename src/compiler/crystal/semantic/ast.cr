@@ -1,6 +1,13 @@
 require "../syntax/ast"
 require "simple_hash"
 
+# TODO: 100 is a pretty big number for the number of nested generic instantiations,
+# but we might want to implement an algorithm that correctly identifies this
+# infinite recursion.
+private def generic_type_too_nested?(nest_level)
+  nest_level > 100
+end
+
 module Crystal
   def self.check_type_allowed_in_generics(node, type, msg)
     return if type.allowed_in_generics?
@@ -415,6 +422,10 @@ module Crystal
         raise ex.message
       end
 
+      if generic_type_too_nested?(generic_type.generic_nest)
+        raise "generic type too nested: #{generic_type}"
+      end
+
       generic_type = generic_type.metaclass unless @in_type_args
       self.type = generic_type
     end
@@ -427,7 +438,13 @@ module Crystal
       return unless elements.all? &.type?
 
       types = elements.map { |exp| exp.type as TypeVar }
-      self.type = mod.tuple_of types
+      tuple_type = mod.tuple_of types
+
+      if generic_type_too_nested?(tuple_type.generic_nest)
+        raise "tuple type too nested: #{tuple_type}"
+      end
+
+      self.type = tuple_type
     end
   end
 
