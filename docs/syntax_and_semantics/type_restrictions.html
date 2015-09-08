@@ -36,7 +36,7 @@
     
 
         
-    <div class="book" data-level="4.7.3.7" data-basepath=".." data-revision="Sun Jun 14 2015 18:59:06 GMT-0300 (ART)">
+    <div class="book" data-level="4.7.3.7" data-basepath=".." data-revision="Tue Sep 08 2015 07:52:04 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1958,6 +1958,29 @@ in foo.cr:2: undefined method &apos;+&apos; for Bool
     ^
 </code></pre><p>This is because when you invoke <code>add</code>, it is instantiated with the types of the arguments: every method invocation with a different type combination results in a different method instantiation.</p>
 <p>The only difference is that the first error message is a little more clear, but both definitions are safe in that you will get a compile time error anyway. So, in general, it&apos;s preferable not to specify type restrictions and almost only use them to define different method overloads. This results in more generic, reusable code. For example, if we define a class that has a <code>+</code> method but isn&apos;t a <code>Number</code>, we can use the <code>add</code> method that doesn&apos;t have type restrictions, but we can&apos;t use the <code>add</code> method that has restrictions.</p>
+<pre><code class="lang-ruby"><span class="hljs-comment"># A class that has a + method but isn&apos;t a Number</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Six</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>+(other)
+    <span class="hljs-number">6</span> + other
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># add method without type restrictions</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>add(x, y)
+  x + y
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># OK</span>
+add <span class="hljs-constant">Six</span>.new, <span class="hljs-number">10</span>
+
+<span class="hljs-comment"># add method with type restrictions</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> </span>restricted_add(x <span class="hljs-symbol">:</span> <span class="hljs-constant">Number</span>, y <span class="hljs-symbol">:</span> <span class="hljs-constant">Number</span>)
+  x + y
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Error: no overload matches &apos;restricted_add&apos; with types Six, Int32</span>
+restricted_add <span class="hljs-constant">Six</span>.new, <span class="hljs-number">10</span>
+</code></pre>
 <p>Refer to the <a href="type_grammar.html">type grammar</a> for the notation used in type restrictions.</p>
 <h2 id="self-restriction">self restriction</h2>
 <p>A special type restriction is <code>self</code>:</p>
