@@ -9,15 +9,24 @@
 
 using namespace llvm;
 
-typedef struct LLVMOpaqueDIBuilder *LLVMDIBuilderRef;
-typedef struct LLVMOpaqueMetadata *LLVMMetadataRef;
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 5
+  #define HAVE_LLVM_35 1
+#endif
 
-DEFINE_ISA_CONVERSION_FUNCTIONS(Metadata, LLVMMetadataRef)
+
+typedef struct LLVMOpaqueDIBuilder *LLVMDIBuilderRef;
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
+
+#if HAVE_LLVM_35
+typedef LLVMValueRef LLVMMetadataRef;
+#else
+typedef struct LLVMOpaqueMetadata *LLVMMetadataRef;
+DEFINE_ISA_CONVERSION_FUNCTIONS(Metadata, LLVMMetadataRef)
 
 inline Metadata **unwrap(LLVMMetadataRef *Vals) {
   return reinterpret_cast<Metadata**>(Vals);
 }
+#endif
 
 template <typename T> T unwrapDI(LLVMMetadataRef v) {
   return v ? T(unwrap<MDNode>(v)) : T();
@@ -72,7 +81,11 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef Dref,
                                                 unsigned Column) {
   DIBuilder *D = unwrap(Dref);
   DILexicalBlock LB = D->createLexicalBlock(
+#if HAVE_LLVM_35
+      unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line, Column, 0);
+#else
       unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line, Column);
+#endif
   return wrap(LB);
 }
 
@@ -92,9 +105,15 @@ LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Dref,
                                                   LLVMMetadataRef *Data,
                                                   size_t Length) {
   DIBuilder *D = unwrap(Dref);
+#if HAVE_LLVM_35
+  Value **DataValue = unwrap(Data);
+  ArrayRef<Value *> Elements(DataValue, Length);
+  DIArray A = D->getOrCreateArray(Elements);
+#else
   Metadata **DataValue = unwrap(Data);
   ArrayRef<Metadata *> Elements(DataValue, Length);
   DITypeArray A = D->getOrCreateTypeArray(Elements);
+#endif
   return wrap(A);
 }
 
@@ -104,7 +123,11 @@ LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref, LLVMMetadataRef File,
                                   LLVMMetadataRef ParameterTypes) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createSubroutineType(
+#if HAVE_LLVM_35
+      unwrapDI<DIFile>(File), unwrapDI<DIArray>(ParameterTypes));
+#else
       unwrapDI<DIFile>(File), unwrapDI<DITypeArray>(ParameterTypes));
+#endif
   return wrap(CT);
 }
 
