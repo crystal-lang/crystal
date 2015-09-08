@@ -125,7 +125,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
-    args = Array(Arg).new(target_def.args.length + 1)
+    args = Array(Arg).new(target_def.args.size + 1)
 
     if !is_fun_literal && self_type.passed_as_self?
       args.push Arg.new("self", type: self_type)
@@ -197,7 +197,7 @@ class Crystal::CodeGenVisitor
 
     abi_info = abi_info(target_def)
 
-    llvm_args_types = Array(LLVM::Type).new(abi_info.arg_types.length)
+    llvm_args_types = Array(LLVM::Type).new(abi_info.arg_types.size)
     abi_info.arg_types.each do |arg_type|
       case arg_type.kind
       when LLVM::ABI::ArgKind::Direct
@@ -300,11 +300,11 @@ class Crystal::CodeGenVisitor
 
       if (closure_parent_context = context.closure_parent_context) &&
           (parent_vars = closure_parent_context.closure_vars)
-        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length, "parent_ptr")
+        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.size, "parent_ptr")
         setup_closure_vars(parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
       elsif closure_self = context.closure_self
         offset = context.closure_parent_context ? 1 : 0
-        self_value = gep(closure_ptr, 0, closure_vars.length + offset, "self")
+        self_value = gep(closure_ptr, 0, closure_vars.size + offset, "self")
         self_value = load(self_value) unless context.type.passed_by_value?
         self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
       end

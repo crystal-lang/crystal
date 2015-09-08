@@ -127,7 +127,7 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
   end
 end
 
-private def assert_end_location(source, line_number = 1, column_number = source.length, file = __FILE__, line = __LINE__)
+private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
   it "gets corrects end location for #{source.inspect}", file, line do
     parser = Parser.new("#{source}; 1")
     node = (parser.parse as Expressions).expressions[0]
@@ -170,8 +170,8 @@ describe "Parser" do
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
     ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
     ":[]=", ":<=>", ":==="].each do |symbol|
-    value = symbol[1, symbol.length - 1]
-    value = value[1, value.length - 2] if value.starts_with?("\"")
+    value = symbol[1, symbol.size - 1]
+    value = value[1, value.size - 2] if value.starts_with?("\"")
     it_parses symbol, value.symbol
   end
   it_parses ":foo", "foo".symbol

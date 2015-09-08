@@ -17,7 +17,7 @@ describe "Code gen: no return" do
         fun exit2 : NoReturn
       end
 
-      if (a = LibC.exit2) && a.length == 3
+      if (a = LibC.exit2) && a.size == 3
       end
       ))
   end

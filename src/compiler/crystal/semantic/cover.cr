@@ -29,7 +29,7 @@ module Crystal
     end
 
     private def compute_cover
-      cover = BitArray.new(cover_length)
+      cover = BitArray.new(cover_size)
       cover_arg_types = arg_types.map(&.cover)
       matches.each { |match| mark_cover(match, cover, cover_arg_types) }
       {cover, cover_arg_types}
@@ -37,11 +37,11 @@ module Crystal
 
     private def compute_fast_cover
       # Check which arg indices of the matches have types or type restrictions
-      args_length = arg_types.length
-      indices = BitArray.new(args_length)
+      args_size = arg_types.size
+      indices = BitArray.new(args_size)
 
       matches.each do |match|
-        args_length.times do |i|
+        args_size.times do |i|
           arg = match.def.args[i]
           if arg.type? || arg.restriction
             indices[i] = true
@@ -49,7 +49,7 @@ module Crystal
         end
       end
 
-      cover = BitArray.new(cover_length(indices))
+      cover = BitArray.new(cover_size(indices))
       cover_arg_types = arg_types.map_with_index do |arg_type, i|
         indices[i] ? arg_type.cover : nil
       end
@@ -57,17 +57,17 @@ module Crystal
       cover
     end
 
-    private def cover_length
+    private def cover_size
       arg_types.inject(1) do |num, type|
-        num * type.cover_length
+        num * type.cover_size
       end
     end
 
-    private def cover_length(indices)
+    private def cover_size(indices)
       i = 0
       arg_types.inject(1) do |num, type|
         if indices[i]
-          val = num * type.cover_length
+          val = num * type.cover_size
         else
           val = num
         end
@@ -77,7 +77,7 @@ module Crystal
     end
 
     private def mark_cover(match, cover, cover_arg_types, indices = nil, index = 0, position = 0, multiplier = 1)
-      if index == cover_arg_types.length
+      if index == cover_arg_types.size
         cover[position] = true
         return
       end
@@ -97,7 +97,7 @@ module Crystal
           if arg_type.is_a?(Array)
             offset = arg_type.index(sub_match_arg_type)
             if offset
-              new_multiplier = multiplier * arg_type.length
+              new_multiplier = multiplier * arg_type.size
               mark_cover match, cover, cover_arg_types, indices, index + 1, position + offset * multiplier, new_multiplier
             end
           elsif arg_type == sub_match_arg_type
@@ -110,7 +110,7 @@ module Crystal
     end
 
     private def add_missing(missing, cover, cover_arg_types, types = [] of Type, index = 0, position = 0, multiplier = 1)
-      if index == cover_arg_types.length
+      if index == cover_arg_types.size
         unless cover[position]
           missing.push types.dup
         end
@@ -121,7 +121,7 @@ module Crystal
       arg_types = [arg_types] unless arg_types.is_a?(Array)
       arg_types.each_with_index do |arg_type, offset|
         types.push arg_type.not_nil!
-        new_multiplier = multiplier * arg_types.length
+        new_multiplier = multiplier * arg_types.size
         add_missing missing, cover, cover_arg_types, types, index + 1, position + offset * multiplier, new_multiplier
         types.pop
       end

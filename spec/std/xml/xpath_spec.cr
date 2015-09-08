@@ -21,7 +21,7 @@ module XML
       doc = doc()
 
       nodes = doc.xpath("//people/person") as NodeSet
-      nodes.length.should eq(2)
+      nodes.size.should eq(2)
 
       nodes[0].name.should eq("person")
       nodes[0]["id"].should eq("1")
@@ -30,7 +30,7 @@ module XML
       nodes[1]["id"].should eq("2")
 
       nodes = doc.xpath_nodes("//people/person")
-      nodes.length.should eq(2)
+      nodes.size.should eq(2)
     end
 
     it "finds string" do
@@ -76,7 +76,7 @@ module XML
         </feed>
         ))
       nodes = doc.xpath("//atom:feed", namespaces: {"atom": "http://www.w3.org/2005/Atom"}) as NodeSet
-      nodes.length.should eq(1)
+      nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
       ns = nodes[0].namespace.not_nil!
       ns.href.should eq("http://www.w3.org/2005/Atom")
@@ -90,7 +90,7 @@ module XML
         </feed>
         ))
       nodes = doc.xpath("//xmlns:feed", namespaces: doc.root.not_nil!.namespaces) as NodeSet
-      nodes.length.should eq(1)
+      nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
       ns = nodes[0].namespace.not_nil!
       ns.href.should eq("http://www.w3.org/2005/Atom")
@@ -106,7 +106,7 @@ module XML
         </feed>
         ))
       nodes = doc.xpath("//feed/person[@id=$value]", variables: {"value": 2}) as NodeSet
-      nodes.length.should eq(1)
+      nodes.size.should eq(1)
       nodes[0]["id"].should eq("2")
     end
   end

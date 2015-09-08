@@ -305,8 +305,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : StringLiteral
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -395,8 +395,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : SymbolLiteral
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -467,8 +467,8 @@ module Macros
     def last : ASTNode | NilLiteral
     end
 
-    # Similar to `Array#length`
-    def length : NumberLiteral
+    # Similar to `Array#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Enumerable#map`
@@ -506,8 +506,8 @@ module Macros
     def keys : ArrayLiteral
     end
 
-    # Similar to `Hash#length`
-    def length : NumberLiteral
+    # Similar to `Hash#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Hash#to_a`
@@ -541,8 +541,8 @@ module Macros
     def empty? : BoolLiteral
     end
 
-    # Similar to `Tuple#length`
-    def length : NumberLiteral
+    # Similar to `Tuple#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Tuple#[]`
@@ -1028,8 +1028,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : MacroId
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -1104,7 +1104,7 @@ module Macros
 
     # Returns the number of elements in this tuple type or tuple metaclass type.
     # Gives a compile error if this is not one of those types.
-    def length : NumberLiteral
+    def size : NumberLiteral
     end
 
     # Returns true if this type is a union type, false otherwise.

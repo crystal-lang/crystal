@@ -105,9 +105,9 @@ struct String::Formatter
 
   private def consume_width(flags)
     if '1' <= current_char <= '9'
-      num, length = consume_number
+      num, size = consume_number
       flags.width = num
-      flags.width_length = length
+      flags.width_size = size
     end
     flags
   end
@@ -116,12 +116,12 @@ struct String::Formatter
     if current_char == '.'
       next_char
       if '1' <= current_char <= '9'
-        num, length = consume_number
+        num, size = consume_number
         flags.precision = num
-        flags.precision_length = length + 1
+        flags.precision_size = size + 1
       else
         flags.precision = 0
-        flags.precision_length = 1
+        flags.precision_size = 1
       end
     end
     flags
@@ -129,20 +129,20 @@ struct String::Formatter
 
   private def consume_number
     num = current_char - '0'
-    length = 1
+    size = 1
     next_char
     while true
       case char = current_char
       when '0' .. '9'
         num *= 10
         num += char - '0'
-        length += 1
+        size += 1
       else
         break
       end
       next_char
     end
-    {num, length}
+    {num, size}
   end
 
   private def consume_type(flags, arg = nil, arg_specified = false)
@@ -175,9 +175,9 @@ struct String::Formatter
   def string(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
-    pad arg.to_s.length, flags if flags.left_padding?
+    pad arg.to_s.size, flags if flags.left_padding?
     @io << arg
-    pad arg.to_s.length, flags if flags.right_padding?
+    pad arg.to_s.size, flags if flags.right_padding?
   end
 
   def int(flags, arg, arg_specified)
@@ -234,8 +234,8 @@ struct String::Formatter
   # Here we rebuild the original format string, like %f or %.2g and use snprintf
   def recreate_float_format_string(flags)
     capacity = 2 # percent + type
-    capacity += flags.width_length
-    capacity += flags.precision_length
+    capacity += flags.width_size
+    capacity += flags.precision_size
     capacity += 1 if flags.plus
     capacity += 1 if flags.minus
     capacity += 1 if flags.zero
@@ -323,17 +323,17 @@ struct String::Formatter
 
   struct Flags
     property space, sharp, plus, minus, zero, base
-    property width, width_length
-    property type, precision, precision_length
+    property width, width_size
+    property type, precision, precision_size
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false
       @width = 0
-      @width_length = 0
+      @width_size = 0
       @base = 10
       @type = ' '
       @precision = nil
-      @precision_length = 0
+      @precision_size = 0
     end
 
     def wants_padding?

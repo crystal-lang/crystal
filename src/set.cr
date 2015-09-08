@@ -34,12 +34,8 @@ struct Set(T)
     @hash.delete(object)
   end
 
-  def length
-    @hash.length
-  end
-
   def size
-    length
+    @hash.size
   end
 
   def clear
@@ -107,7 +103,7 @@ struct Set(T)
   # Set{1, 2, 3}.intersects? Set{3, 4} # => true
   # ```
   def intersects?(other : Set)
-    if length < other.length
+    if size < other.size
       any? { |o| other.includes?(o) }
     else
       other.any? { |o| includes?(o) }
@@ -121,12 +117,12 @@ struct Set(T)
   end
 
   def subset?(other : Set)
-    return false if other.length < length
+    return false if other.size < size
     all? { |value| other.includes?(value) }
   end
 
   def superset?(other : Set)
-    return false if other.length > length
+    return false if other.size > size
     other.all? { |value| includes?(value) }
   end
 

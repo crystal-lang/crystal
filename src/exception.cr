@@ -61,7 +61,7 @@ def caller
     while true
       Unwind.get_proc_name(cursor_ptr, fname_buffer, fname_size, out offset)
       fname = String.new(fname_buffer)
-      break if fname.length < fname_size - 1
+      break if fname.size < fname_size - 1
 
       fname_size += 64
       fname_buffer = fname_buffer.realloc(fname_size)

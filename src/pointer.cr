@@ -21,7 +21,7 @@
 #
 # Note that a pointer is *falsey* if it's null (if it's address is zero).
 #
-# For a safe alternative, see `Slice`, which is a pointer with a length and with bounds checking.
+# For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
 struct Pointer(T)
   include Comparable(self)
 
@@ -421,15 +421,15 @@ struct Pointer(T)
     PointerAppender.new(self)
   end
 
-  # Returns a `Slice` that points to this pointer and is bounded by the given *length*.
+  # Returns a `Slice` that points to this pointer and is bounded by the given *size*.
   #
   # ```
   # ptr = Pointer.malloc(6) { |i| i + 10 } #   [10, 11, 12, 13, 14, 15]
   # slice = ptr.to_slice(4)                #=> [10, 11, 12, 13]
   # slice.class                            #=> Slice(Int32)
   # ```
-  def to_slice(length)
-    Slice.new(self, length)
+  def to_slice(size)
+    Slice.new(self, size)
   end
 
   # Clears (sets to "zero" bytes) a number of values pointed by this pointer.
@@ -455,7 +455,7 @@ struct PointerAppender(T)
     @pointer += 1
   end
 
-  def count
+  def size
     @pointer - @start
   end
 

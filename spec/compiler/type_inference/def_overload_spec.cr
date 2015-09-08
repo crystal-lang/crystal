@@ -633,7 +633,7 @@ describe "Type inference: def overload" do
       ") { int32 }
   end
 
-  it "doesn't match tuples of different lengths" do
+  it "doesn't match tuples of different sizes" do
     assert_error "
       def foo(x : {X, Y, Z})
         'a'
@@ -644,7 +644,7 @@ describe "Type inference: def overload" do
       "no overload matches"
   end
 
-  it "matches tuples of different lengths" do
+  it "matches tuples of different sizes" do
     assert_type("
       def foo(x : {X, Y})
         1

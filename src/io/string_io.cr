@@ -42,7 +42,7 @@ class StringIO
   end
 
   def read(slice : Slice(UInt8))
-    count = slice.length
+    count = slice.size
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
     @pos += count
@@ -52,7 +52,7 @@ class StringIO
   def write(slice : Slice(UInt8))
     check_open
 
-    count = slice.length
+    count = slice.size
 
     return count if count < 0
 
@@ -105,12 +105,12 @@ class StringIO
   end
 
   # :nodoc:
-  def read(length : Int)
-    raise ArgumentError.new "negative length" if length < 0
+  def read(count : Int)
+    raise ArgumentError.new "negative count" if count < 0
 
-    if length <= @bytesize - @pos
-      string = String.new(@buffer + @pos, length)
-      @pos += length
+    if count <= @bytesize - @pos
+      string = String.new(@buffer + @pos, count)
+      @pos += count
       return string
     end
 

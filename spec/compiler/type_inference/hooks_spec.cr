@@ -54,7 +54,7 @@ describe "Type inference: hooks" do
       ") { int32 }
   end
 
-  it "errors if wrong inherited args length" do
+  it "errors if wrong inherited args size" do
     assert_error %(
       class Foo
         macro inherited(x)
@@ -63,7 +63,7 @@ describe "Type inference: hooks" do
       ), "macro 'inherited' must not have arguments"
   end
 
-  it "errors if wrong included args length" do
+  it "errors if wrong included args size" do
     assert_error %(
       module Foo
         macro included(x)
@@ -72,7 +72,7 @@ describe "Type inference: hooks" do
       ), "macro 'included' must not have arguments"
   end
 
-  it "errors if wrong extended args length" do
+  it "errors if wrong extended args size" do
     assert_error %(
       module Foo
         macro extended(x)

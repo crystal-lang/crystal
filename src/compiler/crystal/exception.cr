@@ -70,9 +70,9 @@ module Crystal
     getter line_number
     getter column_number
     getter filename
-    getter length
+    getter size
 
-    def initialize(message, @line_number, @column_number, @filename, @length = nil)
+    def initialize(message, @line_number, @column_number, @filename, @size = nil)
       super(message)
     end
 
@@ -82,7 +82,7 @@ module Crystal
 
     def to_json(io)
       {file: true_filename, line: @line_number, column: @column_number,
-       length: @length, message: @message}.to_json(io)
+       size: @size, message: @message}.to_json(io)
     end
 
     def append_to_s(source, io)
@@ -96,7 +96,7 @@ module Crystal
 
       if source
         lines = source.lines
-        if @line_number - 1 < lines.length
+        if @line_number - 1 < lines.size
           line = lines[@line_number - 1]
           if line
             io << "\n\n"
@@ -107,8 +107,8 @@ module Crystal
             end
             with_color.green.bold.surround(io) do
               io << "^"
-              if length = @length
-                io << ("~" * (length - 1))
+              if size = @size
+                io << ("~" * (size - 1))
               end
             end
             io << "\n"
@@ -148,18 +148,18 @@ module Crystal
       location = node.location
       if location
         column_number = node.name_column_number
-        name_length = node.name_length
+        name_size = node.name_size
         if column_number == 0
-          name_length = 0
+          name_size = 0
           column_number = location.column_number
         end
-        new message, location.line_number, column_number, location.filename, name_length, inner
+        new message, location.line_number, column_number, location.filename, name_size, inner
       else
         new message, nil, 0, nil, 0, inner
       end
     end
 
-    def initialize(message, @line, @column : Int32, @filename, @length, @inner = nil)
+    def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
       super(message)
     end
 
@@ -172,7 +172,7 @@ module Crystal
         inner.to_json(io)
       else
         {file: true_filename, line: @line, column: @column,
-         length: @length, message: deepest_error_message || @message}.to_json(io)
+         size: @size, message: deepest_error_message || @message}.to_json(io)
       end
     end
 
@@ -224,8 +224,8 @@ module Crystal
         io << (" " * (@column - 1))
         with_color.green.bold.surround(io) do
           io << "^"
-          if @length > 0
-            io << ("~" * (@length - 1))
+          if @size > 0
+            io << ("~" * (@size - 1))
           end
         end
       end
@@ -355,7 +355,7 @@ module Crystal
         io.puts
         io.puts
         io << "Specifically in "
-        io << (defs.length == 1 ? "this one" : "these ones")
+        io << (defs.size == 1 ? "this one" : "these ones")
         io << ":"
         defs.each do |a_def|
           print_with_location a_def, io
@@ -405,7 +405,7 @@ module Crystal
       line = lines[line_number - 1]
 
       name_column = node.name_column_number
-      name_length = node.name_length
+      name_size = node.name_size
 
       io << "    "
       io << replace_leading_tabs_with_spaces(line.chomp)
@@ -417,8 +417,8 @@ module Crystal
       io << (" " * (name_column - 1))
       with_color.green.bold.surround(io) do
         io << "^"
-        if name_length > 0
-          io << ("~" * (name_length - 1)) if name_length
+        if name_size > 0
+          io << ("~" * (name_size - 1)) if name_size
         end
       end
     end

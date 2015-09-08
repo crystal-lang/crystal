@@ -184,7 +184,7 @@ class BufferedChannel(T) < Channel(T)
   end
 
   def full?
-    @queue.length >= @capacity
+    @queue.size >= @capacity
   end
 
   def empty?

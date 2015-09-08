@@ -79,9 +79,9 @@ describe "StringIO" do
     end
   end
 
-  it "raises argument error if reads negative length" do
+  it "raises argument error if reads negative count" do
     io = StringIO.new("hello world")
-    expect_raises(ArgumentError, "negative length") do
+    expect_raises(ArgumentError, "negative count") do
       io.read(-1)
     end
   end
@@ -104,7 +104,7 @@ describe "StringIO" do
     str.write_byte 0_u8
     str.write_byte 1_u8
     slice = str.to_slice
-    slice.length.should eq(2)
+    slice.size.should eq(2)
     slice[0].should eq(0_u8)
     slice[1].should eq(1_u8)
   end

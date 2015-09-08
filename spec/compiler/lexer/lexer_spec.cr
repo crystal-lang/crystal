@@ -106,15 +106,15 @@ end
 
 private def it_lexes_symbols(symbols)
   symbols.each do |symbol|
-    value = symbol[1, symbol.length - 1]
-    value = value[1, value.length - 2] if value.starts_with?("\"")
+    value = symbol[1, symbol.size - 1]
+    value = value[1, value.size - 2] if value.starts_with?("\"")
     it_lexes symbol, :SYMBOL, value
   end
 end
 
 private def it_lexes_global_match_data_index(globals)
   globals.each do |global|
-    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.length - 1]
+    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.size - 1]
   end
 end
 

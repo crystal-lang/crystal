@@ -79,14 +79,14 @@ struct HTTP::Headers
   end
 
   def ==(other : Hash)
-    return false unless @hash.length == other.length
+    return false unless @hash.size == other.size
 
     other.each do |key, value|
       this_value = @hash[key_name(key)]?
       if this_value
         case value
         when String
-          return false unless this_value.length == 1 && this_value[0] == value
+          return false unless this_value.size == 1 && this_value[0] == value
         when Array(String)
           return false unless this_value == value
         else
@@ -126,7 +126,7 @@ struct HTTP::Headers
       io << ", " if index > 0
       key.inspect(io)
       io << " => "
-      if values.length == 1
+      if values.size == 1
         values.first.inspect(io)
       else
         values.inspect(io)
@@ -173,7 +173,7 @@ struct HTTP::Headers
   end
 
   private def concat(values)
-    case values.length
+    case values.size
     when 0
       ""
     when 1

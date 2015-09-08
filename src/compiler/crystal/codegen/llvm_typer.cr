@@ -245,13 +245,13 @@ module Crystal
         @struct_cache[type] = a_struct
 
         ivars = type.all_instance_vars
-        ivars_length = ivars.length
+        ivars_size = ivars.size
 
         unless type.struct?
-          ivars_length += 1
+          ivars_size += 1
         end
 
-        element_types = Array(LLVM::Type).new(ivars_length)
+        element_types = Array(LLVM::Type).new(ivars_size)
 
         unless type.struct?
           element_types.push LLVM::Int32 # For the type id

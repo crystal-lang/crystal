@@ -7,19 +7,19 @@ describe "Set" do
       Set(Nil).new.empty?.should be_true
     end
 
-    it "has length 0" do
-      Set(Nil).new.length.should eq(0)
+    it "has size 0" do
+      Set(Nil).new.size.should eq(0)
     end
   end
 
   describe "new" do
     it "creates new set with enumerable without block" do
       set_from_array = Set.new([2, 4, 6, 4])
-      set_from_array.length.should eq(3)
+      set_from_array.size.should eq(3)
       set_from_array.to_a.sort.should eq([2, 4, 6])
 
       set_from_tulpe = Set.new({1, "hello", 'x'})
-      set_from_tulpe.length.should eq(3)
+      set_from_tulpe.size.should eq(3)
       set_from_tulpe.to_a.includes?(1).should be_true
       set_from_tulpe.to_a.includes?("hello").should be_true
       set_from_tulpe.to_a.includes?('x').should be_true
@@ -31,7 +31,7 @@ describe "Set" do
       set = Set(Int32).new
       set.add 1
       set.includes?(1).should be_true
-      set.length.should eq(1)
+      set.size.should eq(1)
     end
   end
 
@@ -39,7 +39,7 @@ describe "Set" do
     it "deletes an object" do
       set = Set{1, 2, 3}
       set.delete 2
-      set.length.should eq(2)
+      set.size.should eq(2)
       set.includes?(1).should be_true
       set.includes?(3).should be_true
     end

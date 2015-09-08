@@ -40,12 +40,12 @@
 # class Zeros
 #   include Iterator(Int32)
 #
-#   def initialize(@length)
+#   def initialize(@size)
 #     @produced = 0
 #   end
 #
 #   def next
-#     if @produced < @length
+#     if @produced < @size
 #       @produced += 1
 #       0
 #     else

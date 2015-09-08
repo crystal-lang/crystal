@@ -58,7 +58,7 @@
 class StringScanner
   def initialize(@str)
     @offset = 0
-    @length = @str.length
+    @size = @str.size
   end
 
   # Returns the current position of the scan offset.
@@ -113,7 +113,7 @@ class StringScanner
   # In other words, the pattern is not anchored to the current scan offset.
   #
   # If there's a match, the scanner advances the scan offset, the last match is
-  # saved, and it returns the length of the skipped match. Otherwise it returns
+  # saved, and it returns the size of the skipped match. Otherwise it returns
   # `nil` and does not
   # advance the offset.
   #
@@ -121,7 +121,7 @@ class StringScanner
   # string.
   def skip(pattern)
     match = scan(pattern)
-    match.length if match
+    match.size if match
   end
 
   # Attempts to skip _until_ the given `pattern` is found after the scan
@@ -129,7 +129,7 @@ class StringScanner
   # offset.
   #
   # If there's a match, the scanner advances the scan offset, the last match is
-  # saved, and it returns the length of the skip. Otherwise it returns `nil`
+  # saved, and it returns the size of the skip. Otherwise it returns `nil`
   # and does not advance the
   # offset.
   #
@@ -137,7 +137,7 @@ class StringScanner
   # string.
   def skip_until(pattern)
     match = scan_until(pattern)
-    match.length if match
+    match.size if match
   end
 
   # Returns the value that `#scan` would return, without advancing the scan
@@ -209,7 +209,7 @@ class StringScanner
   #     s.scan(/(\w+\s?){4}/)  # => "this is a string"
   #     s.eos?                 # => true
   def eos?
-    @offset >= @length
+    @offset >= @size
   end
 
   # Resets the scan offset to the beginning and clears the last match.
@@ -221,7 +221,7 @@ class StringScanner
   # Moves the scan offset to the end of the string and clears the last match.
   def terminate
     @last_match = nil
-    @offset = @length
+    @offset = @size
   end
 
   # Returns the string being scanned.
@@ -241,7 +241,7 @@ class StringScanner
   #     s.scan(/(\w+\s?){2}/)  # => "this is "
   #     s.rest                 # => "a string"
   def rest
-    @str[@offset, @length - @offset]
+    @str[@offset, @size - @offset]
   end
 
   # Writes a representation of the scanner.
@@ -250,8 +250,8 @@ class StringScanner
   # and five characters near the current position.
   def inspect(io : IO)
     io << "#<StringScanner "
-    io << @offset.to_s << "/" << @length.to_s
-    start = Math.min( Math.max(@offset-2, 0), @length-5)
+    io << @offset.to_s << "/" << @size.to_s
+    start = Math.min( Math.max(@offset-2, 0), @size-5)
     io << " \"" << @str[start, 5] << "\" >"
   end
 end

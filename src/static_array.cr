@@ -1,4 +1,4 @@
-# A fixed-length, stack allocated array.
+# A fixed-size, stack allocated array.
 struct StaticArray(T, N)
   include Enumerable(T)
 
@@ -27,7 +27,7 @@ struct StaticArray(T, N)
   end
 
   def ==(other : StaticArray)
-    return false unless length == other.length
+    return false unless size == other.size
     each_with_index do |e, i|
       return false unless e == other[i]
     end
@@ -70,31 +70,23 @@ struct StaticArray(T, N)
     buffer[index] = yield buffer[index]
   end
 
-  def length
+  def size
     N
   end
 
-  def count
-    length
-  end
-
-  def size
-    length
-  end
-
   def []=(value : T)
-    length.times do |i|
+    size.times do |i|
       buffer[i] = value
     end
   end
 
   def shuffle!
-    buffer.shuffle!(length)
+    buffer.shuffle!(size)
     self
   end
 
   def map!
-    buffer.map!(length) { |e| yield e }
+    buffer.map!(size) { |e| yield e }
     self
   end
 
@@ -103,7 +95,7 @@ struct StaticArray(T, N)
   end
 
   def to_slice
-    Slice.new(buffer, length)
+    Slice.new(buffer, size)
   end
 
   def to_unsafe
@@ -117,8 +109,8 @@ struct StaticArray(T, N)
   end
 
   private def check_index_out_of_bounds(index)
-    index += length if index < 0
-    unless 0 <= index < length
+    index += size if index < 0
+    unless 0 <= index < size
       raise IndexError.new
     end
     index

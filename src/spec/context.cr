@@ -96,11 +96,11 @@ module Spec
       puts
 
       success = @results[:success]
-      total = pendings.length + failures.length + errors.length + success.length
+      total = pendings.size + failures.size + errors.size + success.size
 
       final_status = case
-                     when (failures.length + errors.length) > 0 then :fail
-                     when pendings.length > 0                   then :pending
+                     when (failures.size + errors.size) > 0 then :fail
+                     when pendings.size > 0                   then :pending
                      else                                            :success
                      end
 
@@ -114,7 +114,7 @@ module Spec
         seconds = elapsed_time.seconds
         puts "Finished in #{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
       end
-      puts Spec.color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", final_status)
+      puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
 
       unless failures_and_errors.empty?
         puts

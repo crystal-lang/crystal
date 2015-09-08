@@ -109,7 +109,7 @@ end
 width = 640
 height = 480
 
-delay = ARGV.length > 1 ? ARGV[1].to_i : 1
+delay = ARGV.size > 1 ? ARGV[1].to_i : 1
 
 SDL.init
 SDL.show_cursor
@@ -121,7 +121,7 @@ start = SDL.ticks
 
 color_maker = ColorMaker.new(delay)
 rects = parse_rectangles
-puts "Rects: #{rects.length}"
+puts "Rects: #{rects.size}"
 
 while true
   SDL.poll_events do |event|

@@ -58,13 +58,13 @@ module Crystal
       end
 
       if instance_type.variadic
-        min_needed = instance_type.type_vars.length - 1
-        if node.type_vars.length < min_needed
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{min_needed}..)"
+        min_needed = instance_type.type_vars.size - 1
+        if node.type_vars.size < min_needed
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{min_needed}..)"
         end
       else
-        if instance_type.type_vars.length != node.type_vars.length
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+        if instance_type.type_vars.size != node.type_vars.size
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{instance_type.type_vars.size})"
         end
       end
 
@@ -189,7 +189,7 @@ module Crystal
           type_var_type = type_var
         end
 
-        if names.length > 1
+        if names.size > 1
           if type_var_type.is_a?(Type)
             type_var_type.lookup_type(names[1 .. -1], already_looked_up, lookup_in_container)
           else
@@ -206,7 +206,7 @@ module Crystal
 
   class IncludedGenericModule
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      if (names.length == 1) && (m = @mapping[names[0]]?)
+      if (names.size == 1) && (m = @mapping[names[0]]?)
         case @including_class
         when GenericClassType, GenericModuleType
           # skip
@@ -221,7 +221,7 @@ module Crystal
 
   class InheritedGenericClass
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      if (names.length == 1) && (m = @mapping[names[0]]?)
+      if (names.size == 1) && (m = @mapping[names[0]]?)
         case extending_class
         when GenericClassType
           # skip

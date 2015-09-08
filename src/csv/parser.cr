@@ -5,7 +5,7 @@ class CSV::Parser
   # Creates a parser from a `String` or `IO`.
   def initialize(string_or_io : String | IO)
     @lexer = CSV::Lexer.new(string_or_io)
-    @max_row_length = 3
+    @max_row_size = 3
   end
 
   # Returns the remaining rows.
@@ -34,14 +34,14 @@ class CSV::Parser
       return nil
     end
 
-    row = Array(String).new(@max_row_length)
+    row = Array(String).new(@max_row_size)
     while true
       case token.kind
       when Token::Kind::Cell
         row << token.value
         token = @lexer.next_token
       else #:newline, :eof
-        @max_row_length = row.length if row.length > @max_row_length
+        @max_row_size = row.size if row.size > @max_row_size
         return row
       end
     end

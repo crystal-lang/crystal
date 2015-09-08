@@ -1,4 +1,4 @@
-# A Slice is a `Pointer` with an associated length.
+# A Slice is a `Pointer` with an associated size.
 #
 # While a pointer is unsafe because no bound checks are performend when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.
@@ -7,29 +7,29 @@ struct Slice(T)
   include Enumerable(T)
   include Iterable
 
-  # Returns the length of this slice.
+  # Returns the size of this slice.
   #
   # ```
-  # Slice(UInt8).new(3).length #=> 3
+  # Slice(UInt8).new(3).size #=> 3
   # ```
-  getter length
+  getter size
 
-  # Creates a slice to the given *pointer*, bounded by the given *length*. This
+  # Creates a slice to the given *pointer*, bounded by the given *size*. This
   # method does not allocate heap memory.
   #
   # ```
   # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
   #
   # slice = Slice.new(ptr, 3)
-  # slice.length      #=> 3
+  # slice.size      #=> 3
   # slice             #=> [97, 98, 99]
   #
   # String.new(slice) #=> "abc"
   # ```
-  def initialize(@pointer : Pointer(T), @length : Int32)
+  def initialize(@pointer : Pointer(T), @size : Int32)
   end
 
-  # Allocates `length * sizeof(T)` bytes of heap memory initialized to zero
+  # Allocates `size * sizeof(T)` bytes of heap memory initialized to zero
   # and returns a slice pointing to that memory.
   #
   # The memory is allocated by the `GC`, so when there are
@@ -39,13 +39,13 @@ struct Slice(T)
   # slice = Slice(UInt8).new(3)
   # slice #=> [0, 0, 0]
   # ```
-  def self.new(length : Int32)
-    pointer = Pointer(T).malloc(length)
-    new(pointer, length)
+  def self.new(size : Int32)
+    pointer = Pointer(T).malloc(size)
+    new(pointer, size)
   end
 
-  # Allocates `length * sizeof(T)` bytes of heap memory initialized to the value
-  # returned by the block (which is invoked once with each index in the range `0...length`)
+  # Allocates `size * sizeof(T)` bytes of heap memory initialized to the value
+  # returned by the block (which is invoked once with each index in the range `0...size`)
   # and returns a slice pointing to that memory.
   #
   # The memory is allocated by the `GC`, so when there are
@@ -55,12 +55,12 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice #=> [10, 11, 12]
   # ```
-  def self.new(length : Int32)
-    pointer = Pointer.malloc(length) { |i| yield i }
-    new(pointer, length)
+  def self.new(size : Int32)
+    pointer = Pointer.malloc(size) { |i| yield i }
+    new(pointer, size)
   end
 
-  # Allocates `length * sizeof(T)` bytes of heap memory initialized to *value*
+  # Allocates `size * sizeof(T)` bytes of heap memory initialized to *value*
   # and returns a slice pointing to that memory.
   #
   # The memory is allocated by the `GC`, so when there are
@@ -70,8 +70,8 @@ struct Slice(T)
   # slice = Slice.new(3, 10)
   # slice #=> [10, 10, 10]
   # ```
-  def self.new(length : Int32, value : T)
-    new(length) { value }
+  def self.new(size : Int32, value : T)
+    new(size) { value }
   end
 
   # Returns a new slice that i *offset* elements apart from this slice.
@@ -84,11 +84,11 @@ struct Slice(T)
   # slice2 #=> [12, 13, 14]
   # ```
   def +(offset : Int)
-    unless 0 <= offset <= length
+    unless 0 <= offset <= size
       raise IndexError.new
     end
 
-    Slice.new(@pointer + offset, @length - offset)
+    Slice.new(@pointer + offset, @size - offset)
   end
 
   # Returns the element at the given *index*.
@@ -121,8 +121,8 @@ struct Slice(T)
   # slice[4] = 1 #=> IndexError
   # ```
   def []=(index : Int, value : T)
-    index += length if index < 0
-    unless 0 <= index < length
+    index += size if index < 0
+    unless 0 <= index < size
       raise IndexError.new
     end
 
@@ -130,7 +130,7 @@ struct Slice(T)
   end
 
   # Returns a new slice that starts at *start* elements from this slice's start,
-  # and of *count* length.
+  # and of *count* size.
   #
   # Raises `IndexError` if the new slice falls outside this slice.
   #
@@ -142,11 +142,11 @@ struct Slice(T)
   # slice2 #=> [11, 12, 13]
   # ```
   def [](start, count)
-    unless 0 <= start <= @length
+    unless 0 <= start <= @size
       raise IndexError.new
     end
 
-    unless 0 <= count <= @length - start
+    unless 0 <= count <= @size - start
       raise IndexError.new
     end
 
@@ -158,8 +158,8 @@ struct Slice(T)
   end
 
   def at(index : Int)
-    index += length if index < 0
-    if 0 <= index < length
+    index += size if index < 0
+    if 0 <= index < size
       @pointer[index]
     else
       yield
@@ -167,11 +167,11 @@ struct Slice(T)
   end
 
   def empty?
-    @length == 0
+    @size == 0
   end
 
   def each
-    length.times do |i|
+    size.times do |i|
       yield @pointer[i]
     end
   end
@@ -180,8 +180,8 @@ struct Slice(T)
     ItemIterator(T).new(self)
   end
 
-  def pointer(length)
-    unless 0 <= length <= @length
+  def pointer(size)
+    unless 0 <= size <= @size
       raise IndexError.new
     end
 
@@ -203,10 +203,10 @@ struct Slice(T)
   def hexstring
     self as Slice(UInt8)
 
-    str_length = length * 2
-    String.new(str_length) do |buffer|
+    str_size = size * 2
+    String.new(str_size) do |buffer|
       hexstring(buffer)
-      {str_length, str_length}
+      {str_size, str_size}
     end
   end
 
@@ -228,7 +228,7 @@ struct Slice(T)
   end
 
   def rindex
-    (length - 1).downto(0) do |i|
+    (size - 1).downto(0) do |i|
       if yield @pointer[i]
         return i
       end
@@ -251,9 +251,9 @@ struct Slice(T)
   end
 
   def to_a
-    Array(T).build(@length) do |pointer|
-      pointer.copy_from(@pointer, @length)
-      @length
+    Array(T).build(@size) do |pointer|
+      pointer.copy_from(@pointer, @size)
+      @size
     end
   end
 

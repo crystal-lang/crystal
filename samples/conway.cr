@@ -28,14 +28,14 @@ struct ConwayMap
   def initialize(pattern)
     @map = Array.new(HEIGHT) { Array.new(WIDTH, false) }
 
-    ix = min WIDTH, pattern.map(&.length).max
-    iy = min HEIGHT, pattern.length
+    ix = min WIDTH, pattern.map(&.size).max
+    iy = min HEIGHT, pattern.size
     dx = (WIDTH - ix) / 2
     dy = (HEIGHT - iy) / 2
 
     iy.times do |y|
       ix.times do |x|
-        if x < pattern[y].length && !pattern[y][x].whitespace?
+        if x < pattern[y].size && !pattern[y][x].whitespace?
           @map[y + dy][x + dx] = true
         end
       end

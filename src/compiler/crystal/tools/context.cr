@@ -41,14 +41,14 @@ module Crystal
     def to_text(io)
       io.puts message
 
-      if (ctxs = contexts) && ctxs.length > 0
+      if (ctxs = contexts) && ctxs.size > 0
         exprs = ctxs.first.keys
 
         io.puts
         TablePrint.new(io).build do
           row do
             cell "Expr"
-            cell "Type", colspan: ctxs.length
+            cell "Type", colspan: ctxs.size
           end
           separator
 
@@ -185,7 +185,7 @@ module Crystal
       if @contexts.empty?
         return ContextResult.new("failed", "no context information found")
       else
-        res = ContextResult.new("ok", "#{@contexts.count} possible context#{@contexts.count > 1 ? "s" : ""} found")
+        res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
         return res
       end

@@ -70,9 +70,9 @@ module Crystal
       end
     end
 
-    def length
+    def size
       if all = @all
-        all.length
+        all.size
       elsif @second
         2
       elsif @first

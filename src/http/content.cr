@@ -12,12 +12,12 @@ module HTTP
   class FixedLengthContent < Content
     include IO
 
-    def initialize(@io, length)
-      @remaining = length
+    def initialize(@io, size)
+      @remaining = size
     end
 
     def read(slice : Slice(UInt8))
-      count = Math.min(slice.length, @remaining)
+      count = Math.min(slice.size, @remaining)
       bytes_read = @io.read slice[0, count]
       @remaining -= bytes_read
       bytes_read
@@ -53,10 +53,10 @@ module HTTP
     end
 
     def read(slice : Slice(UInt8))
-      count = slice.length
+      count = slice.size
       return 0 if @chunk_remaining == 0 || count == 0
 
-      to_read = Math.min(slice.length, @chunk_remaining)
+      to_read = Math.min(slice.size, @chunk_remaining)
 
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read

@@ -71,27 +71,27 @@ describe "Deque" do
     end
 
     DequeTester.new.test do
-      it "works the same as array when inserting at 1/8 length" do
+      it "works the same as array when inserting at 1/8 size" do
         1000.times do
-          step { c.insert(c.length / 8, i) }
+          step { c.insert(c.size / 8, i) }
         end
       end
-      it "works the same as array when deleting at 3/4 length" do
+      it "works the same as array when deleting at 3/4 size" do
         1000.times do
-          step { c.delete_at(c.length * 3 / 4) }
+          step { c.delete_at(c.size * 3 / 4) }
         end
       end
     end
 
     DequeTester.new.test do
-      it "works the same as array when inserting at 3/4 length" do
+      it "works the same as array when inserting at 3/4 size" do
         1000.times do
-          step { c.insert(c.length * 3 / 4, i) }
+          step { c.insert(c.size * 3 / 4, i) }
         end
       end
-      it "works the same as array when deleting at 1/8 length" do
+      it "works the same as array when deleting at 1/8 size" do
         1000.times do
-          step { c.delete_at(c.length / 8) }
+          step { c.delete_at(c.size / 8) }
         end
       end
     end
@@ -154,7 +154,7 @@ describe "Deque" do
       a = Deque{1, 2, 3}
       b = Deque{4, 5}
       c = a + b
-      c.length.should eq(5)
+      c.size.should eq(5)
       0.upto(4) { |i| c[i].should eq(i + 1) }
     end
 
@@ -371,13 +371,13 @@ describe "Deque" do
     end
   end
 
-  describe "length" do
-    it "has length 0" do
-      Deque(Int32).new.length.should eq(0)
+  describe "size" do
+    it "has size 0" do
+      Deque(Int32).new.size.should eq(0)
     end
 
-    it "has length 2" do
-      Deque{1, 2}.length.should eq(2)
+    it "has size 2" do
+      Deque{1, 2}.size.should eq(2)
     end
   end
 
@@ -594,7 +594,7 @@ describe "Deque" do
       a = [] of Int32
       Deque{1, 2, 3}.cycle do |x|
         a << x
-        break if a.length == 9
+        break if a.size == 9
       end
       a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     end

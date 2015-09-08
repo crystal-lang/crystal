@@ -157,8 +157,8 @@ module Crystal
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
 
-        macro_args_length = a_macro.args.length
-        call_args_length = call.args.length
+        marg_args_size = a_macro.args.size
+        call_args_size = call.args.size
         splat_index = a_macro.splat_index || -1
 
         # Args before the splat argument
@@ -171,15 +171,15 @@ module Crystal
 
         # The splat argument
         if splat_index == -1
-          splat_length = 0
+          splat_size = 0
           offset = 0
         else
-          splat_length = call_args_length - (macro_args_length - 1)
-          splat_length = 0 if splat_length < 0
-          offset = splat_index + splat_length
+          splat_size = call_args_size - (marg_args_size - 1)
+          splat_size = 0 if splat_size < 0
+          offset = splat_index + splat_size
           splat_arg = a_macro.args[splat_index]
-          splat_elements = if splat_index < call.args.length
-                             call.args[splat_index, splat_length]
+          splat_elements = if splat_index < call.args.size
+                             call.args[splat_index, splat_size]
                            else
                              [] of ASTNode
                            end
@@ -188,7 +188,7 @@ module Crystal
 
         # Args after the splat argument
         base = splat_index + 1
-        base.upto(macro_args_length - 1) do |index|
+        base.upto(marg_args_size - 1) do |index|
           macro_arg = a_macro.args[index]
           call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
           call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
@@ -550,13 +550,13 @@ module Crystal
       end
 
       def execute_env(node)
-        if node.args.length == 1
+        if node.args.size == 1
           node.args[0].accept self
           cmd = @last.to_macro_id
           env_value = ENV[cmd]?
           @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
         else
-          node.raise "wrong number of arguments for macro call 'env' (#{node.args.length} for 1)"
+          node.raise "wrong number of arguments for macro call 'env' (#{node.args.size} for 1)"
         end
       end
 
@@ -608,7 +608,7 @@ module Crystal
       end
 
       def execute_run(node)
-        if node.args.length == 0
+        if node.args.size == 0
           node.raise "wrong number of arguments for macro run (0 for 1..)"
         end
 
@@ -631,7 +631,7 @@ module Crystal
           node.raise "error executing macro run: can't find file '#{filename}'"
         end
 
-        if found_filenames.length > 1
+        if found_filenames.size > 1
           node.raise "error executing macro run: '#{filename}' is a directory"
         end
 

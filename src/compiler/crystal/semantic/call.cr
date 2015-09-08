@@ -23,10 +23,10 @@ class Crystal::Call
 
   def target_def
     if defs = @target_defs
-      if defs.length == 1
+      if defs.size == 1
         return defs.first
       else
-        ::raise "#{defs.length} target defs for #{self}"
+        ::raise "#{defs.size} target defs for #{self}"
       end
     end
 
@@ -109,7 +109,7 @@ class Crystal::Call
 
   def lookup_matches_with_splat
     # Check if all splat are of tuples
-    arg_types = Array(Type).new(args.length * 2)
+    arg_types = Array(Type).new(args.size * 2)
     args.each do |arg|
       if arg.is_a?(Splat)
         case arg_type = arg.type
@@ -343,7 +343,7 @@ class Crystal::Call
   def instantiate(matches, owner, self_type = nil)
     block = @block
 
-    typed_defs = Array(Def).new(matches.length)
+    typed_defs = Array(Def).new(matches.size)
 
     matches.each do |match|
       # Discard abstract defs for abstract classes
@@ -363,7 +363,7 @@ class Crystal::Call
 
       lookup_self_type = self_type || match.context.owner
       if self_type
-        lookup_arg_types = Array(Type).new(match.arg_types.length + 1)
+        lookup_arg_types = Array(Type).new(match.arg_types.size + 1)
         lookup_arg_types.push self_type
         lookup_arg_types.concat match.arg_types
       else
@@ -448,7 +448,7 @@ class Crystal::Call
   end
 
   def check_tuple_indexer(owner, def_name, args, arg_types)
-    return unless args.length == 1 && def_name == "[]"
+    return unless args.size == 1 && def_name == "[]"
 
     if owner.is_a?(TupleInstanceType)
       tuple_indexer_helper(args, arg_types, owner, owner) do |instance_type, index|
@@ -465,7 +465,7 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
-      if 0 <= index < instance_type.tuple_types.length
+      if 0 <= index < instance_type.tuple_types.size
         indexer_def = yield instance_type, index
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
@@ -546,8 +546,8 @@ class Crystal::Call
       parents = lookup.parents
     end
 
-    if parents && parents.length > 0
-      parents_length = parents.length
+    if parents && parents.size > 0
+      parents_length = parents.size
       parents.each_with_index do |parent, i|
         if parent.lookup_first_def(enclosing_def.name, block)
           return lookup_matches_in(parent, arg_types, scope, enclosing_def.name)
@@ -604,7 +604,7 @@ class Crystal::Call
   end
 
   def lookup_macro
-    in_macro_target &.lookup_macro(name, args.length, named_args)
+    in_macro_target &.lookup_macro(name, args.size, named_args)
   end
 
   def in_macro_target
@@ -700,8 +700,8 @@ class Crystal::Call
           fun_literal = call_block_arg
         else
           # Otherwise, we create a FunLiteral and type it
-          if block.args.length > fun_args.length
-            raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+          if block.args.size > fun_args.size
+            raise "wrong number of block arguments (#{block.args.size} for #{fun_args.size})"
           end
 
           fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
@@ -800,8 +800,8 @@ class Crystal::Call
   private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
     call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
     if yield_vars
-      if yield_vars.length != call_block_arg_types.length
-        raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
+      if yield_vars.size != call_block_arg_types.size
+        raise "wrong number of block argument's arguments (#{call_block_arg_types.size} for #{yield_vars.size})"
       end
 
       i = 1
@@ -811,8 +811,8 @@ class Crystal::Call
         end
         i += 1
       end
-    elsif call_block_arg_types.length != 0
-      raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
+    elsif call_block_arg_types.size != 0
+      raise "wrong number of block argument's arguments (#{call_block_arg_types.size} for 0)"
     end
   end
 
@@ -836,7 +836,7 @@ class Crystal::Call
     end
 
     def visit(node : Path)
-      if node.names.length == 1 && @context.free_vars
+      if node.names.size == 1 && @context.free_vars
         if type = @context.get_free_var(node.names.first)
           @type = type
           return
@@ -900,9 +900,9 @@ class Crystal::Call
 
     # If there's an argument count mismatch, or we have a splat, or there are
     # named arguments, we create another def that sets ups everything for the real call.
-    if arg_types.length != untyped_def.args.length || untyped_def.splat_index || named_args
+    if arg_types.size != untyped_def.args.size || untyped_def.splat_index || named_args
       named_args_names = named_args.try &.map &.name
-      untyped_def = untyped_def.expand_default_arguments(arg_types.length, named_args_names)
+      untyped_def = untyped_def.expand_default_arguments(arg_types.size, named_args_names)
     end
 
     args_start_index = 0
@@ -940,8 +940,8 @@ class Crystal::Call
     end
 
     # Fill magic constants (__LINE__, __FILE__, __DIR__)
-    named_args_length = named_args.try(&.length) || 0
-    (arg_types.length + named_args_length).upto(typed_def.args.length - 1) do |index|
+    named_args_size = named_args.try(&.size) || 0
+    (arg_types.size + named_args_size).upto(typed_def.args.size - 1) do |index|
       arg = typed_def.args[index]
       default_value = arg.default_value as MagicConstant
       case default_value.name

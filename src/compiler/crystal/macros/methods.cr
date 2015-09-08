@@ -32,23 +32,23 @@ module Crystal
     end
 
     def interpret_argless_method(method, args)
-      interpret_check_args_length method, args, 0
+      interpret_check_args_size method, args, 0
       yield
     end
 
     def interpret_one_arg_method(method, args)
-      interpret_check_args_length method, args, 1
+      interpret_check_args_size method, args, 1
       yield args.first
     end
 
     def interpret_two_args_method(method, args)
-      interpret_check_args_length method, args, 2
+      interpret_check_args_size method, args, 2
       yield args[0], args[1]
     end
 
-    def interpret_check_args_length(method, args, length)
-      unless args.length == length
-        raise "wrong number of arguments for #{method} (#{args.length} for #{length})"
+    def interpret_check_args_size(method, args, size)
+      unless args.size == size
+        raise "wrong number of arguments for #{method} (#{args.size} for #{size})"
       end
     end
 
@@ -148,7 +148,7 @@ module Crystal
             raise "undefined method '~' for float literal: #{self}"
           end
         else
-          raise "wrong number of arguments for NumberLiteral#~ (#{args.length} for 0)"
+          raise "wrong number of arguments for NumberLiteral#~ (#{args.size} for 0)"
         end
       else
         super
@@ -183,8 +183,8 @@ module Crystal
     end
 
     def bin_op(op, args)
-      if args.length != 1
-        raise "wrong number of arguments for NumberLiteral##{op} (#{args.length} for 1)"
+      if args.size != 1
+        raise "wrong number of arguments for NumberLiteral##{op} (#{args.size} for 1)"
       end
 
       other = args.first
@@ -303,12 +303,12 @@ module Crystal
         end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
-      when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(@value.length) }
+      when "size", "length" # TODO: remove length after 0.7.7
+        interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
         interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
       when "split"
-        case args.length
+        case args.size
         when 0
           ArrayLiteral.map(@value.split) { |value| StringLiteral.new(value) }
         when 1
@@ -324,7 +324,7 @@ module Crystal
 
           ArrayLiteral.map(@value.split(splitter)) { |value| StringLiteral.new(value) }
         else
-          raise "wrong number of arguments for split (#{args.length} for 0, 1)"
+          raise "wrong number of arguments for split (#{args.size} for 0, 1)"
         end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|
@@ -341,7 +341,7 @@ module Crystal
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
       when "to_i"
-        case args.length
+        case args.size
         when 0
           value = @value.to_i64?
         when 1
@@ -350,7 +350,7 @@ module Crystal
 
           value = @value.to_i64?(arg.to_number)
         else
-          raise "wrong number of arguments for to_i (#{args.length} for 0, 1)"
+          raise "wrong number of arguments for to_i (#{args.size} for 0, 1)"
         end
 
         if value
@@ -437,8 +437,8 @@ module Crystal
         end
       when "last"
         interpret_argless_method(method, args) { elements.last? || NilLiteral.new }
-      when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(elements.length) }
+      when "size", "length" # TODO: remove length after 0.7.7
+        interpret_argless_method(method, args) { NumberLiteral.new(elements.size) }
       when "map"
         interpret_argless_method(method, args) do
           raise "map expects a block" unless block
@@ -468,7 +468,7 @@ module Crystal
       when "uniq"
         ArrayLiteral.new(elements.uniq)
       when "[]"
-        case args.length
+        case args.size
         when 1
           arg = args.first
           unless arg.is_a?(NumberLiteral)
@@ -483,23 +483,23 @@ module Crystal
             NilLiteral.new
           end
         else
-          raise "wrong number of arguments for [] (#{args.length} for 1)"
+          raise "wrong number of arguments for [] (#{args.size} for 1)"
         end
       when "unshift"
-        case args.length
+        case args.size
         when 1
           elements.unshift(args.first)
           self
         else
-          raise "wrong number of arguments for push (#{args.length} for 1)"
+          raise "wrong number of arguments for push (#{args.size} for 1)"
         end
       when "push", "<<"
-        case args.length
+        case args.size
         when 1
           elements << args.first
           self
         else
-          raise "wrong number of arguments for push (#{args.length} for 1)"
+          raise "wrong number of arguments for push (#{args.size} for 1)"
         end
       else
         super
@@ -514,8 +514,8 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
       when "keys"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.key }
-      when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(entries.length) }
+      when "size", "length" # TODO: remove length after 0.7.7
+        interpret_argless_method(method, args) { NumberLiteral.new(entries.size) }
       when "to_a"
         interpret_argless_method(method, args) do
           ArrayLiteral.map(entries) { |entry| TupleLiteral.new([entry.key, entry.value] of ASTNode) }
@@ -523,16 +523,16 @@ module Crystal
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
       when "[]"
-        case args.length
+        case args.size
         when 1
           key = args.first
           entry = entries.find &.key.==(key)
           entry.try(&.value) || NilLiteral.new
         else
-          raise "wrong number of arguments for [] (#{args.length} for 1)"
+          raise "wrong number of arguments for [] (#{args.size} for 1)"
         end
       when "[]="
-        case args.length
+        case args.size
         when 2
           key, value = args
 
@@ -545,7 +545,7 @@ module Crystal
 
           value
         else
-          raise "wrong number of arguments for []= (#{args.length} for 2)"
+          raise "wrong number of arguments for []= (#{args.size} for 2)"
         end
       else
         super
@@ -558,10 +558,10 @@ module Crystal
       case method
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
-      when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(elements.length) }
+      when "size", "length" # TODO: remove length after 0.7.7
+        interpret_argless_method(method, args) { NumberLiteral.new(elements.size) }
       when "[]"
-        case args.length
+        case args.size
         when 1
           arg = args.first
           unless arg.is_a?(NumberLiteral)
@@ -576,7 +576,7 @@ module Crystal
             raise "tuple index out of bounds: #{index} in #{self}"
           end
         else
-          raise "wrong number of arguments for [] (#{args.length} for 1)"
+          raise "wrong number of arguments for [] (#{args.size} for 1)"
         end
       else
         super
@@ -770,13 +770,13 @@ module Crystal
           end
           BoolLiteral.new(type.has_attribute?(value))
         end
-      when "length"
+      when "size", "length" # TODO: remove length after 0.7.7
         interpret_argless_method(method, args) do
           type = type.instance_type
           if type.is_a?(TupleInstanceType)
-            NumberLiteral.new(type.tuple_types.length)
+            NumberLiteral.new(type.tuple_types.size)
           else
-            raise "undefined method 'length' for TypeNode of type #{type} (must be a tuple type)"
+            raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple type)"
           end
         end
       else
@@ -817,7 +817,7 @@ module Crystal
       end
 
       all_ivars = type.all_instance_vars
-      ivars = Array(ASTNode).new(all_ivars.length)
+      ivars = Array(ASTNode).new(all_ivars.size)
       all_ivars.each do |name, ivar|
         # An instance var might not have a type, so we skip it
         if ivar_type = ivar.type?

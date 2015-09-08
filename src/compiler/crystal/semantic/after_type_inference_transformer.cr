@@ -95,7 +95,6 @@ module Crystal
     def transform(node : Expressions)
       exps = [] of ASTNode
 
-      length = node.expressions.length
       node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
 
@@ -314,7 +313,7 @@ module Crystal
         changed = false
         allocated_defs = [] of Def
 
-        if target_defs.length == 1
+        if target_defs.size == 1
           if target_defs[0].is_a?(External)
             check_args_are_not_closure node, "can't send closure to C function"
           elsif obj_type.is_a?(CStructType) && node.name.ends_with?('=')

@@ -78,7 +78,7 @@ module Crystal
     end
 
     def self.match_def(signature, def_metadata, context)
-      unless (def_metadata.min_length <= signature.arg_types.length <= def_metadata.max_length) &&
+      unless (def_metadata.min_size <= signature.arg_types.size <= def_metadata.max_size) &&
         (def_metadata.yields == !!signature.block)
         return nil
       end
@@ -109,18 +109,18 @@ module Crystal
 
       # The splat argument
       if splat_index == -1
-        splat_length = 0
+        splat_size = 0
         offset = 0
       else
-        splat_length = arg_types.length - (a_def.args.length - 1)
-        offset = splat_index + splat_length
+        splat_size = arg_types.size - (a_def.args.size - 1)
+        offset = splat_index + splat_size
         splat_arg = def_metadata.def.args[splat_index]
 
         # If there's a restriction on a splat, zero splatted args don't match
-        return nil if splat_arg.restriction && splat_length == 0
+        return nil if splat_arg.restriction && splat_size == 0
 
         matched_arg_types ||= [] of Type
-        splat_length.times do |i|
+        splat_size.times do |i|
           matched_arg_type = arg_types[splat_index + i]
 
           # Check that every splatted type matches the restriction
@@ -134,7 +134,7 @@ module Crystal
 
       # Args after the splat argument
       base = splat_index + 1
-      base.upto(a_def.args.length - 1) do |index|
+      base.upto(a_def.args.size - 1) do |index|
         def_arg = a_def.args[index]
         arg_type = arg_types[offset + index - base]?
 
@@ -152,7 +152,7 @@ module Crystal
 
       # Now check named args
       if named_args
-        min_index = signature.arg_types.length
+        min_index = signature.arg_types.size
         named_args.each do |named_arg|
           found_index = a_def.args.index { |arg| arg.name == named_arg.name }
           if found_index
@@ -276,7 +276,7 @@ module Crystal
             end
           end
 
-          if !subtype.leaf? && subtype_matches.length > 0
+          if !subtype.leaf? && subtype_matches.size > 0
             type_to_matches ||= {} of Type => Matches
             type_to_matches[subtype] = subtype_matches
           end
@@ -308,7 +308,7 @@ module Crystal
         change.type.add_def change.def
       end
 
-      Matches.new(matches, (matches && matches.length > 0), self)
+      Matches.new(matches, (matches && matches.size > 0), self)
     end
 
     def covered_by_superclass?(subtype, type_to_matches)

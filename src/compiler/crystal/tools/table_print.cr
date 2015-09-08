@@ -8,15 +8,15 @@ module Crystal
 
     class Column
       def initialize
-        @max_length = 0
+        @max_size = 0
       end
 
       def width
-        @max_length
+        @max_size
       end
 
       def will_render(cell)
-        @max_length = Math.max(@max_length, cell.text.length) if cell.colspan == 1
+        @max_size = Math.max(@max_size, cell.text.size) if cell.colspan == 1
       end
 
       def render_cell(table, cell)
@@ -32,8 +32,8 @@ module Crystal
         when :right
           "%+#{available_width}s" % cell.text
         when :center
-          left = " " * ((available_width - cell.text.length) / 2)
-          right = " " * (available_width - cell.text.length - left.length)
+          left = " " * ((available_width - cell.text.size) / 2)
+          right = " " * (available_width - cell.text.size - left.size)
           "#{left}#{cell.text}#{right}"
         end
       end
@@ -88,7 +88,7 @@ module Crystal
       @data.each_with_index do |data_row, i|
         @io << '\n' if i != 0
         if data_row.is_a?(Separator)
-          @io << "-" * (@columns.sum(&.width) + 1 + 3 * @columns.length)
+          @io << "-" * (@columns.sum(&.width) + 1 + 3 * @columns.size)
         elsif data_row.is_a?(Array(Cell))
           column_index = 0
           data_row.each_with_index do |cell, i|
@@ -104,7 +104,7 @@ module Crystal
     end
 
     protected def column_for_last_cell
-      col = @columns[last_string_row.length-1]?
+      col = @columns[last_string_row.size-1]?
       unless col
         col = Column.new
         @columns << col

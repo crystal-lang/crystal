@@ -88,7 +88,7 @@ class HTTP::Server
       raise ArgumentError.new "no handlers specified"
     end
 
-    0.upto(handlers.length - 2) do |i|
+    0.upto(handlers.size - 2) do |i|
       handlers[i].next = handlers[i + 1]
     end
 

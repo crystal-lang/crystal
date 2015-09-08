@@ -115,7 +115,7 @@ class String
   # Creates a String form the given slice. Bytes will be copied from the slice.
   #
   # This method is always safe to call, and the resulting string will have
-  # the contents and length of the slice.
+  # the contents and size of the slice.
   #
   # ```
   # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
@@ -125,7 +125,7 @@ class String
   # Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
   def self.new(slice : Slice(UInt8))
-    new(slice.pointer(slice.length), slice.length)
+    new(slice.pointer(slice.size), slice.size)
   end
 
   # Creates a String from a pointer. Bytes will be copied from the pointer.
@@ -150,10 +150,10 @@ class String
   end
 
   # Creates a new String from a pointer, indicating its bytesize count
-  # and, optionally, the UTF-8 codepoints count (length). Bytes will be
+  # and, optionally, the UTF-8 codepoints count (size). Bytes will be
   # copied from the pointer.
   #
-  # If the given length is zero, the amount of UTF-8 codepoints will be
+  # If the given size is zero, the amount of UTF-8 codepoints will be
   # lazily computed when needed.
   #
   # ```
@@ -163,16 +163,16 @@ class String
   #
   # Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
-  def self.new(chars : UInt8*, bytesize, length = 0)
+  def self.new(chars : UInt8*, bytesize, size = 0)
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
-      {bytesize, length}
+      {bytesize, size}
     end
   end
 
   # Creates a new String by allocating a buffer (`Pointer(UInt8)`) with the given capacity, then
-  # yielding that buffer. The block must return a tuple with the bytesize and length
-  # (UTF-8 codepoints count) of the String. If the returned length is zero, the UTF-8 codepoints
+  # yielding that buffer. The block must return a tuple with the bytesize and size
+  # (UTF-8 codepoints count) of the String. If the returned size is zero, the UTF-8 codepoints
   # count will be lazily computed.
   #
   # This method is **unsafe**: the bytesize returned by the block must be less than the
@@ -195,9 +195,9 @@ class String
   def self.new(capacity)
     str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
     buffer = (str as String).cstr
-    bytesize, length = yield buffer
+    bytesize, size = yield buffer
     str_header = str as {Int32, Int32, Int32}*
-    str_header.value = {TYPE_ID, bytesize.to_i, length.to_i}
+    str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
     buffer[bytesize] = 0_u8
     str as String
   end
@@ -605,17 +605,17 @@ class String
   # ```
   def [](range : Range(Int, Int))
     from = range.begin
-    from += length if from < 0
+    from += size if from < 0
     to = range.end
-    to += length if to < 0
+    to += size if to < 0
     to -= 1 if range.excludes_end?
-    length = to - from + 1
-    length = 0 if length < 0
-    self[from, length]
+    size = to - from + 1
+    size = 0 if size < 0
+    self[from, size]
   end
 
   # Returns a substring starting from the `start` character
-  # of length `count`.
+  # of size `count`.
   #
   # The `start` argument can be negative to start counting
   # from the end of the string.
@@ -628,7 +628,7 @@ class String
       return byte_slice(start, count)
     end
 
-    start += length if start < 0
+    start += size if start < 0
 
     start_pos = nil
     end_pos = nil
@@ -708,7 +708,7 @@ class String
       return byte ? byte.chr : yield
     end
 
-    index += length if index < 0
+    index += size if index < 0
 
     each_char_with_index do |char, i|
       if index == i
@@ -731,8 +731,8 @@ class String
 
       String.new(count) do |buffer|
         buffer.copy_from(cstr + start, count)
-        slice_length = single_byte_optimizable ? count : 0
-        {count, slice_length}
+        slice_size = single_byte_optimizable ? count : 0
+        {count, slice_size}
       end
     elsif start == bytesize
       if count >= 0
@@ -881,7 +881,7 @@ class String
       return byte_slice(0, bytesize - 1)
     end
 
-    self[0, length - 1]
+    self[0, size - 1]
   end
 
   def strip
@@ -1426,7 +1426,7 @@ class String
       buffer.copy_from(cstr, bytesize)
       (buffer + bytesize).copy_from(other.cstr, other.bytesize)
 
-      if length_known? && other.length_known?
+      if size_known? && other.size_known?
         {size, @length + other.@length}
       else
         {size, 0}
@@ -1448,7 +1448,7 @@ class String
       buffer.copy_from(cstr, bytesize)
       (buffer + bytesize).copy_from(bytes.buffer, count)
 
-      if length_known?
+      if size_known?
         {size, @length + 1}
       else
         {size, 0}
@@ -1484,7 +1484,7 @@ class String
   end
 
   def index(c : Char, offset = 0)
-    offset += length if offset < 0
+    offset += size if offset < 0
     return nil if offset < 0
 
     each_char_with_index do |char, i|
@@ -1497,7 +1497,7 @@ class String
   end
 
   def index(c : String, offset = 0)
-    offset += length if offset < 0
+    offset += size if offset < 0
     return nil if offset < 0
 
     end_pos = bytesize - c.bytesize
@@ -1516,8 +1516,8 @@ class String
     nil
   end
 
-  def rindex(c : Char, offset = length - 1)
-    offset += length if offset < 0
+  def rindex(c : Char, offset = size - 1)
+    offset += size if offset < 0
     return nil if offset < 0
 
     last_index = nil
@@ -1531,17 +1531,17 @@ class String
     last_index
   end
 
-  def rindex(c : String, offset = length - c.length)
-    offset += length if offset < 0
+  def rindex(c : String, offset = size - c.size)
+    offset += size if offset < 0
     return nil if offset < 0
 
-    end_length = length - c.length
+    end_size = size - c.size
 
     last_index = nil
 
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
-      if i <= end_length && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
+      if i <= end_size && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
         last_index = i
       end
     end
@@ -1615,11 +1615,11 @@ class String
           i += 1
           if c.chr.whitespace?
             piece_bytesize = i - 1 - index
-            piece_length = single_byte_optimizable ? piece_bytesize : 0
-            ary.push String.new(cstr + index, piece_bytesize, piece_length)
+            piece_size = single_byte_optimizable ? piece_bytesize : 0
+            ary.push String.new(cstr + index, piece_bytesize, piece_size)
             looking_for_space = false
 
-            if limit && ary.length + 1 == limit
+            if limit && ary.size + 1 == limit
               limit_reached = true
             end
 
@@ -1642,8 +1642,8 @@ class String
     end
     if looking_for_space
       piece_bytesize = bytesize - index
-      piece_length = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + index, piece_bytesize, piece_length)
+      piece_size = single_byte_optimizable ? piece_bytesize : 0
+      ary.push String.new(cstr + index, piece_bytesize, piece_size)
     end
     ary
   end
@@ -1666,17 +1666,17 @@ class String
     reader.each_with_index do |char, i|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
-        piece_length = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
+        piece_size = single_byte_optimizable ? piece_bytesize : 0
+        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
         byte_offset = reader.pos + reader.current_char_width
-        break if limit && ary.length + 1 == limit
+        break if limit && ary.size + 1 == limit
       end
     end
 
     if byte_offset != bytesize
       piece_bytesize = bytesize - byte_offset
-      piece_length = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
+      piece_size = single_byte_optimizable ? piece_bytesize : 0
+      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
     end
 
     ary
@@ -1696,10 +1696,10 @@ class String
       # Special case: return all chars as strings
       each_char do |c|
         ary.push c.to_s
-        break if limit && ary.length + 1 == limit
+        break if limit && ary.size + 1 == limit
       end
 
-      if limit && ary.size != length
+      if limit && ary.size != size
         ary.push(self[ary.size..-1])
       end
 
@@ -1716,18 +1716,18 @@ class String
     while i < stop
       if (buffer + i).memcmp(separator.cstr, separator_bytesize) == 0
         piece_bytesize = i - byte_offset
-        piece_length = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
+        piece_size = single_byte_optimizable ? piece_bytesize : 0
+        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
-        break if limit && ary.length + 1 == limit
+        break if limit && ary.size + 1 == limit
       end
       i += 1
     end
     if byte_offset != bytesize
       piece_bytesize = bytesize - byte_offset
-      piece_length = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_length)
+      piece_size = single_byte_optimizable ? piece_bytesize : 0
+      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
     end
     ary
   end
@@ -1745,19 +1745,19 @@ class String
 
     while match = separator.match_at_byte_index(self, match_offset)
       index = match.byte_begin(0)
-      slice_length = index - slice_offset
+      slice_size = index - slice_offset
       match_bytesize = match[0].bytesize
 
-      if slice_offset == 0 && slice_length == 0 && match_bytesize == 0
+      if slice_offset == 0 && slice_size == 0 && match_bytesize == 0
         # Skip
-      elsif slice_offset == bytesize && slice_length == 0
+      elsif slice_offset == bytesize && slice_size == 0
         ary.push byte_slice(last_slice_offset)
       else
-        ary.push byte_slice(slice_offset, slice_length)
+        ary.push byte_slice(slice_offset, slice_size)
       end
       count += 1
 
-      1.upto(match.length) do |i|
+      1.upto(match.size) do |i|
         ary.push match[i]
       end
 
@@ -1910,7 +1910,7 @@ class String
   end
 
   private def just(len, char, left)
-    return self if length >= len
+    return self if size >= len
 
     bytes :: UInt8[4]
 
@@ -1924,7 +1924,7 @@ class String
       end
     end
 
-    difference = len - length
+    difference = len - size
     new_bytesize = bytesize + difference * count
 
     String.new(new_bytesize) do |buffer|
@@ -1973,7 +1973,7 @@ class String
 
     carry = nil
     last_alnum = 0
-    index = length - 1
+    index = size - 1
 
     while index >= 0
       s = chars[index]
@@ -1999,14 +1999,14 @@ class String
     end
 
     if carry.nil? # there were no alphanumeric chars
-      chars[length - 1] = chars[length - 1].succ
+      chars[size - 1] = chars[size - 1].succ
     end
 
     if carry.is_a?(Char) && index < 0 # we still have a carry and already reached the beginning
       chars.insert(last_alnum, carry)
     end
 
-    String.build(chars.length) do |str|
+    String.build(chars.size) do |str|
       chars.each do |char|
         str << char
       end
@@ -2353,7 +2353,7 @@ class String
     sprintf self, other
   end
 
-  # Return a hash based on this string’s length and content.
+  # Return a hash based on this string’s size and content.
   #
   # See also `Object#hash`.
   def hash
@@ -2367,10 +2367,10 @@ class String
   # Returns the number of unicode codepoints in this string.
   #
   # ```
-  # "hello".length         #=> 5
-  # "你好".length          #=> 2
+  # "hello".size         #=> 5
+  # "你好".size          #=> 2
   # ```
-  def length
+  def size
     if @length > 0 || @bytesize == 0
       return @length
     end
@@ -2397,19 +2397,15 @@ class String
     @length = count
   end
 
-  def size
-    length
-  end
-
   def ascii_only?
-    @bytesize == 0 || length == @bytesize
+    @bytesize == 0 || size == @bytesize
   end
 
   protected def single_byte_optimizable?
     @bytesize == @length
   end
 
-  protected def length_known?
+  protected def size_known?
     @bytesize == 0 || @length > 0
   end
 

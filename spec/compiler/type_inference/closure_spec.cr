@@ -409,7 +409,7 @@ describe "Type inference: closure" do
       "expected block argument's argument #1 to be Int32, not Int64"
   end
 
-  it "errors if forwaring block arg doesn't match input type length" do
+  it "errors if forwaring block arg doesn't match input type size" do
     assert_error "
       def foo(&block : Int32, Int32 -> U)
         block

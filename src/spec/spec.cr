@@ -10,9 +10,9 @@ require "signal"
 # require "spec"
 #
 # describe "Array" do
-#   describe "#length" do
+#   describe "#size" do
 #     it "correctly reports the number of elements in the Array" do
-#       [1, 2, 3].length.should eq 3
+#       [1, 2, 3].size.should eq 3
 #     end
 #   end
 #

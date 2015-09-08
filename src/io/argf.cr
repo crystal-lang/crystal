@@ -10,7 +10,7 @@ class IO::ARGF
   end
 
   def read(slice : Slice(UInt8))
-    count = slice.length
+    count = slice.size
     first_initialize unless @initialized
 
     if current_io = @current_io

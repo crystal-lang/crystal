@@ -148,7 +148,7 @@ describe "Type inference: NoReturn" do
           b = "hello"
         end
 
-        b.length
+        b.size
 
         b = nil
 
@@ -156,7 +156,7 @@ describe "Type inference: NoReturn" do
         a += 1
       end
       ),
-      "undefined method 'length' for Nil"
+      "undefined method 'size' for Nil"
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (1)" do
@@ -271,7 +271,7 @@ describe "Type inference: NoReturn" do
           x.not_nil!
         end
 
-        b.length
+        b.size
 
         b = nil
 
@@ -279,6 +279,6 @@ describe "Type inference: NoReturn" do
         a += 1
       end
       ),
-      "undefined method 'length' for Nil"
+      "undefined method 'size' for Nil"
   end
 end

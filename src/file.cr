@@ -34,7 +34,7 @@ class File < FileDescriptorIO
   end
 
   protected def open_flag(mode)
-    if mode.length == 0
+    if mode.size == 0
       raise "invalid access mode #{mode}"
     end
 
@@ -53,7 +53,7 @@ class File < FileDescriptorIO
       raise "invalid access mode #{mode}"
     end
 
-    case mode.length
+    case mode.size
     when 1
       # Nothing
     when 2
@@ -115,7 +115,7 @@ class File < FileDescriptorIO
     seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
     raise Errno.new "Unable to tell" if seek_value == -1
 
-    seek_value - @in_buffer_rem.length
+    seek_value - @in_buffer_rem.size
   end
 
   # Sets the current position (in bytes) in this File.
@@ -178,7 +178,7 @@ class File < FileDescriptorIO
   def self.basename(filename)
     return "" if filename.bytesize == 0
 
-    last = filename.length - 1
+    last = filename.size - 1
     last -= 1 if filename[last] == SEPARATOR
 
     index = filename.rindex SEPARATOR, last
@@ -191,7 +191,7 @@ class File < FileDescriptorIO
 
   def self.basename(filename, suffix)
     basename = basename(filename)
-    basename = basename[0, basename.length - suffix.length] if basename.ends_with?(suffix)
+    basename = basename[0, basename.size - suffix.size] if basename.ends_with?(suffix)
     basename
   end
 
@@ -205,8 +205,8 @@ class File < FileDescriptorIO
   def self.extname(filename)
     dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.length - 1  && filename[dot_index - 1] != SEPARATOR
-      filename[dot_index, filename.length - dot_index]
+    if dot_index && dot_index != filename.size - 1  && filename[dot_index - 1] != SEPARATOR
+      filename[dot_index, filename.size - dot_index]
     else
       ""
     end
@@ -215,9 +215,9 @@ class File < FileDescriptorIO
   def self.expand_path(path, dir = nil)
     if path.starts_with?('~')
       home = ENV["HOME"]
-      if path.length >= 2 && path[1] == SEPARATOR
+      if path.size >= 2 && path[1] == SEPARATOR
         path = home + path[1..-1]
-      elsif path.length < 2
+      elsif path.size < 2
         return home
       end
     end
@@ -352,7 +352,7 @@ class File < FileDescriptorIO
           byte_count -= 1
         end
 
-        if index != parts.length - 1 && part.ends_with?(SEPARATOR)
+        if index != parts.size - 1 && part.ends_with?(SEPARATOR)
           byte_count -= 1
         end
 

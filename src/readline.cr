@@ -109,7 +109,7 @@ module Readline
   def common_prefix_bytesize(strings : Array)
     str1 = strings[0]
     low = str1.bytesize
-    1.upto(strings.length - 1).each do |i|
+    1.upto(strings.size - 1).each do |i|
       str2 = strings[i]
       low2 = common_prefix_bytesize(str1, str2)
       low = low2 if low2 < low
@@ -129,14 +129,14 @@ module Readline
 
     # We *must* to create the results using malloc (readline later frees that).
     # We create an extra result for the first element.
-    result = LibC.malloc(LibC::SizeT.cast(sizeof(UInt8*)) * (matches.length + 2)) as UInt8**
+    result = LibC.malloc(LibC::SizeT.cast(sizeof(UInt8*)) * (matches.size + 2)) as UInt8**
     matches.each_with_index do |match, i|
       result[i + 1] = malloc_match(match)
     end
-    result[matches.length + 1] = Pointer(UInt8).null
+    result[matches.size + 1] = Pointer(UInt8).null
 
     # The first element is the completion if it's oe
-    if matches.length == 1
+    if matches.size == 1
       result[0] = malloc_match(matches[0])
     else
       # Otherwise, we compute the common prefix of all matches

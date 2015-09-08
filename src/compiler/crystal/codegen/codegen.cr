@@ -172,7 +172,7 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod)
-      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.count), SYMBOL_TABLE_NAME
+      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -400,7 +400,7 @@ module Crystal
       old_needs_value = @needs_value
       @needs_value = false
 
-      last_index = node.expressions.length - 1
+      last_index = node.expressions.size - 1
       node.expressions.each_with_index do |exp, i|
         @needs_value = true if old_needs_value && i == last_index
         accept exp
@@ -1045,7 +1045,7 @@ module Crystal
       end
 
       # Then assign nil to remaining block args
-      node.exps.length.upto(block.args.length - 1) do |i|
+      node.exps.size.upto(block.args.size - 1) do |i|
         arg = block.args[i]
         block_var = block_context.vars[arg.name]
         assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
@@ -1298,7 +1298,7 @@ module Crystal
     def br_block_chain *blocks
       old_block = insert_block
 
-      0.upto(blocks.length - 2) do |i|
+      0.upto(blocks.size - 2) do |i|
         position_at_end blocks[i]
         br blocks[i + 1]
       end
@@ -1389,7 +1389,7 @@ module Crystal
         closure_skip_parent = false
 
         if parent_closure_type
-          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
+          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.size, "parent")
         end
 
         if self_closured
@@ -1397,7 +1397,7 @@ module Crystal
           self_value = llvm_self
           self_value = load self_value if current_context.type.passed_by_value?
 
-          store self_value, gep(closure_ptr, 0, closure_vars.length + offset, "self")
+          store self_value, gep(closure_ptr, 0, closure_vars.size + offset, "self")
 
           current_context.closure_self = current_context.type
         end
@@ -1649,7 +1649,7 @@ module Crystal
         global.initializer = LLVM.struct [
                                type_id(@mod.string),
                                int32(str.bytesize),
-                               int32(str.length),
+                               int32(str.size),
                                LLVM.string(str),
                              ]
         cast_to global, @mod.string

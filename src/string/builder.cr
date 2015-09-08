@@ -32,7 +32,7 @@ class String::Builder
   end
 
   def write(slice : Slice(UInt8))
-    count = slice.length
+    count = slice.size
     new_bytesize = real_bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))

@@ -123,7 +123,7 @@ BODIES = [
     5.15138902046611451e-05)
 ]
 
-if ARGV.length != 1
+if ARGV.size != 1
   puts "Usage: nbody n"
   exit 1
 end

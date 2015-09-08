@@ -9,7 +9,7 @@ private def expect_capture_option(args, option, value)
     end
   end
   flag.should eq(value)
-  args.length.should eq(0)
+  args.size.should eq(0)
 end
 
 private def expect_doesnt_capture_option(args, option)

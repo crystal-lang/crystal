@@ -2,7 +2,7 @@ class Crypto::Blowfish
   ULONG = 0x100000000
 
   def initialize(key)
-    if key.length < 1 || key.length > 56
+    if key.size < 1 || key.size > 56
       raise ArgumentError.new "Invalid key size: the key must be 1-56 bytes."
     end
 
@@ -50,9 +50,9 @@ class Crypto::Blowfish
     0.upto(17) do |i|
       data = 0
       4.times do
-        pos = 0 if pos >= key.length
+        pos = 0 if pos >= key.size
         data = ((data << 8) | key[pos].ord) % ULONG
-        pos = (pos + 1) % key.length
+        pos = (pos + 1) % key.size
       end
       @p[i] = (@p[i] ^ data) % ULONG
     end
@@ -83,9 +83,9 @@ class Crypto::Blowfish
   def next_word(key, pos)
     data = 0
     4.times do
-      pos.value = 0 if pos.value >= key.length
+      pos.value = 0 if pos.value >= key.size
       data = ((data << 8) | key[pos.value].ord) % ULONG
-      pos.value = (pos.value + 1) % key.length
+      pos.value = (pos.value + 1) % key.size
     end
 
     data

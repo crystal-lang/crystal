@@ -154,7 +154,7 @@ describe "Type inference: fun" do
       "no overload matches"
   end
 
-  it "has fun literal as restriction and errors if lengths is different" do
+  it "has fun literal as restriction and errors if sizes are different" do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -199,7 +199,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to ( -> Float64)"
   end
 
-  it "disallows casting a fun type to one accepting same length argument but different output" do
+  it "disallows casting a fun type to one accepting same size argument but different output" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Int32 -> Int32
@@ -207,7 +207,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to (Int32 -> Int32)"
   end
 
-  it "disallows casting a fun type to one accepting same length argument but different input" do
+  it "disallows casting a fun type to one accepting same size argument but different input" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Float64 -> Float64

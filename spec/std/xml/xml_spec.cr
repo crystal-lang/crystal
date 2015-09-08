@@ -23,7 +23,7 @@ describe XML do
     people.attributes.empty?.should be_true
 
     children = doc.children
-    children.length.should eq(1)
+    children.size.should eq(1)
     children.empty?.should be_false
 
     people = children[0]
@@ -32,7 +32,7 @@ describe XML do
     people.document.should eq(doc)
 
     children = people.children
-    children.length.should eq(3)
+    children.size.should eq(3)
 
     text = children[0]
     text.name.should eq("text")
@@ -46,7 +46,7 @@ describe XML do
 
     attrs = person.attributes
     attrs.empty?.should be_false
-    attrs.length.should eq(2)
+    attrs.size.should eq(2)
 
     attr = attrs[0]
     attr.name.should eq("id")
@@ -164,7 +164,7 @@ XML
       ))
     namespaces = doc.root.not_nil!.namespace_scopes
 
-    namespaces.length.should eq(2)
+    namespaces.size.should eq(2)
     namespaces[0].href.should eq("http://www.w3.org/2005/Atom")
     namespaces[0].prefix.should be_nil
     namespaces[1].href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")

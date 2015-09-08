@@ -51,10 +51,10 @@ class Array(T)
   # Returns the number of elements in the array.
   #
   # ```
-  # [:foo, :bar].length #=> 2
+  # [:foo, :bar].size #=> 2
   # ```
-  getter length
-  @length :: Int32
+  getter size
+  @size :: Int32
   @capacity :: Int32
 
   # Creates a new empty Array backed by a buffer that is initially
@@ -68,7 +68,7 @@ class Array(T)
   #
   # ```
   # ary = Array(Int32).new(5)
-  # ary.length #=> 0
+  # ary.size #=> 0
   # ```
   def initialize(initial_capacity = 3 : Int)
     if initial_capacity < 0
@@ -76,7 +76,7 @@ class Array(T)
     end
 
     initial_capacity = Math.max(initial_capacity, 3)
-    @length = 0
+    @size = 0
     @capacity = initial_capacity.to_i
     @buffer = Pointer(T).malloc(initial_capacity)
   end
@@ -97,7 +97,7 @@ class Array(T)
       raise ArgumentError.new("negative array size: #{size}")
     end
 
-    @length = size.to_i
+    @size = size.to_i
 
     if size == 0
       @capacity = 3
@@ -130,7 +130,7 @@ class Array(T)
   end
 
   # Creates a new Array, allocating an internal buffer with the given capacity,
-  # and yielding that buffer. The block must return the desired length of the array.
+  # and yielding that buffer. The block must return the desired size of the array.
   #
   # This method is **unsafe**, but is usually used to initialize the buffer
   # by passing it to a C function.
@@ -142,7 +142,7 @@ class Array(T)
   # ```
   def self.build(capacity : Int)
     ary = Array(T).new(capacity)
-    ary.length = (yield ary.buffer).to_i
+    ary.size = (yield ary.buffer).to_i
     ary
   end
 
@@ -171,7 +171,7 @@ class Array(T)
   # `<=>` operator, as soon as one of such comparisons returns a non zero
   # value, that result is the return value of the whole comparison.
   #
-  # If all elements are equal, the comparison is based on the length of the arrays.
+  # If all elements are equal, the comparison is based on the size of the arrays.
   #
   # ```
   # [8] <=> [1,2,3] # => 1
@@ -179,12 +179,12 @@ class Array(T)
   # [1,2] <=> [1,2] # => 0
   # ```
   def <=>(other : Array)
-    min_length = Math.min(length, other.length)
-    0.upto(min_length - 1) do |i|
+    min_size = Math.min(size, other.size)
+    0.upto(min_size - 1) do |i|
       n = buffer[i] <=> other.buffer[i]
       return n if n != 0
     end
-    length <=> other.length
+    size <=> other.size
   end
 
   # Set intersection: returns a new array containing elements common to the two
@@ -201,14 +201,14 @@ class Array(T)
     return Array(T).new if self.empty? || other.empty?
 
     hash = other.to_lookup_hash
-    hash_length = hash.length
-    Array(T).build(Math.min(length, other.length)) do |buffer|
+    hash_size = hash.size
+    Array(T).build(Math.min(size, other.size)) do |buffer|
       i = 0
       each do |obj|
         hash.delete(obj)
-        new_hash_length = hash.length
-        if hash_length != new_hash_length
-          hash_length = new_hash_length
+        new_hash_size = hash.size
+        if hash_size != new_hash_size
+          hash_size = new_hash_size
           buffer[i] = obj
           i += 1
         end
@@ -226,7 +226,7 @@ class Array(T)
   #
   # See also: `#uniq`.
   def |(other_ary : Array(U))
-    Array(T | U).build(length + other_ary.length) do |buffer|
+    Array(T | U).build(size + other_ary.size) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
       each do |obj|
@@ -256,11 +256,11 @@ class Array(T)
   # [1,2] + [2,3] # => [1,2,2,3]
   # ```
   def +(other : Array(U))
-    new_length = length + other.length
-    Array(T | U).build(new_length) do |buffer|
-      buffer.copy_from(self.buffer, length)
-      (buffer + length).copy_from(other.buffer, other.length)
-      new_length
+    new_size = size + other.size
+    Array(T | U).build(new_size) do |buffer|
+      buffer.copy_from(self.buffer, size)
+      (buffer + size).copy_from(other.buffer, other.size)
+      new_size
     end
   end
 
@@ -272,7 +272,7 @@ class Array(T)
   # [1,2,3] - [2,1] # => [3]
   # ```
   def -(other : Array(U))
-    ary = Array(T).new(Math.max(length - other.length, 0))
+    ary = Array(T).new(Math.max(size - other.size, 0))
     hash = other.to_lookup_hash
     each do |obj|
       ary << obj unless hash.has_key?(obj)
@@ -286,7 +286,7 @@ class Array(T)
   # [ "a", "b", "c" ] * 2   #=> [ "a", "b", "c", "a", "b", "c" ]
   # ```
   def *(times : Int)
-    ary = Array(T).new(length * times)
+    ary = Array(T).new(size * times)
     times.times do
       ary.concat(self)
     end
@@ -376,13 +376,13 @@ class Array(T)
   # ```
   def [](range : Range)
     from = range.begin
-    from += length if from < 0
+    from += size if from < 0
     to = range.end
-    to += length if to < 0
+    to += size if to < 0
     to -= 1 if range.excludes_end?
-    length = to - from + 1
-    length = 0 if length < 0
-    self[from, length]
+    size = to - from + 1
+    size = 0 if size < 0
+    self[from, size]
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -402,15 +402,15 @@ class Array(T)
   # a[5, 1] # => []
   # ```
   def [](start : Int, count : Int)
-    if (start == 0 && length == 0) || (start == length && count >= 0)
+    if (start == 0 && size == 0) || (start == size && count >= 0)
       return Array(T).new
     end
 
-    start += length if start < 0
-    raise IndexError.new unless 0 <= start <= length
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
     raise ArgumentError.new "negative count: #{count}" if count < 0
 
-    count = Math.min(count, length - start)
+    count = Math.min(count, size - start)
 
     if count == 0
       return Array(T).new
@@ -443,8 +443,8 @@ class Array(T)
   # a.at(2) { :baz } #=> :baz
   # ```
   def at(index : Int)
-    index += length if index < 0
-    if 0 <= index < length
+    index += size if index < 0
+    if 0 <= index < size
       @buffer[index]
     else
       yield
@@ -473,8 +473,8 @@ class Array(T)
   # a.clear    #=> []
   # ```
   def clear
-    @buffer.clear(@length)
-    @length = 0
+    @buffer.clear(@size)
+    @size = 0
     self
   end
 
@@ -495,7 +495,7 @@ class Array(T)
   # puts ary2 #=> [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
-    Array(T).new(length) { |i| @buffer[i].clone as T }
+    Array(T).new(size) { |i| @buffer[i].clone as T }
   end
 
   # Returns a copy of self with all nil elements removed.
@@ -526,22 +526,22 @@ class Array(T)
   # ary                    #=> ["a", "b", "c", "d"]
   # ```
   def concat(other : Array)
-    other_length = other.length
-    new_length = length + other_length
-    if new_length > @capacity
-      resize_to_capacity(Math.pw2ceil(new_length))
+    other_size = other.size
+    new_size = size + other_size
+    if new_size > @capacity
+      resize_to_capacity(Math.pw2ceil(new_size))
     end
 
-    (@buffer + @length).copy_from(other.buffer, other_length)
-    @length += other_length
+    (@buffer + @size).copy_from(other.buffer, other_size)
+    @size += other_size
 
     self
   end
 
   # ditto
   def concat(other : Enumerable)
-    left_before_resize = @capacity - @length
-    len = @length
+    left_before_resize = @capacity - @size
+    len = @size
     buf = @buffer + len
     other.each do |elem|
       if left_before_resize == 0
@@ -555,14 +555,9 @@ class Array(T)
       left_before_resize -= 1
     end
 
-    @length = len
+    @size = len
 
     self
-  end
-
-  # Same as `length`.
-  def count
-    @length
   end
 
   # Deletes all items from `self` that are equal to `obj`.
@@ -589,9 +584,9 @@ class Array(T)
     index = check_index_out_of_bounds index
 
     elem = @buffer[index]
-    (@buffer + index).move_from(@buffer + index + 1, length - index - 1)
-    @length -= 1
-    (@buffer + @length).clear
+    (@buffer + index).move_from(@buffer + index + 1, size - index - 1)
+    @size -= 1
+    (@buffer + @size).clear
     elem
   end
 
@@ -610,7 +605,7 @@ class Array(T)
   def delete_if
     i1 = 0
     i2 = 0
-    while i1 < @length
+    while i1 < @size
       e = @buffer[i1]
       unless yield e
         if i1 != i2
@@ -623,8 +618,8 @@ class Array(T)
     end
     if i2 != i1
       count = i1 - i2
-      @length -= count
-      (@buffer + @length).clear(count)
+      @size -= count
+      (@buffer + @size).clear(count)
       true
     else
       false
@@ -649,8 +644,8 @@ class Array(T)
   # ```
   def dup
     Array(T).build(@capacity) do |buffer|
-      buffer.copy_from(self.buffer, length)
-      length
+      buffer.copy_from(self.buffer, size)
+      size
     end
   end
 
@@ -666,7 +661,7 @@ class Array(T)
 
   def each_index
     i = 0
-    while i < length
+    while i < size
       yield i
       i += 1
     end
@@ -678,11 +673,11 @@ class Array(T)
   end
 
   def empty?
-    @length == 0
+    @size == 0
   end
 
   def equals?(other : Array)
-    return false if @length != other.length
+    return false if @size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other[i])
     end
@@ -696,26 +691,26 @@ class Array(T)
   end
 
   def fill(from : Int)
-    from += length if from < 0
+    from += size if from < 0
 
-    raise IndexError.new if from >= length
+    raise IndexError.new if from >= size
 
-    from.upto(length - 1) { |i| @buffer[i] = yield i }
+    from.upto(size - 1) { |i| @buffer[i] = yield i }
 
     self
   end
 
-  def fill(from : Int, size : Int)
-    return self if size < 0
+  def fill(from : Int, count : Int)
+    return self if count < 0
 
-    from += length if from < 0
-    size += length if size < 0
+    from += size if from < 0
+    count += size if count < 0
 
-    raise IndexError.new if from >= length || size + from > length
+    raise IndexError.new if from >= size || count + from > size
 
-    size += from - 1
+    count += from - 1
 
-    from.upto(size) { |i| @buffer[i] = yield i }
+    from.upto(count) { |i| @buffer[i] = yield i }
 
     self
   end
@@ -724,8 +719,8 @@ class Array(T)
     from = range.begin
     to = range.end
 
-    from += length if from < 0
-    to += length if to < 0
+    from += size if from < 0
+    to += size if to < 0
 
     to -= 1 if range.excludes_end?
 
@@ -757,7 +752,7 @@ class Array(T)
   end
 
   def first
-    @length == 0 ? yield : @buffer[0]
+    @size == 0 ? yield : @buffer[0]
   end
 
   def first?
@@ -765,7 +760,7 @@ class Array(T)
   end
 
   def hash
-    inject(31 * @length) do |memo, elem|
+    inject(31 * @size) do |memo, elem|
       31 * memo + elem.hash
     end
   end
@@ -774,16 +769,16 @@ class Array(T)
     check_needs_resize
 
     if index < 0
-      index += length + 1
+      index += size + 1
     end
 
-    unless 0 <= index <= length
+    unless 0 <= index <= size
       raise IndexError.new
     end
 
-    (@buffer + index + 1).move_from(@buffer + index, length - index)
+    (@buffer + index + 1).move_from(@buffer + index, size - index)
     @buffer[index] = obj
-    @length += 1
+    @size += 1
     self
   end
 
@@ -796,7 +791,7 @@ class Array(T)
   end
 
   def last
-    @length == 0 ? yield : @buffer[@length - 1]
+    @size == 0 ? yield : @buffer[@size - 1]
   end
 
   def last?
@@ -804,16 +799,22 @@ class Array(T)
   end
 
   # :nodoc:
+  # TODO: remove after 0.7.7
   def length=(length : Int)
-    @length = length.to_i
+    @size = length.to_i
+  end
+
+  # :nodoc:
+  protected def size=(size : Int)
+    @size = size.to_i
   end
 
   def map(&block : T -> U)
-    Array(U).new(length) { |i| yield buffer[i] }
+    Array(U).new(size) { |i| yield buffer[i] }
   end
 
   def map!
-    @buffer.map!(length) { |e| yield e }
+    @buffer.map!(size) { |e| yield e }
     self
   end
 
@@ -828,7 +829,7 @@ class Array(T)
   end
 
   def map_with_index(&block : T, Int32 -> U)
-    Array(U).new(length) { |i| yield buffer[i], i }
+    Array(U).new(size) { |i| yield buffer[i], i }
   end
 
   # Returns an `Array` with all possible permutations of the given *size*.
@@ -841,7 +842,7 @@ class Array(T)
   #     a.permutations(0) #=> [[]]
   #     a.permutations(4) #=> []
   #
-  def permutations(size = length : Int)
+  def permutations(size = self.size : Int)
     ary = [] of Array(T)
     each_permutation(size) do |a|
       ary << a
@@ -856,8 +857,8 @@ class Array(T)
   #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
-  def each_permutation(size = length : Int)
-    n = self.length
+  def each_permutation(size = self.size : Int)
+    n = self.size
     return self if size > n
 
     raise ArgumentError.new("size must be positive") if size < 0
@@ -889,7 +890,7 @@ class Array(T)
     end
   end
 
-  def combinations(size = length : Int)
+  def combinations(size = self.size : Int)
     ary = [] of Array(T)
     each_combination(size) do |a|
       ary << a
@@ -897,7 +898,7 @@ class Array(T)
     ary
   end
 
-  def each_combination(size = length : Int)
+  def each_combination(size = self.size : Int)
     n = self.size
     return self if size > n
     raise ArgumentError.new("size must be positive") if size < 0
@@ -947,7 +948,7 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
-  def repeated_combinations(size = length : Int)
+  def repeated_combinations(size = self.size : Int)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a
@@ -955,7 +956,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_combination(size = length : Int)
+  def each_repeated_combination(size = self.size : Int)
     n = self.size
     return self if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1002,7 +1003,7 @@ class Array(T)
 
   def self.each_product(arrays)
     pool = arrays.map &.first
-    lens = arrays.map &.length
+    lens = arrays.map &.size
     return if lens.any? &.==(0)
     n = arrays.size
     indices = Array.new(n, 0)
@@ -1030,7 +1031,7 @@ class Array(T)
     end
   end
 
-  def repeated_permutations(size = length : Int)
+  def repeated_permutations(size = self.size : Int)
     ary = [] of Array(T)
     each_repeated_permutation(size) do |a|
       ary << a
@@ -1038,7 +1039,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size = length : Int)
+  def each_repeated_permutation(size = self.size : Int)
     n = self.size
     return self if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1057,12 +1058,12 @@ class Array(T)
   end
 
   def pop
-    if @length == 0
+    if @size == 0
       yield
     else
-      @length -= 1
-      value = @buffer[@length]
-      (@buffer + @length).clear
+      @size -= 1
+      value = @buffer[@size]
+      (@buffer + @size).clear
       value
     end
   end
@@ -1072,11 +1073,11 @@ class Array(T)
       raise ArgumentError.new("can't pop negative count")
     end
 
-    n = Math.min(n, @length)
-    ary = Array(T).new(n) { |i| @buffer[@length - n + i] }
+    n = Math.min(n, @size)
+    ary = Array(T).new(n) { |i| @buffer[@size - n + i] }
 
-    @length -= n
-    (@buffer + @length).clear(n)
+    @size -= n
+    (@buffer + @size).clear(n)
 
     ary
   end
@@ -1086,7 +1087,7 @@ class Array(T)
   end
 
   def product(ary : Array(U))
-    result = Array({T, U}).new(length * ary.length)
+    result = Array({T, U}).new(size * ary.size)
     product(ary) do |x, y|
       result << {x, y}
     end
@@ -1113,8 +1114,8 @@ class Array(T)
   # ```
   def push(value : T)
     check_needs_resize
-    @buffer[@length] = value
-    @length += 1
+    @buffer[@size] = value
+    @size += 1
     self
   end
 
@@ -1127,19 +1128,19 @@ class Array(T)
   end
 
   def replace(other : Array)
-    @length = other.length
-    resize_to_capacity(@length) if @length > @capacity
-    @buffer.copy_from(other.buffer, other.length)
+    @size = other.size
+    resize_to_capacity(@size) if @size > @capacity
+    @buffer.copy_from(other.buffer, other.size)
     self
   end
 
   def reverse
-    Array(T).new(length) { |i| @buffer[length - i - 1] }
+    Array(T).new(size) { |i| @buffer[size - i - 1] }
   end
 
   def reverse!
     i = 0
-    j = length - 1
+    j = size - 1
     while i < j
       @buffer.swap i, j
       i += 1
@@ -1149,7 +1150,7 @@ class Array(T)
   end
 
   def reverse_each
-    (length - 1).downto(0) do |i|
+    (size - 1).downto(0) do |i|
       yield @buffer[i]
     end
     self
@@ -1164,7 +1165,7 @@ class Array(T)
   end
 
   def rindex
-    (length - 1).downto(0) do |i|
+    (size - 1).downto(0) do |i|
       if yield @buffer[i]
         return i
       end
@@ -1173,37 +1174,37 @@ class Array(T)
   end
 
   def rotate!(n = 1)
-    return self if length == 0
-    n %= length if n.abs >= length
-    n += length if n < 0
+    return self if size == 0
+    n %= size if n.abs >= size
+    n += size if n < 0
     return self if n == 0
-    if n <= length / 2
+    if n <= size / 2
       tmp = self[0..n]
-      @buffer.move_from(@buffer + n, length - n)
-      (@buffer + length - n).copy_from(tmp.buffer, n)
+      @buffer.move_from(@buffer + n, size - n)
+      (@buffer + size - n).copy_from(tmp.buffer, n)
     else
       tmp = self[n..-1]
-      (@buffer + length - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp.buffer, length - n)
+      (@buffer + size - n).move_from(@buffer, n)
+      @buffer.copy_from(tmp.buffer, size - n)
     end
     self
   end
 
   def rotate(n = 1)
-    return self if length == 0
-    n %= length if n.abs >= length
-    n += length if n < 0
+    return self if size == 0
+    n %= size if n.abs >= size
+    n += size if n < 0
     return self if n == 0
-    res = Array(T).new(length)
-    res.buffer.copy_from(@buffer + n, length - n)
-    (res.buffer + length - n).copy_from(@buffer, n)
-    res.length = length
+    res = Array(T).new(size)
+    res.buffer.copy_from(@buffer + n, size - n)
+    (res.buffer + size - n).copy_from(@buffer, n)
+    res.size = size
     res
   end
 
   def sample
-    raise IndexError.new if @length == 0
-    @buffer[rand(@length)]
+    raise IndexError.new if @size == 0
+    @buffer[rand(@size)]
   end
 
   def sample(n)
@@ -1217,14 +1218,14 @@ class Array(T)
     when 1
       return [sample] of T
     else
-      if n >= @length
+      if n >= @size
         return dup.shuffle!
       end
 
       ary = Array(T).new(n) { |i| @buffer[i] }
       buffer = ary.buffer
 
-      n.upto(@length - 1) do |i|
+      n.upto(@size - 1) do |i|
         j = rand(i + 1)
         if j <= n
           buffer[j] = @buffer[i]
@@ -1241,13 +1242,13 @@ class Array(T)
   end
 
   def shift
-    if @length == 0
+    if @size == 0
       yield
     else
       value = @buffer[0]
-      @length -= 1
-      @buffer.move_from(@buffer + 1, @length)
-      (@buffer + @length).clear
+      @size -= 1
+      @buffer.move_from(@buffer + 1, @size)
+      (@buffer + @size).clear
       value
     end
   end
@@ -1257,12 +1258,12 @@ class Array(T)
       raise ArgumentError.new("can't shift negative count")
     end
 
-    n = Math.min(n, @length)
+    n = Math.min(n, @size)
     ary = Array(T).new(n) { |i| @buffer[i] }
 
-    @buffer.move_from(@buffer + n, @length - n)
-    @length -= n
-    (@buffer + @length).clear(n)
+    @buffer.move_from(@buffer + n, @size - n)
+    @size -= n
+    (@buffer + @size).clear(n)
 
     ary
   end
@@ -1271,16 +1272,12 @@ class Array(T)
     shift { nil }
   end
 
-  def size
-    @length
-  end
-
   def shuffle
     dup.shuffle!
   end
 
   def shuffle!
-    @buffer.shuffle!(length)
+    @buffer.shuffle!(size)
     self
   end
 
@@ -1293,12 +1290,12 @@ class Array(T)
   end
 
   def sort!
-    Array.quicksort!(@buffer, @length)
+    Array.quicksort!(@buffer, @size)
     self
   end
 
   def sort!(&block: T, T -> Int32)
-    Array.quicksort!(@buffer, @length, block)
+    Array.quicksort!(@buffer, @size, block)
     self
   end
 
@@ -1311,10 +1308,10 @@ class Array(T)
   end
 
   def swap(index0, index1)
-    index0 += length if index0 < 0
-    index1 += length if index1 < 0
+    index0 += size if index0 < 0
+    index1 += size if index1 < 0
 
-    unless (0 <= index0 < length) && (0 <= index1 < length)
+    unless (0 <= index0 < size) && (0 <= index1 < size)
       raise IndexError.new
     end
 
@@ -1350,14 +1347,14 @@ class Array(T)
   def transpose
     return Array(Array(typeof(first.first))).new if empty?
 
-    len = at(0).length
-    (1...@length).each do |i|
-      l = at(i).length
+    len = at(0).size
+    (1...@size).each do |i|
+      l = at(i).size
       raise IndexError.new if len != l
     end
 
     Array(Array(typeof(first.first))).new(len) do |i|
-      Array(typeof(first.first)).new(@length) do |j|
+      Array(typeof(first.first)).new(@size) do |j|
         at(j).at(i)
       end
     end
@@ -1383,7 +1380,7 @@ class Array(T)
   # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # ```
   def uniq(&block : T -> _)
-    if length <= 1
+    if size <= 1
       dup
     else
       hash = to_lookup_hash { |elem| yield elem }
@@ -1410,18 +1407,18 @@ class Array(T)
   # a                    # => [{"student", "sam"}, {"teacher", "matz"}]
   # ```
   def uniq!
-    if length <= 1
+    if size <= 1
       return self
     end
 
     hash = to_lookup_hash { |elem| yield elem }
-    if length == hash.length
+    if size == hash.size
       return self
     end
 
-    old_length = @length
-    @length = hash.length
-    removed = old_length - @length
+    old_size = @size
+    @size = hash.size
+    removed = old_size - @size
     return self if removed == 0
 
     ptr = @buffer
@@ -1430,7 +1427,7 @@ class Array(T)
       ptr += 1
     end
 
-    (@buffer + @length).clear(removed)
+    (@buffer + @size).clear(removed)
 
     self
   end
@@ -1451,7 +1448,7 @@ class Array(T)
   end
 
   def zip(other : Array(U))
-    pairs = Array({T, U}).new(length)
+    pairs = Array({T, U}).new(size)
     zip(other) { |x, y| pairs << {x, y} }
     pairs
   end
@@ -1463,13 +1460,13 @@ class Array(T)
   end
 
   def zip?(other : Array(U))
-    pairs = Array({T, U?}).new(length)
+    pairs = Array({T, U?}).new(size)
     zip?(other) { |x, y| pairs << {x, y} }
     pairs
   end
 
   private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @length == @capacity
+    resize_to_capacity(@capacity * 2) if @size == @capacity
   end
 
   private def resize_to_capacity(capacity)
@@ -1522,8 +1519,8 @@ class Array(T)
   end
 
   private def check_index_out_of_bounds(index)
-    index += length if index < 0
-    unless 0 <= index < length
+    index += size if index < 0
+    unless 0 <= index < size
       raise IndexError.new
     end
     index
@@ -1569,7 +1566,7 @@ class Array(T)
     end
 
     def next
-      return stop if @index >= @array.length
+      return stop if @index >= @array.size
 
       value = @index
       @index += 1
@@ -1586,7 +1583,7 @@ class Array(T)
   class ReverseIterator(T)
     include Iterator(T)
 
-    def initialize(@array : Array(T), @index = array.length - 1)
+    def initialize(@array : Array(T), @index = array.size - 1)
     end
 
     def next
@@ -1598,7 +1595,7 @@ class Array(T)
     end
 
     def rewind
-      @index = @array.length - 1
+      @index = @array.size - 1
       self
     end
   end

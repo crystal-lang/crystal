@@ -18,25 +18,25 @@
 # struct Xs
 #   include Comparable(Xs)
 #
-#   getter length
+#   getter size
 #
-#   def initialize(@length)
+#   def initialize(@size)
 #   end
 #
 #   def succ
-#     Xs.new(@length + 1)
+#     Xs.new(@size + 1)
 #   end
 #
 #   def <=>(other)
-#     @length <=> other.length
+#     @size <=> other.size
 #   end
 #
 #   def inspect(io)
-#     @length.times { io << 'x' }
+#     @size.times { io << 'x' }
 #   end
 #
 #   def to_s(io)
-#     io << @length << ' '
+#     io << @size << ' '
 #     inspect(io)
 #   end
 # end

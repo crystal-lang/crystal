@@ -132,6 +132,6 @@ describe Process do
         cat.close
       end
     end
-    buffer.to_s.lines.length.should eq(1000)
+    buffer.to_s.lines.size.should eq(1000)
   end
 end

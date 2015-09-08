@@ -67,7 +67,7 @@ module Crystal
         end
         break if @dead_code
       end
-      case exps.length
+      case exps.size
       when 0
         Nop.new
       when 1
@@ -90,12 +90,12 @@ module Crystal
       #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
-      if node.values.length == 1
+      if node.values.size == 1
         value = node.values[0]
 
         temp_var = new_temp_var
 
-        assigns = Array(ASTNode).new(node.targets.length + 1)
+        assigns = Array(ASTNode).new(node.targets.size + 1)
         assigns << Assign.new(temp_var.clone, value).at(value)
         node.targets.each_with_index do |target, i|
           call = Call.new(temp_var.clone, "[]", NumberLiteral.new(i)).at(value)
@@ -110,7 +110,7 @@ module Crystal
       # To:
       #
       #     a = [1, 2, 3]
-      elsif node.targets.length == 1
+      elsif node.targets.size == 1
         target = node.targets.first
         array = ArrayLiteral.new(node.values)
         exps = transform_multi_assign_target(target, array)
@@ -303,7 +303,7 @@ module Crystal
       location = node.location
       filenames = @program.find_in_path(node.string, location.try &.filename)
       if filenames
-        nodes = Array(ASTNode).new(filenames.length)
+        nodes = Array(ASTNode).new(filenames.size)
         filenames.each do |filename|
           if @program.add_to_requires(filename)
             parser = Parser.new File.read(filename)

@@ -449,7 +449,7 @@ describe "Code gen: macro" do
   it "runs macro with splat" do
     run(%(
       macro foo(*args)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo 1, 1, 1
@@ -459,7 +459,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat" do
     run(%(
       macro foo(name, *args)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo bar, 1, 1, 1
@@ -469,7 +469,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat in first position (1)" do
     run(%(
       macro foo(*args, name)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo 1, 1, 1, bar
@@ -489,7 +489,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat in the middle (1)" do
     run(%(
       macro foo(foo, *args, name)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo x, 1, 1, 1, bar
@@ -1036,7 +1036,7 @@ describe "Code gen: macro" do
   it "expands macro with default arg and splat (3) (#784)" do
     run(%(
       macro some_macro(a=5, *args)
-        {{args.length}}
+        {{args.size}}
       end
 
       some_macro 1, 2, 3, 4

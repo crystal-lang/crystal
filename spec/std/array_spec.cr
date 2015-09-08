@@ -74,7 +74,7 @@ describe "Array" do
     a = [1, 2, 3]
     b = [4, 5]
     c = a + b
-    c.length.should eq(5)
+    c.size.should eq(5)
     0.upto(4) { |i| c[i].should eq(i + 1) }
   end
 
@@ -130,7 +130,7 @@ describe "Array" do
       [1, 2, 3, 4, 5, 6][1, 3].should eq([2, 3, 4])
     end
 
-    it "gets with start and count exceeding length" do
+    it "gets with start and count exceeding size" do
       [1, 2, 3][1, 3].should eq([2, 3])
     end
 
@@ -503,13 +503,13 @@ describe "Array" do
     end
   end
 
-  describe "length" do
-    it "has length 0" do
-      ([] of Int32).length.should eq(0)
+  describe "size" do
+    it "has size 0" do
+      ([] of Int32).size.should eq(0)
     end
 
-    it "has length 2" do
-      [1, 2].length.should eq(2)
+    it "has size 2" do
+      [1, 2].size.should eq(2)
     end
   end
 
@@ -656,7 +656,7 @@ describe "Array" do
       [1].sample(1).should eq([1])
 
       x = [1, 2, 3].sample(1)
-      x.length.should eq(1)
+      x.size.should eq(1)
       x = x.first
       [1, 2, 3].includes?(x).should be_true
     end
@@ -665,7 +665,7 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(3)
       set = Set.new(b)
-      set.length.should eq(3)
+      set.size.should eq(3)
 
       set.each do |e|
         a.includes?(e).should be_true
@@ -675,9 +675,9 @@ describe "Array" do
     it "gets sample of k elements out of n, where k > n" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(10)
-      b.length.should eq(5)
+      b.size.should eq(5)
       set = Set.new(b)
-      set.length.should eq(5)
+      set.size.should eq(5)
 
       set.each do |e|
         a.includes?(e).should be_true
@@ -748,7 +748,7 @@ describe "Array" do
 
     it "sort with a block" do
       a = ["foo", "a", "hello"]
-      b = a.sort { |x, y| x.length <=> y.length }
+      b = a.sort { |x, y| x.size <=> y.size }
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
@@ -768,7 +768,7 @@ describe "Array" do
 
     it "sort! with a block" do
       a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.length <=> y.length }
+      a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
     end
   end
@@ -776,7 +776,7 @@ describe "Array" do
   describe "sort_by" do
     it "sorts by" do
       a = ["foo", "a", "hello"]
-      b = a.sort_by &.length
+      b = a.sort_by &.size
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
@@ -785,7 +785,7 @@ describe "Array" do
   describe "sort_by!" do
     it "sorts by!" do
       a = ["foo", "a", "hello"]
-      a.sort_by! &.length
+      a.sort_by! &.size
       a.should eq(["a", "foo", "hello"])
     end
   end
@@ -947,7 +947,7 @@ describe "Array" do
 
   describe "zip?" do
     describe "when a block is provided" do
-      describe "and length of an arg is less than receiver" do
+      describe "and size of an arg is less than receiver" do
         it "yields pairs of self's elements and passed array (with nil)" do
           a, b, r = [1, 2, 3], [4, 5], ""
           a.zip?(b) { |x, y| r += "#{x}:#{y}," }
@@ -958,7 +958,7 @@ describe "Array" do
 
     describe "when no block is provided" do
       describe "and the arrays have different typed elements" do
-        describe "and length of an arg is less than receiver" do
+        describe "and size of an arg is less than receiver" do
           it "returns an array of paired elements (tuples with nil)" do
             a, b = [1, 2, 3], ["a", "b"]
             r = a.zip?(b)
@@ -972,7 +972,7 @@ describe "Array" do
   it "does compact_map" do
     a = [1, 2, 3, 4, 5]
     b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
-    b.length.should eq(2)
+    b.size.should eq(2)
     b.should eq([2, 4])
   end
 
@@ -985,7 +985,7 @@ describe "Array" do
       else        false
       end
     end
-    b.length.should eq(2)
+    b.size.should eq(2)
     b.should eq([1, false])
   end
 
@@ -995,7 +995,7 @@ describe "Array" do
       buffer[1] = 2
       2
     end
-    ary.length.should eq(2)
+    ary.size.should eq(2)
     ary.should eq([1, 2])
   end
 
@@ -1076,7 +1076,7 @@ describe "Array" do
       a = [] of Int32
       [1, 2, 3].cycle do |x|
         a << x
-        break if a.length == 9
+        break if a.size == 9
       end
       a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     end
@@ -1121,7 +1121,7 @@ describe "Array" do
       [e, e, e].transpose.empty?.should be_true
     end
 
-    it "raises IndexError error when length of element is invalid" do
+    it "raises IndexError error when size of element is invalid" do
       expect_raises(IndexError){ [[1], [1, 2]].transpose }
       expect_raises(IndexError){ [[1, 2], [1]].transpose }
     end

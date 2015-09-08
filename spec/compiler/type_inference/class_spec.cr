@@ -631,7 +631,7 @@ describe "Type inference: class" do
       B.new(A.new).foo
       ") { int32 }
     b = result.program.types["B"] as InstanceVarContainer
-    b.instance_vars.length.should eq(0)
+    b.instance_vars.size.should eq(0)
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do

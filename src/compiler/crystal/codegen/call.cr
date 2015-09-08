@@ -11,7 +11,7 @@ class Crystal::CodeGenVisitor
       node.raise "Bug: no target defs"
     end
 
-    if target_defs.length > 1
+    if target_defs.size > 1
       # Check if it's a call on a union metaclass
       if (obj = node.obj) && (obj_type = obj.type?) && obj_type.is_a?(MetaclassType) && (instance_type = obj_type.instance_type).is_a?(UnionType)
         codegen_union_metaclass_call(instance_type, node)
@@ -60,7 +60,7 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_non_external(node, target_def, owner)
-    call_args = Array(LLVM::Value).new(node.args.length + 1)
+    call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
     # First self.
@@ -96,7 +96,7 @@ class Crystal::CodeGenVisitor
     end
 
     # Then magic constants (__LINE__, __FILE__, __DIR__)
-    node.args.length.upto(target_def.args.length - 1) do |index|
+    node.args.size.upto(target_def.args.size - 1) do |index|
       arg = target_def.args[index]
       default_value = arg.default_value as MagicConstant
       location = node.location
@@ -131,7 +131,7 @@ class Crystal::CodeGenVisitor
     has_out = false
     abi_info = call_abi_info(target_def, node)
 
-    call_args = Array(LLVM::Value).new(node.args.length + 1)
+    call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
     if abi_info.return_type.attr == LLVM::Attribute::StructRet

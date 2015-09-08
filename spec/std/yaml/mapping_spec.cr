@@ -44,7 +44,7 @@ describe "YAML mapping" do
     person = YAMLPerson.from_yaml("---\nname: John\n")
     person.should be_a(YAMLPerson)
     person.name.should eq("John")
-    person.name.length.should eq(4) # This verifies that name is not nilable
+    person.name.size.should eq(4) # This verifies that name is not nilable
     person.age.should be_nil
   end
 
@@ -52,13 +52,13 @@ describe "YAML mapping" do
     person = YAMLPerson.from_yaml("---\nname: John\nage:\n")
     person.should be_a(YAMLPerson)
     person.name.should eq("John")
-    person.name.length.should eq(4) # This verifies that name is not nilable
+    person.name.size.should eq(4) # This verifies that name is not nilable
     person.age.should be_nil
   end
 
   it "parses array of people" do
     people = Array(YAMLPerson).from_yaml("---\n- name: John\n- name: Doe\n")
-    people.length.should eq(2)
+    people.size.should eq(2)
     people[0].name.should eq("John")
     people[1].name.should eq("Doe")
   end

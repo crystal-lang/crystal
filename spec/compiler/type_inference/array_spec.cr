@@ -17,8 +17,8 @@ describe "Type inference: array" do
     assert_type("require \"prelude\"; [1, 2, 3] of Int32") { array_of(int32) }
   end
 
-  it "types array literal length correctly" do
-    assert_type("require \"prelude\"; [1].length") { int32 }
+  it "types array literal size correctly" do
+    assert_type("require \"prelude\"; [1].size") { int32 }
   end
 
   it "recalculates array literal type after element type changes" do

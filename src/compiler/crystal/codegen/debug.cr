@@ -184,7 +184,7 @@ module Crystal
         else raise "Unsuported value type"
         end
       end
-      LLVM::Value.new LibLLVM.md_node((values.buffer as LibLLVM::ValueRef*), values.length)
+      LLVM::Value.new LibLLVM.md_node((values.buffer as LibLLVM::ValueRef*), values.size)
     end
 
     def dbg_declare

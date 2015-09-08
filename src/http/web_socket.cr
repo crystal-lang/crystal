@@ -10,7 +10,7 @@ class HTTP::WebSocket
 
   MASK_BIT      = 128_u8
 
-  record PacketInfo, opcode, length, final
+  record PacketInfo, opcode, size, final
 
   def initialize(@io)
     @header :: UInt8[2]
@@ -21,36 +21,36 @@ class HTTP::WebSocket
   end
 
   def send(data)
-    write_header(data.length)
+    write_header(data.size)
     @io.print data
     @io.flush
   end
 
   def send_masked(data)
-    write_header(data.length, true)
+    write_header(data.size, true)
 
     mask_array = StaticArray(UInt8, 4).new { rand(256).to_u8 }
     @io.write mask_array.to_slice
 
-    data.length.times do |index|
+    data.size.times do |index|
       mask = mask_array[index % 4]
       @io.write_byte (mask ^ data.byte_at(index).to_u8).to_u8
     end
     @io.flush
   end
 
-  private def write_header(length, masked = false)
+  private def write_header(size, masked = false)
     @io.write_byte(0x81_u8)
 
     mask = masked ? MASK_BIT : 0
-    if length <= 125
-      @io.write_byte(length.to_u8 | mask)
-    elsif length <= UInt16::MAX
+    if size <= 125
+      @io.write_byte(size.to_u8 | mask)
+    elsif size <= UInt16::MAX
       @io.write_byte(126_u8 | mask)
-      1.downto(0) { |i| @io.write_byte((length >> i * 8).to_u8) }
+      1.downto(0) { |i| @io.write_byte((size >> i * 8).to_u8) }
     else
       @io.write_byte(127_u8 | mask)
-      3.downto(0) { |i| @io.write_byte((length >> i * 8).to_u8) }
+      3.downto(0) { |i| @io.write_byte((size >> i * 8).to_u8) }
     end
   end
 
@@ -61,7 +61,7 @@ class HTTP::WebSocket
       opcode = @opcode
     end
 
-    read = @io.read buffer[0, Math.min(@remaining, buffer.length)]
+    read = @io.read buffer[0, Math.min(@remaining, buffer.size)]
     @remaining -= read
 
     # Unmask payload, if needed
@@ -81,7 +81,7 @@ class HTTP::WebSocket
     @io.read_fully(@header.to_slice)
 
     opcode = read_opcode
-    @remaining = read_length
+    @remaining = read_size
 
     # Read mask, if needed
     if masked?
@@ -108,16 +108,16 @@ class HTTP::WebSocket
      end
   end
 
-  private def read_length
-    length = (@header[1] & 0x7f_u8).to_i
-    if length == 126
-      length = 0
-      2.times { length <<= 8; length += @io.read_byte.not_nil! }
-    elsif length == 127
-      length = 0
-      4.times { length <<= 8; length += @io.read_byte.not_nil! }
+  private def read_size
+    size = (@header[1] & 0x7f_u8).to_i
+    if size == 126
+      size = 0
+      2.times { size <<= 8; size += @io.read_byte.not_nil! }
+    elsif size == 127
+      size = 0
+      4.times { size <<= 8; size += @io.read_byte.not_nil! }
     end
-    length
+    size
   end
 
   private def control?

@@ -13,7 +13,7 @@ describe "CharReader" do
     end
   end
 
-  it "iterates through string of length one" do
+  it "iterates through string of size one" do
     reader = CharReader.new("a")
     reader.pos.should eq(0)
     reader.current_char.should eq('a')

@@ -254,7 +254,7 @@ class Crystal::Browser
     end
 
     def call_needs_parens(node)
-      node.args.length > 0 || node.block_arg
+      node.args.size > 0 || node.block_arg
     end
 
     def decorate_var(node, str)
@@ -288,7 +288,7 @@ class Crystal::Browser
     def decorate_call(node, str)
       target_defs = node.target_defs
       if target_defs
-        case target_defs.length
+        case target_defs.size
         when 0
           str
         when 1

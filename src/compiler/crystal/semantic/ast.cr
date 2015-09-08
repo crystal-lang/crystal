@@ -56,7 +56,7 @@ module Crystal
       set_type type
     rescue ex : FrozenTypeException
       # See if we can find where the mismatched type came from
-      if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.length == 2
+      if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
         other_type = type.union_types.find { |type| type != freeze_type }
         trace = from.find_owner_trace(other_type)
         ex.inner = trace
@@ -104,7 +104,7 @@ module Crystal
 
       node = yield dependencies
 
-      if dependencies.length == 1
+      if dependencies.size == 1
         new_type = node.type?
       else
         new_type = Type.merge dependencies
@@ -171,7 +171,7 @@ module Crystal
     def update(from)
       return if @type.same? from.type
 
-      if dependencies.length == 1 || !@type
+      if dependencies.size == 1 || !@type
         new_type = from.type?
       else
         new_type = Type.merge dependencies
@@ -210,7 +210,7 @@ module Crystal
       visited.add node.object_id
       while deps = node.dependencies?
         dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
-        if dependencies.length > 0
+        if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaInstanceVar)
           owner_trace << node if node

@@ -39,7 +39,7 @@ module HTTP
       response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\n\r\nhelloworld"))
       response.status_code.should eq(200)
       response.status_message.should eq("OK")
-      response.headers.length.should eq(0)
+      response.headers.size.should eq(0)
       response.body.should eq("helloworld")
     end
 
@@ -47,7 +47,7 @@ module HTTP
       response = Response.from_io(StringIO.new("HTTP/1.1 404 Not Found\r\n\r\n"))
       response.status_code.should eq(404)
       response.status_message.should eq("Not Found")
-      response.headers.length.should eq(0)
+      response.headers.size.should eq(0)
       response.body.should eq("")
     end
 
@@ -55,7 +55,7 @@ module HTTP
       response = Response.from_io(StringIO.new("HTTP/1.1 100 Continue\r\n\r\n"))
       response.status_code.should eq(100)
       response.status_message.should eq("Continue")
-      response.headers.length.should eq(0)
+      response.headers.size.should eq(0)
       response.body?.should be_nil
     end
 
@@ -85,7 +85,7 @@ module HTTP
     it "doesn't sets content length for 1xx, 204 or 304" do
       [100, 101, 204, 304].each do |status|
         response = Response.new(status)
-        response.headers.length.should eq(0)
+        response.headers.size.should eq(0)
       end
     end
 

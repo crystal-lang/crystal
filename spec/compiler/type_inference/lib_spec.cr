@@ -382,7 +382,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(2)
+    attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
   end
@@ -443,7 +443,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(2)
+    attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
   end
@@ -463,7 +463,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(1)
+    attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
   end
 

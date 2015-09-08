@@ -94,11 +94,11 @@ module Crystal
     end
 
     def print_subtypes(types)
-      while types.length > 0
+      while types.size > 0
         type = types.pop
 
         if types.empty?
-          @indents[@indents.length - 1] = false
+          @indents[@indents.size - 1] = false
         end
 
         print_subtype type
@@ -180,14 +180,14 @@ module Crystal
       instance_vars = instance_vars.values
       typed_instance_vars = instance_vars.select &.type?
 
-      max_name_length = instance_vars.max_of &.name.length
+      max_name_size = instance_vars.max_of &.name.size
 
       if typed_instance_vars.empty?
-        max_type_length = 0
-        max_bytes_length = 0
+        max_type_size = 0
+        max_bytes_size = 0
       else
-        max_type_length = typed_instance_vars.max_of &.type.to_s.length
-        max_bytes_length = typed_instance_vars.max_of { |var| @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(var.type)).to_s.length }
+        max_type_size = typed_instance_vars.max_of &.type.to_s.size
+        max_bytes_size = typed_instance_vars.max_of { |var| @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(var.type)).to_s.size }
       end
 
       instance_vars.each do |ivar|
@@ -199,13 +199,13 @@ module Crystal
           print "      "
         end
         with_color.light_gray.push(STDOUT) do
-          print ivar.name.ljust(max_name_length)
+          print ivar.name.ljust(max_name_size)
           print " : "
           if ivar_type = ivar.type?
-            print ivar_type.to_s.ljust(max_type_length)
+            print ivar_type.to_s.ljust(max_type_size)
             size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
             print " ("
-            print size.to_s.rjust(max_bytes_length)
+            print size.to_s.rjust(max_bytes_size)
             print " bytes)"
           else
             print "MISSING".colorize.red.bright
@@ -234,7 +234,7 @@ module Crystal
     def print_indent
       unless @indents.empty?
         print "  "
-        0.upto(@indents.length - 2) do |i|
+        0.upto(@indents.size - 2) do |i|
           indent = @indents[i]
           if indent
             print "|  "

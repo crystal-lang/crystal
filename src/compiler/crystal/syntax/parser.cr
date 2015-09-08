@@ -141,7 +141,7 @@ module Crystal
       end
 
       values.concat exps[assign_index + 1 .. -1]
-      if values.length != 1 && targets.length != 1 && targets.length != values.length
+      if values.size != 1 && targets.size != 1 && targets.size != values.size
         raise "Multiple assignment count mismatch", location
       end
 
@@ -267,7 +267,7 @@ module Crystal
             next_token_skip_space_or_newline
 
             atomic.name = "[]="
-            atomic.name_length = 0
+            atomic.name_size = 0
             atomic.args << parse_op_assign_no_control
           else
             break unless can_be_assigned?(atomic)
@@ -622,7 +622,7 @@ module Crystal
               next
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
-              method = @token.type.to_s.byte_slice(0, @token.type.to_s.length - 1)
+              method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space
               value = parse_op_assign
               atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
@@ -675,7 +675,7 @@ module Crystal
           column_number = @token.column_number
           next_token_skip_space
           atomic = Call.new(atomic, "[]", name_column_number: column_number).at(location)
-          atomic.name_length = 0 if atomic.is_a?(Call)
+          atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         when :"["
           check_void_value atomic, location
@@ -708,7 +708,7 @@ module Crystal
           end
 
           atomic = Call.new(atomic, method_name, args, name_column_number: column_number).at(location)
-          atomic.name_length = 0 if atomic.is_a?(Call)
+          atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         else
           break
@@ -1999,7 +1999,7 @@ module Crystal
             skip_space_or_newline
             whens << When.new(when_conds, when_body)
           when :else
-            if whens.length == 0
+            if whens.size == 0
               unexpected_token @token.to_s, "expecting when"
             end
             slash_is_regex!
@@ -2628,7 +2628,7 @@ module Crystal
             next_token_skip_space
           else
             body = parse_expressions
-            if extra_assigns.length > 0
+            if extra_assigns.size > 0
               exps = [] of ASTNode
               exps.concat extra_assigns
               if body.is_a?(Expressions)
@@ -2657,7 +2657,7 @@ module Crystal
     def compute_block_arg_yields(block_arg)
       block_arg_fun = block_arg.fun
       if block_arg_fun.is_a?(Fun)
-        @yields = block_arg_fun.inputs.try(&.length) || 0
+        @yields = block_arg_fun.inputs.try(&.size) || 0
       else
         @yields = 0
       end
@@ -3008,7 +3008,7 @@ module Crystal
           Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
         else
           if args
-            if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
+            if (!force_call && is_var) && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
               sign = num.value[0].to_s
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
@@ -3372,7 +3372,7 @@ module Crystal
 
       token_location = @token.location
       if token_location && token_location.line_number == start_line
-        const.name_length = token_location.column_number - start_column
+        const.name_size = token_location.column_number - start_column
       end
 
       if allow_type_vars && @token.type == :"("
@@ -3464,7 +3464,7 @@ module Crystal
         Fun.new(input_types, return_type).at(location)
       else
         input_types = input_types.not_nil!
-        if input_types.length == 1
+        if input_types.size == 1
           input_types.first
         else
           input_types
@@ -3481,12 +3481,12 @@ module Crystal
           parse_type_with_suffix(types, allow_primitives)
         end
 
-        if types.length == 1
+        if types.size == 1
           types.first
         else
           Union.new types
         end
-      elsif types.length == 1
+      elsif types.size == 1
         types.first
       else
         types
@@ -3831,8 +3831,8 @@ module Crystal
       end
 
       yields = (@yields ||= 0)
-      if args && args.length > yields
-        @yields = args.length
+      if args && args.size > yields
+        @yields = args.size
       end
 
       Yield.new(args || [] of ASTNode, scope).at(location).at_end(end_location)
@@ -3858,7 +3858,7 @@ module Crystal
       args = call_args.args if call_args
 
       if args
-        if args.length == 1
+        if args.size == 1
           node = klass.new(args.first)
         else
           tuple = TupleLiteral.new(args).at(args.last)
@@ -4329,7 +4329,7 @@ module Crystal
       when Var, InstanceVar, ClassVar, Path, Global, Underscore
         true
       when Call
-        (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"
+        (node.obj.nil? && node.args.size == 0 && node.block.nil?) || node.name == "[]"
       else
         false
       end
@@ -4405,7 +4405,7 @@ module Crystal
       when :IDENT
         case @token.value
         when :break, :next, :return
-          raise "void value expression", @token, @token.value.to_s.length
+          raise "void value expression", @token, @token.value.to_s.size
         end
       end
     end
@@ -4477,7 +4477,7 @@ module Crystal
     end
 
     def self.free_var_name?(name)
-      name.length == 1 || (name.length == 2 && name[1].digit?)
+      name.size == 1 || (name.size == 2 && name[1].digit?)
     end
   end
 end

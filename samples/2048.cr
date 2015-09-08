@@ -159,7 +159,7 @@ class Drawer
     content = "" if !@content_line || content == "empty"
 
     fill_size = INNER_CELL_WIDTH / 2
-    fill_size -= content.length / 2
+    fill_size -= content.size / 2
     fill_size -= 2
 
     print fill
@@ -168,7 +168,7 @@ class Drawer
       print fill*fill_size
       print content
       print fill*fill_size
-      print fill if content.length % 2 == 0
+      print fill if content.size % 2 == 0
     end
     print fill
   end

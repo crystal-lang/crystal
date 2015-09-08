@@ -4,11 +4,11 @@ describe "Code gen: splat" do
   it "splats" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(*args)
-        args.length
+        args.size
       end
 
       foo 1, 1, 1
@@ -18,11 +18,11 @@ describe "Code gen: splat" do
   it "splats with another arg" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(x, *args)
-        x + args.length
+        x + args.size
       end
 
       foo 10, 1, 1
@@ -32,11 +32,11 @@ describe "Code gen: splat" do
   it "splats with two other args" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(x, *args, z)
-        x + args.length + z
+        x + args.size + z
       end
 
       foo 10, 2, 20
@@ -57,11 +57,11 @@ describe "Code gen: splat" do
   it "splats without args" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(*args)
-        args.length
+        args.size
       end
 
       foo
@@ -71,11 +71,11 @@ describe "Code gen: splat" do
   it "splats with default value" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(x = 100, *args)
-        x + args.length
+        x + args.size
       end
 
       foo
@@ -85,11 +85,11 @@ describe "Code gen: splat" do
   it "splats with default value (2)" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(x, y = 100, *args)
-        x + y + args.length
+        x + y + args.size
       end
 
       foo 10
@@ -99,11 +99,11 @@ describe "Code gen: splat" do
   it "splats with default value (3)" do
     run(%(
       struct Tuple
-        def length; {{@type.length}}; end
+        def size; {{@type.size}}; end
       end
 
       def foo(x, y = 100, *args)
-        x + y + args.length
+        x + y + args.size
       end
 
       foo 10, 20, 30, 40

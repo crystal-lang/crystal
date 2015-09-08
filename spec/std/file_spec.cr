@@ -31,7 +31,7 @@ describe "File" do
 
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
-    lines.length.should eq(20)
+    lines.size.should eq(20)
     lines.first.should eq("Hello World\n")
   end
 

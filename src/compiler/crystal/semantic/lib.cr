@@ -7,7 +7,7 @@ class Crystal::Call
     external = obj_type.lookup_first_def(name, false) as External?
     raise "undefined fun '#{name}' for #{obj_type}" unless external
 
-    check_fun_args_length_match obj_type, external
+    check_fun_args_size_match obj_type, external
     check_fun_out_args external
     return unless obj_and_args_types_set?
 
@@ -27,9 +27,9 @@ class Crystal::Call
     end
   end
 
-  def check_fun_args_length_match(obj_type, external)
-    call_args_count = args.length
-    all_args_count = external.args.length
+  def check_fun_args_size_match(obj_type, external)
+    call_args_count = args.size
+    all_args_count = external.args.size
 
     if external.varargs && call_args_count >= all_args_count
       return
@@ -39,7 +39,7 @@ class Crystal::Call
 
     return if required_args_count <= call_args_count <= all_args_count
 
-    raise "wrong number of arguments for '#{full_name(obj_type)}' (#{args.length} for #{external.args.length})"
+    raise "wrong number of arguments for '#{full_name(obj_type)}' (#{args.size} for #{external.args.size})"
   end
 
   def check_fun_out_args(untyped_def)
@@ -101,7 +101,7 @@ class Crystal::Call
 
     # Need to call to_unsafe on variadic args too
     if typed_def.varargs
-      typed_def.args.length.upto(self.args.length - 1) do |i|
+      typed_def.args.size.upto(self.args.size - 1) do |i|
         self_arg = self.args[i]
         self_arg_type = self_arg.type?
         if self_arg_type

@@ -124,7 +124,7 @@ class OptionParser
     @flags << String.build do |str|
       str << "    "
       str << flag
-      (33 - flag.length).times do
+      (33 - flag.size).times do
         str << " "
       end
       str << description
@@ -199,18 +199,18 @@ class OptionParser
     private def process_double_flag(flag, block, raise_if_missing = false)
       while index = args_index { |arg| arg.starts_with?(flag) }
         arg = @args[index]
-        if arg.length == flag.length
+        if arg.size == flag.size
           delete_arg_at_index(index)
-          if index < args_length
+          if index < args_size
             block.call delete_arg_at_index(index)
           else
             if raise_if_missing
               raise MissingOption.new(flag)
             end
           end
-        elsif arg[flag.length] == '='
+        elsif arg[flag.size] == '='
           delete_arg_at_index(index)
-          value = arg[flag.length + 1 .. -1]
+          value = arg[flag.size + 1 .. -1]
           if value.empty?
             raise MissingOption.new(flag)
           else
@@ -223,8 +223,8 @@ class OptionParser
     private def process_single_flag(flag, block, raise_if_missing = false)
       while index = args_index { |arg| arg.starts_with?(flag) }
         arg = delete_arg_at_index(index)
-        if arg.length == flag.length
-          if index < args_length
+        if arg.size == flag.size
+          if index < args_size
             block.call delete_arg_at_index(index)
           else
             raise MissingOption.new(flag) if raise_if_missing
@@ -237,8 +237,8 @@ class OptionParser
       end
     end
 
-    private def args_length
-      @double_dash_index || @args.length
+    private def args_size
+      @double_dash_index || @args.size
     end
 
     private def args_index(flag)

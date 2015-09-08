@@ -8,8 +8,8 @@ class UNIXServer < UNIXSocket
 
     addr = LibC::SockAddrUn.new
     addr.family = typeof(addr.family).cast(LibC::AF_UNIX)
-    if path.bytesize + 1 > addr.path.length
-      raise "Path length exceeds the maximum size of #{addr.path.length - 1} bytes"
+    if path.bytesize + 1 > addr.path.size
+      raise "Path size exceeds the maximum size of #{addr.path.size - 1} bytes"
     end
     addr.path.buffer.copy_from(path.cstr, path.bytesize + 1)
     if LibC.bind(sock, (pointerof(addr) as LibC::SockAddr*), LibC::SocklenT.cast(sizeof(LibC::SockAddrUn))) != 0

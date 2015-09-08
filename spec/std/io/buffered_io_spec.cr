@@ -188,9 +188,9 @@ describe "BufferedIO" do
     io.read(5).should eq("")
   end
 
-  it "raises argument error if reads negative length" do
+  it "raises argument error if reads negative count" do
     io = BufferedIOWrapper.new(StringIO.new("hello world"))
-    expect_raises(ArgumentError, "negative length") do
+    expect_raises(ArgumentError, "negative count") do
       io.read(-1)
     end
   end

@@ -238,9 +238,9 @@ USAGE
         options.shift
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.length .. -1]}"
+          target_filename = "#{target_filename[cwd.size .. -1]}"
         end
-        if splitted.length == 2
+        if splitted.size == 2
           target_line = splitted[1]
           options << "-l" << target_line
         end
@@ -453,7 +453,7 @@ USAGE
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if filenames.length == 0 || (cursor_command && cursor_location.nil?)
+    if filenames.size == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
       exit 1
     end

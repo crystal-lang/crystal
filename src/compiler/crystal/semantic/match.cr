@@ -44,7 +44,7 @@ module Crystal
     def cover_all?
       cover = @cover
       matches = @matches
-      @success && matches && matches.length > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
+      @success && matches && matches.size > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
     end
 
     def empty?
@@ -63,8 +63,8 @@ module Crystal
       end
     end
 
-    def length
-      @matches.try(&.length) || 0
+    def size
+      @matches.try(&.size) || 0
     end
   end
 end

@@ -7,7 +7,7 @@ describe String::Builder do
       builder << 456
     end
     str.should eq("123456")
-    str.length.should eq(6)
+    str.size.should eq(6)
     str.bytesize.should eq(6)
   end
 

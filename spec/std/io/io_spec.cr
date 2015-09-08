@@ -23,7 +23,7 @@ class SimpleStringIO
   end
 
   def read(slice : Slice(UInt8))
-    count = slice.length
+    count = slice.size
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
     @pos += count
@@ -31,7 +31,7 @@ class SimpleStringIO
   end
 
   def write(slice : Slice(UInt8))
-    count = slice.length
+    count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))

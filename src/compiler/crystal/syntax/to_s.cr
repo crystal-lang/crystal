@@ -246,7 +246,7 @@ module Crystal
       need_parens =
         case node_obj
         when Call
-          case node_obj.args.length
+          case node_obj.args.size
           when 0
             !is_alpha(node_obj.name)
           else
@@ -292,10 +292,10 @@ module Crystal
         @str << decorate_call(node, "=")
         @str << " "
         node.args[1].accept self
-      elsif node_obj && !is_alpha(node.name) && node.args.length == 0
+      elsif node_obj && !is_alpha(node.name) && node.args.size == 0
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !is_alpha(node.name) && node.args.length == 1
+      elsif node_obj && !is_alpha(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
         @str << " "
@@ -348,7 +348,7 @@ module Crystal
       if block
         # Check if this is foo &.bar
         first_block_arg = block.args.first?
-        if first_block_arg && block.args.length == 1
+        if first_block_arg && block.args.size == 1
           block_body = block.body
           if block_body.is_a?(Call)
             block_obj = block_body.obj
@@ -389,7 +389,7 @@ module Crystal
 
     def in_parenthesis(need_parens, node)
       in_parenthesis(need_parens) do
-        if node.is_a?(Expressions) && node.expressions.length == 1
+        if node.is_a?(Expressions) && node.expressions.size == 1
           node.expressions.first.accept self
         else
           node.accept self
@@ -518,7 +518,7 @@ module Crystal
 
     def visit(node : FunLiteral)
       @str << "->"
-      if node.def.args.length > 0
+      if node.def.args.size > 0
         @str << "("
         node.def.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -543,7 +543,7 @@ module Crystal
       end
       @str << node.name
 
-      if node.args.length > 0
+      if node.args.size > 0
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -564,7 +564,7 @@ module Crystal
         @str << "."
       end
       @str << def_name(node.name)
-      if node.args.length > 0 || node.block_arg
+      if node.args.size > 0 || node.block_arg
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -572,7 +572,7 @@ module Crystal
           arg.accept self
         end
         if block_arg = node.block_arg
-          @str << ", " if node.args.length > 0
+          @str << ", " if node.args.size > 0
           @str << "&"
           block_arg.accept self
         end
@@ -596,14 +596,14 @@ module Crystal
       @str << keyword("macro")
       @str << " "
       @str << node.name.to_s
-      if node.args.length > 0 || node.block_arg
+      if node.args.size > 0 || node.block_arg
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
         end
         if block_arg = node.block_arg
-          @str << ", " if node.args.length > 0
+          @str << ", " if node.args.size > 0
           @str << "&"
           block_arg.accept self
         end
@@ -817,7 +817,7 @@ module Crystal
         @str << " "
       end
       @str << keyword("yield")
-      if node.exps.length > 0
+      if node.exps.size > 0
         @str << " "
         node.exps.each_with_index do |exp, i|
           @str << ", " if i > 0
@@ -977,7 +977,7 @@ module Crystal
         @str << " = "
         @str << node.real_name
       end
-      if node.args.length > 0
+      if node.args.size > 0
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -1195,7 +1195,7 @@ module Crystal
         @str << " "
         @str << name
       end
-      if (types = node.types) && types.length > 0
+      if (types = node.types) && types.size > 0
         if node.name
           @str << " :"
         end

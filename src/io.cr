@@ -71,8 +71,8 @@ end
 # The only requirement for a type including the IO module is to define
 # these two methods:
 #
-# * `read(slice : Slice(UInt8))`: read at most *slice.length* bytes into *slice* and return the number of bytes read
-# * `write(slice : Slice(UInt8))`: write at most *slice.length* bytes from *slice* and return the number of bytes written
+# * `read(slice : Slice(UInt8))`: read at most *slice.size* bytes into *slice* and return the number of bytes read
+# * `write(slice : Slice(UInt8))`: write at most *slice.size* bytes from *slice* and return the number of bytes written
 #
 # For example, this is a simple IO on top of a `Slice(UInt8)`:
 #
@@ -84,14 +84,14 @@ end
 #   end
 #
 #   def read(slice : Slice(UInt8))
-#     slice.length.times { |i| slice[i] = @slice[i] }
-#     @slice += slice.length
+#     slice.size.times { |i| slice[i] = @slice[i] }
+#     @slice += slice.size
 #     count
 #   end
 #
 #   def write(slice : Slice(UInt8))
-#     slice.length.times { |i| @slice[i] = slice[i] }
-#     @slice += slice.length
+#     slice.size.times { |i| @slice[i] = slice[i] }
+#     @slice += slice.size
 #     count
 #   end
 # end
@@ -197,7 +197,7 @@ module IO
     end
   end
 
-  # Reads at most *slice.length* bytes from this IO into *slice*. Returns the number of bytes read.
+  # Reads at most *slice.size* bytes from this IO into *slice*. Returns the number of bytes read.
   #
   # ```
   # io = StringIO.new "hello"
@@ -209,7 +209,7 @@ module IO
   # ```
   abstract def read(slice : Slice(UInt8))
 
-  # Writes at most *slice.length* bytes from *slice* into this IO. Returns the number of bytes written.
+  # Writes at most *slice.size* bytes from *slice* into this IO. Returns the number of bytes written.
   #
   # ```
   # io = StringIO.new
@@ -432,8 +432,8 @@ module IO
     (byte & 0x3f).to_u32
   end
 
-  # Tries to read exactly `slice.length` bytes from this IO into `slice`.
-  # Raises `EOFError` if there aren't `slice.length` bytes of data.
+  # Tries to read exactly `slice.size` bytes from this IO into `slice`.
+  # Raises `EOFError` if there aren't `slice.size` bytes of data.
   #
   # ```
   # io = StringIO.new "123451234"
@@ -443,8 +443,8 @@ module IO
   # io.read_fully #=> EOFError
   # ```
   def read_fully(slice : Slice(UInt8))
-    count = slice.length
-    while slice.length > 0
+    count = slice.size
+    while slice.size > 0
       read_bytes = read slice
       raise EOFError.new if read_bytes == 0
       slice += read_bytes
@@ -483,11 +483,11 @@ module IO
     buffer :: UInt8[2048]
     String.build(count) do |str|
       while count > 0
-        read_length = read buffer.to_slice[0, Math.min(count, buffer.length)]
-        break if read_length == 0
+        read_size = read buffer.to_slice[0, Math.min(count, buffer.size)]
+        break if read_size == 0
 
-        str.write buffer.to_slice[0, read_length]
-        count -= read_length
+        str.write buffer.to_slice[0, read_size]
+        count -= read_size
       end
     end
   end
@@ -587,7 +587,7 @@ module IO
     end
 
     # One char: use gets(Char)
-    if delimiter.length == 1
+    if delimiter.size == 1
       return gets(delimiter[0])
     end
 
@@ -619,7 +619,7 @@ module IO
   # Writes the bytes in the given array to this IO.
   def write(array : Array(UInt8))
     # TODO: maybe we should remove this method? Array is heavy for IO
-    write Slice.new(array.buffer, array.length)
+    write Slice.new(array.buffer, array.size)
   end
 
   # Writes a single byte into this IO.
