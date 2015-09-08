@@ -20,13 +20,12 @@ module Crystal
     #
     # To:
     #
-    #     ary = Array(typeof(1, 2, 3)).new(3)
-    #     ary.length = 3
-    #     buffer = ary.buffer
-    #     buffer[0] = 1
-    #     buffer[1] = 2
-    #     buffer[2] = 3
-    #     ary
+    #     Array(typeof(1, 2, 3)).new(3) do |buffer|
+    #       buffer[0] = 1
+    #       buffer[1] = 2
+    #       buffer[2] = 3
+    #       3
+    #     end
     def expand(node : ArrayLiteral)
       if node_of = node.of
         if node.elements.length == 0
@@ -43,27 +42,19 @@ module Crystal
       length = node.elements.length
       capacity = length
 
-      generic = Generic.new(Path.global("Array"), type_var).at(node)
-      constructor = Call.new(generic, "new", NumberLiteral.new(capacity)).at(node)
-
-      temp_var = new_temp_var
-      assign = Assign.new(temp_var.clone, constructor).at(node)
-
-      set_length = Call.new(temp_var.clone, "length=", NumberLiteral.new(length)).at(node)
-      get_buffer = Call.new(temp_var.clone, "buffer").at(node)
-
       buffer = new_temp_var.at(node)
 
-      assign_buffer = Assign.new(buffer.clone, get_buffer).at(node)
-
-      exps = Array(ASTNode).new(node.elements.length + 4)
-      exps.push assign, set_length, assign_buffer
+      exps = Array(ASTNode).new(node.elements.length + 1)
       node.elements.each_with_index do |elem, i|
-        exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i), elem).at(node)
+        exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
       end
-      exps << temp_var.clone
+      exps << NumberLiteral.new(capacity).at(node)
+      block_body = Expressions.new(exps).at(node)
 
-      Expressions.new(exps).at(node)
+      block = Block.new([buffer.clone], block_body).at(node)
+
+      generic = Generic.new(Path.global("Array"), type_var).at(node)
+      Call.new(generic, "build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode, block: block).at(node)
     end
 
     def expand_named(node : ArrayLiteral)
