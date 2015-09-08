@@ -19,7 +19,7 @@ describe HTTP::Headers do
   end
 
   it "serializes underscore or dash separated headers correctly" do
-    headers = HTTP::Headers{"FOO_BAR": "bar", "foobar-foo": "baz"}
+    headers = HTTP::Headers{"FOO_BAR": "bar", "Foobar-foo": "baz"}
     serialized = String.build do |io|
       headers.each do |name, values|
         io << name << ": " << values.first << ";"
