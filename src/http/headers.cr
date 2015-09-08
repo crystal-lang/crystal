@@ -157,9 +157,9 @@ struct HTTP::Headers
 
     i = 0
     while i < key.bytesize
-      if cstr[i] == '-'
+      if cstr[i].chr == '-'
         uppercase = true
-      elsif cstr[i] == '_' || uppercase ^ ('A' <= cstr[i].chr <= 'Z')
+      elsif cstr[i].chr == '_' || uppercase ^ ('A' <= cstr[i].chr <= 'Z')
         return true
       else
         uppercase = false
