@@ -12,6 +12,25 @@ module Crystal
 
     abstract def to_s_with_source(source, io)
 
+    abstract def to_json(io)
+
+    def true_filename(filename=@filename) : String
+      if filename.is_a? VirtualFile
+        loc = filename.expanded_location
+        if loc
+          return true_filename loc.filename
+        else
+          return ""
+        end
+      else
+        if filename
+          return filename
+        else
+          return ""
+        end
+      end
+    end
+
     def to_s_with_source(source)
       String.build do |io|
         to_s_with_source source, io
@@ -59,6 +78,11 @@ module Crystal
 
     def has_location?
       @filename || @line
+    end
+
+    def to_json(io)
+      {file: true_filename, line: @line_number, column: @column_number,
+       length: @length, message: @message}.to_json(io)
     end
 
     def append_to_s(source, io)
@@ -141,6 +165,15 @@ module Crystal
 
     def self.new(message)
       new message, nil, 0, nil, 0
+    end
+
+    def to_json(io)
+      if (inner = @inner) && !inner.is_a? MethodTraceException
+        inner.to_json(io)
+      else
+        {file: true_filename, line: @line, column: @column,
+         length: @length, message: deepest_error_message || @message}.to_json(io)
+      end
     end
 
     def to_s_with_source(source, io)
@@ -241,6 +274,10 @@ module Crystal
 
     def has_location?
       true
+    end
+
+    def to_json(io)
+      nil.to_json(io)
     end
 
     def to_s_with_source(source, io)

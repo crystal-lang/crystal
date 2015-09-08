@@ -88,7 +88,11 @@ USAGE
     end
   rescue ex : Crystal::Exception
     ex.color = @@color
-    puts ex
+    if @@json
+      puts ex.to_json
+    else
+      puts ex
+    end
     exit 1
   rescue ex
     puts ex
@@ -136,6 +140,7 @@ USAGE
 
   private def self.build(options)
     config = create_compiler "build", options
+    @@json = config.output_format == "json"
     config.compile
   end
 
@@ -188,7 +193,7 @@ USAGE
   private def self.cursor_command(command, options)
     config, result = compile_no_codegen command, options, cursor_command: true
 
-    format = config.output_format || "text"
+    format = config.output_format
 
     file = ""
     line = ""
@@ -371,10 +376,10 @@ USAGE
         opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
           cursor_location = cursor
         end
+      end
 
-        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-          output_format = f
-        end
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        output_format = f
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -456,6 +461,7 @@ USAGE
     sources = gather_sources(filenames)
     original_output_filename = output_filename_from_sources(sources)
     output_filename ||= original_output_filename
+    output_format ||= "text"
 
     CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
