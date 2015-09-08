@@ -142,26 +142,37 @@ struct HTTP::Headers
   forward_missing_to @hash
 
   private def key_name(key)
-    if needs_capitalize?(key)
-      key.capitalize
+    if needs_normalize?(key)
+      normalize(key)
     else
       key
     end
   end
 
-  private def needs_capitalize?(key)
+  private def needs_normalize?(key)
     return false if key.empty?
 
     cstr = key.to_unsafe
-    return true unless 'A' <= cstr[0].chr <= 'Z'
+    uppercase = true
 
-    i = 1
+    i = 0
     while i < key.bytesize
-      return true if 'A' <= cstr[i].chr <= 'Z'
+      if cstr[i] == '-'
+        uppercase = true
+      elsif cstr[i] == '_' || uppercase ^ ('A' <= cstr[i].chr <= 'Z')
+        return true
+      else
+        uppercase = false
+      end
+
       i += 1
     end
 
     false
+  end
+
+  private def normalize(key)
+    key.split(/[-_]/).map(&.capitalize).join('-')
   end
 
   private def cast(value : String)
