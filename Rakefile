@@ -75,7 +75,7 @@ task :docs do
           "npm install -g gitbook-cli"
   end
 
-  system "gitbook build ./_gitbook --gitbook=2.0.2"
+  system "gitbook build ./_gitbook --gitbook=2.3.2"
 
   system "rm -rf ./docs"
   system "mv ./_gitbook/_book ./docs"
