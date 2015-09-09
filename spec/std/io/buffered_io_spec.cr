@@ -1,7 +1,10 @@
 require "spec"
 
 class BufferedIOWrapper(T)
-  include BufferedIO
+  include IO::Buffered::Common
+  include IO::Buffered::Reader
+  include IO::Buffered::Writer
+  include IO::Buffered::Seeker
 
   getter called_unbuffered_read
 
@@ -100,14 +103,14 @@ describe "BufferedIO" do
   end
 
   it "does gets with char and limit when not found in buffer" do
-    io = BufferedIOWrapper.new(StringIO.new(("a" * (BufferedIO::BUFFER_SIZE + 10)) + "b"))
+    io = BufferedIOWrapper.new(StringIO.new(("a" * (IO::Buffered::Common::BUFFER_SIZE + 10)) + "b"))
     io.gets('b', 2).should eq("aa")
   end
 
   it "does gets with char and limit when not found in buffer (2)" do
-    base = "a" * (BufferedIO::BUFFER_SIZE + 10)
+    base = "a" * (IO::Buffered::Common::BUFFER_SIZE + 10)
     io = BufferedIOWrapper.new(StringIO.new(base + "aabaaa"))
-    io.gets('b', BufferedIO::BUFFER_SIZE + 11).should eq(base + "a")
+    io.gets('b', IO::Buffered::Common::BUFFER_SIZE + 11).should eq(base + "a")
   end
 
   it "raises if invoking gets with negative limit" do
