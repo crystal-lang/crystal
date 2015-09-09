@@ -482,6 +482,11 @@ module Enumerable(T)
     max_by &.itself
   end
 
+  # Same as `max` but returns nil if the collection is empty.
+  def max?
+    max_by? &.itself
+  end
+
   # Returns the element for which the passed block returns with the maximum value.
   #
   # It compares using `>` so the block must return a type that supports that method
@@ -490,6 +495,17 @@ module Enumerable(T)
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def max_by(&block : T -> U)
+    ret = max_by_internal { |value| yield value }
+    ret[0] ? ret[1] : raise EmptyEnumerable.new
+  end
+
+  # Same as `max_by` but returns nil if the collection is empty.
+  def max_by?(&block : T -> U)
+    ret = max_by_internal { |value| yield value }
+    ret[0] ? ret[1] : nil
+  end
+
+  private def max_by_internal(&block : T -> U)
     max :: U
     obj :: T
     found = false
@@ -503,7 +519,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? obj : raise EmptyEnumerable.new
+    {found, obj}
   end
 
   # Like `max_by` but instead of the element, returns the value returned by the block.
@@ -537,6 +553,11 @@ module Enumerable(T)
     min_by &.itself
   end
 
+  # Same as `min` but returns nil if the collection is empty.
+  def min?
+    min_by? &.itself
+  end
+
   # Returns the element for which the passed block returns with the minimum value.
   #
   # It compares using `<` so the block must return a type that supports that method
@@ -545,6 +566,17 @@ module Enumerable(T)
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def min_by(&block : T -> U)
+    ret = min_by_internal { |value| yield value }
+    ret[0] ? ret[1] : raise EmptyEnumerable.new
+  end
+
+  # Same as `min_by` but returns nil if the collection is empty.
+  def min_by?(&block : T -> U)
+    ret = min_by_internal { |value| yield value }
+    ret[0] ? ret[1] : nil
+  end
+
+  private def min_by_internal(&block : T -> U)
     min :: U
     obj :: T
     found = false
@@ -558,7 +590,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? obj : raise EmptyEnumerable.new
+    {found, obj}
   end
 
   # Like `min_by` but instead of the element, returns the value returned by the block.
