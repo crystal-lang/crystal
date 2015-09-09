@@ -1,4 +1,5 @@
 require "intrinsics"
+require "reflect"
 require "libc"
 require "macros"
 require "object"
