@@ -1298,6 +1298,7 @@ module Crystal
 
       0.upto(blocks.size - 2) do |i|
         position_at_end blocks[i]
+        clear_current_debug_location if @debug
         br blocks[i + 1]
       end
 
