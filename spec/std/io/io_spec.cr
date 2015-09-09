@@ -76,6 +76,23 @@ describe IO do
     end
   end
 
+  describe "partial read" do
+    it "doesn't block on first read.  blocks on 2nd read" do
+      IO.pipe do |read, write|
+        write.puts "hello"
+	slice = Slice(UInt8).new 1024
+
+        read.read_timeout = 1
+        read.read(slice).should eq(6)
+
+        expect_raises(IO::Timeout) do
+          read.read_timeout = 0.0001
+          read.read(slice)
+        end
+      end
+    end
+  end
+
   describe "IO iterators" do
     it "iterates by line" do
       io = StringIO.new("hello\nbye\n")
