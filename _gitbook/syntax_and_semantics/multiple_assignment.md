@@ -24,7 +24,7 @@ b #=> 1
 
 If the right-hand side contains just one expression, it is considered an indexed type and the following syntax sugar applies:
 
-```
+```crystal
 name, age, source = "Crystal,1,github".split(",")
 
 # The above is the same as this:
