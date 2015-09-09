@@ -1281,6 +1281,98 @@ class Array(T)
     self
   end
 
+  # Returns the element at the given index.
+  #
+  # Negative indices can be used to start counting from the end of the array.
+  # Raises `IndexError` if trying to access an element outside the array's range.
+  # same as [](index : Int)
+  def slice(index : Int)
+    self[index]
+  end
+
+  # Returns all elements that are within the given range
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Aditionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  # Raises `IndexError` if the starting index is out of range.
+  # same as [](range : Range)
+  def slice(range : Range)
+    self[range]
+  end
+
+  # Returns count or less (if there aren't enough) elements starting at the
+  # given start index.
+  # Raises `IndexError` if the index is out of range.
+  #
+  # ```
+  # a = ["ant", "bat", "cat", "dog"]
+  # a.slice!(1, 2)  #=> ["bat", "cat"]
+  # a               #=> ["ant", "bat", "cat", "dog"]
+  # a.slice!(99,1)  #=> IndexError
+  # ```
+  def slice(index, count)
+    self[index, count]
+  end
+
+  # Deletes the element at the given index, returning that element.
+  # Raises `IndexError` if the index is out of range.
+  # same as delete_at
+  #
+  # ```
+  # a = ["ant", "bat", "cat", "dog"]
+  # a.slice!(2)  #=> "cat"
+  # a            #=> ["ant", "bat", "dog"]
+  # a.slice!(99) #=> IndexError
+  # ```
+  def slice!(index : Int)
+    delete_at index
+  end
+
+  # Deletes all elements that are within the given range,
+  # returning that elements.
+  # Raises `IndexError` if the index is out of range.
+  #
+  # ```
+  # a = ["ant", "bat", "cat", "dog"]
+  # a.slice!(1..2)  #=> ["bat", "cat"]
+  # a               #=> ["ant", "dog"]
+  # a.slice!(99..100)  #=> IndexError
+  # ```
+  def slice!(range : Range)
+    return nil if range.first < 0 && range.end > 0
+    from = range.begin
+    from += length if from < 0
+    to = range.end
+    to += length if to < 0
+    to -= 1 if range.excludes_end?
+    length = to - from + 1
+    length = 0 if length < 0
+    self.slice!(from, length)
+  end
+
+  # Deletes count or less (if there aren't enough) elements at the given start index, 
+  # returning that elements.
+  # Raises `IndexError` if the index is out of range.
+  #
+  # ```
+  # a = ["ant", "bat", "cat", "dog"]
+  # a.slice!(1, 2)  #=> ["bat", "cat"]
+  # a               #=> ["ant", "dog"]
+  # a.slice!(99,1)  #=> IndexError
+  # ```
+  def slice!(index, count)
+    return [] of T if count == 0
+    index = length + index if index < 0
+    return nil if index < 0
+    count = index + count <= length ? count : length - index
+    val = self[index, count]
+    (@buffer + index).move_from(@buffer + index + 1, count)
+    @length -= count
+    (@buffer + @length).clear(count)
+    val
+  end
+
   def sort
     dup.sort!
   end

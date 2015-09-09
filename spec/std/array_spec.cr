@@ -738,6 +738,60 @@ describe "Array" do
     end
   end
 
+  describe "slice" do
+    it "slice! " do
+      a = [1, 2, 3]
+      a.slice!(1).should eq(2)
+      a.should eq([1, 3])
+      a = [1, 2, 3]
+      a.slice!(-1).should eq(3)
+      a.should eq([1, 2])
+      a = [1, 2, 3]
+      a.slice!(-2..0).should eq([] of Int32)
+      a.slice!(-2..-1).should eq([2,3])
+      a.should eq([1])
+      a = [1, 2, 3]
+      a.slice!(1, 2).should eq([2,3])
+      a.should eq([1])
+      a.length.should eq(1)
+      a = [1, 2, 3]
+      a.slice!(1..5).should eq([2,3])
+      a.should eq([1])
+    end
+
+    it "slice" do
+      a = [1, 2, 3]
+      a.slice(1).should eq(2)
+      a.should eq([1, 2, 3])
+      a.slice(-1).should eq(3)
+      a.should eq([1, 2, 3])
+      a.slice(-2..0).should eq([] of Int32)
+      a.slice(-2..-1).should eq([2,3])
+      a.slice(1, 2).should eq([2,3])
+    end
+
+
+    it "slice! exception" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.slice!(4,1)
+      end
+      expect_raises IndexError do
+        a.slice!(4..5)
+      end
+    end
+
+    it "slice exception" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.slice(4,1)
+      end
+      expect_raises IndexError do
+        a.slice(4..5)
+      end
+    end
+  end
+
   describe "sort" do
     it "sort without block" do
       a = [3, 4, 1, 2, 5, 6]
