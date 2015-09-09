@@ -297,6 +297,26 @@ describe "Array" do
       a.should eq([1, 3, 4])
     end
 
+    it "deletes use range" do
+      a = [1, 2, 3]
+      a.delete_at(1).should eq(2)
+      a.should eq([1, 3])
+      a = [1, 2, 3]
+      a.delete_at(-1).should eq(3)
+      a.should eq([1, 2])
+      a = [1, 2, 3]
+      a.delete_at(-2..0).should eq([] of Int32)
+      a.delete_at(-2..-1).should eq([2,3])
+      a.should eq([1])
+      a = [1, 2, 3]
+      a.delete_at(1, 2).should eq([2,3])
+      a.should eq([1])
+      a.size.should eq(1)
+      a = [1, 2, 3]
+      a.delete_at(1..5).should eq([2,3])
+      a.should eq([1])
+    end
+
     it "deletes negative index" do
       a = [1, 2, 3, 4]
       a.delete_at(-3).should eq(2)
@@ -308,6 +328,13 @@ describe "Array" do
       expect_raises IndexError do
         a.delete_at(4)
       end
+      expect_raises IndexError do
+        a.delete_at(5,1)
+      end
+      expect_raises IndexError do
+        a.delete_at(5..6)
+      end
+
     end
   end
 
