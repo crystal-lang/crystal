@@ -63,8 +63,11 @@ module Crystal
 
     def set_current_debug_location(node : ASTNode)
       location = node.location
-      puts "no location: #{node}" unless location
-      set_current_debug_location(location)
+      if location
+        set_current_debug_location(location)
+      else
+        clear_current_debug_location
+      end
     end
 
     def set_current_debug_location(location)
