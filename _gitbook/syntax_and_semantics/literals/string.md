@@ -4,13 +4,13 @@ A [String](http://crystal-lang.org/api/String.html) represents an immutable sequ
 
 A String is typically created with a string literal, enclosing UTF-8 characters in double quotes:
 
-```ruby
+```crystal
 "hello world"
 ```
 
 A backslash can be used to denote some characters inside the string:
 
-```ruby
+```crystal
 "\"" # double quote
 "\\" # backslash
 "\e" # escape
@@ -23,7 +23,7 @@ A backslash can be used to denote some characters inside the string:
 
 You can use a backslash followed by at most three digits to denote a code point written in octal:
 
-```ruby
+```crystal
 "\101" # == "A"
 "\123" # == "S"
 "\12"  # == "\n"
@@ -32,20 +32,20 @@ You can use a backslash followed by at most three digits to denote a code point 
 
 You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 
-```ruby
+```crystal
 "\u0041" # == "A"
 ```
 
 Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):
 
-```ruby
+```crystal
 "\u{41}"    # == "A"
 "\u{1F52E}" # == "🔮"
 ```
 
 A string can span multiple lines:
 
-```ruby
+```crystal
 "hello
       world" # same as "hello\n      world"
 ```
@@ -54,7 +54,7 @@ Note that in the above example trailing and leading spaces, as well as newlines,
 end up in the resulting string. To avoid this, you can split a string into multiple lines
 by joining multiple literals with a backslash:
 
-```ruby
+```crystal
 "hello " \
 "world, " \
 "no newlines" # same as "hello world, no newlines"
@@ -62,7 +62,7 @@ by joining multiple literals with a backslash:
 
 Alternatively, a backlash followed by a newline can be inserted inside the string literal:
 
-```ruby
+```crystal
 "hello \
      world, \
      no newlines" # same as "hello world, no newlines"
@@ -73,7 +73,7 @@ In this case, leading whitespace is not included in the resulting string.
 If you need to write a string that has many double quotes, parenthesis, or similar
 characters, you can use alternative literals:
 
-```ruby
+```crystal
 # Supports double quotes and nested parenthesis
 %(hello ("world")) # same as "hello (\"world\")"
 
@@ -91,7 +91,7 @@ characters, you can use alternative literals:
 
 To create a String with embedded expressions, you can use string interpolation:
 
-```ruby
+```crystal
 a = 1
 b = 2
 "sum = #{a + b}"        # "sum = 3"

@@ -2,7 +2,7 @@
 
 If a class defines a `finalize` method, when an instance of that class is garbage-collected that method will be invoked:
 
-```ruby
+```crystal
 class Foo
   def finalize
     # Invoked when Foo is garbage-collected

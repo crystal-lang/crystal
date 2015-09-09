@@ -2,7 +2,7 @@
 
 The `instance_sizeof` expression returns an `Int32` with the instance size of a given class. For example:
 
-```ruby
+```crystal
 class Point
   def initialize(@x, @y)
   end

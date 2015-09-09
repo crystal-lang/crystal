@@ -2,7 +2,7 @@
 
 A `lib` declaration groups C functions and types that belong to a library.
 
-```ruby
+```crystal
 @[Link("pcre")]
 lib LibPCRE
 end

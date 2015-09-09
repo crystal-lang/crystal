@@ -2,7 +2,7 @@
 
 If a type defines a `to_unsafe` method, when passing it to C the value returned by this method will be passed. For example:
 
-```ruby
+```crystal
 lib C
   fun exit(status : Int32) : NoReturn
 end
@@ -26,7 +26,7 @@ This is very useful for defining wrappers of C types without having to explicitl
 
 For example, the `String` class implements `to_unsafe` to return `UInt8*`:
 
-```ruby
+```crystal
 lib C
   fun printf(format : UInt8*, ...) : Int32
 end

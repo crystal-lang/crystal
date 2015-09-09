@@ -2,7 +2,7 @@
 
 The pseudo-method `is_a?` determines whether a type inherits or includes another type. For example:
 
-```ruby
+```crystal
 a = 1
 a.is_a?(Int32)          #=> true
 a.is_a?(String)         #=> false

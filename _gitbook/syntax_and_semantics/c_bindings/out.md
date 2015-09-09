@@ -2,7 +2,7 @@
 
 Consider the [waitpid](http://www.gnu.org/software/libc/manual/html_node/Process-Completion.html) function:
 
-```ruby
+```crystal
 lib C
   fun waitpid(pid : Int32, status_ptr : Int32*, options : Int32) : Int32
 end
@@ -17,7 +17,7 @@ that status_ptr points to, unless status_ptr is a null pointer.
 
 We can use this function like this:
 
-```ruby
+```crystal
 pid = ...
 options = ...
 status_ptr :: Int32
@@ -29,7 +29,7 @@ In this way we pass a pointer of `status_ptr` to the function for it to fill its
 
 There's a simpler way to write the above by using an `out` parameter:
 
-```ruby
+```crystal
 pid = ...
 options = ...
 

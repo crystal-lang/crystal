@@ -19,7 +19,7 @@ a convenient syntax is provided for some common types. These are especially usef
 
 Regular types and generics can be used:
 
-```ruby
+```crystal
 Int32
 My::Nested::Type
 Array(String)
@@ -27,7 +27,7 @@ Array(String)
 
 ## Union
 
-```ruby
+```crystal
 alias Int32OrString = Int32 | String
 ```
 
@@ -35,13 +35,13 @@ The pipe (`|`) in types creates a union type. `Int32 | String` is read "Int32 or
 
 ## Nilable
 
-```ruby
+```crystal
 alias Int32OrNil = Int32?
 ```
 
 is the same as:
 
-```ruby
+```crystal
 alias Int32OrNil = Int32 | ::Nil
 ```
 
@@ -49,13 +49,13 @@ In regular code, `Int32?` is a syntax error.
 
 ## Pointer
 
-```ruby
+```crystal
 alias Int32Ptr = Int32*
 ```
 
 is the same as:
 
-```ruby
+```crystal
 alias Int32 = Pointer(Int32)
 ```
 
@@ -63,13 +63,13 @@ In regular code, `Int32*` means invoking the `*` method on `Int32`.
 
 ## StaticArray
 
-```ruby
+```crystal
 alias Int32_8 = Int32[8]
 ```
 
 is the same as:
 
-```ruby
+```crystal
 alias Int32_8 = StaticArray(Int32, 8)
 ```
 
@@ -77,13 +77,13 @@ In regular code, `Int32[8]` means invoking the `[]` method on `Int32` with `8` a
 
 ## Tuple
 
-```ruby
+```crystal
 alias Int32StringTuple = {Int32, String}
 ```
 
 is the same as:
 
-```ruby
+```crystal
 alias Int32StringTuple = Tuple(Int32, String)
 ```
 
@@ -91,31 +91,31 @@ In regular code, `{Int32, String}` is a tuple instance containing `Int32` and `S
 
 ## Proc
 
-```ruby
+```crystal
 alias Int32ToString = Int32 -> String
 ```
 
 is the same as:
 
-```ruby
+```crystal
 alias Int32ToString = Proc(Int32, String)
 ```
 
 To specify a Proc without arguments:
 
-```ruby
+```crystal
 alias ProcThatReturnsInt32 = -> Int32
 ```
 
 To specify multiple arguments:
 
-```ruby
+```crystal
 alias Int32AndCharToString = Int32, Char -> String
 ```
 
 For nested procs (and any type, in general), you can use parentheses:
 
-```ruby
+```crystal
 alias ComplexProc = (Int32 -> Int32) -> String
 ```
 
@@ -131,7 +131,7 @@ In regular code `Int32 -> String` is a syntax error.
 
 For example:
 
-```ruby
+```crystal
 def foo(x : Int32)
   "instance"
 end
@@ -146,7 +146,7 @@ foo Int32 # "class"
 
 `class` is also useful for creating arrays and collections of class type:
 
-```ruby
+```crystal
 class Parent
 end
 
@@ -165,7 +165,7 @@ ary << Child2
 
 An underscore is allowed in type restrictions. It matches anything:
 
-```ruby
+```crystal
 # Same as not specifying a restriction, not very useful
 def foo(x : _)
 end
@@ -179,7 +179,7 @@ end
 
 `typeof` is allowed in the type grammar. It returns a union type of the type of the passed expressions:
 
-```ruby
+```crystal
 alias SameAsInt32 = typeof(1 + 2)
 alias Int32OrString = typeof(1, "a")
 ```

@@ -2,7 +2,7 @@
 
 A [Range](http://crystal-lang.org/api/Range.html) is typically constructed with a range literal:
 
-```ruby
+```crystal
 x..y  # an inclusive range, in mathematics: [x, y]
 x...y # an exclusive range, in mathematics: [x, y)
 ```

@@ -2,7 +2,7 @@
 
 You can use function types in C declarations:
 
-```ruby
+```crystal
 lib X
   # In C:
   #
@@ -13,20 +13,20 @@ end
 
 Then you can pass a function (a [Proc](http://crystal-lang.org/api/Proc.html)) like this:
 
-```ruby
+```crystal
 f = ->(x : Int32) { x + 1 }
 X.callback(f)
 ```
 
 If you define the function inline in the same call you can omit the argument types, the compiler will add the types for you based on the `fun` signature:
 
-```ruby
+```crystal
 X.callback ->(x) { x + 1 }
 ```
 
 Note, however, that functions passed to C can't form closures. If the compiler detects at compile-time that a closure is being passed, an error will be issued:
 
-```ruby
+```crystal
 y = 2
 X.callback ->(x) { x + y } # Error: can't send closure
                            # to C function
@@ -44,7 +44,7 @@ The compiler infers this attribute for a method if it invokes a method that is m
 
 However, some C functions accept callbacks to be executed by other C functions. For example, suppose a ficticious library:
 
-```ruby
+```crystal
 lib LibFoo
   fun store_callback(callback : ->)
   fun execute_callback
@@ -56,7 +56,7 @@ LibFoo.execute_callback
 
 If the callback passed to `store_callback` raises, then `execute_callback` will raise. However, the compiler doesn't know that `execute_callback` can potentially raise because it is not marked as `@[Raises]` and the compiler has no way to figure this out. In these cases you have to manually mark such functions:
 
-```ruby
+```crystal
 lib LibFoo
   fun store_callback(callback : ->)
 

@@ -2,7 +2,7 @@
 
 A slightly more interesting example is an HTTP Server:
 
-```ruby
+```crystal
 require "http/server"
 
 server = HTTP::Server.new(8080) do |request|

@@ -4,7 +4,7 @@ Once macros generate code, they are parsed with a regular Crystal parser where l
 
 This is better understood with an example:
 
-```ruby
+```crystal
 macro update_x
   x = 1
 end
@@ -16,7 +16,7 @@ x #=> 1
 
 This can sometimes be useful to avoid repetitive code by actually accessing and reading/writing local variables, but can also overwrite local variables by mistake. You can use fresh variables with `%name`:
 
-```ruby
+```crystal
 macro dont_update_x
   %x = 1
   puts %x
@@ -31,7 +31,7 @@ Using `%x` in the above example we declare a variable whose name is guaranteed n
 
 Additionally, you can declare fresh variables related to some other AST node using `%var{key1, key2, ..., keyN}`. For example:
 
-```ruby
+```crystal
 macro fresh_vars_sample(*names)
   # First declare vars
   {% for name, index in names %}

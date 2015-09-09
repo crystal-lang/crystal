@@ -2,7 +2,7 @@
 
 You can use `next` to try to execute the next iteration of a `while` loop. After executing `next`, the `while`'s condition is checked and, if *truthy*, the body will be executed.
 
-```ruby
+```crystal
 a = 1
 while a < 5
   a += 1

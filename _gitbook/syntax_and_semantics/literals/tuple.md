@@ -2,7 +2,7 @@
 
 A [Tuple](http://crystal-lang.org/api/Tuple.html) is typically created with a tuple literal:
 
-```ruby
+```crystal
 tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
 tuple[0]                  #=> 1       (Int32)
 tuple[1]                  #=> "hello" (String)

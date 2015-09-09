@@ -2,7 +2,7 @@
 
 A [Hash](http://crystal-lang.org/api/Hash.html) representing a mapping of keys of a type `K` to values of a type `V`. It is typically created with a hash literal:
 
-```ruby
+```crystal
 {1 => 2, 3 => 4}     # Hash(Int32, Int32)
 {1 => 2, 'a' => 3}   # Hash(Int32 | Char, Int32)
 ```
@@ -11,7 +11,7 @@ A Hash can have mixed types, both for the keys and values, meaning `K`/`V` will 
 
 When creating an empty hash you must always specify `K` and `V`:
 
-```ruby
+```crystal
 {} of Int32 => Int32 # same as Hash(Int32, Int32).new
 {}                   # syntax error
 ```
@@ -20,7 +20,7 @@ When creating an empty hash you must always specify `K` and `V`:
 
 A special notation allows creating hashes with symbol keys:
 
-```ruby
+```crystal
 {key1: 'a', key2: 'b'} # Hash(Symbol, Char)
 ```
 
@@ -28,7 +28,7 @@ A special notation allows creating hashes with symbol keys:
 
 A special notation allows creating hashes with string keys:
 
-```ruby
+```crystal
 {"key1": 'a', "key2": 'b'} # Hash(String, Char)
 ```
 
@@ -36,13 +36,13 @@ A special notation allows creating hashes with string keys:
 
 You can use a special hash literal syntax with other types too, as long as they define an argless `new` method and a `[]=` method:
 
-```ruby
+```crystal
 MyType{"foo": "bar"}
 ```
 
 If `MyType` is not generic, the above is equivalent to this:
 
-```ruby
+```crystal
 tmp = MyType.new
 tmp["foo"] = "bar"
 tmp
@@ -50,7 +50,7 @@ tmp
 
 If `MyType` is generic, the above is equivalent to this:
 
-```ruby
+```crystal
 tmp = MyType(typeof("foo"), typeof("bar")).new
 tmp["foo"] = "bar"
 tmp
@@ -58,6 +58,6 @@ tmp
 
 In the case of a generic type, the type arguments can be specified too:
 
-```ruby
+```crystal
 MyType(String, String) {"foo": "bar"}
 ```

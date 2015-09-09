@@ -2,7 +2,7 @@
 
 An `alias` declaration inside a `lib` declares a C `typedef`:
 
-```ruby
+```crystal
 lib X
   alias MyInt = Int32
 end
@@ -10,7 +10,7 @@ end
 
 Now `Int32` and `MyInt` are interchangeable:
 
-```ruby
+```crystal
 lib X
   alias MyInt = Int32
 
@@ -22,7 +22,7 @@ X.some_fun 1 # OK
 
 An `alias` is most useful to avoid writing long types over and over, but also to declare a type based on compile-time flags:
 
-```ruby
+```crystal
 lib C
   ifdef x86_64
     SizeT = Int64

@@ -2,7 +2,7 @@
 
 The pseudo-method `responds_to?` determines whether a type has a method with the given name. For example:
 
-```ruby
+```crystal
 a = 1
 a.responds_to?(:abs)    #=> true
 a.responds_to?(:size) #=> false

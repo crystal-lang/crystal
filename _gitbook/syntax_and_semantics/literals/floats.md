@@ -10,7 +10,7 @@ a sequence of numbers or underscores, followed by a dot,
 followed by numbers or underscores, followed by an optional exponent suffix,
 followed by an optional type suffix. If no suffix is present, the literal's type is `Float64`.
 
-```ruby
+```crystal
 1.0      # Float64
 1.0_f32  # Float32
 1_f32    # Float32
@@ -27,6 +27,6 @@ The underscore `_` before the suffix is optional.
 
 Underscores can be used to make some numbers more readable:
 
-```ruby
+```crystal
 1_000_000.111_111 # better than 1000000.111111
 ```

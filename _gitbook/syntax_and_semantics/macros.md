@@ -3,7 +3,7 @@
 Macros are methods that receive AST nodes at compile-time and produce
 code that is pasted into a program. For example:
 
-```ruby
+```crystal
 macro define_method(name, content)
   def {{name}}
     {{content}}
@@ -34,7 +34,7 @@ They can also be defined in classes and modules, and are only visible in those s
 
 For example, a block which is given an object to use as the default receiver by being invoked with `with ... yield` can access macros defined within that object's ancestors chain:
 
-```ruby
+```crystal
 class Foo
   macro emphasize(value)
     "***#{ {{value}} }***"
@@ -54,7 +54,7 @@ You use `{{...}}` to paste, or interpolate, an AST node, as in the above example
 
 Note that the node is pasted as-is. If in the previous example we pass a symbol, the generated code becomes invalid:
 
-```ruby
+```crystal
 # This generates:
 #
 #     def :foo
@@ -71,7 +71,7 @@ You can invoke a **fixed subset** of methods on AST nodes at compile-time. These
 
 For example, invoking `ASTNode#id` in the above example solves the problem:
 
-```ruby
+```crystal
 macro define_method(name, content)
   def {{name.id}}
     {{content}}
@@ -90,7 +90,7 @@ define_method :foo, 1
 
 You use `{% if condition %}` ... `{% end %}` to conditionally generate code:
 
-```ruby
+```crystal
 macro define_method(name, content)
   def {{name}}
     {% if content == 1 %}
@@ -112,7 +112,7 @@ Similar to regular code, `Nop`, `NilLiteral` and a false `BoolLiteral` are consi
 
 Macro conditionals can be used outside a macro definition:
 
-```ruby
+```crystal
 {% if env("TEST") %}
   puts "We are in test mode"
 {% end %}
@@ -121,7 +121,7 @@ Macro conditionals can be used outside a macro definition:
 ### Iteration
 To iterate an `ArrayLiteral`:
 
-```ruby
+```crystal
 macro define_dummy_methods(names)
   {% for name, index in names %}
     def {{name.id}}
@@ -141,7 +141,7 @@ The `index` variable in the above example is optional.
 
 To iterate a `HashLiteral`:
 
-```ruby
+```crystal
 macro define_dummy_methods(hash)
   {% for key, value in hash %}
     def {{key.id}}
@@ -156,7 +156,7 @@ bar #=> 20
 
 Macro iterations can be used outside a macro definition:
 
-```ruby
+```crystal
 {% for name, index in ["foo", "bar", "baz"] %}
   def {{name.id}}
     {{index}}
@@ -172,7 +172,7 @@ baz #=> 2
 
 A macro can accept variadic arguments:
 
-```ruby
+```crystal
 macro define_dummy_methods(*names)
   {% for name, index in names %}
     def {{name.id}}
@@ -192,7 +192,7 @@ The arguments are packed into an `ArrayLiteral` and passed to the macro.
 
 Additionaly, using `*` when interpolating an `ArrayLiteral` interpolates the elements separated by commas:
 
-```ruby
+```crystal
 macro println(*values)
    print {{*values}}, '\n'
 end
@@ -210,7 +210,7 @@ Note that `@type` is always the *instance* type, even when the macro is invoked 
 
 Macros can access constants. For example:
 
-```ruby
+```crystal
 VALUES = [1, 2, 3]
 
 {% for value in VALUES %}

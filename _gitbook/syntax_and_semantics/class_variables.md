@@ -2,7 +2,7 @@
 
 Class variables are associated to classes instead of instances. They are prefixed with two "at" signs (`@@`). For example:
 
-```ruby
+```crystal
 class Counter
   @@instances = 0
 
@@ -26,7 +26,7 @@ Class variables can be read and written from class methods or instance methods.
 
 If a class variable is read before it is assigned a value, it will include the `Nil` type:
 
-```ruby
+```crystal
 class Counter
   def self.increment
     @@instances += 1
@@ -38,7 +38,7 @@ Counter.increment # Error: undefined method '+' for Nil
 
 Class variables are always associated to a single type and are not inherited:
 
-```ruby
+```crystal
 class Parent
   @@counter = 0
 end

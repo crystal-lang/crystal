@@ -2,7 +2,7 @@
 
 You can declare/assign multiple variables at the same time by separating expressions with a comma (`,`):
 
-```ruby
+```crystal
 name, age = "Crystal", 1
 
 # The above is the same as this:
@@ -14,7 +14,7 @@ age   = temp2
 
 Note that because expressions are assigned to temporary variables it is possible to exchange variables’ contents in a single line:
 
-```ruby
+```crystal
 a = 1
 b = 2
 a, b = b, a
@@ -36,7 +36,7 @@ source = temp[2]
 
 If the left-hand side contains just one variable, the right-hand side is considered an array:
 
-```ruby
+```crystal
 names = "John", "Peter", "Jack"
 
 # The above is the same as:
@@ -45,7 +45,7 @@ names = ["John", "Peter", "Jack"]
 
 Multiple assignment is also available to methods that end with `=`:
 
-```ruby
+```crystal
 person.name, person.age = "John", 32
 
 # Same as:
@@ -57,7 +57,7 @@ person.age = temp2
 
 And it is also available to indexers (`[]=`):
 
-```ruby
+```crystal
 objects[1], objects[2] = 3, 4
 
 # Same as:

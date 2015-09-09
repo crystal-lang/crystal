@@ -4,14 +4,14 @@ You can read this document from top to bottom, but it’s advisable to jump thro
 
 In code examples, the comment `#=>` is used to show the value of an expression. For example:
 
-```ruby
+```crystal
 a = 1 + 2
 a #=> 3
 ```
 
 A comment using `::` is used for showing the type of a variable.
 
-```ruby
+```crystal
 s = "hello"
 # s :: String
 ```

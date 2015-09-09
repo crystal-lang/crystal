@@ -7,7 +7,7 @@ A method's return type is always inferred by the compiler. However, you might wa
 
 For example:
 
-```ruby
+```crystal
 def some_method : String
   "hello"
 end

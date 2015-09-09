@@ -2,7 +2,7 @@
 
 Captured blocks and proc literals closure local variables and `self`. This is better understood with an example:
 
-```ruby
+```crystal
 x = 0
 proc = ->{ x += 1; x }
 proc.call #=> 1
@@ -12,7 +12,7 @@ x         #=> 2
 
 Or with a proc returned from a method:
 
-```ruby
+```crystal
 def counter
   x = 0
   ->{ x += 1; x }
@@ -29,7 +29,7 @@ In the above example, even though `x` is a local variable, it was captured by th
 
 The compiler is usually moderately smart about the type of local variables. For example:
 
-```ruby
+```crystal
 def foo
   yield
 end
@@ -45,7 +45,7 @@ The compiler knows that after the block, `x` can be Int32 or String (it could kn
 
 If `x` is assigned something else after the block, the compiler knows the type changed:
 
-```ruby
+```crystal
 x = 1
 foo do
   x = "hello"
@@ -58,7 +58,7 @@ x # :: Char
 
 However, if `x` is closured by a proc, the type is always the mixed type of all assignments to it:
 
-```ruby
+```crystal
 def capture(&block)
   block
 end
@@ -74,7 +74,7 @@ This is because the captured block could have been potentially stored in a globa
 
 This also happens with regular proc literals, even if it's evident that the proc wasn't invoked or stored:
 
-```ruby
+```crystal
 def capture(&block)
   block
 end

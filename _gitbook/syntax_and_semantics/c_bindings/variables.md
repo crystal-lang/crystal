@@ -2,7 +2,7 @@
 
 Variables exposed by a C library can be declared inside a `lib` declaration using a global-variable-like declaration:
 
-```ruby
+```crystal
 lib C
   $errno : Int32
 end
@@ -10,7 +10,7 @@ end
 
 Then it can be get and set:
 
-```ruby
+```crystal
 C.errno #=> some value
 C.errno = 0
 C.errno #=> 0
@@ -18,7 +18,7 @@ C.errno #=> 0
 
 A variable can be marked as thread local with an attribute:
 
-```ruby
+```crystal
 lib C
   @[ThreadLocal]
   $errno : Int32

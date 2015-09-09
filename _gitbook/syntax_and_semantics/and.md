@@ -4,7 +4,7 @@ An `&&` (and) evaluates its left hand side. If it's *truthy*, it evaluates its r
 
 You can think an `&&` as syntax sugar of an `if`:
 
-```ruby
+```crystal
 some_exp1 && some_exp2
 
 # The above is the same as:

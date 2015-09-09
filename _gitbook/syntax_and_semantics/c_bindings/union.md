@@ -2,7 +2,7 @@
 
 A `union` declaration inside a `lib` declares a C union:
 
-```ruby
+```crystal
 lib U
   # In C:
   #
@@ -19,7 +19,7 @@ end
 
 To create an instance of a union use `new`:
 
-```ruby
+```crystal
 value = U::IntOrFloat.new
 ```
 
@@ -29,14 +29,14 @@ A C union starts with all its fields set to "zero": integers and floats start at
 
 To avoid this initialization you can use `::`:
 
-```ruby
+```crystal
 value :: U::IntOrFlaot
 value.some_int #=> some garbage value
 ```
 
 You can set and get its properties:
 
-```ruby
+```crystal
 value = U::IntOrFloat.new
 value.some_int = 1
 value.some_int #=> 1
@@ -45,7 +45,7 @@ value.some_float #=> 4.94066e-324
 
 A C union is passed by value (as a copy) to functions and methods, and also passed by value when it is returned from a method:
 
-```ruby
+```crystal
 def change_it(value)
   value.some_int = 1
 end

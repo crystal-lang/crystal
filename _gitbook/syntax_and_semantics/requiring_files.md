@@ -45,7 +45,7 @@ The lookup goes like this:
 
 This relative is mostly used inside a project to refer to other files inside it. It is also used to refer to code from specs:
 
-```ruby
+```crystal
 # in spec/project_spec.cr
 require "../src/project"
 ```

@@ -2,7 +2,7 @@
 
 The value of an `if` is the value of the last expression found in each of its branches:
 
-```ruby
+```crystal
 a = if 2 > 1
       3
     else
@@ -13,7 +13,7 @@ a #=> 3
 
 If an `if` branch is empty, or it’s missing, it’s considered as if it had `nil` in it:
 
-```ruby
+```crystal
 if 1 > 2
   3
 end
