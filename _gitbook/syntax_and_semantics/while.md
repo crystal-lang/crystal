@@ -2,7 +2,7 @@
 
 A `while` executes its body as long as its condition is *truthy*.
 
-```ruby
+```crystal
 while some_condition
   do_this
 end
@@ -16,7 +16,7 @@ Similar to an `if`, if a `while`'s condition is a variable, the variable is guar
 
 The type of a variable after a `while` depends on the type it had before the `while` and the type it had before leaving the `while`'s body:
 
-```ruby
+```crystal
 a = 1
 while some_condition
   # a :: Int32 | String
@@ -31,7 +31,7 @@ end
 
 If you need to execute the body at least once and then check for a breaking condition, you can do this:
 
-```ruby
+```crystal
 while true
   do_something
   break if some_condition
@@ -40,7 +40,7 @@ end
 
 Or use `loop`, found in the standard library:
 
-```ruby
+```crystal
 loop do
   do_something
   break if some_condition

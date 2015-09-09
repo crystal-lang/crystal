@@ -2,7 +2,7 @@
 
 Constants can be declared at the top level or inside other types. They must start with a capital letter:
 
-```ruby
+```crystal
 PI = 3.14
 
 module Earth
@@ -17,7 +17,7 @@ Although not enforced by the compiler, constants are usually named with all capi
 
 A constant definition can invoke methods and have complex logic:
 
-```ruby
+```crystal
 TEN = begin
   a = 0
   while a < 10

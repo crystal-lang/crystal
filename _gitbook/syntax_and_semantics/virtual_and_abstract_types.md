@@ -2,7 +2,7 @@
 
 When a variable's type combines different types under the same class hierarchy, its type becomes a **virtual type**. This applies to every class except for `Reference`. An example:
 
-```ruby
+```crystal
 class Animal
 end
 
@@ -51,7 +51,7 @@ Note that virtual types only apply to classes, never to structs.
 
 Lets make John's pet talk:
 
-```ruby
+```crystal
 john.pet.talk # Error: undefined method 'talk' for Animal
 ```
 
@@ -59,26 +59,26 @@ We get an error because the compiler now treats `@pet` as an `Animal+`, which in
 
 What the compiler doesn't know is that for us, `Animal` will never be instantiated as it doesn't make sense to instantiate one. We have a way to tell the compiler so by marking the class as `abstract`:
 
-```ruby
+```crystal
 abstract class Animal
 end
 ```
 
 Now the code compiles:
 
-```ruby
+```crystal
 john.pet.talk #=> "Woof!"
 ```
 
 Marking a class as abstract will also prevent us from creating an instance of it:
 
-```ruby
+```crystal
 Animal.new # Error: can't instantiate abstract class Animal
 ```
 
 To make it more explicit that an `Animal` must define a `talk` method, we can add it to `Animal` as an abstract method:
 
-```ruby
+```crystal
 abstract class Animal
   # Makes this animal talk
   abstract def talk

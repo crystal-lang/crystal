@@ -2,7 +2,7 @@
 
 To forward captured blocks, you use a block argument, prefixing an expression with `&`:
 
-```ruby
+```crystal
 def capture(&block)
   block
 end
@@ -17,13 +17,13 @@ invoke(&proc) # prints "Hello"
 
 In the above example, `invoke` receives a block. We can't pass `proc` directly to it because `invoke` doesn't receive regular arguments, just a block argument. We use `&` to specify that we really want to pass `proc` as the block argument. Otherwise:
 
-```ruby
+```crystal
 invoke(proc) # Error: wrong number of arguments for 'invoke' (1 for 0)
 ```
 
 You can actually pass a proc to a method that yields:
 
-```ruby
+```crystal
 def capture(&block)
   block
 end
@@ -39,7 +39,7 @@ twice &proc
 
 The above is simpy rewritten to:
 
-```ruby
+```crystal
 proc = capture { puts "Hello" }
 twice do
   proc.call
@@ -48,13 +48,13 @@ end
 
 Or, combining the `&` and `->` syntaxes:
 
-```ruby
+```crystal
 twice &->{ puts "Hello" }
 ```
 
 Or:
 
-```ruby
+```crystal
 def say_hello
   puts "Hello"
 end
@@ -66,7 +66,7 @@ twice &->say_hello
 
 To forward non-captured blocks, you must use `yield`:
 
-```ruby
+```crystal
 def foo
   yield 1
 end
@@ -91,7 +91,7 @@ end
 
 You can also use the `&block` syntax to forward blocks, but then you have to at least specify the input types, and the generated code will involve closures and will be slower:
 
-```ruby
+```crystal
 def foo
   yield 1
 end
@@ -114,7 +114,7 @@ end
 
 Try to avoid forwarding blocks like this if doing `yield` is enough. There's also the issue that `break` and `next` are not allowed inside captured blocks, so the following won't work when using `&block` forwarding:
 
-```ruby
+```crystal
 foo_forward do |i|
   break # error
 end

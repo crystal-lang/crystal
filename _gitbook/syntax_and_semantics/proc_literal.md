@@ -2,7 +2,7 @@
 
 A captured block is the same as declaring a [Proc literal](literals/proc.html) and [passing](block_forwarding.html) it to the method.
 
-```ruby
+```crystal
 def some_proc(&block : Int32 -> Int32)
   block
 end
@@ -17,7 +17,7 @@ x #=> 11
 
 As explained in the [proc literals](literals/proc.html) section, a Proc can also be created from existing methods:
 
-```ruby
+```crystal
 def add(x, y)
   x + y
 end

@@ -2,7 +2,7 @@
 
 An `enum` declaration inside a `lib` declares a C enum:
 
-```ruby
+```crystal
 lib X
   # In C:
   #
@@ -25,13 +25,13 @@ As in C, the first member of the enum has a value of zero and each successive va
 
 To use a value:
 
-```ruby
+```crystal
 X::SomeEnum::One #=> One
 ```
 
 You can specify the value of a member:
 
-```ruby
+```crystal
 lib X
   enum SomeEnum
     Ten = 10
@@ -45,7 +45,7 @@ As you can see, some basic math is allowed for a member value: `+`, `-`, `*`, `/
 
 The type of an enum member is `Int32` by default, even if you specify a different type in a constant value:
 
-```ruby
+```crystal
 lib X
   enum SomeEnum
     A = 1_u32
@@ -57,7 +57,7 @@ X::SomeEnum #=> 1_i32
 
 However, you can change this default type:
 
-```ruby
+```crystal
 lib X
   enum SomeEnum : Int8
     Zero,
@@ -71,7 +71,7 @@ X::SomeEnum::Two  #=> 2_i8
 
 You can use an enum as a type in a `fun` argument or `struct` or `union` members:
 
-```ruby
+```crystal
 lib X
   enum SomeEnum
     One

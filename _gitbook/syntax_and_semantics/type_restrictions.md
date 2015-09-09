@@ -2,7 +2,7 @@
 
 Type restrictions are type annotations put to method arguments to restrict the types accepted by that method.
 
-```ruby
+```crystal
 def add(x : Number, y : Number)
   x + y
 end
@@ -16,7 +16,7 @@ add true, false
 
 Note that if we had defined `add` without type restrictions, we would also have gotten a compile time error:
 
-```ruby
+```crystal
 def add(x, y)
   x + y
 end
@@ -42,7 +42,7 @@ This is because when you invoke `add`, it is instantiated with the types of the 
 
 The only difference is that the first error message is a little more clear, but both definitions are safe in that you will get a compile time error anyway. So, in general, it's preferable not to specify type restrictions and almost only use them to define different method overloads. This results in more generic, reusable code. For example, if we define a class that has a `+` method but isn't a `Number`, we can use the `add` method that doesn't have type restrictions, but we can't use the `add` method that has restrictions.
 
-```ruby
+```crystal
 # A class that has a + method but isn't a Number
 class Six
   def +(other)
@@ -73,7 +73,7 @@ Refer to the [type grammar](type_grammar.html) for the notation used in type res
 
 A special type restriction is `self`:
 
-```ruby
+```crystal
 class Person
   def ==(other : self)
     other.name == name
@@ -99,7 +99,7 @@ As a side note, since `Person` inherits `Reference` the second definition of `==
 
 Note that `self` always represents a match against an instance type, even in class methods:
 
-```ruby
+```crystal
 class Person
   def self.compare(p1 : self, p2 : self)
     p1.name == p2.name
@@ -118,7 +118,7 @@ You can use `self.class` to restrict to the Person type. The next section talks 
 
 Using, for example, `Int32` as a type restriction makes the method only accept instances of `Int32`:
 
-```ruby
+```crystal
 def foo(x : Int32)
 end
 
@@ -128,7 +128,7 @@ foo "hello" # Error
 
 If you want a method to only accept the type Int32 (not instances of it), you use `.class`:
 
-```ruby
+```crystal
 def foo(x : Int32.class)
 end
 
@@ -138,7 +138,7 @@ foo String # Error
 
 The above is useful for providing overloads based on types, not instances:
 
-```ruby
+```crystal
 def foo(x : Int32.class)
   puts "Got Int32"
 end
@@ -155,7 +155,7 @@ foo String # prints "Got String"
 
 You can specify type restrictions in splats:
 
-```ruby
+```crystal
 def foo(*args : Int32)
 end
 
@@ -170,7 +170,7 @@ foo()             # Error
 
 When specifying a type, all elements in a tuple must match that type. Additionally, the empty-tuple doesn't match any of the above cases. If you want to support the empty-tuple case, add another overload:
 
-```ruby
+```crystal
 def foo
   # This is the empty-tuple case
 end
@@ -180,7 +180,7 @@ end
 
 If you use a single uppercase letter as a type restriction, the identifier becomes a free variable:
 
-```ruby
+```crystal
 def foo(x : T)
   T
 end
@@ -193,7 +193,7 @@ That is, `T` becomes the type that was effectively used to instantiate the metho
 
 A free variable can be used to extract the type parameter of a generic type within a type restriction:
 
-```ruby
+```crystal
 def foo(x : Array(T))
   T
 end
@@ -204,7 +204,7 @@ foo([1, "a"]) #=> (Int32 | String)
 
 To create a method that accepts a type name, rather than an instance of a type, append `.class` to a free variable in the type restriction:
 
-```ruby
+```crystal
 def foo(x : T.class)
   Array(T)
 end

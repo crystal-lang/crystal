@@ -4,7 +4,7 @@ The `pointerof` expression returns a [Pointer](http://crystal-lang.org/api/Point
 
 An example with a variable:
 
-```ruby
+```crystal
 a = 1
 
 ptr = pointerof(a)
@@ -15,7 +15,7 @@ a #=> 2
 
 An example with an instance variable:
 
-```ruby
+```crystal
 class Point
   def initialize(@x, @y)
   end

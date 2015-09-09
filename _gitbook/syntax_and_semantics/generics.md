@@ -2,7 +2,7 @@
 
 Instance variables' types are inferred from the values assigned to them, like it was explained in [instance variables type inference](instance_variables_type_inference.html):
 
-```ruby
+```crystal
 class MyBox
   def initialize(@value)
   end
@@ -15,7 +15,7 @@ end
 
 For example, if we take the above code and add this:
 
-```ruby
+```crystal
 MyBox.new(1)
 ```
 
@@ -28,7 +28,7 @@ and then check what the compiler inferred with `crystal hierarchy file.cr`, we g
 
 If we create more boxes with more types:
 
-```ruby
+```crystal
 MyBox.new(nil)
 MyBox.new("hello")
 MyBox.new(1)
@@ -43,7 +43,7 @@ we get:
 
 The above makes it impossible to deal with a single box of a fixed type:
 
-```ruby
+```crystal
 MyBox.new(1)
 
 box = MyBox.new("hello")
@@ -54,7 +54,7 @@ In cases like this where we want each instance to have a unique type for `@value
 
 You can make a class generic based on one or more type variables. For example:
 
-```ruby
+```crystal
 class MyBox(T)
   def initialize(@value)
   end
@@ -67,7 +67,7 @@ end
 
 Then you instantiate it like this:
 
-```ruby
+```crystal
 MyBox(Int32).new(1)
 
 box = MyBox(String).new("hello")
@@ -88,13 +88,13 @@ The above now works, because `MyBox` is now not a single type, but a family of t
 
 However, there's a tiny flaw in the above code. This is allowed:
 
-```ruby
+```crystal
 MyBox(Int32).new("hello")
 ```
 
 This is because there's nothing relating the `T` in the type with the instance variable `@value`. The fix is easy, we can use a [type restriction](type_restrictions.html):
 
-```ruby
+```crystal
 class MyBox(T)
   def initialize(@value : T)
   end
@@ -114,7 +114,7 @@ In a way, there's still nothing relating `T` with `@value`. However, the only wa
 
 But check this:
 
-```ruby
+```crystal
 class MyBox(T)
   def initialize(@value : T)
   end
@@ -134,7 +134,7 @@ box.value = "hello"       # OK
 
 The above is perfectly valid, because there's no type restriction in the `value=` method, and so we have just "broken" our class. Again, the solution is to use a type restriction:
 
-```ruby
+```crystal
 class MyBox(T)
   def initialize(@value : T)
   end
@@ -154,7 +154,7 @@ box.value = "hello"       # Error
 
 More then one type arguments are allowed:
 
-```ruby
+```crystal
 class MyDictionary(K, V)
 end
 ```
@@ -165,7 +165,7 @@ Only single letter names are allowed as names of type arguments.
 
 Type restrictions in a generic type's constructor are free variables when type arguments were not specified, and then are used to infer them. For example:
 
-```ruby
+```crystal
 MyBox.new(1)       #:: MyBox(Int32)
 MyBox.new("hello") #:: MyBox(String)
 ```
@@ -182,7 +182,7 @@ In this way generic types are less tedious to work with.
 
 Although generic types are usually associated with containers, they can also be used to improve execution performance at the cost of a larger executable size. The main trick is to use a generic type to avoid runtime method dispatch. For example there's the standard library's `BufferedIO(T)`:
 
-```ruby
+```crystal
 file = File.open("myfile.txt")
 io = BufferedIO.new(file) #:: BufferedIO(File)
 io.gets
@@ -194,7 +194,7 @@ That `io` variable is a specified `BufferedIO(File)` instance, so invoking `gets
 
 Structs and modules can be generic too. When a module is generic you include it like this:
 
-```ruby
+```crystal
 module Moo(T)
   def t
     T
@@ -218,7 +218,7 @@ Note that in the above example `T` becomes `Int32` because `Foo.new(1)` makes `U
 
 Generic classes and structs can be inherited. When inheriting you can specify an instance of the generic type, or delegate type varaibles:
 
-```ruby
+```crystal
 class Parent(T)
 end
 

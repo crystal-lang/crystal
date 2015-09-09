@@ -7,7 +7,7 @@ Modules serve two purposes:
 
 An example of a module as a namespace:
 
-```ruby
+```crystal
 module Curses
   class Window
   end
@@ -22,7 +22,7 @@ To use a module as a partial type you use `include` or `extend`.
 
 An `include` makes a type include methods defined in that module as instance methods:
 
-```ruby
+```crystal
 module ItemsSize
   def size
     items.size
@@ -47,7 +47,7 @@ A `module` can include other modules, so when a method is not found in it it wil
 
 An `extend` makes a type include methods defined in that module as class methods:
 
-```ruby
+```crystal
 module SomeSize
   def size
     3
@@ -65,7 +65,7 @@ Both `include` and `extend` make constants defined in the module available to th
 
 Both of them can be used at the top level to avoid writing a namespace over and over (although the chances of name clashes increase):
 
-```ruby
+```crystal
 module SomeModule
   class SomeType
   end
@@ -85,7 +85,7 @@ some_method  # OK, 1
 
 A common pattern for modules is `extend self`:
 
-```ruby
+```crystal
 module Base64
   extend self
 
@@ -101,13 +101,13 @@ end
 
 In this way a module can be used as a namespace:
 
-```ruby
+```crystal
 Base64.encode64 "hello" #=> "aGVsbG8="
 ```
 
 But also it can be included in the program and its methods can be invoked without a namespace:
 
-```ruby
+```crystal
 include Base64
 
 encode64 "hello" #=> "aGVsbG8="
@@ -117,7 +117,7 @@ For this to be useful the method name should have some reference to the module, 
 
 A module cannot be instantiated:
 
-```ruby
+```crystal
 module Moo
 end
 

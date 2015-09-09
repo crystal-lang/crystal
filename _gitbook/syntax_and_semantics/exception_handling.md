@@ -6,7 +6,7 @@ Crystal's way to do error handling is by raising and rescuing exceptions.
 
 You raise exceptions by invoking a top-level `raise` method. Unlike other keywords, `raise` is a regular method with two overloads: [one accepting a String](http://crystal-lang.org/api/toplevel.html#raise%28message%20%3A%20String%29-class-method) and another [accepting an Exception instance](http://crystal-lang.org/api/toplevel.html#raise%28ex%20%3A%20Exception%29-class-method):
 
-```ruby
+```crystal
 raise "OH NO!"
 raise Exception.new("Some error")
 ```
@@ -19,7 +19,7 @@ Only `Exception` instances or subclasses can be raised.
 
 To define a custom exception type, just subclass from [Exception](http://crystal-lang.org/api/Exception.html):
 
-```ruby
+```crystal
 class MyException < Exception
 end
 
@@ -33,7 +33,7 @@ You can, as always, define a constructor for your exception or just use the defa
 
 To rescue any exception use a `begin ... rescue ... end` expression:
 
-```ruby
+```crystal
 begin
   raise "OH NO!"
 rescue
@@ -45,7 +45,7 @@ end
 
 To access the rescued exception you can specify a variable in the `rescue` clause:
 
-```ruby
+```crystal
 begin
   raise "OH NO!"
 rescue ex
@@ -57,7 +57,7 @@ end
 
 To rescue just one type of exception (or any of its subclasses):
 
-```ruby
+```crystal
 begin
   raise MyException.new("OH NO!")
 rescue MyException
@@ -69,7 +69,7 @@ end
 
 And to access it, use a syntax similar to type restrictions:
 
-```ruby
+```crystal
 begin
   raise MyException.new("OH NO!")
 rescue ex : MyException
@@ -81,7 +81,7 @@ end
 
 Multiple `rescue` clauses can be specified:
 
-```ruby
+```crystal
 begin
   # ...
 rescue ex1 : MyException
@@ -95,7 +95,7 @@ end
 
 You can also rescue multiple exception types at once by specifying a union type:
 
-```ruby
+```crystal
 begin
   # ...
 rescue ex : MyException | MyOtherException
@@ -109,7 +109,7 @@ end
 
 An `ensure` clause is executed at the end of a `begin ... end` or `begin ... rescue ... end` expression regardless of whether an exception was raised or not:
 
-```ruby
+```crystal
 begin
   something_dangerous
 ensure
@@ -122,7 +122,7 @@ end
 
 Or:
 
-```ruby
+```crystal
 begin
   something_dangerous
 rescue
@@ -138,7 +138,7 @@ end
 
 An `else` clause is executed only if no exceptions were rescued:
 
-```ruby
+```crystal
 begin
   something_dangerous
 rescue
@@ -154,7 +154,7 @@ An `else` clause can only be specified if at least one `rescue` clause is specif
 
 Exception handling has a short syntax form: assume a method definition is an implicit `begin ... end` expression, then specify `rescue`, `ensure` and `else` clauses:
 
-```ruby
+```crystal
 def some_method
   something_dangerous
 rescue
@@ -173,7 +173,7 @@ end
 
 An example with `ensure`:
 
-```ruby
+```crystal
 def some_method
   something_dangerous
 ensure
@@ -194,7 +194,7 @@ end
 
 Variables declared inside the `begin` part of an exception handler also get the `Nil` type when considered inside a `rescue` or `ensure` body. For example:
 
-```ruby
+```crystal
 begin
   a = something_dangerous_that_returns_Int32
 ensure
@@ -204,7 +204,7 @@ end
 
 The above happens even if `something_dangerous_that_returns_Int32` never raises, or if `a` was assigned a value and then a method that potentially raises is executed:
 
-```ruby
+```crystal
 begin
   a = 1
   something_dangerous
@@ -215,7 +215,7 @@ end
 
 Although it is obvious that `a` will always be assigned a value, the compiler will still think `a` might never had a chance to be initialized. Even though this logic might improve in the future, right now it forces you to keep your exception handlers to their necessary minimum, making the code's intention more clear:
 
-```ruby
+```crystal
 # Clearer than the above: `a` doesn't need
 # to be in the exception handling code.
 a = 1
@@ -232,7 +232,7 @@ Although exceptions are available as one of the mechanisms for handling errors, 
 
 The standard library usually provides a couple of methods to accomplish something: one raises, one returns `nil`. For example:
 
-```ruby
+```crystal
 array = [1, 2, 3]
 array[4]  # raises because of IndexOutOfBounds
 array[4]? # returns nil because of index out of bounds

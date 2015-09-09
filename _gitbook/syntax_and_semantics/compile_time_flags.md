@@ -13,7 +13,7 @@ Additionally, if a program is compiled with `--release`, the `release` flag will
 
 You can test these flags with `ifdef`:
 
-```ruby
+```crystal
 ifdef x86_64
   # some specific code for 64 bits platforms
 else
@@ -23,7 +23,7 @@ end
 
 You can use `&&`, `||` and `|`:
 
-```ruby
+```crystal
 ifdef linux && x86_64
   # some specific code for linux 64 bits
 end
@@ -31,7 +31,7 @@ end
 
 These flags are generally used in C bindings to conditionally define types and functions. For example the very well known `size_t` type is defined like this in Crystal:
 
-```ruby
+```crystal
 lib C
   ifdef x86_64
     alias SizeT = UInt64
@@ -43,7 +43,7 @@ end
 
 **Note:** conditionally defining fields of a C struct or union is not currently supported. The whole type definition must be defined separately.
 
-```ruby
+```crystal
 lib C
   struct SomeStruct
     # Error: the next line gives a parser error

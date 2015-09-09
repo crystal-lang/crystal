@@ -6,7 +6,7 @@ Methods can be marked as `private` or `protected`.
 
 A `private` method can only be invoked without a receiver, that is, without something before the dot:
 
-```ruby
+```crystal
 class Person
   private def say(message)
     puts message
@@ -24,7 +24,7 @@ end
 
 Note that `private` methods are visible by subclasses:
 
-```ruby
+```crystal
 class Employee < Person
   def say_bye
     say "bye" # OK
@@ -34,7 +34,7 @@ end
 
 A `protected` method can only be invoked on instances of the same type as the current type:
 
-```ruby
+```crystal
 class Person
   protected def say(message)
     puts message
@@ -64,7 +64,7 @@ one_more.say "hello" # Error, one_more is a Person
 
 A `protected` class method can be invoked from an instance method and the other way around:
 
-```ruby
+```crystal
 class Person
   protected def self.say(message)
     puts message
@@ -80,7 +80,7 @@ end
 
 A `private` top-level method is only visible in the current file.
 
-```ruby
+```crystal
 # In file one.cr
 private def greet
   puts "Hello"

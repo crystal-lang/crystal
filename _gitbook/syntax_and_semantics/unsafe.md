@@ -9,7 +9,7 @@ These parts of the language are considered unsafe:
 
 "Unsafe" means that memory corruption, segmentation faults and crashes are possible to achieve. For example:
 
-```ruby
+```crystal
 a = 1
 ptr = pointerof(a)
 ptr[100_000] = 2   # undefined behaviour, probably a segmentation fault

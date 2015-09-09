@@ -2,7 +2,7 @@
 
 Global variables start with a dollar sign (`$`). They are declared when you first assign them a value.
 
-```ruby
+```crystal
 $year = 2014
 ```
 

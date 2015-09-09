@@ -2,7 +2,7 @@
 
 An [Array](http://crystal-lang.org/api/Array.html) is a generic type containing elements of a type `T`. It is typically created with an array literal:
 
-```ruby
+```crystal
 [1, 2, 3]         # Array(Int32)
 [1, "hello", 'x'] # Array(Int32 | String | Char)
 ```
@@ -11,7 +11,7 @@ An Array can have mixed types, meaning `T` will be a union of types, but these a
 
 When creating an empty array you must always specify T:
 
-```ruby
+```crystal
 [] of Int32 # same as Array(Int32).new
 []          # syntax error
 ```
@@ -20,7 +20,7 @@ When creating an empty array you must always specify T:
 
 Arrays of strings can be created with a special syntax:
 
-```ruby
+```crystal
 %w(one two three) # ["one", "two", "three"]
 ```
 
@@ -28,7 +28,7 @@ Arrays of strings can be created with a special syntax:
 
 Arrays of symbols can be created with a special syntax:
 
-```ruby
+```crystal
 %i(one two three) # [:one, :two, :three]
 ```
 
@@ -36,13 +36,13 @@ Arrays of symbols can be created with a special syntax:
 
 You can use a special array literal syntax with other types too, as long as they define an argless `new` method and a `<<` method:
 
-```ruby
+```crystal
 MyType{1, 2, 3}
 ```
 
 If `MyType` is not generic, the above is equivalent to this:
 
-```ruby
+```crystal
 tmp = MyType.new
 tmp << 1
 tmp << 2
@@ -52,7 +52,7 @@ tmp
 
 If `MyType` is generic, the above is equivalent to this:
 
-```ruby
+```crystal
 tmp = MyType(typeof(1, 2, 3)).new
 tmp << 1
 tmp << 2
@@ -62,6 +62,6 @@ tmp
 
 In the case of a generic type, the type arguments can be specified too:
 
-```ruby
+```crystal
 MyType(Int32 | String) {1, 2, "foo"}
 ```

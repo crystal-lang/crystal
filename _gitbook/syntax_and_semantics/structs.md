@@ -2,7 +2,7 @@
 
 Instead of defining a type with `class` you can do so with `struct`:
 
-```ruby
+```crystal
 struct Point
   property x
   property y

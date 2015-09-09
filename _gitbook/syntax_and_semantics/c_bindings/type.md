@@ -2,7 +2,7 @@
 
 A `type` declaration inside a `lib` declares a kind of C `typedef`, but stronger:
 
-```ruby
+```crystal
 lib X
   type MyInt = Int32
 end
@@ -10,7 +10,7 @@ end
 
 Unlike C, `Int32` and `MyInt` are not interchangeable:
 
-```ruby
+```crystal
 lib X
   type MyInt = Int32
 

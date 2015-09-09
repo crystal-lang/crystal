@@ -2,7 +2,7 @@
 
 The ternary `if` allows writing an `if` in a shorter way:
 
-```ruby
+```crystal
 a = 1 > 2 ? 3 : 4
 
 # The above is the same as:

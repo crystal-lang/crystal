@@ -2,7 +2,7 @@
 
 Local variables start with lowercase letters. They are declared when you first assign them a value.
 
-```ruby
+```crystal
 name = "Crystal"
 age = 1
 ```
@@ -11,7 +11,7 @@ Their type is inferred from their usage, not only from their initializer. In gen
 
 For example, reassigning a variable with a different expression makes it have that expression’s type:
 
-```ruby
+```crystal
 var = "Hello"
 # At this point 'var' is a String
 

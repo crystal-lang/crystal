@@ -2,7 +2,7 @@
 
 The program is a global object in which you can define types, methods and file-local variables.
 
-```ruby
+```crystal
 # Defines a method in the program
 def add(x, y)
   x + y
@@ -14,7 +14,7 @@ add(1, 2) #=> 3
 
 A method's value is the value of its last expression, there's no need for explicit `return` expressions. However, explicit `return` are possible:
 
-```ruby
+```crystal
 def even?(num)
   if num % 2 == 0
     return true
@@ -26,7 +26,7 @@ end
 
 When invoking a method without a receiver, like `add(1, 2)`, it will be searched in the program if not found in the current type or any of its ancestors.
 
-```ruby
+```crystal
 def add(x, y)
   x + y
 end
@@ -48,7 +48,7 @@ end
 
 If you want to invoke the program's method, even though the current type defines a method with the same name, prefix the call with `::`:
 
-```ruby
+```crystal
 def baz(x, y)
   x + y
 end
@@ -67,7 +67,7 @@ end
 
 Variables declared in a program are not visible inside methods:
 
-```ruby
+```crystal
 x = 1
 
 def add(y)
@@ -79,6 +79,6 @@ add(2)
 
 Parentheses in method invocations are optional:
 
-```ruby
+```crystal
 add 1, 2 # same as add(1, 2)
 ```

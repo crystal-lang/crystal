@@ -2,7 +2,7 @@
 
 A `struct` declaration inside a `lib` declares a C struct.
 
-```ruby
+```crystal
 lib C
   # In C:
   #
@@ -19,7 +19,7 @@ end
 
 You can also specify many fields of the same type:
 
-```ruby
+```crystal
 lib C
   struct TimeZone
     minutes_west, dst_time : Int32
@@ -29,7 +29,7 @@ end
 
 To declare recursive structs you can forward-declare them:
 
-```ruby
+```crystal
 lib C
   # This is a forward declaration
   struct Node
@@ -43,7 +43,7 @@ end
 
 To create an instance of a struct use `new`:
 
-```ruby
+```crystal
 tz = C::TimeZone.new
 ```
 
@@ -53,14 +53,14 @@ A C struct starts with all its fields set to "zero": integers and floats start a
 
 To avoid this initialization you can use `::`:
 
-```ruby
+```crystal
 tz :: C::TimeZone
 tz.minutes_west #=> some garbage value
 ```
 
 You can set and get its properties:
 
-```ruby
+```crystal
 tz = C::TimeZone.new
 tz.minutes_west = 1
 tz.minutes_west #=> 1
@@ -68,7 +68,7 @@ tz.minutes_west #=> 1
 
 You can also initialize some fields with a syntax similar to [named arguments](../default_and_named_arguments.html):
 
-```ruby
+```crystal
 tz = C::TimeZone.new minutes_west: 1, dst_time: 2
 tz.minutes_west #=> 1
 tz.dst_time     #=> 2
@@ -76,7 +76,7 @@ tz.dst_time     #=> 2
 
 A C struct is passed by value (as a copy) to functions and methods, and also passed by value when it is returned from a method:
 
-```ruby
+```crystal
 def change_it(tz)
   tz.minutes_west = 1
 end

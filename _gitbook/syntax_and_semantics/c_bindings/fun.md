@@ -2,7 +2,7 @@
 
 A `fun` declaration inside a `lib` binds to a C function.
 
-```ruby
+```crystal
 lib C
   # In C: double cos(double x)
   fun cos(value : Float64) : Float64
@@ -11,13 +11,13 @@ end
 
 Once you bind it, the function is available inside the `C` type as if it was a class method:
 
-```ruby
+```crystal
 C.cos(1.5) #=> 0.0707372
 ```
 
 You can omit the parentheses if the function doesn't have arguments (and omit them in the call as well):
 
-```ruby
+```crystal
 lib C
   fun getch : Int32
 end
@@ -27,7 +27,7 @@ C.getch
 
 If the return type is void you can omit it:
 
-```ruby
+```crystal
 lib C
   fun srand(seed : UInt32)
 end
@@ -37,7 +37,7 @@ C.srand(1_u32)
 
 You can bind to variadic functions:
 
-```ruby
+```crystal
 lib X
   fun variadic(value : Int32, ...) : Int32
 end
@@ -49,7 +49,7 @@ Note that there are no implicit conversions (except `to_unsafe`, explained later
 
 Because method names in Crystal must start with a lowercase letter, `fun` names must also start with a lowercase letter. If you need to bind to a C function that starts with a capital letter you can give the function another name for Crystal:
 
-```ruby
+```crystal
 lib LibSDL
   fun init = SDL_Init(flags : UInt32) : Int32
 end
@@ -57,7 +57,7 @@ end
 
 You can also use a string as a name if the name is not a valid identifier or type name:
 
-```ruby
+```crystal
 lib LLVMIntrinsics
   fun ceil_f32 = "llvm.ceil.f32"(value : Float32) : Float32
 end
@@ -78,7 +78,7 @@ Refer to the [type gammar](type_grammar.html) for the notation used in fun types
 
 The standard library defines the [LibC](https://github.com/manastech/crystal/blob/master/src/libc.cr) lib with aliases for common C types, like `int`, `short`, `size_t`. Use them in bindings like this:
 
-```ruby
+```crystal
 lib MyLib
   fun my_fun(some_size : LibC::SizeT)
 end

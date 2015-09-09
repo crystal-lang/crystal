@@ -4,7 +4,7 @@ Did you notice that in all of the previous examples we never said the types of a
 
 When we wrote:
 
-```ruby
+```crystal
 class Person
   getter name
 
@@ -22,7 +22,7 @@ Since we invoked `Person.new` with a `String` argument, the compiler makes `@nam
 
 If we had invoked `Person.new` with another type, `@name` would have taken a different type:
 
-```ruby
+```crystal
 one = Person.new 1
 one.name #=> 1
 one.name + 2 #=> 3
@@ -54,7 +54,7 @@ In the second case:
 
 What happens if we create two different people, one with a `String` and one with an `Int32`? Let's try it:
 
-```ruby
+```crystal
 john = Person.new "John"
 one = Person.new 1
 ```
@@ -75,7 +75,7 @@ We can see that now `@name` has a type `(String | Int32)`, which is read as a *u
 
 In this case, the compiler will consider any usage of `@name` as always being either a `String` or an `Int32` and will give a compile time error if a method is not found for *both* types:
 
-```ruby
+```crystal
 john = Person.new "John"
 one = Person.new 1
 
@@ -88,7 +88,7 @@ john.name + 3
 
 The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:
 
-```ruby
+```crystal
 john = Person.new "John"
 john.name.size
 one = Person.new 1
@@ -118,7 +118,7 @@ If you do want to have different `Person` types, one with `@name` being an `Int3
 
 If an instance variable is not assigned in all of the `initialize` defined in a class, it will be considered as also having the type `Nil`:
 
-```ruby
+```crystal
 class Person
   getter name
 
@@ -153,7 +153,7 @@ The hierarchy graph now shows:
 
 You can see `@address` is `String?`, which is a short form notation of `String | Nil`. This means that the following gives a compile time error:
 
-```ruby
+```crystal
 # Error: undefined method 'size' for Nil
 john.address.size
 ```
@@ -164,7 +164,7 @@ To deal with `Nil`, and generally with union types, you have several options: us
 
 Instance variables can also be initialized outside `initialize` methods:
 
-```ruby
+```crystal
 class Person
   @age = 0
 
@@ -179,7 +179,7 @@ This will initialize `@age` to zero in every constructor. This is useful to avoi
 
 In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with `::`:
 
-```ruby
+```crystal
 class Person
   @age :: Int32
 

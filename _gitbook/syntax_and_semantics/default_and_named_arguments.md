@@ -2,7 +2,7 @@
 
 A method can specify default values for the last arguments:
 
-```ruby
+```crystal
 class Person
   def become_older(by = 1)
     @age += by
@@ -21,13 +21,13 @@ john.age #=> 3
 
 To specify the values of arguments that have default values you can also use their names in the invocation:
 
-```ruby
+```crystal
 john.become_older by: 5
 ```
 
 When the method has many default arguments the order of the names in the invocation doesn't matter, and some names can be ommited:
 
-```ruby
+```crystal
 def some_method(x, y = 1, z = 2, w = 3)
   # do something...
 end

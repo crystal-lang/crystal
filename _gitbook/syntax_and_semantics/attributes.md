@@ -10,7 +10,7 @@ Tells the compiler how to link a C library. This is explained in the [lib](c_bin
 
 The `@[ThreadLocal]` attribute can be applied to global variables and class variables. It makes them be thread local.
 
-```ruby
+```crystal
 # One for each thread
 @[ThreadLocal]
 $values = [] of Int32
@@ -24,7 +24,7 @@ Allows marking a [C struct](c_bindings/struct.html) as packed, which makes the a
 
 Gives a hint to the compiler to always inline a method:
 
-```ruby
+```crystal
 @[AlwaysInline]
 def foo
   1
@@ -35,7 +35,7 @@ end
 
 Tells the compiler to never inline a method call. This has no effect if the method yields.
 
-```ruby
+```crystal
 @[NoInline]
 def foo
   1
@@ -54,7 +54,7 @@ Marks a method or [lib fun](c_bindings/fun.html) as potentially raising an excep
 
 Indicates the call convention of a [lib fun](c_bindings/fun.html). For example:
 
-```ruby
+```crystal
 lib LibFoo
   @[CallConvention("X86_StdCall")]
   fun foo : Int32

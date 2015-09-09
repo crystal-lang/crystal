@@ -2,7 +2,7 @@
 
 An `until` executes its body until its condition is *truthy*. An `until` is just syntax sugar for a `while` with the condition negated:
 
-```ruby
+```crystal
 until some_condition
   do_this
 end

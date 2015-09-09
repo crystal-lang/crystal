@@ -4,7 +4,7 @@ A `case` is a control expression that allows a sort of pattern matching. It allo
 
 In its basic form, it allows matching a value against other values:
 
-```ruby
+```crystal
 case exp
 when value1, value2
   do_something
@@ -29,7 +29,7 @@ Note that `===` is used for comparing an expression against a `case`'s value.
 
 If a `when`'s expression is a type, `is_a?` is used. Additionally, if the case expression is a variable or a variable assignment the type of the variable is restricted:
 
-```ruby
+```crystal
 case var
 when String
   # var :: String
@@ -54,7 +54,7 @@ end
 
 You can invoke a method on the `case`'s expression in a `when` by using the implicit-object syntax:
 
-```ruby
+```crystal
 case num
 when .even?
   do_something
@@ -73,7 +73,7 @@ end
 
 Finally, you can ommit the `case`'s value:
 
-```ruby
+```crystal
 case
 when cond1, cond2
   do_something

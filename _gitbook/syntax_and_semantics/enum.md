@@ -2,7 +2,7 @@
 
 An enum is a set of integer values, where each value has an associated name. For example:
 
-```ruby
+```crystal
 enum Color
   Red
   Green
@@ -12,7 +12,7 @@ end
 
 An enum is defined with the `enum` keyword, followed by its name. The enum's body contains the values. Values start with the value `0` and are incremented by one. The default value can be overwritten:
 
-```ruby
+```crystal
 enum Color
   Red         # 0
   Green       # 1
@@ -23,19 +23,19 @@ end
 
 Each constant in the enum has the type of the enum:
 
-```ruby
+```crystal
 Color::Red #:: Color
 ```
 
 To get the underlying value you invoke `value` on it:
 
-```ruby
+```crystal
 Color::Green.value #=> 1
 ```
 
 The type of the value is `Int32` by default but can be changed:
 
-```ruby
+```crystal
 enum Color : UInt8
   Red
   Green
@@ -53,7 +53,7 @@ All enums inherit from [Enum](http://crystal-lang.org/api/Enum.html).
 
 An enum can be marked with the `@[Flags]` attribute. This changes the default values:
 
-```ruby
+```crystal
 @[Flags]
 enum IOMode
   Read # 1
@@ -66,14 +66,14 @@ The `@[Flags]` attribute makes the first constant's value be `1`, and successive
 
 Implicit constants, `None` and `All`, are automatically added to these enums, where `None` has the value `0` and `All` has the "or"ed value of all constants.
 
-```ruby
+```crystal
 IOMode::None.value #=> 0
 IOMode::All.value  #=> 7
 ```
 
 Additionally, some `Enum` methods check the `@[Flags]` method. For example:
 
-```ruby
+```crystal
 puts(Color::Red)                    # prints "Red"
 puts(IOMode::Write | IOMode::Async) # prints "Write, Async"
 ```
@@ -82,13 +82,13 @@ puts(IOMode::Write | IOMode::Async) # prints "Write, Async"
 
 An enum can be created from an integer:
 
-```ruby
+```crystal
 puts Color.new(1) #=> prints "Green"
 ```
 
 Values that don't correspond to an enum's constants are allowed: the value will still be of type `Color`, but when printed you will get the underlying value:
 
-```ruby
+```crystal
 puts Color.new(10) #=> prints "10"
 ```
 
@@ -98,7 +98,7 @@ This method is mainly intended to convert integers from C to enums in Crystal.
 
 Just like a class or a struct, you can define methods for enums:
 
-```ruby
+```crystal
 enum Color
   Red
   Green
@@ -119,7 +119,7 @@ Class variables are allowed, but instance variables not.
 
 Enums are a type-safe alternative to [Symbol](http://crystal-lang.org/api/Symbol.html). For example, an API's method can specify a [type restriction](type_restrictions.html) using an enum type:
 
-```ruby
+```crystal
 def paint(color : Color)
   case color
   when Color::Red
@@ -135,7 +135,7 @@ paint Color::Red
 
 The above could also be implemented with a Symbol:
 
-```ruby
+```crystal
 def paint(color : Symbol)
   case color
   when :red

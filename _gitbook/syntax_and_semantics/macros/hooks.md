@@ -9,7 +9,7 @@ Special macros exist that are invoked in some situations, as hooks:
 
 Example of `inherited`:
 
-```ruby
+```crystal
 class Parent
   macro inherited
     def {{@type.name.downcase.id}}
@@ -26,7 +26,7 @@ Child.new.child #=> 1
 
 Example of `method_missing`:
 
-```ruby
+```crystal
 macro method_missing(name, args, block)
   print "Got ", {{name.id.stringify}}, " with ", {{args.size}}, " arguments", '\n'
 end

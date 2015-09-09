@@ -2,19 +2,19 @@
 
 Operators like `+` and `-` are regular method calls. For example:
 
-```ruby
+```crystal
 a + b
 ```
 
 is the same as:
 
-```ruby
+```crystal
 a.+(b)
 ```
 
 You can define an operator for a type like this:
 
-```ruby
+```crystal
 struct Vector2
   getter x, y
 
@@ -35,7 +35,7 @@ Next follows the full list of operators with their usual meaning.
 
 ## Unary operators
 
-```ruby
+```crystal
 +   # positive
 -   # negative
 !   # not
@@ -44,7 +44,7 @@ Next follows the full list of operators with their usual meaning.
 
 These are defined without arguments. For example
 
-```ruby
+```crystal
 struct Vector2
   def -
     Vector2.new(-x, -y)
@@ -57,7 +57,7 @@ v1 = Vector2.new(1, 2)
 
 ## Binary operators
 
-```ruby
+```crystal
 +   # addition
 -   # subtraction
 *   # multiplication
@@ -82,7 +82,7 @@ v1 = Vector2.new(1, 2)
 
 ## Indexing
 
-```ruby
+```crystal
 []  # array index (raises on out of bounds)
 []? # array index (nil on out of bounds)
 []= # array index assignment
@@ -90,7 +90,7 @@ v1 = Vector2.new(1, 2)
 
 For example:
 
-```ruby
+```crystal
 class MyArray
   def [](index)
     # ...

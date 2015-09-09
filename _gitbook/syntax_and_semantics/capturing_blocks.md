@@ -4,7 +4,7 @@ A block can be captured and turned into a `Proc`, which represents a block of co
 
 To capture a block you must specify it as a method's block argument, give it a name and specify the input and output types. For example:
 
-```ruby
+```crystal
 def int_to_int(&block : Int32 -> Int32)
   block
 end
@@ -17,7 +17,7 @@ The above code captures the block of code passed to `int_to_int` in the `block` 
 
 In this way a block can be saved as a callback:
 
-```ruby
+```crystal
 class Model
   def on_save(&block)
     @on_save_callback = block
@@ -39,7 +39,7 @@ In the above example the type of `&block` wasn't specified: this just means that
 
 Note that if the return type is not specified, nothing gets returned from the proc call:
 
-```ruby
+```crystal
 def some_proc(&block : Int32 ->)
   block
 end
@@ -50,7 +50,7 @@ proc.call(1) # void
 
 To have something returned, either specify the return type or use an underscore to allow any return type:
 
-```ruby
+```crystal
 def some_proc(&block : Int32 -> _)
   block
 end

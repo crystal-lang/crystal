@@ -2,7 +2,7 @@
 
 Assignment is done with the equal (`=`) character.
 
-```ruby
+```crystal
 # Assigns to a local variable
 local = 1
 
@@ -20,7 +20,7 @@ Each of the above kinds of variables will be explained later on.
 
 Some syntax sugar that contains the `=` character is available:
 
-```ruby
+```crystal
 local += 1  # same as: local = local + 1
 
 # The above is valid with these operators:
@@ -32,7 +32,7 @@ local &&= 1 # same as: local && (local = 1)
 
 A method invocation that ends with `=` has syntax sugar:
 
-```ruby
+```crystal
 # A setter
 person.name=("John")
 
@@ -54,7 +54,7 @@ objects[2, 3]
 
 The `=` operator syntax sugar is also available to setters and indexers. Note that `||` and `&&` use the `[]?` method to check for key prescence.
 
-```ruby
+```crystal
 person.age += 1        # same as: person.age = person.age + 1
 
 person.name ||= "John" # same as: person.name || (person.name = "John")
