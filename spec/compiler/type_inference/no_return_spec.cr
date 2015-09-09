@@ -281,4 +281,18 @@ describe "Type inference: NoReturn" do
       ),
       "undefined method 'size' for Nil"
   end
+
+  it "types exception handler as NoReturn if ensure is NoReturn" do
+    assert_type(%(
+      lib LibC
+        fun foo : NoReturn
+      end
+
+      begin
+        1
+      ensure
+        LibC.foo
+      end
+      )) { no_return }
+  end
 end

@@ -299,6 +299,16 @@ module Crystal
     end
   end
 
+  class ExceptionHandler
+    def map_type(type)
+      if (ensure_type = @ensure.try &.type?).try &.is_a?(NoReturnType)
+        ensure_type
+      else
+        type
+      end
+    end
+  end
+
   class Cast
     property? upcast
     @upcast = false

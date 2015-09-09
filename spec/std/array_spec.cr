@@ -189,6 +189,12 @@ describe "Array" do
       [1][1, 0].should eq([] of Int32)
       [1][1, 10].should eq([] of Int32)
     end
+
+    it "raises on too negative left bound" do
+      expect_raises IndexError do
+        [1, 2, 3][-4 .. 0]
+      end
+    end
   end
 
   describe "[]=" do

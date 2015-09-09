@@ -17,7 +17,7 @@ module Benchmark
       # After #execute, these are populated with the resulting statistics.
       property items :: Array(Entry)
 
-      def initialize(calculation = 5, warmup = 2)
+      def initialize(calculation = 5, warmup = 2, @interactive = STDOUT.tty?)
         @warmup_time = warmup.seconds
         @calculation_time = calculation.seconds
         @items = [] of Entry
@@ -37,10 +37,10 @@ module Benchmark
       end
 
       def report
-        max_label = @items.max_of &.label.size
-        max_compare = @items.max_of &.human_compare.size
+        max_label = ran_items.max_of &.label.size
+        max_compare = ran_items.max_of &.human_compare.size
 
-        @items.each do |item|
+        ran_items.each do |item|
           printf "%s %s (±%5.2f%%) %s\n",
             item.label.rjust(max_label),
             item.human_mean,
@@ -91,12 +91,22 @@ module Benchmark
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
           item.calculate_stats(ips)
+
+          if @interactive
+            run_comparison
+            report
+            print "\e[#{ran_items.size}A"
+          end
         end
       end
 
+      private def ran_items
+        @items.select(&.ran?)
+      end
+
       private def run_comparison
-        fastest = @items.max_by { |i| i.mean }
-        @items.each do |item|
+        fastest = ran_items.max_by { |i| i.mean }
+        ran_items.each do |item|
           item.slower = (fastest.mean / item.mean).to_f
         end
       end
@@ -131,7 +141,13 @@ module Benchmark
       # Multiple slower than the fastest entry
       property! slower :: Float
 
+      @ran = false
+
       def initialize(@label, @action) end
+
+      def ran?
+        @ran
+      end
 
       def call
         action.call
@@ -147,6 +163,7 @@ module Benchmark
       end
 
       def calculate_stats(samples)
+        @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
         @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f

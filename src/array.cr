@@ -377,6 +377,8 @@ class Array(T)
   def [](range : Range)
     from = range.begin
     from += size if from < 0
+    raise IndexError.new if from < 0
+
     to = range.end
     to += size if to < 0
     to -= 1 if range.excludes_end?

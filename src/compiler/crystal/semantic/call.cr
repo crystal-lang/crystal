@@ -262,11 +262,6 @@ class Crystal::Call
     if matches.empty?
       # For now, if the owner is a NoReturn just ignore the error (this call should be recomputed later)
       unless owner.no_return?
-        # Check if it's a union metaclass
-        if owner.is_a?(MetaclassType) && (instance_type = owner.instance_type).is_a?(UnionType)
-          return lookup_matches_in_union_metaclass(instance_type, arg_types)
-        end
-
         # If the owner is abstract type without subclasses,
         # or if the owner is an abstract generic instance type,
         # don't give error. This is to allow small code comments without giving
@@ -309,14 +304,6 @@ class Crystal::Call
     else
       bubbling_exception { lookup_matches_with_signature(owner, signature) }
     end
-  end
-
-  def lookup_matches_in_union_metaclass(instance_type, arg_types)
-    matches = [] of Def
-    instance_type.union_types.each do |type|
-      matches.concat lookup_matches_in(type.metaclass, arg_types)
-    end
-    matches
   end
 
   def lookup_matches_with_signature(owner : Program, signature)

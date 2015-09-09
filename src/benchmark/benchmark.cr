@@ -87,9 +87,10 @@ module Benchmark
   #
   # The optional parameters `calculation` and `warmup` set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`.
-  def ips(calculation = 5, warmup = 2)
-    job = IPS::Job.new(calculation, warmup)
+  # `Benchmark::IPS`. When the `interactive` parameter is true, results are
+  # displayed and updated as they are calculated, otherwise all at once.
+  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+    job = IPS::Job.new(calculation, warmup, interactive)
     yield job
     job.execute
     job.report

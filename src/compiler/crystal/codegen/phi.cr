@@ -44,6 +44,8 @@ class Crystal::CodeGenVisitor
     end
 
     def add(value, type : Type, last = false)
+      return unreachable if node.no_returns?
+
       if @needs_value
         unless node.type.void?
           value = @codegen.upcast value, node.type, type

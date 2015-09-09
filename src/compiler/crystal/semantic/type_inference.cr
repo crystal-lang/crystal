@@ -2382,12 +2382,11 @@ module Crystal
       node.body.accept self
 
       endless_while = node.cond.true_literal?
-      merge_while_vars endless_while, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      merge_while_vars node.cond, endless_while, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
       @while_vars = old_while_vars
-
 
       unless node.has_breaks
         if endless_while
@@ -2402,15 +2401,17 @@ module Crystal
     end
 
     # Here we assign the types of variables after a while.
-    def merge_while_vars(endless, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
+    def merge_while_vars(cond, endless, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = MetaVars.new
+
+      cond_var = get_while_cond_assign_target(cond)
 
       while_vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
 
         # If a variable was assigned in the condition, it has that type.
-        if after_cond_var && !after_cond_var.same?(before_cond_var)
+        if cond_var && (cond_var.name == name) && after_cond_var && !after_cond_var.same?(before_cond_var)
           after_while_var = MetaVar.new(name)
           after_while_var.bind_to(after_cond_var)
           after_while_var.nil_if_read = after_cond_var.nil_if_read
@@ -2466,6 +2467,26 @@ module Crystal
           end
         end
       end
+    end
+
+    def get_while_cond_assign_target(node)
+      case node
+      when Assign
+        target = node.target
+        if target.is_a?(Var)
+          return target
+        end
+      when And
+        return get_while_cond_assign_target(node.left)
+      when If
+        if node.binary == :and
+          return get_while_cond_assign_target(node.cond)
+        end
+      when Call
+        return get_while_cond_assign_target(node.obj)
+      end
+
+      nil
     end
 
     # If we have:
@@ -2887,6 +2908,10 @@ module Crystal
             var.nil_if_read = false
           end
         end
+      end
+
+      if node_ensure = node.ensure
+        node_ensure.add_observer(node)
       end
 
       if node_else = node.else
@@ -3593,7 +3618,6 @@ module Crystal
       end
 
       if inside_exp?
-        # pp @exp_nest
         node.raise "can't #{op} dynamically"
       end
     end

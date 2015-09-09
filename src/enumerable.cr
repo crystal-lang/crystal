@@ -836,23 +836,51 @@ module Enumerable(T)
 
   # Adds all the elements in the collection together.
   #
-  # Only collections of numbers are supported.
+  # Only collections of numbers (objects that can be added via an `+` method) are supported.
   #
   #     [1, 2, 3, 4, 5, 6].sum  #=> 21
   #
-  # An optional *initial* value can be passed.
+  # If the collection is empty, returns zero.
   #
-  #     [1, 2, 3, 4, 5, 6].sum(100)  #=> 121
+  #     ([] of Int32).sum #=> 0
+  def sum
+    sum Reflect(T).first.zero
+  end
+
+  # Adds *initial* and all the elements in the collection together.
   #
-  def sum(initial = T.zero)
+  # Only collections of numbers (objects that can be added via an `+` method) are supported.
+  #
+  #     [1, 2, 3, 4, 5, 6].sum(7)  #=> 28
+  #
+  # If the collection is empty, returns *initial*.
+  #
+  #     ([] of Int32).sum(7) #=> 7
+  def sum(initial)
     sum initial, &.itself
   end
 
-  # Adds the results of the passed block for each element in the collection.
+  # Adds all results of the passed block for each element in the collection.
   #
   #     ["Alice", "Bob"].sum { |name| name.size }  #=> 8 (5 + 3)
   #
-  def sum(initial = typeof(yield first).zero)
+  # If the collection is empty, returns zero.
+  #
+  #     ([] of Int32).sum { |x| x + 1 } #=> 0
+  def sum(&block)
+    sum(Reflect(typeof(yield first)).first.zero) do |value|
+      yield value
+    end
+  end
+
+  # Adds *initial* and all results of the passed block for each element in the collection.
+  #
+  #     ["Alice", "Bob"].sum(1) { |name| name.size }  #=> 9 (1 + 5 + 3)
+  #
+  # If the collection is empty, returns zero.
+  #
+  #     ([] of String).sum(1) { |name| name.size } #=> 1
+  def sum(initial, &block)
     inject(initial) { |memo, e| memo + (yield e) }
   end
 

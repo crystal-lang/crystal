@@ -21,4 +21,20 @@ describe "Code gen: no return" do
       end
       ))
   end
+
+  it "codegen types exception handler as NoReturn if ensure is NoReturn" do
+    codegen(%(
+      require "prelude"
+
+      lib LibC
+        fun foo : NoReturn
+      end
+
+      begin
+        1
+      ensure
+        LibC.foo
+      end
+      ))
+  end
 end

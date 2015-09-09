@@ -114,6 +114,12 @@ describe "String" do
       ";"[0 .. -2].should eq("")
     end
 
+    it "raises on too negative left bound" do
+      expect_raises IndexError do
+        "foo"[-4 .. 0]
+      end
+    end
+
     describe "with a regex" do
       assert { "FooBar"[/o+/].should eq "oo" }
       assert { "FooBar"[/([A-Z])/, 1].should eq "F" }

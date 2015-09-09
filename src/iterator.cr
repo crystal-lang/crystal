@@ -373,6 +373,91 @@ module Iterator(T)
     slice(n)
   end
 
+  # Returns an iterator that flattens nested iterators into a single iterator
+  # whose type is the union of the simple types of all of the nested iterators
+  # (and their nested iterators, and so on).
+  #
+  #     iter = [(1..2).each, ('a'..'b').each].each.flatten
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => 'a'
+  #     iter.next # => 'b'
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def flatten
+    Flatten(typeof(Flatten.element_type(self))).new(self)
+  end
+
+  # :nodoc:
+  class Flatten(T1)
+    include Iterator(T1)
+
+    def initialize(@iterator)
+      @generator = @iterator
+      @top = true
+      @to_rewind = [] of Proc(Nil)
+    end
+
+    def next
+      value = @generator.next
+      if value.is_a?(Stop)
+        if @top
+          return stop
+        else
+          @generator = @iterator
+          @top = true
+          return self.next
+        end
+      end
+
+      flatten value
+    end
+
+    def make_rewinder iter
+      ->{
+        iter.rewind
+        # Return nil to disguise the individual iterator types
+        nil
+      }
+    end
+
+    def rewind
+      @iterator.rewind
+      @generator = @iterator
+      @top = true
+      @to_rewind.each &.call
+      @to_rewind.clear()
+    end
+
+    def flatten(element)
+      case element
+      when Iterator
+        flat = element.flatten
+        @generator = flat
+        @to_rewind << make_rewinder flat
+        @top = false
+        self.next
+      when Iterable
+        flatten element.each
+      else
+        element
+      end
+    end
+
+    def self.element_type(element)
+      case element
+      when Stop
+        raise ""
+      when Iterator
+        element_type(element.next)
+      when Iterable
+        element_type(element.each)
+      else
+        element
+      end
+    end
+  end
+
   # Returns an iterator that chunks the iterator's elements in arrays of *size*
   # filling up the remaining elements if no element remains with nil or a given
   # optional parameter.
