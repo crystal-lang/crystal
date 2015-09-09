@@ -87,6 +87,7 @@ class Crystal::CodeGenVisitor
           context.closure_parent_context = closure_parent_context
         end
 
+        set_current_debug_location target_def if @debug
         alloca_vars target_def.vars, target_def, args, context.closure_parent_context
 
         create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)

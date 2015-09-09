@@ -383,6 +383,7 @@ module Crystal
 
       last_fun = target_def_fun(node.call.target_def, owner)
 
+      set_current_debug_location(node) if @debug
       fun_ptr = bit_cast(last_fun, LLVM::VoidPointer)
       if call_self && !owner.metaclass? && !owner.is_a?(LibType)
         ctx_ptr = bit_cast(call_self, LLVM::VoidPointer)
