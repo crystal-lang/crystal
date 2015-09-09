@@ -58,6 +58,8 @@ private def h_mean(mean)
 end
 
 describe Benchmark::IPS::Entry, "#human_mean" do
+  assert { h_mean(0.12345678901234).should eq("  0.12 ") }
+
   assert { h_mean(1.23456789012345).should eq("  1.23 ") }
   assert { h_mean(12.3456789012345).should eq(" 12.35 ") }
   assert { h_mean(123.456789012345).should eq("123.46 ") }

@@ -38,19 +38,14 @@ module Benchmark
 
       def report
         max_label = @items.max_of &.label.size
+        max_compare = @items.max_of &.human_compare.size
 
         @items.each do |item|
-          if item.slower == 1.0
-            compare = "      fastest"
-          else
-            compare = sprintf "%5.2f× slower", item.slower
-          end
-
           printf "%s %s (±%5.2f%%) %s\n",
             item.label.rjust(max_label),
             item.human_mean,
             item.relative_stddev,
-            compare
+            item.human_compare.rjust(max_compare)
         end
       end
 
@@ -95,7 +90,7 @@ module Benchmark
           final_time = Time.now
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
-          item.calculate_stats(ips)# = Stats.new(ips)
+          item.calculate_stats(ips)
         end
       end
 
@@ -161,7 +156,7 @@ module Benchmark
 
       def human_mean
         pair = case Math.log10(mean)
-               when 0..3
+               when -1..3
                  {mean, ' '}
                when 3..6
                  {mean/1_000, 'k'}
@@ -171,6 +166,14 @@ module Benchmark
                  {mean/1_000_000_000, 'G'}
                end
         "#{pair[0].round(2).to_s.rjust(6)}#{pair[1]}"
+      end
+
+      def human_compare
+        if slower == 1.0
+          "fastest"
+        else
+          sprintf "%5.2f× slower", slower
+        end
       end
     end
   end
