@@ -671,7 +671,6 @@ module Crystal
     end
 
     def visit(node : Assign)
-      set_current_debug_location node if @debug
       target, value = node.target, node.value
 
       case target
@@ -704,6 +703,7 @@ module Crystal
 
       return if value.no_returns?
 
+      set_current_debug_location node if @debug
       ptr = case target
             when InstanceVar
               instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
