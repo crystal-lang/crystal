@@ -482,7 +482,7 @@ module Enumerable(T)
     max_by &.itself
   end
 
-  # Same as `max` but returns nil if the collection is empty.
+  # Like `max` but returns nil if the collection is empty.
   def max?
     max_by? &.itself
   end
@@ -495,14 +495,15 @@ module Enumerable(T)
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def max_by(&block : T -> U)
-    ret = max_by_internal { |value| yield value }
-    ret[0] ? ret[1] : raise EmptyEnumerable.new
+    found, value = max_by_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
   end
 
-  # Same as `max_by` but returns nil if the collection is empty.
+  # Like `max_by` but returns nil if the collection is empty.
   def max_by?(&block : T -> U)
-    ret = max_by_internal { |value| yield value }
-    ret[0] ? ret[1] : nil
+    found, value = max_by_internal {|value| yield value }
+    found ? value : nil
   end
 
   private def max_by_internal(&block : T -> U)
@@ -527,6 +528,18 @@ module Enumerable(T)
   #     ["Alice", "Bob"].max_of { |name| name.size }  #=> 5 (Alice's size)
   #
   def max_of(&block : T -> U)
+    found, value = max_of_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `max_of` but returns nil if the collection is empty.
+  def max_of?(&block : T -> U)
+    found, value = max_of_internal {|value| yield value }
+    found ? value : nil
+  end
+
+  private def max_of_internal(&block : T -> U)
     max :: U
     found = false
 
@@ -538,7 +551,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? max : raise EmptyEnumerable.new
+    {found, max}
   end
 
   # Returns the element with the minimum value in the collection.
@@ -553,7 +566,7 @@ module Enumerable(T)
     min_by &.itself
   end
 
-  # Same as `min` but returns nil if the collection is empty.
+  # Like `min` but returns nil if the collection is empty.
   def min?
     min_by? &.itself
   end
@@ -566,14 +579,15 @@ module Enumerable(T)
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def min_by(&block : T -> U)
-    ret = min_by_internal { |value| yield value }
-    ret[0] ? ret[1] : raise EmptyEnumerable.new
+    found, value = min_by_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
   end
 
-  # Same as `min_by` but returns nil if the collection is empty.
+  # Like `min_by` but returns nil if the collection is empty.
   def min_by?(&block : T -> U)
-    ret = min_by_internal { |value| yield value }
-    ret[0] ? ret[1] : nil
+    found, value = min_by_internal {|value| yield value }
+    found ? value : nil
   end
 
   private def min_by_internal(&block : T -> U)
@@ -598,6 +612,18 @@ module Enumerable(T)
   #     ["Alice", "Bob"].min_of { |name| name.size }  #=> 3 (Bob's size)
   #
   def min_of(&block : T -> U)
+    found, value = min_of_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `min_of` but returns nil if the collection is empty.
+  def min_of?(&block : T -> U)
+    found, value = min_of_internal {|value| yield value }
+    found ? value : nil
+  end
+
+  private def min_of_internal(&block : T -> U)
     min :: U
     found = false
 
@@ -609,7 +635,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? min : raise EmptyEnumerable.new
+    {found, min}
   end
 
   # Returns a tuple with both the minimum and maximum value.
@@ -621,12 +647,29 @@ module Enumerable(T)
     minmax_by &.itself
   end
 
+  # Like `minmax` but returns `{nil, nil}` if the collection is empty.
+  def minmax?
+    minmax_by? &.itself
+  end
+
   # Returns a tuple with both the minimum and maximum values according to the passed block.
   #
   #     ["Alice", "Bob", "Carl"].minmax_by { |name| name.size }  #=> {"Bob", "Alice"}
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def minmax_by(&block : T -> U)
+    found, value = minmax_by_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `minmax_by` but returns `{nil, nil}` if the collection is empty.
+  def minmax_by?(&block : T -> U)
+    found, value = minmax_by_internal {|value| yield value }
+    found ? value : {nil, nil}
+  end
+
+  private def minmax_by_internal(&block : T -> U)
     min :: U
     max :: U
     objmin :: T
@@ -646,7 +689,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? {objmin, objmax} : raise EmptyEnumerable.new
+    {found, {objmin, objmax}}
   end
 
   # Returns a tuple with both the minimum and maximum value the block returns when passed the elements in the
@@ -656,6 +699,18 @@ module Enumerable(T)
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def minmax_of(&block : T -> U)
+    found, value = minmax_of_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `minmax_of` but returns `{nil, nil}` if the collection is empty.
+  def minmax_of?(&block : T -> U)
+    found, value = minmax_of_internal {|value| yield value }
+    found ? value : {nil, nil}
+  end
+
+  private def minmax_of_internal(&block : T -> U)
     min :: U
     max :: U
     found = false
@@ -671,7 +726,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? {min, max} : raise EmptyEnumerable.new
+    {found, {min, max}}
   end
 
   # Returns `true` if the passed block returns `true` for none of the elements of the collection.

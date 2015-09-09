@@ -386,7 +386,9 @@ describe "Enumerable" do
         ([] of Int32).max
       end
     end
+  end
 
+  describe "max?" do
     it "returns nil if empty" do
       ([] of Int32).max?.should be_nil
     end
@@ -396,8 +398,20 @@ describe "Enumerable" do
     assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
   end
 
+  describe "max_by?" do
+    it "returns nil if empty" do
+      ([] of Int32).max_by? {|x| -x }.should be_nil
+    end
+  end
+
   describe "max_of" do
     assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+  end
+
+  describe "max_of?" do
+    it "returns nil if empty" do
+      ([] of Int32).max_of? {|x| -x }.should be_nil
+    end
   end
 
   describe "min" do
@@ -408,7 +422,9 @@ describe "Enumerable" do
         ([] of Int32).min
       end
     end
+  end
 
+  describe "min?" do
     it "returns nil if empty" do
       ([] of Int32).min?.should be_nil
     end
@@ -418,8 +434,20 @@ describe "Enumerable" do
     assert { [1, 2, 3].min_by { |x| -x }.should eq(3) }
   end
 
+  describe "min_by?" do
+    it "returns nil if empty" do
+      ([] of Int32).max_by? {|x| -x }.should be_nil
+    end
+  end
+
   describe "min_of" do
     assert { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+  end
+
+  describe "min_of?" do
+    it "returns nil if empty" do
+      ([] of Int32).min_of? {|x| -x }.should be_nil
+    end
   end
 
   describe "minmax" do
@@ -432,12 +460,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "minmax?" do
+    it "returns two nils if empty" do
+      ([] of Int32).minmax?.should eq({nil, nil})
+    end
+  end
+
   describe "minmax_by" do
     assert { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
   end
 
+  describe "minmax_by?" do
+    it "returns two nils if empty" do
+      ([] of Int32).minmax_by? {|x| -x }.should eq({nil, nil})
+    end
+  end
+
   describe "minmax_of" do
     assert { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+  end
+
+  describe "minmax_of?" do
+    it "returns two nils if empty" do
+      ([] of Int32).minmax_of? {|x| -x }.should eq({nil, nil})
+    end
   end
 
   describe "none?" do
