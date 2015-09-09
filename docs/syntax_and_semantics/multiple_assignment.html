@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.5.1" data-basepath=".." data-revision="Wed Sep 09 2015 11:06:29 GMT+0000 (UTC)">
+    <div class="book" data-level="4.5.1" data-basepath=".." data-revision="Wed Sep 09 2015 11:16:54 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1947,14 +1947,15 @@ a <span class="hljs-comment">#=&gt; 2</span>
 b <span class="hljs-comment">#=&gt; 1</span>
 </code></pre>
 <p>If the right-hand side contains just one expression, it is considered an indexed type and the following syntax sugar applies:</p>
-<pre><code>name, age, source = &quot;Crystal,1,github&quot;.split(&quot;,&quot;)
+<pre><code class="lang-crystal">name, age, source = <span class="hljs-string">&quot;Crystal,1,github&quot;</span>.split(<span class="hljs-string">&quot;,&quot;</span>)
 
-# The above is the same as this:
-temp = &quot;Crystal,1,github&quot;.split(&quot;,&quot;)
-name   = temp[0]
-age    = temp[1]
-source = temp[2]
-</code></pre><p>If the left-hand side contains just one variable, the right-hand side is considered an array:</p>
+<span class="hljs-comment"># The above is the same as this:</span>
+temp = <span class="hljs-string">&quot;Crystal,1,github&quot;</span>.split(<span class="hljs-string">&quot;,&quot;</span>)
+name   = temp[<span class="hljs-number">0</span>]
+age    = temp[<span class="hljs-number">1</span>]
+source = temp[<span class="hljs-number">2</span>]
+</code></pre>
+<p>If the left-hand side contains just one variable, the right-hand side is considered an array:</p>
 <pre><code class="lang-crystal">names = <span class="hljs-string">&quot;John&quot;</span>, <span class="hljs-string">&quot;Peter&quot;</span>, <span class="hljs-string">&quot;Jack&quot;</span>
 
 <span class="hljs-comment"># The above is the same as:</span>
