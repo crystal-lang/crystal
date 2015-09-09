@@ -2910,6 +2910,10 @@ module Crystal
         end
       end
 
+      if node_ensure = node.ensure
+        node_ensure.add_observer(node)
+      end
+
       if node_else = node.else
         node.bind_to node_else
       else
