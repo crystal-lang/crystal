@@ -393,28 +393,24 @@ module Iterator(T)
     include Iterator(T1)
 
     def initialize(@iterator)
-      @generator = make_generator @iterator
+      @generator = @iterator
       @top = true
       @to_rewind = [] of Proc(Nil)
     end
 
     def next
-      value = @generator.call
+      value = @generator.next
       if value.is_a?(Stop)
         if @top
           return stop
         else
-          @generator = make_generator @iterator
+          @generator = @iterator
           @top = true
           return self.next
         end
       end
 
       flatten value
-    end
-
-    def make_generator iter
-      ->{ iter.next }
     end
 
     def make_rewinder iter
@@ -427,46 +423,37 @@ module Iterator(T)
 
     def rewind
       @iterator.rewind
-      @generator = make_generator @iterator
+      @generator = @iterator
       @top = true
-      @to_rewind.each{ |p| p.call }
+      @to_rewind.each &.call
       @to_rewind.clear()
     end
 
-    def flatten(iter : Iterator)
-      flat = iter.flatten
-      @generator = make_generator flat
-      @to_rewind << make_rewinder flat
-      @top = false
-      self.next
-    end
-
-    def flatten(ary : Array)
-      iter = ary.each
-      flatten iter
-    end
-
-    def flatten(other: T1) : T1
-      other
-    end
-
-    def flatten(s : Stop)
-      s
-    end
-
-    def flatten(e : EmptyEnumerable)
-      stop
-    end
-
-    def self.element_type(ary)
-      if ary.responds_to?(:first)
-        typ = element_type(ary.first)
-        if ary.responds_to?(:rewind)
-          ary.rewind
-        end
-        typ
+    def flatten(element)
+      case element
+      when Iterator
+        flat = element.flatten
+        @generator = flat
+        @to_rewind << make_rewinder flat
+        @top = false
+        self.next
+      when Iterable
+        flatten element.each
       else
-        ary
+        element
+      end
+    end
+
+    def self.element_type(element)
+      case element
+      when Stop
+        raise ""
+      when Iterator
+        element_type(element.next)
+      when Iterable
+        element_type(element.each)
+      else
+        element
       end
     end
   end
