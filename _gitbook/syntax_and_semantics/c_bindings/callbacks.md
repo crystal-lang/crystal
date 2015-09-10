@@ -36,6 +36,13 @@ If the compiler can't detect this at compile-time, an exception will be raised a
 
 Refer to the [type grammar](type_grammar.html) for the notation used in callbacks and procs types.
 
+If you want to pass `NULL` instead of a callback, just pass `nil`:
+
+```crystal
+# Same as callback(NULL) in C
+x.callback nil
+```
+
 ## Raises attribute
 
 If a C function executes a user-provided callback that might raise, it must be annotated with the `@[Raises]` attribute.
