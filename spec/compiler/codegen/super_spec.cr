@@ -325,4 +325,27 @@ describe "Codegen: super" do
       (Base.new || Child.new).bar
       )).to_i.should eq(123)
   end
+
+  it "doesn't invoke super twice in inherited generic types (#942)" do
+    run(%(
+      $a = 0
+
+      abstract class Foo
+      end
+
+      class Bar(T) < Foo
+        def initialize
+            $a += 1
+            super
+        end
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Int8).new
+
+      $a
+      )).to_i.should eq(1)
+  end
 end

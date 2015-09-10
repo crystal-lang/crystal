@@ -539,7 +539,13 @@ class Crystal::Call
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
       parents = ancestors[index_of_ancestor + 1 .. -1]
     when GenericType
-      parents = parent_visitor.typed_def.owner.ancestors
+      ancestors = parent_visitor.scope.ancestors
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(InheritedGenericClass) && ancestor.extended_class == lookup }
+      if index_of_ancestor
+        parents = ancestors[index_of_ancestor + 1 .. -1]
+      else
+        parents = ancestors
+      end
     else
       parents = lookup.ancestors
     end
