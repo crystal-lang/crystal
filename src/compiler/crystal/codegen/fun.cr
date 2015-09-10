@@ -67,6 +67,13 @@ class Crystal::CodeGenVisitor
       if needs_body
         emit_def_debug_metadata target_def if @debug
 
+        context.fun.add_attribute LLVM::Attribute::UWTable
+        if @mod.has_flag?("darwin")
+          # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
+          context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
+          context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
+        end
+
         new_entry_block
 
         if is_closure
