@@ -313,6 +313,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
+    def lookup_defs_without_parents(name)
+      raise "Bug: #{self} doesn't implement lookup_defs_without_parents"
+    end
+
     def lookup_defs_with_modules(name)
       raise "Bug: #{self} doesn't implement lookup_defs_with_modules"
     end
@@ -518,6 +522,14 @@ module Crystal
         end
       end
 
+      all_defs
+    end
+
+    def lookup_defs_without_parents(name)
+      all_defs = [] of Def
+      self.defs.try &.[name]?.try &.each do |item|
+        all_defs << item.def
+      end
       all_defs
     end
 
@@ -1236,6 +1248,10 @@ module Crystal
     end
 
     def lookup_defs(name)
+      [] of Def
+    end
+
+    def lookup_defs_without_parents(name)
       [] of Def
     end
 

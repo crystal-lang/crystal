@@ -26,7 +26,11 @@ class Crystal::Call
       raise_matches_not_found_for_virtual_metaclass_new owner
     end
 
-    defs = owner.lookup_defs(def_name)
+    if name == "super"
+      defs = owner.lookup_defs_without_parents(def_name)
+    else
+      defs = owner.lookup_defs(def_name)
+    end
 
     # Another special case: initialize is only looked up one level,
     # so we must find the first one defined.

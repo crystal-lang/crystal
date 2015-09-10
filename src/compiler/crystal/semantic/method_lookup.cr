@@ -6,6 +6,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_matches"
     end
 
+    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
+      raise "Bug: #{self} doesn't implement lookup_matches_without_parents"
+    end
+
     def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
     end
@@ -197,6 +201,7 @@ module Crystal
 
   class AliasType
     delegate lookup_matches, aliased_type
+    delegate lookup_matches_without_parents, aliased_type
   end
 
   module VirtualTypeLookup

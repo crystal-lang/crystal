@@ -141,56 +141,56 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_in(owner : AliasType, arg_types)
-    lookup_matches_in(owner.remove_alias, arg_types)
+  def lookup_matches_in(owner : AliasType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in(owner.remove_alias, arg_types, search_in_parents: search_in_parents)
   end
 
-  def lookup_matches_in(owner : UnionType, arg_types)
+  def lookup_matches_in(owner : UnionType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     matches = [] of Def
     owner.union_types.each do |type|
       next if type.abstract && !type.virtual?
 
-      matches.concat lookup_matches_in(type, arg_types)
+      matches.concat lookup_matches_in(type, arg_types, search_in_parents: search_in_parents)
     end
     matches
   end
 
-  def lookup_matches_in(owner : Program, arg_types, self_type = nil, def_name = self.name)
-    lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  def lookup_matches_in(owner : Program, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in_type(owner, arg_types, self_type, def_name, search_in_parents)
   end
 
-  def lookup_matches_in(owner : FileModule, arg_types)
-    lookup_matches_in mod, arg_types
+  def lookup_matches_in(owner : FileModule, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in mod, arg_types, search_in_parents: search_in_parents
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType, arg_types)
+  def lookup_matches_in(owner : NonGenericModuleType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     attach_subclass_observer owner
 
     including_types = owner.including_types
     if including_types
-      lookup_matches_in(including_types, arg_types)
+      lookup_matches_in(including_types, arg_types, search_in_parents: search_in_parents)
     else
       [] of Def
     end
   end
 
-  def lookup_matches_in(owner : GenericClassType, arg_types)
+  def lookup_matches_in(owner : GenericClassType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     including_types = owner.including_types
     if including_types
       attach_subclass_observer owner
 
-      lookup_matches_in(including_types, arg_types)
+      lookup_matches_in(including_types, arg_types, search_in_parents: search_in_parents)
     else
       raise "no type inherits #{owner}"
     end
   end
 
-  def lookup_matches_in(owner : LibType, arg_types, self_type = nil, def_name = self.name)
+  def lookup_matches_in(owner : LibType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     raise "lib fun call is not supported in dispatch"
   end
 
-  def lookup_matches_in(owner : Type, arg_types, self_type = nil, def_name = self.name)
-    lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  def lookup_matches_in(owner : Type, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in_type(owner, arg_types, self_type, def_name, search_in_parents)
   end
 
   def lookup_matches_in_with_scope(owner, arg_types)
@@ -216,11 +216,11 @@ class Crystal::Call
     instantiate matches, owner, nil
   end
 
-  def lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  def lookup_matches_in_type(owner, arg_types, self_type, def_name, search_in_parents)
     signature = CallSignature.new(def_name, arg_types, block, named_args)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature)
+    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents)
 
     if matches.empty?
       if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?
@@ -243,7 +243,7 @@ class Crystal::Call
           matches = Matches.new([Match.new(initialize_def, arg_types, MatchContext.new(owner, owner))], true)
         end
       elsif !obj && owner != mod
-        mod_matches = lookup_matches_with_signature(mod, signature)
+        mod_matches = lookup_matches_with_signature(mod, signature, search_in_parents)
         matches = mod_matches unless mod_matches.empty?
       end
     end
@@ -290,23 +290,30 @@ class Crystal::Call
     raise "Bug: trying to lookup matches in nil in #{self}"
   end
 
-  def lookup_matches_checking_expansion(owner, signature)
+  def lookup_matches_checking_expansion(owner, signature, search_in_parents = true)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
     # triggering a virtual lookup. But the context of lookup must be preseved.
     if is_expansion?
-      matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
+      matches = bubbling_exception do
+        target = parent_visitor.typed_def.original_owner
+        if search_in_parents
+          target.lookup_matches signature
+        else
+          target.lookup_matches_without_parents signature
+        end
+      end
       matches.each do |match|
         match.context.owner = owner
         match.context.type_lookup = parent_visitor.type_lookup.not_nil!
       end
       matches
     else
-      bubbling_exception { lookup_matches_with_signature(owner, signature) }
+      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents) }
     end
   end
 
-  def lookup_matches_with_signature(owner : Program, signature)
+  def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
     location = self.location
     if location && (filename = location.filename).is_a?(String)
       matches = owner.lookup_private_matches filename, signature
@@ -323,8 +330,12 @@ class Crystal::Call
     matches
   end
 
-  def lookup_matches_with_signature(owner, signature)
-    owner.lookup_matches signature
+  def lookup_matches_with_signature(owner, signature, search_in_parents)
+    if search_in_parents
+      owner.lookup_matches signature
+    else
+      owner.lookup_matches_without_parents signature
+    end
   end
 
   def instantiate(matches, owner, self_type = nil)
@@ -518,7 +529,7 @@ class Crystal::Call
     lookup = enclosing_def.owner
     case lookup
     when VirtualType
-      parents = lookup.base_type.parents
+      parents = lookup.base_type.ancestors
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index(lookup).not_nil!
@@ -528,19 +539,20 @@ class Crystal::Call
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
       parents = ancestors[index_of_ancestor + 1 .. -1]
     when GenericType
-      parents = parent_visitor.typed_def.owner.parents
+      parents = parent_visitor.typed_def.owner.ancestors
     else
-      parents = lookup.parents
+      parents = lookup.ancestors
     end
 
+    in_initialize = enclosing_def.name == "initialize"
+
     if parents && parents.size > 0
-      parents_length = parents.size
       parents.each_with_index do |parent, i|
         if parent.lookup_first_def(enclosing_def.name, block)
-          return lookup_matches_in(parent, arg_types, scope, enclosing_def.name)
+          return lookup_matches_in_type(parent, arg_types, scope, enclosing_def.name, !in_initialize)
         end
       end
-      lookup_matches_in(parents.last, arg_types, scope, enclosing_def.name)
+      lookup_matches_in_type(parents.last, arg_types, scope, enclosing_def.name, !in_initialize)
     else
       raise "there's no superclass in this scope"
     end
