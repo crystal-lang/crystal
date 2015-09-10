@@ -880,7 +880,9 @@ module Crystal
     end
 
     def type_cast_exception_call(to_type)
-      call = Call.global("raise", StringLiteral.new("cast to #{to_type} failed"))
+      ex = Call.new(Path.global("TypeCastError"), "new", StringLiteral.new("cast to #{to_type} failed"))
+      call = Call.global("raise", ex)
+
       @mod.infer_type_intermediate call
       call
     end
