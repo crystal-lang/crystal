@@ -104,6 +104,16 @@ class HTTP::Client
     end
   end
 
+  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  def read_timeout=(read_timeout : Number)
+    @read_timeout = read_timeout.to_f
+  end
+
+  # Set the read timeout with a TimeSpan, to wait when reading before raising an `IO::Timeout`.
+  def read_timeout=(read_timeout : TimeSpan)
+    self.read_timeout = read_timeout.total_seconds
+  end
+
   # Sets a callback to execute before each request. This is usually
   # used to set an authorization header. Only **one** callback is allowed.
   #
@@ -327,6 +337,7 @@ class HTTP::Client
 
   private def socket
     socket = @socket ||= TCPSocket.new @host, @port
+    socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
     if @ssl
       @ssl_socket ||= OpenSSL::SSL::Socket.new(socket)

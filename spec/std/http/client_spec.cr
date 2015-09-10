@@ -1,5 +1,6 @@
 require "spec"
 require "http/client"
+require "http/server"
 
 module HTTP
   describe Client do
@@ -23,6 +24,27 @@ module HTTP
       expect_raises(ArgumentError) do
         HTTP::Client.get "www.example.com"
       end
+    end
+
+    it "tests read_timeout" do
+      server = HTTP::Server.new(8081) do |req|
+        sleep 0.5
+        HTTP::Response.ok("text/plain", "OK")
+      end
+      spawn do
+        server.listen
+      end
+
+      client = Client.new("localhost", 8081)
+      client.read_timeout = 1.second
+      client.get("/")
+
+      expect_raises(IO::Timeout, "read timed out") do
+        client.read_timeout = 0.0001
+        client.get("/")
+      end
+
+      server.close
     end
   end
 end
