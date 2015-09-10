@@ -602,16 +602,16 @@ class Array(T)
   # a                  #=> ["ant", "dog"]
   # a.delete_at(99..100)  #=> IndexError
   # ```
-  def delete_at(range : Range)
-    return nil if range.first < 0 && range.end > 0
+  def delete_at(range : Range(Int, Int))
     from = range.begin
     from += size if from < 0
+    raise IndexError.new if from < 0
     to = range.end
     to += size if to < 0
     to -= 1 if range.excludes_end?
-    len = to - from + 1
-    len = 0 if len < 0
-    delete_at(from, len)
+    size = to - from + 1
+    size = 0 if size < 0
+    delete_at(from, size)
   end
 
   # Deletes count or less (if there aren't enough) elements at the given start index, 
@@ -624,18 +624,14 @@ class Array(T)
   # a                  #=> ["ant", "dog"]
   # a.delete_at(99,1)  #=> IndexError
   # ```
-  def delete_at(index, count)
+  def delete_at(index : Int, count : Int)
     val = self[index, count]
-    index = size + index if index < 0
-    return nil if index < 0
-    return [] of T if count == 0
     count = index + count <= size ? count : size - index
     (@buffer + index).move_from(@buffer + index + 1, count)
     @size -= count
     (@buffer + @size).clear(count)
     val
   end
-
 
   # Deletes every element of `self` for which block evaluates to true.
   # The array is changed after the iteration is over,
