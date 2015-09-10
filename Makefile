@@ -21,6 +21,8 @@ doc:
 crystal: $(O)/crystal
 all_spec: $(O)/all_spec
 
+llvm_ext: $(LLVM_EXT_OBJ)
+
 $(O)/all_spec: $(LLVM_EXT_OBJ) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
