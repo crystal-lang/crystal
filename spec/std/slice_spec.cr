@@ -124,4 +124,17 @@ describe "Slice" do
     slice.rindex('o'.ord.to_u8).should eq(2)
     slice.rindex('z'.ord.to_u8).should be_nil
   end
+
+  it "does bytesize" do
+    slice = Slice(Int32).new(2)
+    slice.bytesize.should eq(8)
+  end
+
+  it "does ==" do
+    a = Slice.new(3) { |i| i }
+    b = Slice.new(3) { |i| i }
+    c = Slice.new(3) { |i| i + 1 }
+    a.should eq(b)
+    a.should_not eq(c)
+  end
 end
