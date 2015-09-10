@@ -21,6 +21,9 @@
 #
 # Note that a pointer is *falsey* if it's null (if it's address is zero).
 #
+# When calling a C function that expects a pointer you can also pass `nil` instead of using
+# `Pointer.null` to construct a null pointer.
+#
 # For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
 struct Pointer(T)
   include Comparable(self)
@@ -333,6 +336,9 @@ struct Pointer(T)
   end
 
   # Returns a pointer whose memory address is zero. This doesn't allocate memory.
+  #
+  # When calling a C function you can also pass `nil` instead of constructing a
+  # null pointer with this method.
   #
   # ```
   # ptr = Pointer(Int32).null
