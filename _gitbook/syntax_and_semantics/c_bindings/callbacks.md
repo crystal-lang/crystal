@@ -40,7 +40,7 @@ If you want to pass `NULL` instead of a callback, just pass `nil`:
 
 ```crystal
 # Same as callback(NULL) in C
-x.callback nil
+X.callback nil
 ```
 
 ## Raises attribute
