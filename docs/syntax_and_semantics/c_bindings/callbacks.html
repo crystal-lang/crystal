@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.15.10" data-basepath="../.." data-revision="Wed Sep 09 2015 11:06:29 GMT+0000 (UTC)">
+    <div class="book" data-level="4.15.10" data-basepath="../.." data-revision="Thu Sep 10 2015 19:10:56 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1952,6 +1952,10 @@
 </code></pre>
 <p>If the compiler can&apos;t detect this at compile-time, an exception will be raised at runtime.</p>
 <p>Refer to the <a href="type_grammar.html">type grammar</a> for the notation used in callbacks and procs types.</p>
+<p>If you want to pass <code>NULL</code> instead of a callback, just pass <code>nil</code>:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># Same as callback(NULL) in C</span>
+x.callback <span class="hljs-literal">nil</span>
+</code></pre>
 <h2 id="raises-attribute">Raises attribute</h2>
 <p>If a C function executes a user-provided callback that might raise, it must be annotated with the <code>@[Raises]</code> attribute.</p>
 <p>The compiler infers this attribute for a method if it invokes a method that is marked as <code>@[Raises]</code> or raises (recursively).</p>
