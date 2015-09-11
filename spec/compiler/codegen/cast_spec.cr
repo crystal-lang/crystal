@@ -39,7 +39,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from union to single type raises" do
+  it "casts from union to single type raises TypeCastError" do
     run(%(
       require "prelude"
 
@@ -48,7 +48,7 @@ describe "Code gen: cast" do
         a as Char
         false
       rescue ex
-        ex.message == "cast to Char failed"
+        (ex.message == "cast to Char failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -63,7 +63,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from union to another union raises" do
+  it "casts from union to another union raises TypeCastError" do
     run(%(
       require "prelude"
 
@@ -72,7 +72,7 @@ describe "Code gen: cast" do
         a as Float64 | Char
         false
       rescue ex
-        ex.message == "cast to (Float64 | Char) failed"
+        (ex.message == "cast to (Float64 | Char) failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -99,7 +99,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  it "casts from virtual to single type raises" do
+  it "casts from virtual to single type raises TypeCastError" do
     run(%(
       require "prelude"
 
@@ -120,7 +120,7 @@ describe "Code gen: cast" do
         a as CastSpecBaz
         false
       rescue ex
-        ex.message == "cast to CastSpecBaz failed"
+        (ex.message == "cast to CastSpecBaz failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -178,7 +178,7 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts from nilable to nil raises" do
+  it "casts from nilable to nil raises TypeCastError" do
     run(%(
       require "prelude"
 
@@ -187,7 +187,7 @@ describe "Code gen: cast" do
         a as Nil
         false
       rescue ex
-        ex.message.includes? "cast to Nil failed"
+        (ex.message.includes? "cast to Nil failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -202,7 +202,7 @@ describe "Code gen: cast" do
       )).to_b.should be_false
   end
 
-  it "casts from nilable to reference raises" do
+  it "casts from nilable to reference raises TypeCastError" do
     run(%(
       require "prelude"
 
@@ -211,7 +211,7 @@ describe "Code gen: cast" do
         a as Reference
         false
       rescue ex
-        ex.message == "cast to Reference failed"
+        (ex.message == "cast to Reference failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
