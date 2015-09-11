@@ -37,4 +37,6 @@ describe "ASTNode#to_s" do
   expect_to_s %({% if foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %})
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
+  expect_to_s %[1 as Int32]
+  expect_to_s %[(1 || 1.1) as Int32]
 end

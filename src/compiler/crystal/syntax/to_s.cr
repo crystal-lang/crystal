@@ -1099,7 +1099,7 @@ module Crystal
     end
 
     def visit(node : Cast)
-      node.obj.accept self
+      accept_with_maybe_begin_end node.obj
       @str << " "
       @str << keyword("as")
       @str << " "
@@ -1351,11 +1351,17 @@ module Crystal
 
     def accept_with_maybe_begin_end(node)
       if node.is_a?(Expressions)
-        @str << keyword("begin")
-        newline
-        accept_with_indent(node)
-        append_indent
-        @str << keyword("end")
+        if node.expressions.size == 1
+          @str << "("
+          node.expressions.first.accept self
+          @str << ")"
+        else
+          @str << keyword("begin")
+          newline
+          accept_with_indent(node)
+          append_indent
+          @str << keyword("end")
+        end
       else
         node.accept self
       end
