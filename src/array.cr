@@ -404,19 +404,20 @@ class Array(T)
   # a[5, 1] # => []
   # ```
   def [](start : Int, count : Int)
-    if (start == 0 && size == 0) || (start == size && count >= 0)
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
+    if start == size
       return Array(T).new
     end
 
     start += size if start < 0
     raise IndexError.new unless 0 <= start <= size
-    raise ArgumentError.new "negative count: #{count}" if count < 0
-
-    count = Math.min(count, size - start)
 
     if count == 0
       return Array(T).new
     end
+
+    count = Math.min(count, size - start)
 
     Array(T).build(count) do |buffer|
       buffer.copy_from(@buffer + start, count)

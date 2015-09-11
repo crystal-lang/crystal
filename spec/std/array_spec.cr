@@ -162,6 +162,12 @@ describe "Array" do
       end
     end
 
+    it "raises on negative count on empty Array" do
+      expect_raises ArgumentError, /negative count: -1/ do
+        Array(Int32).new[0,-1]
+      end
+    end
+
     it "gets 0, 0 on empty array" do
       a = [] of Int32
       a[0, 0].should eq(a)
