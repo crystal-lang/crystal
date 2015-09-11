@@ -294,4 +294,12 @@ describe "Code gen: cast" do
       end
       )).to_b.should be_true
   end
+
+  it "casts (bug)" do
+    run(%(
+      require "prelude"
+      (1 || 1.1) as Int32
+      123
+      )).to_i.should eq(123)
+  end
 end

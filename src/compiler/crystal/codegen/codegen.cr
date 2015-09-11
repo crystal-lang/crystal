@@ -836,7 +836,10 @@ module Crystal
     end
 
     def visit(node : Cast)
-      accept node.obj
+      request_value do
+        accept node.obj
+      end
+
       last_value = @last
 
       obj_type = node.obj.type
