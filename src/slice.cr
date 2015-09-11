@@ -240,6 +240,16 @@ struct Slice(T)
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end
 
+  def bytesize
+    sizeof(T) * size
+  end
+
+  def ==(other : self)
+    return false if bytesize != other.bytesize
+    sz = LibC::SizeT.cast(bytesize)
+    return LibC.memcmp(to_unsafe as Void*, other.to_unsafe as Void*, sz) == 0
+  end
+
   def to_slice
     self
   end
