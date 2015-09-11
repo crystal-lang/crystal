@@ -1916,7 +1916,7 @@ module Crystal
             break
           end
         else
-          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(next_char)
+          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char)
             yields = true
             char = current_char
             whitespace = true
@@ -1926,8 +1926,8 @@ module Crystal
 
             if keyword == :macro && char.whitespace?
               old_pos = @reader.pos
-              if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char)
-                char = current_char
+              if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(peek_next_char)
+                char = next_char
               else
                 @reader.pos = old_pos
               end
@@ -1979,49 +1979,49 @@ module Crystal
         if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace?
           case next_char
           when 'd'
-            next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :abstract_def
+            next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :abstract_def
           when 'c'
-            next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :abstract_class
+            next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :abstract_class
           when 's'
-            next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :abstract_struct
+            next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && peek_not_ident_part_or_end_next_char && :abstract_struct
           end
         end
       when 'b'
-        next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && !ident_part_or_end?(next_char) && :begin
+        next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :begin
       when 'c'
         (char = next_char) && (
-          (char == 'a' && next_char == 's' && next_char == 'e' && !ident_part_or_end?(next_char) && :case) ||
-          (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :class)
+          (char == 'a' && next_char == 's' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :case) ||
+          (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :class)
         )
       when 'd'
         (char = next_char) &&
-                ((char == 'o' && !ident_part_or_end?(next_char) && :do) ||
-                 (char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :def))
+                ((char == 'o' && peek_not_ident_part_or_end_next_char && :do) ||
+                 (char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :def))
       when 'f'
-        next_char == 'u' && next_char == 'n' && !ident_part_or_end?(next_char) && :fun
+        next_char == 'u' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :fun
       when 'i'
         beginning_of_line && next_char == 'f' &&
           (char = next_char) && (
             (!ident_part_or_end?(char) && :if) ||
-            (char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :ifdef)
+            (char == 'd' && next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :ifdef)
           )
       when 'l'
-        next_char == 'i' && next_char == 'b' && !ident_part_or_end?(next_char) && :lib
+        next_char == 'i' && next_char == 'b' && peek_not_ident_part_or_end_next_char && :lib
       when 'm'
         (char = next_char) && (
-          (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && !ident_part_or_end?(next_char) && :macro) ||
-          (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :module)
+          (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && peek_not_ident_part_or_end_next_char && :macro) ||
+          (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :module)
         )
       when 's'
-        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :struct
+        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
       when 'u'
         next_char == 'n' && (char = next_char) && (
-          (char == 'i' && next_char == 'o' && next_char == 'n' && !ident_part_or_end?(next_char) && :union) ||
-          (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :unless) ||
-          (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && !ident_part_or_end?(next_char) && :until)
+          (char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :union) ||
+          (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :unless) ||
+          (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && peek_not_ident_part_or_end_next_char && :until)
         )
       when 'w'
-        beginning_of_line && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :while
+        beginning_of_line && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :while
       else
         false
       end
@@ -2330,6 +2330,10 @@ module Crystal
 
     def ident_part_or_end?(char)
       ident_part?(char) || char == '?' || char == '!'
+    end
+
+    def peek_not_ident_part_or_end_next_char
+      !ident_part_or_end?(peek_next_char) && next_char
     end
 
     def closing_char(char = current_char)
