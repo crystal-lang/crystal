@@ -537,6 +537,7 @@ module Crystal
       then_block, else_block = new_blocks "then", "else"
 
       request_value do
+        set_current_debug_location(node) if @debug
         codegen_cond_branch node.cond, then_block, else_block
       end
 
@@ -570,6 +571,7 @@ module Crystal
         position_at_end while_block
 
         request_value do
+          set_current_debug_location node.cond if @debug
           codegen_cond_branch node.cond, body_block, exit_block
         end
 
@@ -603,6 +605,7 @@ module Crystal
     end
 
     def visit(node : Break)
+      set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
 
       if break_phi = context.break_phi
@@ -622,6 +625,7 @@ module Crystal
     end
 
     def visit(node : Next)
+      set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
 
       if next_phi = context.next_phi
