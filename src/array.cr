@@ -44,9 +44,10 @@
 # set << 3
 # ```
 class Array(T)
-  include Enumerable(T)
-  include Iterable
   include Comparable(Array)
+  include Enumerable(T)
+  include Enumerable::FixedSizeCompare(T)
+  include Iterable
 
   # Returns the number of elements in the array.
   #
@@ -144,23 +145,6 @@ class Array(T)
     ary = Array(T).new(capacity)
     ary.size = (yield ary.buffer).to_i
     ary
-  end
-
-  # Equality. Returns true if it is passed an Array and `equals?`
-  # returns true for both arrays, the caller and the argument.
-  #
-  # ```
-  # ary = [1,2,3]
-  # ary == [1,2,3] # => true
-  # ary == [2,3]   # => false
-  # ```
-  def ==(other : Array)
-    equals?(other) { |x, y| x == y }
-  end
-
-  # :nodoc:
-  def ==(other)
-    false
   end
 
   # Combined comparison operator. Returns 0 if the first array equals the second, 1
@@ -720,14 +704,6 @@ class Array(T)
     @size == 0
   end
 
-  def equals?(other : Array)
-    return false if @size != other.size
-    each_with_index do |item, i|
-      return false unless yield(item, other[i])
-    end
-    true
-  end
-
   def fill
     each_index { |i| @buffer[i] = yield i }
 
@@ -851,6 +827,10 @@ class Array(T)
   # :nodoc:
   protected def size=(size : Int)
     @size = size.to_i
+  end
+
+  def bytesize
+    sizeof(T) * @size
   end
 
   def map(&block : T -> U)
