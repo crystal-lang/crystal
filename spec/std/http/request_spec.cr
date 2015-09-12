@@ -17,7 +17,7 @@ module HTTP
       request = Request.new "POST", "/", body: "thisisthebody"
       io = StringIO.new
       request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-length: 13\r\n\r\nthisisthebody")
+      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
     end
 
     it "parses GET" do
