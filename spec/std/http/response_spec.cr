@@ -105,7 +105,7 @@ module HTTP
       response = Response.new(200, "hello", headers)
       io = StringIO.new
       response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-type: text/plain\r\nContent-length: 5\r\n\r\nhello")
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end
 
     it "sets content length from body" do
@@ -117,21 +117,21 @@ module HTTP
       response = Response.not_found
       io = StringIO.new
       response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 404 Not Found\r\nContent-type: text/plain\r\nContent-length: 9\r\n\r\nNot Found")
+      io.to_s.should eq("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found")
     end
 
     it "builds default ok response" do
       response = Response.ok("text/plain", "Hello")
       io = StringIO.new
       response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-type: text/plain\r\nContent-length: 5\r\n\r\nHello")
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
     end
 
     it "builds default error response" do
       response = Response.error("text/plain", "Error!")
       io = StringIO.new
       response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-type: text/plain\r\nContent-length: 6\r\n\r\nError!")
+      io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nError!")
     end
   end
 end
