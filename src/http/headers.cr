@@ -21,6 +21,8 @@ struct HTTP::Headers
       cstr2 = key2.to_unsafe
 
       key1.bytesize.times do |i|
+        next if cstr1[i] == cstr2[i] # Optimize the common case
+
         byte1 = normalize_byte(cstr1[i])
         byte2 = normalize_byte(cstr2[i])
 
@@ -29,13 +31,13 @@ struct HTTP::Headers
     end
 
     private def normalize_byte(byte)
-      if 'A' <= byte.chr <= 'Z'
-        byte + 32
-      elsif char == '_'
-        '-'.ord
-      else
-        byte
-      end
+      char = byte.chr
+
+      return byte if 'a' <= char <= 'z' || char == '-' # Optimize the common case
+      return byte + 32 if 'A' <= char <= 'Z'
+      return '-'.ord if char == '_'
+
+      byte
     end
   end
 
