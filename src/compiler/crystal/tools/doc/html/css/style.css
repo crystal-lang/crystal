@@ -237,6 +237,34 @@ h1.type-name {
   color: #624288;
 }
 
+.methods-inherited {
+  padding-right: 10%;
+  line-height: 1.5em;
+}
+
+.methods-inherited h3 {
+  margin-bottom: 4px;
+}
+
+.methods-inherited a {
+  display: inline-block;
+  text-decoration: none;
+  color: #47266E;
+}
+
+.methods-inherited a:hover {
+  text-decoration: underline;
+  color: #6C518B;
+}
+
+.methods-inherited .tooltip span {
+  background: #D5CAE3;
+  color: #47266E;
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin: -4px -8px;
+}
+
 pre {
   padding: 10px 20px;
   margin-top: 4px;
@@ -250,6 +278,18 @@ pre {
 
 code {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+}
+
+.tooltip span {
+  position: absolute;
+  opacity: 0;
+  display: none;
+  pointer-events: none;
+}
+
+.tooltip:hover span {
+  display: inline-block;
+  opacity: 1;
 }
 
 .c {

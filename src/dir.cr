@@ -95,6 +95,7 @@ class Dir
     unless @dir
       raise Errno.new("Error opening directory '#{@path}'")
     end
+    @closed = false
   end
 
   # Alias for `new(path)`
@@ -148,9 +149,13 @@ class Dir
   # d.read   #=> "config.h"
   # ```
   def read
+    # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
+    LibC.errno = 0
     ent = LibC.readdir(@dir)
     if ent
       String.new(ent.value.name.buffer)
+    elsif LibC.errno != 0
+      raise Errno.new("readdir")
     else
       nil
     end
@@ -164,12 +169,19 @@ class Dir
 
   # Closes the directory stream.
   def close
-    LibC.closedir(@dir)
+    return if @closed
+    if LibC.closedir(@dir) != 0
+      raise Errno.new("closedir")
+    end
+    @closed = true
   end
 
   def self.working_directory
-    dir = LibC.getcwd(nil, 0)
-    String.new(dir).tap { LibC.free(dir as Void*) }
+    if dir = LibC.getcwd(nil, 0)
+      String.new(dir).tap { LibC.free(dir as Void*) }
+    else
+      raise Errno.new("getcwd")
+    end
   end
 
   # Changes the current working directory of the process to the given string.
@@ -270,7 +282,11 @@ class Dir
 
   def self.exists?(path)
     if LibC.stat(path, out stat) != 0
-      return false
+      if LibC.errno == Errno::ENOENT
+        return false
+      else
+        raise Errno.new("stat")
+      end
     end
     File::Stat.new(stat).directory?
   end

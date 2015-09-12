@@ -4,7 +4,7 @@ require "curses"
 include Curses
 
 def show_message(message)
-  width = message.length + 6
+  width = message.size + 6
   win = Window.new(5, width,
        (lines - 5) / 2, (cols - width) / 2)
   win.box(0.chr, 0.chr)

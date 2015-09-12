@@ -74,7 +74,7 @@ describe "Array" do
     a = [1, 2, 3]
     b = [4, 5]
     c = a + b
-    c.length.should eq(5)
+    c.size.should eq(5)
     0.upto(4) { |i| c[i].should eq(i + 1) }
   end
 
@@ -122,23 +122,38 @@ describe "Array" do
       [1, 2, 3, 4, 5, 6][-5 ... -2].should eq([2, 3, 4])
     end
 
-    it "gets on empty range" do
+    it "gets on range with start higher than end" do
+      [1, 2, 3][2 .. 1].should eq([] of Int32)
       [1, 2, 3][3 .. 1].should eq([] of Int32)
+      expect_raises IndexError do
+        [1, 2, 3][4 .. 1]
+      end
+    end
+
+    it "gets on range with start higher than negative end" do
+      [1, 2, 3][1 .. -1].should eq([2, 3] of Int32)
+      [1, 2, 3][2 .. -2].should eq([] of Int32)
+    end
+
+    it "raises on index out of bounds with range" do
+      expect_raises IndexError do
+        [1, 2, 3][4 .. 6]
+      end
     end
 
     it "gets with start and count" do
       [1, 2, 3, 4, 5, 6][1, 3].should eq([2, 3, 4])
     end
 
-    it "gets with start and count exceeding length" do
+    it "gets with start and count exceeding size" do
       [1, 2, 3][1, 3].should eq([2, 3])
     end
 
-    it "gets with negative start " do
+    it "gets with negative start" do
       [1, 2, 3, 4, 5, 6][-4, 2].should eq([3, 4])
     end
 
-    it "raises on index out of bounds with range" do
+    it "raises on index out of bounds with start and count" do
       expect_raises IndexError do
         [1, 2, 3][4, 0]
       end
@@ -159,6 +174,12 @@ describe "Array" do
     it "raises on negative count" do
       expect_raises ArgumentError, /negative count: -1/ do
         [1, 2, 3][1, -1]
+      end
+    end
+
+    it "raises on negative count on empty Array" do
+      expect_raises ArgumentError, /negative count: -1/ do
+        Array(Int32).new[0,-1]
       end
     end
 
@@ -188,6 +209,12 @@ describe "Array" do
     it "returns empty if at end" do
       [1][1, 0].should eq([] of Int32)
       [1][1, 10].should eq([] of Int32)
+    end
+
+    it "raises on too negative left bound" do
+      expect_raises IndexError do
+        [1, 2, 3][-4 .. 0]
+      end
     end
   end
 
@@ -297,6 +324,34 @@ describe "Array" do
       a.should eq([1, 3, 4])
     end
 
+    it "deletes use range" do
+      a = [1, 2, 3]
+      a.delete_at(1).should eq(2)
+      a.should eq([1, 3])
+      a = [1, 2, 3]
+      a.delete_at(-1).should eq(3)
+      a.should eq([1, 2])
+      a = [1, 2, 3]
+      a.delete_at(-2..-1).should eq([2,3])
+      a.should eq([1])
+      a = [1, 2, 3]
+      a.delete_at(1, 2).should eq([2,3])
+      a.should eq([1])
+      a = [1, 2, 3]
+      a.delete_at(1..5).should eq([2,3])
+      a.should eq([1])
+      a.size.should eq(1)
+    end
+
+    it "returns empty if at end" do
+      a = [1]
+      a.delete_at(1, 0).should eq([] of Int32)
+      a.delete_at(1, 10).should eq([] of Int32)
+      a.delete_at(1..0).should eq([] of Int32)
+      a.delete_at(1..10).should eq([] of Int32)
+      a.should eq([1])
+    end
+
     it "deletes negative index" do
       a = [1, 2, 3, 4]
       a.delete_at(-3).should eq(2)
@@ -304,9 +359,17 @@ describe "Array" do
     end
 
     it "deletes out of bounds" do
-      a = [1, 2, 3, 4]
       expect_raises IndexError do
-        a.delete_at(4)
+        [1].delete_at(2)
+      end
+      expect_raises IndexError do
+        [1].delete_at(2,1)
+      end
+      expect_raises IndexError do
+        [1].delete_at(2..3)
+      end
+      expect_raises IndexError do
+        [1].delete_at(-2..-1)
       end
     end
   end
@@ -503,13 +566,13 @@ describe "Array" do
     end
   end
 
-  describe "length" do
-    it "has length 0" do
-      ([] of Int32).length.should eq(0)
+  describe "size" do
+    it "has size 0" do
+      ([] of Int32).size.should eq(0)
     end
 
-    it "has length 2" do
-      [1, 2].length.should eq(2)
+    it "has size 2" do
+      [1, 2].size.should eq(2)
     end
   end
 
@@ -656,7 +719,7 @@ describe "Array" do
       [1].sample(1).should eq([1])
 
       x = [1, 2, 3].sample(1)
-      x.length.should eq(1)
+      x.size.should eq(1)
       x = x.first
       [1, 2, 3].includes?(x).should be_true
     end
@@ -665,7 +728,7 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(3)
       set = Set.new(b)
-      set.length.should eq(3)
+      set.size.should eq(3)
 
       set.each do |e|
         a.includes?(e).should be_true
@@ -675,9 +738,9 @@ describe "Array" do
     it "gets sample of k elements out of n, where k > n" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(10)
-      b.length.should eq(5)
+      b.size.should eq(5)
       set = Set.new(b)
-      set.length.should eq(5)
+      set.size.should eq(5)
 
       set.each do |e|
         a.includes?(e).should be_true
@@ -748,7 +811,7 @@ describe "Array" do
 
     it "sort with a block" do
       a = ["foo", "a", "hello"]
-      b = a.sort { |x, y| x.length <=> y.length }
+      b = a.sort { |x, y| x.size <=> y.size }
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
@@ -768,7 +831,7 @@ describe "Array" do
 
     it "sort! with a block" do
       a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.length <=> y.length }
+      a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
     end
   end
@@ -776,7 +839,7 @@ describe "Array" do
   describe "sort_by" do
     it "sorts by" do
       a = ["foo", "a", "hello"]
-      b = a.sort_by &.length
+      b = a.sort_by &.size
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
@@ -785,7 +848,7 @@ describe "Array" do
   describe "sort_by!" do
     it "sorts by!" do
       a = ["foo", "a", "hello"]
-      a.sort_by! &.length
+      a.sort_by! &.size
       a.should eq(["a", "foo", "hello"])
     end
   end
@@ -947,7 +1010,7 @@ describe "Array" do
 
   describe "zip?" do
     describe "when a block is provided" do
-      describe "and length of an arg is less than receiver" do
+      describe "and size of an arg is less than receiver" do
         it "yields pairs of self's elements and passed array (with nil)" do
           a, b, r = [1, 2, 3], [4, 5], ""
           a.zip?(b) { |x, y| r += "#{x}:#{y}," }
@@ -958,7 +1021,7 @@ describe "Array" do
 
     describe "when no block is provided" do
       describe "and the arrays have different typed elements" do
-        describe "and length of an arg is less than receiver" do
+        describe "and size of an arg is less than receiver" do
           it "returns an array of paired elements (tuples with nil)" do
             a, b = [1, 2, 3], ["a", "b"]
             r = a.zip?(b)
@@ -972,7 +1035,7 @@ describe "Array" do
   it "does compact_map" do
     a = [1, 2, 3, 4, 5]
     b = a.compact_map { |e| e.divisible_by?(2) ? e : nil }
-    b.length.should eq(2)
+    b.size.should eq(2)
     b.should eq([2, 4])
   end
 
@@ -985,7 +1048,7 @@ describe "Array" do
       else        false
       end
     end
-    b.length.should eq(2)
+    b.size.should eq(2)
     b.should eq([1, false])
   end
 
@@ -995,7 +1058,7 @@ describe "Array" do
       buffer[1] = 2
       2
     end
-    ary.length.should eq(2)
+    ary.size.should eq(2)
     ary.should eq([1, 2])
   end
 
@@ -1076,7 +1139,7 @@ describe "Array" do
       a = [] of Int32
       [1, 2, 3].cycle do |x|
         a << x
-        break if a.length == 9
+        break if a.size == 9
       end
       a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     end
@@ -1121,7 +1184,7 @@ describe "Array" do
       [e, e, e].transpose.empty?.should be_true
     end
 
-    it "raises IndexError error when length of element is invalid" do
+    it "raises IndexError error when size of element is invalid" do
       expect_raises(IndexError){ [[1], [1, 2]].transpose }
       expect_raises(IndexError){ [[1, 2], [1]].transpose }
     end
@@ -1308,6 +1371,22 @@ describe "Array" do
       res = [] of Array(Int32)
       Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
       res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+    end
+
+    it "with splat" do
+      res = [] of Array(Int32 | Char)
+      Array.each_product([1, 2], ['a', 'b']) { |r| res << r }
+      res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+  end
+
+  describe "Array.product" do
+    it "with array" do
+      Array.product([[1, 2], ['a', 'b']]).should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
+    end
+
+    it "with splat" do
+      Array.product([1, 2], ['a', 'b']).should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
     end
   end
 

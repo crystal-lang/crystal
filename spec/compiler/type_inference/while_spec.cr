@@ -70,4 +70,41 @@ describe "Type inference: while" do
       a
       )) { nilable int32 }
   end
+
+  it "types while with && (#1425)" do
+    assert_type(%(
+      a = 1
+      while a.is_a?(Int32) && (1 == 1)
+        a = nil
+      end
+      a
+      )) { nilable int32 }
+  end
+
+  it "types while with assignment" do
+    assert_type(%(
+      while a = 1
+        break
+      end
+      a
+      )) { int32 }
+  end
+
+  it "types while with assignment and &&" do
+    assert_type(%(
+      while (a = 1) && (1 == 1)
+        break
+      end
+      a
+      )) { int32 }
+  end
+
+  it "types while with assignment and call" do
+    assert_type(%(
+      while (a = 1) > 0
+        break
+      end
+      a
+      )) { int32 }
+  end
 end

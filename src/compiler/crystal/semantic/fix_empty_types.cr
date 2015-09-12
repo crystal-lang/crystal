@@ -25,8 +25,8 @@ module Crystal
 
     def visit(node : FunLiteral)
       node.def.body.accept self
-      unless node.def.body.type?
-        node.def.body.type = @mod.no_return
+      unless node.def.type?
+        node.def.type = @mod.no_return
       end
       false
     end
@@ -50,6 +50,10 @@ module Crystal
     end
 
     def end_visit(node : Call)
+      if expanded = node.expanded
+        expanded.accept self
+      end
+
       # If the block doesn't have a type, it's a no-return.
       block = node.block
       if block && !block.type?

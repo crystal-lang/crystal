@@ -13,7 +13,7 @@ module Crystal
 
     def infer_type_intermediate(node)
       node.accept TypeVisitor.new(self)
-      expand_def_macros
+      expand_macro_defs
       fix_empty_types node
       after_type_inference node
     end
@@ -112,21 +112,13 @@ module Crystal
 
     def visit_any(node)
       @unreachable = false
-      if nesting_exp?(node)
-        @exp_nest += 1
-        # puts "~~~"
-        # pp node, node.class, "+1", @exp_nest
-      end
+      @exp_nest += 1 if nesting_exp?(node)
 
       true
     end
 
     def end_visit_any(node)
-      if nesting_exp?(node)
-        @exp_nest -= 1
-        # puts "~~~"
-        # pp node, node.class, "-1", @exp_nest
-      end
+      @exp_nest -= 1 if nesting_exp?(node)
 
       if @attributes
         case node
@@ -150,7 +142,7 @@ module Crystal
     def nesting_exp?(node)
       case node
       when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
-           Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf
+           Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression
         false
       else
         true
@@ -638,12 +630,6 @@ module Crystal
       false
     end
 
-    def visit(node : Undef)
-      unless current_type.undef(node.name)
-        node.raise "undefined method #{node.name} for #{current_type.type_desc} #{current_type}"
-      end
-    end
-
     def visit(node : Yield)
       if @fun_literal_context
         node.raise "can't yield from function literal"
@@ -689,6 +675,10 @@ module Crystal
       bind_block_args_to_yield_exps block, node
 
       unless block.visited
+        # When we yield, we are no longer inside `untyped_def`, so we un-nest
+        untyped_def = @untyped_def
+        untyped_def.block_nest -= 1 if untyped_def
+
         call.bubbling_exception do
           if node_scope = node.scope
             block.scope = node_scope.type
@@ -697,6 +687,9 @@ module Crystal
             block.accept call.parent_visitor.not_nil!
           end
         end
+
+        # And now we are back inside `untyped_def`
+        untyped_def.block_nest += 1 if untyped_def
       end
 
       node.bind_to block
@@ -870,7 +863,7 @@ module Crystal
           arg.accept self
           arg_type = arg.type.instance_type
           TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
-          Var.new("arg#{i}", arg_type) as ASTNode
+          Var.new("arg#{i}", arg_type.virtual_type) as ASTNode
         end
       end
 
@@ -888,13 +881,13 @@ module Crystal
 
     def end_visit(node : Fun)
       if inputs = node.inputs
-        types = inputs.map &.type.instance_type
+        types = inputs.map &.type.instance_type.virtual_type
       else
         types = [] of Type
       end
 
       if output = node.output
-        types << output.type.instance_type
+        types << output.type.instance_type.virtual_type
       else
         types << mod.void
       end
@@ -1117,7 +1110,7 @@ module Crystal
     end
 
     def special_fun_type_new_call(node, fun_type)
-      if node.args.length != 0
+      if node.args.size != 0
         return false
       end
 
@@ -1126,8 +1119,8 @@ module Crystal
         return false
       end
 
-      if block.args.length > fun_type.fun_types.length - 1
-        node.raise "wrong number of block arguments for #{fun_type}#new (#{block.args.length} for #{fun_type.fun_types.length - 1})"
+      if block.args.size > fun_type.fun_types.size - 1
+        node.raise "wrong number of block arguments for #{fun_type}#new (#{block.args.size} for #{fun_type.fun_types.size - 1})"
       end
 
       # We create a ->(...) { } from the block
@@ -1273,15 +1266,26 @@ module Crystal
     end
 
     def expand_macro(node)
-      return false if node.obj || node.name == "super"
+      obj = node.obj
+      case obj
+      when Path
+        macro_scope = resolve_ident(obj)
+        return false unless macro_scope.is_a?(Type)
 
-      the_macro = node.lookup_macro
+        the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args.size, node.named_args)
+      when Nil
+        return false if node.name == "super" || node.name == "previous_def"
+        the_macro = node.lookup_macro
+      else
+        return false
+      end
+
       return false unless the_macro
 
       @exp_nest -= 1
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro (@scope || current_type), the_macro, node
+        @mod.expand_macro (macro_scope || @scope || current_type), the_macro, node
       end
 
       @exp_nest += 1
@@ -1342,7 +1346,11 @@ module Crystal
         node.raise "expanding macro", ex
       end
 
-      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys), inside_def: !!@typed_def)
+      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+                                                inside_def: !!@typed_def,
+                                                inside_type: !current_type.is_a?(Program),
+                                                inside_exp: @exp_nest > 0,
+                                                )
 
       if node_doc = node.doc
         generated_nodes.accept PropagateDocVisitor.new(node_doc)
@@ -1356,7 +1364,7 @@ module Crystal
       # are not visible afterwards. However, keep the ones that start with
       # double underscore because those are generated by the compiler in case
       # like `x && y`. Also preserve special vars.
-      if old_var_names.length != @vars.length
+      if old_var_names.size != @vars.size
         @vars.delete_if do |name, var|
           !name.starts_with?('$') && !name.starts_with?("__") && !old_var_names.includes?(name)
         end
@@ -1397,13 +1405,13 @@ module Crystal
       end
 
       if instance_type.variadic
-        min_needed = instance_type.type_vars.length - 1
-        if node.type_vars.length < min_needed
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{min_needed}..)"
+        min_needed = instance_type.type_vars.size - 1
+        if node.type_vars.size < min_needed
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{min_needed}..)"
         end
       else
-        if instance_type.type_vars.length != node.type_vars.length
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+        if instance_type.type_vars.size != node.type_vars.size
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{instance_type.type_vars.size})"
         end
       end
 
@@ -1513,8 +1521,8 @@ module Crystal
           node_superclass.raise "#{superclass} is not a generic class, it's a #{superclass.type_desc}"
         end
 
-        if node_superclass.type_vars.length != superclass.type_vars.length
-          node_superclass.raise "wrong number of type vars for #{superclass} (#{node_superclass.type_vars.length} for #{superclass.type_vars.length})"
+        if node_superclass.type_vars.size != superclass.type_vars.size
+          node_superclass.raise "wrong number of type vars for #{superclass} (#{node_superclass.type_vars.size} for #{superclass.type_vars.size})"
         end
       end
 
@@ -1549,7 +1557,7 @@ module Crystal
           if type.is_a?(GenericType)
             type_type_vars = type.type_vars
             if type_vars != type_type_vars
-              if type_type_vars.length == 1
+              if type_type_vars.size == 1
                 node.raise "type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
               else
                 node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
@@ -1568,7 +1576,7 @@ module Crystal
             mapping = Hash.zip(superclass.type_vars, node_superclass.type_vars)
             superclass = InheritedGenericClass.new(@mod, superclass, mapping)
           else
-            node_superclass.not_nil!.raise "wrong number of type vars for #{superclass} (0 for #{superclass.type_vars.length})"
+            node_superclass.not_nil!.raise "wrong number of type vars for #{superclass} (0 for #{superclass.type_vars.size})"
           end
         else
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
@@ -1798,7 +1806,7 @@ module Crystal
           end
           lib_framework = arg.value
         else
-          attr.raise "wrong number of link arguments (#{args.length} for 1..4)"
+          attr.raise "wrong number of link arguments (#{args.size} for 1..4)"
         end
 
         count += 1
@@ -2096,7 +2104,7 @@ module Crystal
       unless obj
         node.raise "invalid constant value"
       end
-      if node.args.length != 1
+      if node.args.size != 1
         node.raise "invalid constant value"
       end
 
@@ -2374,12 +2382,11 @@ module Crystal
       node.body.accept self
 
       endless_while = node.cond.true_literal?
-      merge_while_vars endless_while, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      merge_while_vars node.cond, endless_while, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
       @while_vars = old_while_vars
-
 
       unless node.has_breaks
         if endless_while
@@ -2394,15 +2401,17 @@ module Crystal
     end
 
     # Here we assign the types of variables after a while.
-    def merge_while_vars(endless, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
+    def merge_while_vars(cond, endless, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = MetaVars.new
+
+      cond_var = get_while_cond_assign_target(cond)
 
       while_vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
 
         # If a variable was assigned in the condition, it has that type.
-        if after_cond_var && !after_cond_var.same?(before_cond_var)
+        if cond_var && (cond_var.name == name) && after_cond_var && !after_cond_var.same?(before_cond_var)
           after_while_var = MetaVar.new(name)
           after_while_var.bind_to(after_cond_var)
           after_while_var.nil_if_read = after_cond_var.nil_if_read
@@ -2460,6 +2469,26 @@ module Crystal
       end
     end
 
+    def get_while_cond_assign_target(node)
+      case node
+      when Assign
+        target = node.target
+        if target.is_a?(Var)
+          return target
+        end
+      when And
+        return get_while_cond_assign_target(node.left)
+      when If
+        if node.binary == :and
+          return get_while_cond_assign_target(node.cond)
+        end
+      when Call
+        return get_while_cond_assign_target(node.obj)
+      end
+
+      nil
+    end
+
     # If we have:
     #
     #   if a
@@ -2489,7 +2518,7 @@ module Crystal
 
     def end_visit(node : Break)
       if target_block = block
-        node.target = target_block
+        node.target = target_block.call.not_nil!
 
         target_block.break.bind_to(node.exp || mod.nil_var)
 
@@ -2881,6 +2910,10 @@ module Crystal
         end
       end
 
+      if node_ensure = node.ensure
+        node_ensure.add_observer(node)
+      end
+
       if node_else = node.else
         node.bind_to node_else
       else
@@ -2984,8 +3017,8 @@ module Crystal
           node_name.raise "#{type} is not a generic module"
         end
 
-        if type.type_vars.length != node_name.type_vars.length
-          node_name.raise "wrong number of type vars for #{type} (#{node_name.type_vars.length} for #{type.type_vars.length})"
+        if type.type_vars.size != node_name.type_vars.size
+          node_name.raise "wrong number of type vars for #{type} (#{node_name.type_vars.size} for #{type.type_vars.size})"
         end
 
         mapping = Hash.zip(type.type_vars, node_name.type_vars)
@@ -3086,8 +3119,8 @@ module Crystal
           attr.raise "call convention already specified"
         end
 
-        if attr.args.length != 1
-          attr.raise "wrong number of arguments for attribute CallConvention (#{attr.args.length} for 1)"
+        if attr.args.size != 1
+          attr.raise "wrong number of arguments for attribute CallConvention (#{attr.args.size} for 1)"
         end
 
         call_convention_node = attr.args.first
@@ -3136,7 +3169,7 @@ module Crystal
     end
 
     def process_type_name(node_name)
-      if node_name.names.length == 1 && !node_name.global
+      if node_name.names.size == 1 && !node_name.global
         scope = current_type
         name = node_name.names.first
       else
@@ -3171,7 +3204,7 @@ module Crystal
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
         target_type = type
-        if node.names.length > 1
+        if node.names.size > 1
           target_type = lookup_type target_type, node.names[1 .. -1], node
         end
       else
@@ -3585,7 +3618,6 @@ module Crystal
       end
 
       if inside_exp?
-        # pp @exp_nest
         node.raise "can't #{op} dynamically"
       end
     end

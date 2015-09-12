@@ -11,13 +11,7 @@ class Crystal::CodeGenVisitor
       node.raise "Bug: no target defs"
     end
 
-    if target_defs.length > 1
-      # Check if it's a call on a union metaclass
-      if (obj = node.obj) && (obj_type = obj.type?) && obj_type.is_a?(MetaclassType) && (instance_type = obj_type.instance_type).is_a?(UnionType)
-        codegen_union_metaclass_call(instance_type, node)
-        return false
-      end
-
+    if target_defs.size > 1
       codegen_dispatch node, target_defs
       return false
     end
@@ -60,7 +54,7 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_non_external(node, target_def, owner)
-    call_args = Array(LLVM::Value).new(node.args.length + 1)
+    call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
     # First self.
@@ -96,7 +90,7 @@ class Crystal::CodeGenVisitor
     end
 
     # Then magic constants (__LINE__, __FILE__, __DIR__)
-    node.args.length.upto(target_def.args.length - 1) do |index|
+    node.args.size.upto(target_def.args.size - 1) do |index|
       arg = target_def.args[index]
       default_value = arg.default_value as MagicConstant
       location = node.location
@@ -131,7 +125,7 @@ class Crystal::CodeGenVisitor
     has_out = false
     abi_info = call_abi_info(target_def, node)
 
-    call_args = Array(LLVM::Value).new(node.args.length + 1)
+    call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
     if abi_info.return_type.attr == LLVM::Attribute::StructRet
@@ -230,6 +224,7 @@ class Crystal::CodeGenVisitor
         context.reset_closure
 
         target_def = node.target_def
+        node.ensure_exception_handler = current_ensure_exception_handler
         target_def.ensure_exception_handler = current_ensure_exception_handler
 
         alloca_vars target_def.vars, target_def
@@ -332,29 +327,6 @@ class Crystal::CodeGenVisitor
     @needs_value = old_needs_value
   end
 
-  # We codegen a call to the first type in the union, and cast it to the node's type.
-  # So for example if you have ::(Int32 | Float64).zero it will give (0 as Int32 | Float)
-  def codegen_union_metaclass_call(union_type, node)
-    new_type = union_type.union_types.first.metaclass
-
-    call = node.clone
-    call.obj.not_nil!.set_type(new_type)
-
-    node.args.zip(call.args) do |node_arg, call_arg|
-      call_arg.set_type(node_arg.type?)
-    end
-
-    new_target_defs = node.target_defs.not_nil!.select { |a_def| a_def.owner == new_type }
-
-    call.target_defs = new_target_defs
-    call.bind_to(new_target_defs)
-    call.scope = call.type
-
-    call.accept(self)
-
-    @last = upcast(@last, node.type, call.type)
-  end
-
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
     if body.is_a?(Crystal::Primitive)
@@ -371,6 +343,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
+    set_current_debug_location node if @debug
+
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
       @last = builder.invoke func, call_args, invoke_out_block, rescue_block
@@ -388,7 +362,6 @@ class Crystal::CodeGenVisitor
     end
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
-    emit_debug_metadata node, @last if @debug
 
     if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)

@@ -8,6 +8,20 @@ describe Channel do
   it "creates buffered with capacity argument" do
     Channel(Int32).new(32).should be_a(BufferedChannel(Int32))
   end
+
+  it "does receive_first" do
+    channel = Channel(Int32).new(1)
+    channel.send(1)
+    Channel.receive_first(Channel(Int32).new, channel).should eq 1
+  end
+
+  it "does send_first" do
+    ch1 = Channel(Int32).new(1)
+    ch2 = Channel(Int32).new(1)
+    ch1.send(1)
+    Channel.send_first(2, ch1, ch2)
+    ch2.receive.should eq 2
+  end
 end
 
 describe UnbufferedChannel do

@@ -17,6 +17,10 @@ module Crystal::Doc
     ecr_file "#{__DIR__}/html/method_detail.html"
   end
 
+  record MethodsInheritedTemplate, type, ancestor do
+    ecr_file "#{__DIR__}/html/methods_inherited.html"
+  end
+
   record OtherTypesTemplate, title, type, other_types do
     ecr_file "#{__DIR__}/html/other_types.html"
   end

@@ -65,7 +65,7 @@ module Crystal
 
       a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
 
-      if method_missing.args.length == 1
+      if method_missing.args.size == 1
         call = Call.new(nil, signature.name, args: args_nodes, block: block_node.is_a?(Block) ? block_node : nil)
         fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
       else
@@ -78,7 +78,7 @@ module Crystal
       end
 
       a_def.body = generated_nodes
-      a_def.yields = block.try &.args.length
+      a_def.yields = block.try &.args.size
 
       owner = self
       owner = owner.base_type if owner.is_a?(VirtualType)

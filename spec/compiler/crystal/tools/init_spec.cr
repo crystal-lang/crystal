@@ -61,8 +61,26 @@ deps do
 end
 ```})
 
+      readme.should contain(%{TODO: Write a description here})
+      readme.should_not contain(%{TODO: Write installation instructions here})
       readme.should contain(%{require "example"})
       readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example/fork )})
+      readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
+    end
+
+    describe_file "example_app/README.md" do |readme|
+      readme.should contain("# example")
+
+      readme.should_not contain(%{```crystal
+deps do
+  github "[your-github-name]/example"
+end
+```})
+
+      readme.should contain(%{TODO: Write a description here})
+      readme.should contain(%{TODO: Write installation instructions here})
+      readme.should_not contain(%{require "example"})
+      readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example_app/fork )})
       readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
     end
 

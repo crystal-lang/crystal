@@ -40,9 +40,9 @@ module Crystal
       return false unless yields == other.yields
 
       # A def with more required arguments than the other comes first
-      if min_length > other.max_length
+      if min_size > other.max_size
         return true
-      elsif other.min_length > max_length
+      elsif other.min_size > max_size
         return false
       end
 
@@ -60,9 +60,9 @@ module Crystal
       end
 
       if self_splat_index && other_splat_index
-        min = Math.min(min_length, other.min_length)
+        min = Math.min(min_size, other.min_size)
       else
-        min = Math.min(max_length, other.max_length)
+        min = Math.min(max_size, other.max_size)
       end
 
       (0...min).each do |index|
@@ -134,7 +134,7 @@ module Crystal
   class Generic
     def is_restriction_of?(other : Generic, owner)
       return true if self == other
-      return false unless name == other.name && type_vars.length == other.type_vars.length
+      return false unless name == other.name && type_vars.size == other.type_vars.size
 
       type_vars.zip(other.type_vars) do |type_var, other_type_var|
         return false unless type_var.is_restriction_of?(other_type_var, owner)
@@ -192,11 +192,11 @@ module Crystal
       types = other.types.compact_map do |ident|
         restrict(ident, context) as Type?
       end
-      types.length > 0 ? program.type_merge_union_of(types) : nil
+      types.size > 0 ? program.type_merge_union_of(types) : nil
     end
 
     def restrict(other : Path, context)
-      single_name = other.names.length == 1
+      single_name = other.names.size == 1
       if single_name
         owner = context.owner
 
@@ -214,6 +214,7 @@ module Crystal
       end
 
       ident_type ||= context.type_lookup.lookup_type other
+
       if ident_type
         restrict ident_type, context
       elsif single_name
@@ -356,8 +357,8 @@ module Crystal
 
       generic_class = generic_class as GenericClassType
 
-      if generic_class.type_vars.length != other.type_vars.length
-        other.raise "wrong number of type vars for #{generic_class} (#{other.type_vars.length} for #{generic_class.type_vars.length})"
+      if generic_class.type_vars.size != other.type_vars.size
+        other.raise "wrong number of type vars for #{generic_class} (#{other.type_vars.size} for #{generic_class.type_vars.size})"
       end
 
       i = 0
@@ -408,7 +409,7 @@ module Crystal
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class as TupleType
-      return nil unless other.type_vars.length == tuple_types.length
+      return nil unless other.type_vars.size == tuple_types.size
 
       tuple_types.zip(other.type_vars) do |tuple_type, type_var|
         restricted = tuple_type.restrict(type_var, context)
@@ -433,7 +434,7 @@ module Crystal
       return nil unless generic_module == @module
 
       generic_module = generic_module as GenericModuleType
-      return nil unless generic_module.type_vars.length == @module.type_vars.length
+      return nil unless generic_module.type_vars.size == @module.type_vars.size
 
       @module.type_vars.zip(other.type_vars) do |module_type_var, other_type_var|
         if m = @mapping[module_type_var]?
@@ -441,7 +442,7 @@ module Crystal
           restricted = t.restrict other_type_var, context
           return nil unless restricted
 
-          if other_type_var.is_a?(Path) && other_type_var.names.length == 1
+          if other_type_var.is_a?(Path) && other_type_var.names.size == 1
             context.set_free_var(other_type_var.names.first, restricted)
           end
         end
@@ -475,7 +476,7 @@ module Crystal
       return nil unless generic_class == @extended_class
 
       generic_class = generic_class as GenericClassType
-      return nil unless generic_class.type_vars.length == type_vars.length
+      return nil unless generic_class.type_vars.size == type_vars.size
 
       type_vars.zip(other.type_vars) do |class_type_var, other_type_var|
         if m = @mapping[class_type_var]?
@@ -483,7 +484,7 @@ module Crystal
           restricted = t.restrict other_type_var, context
           return nil unless restricted && t == restricted
 
-          if other_type_var.is_a?(Path) && other_type_var.names.length == 1
+          if other_type_var.is_a?(Path) && other_type_var.names.size == 1
             context.set_free_var(other_type_var.names.first, restricted)
           end
         end
@@ -543,13 +544,28 @@ module Crystal
       remove_alias.is_restriction_of?(other, owner)
     end
 
+    def restrict(other  : Path, context)
+      other_type = context.type_lookup.lookup_type other
+      if other_type
+        if other_type == self
+          return self
+        end
+      else
+        single_name = other.names.size == 1
+        if single_name
+          if Parser.free_var_name?(other.names.first)
+            return context.set_free_var(other.names.first, self)
+          else
+            other.raise "undefined constant #{other}"
+          end
+        end
+      end
+
+      remove_alias.restrict(other, context)
+    end
+
     def restrict(other, context)
       return self if self == other
-
-      if other.is_a?(Path)
-        other_type = context.type_lookup.lookup_type other
-        return self if self == other_type
-      end
 
       remove_alias.restrict(other, context)
     end
@@ -577,10 +593,10 @@ module Crystal
   class FunInstanceType
     def restrict(other : Fun, context)
       inputs = other.inputs
-      inputs_len = inputs ? inputs.length : 0
+      inputs_len = inputs ? inputs.size : 0
       output = other.output
 
-      return nil if fun_types.length != inputs_len + 1
+      return nil if fun_types.size != inputs_len + 1
 
       if inputs
         inputs.zip(fun_types) do |input, my_input|
@@ -612,7 +628,7 @@ module Crystal
       generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class.is_a?(FunType)
 
-      return nil unless other.type_vars.length == fun_types.length
+      return nil unless other.type_vars.size == fun_types.size
 
       fun_types.each_with_index do |fun_type, i|
         other_type_var = other.type_vars[i]
@@ -640,7 +656,7 @@ module Crystal
       end
 
       # Disallow casting a function to another one accepting different argument count
-      return nil if arg_types.length != other_arg_types.length
+      return nil if arg_types.size != other_arg_types.size
 
       arg_types.zip(other_arg_types) do |arg_type, other_arg_type|
         return false unless arg_type == other_arg_type

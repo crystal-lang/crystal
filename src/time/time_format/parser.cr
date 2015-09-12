@@ -65,7 +65,7 @@ struct TimeFormat
 
     def month_name
       string = consume_string
-      if string.length < 3
+      if string.size < 3
         raise "invalid month"
       end
 
@@ -104,7 +104,7 @@ struct TimeFormat
 
     def day_name
       string = consume_string
-      if string.length < 3
+      if string.size < 3
         raise "invalid day name"
       end
 

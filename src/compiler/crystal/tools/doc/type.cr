@@ -104,6 +104,21 @@ class Crystal::Doc::Type
     end
   end
 
+  def ancestors
+    ancestors = [] of self
+    @type.ancestors.each do |ancestor|
+      case ancestor
+      when InheritedGenericClass
+        ancestor = ancestor.extended_class
+      when IncludedGenericModule
+        ancestor = ancestor.module
+      end
+      ancestors << @generator.type(ancestor)
+      break if ancestor == @generator.program.object
+    end
+    ancestors
+  end
+
   def locations
     @generator.relative_locations(@type)
   end
@@ -286,6 +301,8 @@ class Crystal::Doc::Type
             next
           end
 
+          next unless @generator.must_include?(subclass)
+
           subclasses << @generator.type(subclass)
         end
         subclasses.sort_by! &.full_name.downcase
@@ -418,33 +435,33 @@ class Crystal::Doc::Type
     lookup_in_methods instance_methods, name
   end
 
-  def lookup_method(name, args_count)
-    lookup_in_methods instance_methods, name, args_count
+  def lookup_method(name, args_size)
+    lookup_in_methods instance_methods, name, args_size
   end
 
   def lookup_class_method(name)
     lookup_in_methods class_methods, name
   end
 
-  def lookup_class_method(name, args_count)
-    lookup_in_methods class_methods, name, args_count
+  def lookup_class_method(name, args_size)
+    lookup_in_methods class_methods, name, args_size
   end
 
   def lookup_macro(name)
     lookup_in_methods macros, name
   end
 
-  def lookup_macro(name, args_count)
-    lookup_in_methods macros, name, args_count
+  def lookup_macro(name, args_size)
+    lookup_in_methods macros, name, args_size
   end
 
   private def lookup_in_methods(methods, name)
     methods.find { |method| method.name == name }
   end
 
-  private def lookup_in_methods(methods, name, args_count)
-    if args_count
-      methods.find { |method| method.name == name && method.args.length == args_count }
+  private def lookup_in_methods(methods, name, args_size)
+    if args_size
+      methods.find { |method| method.name == name && method.args.size == args_size }
     else
       methods = methods.select { |method| method.name == name }
       (methods.find { |method| method.args.empty? }) || methods.first?
@@ -478,7 +495,7 @@ class Crystal::Doc::Type
     String.build { |io| node_to_html node, io }
   end
 
-  def node_to_html(node : Path, io)
+  def node_to_html(node : Path, io, links = true)
     # We don't want "::" prefixed in from of paths in the docs
     old_global = node.global
     node.global = false
@@ -486,7 +503,7 @@ class Crystal::Doc::Type
     begin
       match = lookup_type(node)
       if match
-        type_to_html match, io, node.to_s
+        type_to_html match, io, node.to_s, links: links
       else
         io << node
       end
@@ -495,15 +512,19 @@ class Crystal::Doc::Type
     end
   end
 
-  def node_to_html(node : Generic, io)
+  def node_to_html(node : Generic, io, links = true)
     match = lookup_type(node.name)
     if match
       if match.must_be_included?
-        io << %(<a href=")
-        io << match.path_from(self)
-        io << %(">)
+        if links
+          io << %(<a href=")
+          io << match.path_from(self)
+          io << %(">)
+        end
         match.full_name_without_type_vars(io)
-        io << "</a>"
+        if links
+          io << "</a>"
+        end
       else
         io << node.name
       end
@@ -512,30 +533,30 @@ class Crystal::Doc::Type
     end
     io << "("
     node.type_vars.join(", ", io) do |type_var|
-      node_to_html type_var, io
+      node_to_html type_var, io, links: links
     end
     io << ")"
   end
 
-  def node_to_html(node : Fun, io)
+  def node_to_html(node : Fun, io, links = true)
     if inputs = node.inputs
       inputs.join(", ", io) do |input|
-        node_to_html input, io
+        node_to_html input, io, links: links
       end
     end
     io << " -> "
     if output = node.output
-      node_to_html output, io
+      node_to_html output, io, links: links
     end
   end
 
-  def node_to_html(node : Union, io)
+  def node_to_html(node : Union, io, links = true)
     node.types.join(" | ", io) do |elem|
-      node_to_html elem, io
+      node_to_html elem, io, links: links
     end
   end
 
-  def node_to_html(node, io)
+  def node_to_html(node, io, links = true)
     io << node
   end
 
@@ -543,41 +564,45 @@ class Crystal::Doc::Type
     String.build { |io| type_to_html(type, io) }
   end
 
-  def type_to_html(type : Crystal::UnionType, io, text = nil)
+  def type_to_html(type : Crystal::UnionType, io, text = nil, links = true)
     type.union_types.join(" | ", io) do |union_type|
-      type_to_html union_type, io, text
+      type_to_html union_type, io, text, links: links
     end
   end
 
-  def type_to_html(type : Crystal::FunInstanceType, io, text = nil)
+  def type_to_html(type : Crystal::FunInstanceType, io, text = nil, links = true)
     type.arg_types.join(", ", io) do |arg_type|
-      type_to_html arg_type, io
+      type_to_html arg_type, io, links: links
     end
     io << " -> "
     return_type = type.return_type
-    type_to_html return_type, io unless return_type.void?
+    type_to_html return_type, io, links: links unless return_type.void?
   end
 
-  def type_to_html(type : Crystal::TupleInstanceType, io, text = nil)
+  def type_to_html(type : Crystal::TupleInstanceType, io, text = nil, links = true)
     io << "{"
     type.tuple_types.join(", ", io) do |tuple_type|
-      type_to_html tuple_type, io
+      type_to_html tuple_type, io, links: links
     end
     io << "}"
   end
 
-  def type_to_html(type : Crystal::GenericClassInstanceType, io, text = nil)
+  def type_to_html(type : Crystal::GenericClassInstanceType, io, text = nil, links = true)
     generic_class = @generator.type(type.generic_class)
     if generic_class.must_be_included?
-      io << %(<a href=")
-      io << generic_class.path_from(self)
-      io << %(">)
+      if links
+        io << %(<a href=")
+        io << generic_class.path_from(self)
+        io << %(">)
+      end
       if text
         io << text
       else
         generic_class.full_name_without_type_vars(io)
       end
-      io << "</a>"
+      if links
+        io << "</a>"
+      end
     else
       if text
         io << text
@@ -589,34 +614,38 @@ class Crystal::Doc::Type
     type.type_vars.values.join(", ", io) do |type_var|
       case type_var
       when Var
-        type_to_html type_var.type, io
+        type_to_html type_var.type, io, links: links
       when Crystal::Type
-        type_to_html type_var, io
+        type_to_html type_var, io, links: links
       end
     end
     io << ')'
   end
 
-  def type_to_html(type : Crystal::VirtualType, io, text = nil)
-    type_to_html type.base_type, io, text
+  def type_to_html(type : Crystal::VirtualType, io, text = nil, links = true)
+    type_to_html type.base_type, io, text, links: links
     io << '+'
   end
 
-  def type_to_html(type : Crystal::Type, io, text = nil)
-    type_to_html @generator.type(type), io, text
+  def type_to_html(type : Crystal::Type, io, text = nil, links = true)
+    type_to_html @generator.type(type), io, text, links: links
   end
 
-  def type_to_html(type : Type, io, text = nil)
+  def type_to_html(type : Type, io, text = nil, links = true)
     if type.must_be_included?
-      io << %(<a href=")
-      io << type.path_from(self)
-      io << %(">)
+      if links
+        io << %(<a href=")
+        io << type.path_from(self)
+        io << %(">)
+      end
       if text
         io << text
       else
         type.full_name(io)
       end
-      io << "</a>"
+      if links
+        io << "</a>"
+      end
     else
       if text
         io << text

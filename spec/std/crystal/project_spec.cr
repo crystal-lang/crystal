@@ -11,7 +11,7 @@ module Crystal
             github "owner/repo"
           end
         end
-        project.dependencies.length.should eq(1)
+        project.dependencies.size.should eq(1)
         project.dependencies[0].should be_a(GitHubDependency)
       end
 
@@ -23,7 +23,7 @@ module Crystal
           end
         end
 
-        project.dependencies.length.should eq(1)
+        project.dependencies.size.should eq(1)
         project.dependencies[0].should be_a(PathDependency)
       end
     end

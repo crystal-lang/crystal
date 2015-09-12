@@ -5,7 +5,7 @@ class Markdown::Parser
   end
 
   def parse
-    while @line < @lines.length
+    while @line < @lines.size
       process_paragraph
     end
   end
@@ -81,7 +81,7 @@ class Markdown::Parser
       process_line @lines[@line]
       @line += 1
 
-      if @line == @lines.length
+      if @line == @lines.size
         break
       end
 
@@ -115,7 +115,7 @@ class Markdown::Parser
       @renderer.text line.byte_slice(Math.min(line.bytesize, 4))
       @line += 1
 
-      if @line == @lines.length
+      if @line == @lines.size
         break
       end
 
@@ -143,14 +143,14 @@ class Markdown::Parser
 
     @line += 1
 
-    if @line < @lines.length
+    if @line < @lines.size
       while true
         line = @lines[@line]
 
         @renderer.text line
         @line += 1
 
-        if (@line == @lines.length)
+        if (@line == @lines.size)
           break
         end
 
@@ -177,7 +177,7 @@ class Markdown::Parser
       if empty? line
         @line += 1
 
-        if @line == @lines.length
+        if @line == @lines.size
           break
         end
 
@@ -191,7 +191,7 @@ class Markdown::Parser
       @renderer.end_list_item
       @line += 1
 
-      if @line == @lines.length
+      if @line == @lines.size
         break
       end
     end
@@ -210,7 +210,7 @@ class Markdown::Parser
       if empty? line
         @line += 1
 
-        if @line == @lines.length
+        if @line == @lines.size
           break
         end
 
@@ -224,7 +224,7 @@ class Markdown::Parser
       @renderer.end_list_item
       @line += 1
 
-      if @line == @lines.length
+      if @line == @lines.size
         break
       end
     end
@@ -235,7 +235,7 @@ class Markdown::Parser
   end
 
   def append_double_newline_if_has_more
-    if @line < @lines.length
+    if @line < @lines.size
       newline
       newline
     end
@@ -407,7 +407,7 @@ class Markdown::Parser
   end
 
   def next_line_is_all?(char)
-    return false unless @line + 1 < @lines.length
+    return false unless @line + 1 < @lines.size
 
     line = @lines[@line + 1]
     return false if line.empty?
@@ -423,7 +423,7 @@ class Markdown::Parser
   end
 
   def next_line_starts_with_backticks?
-    return false unless @line + 1 < @lines.length
+    return false unless @line + 1 < @lines.size
     starts_with_backticks? @lines[@line + 1]
   end
 
@@ -495,7 +495,7 @@ class Markdown::Parser
   def next_lines_empty_of_code?
     line_number = @line
 
-    while line_number < @lines.length
+    while line_number < @lines.size
       line = @lines[line_number]
 
       if empty? line

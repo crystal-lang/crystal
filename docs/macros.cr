@@ -1,8 +1,8 @@
-# The Macros module is a ficticious module used to document macros
+# The Macros module is a fictitious module used to document macros
 # and macro methods.
 #
 # You can invoke a **fixed subset** of methods on AST nodes at compile-time. These methods
-# are documented on the classes in this module. Additionaly, methods of the
+# are documented on the classes in this module. Additionally, methods of the
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Macros
   # Outputs the current macro's buffer to the standard output. Useful for debugging
@@ -47,7 +47,7 @@ module Macros
   # The `run` macro is useful when the subset of available macro methods
   # are not enough for your purposes and you need something more powerful.
   # With `run` you can read files at compile time, connect to the internet
-  # or to a datbase.
+  # or to a database.
   #
   # A simple example:
   #
@@ -150,6 +150,11 @@ module Macros
     # test "hi" #=> prints "Didn't get a number literal"
     # ```
     def is_a?(name) : BoolLiteral
+    end
+
+    # Gives a compile-time error with the given message. This will
+    # highlight this node in the error message.
+    def raise(message) : NoReturn
     end
   end
 
@@ -300,8 +305,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : StringLiteral
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -390,8 +395,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : SymbolLiteral
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -450,6 +455,10 @@ module Macros
     def first : ASTNode | NilLiteral
     end
 
+    # Similar to `Enumerable#includes?(obj)`.
+    def includes?(node : ASTNode) : BoolLiteral
+    end
+
     # Similar to `Enumerable#join`
     def join(separator) : StringLiteral
     end
@@ -458,8 +467,8 @@ module Macros
     def last : ASTNode | NilLiteral
     end
 
-    # Similar to `Array#length`
-    def length : NumberLiteral
+    # Similar to `Array#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Enumerable#map`
@@ -497,8 +506,8 @@ module Macros
     def keys : ArrayLiteral
     end
 
-    # Similar to `Hash#length`
-    def length : NumberLiteral
+    # Similar to `Hash#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Hash#to_a`
@@ -532,8 +541,8 @@ module Macros
     def empty? : BoolLiteral
     end
 
-    # Similar to `Tuple#length`
-    def length : NumberLiteral
+    # Similar to `Tuple#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Tuple#[]`
@@ -541,7 +550,7 @@ module Macros
     end
   end
 
-  # A ficticious node representing a variable or instance
+  # A fictitious node representing a variable or instance
   # variable, together with type information.
   class MetaVar < ASTNode
     # Returns the name of this variable.
@@ -627,8 +636,15 @@ module Macros
   # end
 
   # Assign expression.
-  # class Assign < ASTNode
-  # end
+  class Assign < ASTNode
+    # Returns the target assigned to.
+    def target : ASTNode
+    end
+
+    # Returns the value that is being assigned.
+    def value : ASTNode
+    end
+  end
 
   # Assign expression.
   # class MultiAssign < ASTNode
@@ -740,11 +756,31 @@ module Macros
   # class Require < ASTNode
   # end
 
-  # class When < ASTNode
-  # end
+  # A `when` inside a `case`
+  class When < ASTNode
+    # Returns the conditions of this `when`.
+    def conds : ArrayLiteral
+    end
 
-  # class Case < ASTNode
-  # end
+    # Returns the body of this `when`.
+    def body : ASTNode
+    end
+  end
+
+  # A `case` expression
+  class Case < ASTNode
+    # Returns the condition (target) of this `case`.
+    def cond : ASTNode
+    end
+
+    # Returns the `when`s of this `case`.
+    def whens : ArrayLiteral(When)
+    end
+
+    # Returns the `else` of this `case`.
+    def else : ArrayLiteral(When)
+    end
+  end
 
   # class ImplicitObj < ASTNode
   # end
@@ -900,7 +936,7 @@ module Macros
   # class MagicConstant < ASTNode
   # end
 
-  # A ficticious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a MacroId
@@ -992,8 +1028,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : MacroId
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -1068,7 +1104,7 @@ module Macros
 
     # Returns the number of elements in this tuple type or tuple metaclass type.
     # Gives a compile error if this is not one of those types.
-    def length : NumberLiteral
+    def size : NumberLiteral
     end
 
     # Returns true if this type is a union type, false otherwise.

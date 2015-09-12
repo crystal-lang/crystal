@@ -449,7 +449,7 @@ describe "Code gen: macro" do
   it "runs macro with splat" do
     run(%(
       macro foo(*args)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo 1, 1, 1
@@ -459,7 +459,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat" do
     run(%(
       macro foo(name, *args)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo bar, 1, 1, 1
@@ -469,7 +469,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat in first position (1)" do
     run(%(
       macro foo(*args, name)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo 1, 1, 1, bar
@@ -489,7 +489,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat in the middle (1)" do
     run(%(
       macro foo(foo, *args, name)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo x, 1, 1, 1, bar
@@ -739,7 +739,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar-Baz")
   end
 
-  it "gets enum members with @constants" do
+  it "gets enum members with @type.constants" do
     run(%(
       enum Color
         Red
@@ -747,15 +747,15 @@ describe "Code gen: macro" do
         Blue
 
         def self.red
-          {{@constants[0]}}
+          {{@type.constants[0]}}
         end
 
         def self.green
-          {{@constants[1]}}
+          {{@type.constants[1]}}
         end
 
         def self.blue
-          {{@constants[2]}}
+          {{@type.constants[2]}}
         end
       end
 
@@ -1036,7 +1036,7 @@ describe "Code gen: macro" do
   it "expands macro with default arg and splat (3) (#784)" do
     run(%(
       macro some_macro(a=5, *args)
-        {{args.length}}
+        {{args.size}}
       end
 
       some_macro 1, 2, 3, 4
@@ -1141,6 +1141,79 @@ describe "Code gen: macro" do
       end
 
       a
+      )).to_i.should eq(123)
+  end
+
+  it "fixes empty types of macro expansions (#1379)" do
+    run(%(
+      macro lala(exp)
+        {{exp}}
+      end
+
+      def foo
+        bar do
+          return 123
+        end
+      end
+
+      def bar
+        return yield
+      end
+
+      lala foo
+      )).to_i.should eq(123)
+  end
+
+  it "expands macro as class method" do
+    run(%(
+      class Foo
+        macro bar
+          1
+        end
+      end
+
+      Foo.bar
+      )).to_i.should eq(1)
+  end
+
+  it "expands macro as class method and accesses @type" do
+    run(%(
+      class Foo
+        macro bar
+          {{@type.stringify}}
+        end
+      end
+
+      Foo.bar
+      )).to_string.should eq("Foo")
+  end
+
+  it "codegens macro with comment (bug) (#1396)" do
+    run(%(
+      macro my_macro
+        # {{ 1 }}
+        {{ 1 }}
+      end
+
+      my_macro
+      )).to_i.should eq(1)
+  end
+
+  it "correctly resolves constant inside block in macro def" do
+    run(%(
+      def foo
+        yield
+      end
+
+      class Foo
+        Const = 123
+
+        macro def self.bar : Int32
+          foo { Const }
+        end
+      end
+
+      Foo.bar
       )).to_i.should eq(123)
   end
 end

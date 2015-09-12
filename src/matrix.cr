@@ -53,20 +53,20 @@ class Matrix(T)
 
   # Creates a matrix interpreting each argument as a row.
   def self.rows(rows : Array(Array) | Tuple)
-    if rows.any? { |row| row.length != rows[0].length }
+    if rows.any? { |row| row.size != rows[0].size }
       raise NotRegular.new
     end
-    Matrix.new(rows.length, rows.first.length) do |i, r, c|
+    Matrix.new(rows.size, rows.first.size) do |i, r, c|
       rows[r][c]
     end
   end
 
   # Creates a matrix interpreting each argument as a column.
   def self.columns(columns : Array(Array) | Tuple)
-    if columns.any? { |column| column.length != columns[0].length }
+    if columns.any? { |column| column.size != columns[0].size }
       raise NotRegular.new
     end
-    Matrix.new(columns.first.length, columns.length) do |i, r, c|
+    Matrix.new(columns.first.size, columns.size) do |i, r, c|
       columns[c][r]
     end
   end
@@ -74,7 +74,7 @@ class Matrix(T)
   # Creates a diagonal matrix with the supplied arguments. Best suited to
   # numeric matrices.
   def self.diagonal(*values)
-    matrix = Matrix(T).new(values.length, values.length)
+    matrix = Matrix(T).new(values.size, values.size)
     values.each_with_index do |e, i|
       matrix[i, i] = e
     end
@@ -90,14 +90,14 @@ class Matrix(T)
 
   # Creates a single row matrix with the given values.
   def self.row(*values)
-    Matrix.new(1, values.length) do |i|
+    Matrix.new(1, values.size) do |i|
       values[i]
     end
   end
 
   # Creates a single column matrix with the given values.
   def self.column(*values)
-    Matrix.new(values.length, 1) do |i|
+    Matrix.new(values.size, 1) do |i|
       values[i]
     end
   end

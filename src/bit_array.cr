@@ -11,20 +11,20 @@
 #     require "bit_array"
 #     ba = BitArray.new(12) # => "BitArray[000000000000]"
 #     ba[2]                 # => false
-#     0.upto(5) { |i| a[i*2] = true }
+#     0.upto(5) { |i| ba[i*2] = true }
 #     ba                    # => "BitArray[101010101010]"
 #     ba[2]                 # => true
 struct BitArray
   include Enumerable(Bool)
 
   # The number of bits the BitArray stores
-  getter length
+  getter size
 
-  # Create a new BitArray of `length` bits.
+  # Create a new BitArray of `size` bits.
   #
   # `initial` optionally sets the starting value, true or false, for all bits
   # in the array.
-  def initialize(@length, initial = false : Bool)
+  def initialize(@size, initial = false : Bool)
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
@@ -84,7 +84,7 @@ struct BitArray
   end
 
   def each
-    @length.times do |i|
+    @size.times do |i|
       yield self[i]
     end
   end
@@ -98,13 +98,13 @@ struct BitArray
   end
 
   private def bit_index_and_sub_index(index)
-    index += @length if index < 0
-    raise IndexError.new if index >= @length || index < 0
+    index += @size if index < 0
+    raise IndexError.new if index >= @size || index < 0
 
     index.divmod(32)
   end
 
   private def malloc_size
-    (@length / 32.0).ceil.to_i
+    (@size / 32.0).ceil.to_i
   end
 end

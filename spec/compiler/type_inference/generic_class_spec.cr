@@ -476,4 +476,43 @@ describe "Type inference: generic class" do
       ),
       "use a more specific type"
   end
+
+  it "errors on too nested generic instance" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      def foo
+        Foo(typeof(foo)).new
+      end
+
+      foo
+      ),
+      "generic type too nested"
+  end
+
+  it "errors on too nested generic instance, with union type" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      def foo
+        1 || Foo(typeof(foo)).new
+      end
+
+      foo
+      ),
+      "generic type too nested"
+  end
+
+  it "errors on too nested tuple instance" do
+    assert_error %(
+      def foo
+        {typeof(foo)}
+      end
+
+      foo
+      ),
+      "tuple type too nested"
+  end
 end

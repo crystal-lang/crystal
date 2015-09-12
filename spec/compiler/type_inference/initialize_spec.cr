@@ -122,7 +122,7 @@ describe "Type inference: initialize" do
     foo.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
 
     bar = mod.types["Bar"] as NonGenericClassType
-    bar.instance_vars.length.should eq(0)
+    bar.instance_vars.size.should eq(0)
   end
 
   it "errors when instance variable never assigned" do

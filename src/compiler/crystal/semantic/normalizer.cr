@@ -4,8 +4,9 @@ require "../syntax/transformer"
 
 module Crystal
   class Program
-    def normalize(node)
+    def normalize(node, inside_exp = false)
       normalizer = Normalizer.new(self)
+      normalizer.exp_nest = 1 if inside_exp
       node = normalizer.normalize(node)
       puts node if ENV["SSA"]? == "1"
       node
@@ -14,10 +15,12 @@ module Crystal
 
   class Normalizer < Transformer
     getter program
+    property exp_nest
 
     def initialize(@program)
       @dead_code = false
       @current_def = nil
+      @exp_nest = 0
     end
 
     def normalize(node)
@@ -26,9 +29,12 @@ module Crystal
 
     def before_transform(node)
       @dead_code = false
+      @exp_nest += 1 if nesting_exp?(node)
     end
 
     def after_transform(node)
+      @exp_nest -= 1 if nesting_exp?(node)
+
       case node
       when Return, Break, Next
         @dead_code = true
@@ -36,6 +42,15 @@ module Crystal
        # Skip
       else
         @dead_code = false
+      end
+    end
+
+    def nesting_exp?(node)
+      case node
+      when Expressions, VisibilityModifier, MacroFor, MacroIf, MacroExpression, Require, IfDef
+        false
+      else
+        true
       end
     end
 
@@ -52,7 +67,7 @@ module Crystal
         end
         break if @dead_code
       end
-      case exps.length
+      case exps.size
       when 0
         Nop.new
       when 1
@@ -75,12 +90,12 @@ module Crystal
       #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
-      if node.values.length == 1
+      if node.values.size == 1
         value = node.values[0]
 
         temp_var = new_temp_var
 
-        assigns = Array(ASTNode).new(node.targets.length + 1)
+        assigns = Array(ASTNode).new(node.targets.size + 1)
         assigns << Assign.new(temp_var.clone, value).at(value)
         node.targets.each_with_index do |target, i|
           call = Call.new(temp_var.clone, "[]", NumberLiteral.new(i)).at(value)
@@ -95,7 +110,7 @@ module Crystal
       # To:
       #
       #     a = [1, 2, 3]
-      elsif node.targets.length == 1
+      elsif node.targets.size == 1
         target = node.targets.first
         array = ArrayLiteral.new(node.values)
         exps = transform_multi_assign_target(target, array)
@@ -281,10 +296,14 @@ module Crystal
     # Transform require to its source code.
     # The source code can be a Nop if the file was already required.
     def transform(node : Require)
+      if @exp_nest > 0
+        node.raise "can't require dynamically"
+      end
+
       location = node.location
       filenames = @program.find_in_path(node.string, location.try &.filename)
       if filenames
-        nodes = Array(ASTNode).new(filenames.length)
+        nodes = Array(ASTNode).new(filenames.size)
         filenames.each do |filename|
           if @program.add_to_requires(filename)
             parser = Parser.new File.read(filename)

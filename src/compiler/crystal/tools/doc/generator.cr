@@ -1,4 +1,6 @@
 class Crystal::Doc::Generator
+  getter program
+
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
@@ -222,7 +224,7 @@ class Crystal::Doc::Generator
 
   def fetch_doc_lines(doc)
     doc.gsub /\n+/ do |match|
-      if match.length == 1
+      if match.size == 1
         " "
       else
         "\n"
@@ -283,7 +285,7 @@ class Crystal::Doc::Generator
     filename = location.filename
     return unless filename.is_a?(String)
     return unless filename.starts_with? @base_dir
-    filename[@base_dir.length .. -1]
+    filename[@base_dir.size .. -1]
   end
 
   record RelativeLocation, filename, url

@@ -141,7 +141,7 @@ class Program
   end
 
   def self.new(source : Array(Char))
-    new parse(source, 0, source.length)
+    new parse(source, 0, source.size)
   end
 
   def self.parse(source, from, to)
@@ -178,7 +178,7 @@ class Program
 
   def self.find_matching_close(source, open_index)
     open_count = 0
-    (open_index...source.length).each do |i|
+    (open_index...source.size).each do |i|
       case source[i]
       when '['
         open_count += 1
@@ -243,7 +243,7 @@ end
 
 def get_output_name(filename)
   if filename.ends_with?(".bf")
-    "#{filename[0 .. filename.length - 4]}.ll"
+    "#{filename[0 .. filename.size - 4]}.ll"
   else
     "#{filename}.ll"
   end

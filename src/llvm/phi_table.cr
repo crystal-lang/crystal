@@ -16,7 +16,7 @@ struct LLVM::PhiTable
     @blocks.empty?
   end
 
-  def length
-    @blocks.length
+  def size
+    @blocks.size
   end
 end

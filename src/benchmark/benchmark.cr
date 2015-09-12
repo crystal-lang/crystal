@@ -12,11 +12,12 @@ require "./**"
 # end
 # ```
 #
-# This generates the following output:
+# This generates the following output showing the mean iterations per second,
+# the standard deviation relative to the mean, and a comparison:
 #
 # ```text
-#   short sleep    91.82 (±  1.11)  8.72× slower
-# shorter sleep   800.98 (±  4.72)       fastest
+#   short sleep    91.82 (± 2.51%)  8.72× slower
+# shorter sleep   800.98 (± 1.10%)       fastest
 # ```
 #
 # `Benchmark::IPS` defaults to 2 seconds of warmup time and 5 seconds of
@@ -86,9 +87,10 @@ module Benchmark
   #
   # The optional parameters `calculation` and `warmup` set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`.
-  def ips(calculation = 5, warmup = 2)
-    job = IPS::Job.new(calculation, warmup)
+  # `Benchmark::IPS`. When the `interactive` parameter is true, results are
+  # displayed and updated as they are calculated, otherwise all at once.
+  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+    job = IPS::Job.new(calculation, warmup, interactive)
     yield job
     job.execute
     job.report

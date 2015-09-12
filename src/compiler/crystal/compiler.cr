@@ -199,7 +199,7 @@ module Crystal
       target_triple = target_machine.triple
 
       timing(msg) do
-        if units.length == 1
+        if units.size == 1
           first_unit = units.first
 
           codegen_single_unit(first_unit, target_triple, multithreaded)
@@ -332,7 +332,7 @@ module Crystal
           end
         end
 
-        if @name.length > 50
+        if @name.size > 50
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
           @name = "#{@name[0..16]}-#{Crypto::MD5.hex_digest(@name)}"
         end
@@ -396,7 +396,7 @@ module Crystal
       end
 
       def object_name
-        "#{@output_dir}/#{@name}.o"
+        Crystal.relative_filename("#{@output_dir}/#{@name}.o")
       end
 
       def bc_name
@@ -416,7 +416,7 @@ module Crystal
   def self.relative_filename(filename : String)
     dir = Dir.working_directory
     if filename.starts_with?(dir)
-      filename = filename[dir.length .. -1]
+      filename = filename[dir.size .. -1]
       if filename.starts_with? "/"
         ".#{filename}"
       else

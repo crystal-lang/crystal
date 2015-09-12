@@ -23,10 +23,10 @@ class Crystal::Call
 
   def target_def
     if defs = @target_defs
-      if defs.length == 1
+      if defs.size == 1
         return defs.first
       else
-        ::raise "#{defs.length} target defs for #{self}"
+        ::raise "#{defs.size} target defs for #{self}"
       end
     end
 
@@ -109,7 +109,7 @@ class Crystal::Call
 
   def lookup_matches_with_splat
     # Check if all splat are of tuples
-    arg_types = Array(Type).new(args.length * 2)
+    arg_types = Array(Type).new(args.size * 2)
     args.each do |arg|
       if arg.is_a?(Splat)
         case arg_type = arg.type
@@ -141,56 +141,56 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_in(owner : AliasType, arg_types)
-    lookup_matches_in(owner.remove_alias, arg_types)
+  def lookup_matches_in(owner : AliasType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in(owner.remove_alias, arg_types, search_in_parents: search_in_parents)
   end
 
-  def lookup_matches_in(owner : UnionType, arg_types)
+  def lookup_matches_in(owner : UnionType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     matches = [] of Def
     owner.union_types.each do |type|
       next if type.abstract && !type.virtual?
 
-      matches.concat lookup_matches_in(type, arg_types)
+      matches.concat lookup_matches_in(type, arg_types, search_in_parents: search_in_parents)
     end
     matches
   end
 
-  def lookup_matches_in(owner : Program, arg_types, self_type = nil, def_name = self.name)
-    lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  def lookup_matches_in(owner : Program, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in_type(owner, arg_types, self_type, def_name, search_in_parents)
   end
 
-  def lookup_matches_in(owner : FileModule, arg_types)
-    lookup_matches_in mod, arg_types
+  def lookup_matches_in(owner : FileModule, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in mod, arg_types, search_in_parents: search_in_parents
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType, arg_types)
+  def lookup_matches_in(owner : NonGenericModuleType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     attach_subclass_observer owner
 
     including_types = owner.including_types
     if including_types
-      lookup_matches_in(including_types, arg_types)
+      lookup_matches_in(including_types, arg_types, search_in_parents: search_in_parents)
     else
       [] of Def
     end
   end
 
-  def lookup_matches_in(owner : GenericClassType, arg_types)
+  def lookup_matches_in(owner : GenericClassType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     including_types = owner.including_types
     if including_types
       attach_subclass_observer owner
 
-      lookup_matches_in(including_types, arg_types)
+      lookup_matches_in(including_types, arg_types, search_in_parents: search_in_parents)
     else
       raise "no type inherits #{owner}"
     end
   end
 
-  def lookup_matches_in(owner : LibType, arg_types, self_type = nil, def_name = self.name)
+  def lookup_matches_in(owner : LibType, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
     raise "lib fun call is not supported in dispatch"
   end
 
-  def lookup_matches_in(owner : Type, arg_types, self_type = nil, def_name = self.name)
-    lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  def lookup_matches_in(owner : Type, arg_types, self_type = nil, def_name = self.name, search_in_parents = true)
+    lookup_matches_in_type(owner, arg_types, self_type, def_name, search_in_parents)
   end
 
   def lookup_matches_in_with_scope(owner, arg_types)
@@ -216,11 +216,11 @@ class Crystal::Call
     instantiate matches, owner, nil
   end
 
-  def lookup_matches_in_type(owner, arg_types, self_type, def_name)
+  def lookup_matches_in_type(owner, arg_types, self_type, def_name, search_in_parents)
     signature = CallSignature.new(def_name, arg_types, block, named_args)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature)
+    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents)
 
     if matches.empty?
       if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?
@@ -243,7 +243,7 @@ class Crystal::Call
           matches = Matches.new([Match.new(initialize_def, arg_types, MatchContext.new(owner, owner))], true)
         end
       elsif !obj && owner != mod
-        mod_matches = lookup_matches_with_signature(mod, signature)
+        mod_matches = lookup_matches_with_signature(mod, signature, search_in_parents)
         matches = mod_matches unless mod_matches.empty?
       end
     end
@@ -262,11 +262,6 @@ class Crystal::Call
     if matches.empty?
       # For now, if the owner is a NoReturn just ignore the error (this call should be recomputed later)
       unless owner.no_return?
-        # Check if it's a union metaclass
-        if owner.is_a?(MetaclassType) && (instance_type = owner.instance_type).is_a?(UnionType)
-          return lookup_matches_in_union_metaclass(instance_type, arg_types)
-        end
-
         # If the owner is abstract type without subclasses,
         # or if the owner is an abstract generic instance type,
         # don't give error. This is to allow small code comments without giving
@@ -295,31 +290,30 @@ class Crystal::Call
     raise "Bug: trying to lookup matches in nil in #{self}"
   end
 
-  def lookup_matches_checking_expansion(owner, signature)
+  def lookup_matches_checking_expansion(owner, signature, search_in_parents = true)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
     # triggering a virtual lookup. But the context of lookup must be preseved.
     if is_expansion?
-      matches = bubbling_exception { parent_visitor.typed_def.original_owner.lookup_matches signature }
+      matches = bubbling_exception do
+        target = parent_visitor.typed_def.original_owner
+        if search_in_parents
+          target.lookup_matches signature
+        else
+          target.lookup_matches_without_parents signature
+        end
+      end
       matches.each do |match|
         match.context.owner = owner
         match.context.type_lookup = parent_visitor.type_lookup.not_nil!
       end
       matches
     else
-      bubbling_exception { lookup_matches_with_signature(owner, signature) }
+      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents) }
     end
   end
 
-  def lookup_matches_in_union_metaclass(instance_type, arg_types)
-    matches = [] of Def
-    instance_type.union_types.each do |type|
-      matches.concat lookup_matches_in(type.metaclass, arg_types)
-    end
-    matches
-  end
-
-  def lookup_matches_with_signature(owner : Program, signature)
+  def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
     location = self.location
     if location && (filename = location.filename).is_a?(String)
       matches = owner.lookup_private_matches filename, signature
@@ -336,14 +330,18 @@ class Crystal::Call
     matches
   end
 
-  def lookup_matches_with_signature(owner, signature)
-    owner.lookup_matches signature
+  def lookup_matches_with_signature(owner, signature, search_in_parents)
+    if search_in_parents
+      owner.lookup_matches signature
+    else
+      owner.lookup_matches_without_parents signature
+    end
   end
 
   def instantiate(matches, owner, self_type = nil)
     block = @block
 
-    typed_defs = Array(Def).new(matches.length)
+    typed_defs = Array(Def).new(matches.size)
 
     matches.each do |match|
       # Discard abstract defs for abstract classes
@@ -363,7 +361,7 @@ class Crystal::Call
 
       lookup_self_type = self_type || match.context.owner
       if self_type
-        lookup_arg_types = Array(Type).new(match.arg_types.length + 1)
+        lookup_arg_types = Array(Type).new(match.arg_types.size + 1)
         lookup_arg_types.push self_type
         lookup_arg_types.concat match.arg_types
       else
@@ -402,7 +400,19 @@ class Crystal::Call
               visitor.call = self
               visitor.scope = lookup_self_type
               visitor.type_lookup = match.context.type_lookup
+
+              yields_to_block = block && !match.def.uses_block_arg
+
+              if yields_to_block
+                raise_if_block_too_nested(match.def.block_nest)
+                match.def.block_nest += 1
+              end
+
               typed_def.body.accept visitor
+
+              if yields_to_block
+                match.def.block_nest -= 1
+              end
 
               if visitor.is_initialize
                 visitor.bind_initialize_instance_vars(owner)
@@ -417,6 +427,17 @@ class Crystal::Call
     typed_defs
   end
 
+  def raise_if_block_too_nested(block_nest)
+    # When we visit this def's body, we nest. If we are nesting
+    # over and over again, and there's a block, it means this will go on forever
+    #
+    # TODO Ideally this should check `> 1`, but the algorithm isn't precise. However,
+    # manually nested blocks don't nest this deep.
+    if block_nest > 15
+      raise "recursive block expansion: blocks that yield are always inlined, and this call leads to an infinite inlining"
+    end
+  end
+
   def check_return_type(typed_def, typed_def_return_type, match, match_owner)
     self_type = match_owner.instance_type
     root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
@@ -425,7 +446,7 @@ class Crystal::Call
   end
 
   def check_tuple_indexer(owner, def_name, args, arg_types)
-    return unless args.length == 1 && def_name == "[]"
+    return unless args.size == 1 && def_name == "[]"
 
     if owner.is_a?(TupleInstanceType)
       tuple_indexer_helper(args, arg_types, owner, owner) do |instance_type, index|
@@ -442,7 +463,7 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
-      if 0 <= index < instance_type.tuple_types.length
+      if 0 <= index < instance_type.tuple_types.size
         indexer_def = yield instance_type, index
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
@@ -508,7 +529,7 @@ class Crystal::Call
     lookup = enclosing_def.owner
     case lookup
     when VirtualType
-      parents = lookup.base_type.parents
+      parents = lookup.base_type.ancestors
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index(lookup).not_nil!
@@ -518,19 +539,26 @@ class Crystal::Call
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
       parents = ancestors[index_of_ancestor + 1 .. -1]
     when GenericType
-      parents = parent_visitor.typed_def.owner.parents
+      ancestors = parent_visitor.scope.ancestors
+      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(InheritedGenericClass) && ancestor.extended_class == lookup }
+      if index_of_ancestor
+        parents = ancestors[index_of_ancestor + 1 .. -1]
+      else
+        parents = ancestors
+      end
     else
-      parents = lookup.parents
+      parents = lookup.ancestors
     end
 
-    if parents && parents.length > 0
-      parents_length = parents.length
+    in_initialize = enclosing_def.name == "initialize"
+
+    if parents && parents.size > 0
       parents.each_with_index do |parent, i|
         if parent.lookup_first_def(enclosing_def.name, block)
-          return lookup_matches_in(parent, arg_types, scope, enclosing_def.name)
+          return lookup_matches_in_type(parent, arg_types, scope, enclosing_def.name, !in_initialize)
         end
       end
-      lookup_matches_in(parents.last, arg_types, scope, enclosing_def.name)
+      lookup_matches_in_type(parents.last, arg_types, scope, enclosing_def.name, !in_initialize)
     else
       raise "there's no superclass in this scope"
     end
@@ -581,7 +609,7 @@ class Crystal::Call
   end
 
   def lookup_macro
-    in_macro_target &.lookup_macro(name, args.length, named_args)
+    in_macro_target &.lookup_macro(name, args.size, named_args)
   end
 
   def in_macro_target
@@ -677,8 +705,8 @@ class Crystal::Call
           fun_literal = call_block_arg
         else
           # Otherwise, we create a FunLiteral and type it
-          if block.args.length > fun_args.length
-            raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+          if block.args.size > fun_args.size
+            raise "wrong number of block arguments (#{block.args.size} for #{fun_args.size})"
           end
 
           fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
@@ -777,8 +805,8 @@ class Crystal::Call
   private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
     call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
     if yield_vars
-      if yield_vars.length != call_block_arg_types.length
-        raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
+      if yield_vars.size != call_block_arg_types.size
+        raise "wrong number of block argument's arguments (#{call_block_arg_types.size} for #{yield_vars.size})"
       end
 
       i = 1
@@ -788,8 +816,8 @@ class Crystal::Call
         end
         i += 1
       end
-    elsif call_block_arg_types.length != 0
-      raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
+    elsif call_block_arg_types.size != 0
+      raise "wrong number of block argument's arguments (#{call_block_arg_types.size} for 0)"
     end
   end
 
@@ -813,7 +841,7 @@ class Crystal::Call
     end
 
     def visit(node : Path)
-      if node.names.length == 1 && @context.free_vars
+      if node.names.size == 1 && @context.free_vars
         if type = @context.get_free_var(node.names.first)
           @type = type
           return
@@ -877,9 +905,9 @@ class Crystal::Call
 
     # If there's an argument count mismatch, or we have a splat, or there are
     # named arguments, we create another def that sets ups everything for the real call.
-    if arg_types.length != untyped_def.args.length || untyped_def.splat_index || named_args
+    if arg_types.size != untyped_def.args.size || untyped_def.splat_index || named_args
       named_args_names = named_args.try &.map &.name
-      untyped_def = untyped_def.expand_default_arguments(arg_types.length, named_args_names)
+      untyped_def = untyped_def.expand_default_arguments(arg_types.size, named_args_names)
     end
 
     args_start_index = 0
@@ -917,8 +945,8 @@ class Crystal::Call
     end
 
     # Fill magic constants (__LINE__, __FILE__, __DIR__)
-    named_args_length = named_args.try(&.length) || 0
-    (arg_types.length + named_args_length).upto(typed_def.args.length - 1) do |index|
+    named_args_size = named_args.try(&.size) || 0
+    (arg_types.size + named_args_size).upto(typed_def.args.size - 1) do |index|
       arg = typed_def.args[index]
       default_value = arg.default_value as MagicConstant
       case default_value.name

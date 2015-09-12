@@ -1,4 +1,4 @@
-# A tuple is a fixed-length, immutable, stack-allocated sequence of values
+# A tuple is a fixed-size, immutable, stack-allocated sequence of values
 # of possibly different types.
 #
 # A tuple can be created with the usual `new` method or with a tuple literal:
@@ -20,7 +20,7 @@
 # a value whose type is the union of all the types in the tuple, and might raise
 # `IndexError` .
 #
-# Tuples are the preferred way to return fixed-length multiple return
+# Tuples are the preferred way to return fixed-size multiple return
 # values because no memory is needed to be allocated for them:
 #
 # ```
@@ -127,7 +127,7 @@ struct Tuple
   # tuple.at(3) { 10 }        #=> 10
   # ```
   def at(index : Int)
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       return self[{{i}}] if {{i}} == index
     {% end %}
     yield
@@ -160,7 +160,7 @@ struct Tuple
   # 'x'
   # ```
   def each
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       yield self[{{i}}]
     {% end %}
     self
@@ -175,7 +175,7 @@ struct Tuple
     ItemIterator(typeof((i = 0; self[i]))).new(self)
   end
 
-  # Returns `true` if this tuple has the same length as the other tuple
+  # Returns `true` if this tuple has the same size as the other tuple
   # and their elements are equal to each other when  compared with `==`.
   #
   # ```crystal
@@ -187,7 +187,7 @@ struct Tuple
   # t1 == t3            #=> false
   # ```
   def ==(other : self)
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       return false unless self[{{i}}] == other[{{i}}]
     {% end %}
     true
@@ -195,9 +195,9 @@ struct Tuple
 
   # ditto
   def ==(other : Tuple)
-    return false unless length == other.length
+    return false unless size == other.size
 
-    length.times do |i|
+    size.times do |i|
       return false unless self[i] == other[i]
     end
     true
@@ -213,8 +213,8 @@ struct Tuple
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #
   #
-  # If all the elements are equal, then the result is based on a comparison of the tuple lengths.
-  # Thus, two tuples are "equal" according to `<=>` if, and only if, they have the same length
+  # If all the elements are equal, then the result is based on a comparison of the tuple sizes.
+  # Thus, two tuples are "equal" according to `<=>` if, and only if, they have the same size
   # and the value of each element is equal to the value of the corresponding element in the other tuple.
   #
   # ```
@@ -225,7 +225,7 @@ struct Tuple
   #
   # See `Object#<=>`.
   def <=>(other : self)
-    {% for i in 0 ... @length %}
+    {% for i in 0 ... @type.length %}
       cmp = self[{{i}}] <=> other[{{i}}]
       return cmp unless cmp == 0
     {% end %}
@@ -234,20 +234,20 @@ struct Tuple
 
   # ditto
   def <=>(other : Tuple)
-    min_length = Math.min(length, other.length)
-    min_length.times do |i|
+    min_size = Math.min(size, other.size)
+    min_size.times do |i|
       cmp = self[i] <=> other[i]
       return cmp unless cmp == 0
     end
-    length <=> other.length
+    size <=> other.size
   end
 
   # returns a hash value based on this tuple's length and contents.
   #
   # see `object#hash`.
   def hash
-    hash = 31 * length
-    {% for i in 0 ... @length %}
+    hash = 31 * size
+    {% for i in 0 ... @type.length %}
       hash = 31 * hash + self[{{i}}].hash
     {% end %}
     hash
@@ -262,7 +262,7 @@ struct Tuple
   def clone
     {% if true %}
       Tuple.new(
-        {% for i in 0 ... @length %}
+        {% for i in 0 ... @type.length %}
           self[{{i}}].clone,
         {% end %}
       )
@@ -276,21 +276,16 @@ struct Tuple
   # {1, 2}.empty?    #=> false
   # ```
   def empty?
-    length == 0
-  end
-
-  # Same as `length`.
-  def size
-    length
+    size == 0
   end
 
   # Returns the number of elements in this tuple.
   #
   # ```
-  # {'a', 'b'}.length #=> 2
+  # {'a', 'b'}.size #=> 2
   # ```
-  def length
-    {{@length}}
+  def size
+    {{@type.length}}
   end
 
   # Returns a tuple containing the types of this tuple.
@@ -329,7 +324,7 @@ struct Tuple
   def map
     {% if true %}
       Tuple.new(
-        {% for i in 0 ... @length %}
+        {% for i in 0 ... @type.length %}
           (yield self[{{i}}]),
         {% end %}
       )
@@ -357,7 +352,7 @@ struct Tuple
   # empty.first? #=> nil
   # ```
   def first?
-    {% if @length == 0 %}
+    {% if @type.length == 0 %}
       nil
     {% else %}
       self[0]
@@ -373,7 +368,7 @@ struct Tuple
   # ```
   def last
     {% if true %}
-      self[{{@length - 1}}]
+      self[{{@type.length - 1}}]
     {% end %}
   end
 
@@ -388,10 +383,10 @@ struct Tuple
   # empty.last? #=> nil
   # ```
   def last?
-    {% if @length == 0 %}
+    {% if @type.length == 0 %}
       nil
     {% else %}
-      self[{{@length - 1}}]
+      self[{{@type.length - 1}}]
     {% end %}
   end
 

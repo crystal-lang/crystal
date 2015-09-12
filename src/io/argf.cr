@@ -9,7 +9,8 @@ class IO::ARGF
     @read_from_stdin = false
   end
 
-  def read(slice : Slice(UInt8), count)
+  def read(slice : Slice(UInt8))
+    count = slice.size
     first_initialize unless @initialized
 
     if current_io = @current_io
@@ -19,7 +20,7 @@ class IO::ARGF
       # It might be the case that the user put more strings into
       # ARGV, so in this case we need to read from that.
       read_next_argv
-      read_count = read(slice, count)
+      read_count = read slice[0, count]
     else
       read_count = 0
     end
@@ -27,7 +28,7 @@ class IO::ARGF
     read_count
   end
 
-  def write(slice : Slice(UInt8), count)
+  def write(slice : Slice(UInt8))
     raise IO::Error.new "can't write to ARGF"
   end
 
@@ -48,7 +49,7 @@ class IO::ARGF
   end
 
   private def read_from_current_io(current_io, slice, count)
-    read_count = current_io.read(slice, count)
+    read_count = current_io.read slice[0, count]
     if read_count < count
       unless @read_from_stdin
         current_io.close
@@ -58,7 +59,7 @@ class IO::ARGF
           read_next_argv
           slice += read_count
           count -= read_count
-          read_count += read(slice, count)
+          read_count += read slice[0, count]
         end
       end
     end

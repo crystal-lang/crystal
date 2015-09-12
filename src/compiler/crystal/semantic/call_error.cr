@@ -26,7 +26,11 @@ class Crystal::Call
       raise_matches_not_found_for_virtual_metaclass_new owner
     end
 
-    defs = owner.lookup_defs(def_name)
+    if name == "super"
+      defs = owner.lookup_defs_without_parents(def_name)
+    else
+      defs = owner.lookup_defs(def_name)
+    end
 
     # Another special case: initialize is only looked up one level,
     # so we must find the first one defined.
@@ -42,28 +46,7 @@ class Crystal::Call
     end
 
     # Check if it's the case of an abstract def
-    if !matches || (matches.try &.empty?)
-      signature = CallSignature.new(def_name, args.map(&.type), block, named_args)
-      defs.each do |a_def|
-        if a_def.abstract
-          context = MatchContext.new(owner, a_def.owner)
-          match = MatchesLookup.match_def(signature, DefWithMetadata.new(a_def), context)
-          if match
-            if a_def.owner == owner
-              owner.all_subclasses.each do |subclass|
-                submatches = subclass.lookup_matches(signature)
-                if submatches.empty?
-                  raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{subclass}"
-                end
-              end
-              raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
-            else
-              raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
-            end
-          end
-        end
-      end
-    end
+    check_abstract_def_error(owner, matches, defs, def_name)
 
     obj = @obj
 
@@ -80,12 +63,12 @@ class Crystal::Call
       check_macro_wrong_number_of_arguments(def_name)
 
       owner_trace = obj.try &.find_owner_trace(owner)
-      similar_name = owner.lookup_similar_def_name(def_name, self.args.length, block)
+      similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
 
       error_msg = String.build do |msg|
         if obj && owner != mod
           msg << "undefined method '#{def_name}' for #{owner}"
-        elsif args.length > 0 || has_parenthesis
+        elsif args.size > 0 || has_parenthesis
           msg << "undefined method '#{def_name}'"
         else
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
@@ -115,7 +98,7 @@ class Crystal::Call
           scope = scope as InstanceVarContainer
           ivar = scope.lookup_instance_var(obj.name)
           deps = ivar.dependencies?
-          if deps && deps.length == 1 && deps.first.same?(mod.nil_var)
+          if deps && deps.size == 1 && deps.first.same?(mod.nil_var)
             similar_name = scope.lookup_similar_instance_var_name(ivar.name)
             if similar_name
               msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
@@ -128,43 +111,43 @@ class Crystal::Call
       raise error_msg, owner_trace
     end
 
-    real_args_length = self.args.sum do |arg|
+    real_args_size = self.args.sum do |arg|
       arg_type = arg.type
       if arg.is_a?(Splat) && arg_type.is_a?(TupleInstanceType)
-        arg_type.tuple_types.length
+        arg_type.tuple_types.size
       else
         1
       end
     end
 
-    defs_matching_args_length = defs.select do |a_def|
-      min_length, max_length = a_def.min_max_args_lengths
-      min_length <= real_args_length <= max_length
+    defs_matchin_args_size = defs.select do |a_def|
+      min_size, max_size = a_def.min_max_args_sizes
+      min_size <= real_args_size <= max_size
     end
 
-    if defs_matching_args_length.empty?
-      all_arguments_lengths = [] of Int32
+    if defs_matchin_args_size.empty?
+      all_arguments_sizes = [] of Int32
       min_splat = Int32::MAX
       defs.each do |a_def|
-        min_length, max_length = a_def.min_max_args_lengths
-        if max_length == Int32::MAX
-          min_splat = Math.min(min_length, min_splat)
-          all_arguments_lengths.push min_splat
+        min_size, max_size = a_def.min_max_args_sizes
+        if max_size == Int32::MAX
+          min_splat = Math.min(min_size, min_splat)
+          all_arguments_sizes.push min_splat
         else
-          min_length.upto(max_length) do |length|
-            all_arguments_lengths.push length
+          min_size.upto(max_size) do |size|
+            all_arguments_sizes.push size
           end
         end
       end
-      all_arguments_lengths.uniq!.sort!
+      all_arguments_sizes.uniq!.sort!
 
       raise String.build do |str|
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
         str << "' ("
-        str << real_args_length
+        str << real_args_size
         str << " for "
-        all_arguments_lengths.join ", ", str
+        all_arguments_sizes.join ", ", str
         if min_splat != Int32::MAX
           str << "+"
         end
@@ -174,21 +157,21 @@ class Crystal::Call
       end
     end
 
-    if defs_matching_args_length.length > 0
-      if block && defs_matching_args_length.all? { |a_def| !a_def.yields }
+    if defs_matchin_args_size.size > 0
+      if block && defs_matchin_args_size.all? { |a_def| !a_def.yields }
         raise "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
-      elsif !block && defs_matching_args_length.all?(&.yields)
+      elsif !block && defs_matchin_args_size.all?(&.yields)
         raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
       end
 
       if named_args = @named_args
-        defs_matching_args_length.each do |a_def|
+        defs_matchin_args_size.each do |a_def|
           check_named_args_mismatch owner, named_args, a_def
         end
       end
     end
 
-    if args.length == 1 && args.first.type.includes_type?(mod.nil)
+    if args.size == 1 && args.first.type.includes_type?(mod.nil)
       owner_trace = args.first.find_owner_trace(mod.nil)
     end
 
@@ -226,7 +209,7 @@ class Crystal::Call
         if cover.is_a?(Cover)
           missing = cover.missing
           uniq_arg_names = arg_names.uniq!
-          uniq_arg_names = uniq_arg_names.length == 1 ? uniq_arg_names.first : nil
+          uniq_arg_names = uniq_arg_names.size == 1 ? uniq_arg_names.first : nil
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
             missing.each_with_index do |missing_types|
@@ -246,17 +229,45 @@ class Crystal::Call
     raise message, owner_trace
   end
 
+  def check_abstract_def_error(owner, matches, defs, def_name)
+    return unless !matches || (matches.try &.empty?)
+    return unless defs.all? &.abstract
+
+    signature = CallSignature.new(def_name, args.map(&.type), block, named_args)
+    defs.each do |a_def|
+      context = MatchContext.new(owner, a_def.owner)
+      match = MatchesLookup.match_def(signature, DefWithMetadata.new(a_def), context)
+      next unless match
+
+      if a_def.owner == owner
+        owner.all_subclasses.each do |subclass|
+          submatches = subclass.lookup_matches(signature)
+          if submatches.empty?
+            raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{subclass}"
+          end
+        end
+        raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+      else
+        raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+      end
+    end
+  end
+
   def append_matches(owner, defs, str, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       str << "\n - "
       append_def_full_name owner, a_def, str
-      if defs.length > 1 && a_def.same?(matched_def)
+      if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
       if a_def.args.any? { |arg| arg.default_value && arg.name == argument_name }
         str << colorize(" (did you mean this one?)").yellow.bold
       end
     end
+  end
+
+  def def_full_name(owner, a_def)
+    String.build { |io| append_def_full_name(owner, a_def, io) }
   end
 
   def append_def_full_name(owner, a_def, str)
@@ -275,7 +286,7 @@ class Crystal::Call
         str << arg_type
       elsif res = arg.restriction
         str << " : "
-        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.length == 1
+        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.size == 1
           if type_var = owner.type_vars[res.names[0]]?
             str << type_var.type
           else
@@ -296,11 +307,11 @@ class Crystal::Call
 
     owner.each_concrete_type do |concrete_type|
       defs = concrete_type.instance_type.lookup_defs_with_modules("initialize")
-      defs = defs.select { |a_def| a_def.args.length != args.length }
+      defs = defs.select { |a_def| a_def.args.size != args.size }
       unless defs.empty?
-        all_arguments_lengths = Set(Int32).new
-        defs.each { |a_def| all_arguments_lengths << a_def.args.length }
-        raise "wrong number of arguments for '#{concrete_type.instance_type}#initialize' (#{args.length} for #{all_arguments_lengths.join ", "})"
+        all_arguments_sizes = Set(Int32).new
+        defs.each { |a_def| all_arguments_sizes << a_def.args.size }
+        raise "wrong number of arguments for '#{concrete_type.instance_type}#initialize' (#{args.size} for #{all_arguments_sizes.join ", "})"
       end
     end
   end
@@ -309,12 +320,12 @@ class Crystal::Call
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros
 
-    all_arguments_lengths = Set(Int32).new
+    all_arguments_sizes = Set(Int32).new
     macros.each do |a_macro|
       named_args.try &.each do |named_arg|
         index = a_macro.args.index { |arg| arg.name == named_arg.name }
         if index
-          if index < args.length
+          if index < args.size
             raise "argument '#{named_arg.name}' already specified"
           end
         else
@@ -322,21 +333,21 @@ class Crystal::Call
         end
       end
 
-      min_length = a_macro.args.index(&.default_value) || a_macro.args.length
-      min_length.upto(a_macro.args.length) do |args_length|
-        all_arguments_lengths << args_length
+      min_size = a_macro.args.index(&.default_value) || a_macro.args.size
+      min_size.upto(a_macro.args.size) do |args_size|
+        all_arguments_sizes << args_size
       end
     end
 
-    raise "wrong number of arguments for macro '#{def_name}' (#{args.length} for #{all_arguments_lengths.join ", "})"
+    raise "wrong number of arguments for macro '#{def_name}' (#{args.size} for #{all_arguments_sizes.join ", "})"
   end
 
   def check_named_args_mismatch(owner, named_args, a_def)
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.name == named_arg.name }
       if found_index
-        min_length = args.length
-        if found_index < min_length
+        min_size = args.size
+        if found_index < min_size
           named_arg.raise "argument '#{named_arg.name}' already specified"
         end
       else

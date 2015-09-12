@@ -81,13 +81,13 @@ describe "JSON mapping" do
     person = JSONPerson.from_json(%({"name": "John"}))
     person.should be_a(JSONPerson)
     person.name.should eq("John")
-    person.name.length.should eq(4) # This verifies that name is not nilable
+    person.name.size.should eq(4) # This verifies that name is not nilable
     person.age.should be_nil
   end
 
   it "parses array of people" do
     people = Array(JSONPerson).from_json(%([{"name": "John"}, {"name": "Doe"}]))
-    people.length.should eq(2)
+    people.size.should eq(2)
   end
 
   it "does to_json" do

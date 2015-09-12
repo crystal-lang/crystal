@@ -157,4 +157,11 @@ describe "Dir" do
 
     filenames.includes?("dir_spec.cr").should be_true
   end
+
+  it "double close doesn't error" do
+    dir = Dir.open(__DIR__) do |dir|
+      dir.close
+      dir.close
+    end
+  end
 end

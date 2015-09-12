@@ -40,12 +40,12 @@
 # class Zeros
 #   include Iterator(Int32)
 #
-#   def initialize(@length)
+#   def initialize(@size)
 #     @produced = 0
 #   end
 #
 #   def next
-#     if @produced < @length
+#     if @produced < @size
 #       @produced += 1
 #       0
 #     else
@@ -151,6 +151,16 @@ module Iterator(T)
   # Rewinds the iterator to its original state.
   abstract def rewind
 
+  # Returns an iterator that returns elements from the original iterator until
+  # it is exhausted and then returns the elements of the second iterator.
+  #
+  #     iter = (1..2).each.chain(('a'..'b').each)
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => 'a'
+  #     iter.next # => 'b'
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def chain(other : Iterator(U))
     Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
@@ -183,6 +193,15 @@ module Iterator(T)
     end
   end
 
+  # Return an iterator that applies the given function to the element and then
+  # returns it unless it is nil. If the returned value would be nil it instead
+  # returns the next non nil value.
+  #
+  #     iter = [1, nil, 2, nil].each.compact_map {|e| e.try &.*(2)}
+  #     iter.next # => 2
+  #     iter.next # => 4
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def compact_map(&func : T -> U)
     CompactMap(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
   end
@@ -205,6 +224,14 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that returns consecutive chunks of the size *n*.
+  #
+  #     iter = (1..5).each.cons(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [2, 3, 4]
+  #     iter.next # => [3, 4, 5]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def cons(n)
     raise ArgumentError.new "invalid cons size: #{n}" if n <= 0
     Cons(typeof(self), T).new(self, n)
@@ -235,6 +262,18 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that repeatedly returns the elements of the original
+  # iterator forever starting back at the beginning when the end was reached.
+  #
+  #     iter = ["a", "b", "c"].each.cycle
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     # and so an and so on
   def cycle
     Cycle(typeof(self), T).new(self)
   end
@@ -258,6 +297,18 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that repeatedly returns the elements of the original
+  # iterator starting back at the beginning when the end was reached,
+  # but only n times.
+  #
+  #     iter = ["a", "b", "c"].each.cycle(2)
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => "c"
+  #     iter.next # => Iterator::Stop::INSTANCE
   def cycle(n : Int)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
@@ -295,6 +346,12 @@ module Iterator(T)
     self
   end
 
+  # Calls the given block once for each element, passing that element
+  # as a parameter.
+  #
+  #     iter = [ "a", "b", "c" ].each
+  #     iter.each {|x| print x, " " } # Prints "a b c"
+  #
   def each
     while true
       value = self.next
@@ -303,10 +360,118 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that then returns slices of n elements of the initial
+  # iterator.
+  #
+  #     iter = (1..9).each.each_slice(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [4, 5, 6]
+  #     iter.next # => [7, 8, 9]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def each_slice(n)
     slice(n)
   end
 
+  # Returns an iterator that flattens nested iterators into a single iterator
+  # whose type is the union of the simple types of all of the nested iterators
+  # (and their nested iterators, and so on).
+  #
+  #     iter = [(1..2).each, ('a'..'b').each].each.flatten
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => 'a'
+  #     iter.next # => 'b'
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def flatten
+    Flatten(typeof(Flatten.element_type(self))).new(self)
+  end
+
+  # :nodoc:
+  class Flatten(T1)
+    include Iterator(T1)
+
+    def initialize(@iterator)
+      @generator = @iterator
+      @top = true
+      @to_rewind = [] of Proc(Nil)
+    end
+
+    def next
+      value = @generator.next
+      if value.is_a?(Stop)
+        if @top
+          return stop
+        else
+          @generator = @iterator
+          @top = true
+          return self.next
+        end
+      end
+
+      flatten value
+    end
+
+    def make_rewinder iter
+      ->{
+        iter.rewind
+        # Return nil to disguise the individual iterator types
+        nil
+      }
+    end
+
+    def rewind
+      @iterator.rewind
+      @generator = @iterator
+      @top = true
+      @to_rewind.each &.call
+      @to_rewind.clear()
+    end
+
+    def flatten(element)
+      case element
+      when Iterator
+        flat = element.flatten
+        @generator = flat
+        @to_rewind << make_rewinder flat
+        @top = false
+        self.next
+      when Iterable
+        flatten element.each
+      else
+        element
+      end
+    end
+
+    def self.element_type(element)
+      case element
+      when Stop
+        raise ""
+      when Iterator
+        element_type(element.next)
+      when Iterable
+        element_type(element.each)
+      else
+        element
+      end
+    end
+  end
+
+  # Returns an iterator that chunks the iterator's elements in arrays of *size*
+  # filling up the remaining elements if no element remains with nil or a given
+  # optional parameter.
+  #
+  #     iter = (1..3).each.in_groups_of(2)
+  #     iter.next # => [1, 2]
+  #     iter.next # => [3, nil]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  #     iter = (1..3).each.in_groups_of(2, 'z')
+  #     iter.next # => [1, 2]
+  #     iter.next # => [3, 'z']
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def in_groups_of(size : Int, filled_up_with = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
     InGroupsOf(typeof(self), T, typeof(size), typeof(filled_up_with)).new(self, size, filled_up_with)
@@ -333,6 +498,16 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that applies the given block to the next element and
+  # returns the result.
+  #
+  #
+  #     iter = [1, 2, 3].each.map &.*(2)
+  #     iter.next # => 2
+  #     iter.next # => 4
+  #     iter.next # => 6
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def map(&func : T -> U)
     Map(typeof(self), T, U).new(self, func)
   end
@@ -351,6 +526,13 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that only returns elements for which the the passed in
+  # block returns a falsey value.
+  #
+  #     iter = [1, 2, 3].each.reject &.odd?
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def reject(&func : T -> U)
     Reject(typeof(self), T, U).new(self, func)
   end
@@ -373,6 +555,14 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that only returns elements for which the the passed
+  # in block returns a truthy value.
+  #
+  #     iter = [1, 2, 3].each.select &.odd?
+  #     iter.next # => 1
+  #     iter.next # => 3
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def select(&func : T -> U)
     Select(typeof(self), T, U).new(self, func)
   end
@@ -395,6 +585,13 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that skips the first *n* elements and only returns
+  # the elements after that.
+  #
+  #     iter = (1..3).each.skip(2)
+  #     iter.next # -> 3
+  #     iter.next # -> Iterator::Stop::INSTANCE
+  #
   def skip(n)
     raise ArgumentError.new "Attempted to skip negative size: #{n}" if n < 0
     Skip(typeof(self), T).new(self, n)
@@ -423,6 +620,15 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that only starts to return elements once the given block
+  # has returned falsey value for one element.
+  #
+  #     iter = [1, 2, 3, 4, 0].each.skip_while { |i| i < 3}
+  #     iter.next # => 3
+  #     iter.next # => 4
+  #     iter.next # => 0
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def skip_while(&func : T -> U)
     SkipWhile(typeof(self), T, U).new(self, func)
   end
@@ -453,6 +659,15 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that returns slices of n elements of the initial
+  # iterator.
+  #
+  #     iter = (1..9).each.slice(3)
+  #     iter.next # => [1, 2, 3]
+  #     iter.next # => [4, 5, 6]
+  #     iter.next # => [7, 8, 9]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def slice(n)
     raise ArgumentError.new "invalid slice size: #{n}" if n <= 0
     Slice(typeof(self), T).new(self, n)
@@ -483,6 +698,15 @@ module Iterator(T)
     end
   end
 
+
+  # Returns an iterator that only returns the first n elements of the
+  # initial iterator.
+  #
+  #     iter = ["a", "b", "c"].each.take 2
+  #     iter.next # => "a"
+  #     iter.next # => "b"
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def take(n)
     raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
     Take(typeof(self), T).new(self, n)
@@ -512,6 +736,14 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that returns elements while the given block returns a
+  # truthy value.
+  #
+  #     iter = (1..5).each.take_while {|i| i <3 }
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def take_while(&func : T -> U)
     TakeWhile(typeof(self), T, U).new(self, func)
   end
@@ -542,6 +774,19 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that calls the given block with the next element of the
+  # iterator when calling `next`, still returning the original element.
+  #
+  #     a = 0
+  #     iter = (1..3).each.tap { |x| a += x}
+  #     iter.next # => 1
+  #     a         # => 1
+  #     iter.next # => 2
+  #     a         # => 3
+  #     iter.next # => 3
+  #     a         # => 6
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def tap(&block : T ->)
     Tap(typeof(self), T).new(self, block)
   end
@@ -561,8 +806,29 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that only returns unique values of the original
+  # iterator.
+  #
+  #     iter = [1, 2, 1].each.uniq
+  #     iter.next # => 1
+  #     iter.next # => 2
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def uniq
     uniq &.itself
+  end
+
+  # Returns an iterator that only returns unique values of the original
+  # iterator. The provided block is applied to the elements to determine the
+  # value to be checked for uniqueness.
+  #
+  #     iter = [["a", "a"], ["b", "a"], ["a", "c"]].uniq &.first
+  #     iter.next # => ["a", "a"]
+  #     iter.next # => ["b", "a"]
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def uniq(&func : T -> U)
+    Uniq(typeof(self), T, U).new(self, func)
   end
 
   # :nodoc:
@@ -592,10 +858,14 @@ module Iterator(T)
     end
   end
 
-  def uniq(&func : T -> U)
-    Uniq(typeof(self), T, U).new(self, func)
-  end
-
+  # Returns an iterator that returns a tuple of the element and its index.
+  #
+  #     iter = (1..3).each.with_index
+  #     iter.next # => {1, 0}
+  #     iter.next # => {2, 1}
+  #     iter.next # => {3, 2}
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def with_index(offset = 0)
     WithIndex(typeof(self), T).new(self, offset)
   end
@@ -621,6 +891,14 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that returns a tuple of the element and a given object.
+  #
+  #     iter = (1..3).each.with_object("a")
+  #     iter.next # => {1, "a"}
+  #     iter.next # => {2, "a"}
+  #     iter.next # => {3, "a"}
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
   def with_object(obj)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
   end
@@ -639,6 +917,17 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that returns the elements of this iterator and the given
+  # one pairwise as tupels.
+  #
+  #    iter1 = [4, 5, 6].each
+  #    iter2 = [7, 8, 9].each
+  #    iter = iter1.zip(iter2)
+  #    iter.next # => {4, 7}
+  #    iter.next # => {5, 8}
+  #    iter.next # => {6, 9}
+  #    iter.next # => Iterator::Stop::INSTANCE
+  #
   def zip(other : Iterator(U))
     Zip(typeof(self), typeof(other), T, U).new(self, other)
   end

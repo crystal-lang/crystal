@@ -55,7 +55,7 @@ module Crystal
       if matches.empty?
         # We first need to check if there aren't any "new" methods in the class
         defs = scope.lookup_defs("new")
-        if defs.any? { |a_def| a_def.args.length > 0 }
+        if defs.any? { |a_def| a_def.args.size > 0 }
           Matches.new(nil, false)
         else
           define_new_without_initialize(scope, arg_types)
@@ -69,14 +69,14 @@ module Crystal
 
     def define_new_without_initialize(scope, arg_types)
       defs = scope.instance_type.lookup_defs("initialize")
-      if defs.length > 0
+      if defs.size > 0
         raise_matches_not_found scope.instance_type, "initialize"
       end
 
-      if defs.length == 0 && arg_types.length > 0
+      if defs.size == 0 && arg_types.size > 0
         news = scope.instance_type.metaclass.lookup_defs("new")
         if news.empty?
-          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
+          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.size} for 0)"
         else
           raise_matches_not_found scope.instance_type.metaclass, "new"
         end

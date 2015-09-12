@@ -128,7 +128,7 @@ ifdef x86_64
         LibFoo.foo(s)
         )).first_value
       str = mod.to_s
-      str.scan(/byval/).length.should eq(2)
+      str.scan(/byval/).size.should eq(2)
     end
 
     it "passes struct bigger than128 bits (for real)" do
@@ -267,7 +267,7 @@ ifdef x86_64
         str = LibFoo.foo(1)
         )).first_value
       str = mod.to_s
-      str.scan(/sret/).length.should eq(2)
+      str.scan(/sret/).size.should eq(2)
       str.should contain("sret, i32") # sret goes as first argument
     end
 

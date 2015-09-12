@@ -855,10 +855,6 @@ module Crystal
       when 'u'
         if next_char == 'n'
           case next_char
-          when 'd'
-            if next_char == 'e' && next_char == 'f'
-              return check_ident_or_keyword(:undef, start)
-            end
           when 'i'
             if next_char == 'o' && next_char == 'n'
               return check_ident_or_keyword(:union, start)
@@ -963,6 +959,10 @@ module Crystal
       end
 
       @token
+    end
+
+    def token_end_location
+      @token_end_location ||= Location.new(@line_number, @column_number - 1, @filename)
     end
 
     def slash_is_regex!
@@ -1099,7 +1099,7 @@ module Crystal
       has_underscore = false
       is_integer = true
       has_suffix = true
-      suffix_length = 0
+      suffix_size = 0
 
       while true
         char = next_char
@@ -1148,7 +1148,7 @@ module Crystal
           end
 
           if current_char == 'f' || current_char == 'F'
-            suffix_length = consume_float_suffix
+            suffix_size = consume_float_suffix
           else
             @token.number_kind = :f64
           end
@@ -1176,43 +1176,43 @@ module Crystal
         end
 
         if current_char == 'f' || current_char == 'F'
-          suffix_length = consume_float_suffix
+          suffix_size = consume_float_suffix
         else
           @token.number_kind = :f64
         end
       when 'f', 'F'
         is_integer = false
-        suffix_length = consume_float_suffix
+        suffix_size = consume_float_suffix
       when 'i'
-        suffix_length = consume_int_suffix
+        suffix_size = consume_int_suffix
       when 'u'
-        suffix_length = consume_uint_suffix
+        suffix_size = consume_uint_suffix
       else
         has_suffix = false
         @token.number_kind = :i32
       end
 
-      end_pos = current_pos - suffix_length
+      end_pos = current_pos - suffix_size
 
       string_value = string_range(start, end_pos)
       string_value = string_value.delete('_') if has_underscore
 
       if is_integer
-        num_length = string_value.length
-        num_length -= 1 if negative
+        num_size = string_value.size
+        num_size -= 1 if negative
 
         if has_suffix
-          check_integer_literal_fits_in_size string_value, num_length, negative, start
+          check_integer_literal_fits_in_size string_value, num_size, negative, start
         else
-          deduce_integer_kind string_value, num_length, negative, start
+          deduce_integer_kind string_value, num_size, negative, start
         end
       end
 
       @token.value = string_value
     end
 
-    macro gen_check_int_fits_in_size(type, method, length)
-      if num_length >= {{length}}
+    macro gen_check_int_fits_in_size(type, method, size)
+      if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
         max = {{type}}::MAX.{{method}}
         max += 1 if negative
@@ -1223,12 +1223,12 @@ module Crystal
       end
     end
 
-    macro gen_check_uint_fits_in_size(type, length)
+    macro gen_check_uint_fits_in_size(type, size)
       if negative
         raise "Invalid negative value #{string_value} for {{type}}"
       end
 
-      if num_length >= {{length}}
+      if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
         if int_value > {{type}}::MAX
           raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
@@ -1236,7 +1236,7 @@ module Crystal
       end
     end
 
-    def check_integer_literal_fits_in_size(string_value, num_length, negative, start)
+    def check_integer_literal_fits_in_size(string_value, num_size, negative, start)
       case @token.number_kind
       when :i8
         gen_check_int_fits_in_size Int8, to_u8, 3
@@ -1257,14 +1257,14 @@ module Crystal
           raise "Invalid negative value #{string_value} for UInt64"
         end
 
-        check_value_fits_in_uint64 string_value, num_length, start
+        check_value_fits_in_uint64 string_value, num_size, start
       end
     end
 
-    def deduce_integer_kind(string_value, num_length, negative, start)
-      check_value_fits_in_uint64 string_value, num_length, start
+    def deduce_integer_kind(string_value, num_size, negative, start)
+      check_value_fits_in_uint64 string_value, num_size, start
 
-      if num_length >= 10
+      if num_size >= 10
         int_value = absolute_integer_value(string_value, negative)
 
         int64max = Int64::MAX.to_u64
@@ -1289,12 +1289,12 @@ module Crystal
       end
     end
 
-    def check_value_fits_in_uint64(string_value, num_length, start)
-      if num_length > 20
+    def check_value_fits_in_uint64(string_value, num_size, start)
+      if num_size > 20
         raise_value_doesnt_fit_in_uint64 string_value, start
       end
 
-      if num_length == 20
+      if num_size == 20
         i = 0
         "18446744073709551615".each_byte do |byte|
           string_byte = string_value.byte_at(i)
@@ -1431,19 +1431,19 @@ module Crystal
         string_value = num.to_s
       end
 
-      name_length = string_value.length
-      name_length -= 1 if negative
+      name_size = string_value.size
+      name_size -= 1 if negative
 
       case current_char
       when 'i'
         consume_int_suffix
-        check_integer_literal_fits_in_size string_value, name_length, negative, start
+        check_integer_literal_fits_in_size string_value, name_size, negative, start
       when 'u'
         consume_uint_suffix
-        check_integer_literal_fits_in_size string_value, name_length, negative, start
+        check_integer_literal_fits_in_size string_value, name_size, negative, start
       else
         @token.number_kind = :i32
-        deduce_integer_kind string_value, name_length, negative, start
+        deduce_integer_kind string_value, name_size, negative, start
       end
 
       first_byte = @reader.string.byte_at(start)
@@ -1775,6 +1775,16 @@ module Crystal
         return @token
       end
 
+      if current_char == '\\' && peek_next_char == '%'
+        beginning_of_line = false
+        next_char
+        next_char
+        @token.type = :MACRO_LITERAL
+        @token.value = "%"
+        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        return @token
+      end
+
       if current_char == '{'
         case next_char
         when '{'
@@ -1794,25 +1804,32 @@ module Crystal
 
       if comment || (!delimiter_state && current_char == '#')
         comment = true
+        char = current_char
+        char = next_char if current_char == '#'
         while true
-          case next_char
+          case char
           when '\n'
             comment = false
             beginning_of_line = true
             whitespace = true
+            next_char
+            @line_number += 1
+            @column_number = 1
+            @token.line_number = @line_number
+            @token.column_number = @column_number
             break
           when '{'
             break
           when '\0'
             raise "unterminated macro"
           end
+          char = next_char
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
         return @token
       end
-
 
       if current_char == '%' && ident_start?(peek_next_char)
         char = next_char
@@ -1853,7 +1870,7 @@ module Crystal
 
       char = current_char
 
-      until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (whitespace && !delimiter_state && char == 'e')
+      until char == '{' || char == '\0' || (char == '\\' && ((peek = peek_next_char) == '{' || peek == '%')) || (whitespace && !delimiter_state && char == 'e')
         case char
         when '\n'
           @line_number += 1
@@ -1899,7 +1916,7 @@ module Crystal
             break
           end
         else
-          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(next_char)
+          if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char)
             yields = true
             char = current_char
             whitespace = true
@@ -1909,8 +1926,8 @@ module Crystal
 
             if keyword == :macro && char.whitespace?
               old_pos = @reader.pos
-              if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char)
-                char = current_char
+              if next_char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(peek_next_char)
+                char = next_char
               else
                 @reader.pos = old_pos
               end
@@ -1962,49 +1979,49 @@ module Crystal
         if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace?
           case next_char
           when 'd'
-            next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :abstract_def
+            next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :abstract_def
           when 'c'
-            next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :abstract_class
+            next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :abstract_class
           when 's'
-            next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :abstract_struct
+            next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && peek_not_ident_part_or_end_next_char && :abstract_struct
           end
         end
       when 'b'
-        next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && !ident_part_or_end?(next_char) && :begin
+        next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :begin
       when 'c'
         (char = next_char) && (
-          (char == 'a' && next_char == 's' && next_char == 'e' && !ident_part_or_end?(next_char) && :case) ||
-          (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :class)
+          (char == 'a' && next_char == 's' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :case) ||
+          (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :class)
         )
       when 'd'
         (char = next_char) &&
-                ((char == 'o' && !ident_part_or_end?(next_char) && :do) ||
-                 (char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :def))
+                ((char == 'o' && peek_not_ident_part_or_end_next_char && :do) ||
+                 (char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :def))
       when 'f'
-        next_char == 'u' && next_char == 'n' && !ident_part_or_end?(next_char) && :fun
+        next_char == 'u' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :fun
       when 'i'
         beginning_of_line && next_char == 'f' &&
           (char = next_char) && (
             (!ident_part_or_end?(char) && :if) ||
-            (char == 'd' && next_char == 'e' && next_char == 'f' && !ident_part_or_end?(next_char) && :ifdef)
+            (char == 'd' && next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :ifdef)
           )
       when 'l'
-        next_char == 'i' && next_char == 'b' && !ident_part_or_end?(next_char) && :lib
+        next_char == 'i' && next_char == 'b' && peek_not_ident_part_or_end_next_char && :lib
       when 'm'
         (char = next_char) && (
-          (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && !ident_part_or_end?(next_char) && :macro) ||
-          (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :module)
+          (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && peek_not_ident_part_or_end_next_char && :macro) ||
+          (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :module)
         )
       when 's'
-        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(next_char) && :struct
+        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
       when 'u'
         next_char == 'n' && (char = next_char) && (
-          (char == 'i' && next_char == 'o' && next_char == 'n' && !ident_part_or_end?(next_char) && :union) ||
-          (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && !ident_part_or_end?(next_char) && :unless) ||
-          (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && !ident_part_or_end?(next_char) && :until)
+          (char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :union) ||
+          (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :unless) ||
+          (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && peek_not_ident_part_or_end_next_char && :until)
         )
       when 'w'
-        beginning_of_line && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e' && !ident_part_or_end?(next_char) && :while
+        beginning_of_line && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :while
       else
         false
       end
@@ -2253,6 +2270,7 @@ module Crystal
       @token.location = nil
       @token.passed_backslash_newline = false
       @token.doc_buffer = nil unless @token.type == :SPACE || @token.type == :NEWLINE
+      @token_end_location = nil
     end
 
     def next_token_skip_space
@@ -2314,6 +2332,10 @@ module Crystal
       ident_part?(char) || char == '?' || char == '!'
     end
 
+    def peek_not_ident_part_or_end_next_char
+      !ident_part_or_end?(peek_next_char) && next_char
+    end
+
     def closing_char(char = current_char)
       case char
       when '<' then '>'
@@ -2350,8 +2372,8 @@ module Crystal
       ::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
     end
 
-    def raise(message, token : Token, length = nil)
-      ::raise Crystal::SyntaxException.new(message, token.line_number, token.column_number, token.filename, length)
+    def raise(message, token : Token, size = nil)
+      ::raise Crystal::SyntaxException.new(message, token.line_number, token.column_number, token.filename, size)
     end
 
     def raise(message, location : Location)

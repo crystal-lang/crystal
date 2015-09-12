@@ -109,6 +109,8 @@ module Crystal
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
       @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
+      emit_main_def_debug_metadata(@main, "??") if @debug
+
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
 
@@ -151,10 +153,6 @@ module Crystal
       @needs_value = true
 
       @empty_md_list = metadata([] of Int32)
-
-      @subprograms = {} of LLVM::Module => Array(LLVM::Value?)
-      @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
-
       @unused_fun_defs = [] of FunDef
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
@@ -172,7 +170,7 @@ module Crystal
     end
 
     def define_symbol_table(llvm_mod)
-      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.count), SYMBOL_TABLE_NAME
+      llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
     end
 
     class CodegenWellKnownFunctions < Visitor
@@ -232,12 +230,12 @@ module Crystal
       end
 
       @modules.each do |name, mod|
-        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
-        mod.verify if env_verify
-
         if @debug
           add_compile_unit_metadata(mod, name == "" ? "main" : name)
         end
+
+        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
+        mod.verify if env_verify
       end
     end
 
@@ -385,6 +383,7 @@ module Crystal
 
       last_fun = target_def_fun(node.call.target_def, owner)
 
+      set_current_debug_location(node) if @debug
       fun_ptr = bit_cast(last_fun, LLVM::VoidPointer)
       if call_self && !owner.metaclass? && !owner.is_a?(LibType)
         ctx_ptr = bit_cast(call_self, LLVM::VoidPointer)
@@ -400,7 +399,7 @@ module Crystal
       old_needs_value = @needs_value
       @needs_value = false
 
-      last_index = node.expressions.length - 1
+      last_index = node.expressions.size - 1
       node.expressions.each_with_index do |exp, i|
         @needs_value = true if old_needs_value && i == last_index
         accept exp
@@ -538,6 +537,7 @@ module Crystal
       then_block, else_block = new_blocks "then", "else"
 
       request_value do
+        set_current_debug_location(node) if @debug
         codegen_cond_branch node.cond, then_block, else_block
       end
 
@@ -571,6 +571,7 @@ module Crystal
         position_at_end while_block
 
         request_value do
+          set_current_debug_location node.cond if @debug
           codegen_cond_branch node.cond, body_block, exit_block
         end
 
@@ -604,11 +605,12 @@ module Crystal
     end
 
     def visit(node : Break)
+      set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
 
       if break_phi = context.break_phi
         old_last = @last
-        execute_ensures_until(node.target as Block)
+        execute_ensures_until(node.target as Call)
         @last = old_last
 
         break_phi.add @last, node_type
@@ -623,6 +625,7 @@ module Crystal
     end
 
     def visit(node : Next)
+      set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
 
       if next_phi = context.next_phi
@@ -705,6 +708,7 @@ module Crystal
 
       return if value.no_returns?
 
+      set_current_debug_location node if @debug
       ptr = case target
             when InstanceVar
               instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
@@ -732,7 +736,6 @@ module Crystal
             end
 
       store_instruction = assign ptr, target_type, value.type, @last
-      emit_debug_metadata node, store_instruction if @debug
 
       false
     end
@@ -837,7 +840,10 @@ module Crystal
     end
 
     def visit(node : Cast)
-      accept node.obj
+      request_value do
+        accept node.obj
+      end
+
       last_value = @last
 
       obj_type = node.obj.type
@@ -1045,7 +1051,7 @@ module Crystal
       end
 
       # Then assign nil to remaining block args
-      node.exps.length.upto(block.args.length - 1) do |i|
+      node.exps.size.upto(block.args.size - 1) do |i|
         arg = block.args[i]
         block_var = block_context.vars[arg.name]
         assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
@@ -1298,8 +1304,9 @@ module Crystal
     def br_block_chain *blocks
       old_block = insert_block
 
-      0.upto(blocks.length - 2) do |i|
+      0.upto(blocks.size - 2) do |i|
         position_at_end blocks[i]
+        clear_current_debug_location if @debug
         br blocks[i + 1]
       end
 
@@ -1389,7 +1396,7 @@ module Crystal
         closure_skip_parent = false
 
         if parent_closure_type
-          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
+          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.size, "parent")
         end
 
         if self_closured
@@ -1397,7 +1404,7 @@ module Crystal
           self_value = llvm_self
           self_value = load self_value if current_context.type.passed_by_value?
 
-          store self_value, gep(closure_ptr, 0, closure_vars.length + offset, "self")
+          store self_value, gep(closure_ptr, 0, closure_vars.size + offset, "self")
 
           current_context.closure_self = current_context.type
         end
@@ -1649,7 +1656,7 @@ module Crystal
         global.initializer = LLVM.struct [
                                type_id(@mod.string),
                                int32(str.bytesize),
-                               int32(str.length),
+                               int32(str.size),
                                LLVM.string(str),
                              ]
         cast_to global, @mod.string

@@ -31,7 +31,7 @@ describe "File" do
 
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
-    lines.length.should eq(20)
+    lines.size.should eq(20)
     lines.first.should eq("Hello World\n")
   end
 
@@ -152,6 +152,8 @@ describe "File" do
     stat.chardev?.should be_false
     stat.directory?.should be_false
     stat.file?.should be_true
+    stat.symlink?.should be_false
+    stat.socket?.should be_false
   end
 
   it "gets stat for this directory" do
@@ -160,6 +162,8 @@ describe "File" do
     stat.chardev?.should be_false
     stat.directory?.should be_true
     stat.file?.should be_false
+    stat.symlink?.should be_false
+    stat.socket?.should be_false
   end
 
   it "gets stat for a character device" do
@@ -168,6 +172,18 @@ describe "File" do
     stat.chardev?.should be_true
     stat.directory?.should be_false
     stat.file?.should be_false
+    stat.symlink?.should be_false
+    stat.socket?.should be_false
+  end
+
+  it "gets stat for a symlink" do
+    stat = File.lstat("#{__DIR__}/data/symlink.txt")
+    stat.blockdev?.should be_false
+    stat.chardev?.should be_false
+    stat.directory?.should be_false
+    stat.file?.should be_false
+    stat.symlink?.should be_true
+    stat.socket?.should be_false
   end
 
   it "gets stat for open file" do
@@ -177,6 +193,8 @@ describe "File" do
       stat.chardev?.should be_false
       stat.directory?.should be_false
       stat.file?.should be_true
+      stat.symlink?.should be_false
+      stat.socket?.should be_false
     end
   end
 
@@ -300,20 +318,31 @@ describe "File" do
 
     it "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/").should eq(home)
-      File.expand_path("~/..badfilename").should eq("#{home}/..badfilename")
+      File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
       File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
-      File.expand_path("~/a","~/b").should eq("#{home}/a")
+      File.expand_path("~/a","~/b").should eq(File.join(home, "a"))
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
   end
 
-  it "writes" do
-    filename = "#{__DIR__}/data/temp_write.txt"
-    File.write(filename, "hello")
-    File.read(filename).strip.should eq("hello")
-    File.delete(filename)
+  describe "write" do
+    it "can write to a file" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello")
+      File.read(filename).strip.should eq("hello")
+      File.delete(filename)
+    end
+
+    it "raises if trying to write to a file not opened for writing" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello")
+      expect_raises(IO::Error, "File not open for writing") do
+        File.open(filename) { |file| file << "hello" }
+      end
+      File.delete(filename)
+    end
   end
 
   it "does to_s" do

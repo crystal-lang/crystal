@@ -1,10 +1,10 @@
 module Crypto::Subtle
   def self.constant_time_compare(x, y)
-    return 0 if x.length != y.length
+    return 0 if x.size != y.size
 
     v = 0_u8
 
-    x.length.times do |i|
+    x.size.times do |i|
       v = v | x[i] ^ y[i]
     end
 

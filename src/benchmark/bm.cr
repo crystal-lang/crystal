@@ -45,7 +45,7 @@ module Benchmark
 
       # Reports a single benchmark unit.
       def report(label = " ", &block)
-        @label_width = label.length if label.length > @label_width
+        @label_width = label.size if label.size > @label_width
         @reports << {label, block}
       end
 
@@ -59,7 +59,7 @@ module Benchmark
         @reports.each do |report|
           label, block = report
           print label
-          diff = @label_width - label.length + 1
+          diff = @label_width - label.size + 1
           if diff > 0
             print " " * diff
           end

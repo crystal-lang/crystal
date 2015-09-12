@@ -30,7 +30,7 @@ describe XML do
 
     attrs = h1.attributes
     attrs.empty?.should be_false
-    attrs.length.should eq(1)
+    attrs.size.should eq(1)
 
     attr = attrs[0]
     attr.name.should eq("class")

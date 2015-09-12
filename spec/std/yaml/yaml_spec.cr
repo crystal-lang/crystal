@@ -15,6 +15,14 @@ describe "YAML" do
       doc[0].should be(doc)
     end
 
+    it "parses recursive mapping" do
+      doc = YAML.load(%(--- &1
+        friends:
+        - *1
+        )) as Hash
+      (doc["friends"] as Array)[0].should be(doc)
+    end
+
     it "parses alias to scalar" do
       doc = YAML.load("---\n- &x foo\n- *x\n") as Array
       doc.should eq(["foo", "foo"])

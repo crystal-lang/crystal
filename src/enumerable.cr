@@ -32,8 +32,8 @@ module Enumerable(T)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil` for all elements of the collection.
   #
-  #     ["ant", "bear", "cat"].all? { |word| word.length >= 3 }  #=> true
-  #     ["ant", "bear", "cat"].all? { |word| word.length >= 4 }  #=> false
+  #     ["ant", "bear", "cat"].all? { |word| word.size >= 3 }  #=> true
+  #     ["ant", "bear", "cat"].all? { |word| word.size >= 4 }  #=> false
   #
   def all?
     each { |e| return false unless yield e }
@@ -51,8 +51,8 @@ module Enumerable(T)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil` for at least one element of the collection.
   #
-  #     ["ant", "bear", "cat"].any? { |word| word.length >= 4 }  #=> true
-  #     ["ant", "bear", "cat"].any? { |word| word.length > 4 }   #=> false
+  #     ["ant", "bear", "cat"].any? { |word| word.size >= 4 }  #=> true
+  #     ["ant", "bear", "cat"].any? { |word| word.size > 4 }   #=> false
   #
   def any?
     each { |e| return true if yield e }
@@ -92,14 +92,6 @@ module Enumerable(T)
     count = 0
     each { |e| count += 1 if yield e }
     count
-  end
-
-  # Returns the number of elements in the collection.
-  #
-  #     [1, 2, 3, 4].count  #=> 4
-  #
-  def count
-    count { true }
   end
 
   # Returns the number of times that the passed item is present in the collection.
@@ -204,8 +196,8 @@ module Enumerable(T)
 
   # Iterates over the collection, passing each element and the initial object *obj*. Returns that object.
   #
-  #     ["Alice", "Bob"].each_with_object({} of String => Int32) do |user, lengths|
-  #       lengths[user] = user.length
+  #     ["Alice", "Bob"].each_with_object({} of String => Int32) do |user, sizes|
+  #       sizes[user] = user.size
   #     end  #=> {"Alice" => 5, "Bob" => 3}
   #
   def each_with_object(obj)
@@ -234,15 +226,6 @@ module Enumerable(T)
   def first
     each { |e| return e }
     raise EmptyEnumerable.new
-  end
-
-  # Returns an array with the first *count* elements in the collection.
-  #
-  # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
-  # include the case of calling it over an empty collection, in which case it returns an empty array (unlike the variant
-  # without a parameter).
-  def first(count : Int)
-    take(count)
   end
 
   # Returns the first element in the collection. When the collection is empty, returns `nil`.
@@ -274,7 +257,7 @@ module Enumerable(T)
   # Returns a `Hash` whose keys are each different value that the passed block returned when run for each element in the
   # collection, and which values are an array of the elements for which the block returned that value.
   #
-  #     ["Alice", "Bob", "Ary"].group_by { |name| name.length }  #=> {5 => ["Alice"], 3 => ["Bob", "Ary"]}
+  #     ["Alice", "Bob", "Ary"].group_by { |name| name.size }  #=> {5 => ["Alice"], 3 => ["Bob", "Ary"]}
   #
   def group_by(&block : T -> U)
     h = Hash(U, Array(T)).new
@@ -294,9 +277,11 @@ module Enumerable(T)
   #     [1, 2, 3].in_groups_of(2, 0) #=> [[1, 2], [3, 0]]
   #     [1, 2, 3].in_groups_of(2) #=> [[1, 2], [3, nil]]
   #
-  def in_groups_of(size: Int, filled_up_with = nil)
+  def in_groups_of(size : Int, filled_up_with = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
-    parts_count = (count.to_f / size).ceil.to_i
+
+    # TODO: this consumes the enumerable twice, fix
+    parts_count = (self.size.to_f / size).ceil.to_i
     ary         = Array(Array(T | typeof(filled_up_with))).new(parts_count)
     parts_count.times do |i|
       ary << Array(T | typeof(filled_up_with)).new(size, filled_up_with)
@@ -315,9 +300,12 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size: Int, filled_up_with = nil)
+  def in_groups_of(size : Int, filled_up_with = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
     ary = Array(T | typeof(filled_up_with)).new(size, filled_up_with)
+
+    # TODO: this consumes the enumerable twice, fix
+    count = self.size
 
     each_with_index do |e, i|
       ary[i % size] = e
@@ -339,7 +327,7 @@ module Enumerable(T)
 
   # Returns the index of the first element for which the passed block returns `true`.
   #
-  #     ["Alice", "Bob"].index { |name| name.length < 4 }  #=> 1 (Bob's index)
+  #     ["Alice", "Bob"].index { |name| name.size < 4 }  #=> 1 (Bob's index)
   #
   # Returns `nil` if the block didn't return `true`for any element.
   def index
@@ -365,9 +353,9 @@ module Enumerable(T)
   # the other. If you want to keep all values, then you should probably use
   # `group_by` instead.
   #
-  #     ["Anna", "Ary", "Alice"].index_by {|e| e.length }
+  #     ["Anna", "Ary", "Alice"].index_by {|e| e.size }
   #     #=> {4=>"Anna", 3=>"Ary", 5=>"Alice"}
-  #     ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.length }
+  #     ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.size }
   #     # => {4=>"Anna", 3=>"Bob", 5=>"Alice"}
   #
   #
@@ -494,14 +482,31 @@ module Enumerable(T)
     max_by &.itself
   end
 
+  # Like `max` but returns nil if the collection is empty.
+  def max?
+    max_by? &.itself
+  end
+
   # Returns the element for which the passed block returns with the maximum value.
   #
   # It compares using `>` so the block must return a type that supports that method
   #
-  #     ["Alice", "Bob"].max_by { |name| name.length }  #=> "Alice"
+  #     ["Alice", "Bob"].max_by { |name| name.size }  #=> "Alice"
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def max_by(&block : T -> U)
+    found, value = max_by_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `max_by` but returns nil if the collection is empty.
+  def max_by?(&block : T -> U)
+    found, value = max_by_internal {|value| yield value }
+    found ? value : nil
+  end
+
+  private def max_by_internal(&block : T -> U)
     max :: U
     obj :: T
     found = false
@@ -515,14 +520,26 @@ module Enumerable(T)
       found = true
     end
 
-    found ? obj : raise EmptyEnumerable.new
+    {found, obj}
   end
 
   # Like `max_by` but instead of the element, returns the value returned by the block.
   #
-  #     ["Alice", "Bob"].max_of { |name| name.length }  #=> 5 (Alice's length)
+  #     ["Alice", "Bob"].max_of { |name| name.size }  #=> 5 (Alice's size)
   #
   def max_of(&block : T -> U)
+    found, value = max_of_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `max_of` but returns nil if the collection is empty.
+  def max_of?(&block : T -> U)
+    found, value = max_of_internal {|value| yield value }
+    found ? value : nil
+  end
+
+  private def max_of_internal(&block : T -> U)
     max :: U
     found = false
 
@@ -534,7 +551,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? max : raise EmptyEnumerable.new
+    {found, max}
   end
 
   # Returns the element with the minimum value in the collection.
@@ -549,14 +566,31 @@ module Enumerable(T)
     min_by &.itself
   end
 
+  # Like `min` but returns nil if the collection is empty.
+  def min?
+    min_by? &.itself
+  end
+
   # Returns the element for which the passed block returns with the minimum value.
   #
   # It compares using `<` so the block must return a type that supports that method
   #
-  #     ["Alice", "Bob"].min_by { |name| name.length }  #=> "Bob"
+  #     ["Alice", "Bob"].min_by { |name| name.size }  #=> "Bob"
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def min_by(&block : T -> U)
+    found, value = min_by_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `min_by` but returns nil if the collection is empty.
+  def min_by?(&block : T -> U)
+    found, value = min_by_internal {|value| yield value }
+    found ? value : nil
+  end
+
+  private def min_by_internal(&block : T -> U)
     min :: U
     obj :: T
     found = false
@@ -570,14 +604,26 @@ module Enumerable(T)
       found = true
     end
 
-    found ? obj : raise EmptyEnumerable.new
+    {found, obj}
   end
 
   # Like `min_by` but instead of the element, returns the value returned by the block.
   #
-  #     ["Alice", "Bob"].min_of { |name| name.length }  #=> 3 (Bob's length)
+  #     ["Alice", "Bob"].min_of { |name| name.size }  #=> 3 (Bob's size)
   #
   def min_of(&block : T -> U)
+    found, value = min_of_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `min_of` but returns nil if the collection is empty.
+  def min_of?(&block : T -> U)
+    found, value = min_of_internal {|value| yield value }
+    found ? value : nil
+  end
+
+  private def min_of_internal(&block : T -> U)
     min :: U
     found = false
 
@@ -589,7 +635,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? min : raise EmptyEnumerable.new
+    {found, min}
   end
 
   # Returns a tuple with both the minimum and maximum value.
@@ -601,12 +647,29 @@ module Enumerable(T)
     minmax_by &.itself
   end
 
+  # Like `minmax` but returns `{nil, nil}` if the collection is empty.
+  def minmax?
+    minmax_by? &.itself
+  end
+
   # Returns a tuple with both the minimum and maximum values according to the passed block.
   #
-  #     ["Alice", "Bob", "Carl"].minmax_by { |name| name.length }  #=> {"Bob", "Alice"}
+  #     ["Alice", "Bob", "Carl"].minmax_by { |name| name.size }  #=> {"Bob", "Alice"}
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def minmax_by(&block : T -> U)
+    found, value = minmax_by_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `minmax_by` but returns `{nil, nil}` if the collection is empty.
+  def minmax_by?(&block : T -> U)
+    found, value = minmax_by_internal {|value| yield value }
+    found ? value : {nil, nil}
+  end
+
+  private def minmax_by_internal(&block : T -> U)
     min :: U
     max :: U
     objmin :: T
@@ -626,16 +689,28 @@ module Enumerable(T)
       found = true
     end
 
-    found ? {objmin, objmax} : raise EmptyEnumerable.new
+    {found, {objmin, objmax}}
   end
 
   # Returns a tuple with both the minimum and maximum value the block returns when passed the elements in the
   # collection.
   #
-  #     ["Alice", "Bob", "Carl"].minmax_of { |name| name.length }  #=> {3, 5}
+  #     ["Alice", "Bob", "Carl"].minmax_of { |name| name.size }  #=> {3, 5}
   #
   # Raises `EmptyEnumerable` if the collection is empty.
   def minmax_of(&block : T -> U)
+    found, value = minmax_of_internal {|value| yield value }
+    raise EmptyEnumerable.new unless found
+    value
+  end
+
+  # Like `minmax_of` but returns `{nil, nil}` if the collection is empty.
+  def minmax_of?(&block : T -> U)
+    found, value = minmax_of_internal {|value| yield value }
+    found ? value : {nil, nil}
+  end
+
+  private def minmax_of_internal(&block : T -> U)
     min :: U
     max :: U
     found = false
@@ -651,7 +726,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? {min, max} : raise EmptyEnumerable.new
+    {found, {min, max}}
   end
 
   # Returns `true` if the passed block returns `true` for none of the elements of the collection.
@@ -722,6 +797,14 @@ module Enumerable(T)
     ary
   end
 
+  # Returns the number of elements in the collection.
+  #
+  #     [1, 2, 3, 4].size  #=> 4
+  #
+  def size
+    count { true }
+  end
+
   # Returns an array with the first *count* elements removed from the original collection.
   #
   # If *count* is bigger than the number of elements in the collection, returns an empty array.
@@ -753,23 +836,51 @@ module Enumerable(T)
 
   # Adds all the elements in the collection together.
   #
-  # Only collections of numbers are supported.
+  # Only collections of numbers (objects that can be added via an `+` method) are supported.
   #
   #     [1, 2, 3, 4, 5, 6].sum  #=> 21
   #
-  # An optional *initial* value can be passed.
+  # If the collection is empty, returns zero.
   #
-  #     [1, 2, 3, 4, 5, 6].sum(100)  #=> 121
+  #     ([] of Int32).sum #=> 0
+  def sum
+    sum Reflect(T).first.zero
+  end
+
+  # Adds *initial* and all the elements in the collection together.
   #
-  def sum(initial = T.zero)
+  # Only collections of numbers (objects that can be added via an `+` method) are supported.
+  #
+  #     [1, 2, 3, 4, 5, 6].sum(7)  #=> 28
+  #
+  # If the collection is empty, returns *initial*.
+  #
+  #     ([] of Int32).sum(7) #=> 7
+  def sum(initial)
     sum initial, &.itself
   end
 
-  # Adds the results of the passed block for each element in the collection.
+  # Adds all results of the passed block for each element in the collection.
   #
-  #     ["Alice", "Bob"].sum { |name| name.length }  #=> 8 (5 + 3)
+  #     ["Alice", "Bob"].sum { |name| name.size }  #=> 8 (5 + 3)
   #
-  def sum(initial = typeof(yield first).zero)
+  # If the collection is empty, returns zero.
+  #
+  #     ([] of Int32).sum { |x| x + 1 } #=> 0
+  def sum(&block)
+    sum(Reflect(typeof(yield first)).first.zero) do |value|
+      yield value
+    end
+  end
+
+  # Adds *initial* and all results of the passed block for each element in the collection.
+  #
+  #     ["Alice", "Bob"].sum(1) { |name| name.size }  #=> 9 (1 + 5 + 3)
+  #
+  # If the collection is empty, returns zero.
+  #
+  #     ([] of String).sum(1) { |name| name.size } #=> 1
+  def sum(initial, &block)
     inject(initial) { |memo, e| memo + (yield e) }
   end
 

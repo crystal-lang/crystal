@@ -127,6 +127,16 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
   end
 end
 
+private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
+  it "gets corrects end location for #{source.inspect}", file, line do
+    parser = Parser.new("#{source}; 1")
+    node = (parser.parse as Expressions).expressions[0]
+    end_loc = node.end_location.not_nil!
+    end_loc.line_number.should eq(line_number)
+    end_loc.column_number.should eq(column_number)
+  end
+end
+
 describe "Parser" do
   it_parses "nil", NilLiteral.new
 
@@ -160,8 +170,8 @@ describe "Parser" do
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
     ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
     ":[]=", ":<=>", ":==="].each do |symbol|
-    value = symbol[1, symbol.length - 1]
-    value = value[1, value.length - 2] if value.starts_with?("\"")
+    value = symbol[1, symbol.size - 1]
+    value = value[1, value.size - 2] if value.starts_with?("\"")
     it_parses symbol, value.symbol
   end
   it_parses ":foo", "foo".symbol
@@ -941,9 +951,6 @@ describe "Parser" do
 
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
-  it_parses "undef foo", Undef.new("foo")
-  it_parses "undef foo\nfoo", [Undef.new("foo"), "foo".call]
-
   it_parses "@[Foo]", Attribute.new("Foo")
   it_parses "@[Foo()]", Attribute.new("Foo")
   it_parses "@[Foo(1)]", Attribute.new("Foo", [1.int32] of ASTNode)
@@ -1195,5 +1202,109 @@ describe "Parser" do
   assert_syntax_error "while 1 == 1 a; end", "unexpected token"
   assert_syntax_error "case 1 == 1 a; when 2; end", "unexpected token"
   assert_syntax_error "case 1 == 1; when 2 a; end", "unexpected token"
-end
 
+  assert_syntax_error %(class Foo; require "bar"; end), "can't require inside type declarations"
+  assert_syntax_error %(module Foo; require "bar"; end), "can't require inside type declarations"
+  assert_syntax_error %(def foo; require "bar"; end), "can't require inside def"
+
+  describe "end locations" do
+    assert_end_location "nil"
+    assert_end_location "false"
+    assert_end_location "123"
+    assert_end_location "123.45"
+    assert_end_location "'a'"
+    assert_end_location ":foo"
+    assert_end_location %("hello")
+    assert_end_location "[1, 2]"
+    assert_end_location "[] of Int32"
+    assert_end_location "{a: 1}"
+    assert_end_location "{} of Int32 => String"
+    assert_end_location "1..3"
+    assert_end_location "/foo/"
+    assert_end_location "{1, 2}"
+    assert_end_location "foo"
+    assert_end_location "foo(1, 2)"
+    assert_end_location "foo 1, 2"
+    assert_end_location "Foo"
+    assert_end_location "Foo(A)"
+    assert_end_location "if 1; else; 2; end"
+    assert_end_location "if 1; elseif; 2; end"
+    assert_end_location "unless 1; 2; end"
+    assert_end_location "ifdef foo; 2; end"
+    assert_end_location "a = 123"
+    assert_end_location "a, b = 1, 2"
+    assert_end_location "@foo"
+    assert_end_location "foo.@foo"
+    assert_end_location "@@foo"
+    assert_end_location "$foo"
+    assert_end_location "a && b"
+    assert_end_location "a || b"
+    assert_end_location "def foo; end"
+    assert_end_location "def foo; 1; end"
+    assert_end_location "def foo; rescue ex; end"
+    assert_end_location "abstract def foo"
+    assert_end_location "abstract def foo : Int32"
+    assert_end_location "begin; 1; end"
+    assert_end_location "class Foo; end"
+    assert_end_location "struct Foo; end"
+    assert_end_location "module Foo; end"
+    assert_end_location "->{ }"
+    assert_end_location "macro foo;end"
+    assert_end_location "macro foo; 123; end"
+    assert_end_location "!foo"
+    assert_end_location "pointerof(@foo)"
+    assert_end_location "sizeof(Foo)"
+    assert_end_location "typeof(1)"
+    assert_end_location "1 if 2"
+    assert_end_location "while 1; end"
+    assert_end_location "return"
+    assert_end_location "return 1"
+    assert_end_location "yield"
+    assert_end_location "yield 1"
+    assert_end_location "include Foo"
+    assert_end_location "extend Foo"
+    assert_end_location "1 as Int32"
+    assert_end_location "puts obj.foo"
+
+    it "gets corrects end location for var" do
+      parser = Parser.new("foo = 1\nfoo; 1")
+      node = (parser.parse as Expressions).expressions[1]
+      end_loc = node.end_location.not_nil!
+      end_loc.line_number.should eq(2)
+      end_loc.column_number.should eq(3)
+    end
+
+    it "gets corrects end location for block with { ... }" do
+      parser = Parser.new("foo { 1 + 2 }; 1")
+      node = (parser.parse as Expressions).expressions[0] as Call
+      block = node.block.not_nil!
+      end_loc = block.end_location.not_nil!
+      end_loc.line_number.should eq(1)
+      end_loc.column_number.should eq(13)
+      node.end_location.should eq(end_loc)
+    end
+
+    it "gets corrects end location for block with do ... end" do
+      parser = Parser.new("foo do\n  1 + 2\nend; 1")
+      node = (parser.parse as Expressions).expressions[0] as Call
+      block = node.block.not_nil!
+      end_loc = block.end_location.not_nil!
+      end_loc.line_number.should eq(3)
+      end_loc.column_number.should eq(3)
+      node.end_location.should eq(end_loc)
+    end
+
+    it "gets correct location after macro with yield" do
+      parser = Parser.new(%(
+        macro foo
+          yield
+        end
+
+        1 + 'a'
+        ))
+      node = (parser.parse as Expressions).expressions[1]
+      loc = node.location.not_nil!
+      loc.line_number.should eq(6)
+    end
+  end
+end

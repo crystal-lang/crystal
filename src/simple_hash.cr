@@ -8,7 +8,7 @@ struct SimpleHash(K, V)
 
   def [](key)
     fetch(key) do
-      raise KeyError.new "Missing hash value: #{key.inspect}"
+      raise KeyError.new "Missing hash key: #{key.inspect}"
     end
   end
 
@@ -91,12 +91,8 @@ struct SimpleHash(K, V)
     @values.map { |tuple| tuple[1] }
   end
 
-  def length
-    @values.length
-  end
-
   def size
-    length
+    @values.size
   end
 
   def object_id
@@ -111,7 +107,7 @@ struct SimpleHash(K, V)
     io << '{'
     @values.each_with_index do |pair, index|
       pair.join(" => ", io) { |value, io| value.inspect(io) }
-      io << ", " if index < @values.length - 1
+      io << ", " if index < @values.size - 1
     end
     io << '}'
   end

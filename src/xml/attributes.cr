@@ -11,16 +11,12 @@ struct XML::Attributes
     props.nil?
   end
 
-  def length
-    count
-  end
-
   def [](index : Int)
-    length = self.length
+    size = self.size
 
-    index += length if index < 0
+    index += size if index < 0
 
-    unless 0 <= index < length
+    unless 0 <= index < size
       raise IndexError.new
     end
 

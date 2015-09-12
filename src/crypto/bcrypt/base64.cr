@@ -18,12 +18,12 @@ module Crypto::Bcrypt::Base64
 
   def decode(data)
     slice = data.to_slice
-    encode_size = (slice.length * 4 / 3.0).to_i + 1
+    encode_size = (slice.size * 4 / 3.0).to_i + 1
 
     String.new(encode_size) do |buf|
       appender = buf.appender
       from_base64(slice) { |byte| appender << byte }
-      {appender.count, 0}
+      {appender.size, 0}
     end
   end
 
@@ -36,7 +36,7 @@ module Crypto::Bcrypt::Base64
       i += 1
       yield ((c1 << 2 | c2 >> 4) & 0xff).to_u8
 
-      break if (i == data.length)
+      break if (i == data.size)
 
       c1 = c2 << 4
       c2 = DECODE_TABLE[data[i]-46]

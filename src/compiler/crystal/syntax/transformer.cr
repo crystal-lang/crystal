@@ -30,7 +30,7 @@ module Crystal
         end
       end
 
-      if exps.length == 1
+      if exps.size == 1
         exps[0]
       else
         node.expressions = exps
@@ -435,10 +435,6 @@ module Crystal
     end
 
     def transform(node : Self)
-      node
-    end
-
-    def transform(node : Undef)
       node
     end
 

@@ -206,7 +206,7 @@ module Crystal
     end
 
     def union_of(types : Array)
-      case types.length
+      case types.size
       when 0
         nil
       when 1
@@ -222,7 +222,7 @@ module Crystal
       # NilType has type_id == 0
       if types_ids.first == 0
         # Check if it's a Nilable type
-        if types.length == 2
+        if types.size == 2
           other_type = types[1]
           if other_type.reference_like? && !other_type.virtual?
             return NilableType.new(self, other_type)
@@ -255,7 +255,7 @@ module Crystal
     end
 
     def fun_of(nodes : Array(ASTNode), return_type : Type)
-      types = Array(Type).new(nodes.length + 1)
+      types = Array(Type).new(nodes.size + 1)
       nodes.each do |node|
         types << node.type
       end

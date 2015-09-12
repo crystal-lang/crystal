@@ -46,7 +46,7 @@ module Crypto::Bcrypt
   end
 
   private def generate_from_hash(password)
-    if password.length < MIN_HASH_SIZE
+    if password.size < MIN_HASH_SIZE
       raise ArgumentError.new "Invalid hashedSecret size: hashedSecret too short to be a bcrypted password"
     end
 

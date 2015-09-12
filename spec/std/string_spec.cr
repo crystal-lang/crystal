@@ -114,6 +114,12 @@ describe "String" do
       ";"[0 .. -2].should eq("")
     end
 
+    it "raises on too negative left bound" do
+      expect_raises IndexError do
+        "foo"[-4 .. 0]
+      end
+    end
+
     describe "with a regex" do
       assert { "FooBar"[/o+/].should eq "oo" }
       assert { "FooBar"[/([A-Z])/, 1].should eq "F" }
@@ -323,7 +329,7 @@ describe "String" do
     "1234.56".to_f64.should eq(1234.56_f64)
   end
 
-  it "compares strings: different length" do
+  it "compares strings: different size" do
     "foo".should_not eq("fo")
   end
 
@@ -332,11 +338,11 @@ describe "String" do
     f.should eq(f)
   end
 
-  it "compares strings: same length, same string" do
+  it "compares strings: same size, same string" do
     "foo".should eq("fo" + "o")
   end
 
-  it "compares strings: same length, different string" do
+  it "compares strings: same size, different string" do
     "foo".should_not eq("bar")
   end
 
@@ -354,7 +360,7 @@ describe "String" do
     (str * 3).should eq("foofoofoo")
   end
 
-  it "multiplies with length one" do
+  it "multiplies with size one" do
     str = "f"
     (str * 0).should eq("")
     (str * 10).should eq("ffffffffff")
@@ -657,7 +663,7 @@ describe "String" do
   it "reverses utf-8 string" do
     reversed = "こんいちは".reverse
     reversed.bytesize.should eq(15)
-    reversed.length.should eq(5)
+    reversed.size.should eq(5)
     reversed.should eq("はちいんこ")
   end
 
@@ -688,14 +694,14 @@ describe "String" do
 
     it "subs with regex and block" do
       actual = "foo booor booooz".sub(/o+/) {|str|
-        "#{str}#{str.length}"
+        "#{str}#{str.size}"
       }
       actual.should eq("foo2 booor booooz")
     end
 
     it "subs with regex and block with group" do
       actual = "foo booor booooz".sub(/(o+).*?(o+)/) {|str, match|
-        "#{match[1].length}#{match[2].length}"
+        "#{match[1].size}#{match[2].size}"
       }
       actual.should eq("f23r booooz")
     end
@@ -798,14 +804,14 @@ describe "String" do
 
     it "gsubs with regex and block" do
       actual = "foo booor booooz".gsub(/o+/) do |str|
-        "#{str}#{str.length}"
+        "#{str}#{str.size}"
       end
       actual.should eq("foo2 booo3r boooo4z")
     end
 
     it "gsubs with regex and block with group" do
       actual = "foo booor booooz".gsub(/(o+).*?(o+)/) do |str, match|
-        "#{match[1].length}#{match[2].length}"
+        "#{match[1].size}#{match[2].size}"
       end
       actual.should eq("f23r b31z")
     end
@@ -953,7 +959,7 @@ describe "String" do
       str2 = str + '/'
       str2.should eq("foo/")
       str2.bytesize.should eq(4)
-      str2.length.should eq(4)
+      str2.size.should eq(4)
     end
 
     it "does with unicode char" do
@@ -961,7 +967,7 @@ describe "String" do
       str2 = str + 'る'
       str2.should eq("foobaる")
       str2.bytesize.should eq(8)
-      str2.length.should eq(6)
+      str2.size.should eq(6)
     end
   end
 
@@ -1249,7 +1255,7 @@ describe "String" do
     end
   end
 
-  it "has size (same as length)" do
+  it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
 
@@ -1417,8 +1423,8 @@ describe "String" do
     "ab☃".codepoints.should eq [97, 98, 9731]
   end
 
-  it "gets length of \0 string" do
-    "\0\0".length.should eq(2)
+  it "gets size of \0 string" do
+    "\0\0".size.should eq(2)
   end
 
   context "%" do

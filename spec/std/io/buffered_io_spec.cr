@@ -3,11 +3,14 @@ require "spec"
 class BufferedIOWrapper(T)
   include BufferedIO
 
+  getter called_unbuffered_read
+
   def initialize(@io : T)
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
     @out_count = 0
     @flush_on_newline = false
     @sync = false
+    @called_unbuffered_read = false
   end
 
   def self.new(io)
@@ -17,12 +20,13 @@ class BufferedIOWrapper(T)
     io
   end
 
-  private def unbuffered_read(slice : Slice(UInt8), count)
-    @io.read(slice, count)
+  private def unbuffered_read(slice : Slice(UInt8))
+    @called_unbuffered_read = true
+    @io.read(slice)
   end
 
-  private def unbuffered_write(slice : Slice(UInt8), count)
-    @io.write(slice, count)
+  private def unbuffered_write(slice : Slice(UInt8))
+    @io.write(slice)
   end
 
   private def unbuffered_flush
@@ -167,7 +171,7 @@ describe "BufferedIO" do
     io = BufferedIOWrapper.new(StringIO.new(s))
 
     slice = Slice(UInt8).new(9000)
-    count = io.read(slice, 9000)
+    count = io.read(slice)
     count.should eq(9000)
 
     900.times do
@@ -184,9 +188,9 @@ describe "BufferedIO" do
     io.read(5).should eq("")
   end
 
-  it "raises argument error if reads negative length" do
+  it "raises argument error if reads negative count" do
     io = BufferedIOWrapper.new(StringIO.new("hello world"))
-    expect_raises(ArgumentError, "negative length") do
+    expect_raises(ArgumentError, "negative count") do
       io.read(-1)
     end
   end
@@ -235,7 +239,7 @@ describe "BufferedIO" do
     io.flush_on_newline = true
 
     slice = Slice.new(10) { |i| i == 9 ? '\n'.ord.to_u8 : ('a'.ord + i).to_u8 }
-    io.write slice, 4
+    io.write slice[0, 4]
     io.flush
     str.to_s.should eq("abcd")
   end
@@ -253,5 +257,12 @@ describe "BufferedIO" do
 
     str.rewind
     str.read_byte.should eq(1_u8)
+  end
+
+  it "shouldn't call unbuffered read if reading to an empty slice" do
+    str = StringIO.new("foo")
+    io = BufferedIOWrapper.new(str)
+    io.read(Slice(UInt8).new(0))
+    io.called_unbuffered_read.should be_false
   end
 end

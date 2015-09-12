@@ -10,7 +10,7 @@ module Crystal
       nil
     end
 
-    def lookup_similar_def_name(name, args_length, block)
+    def lookup_similar_def_name(name, args_size, block)
       nil
     end
   end
@@ -18,7 +18,7 @@ module Crystal
   module MatchesLookup
     SuggestableName =/\A[a-z_]/
 
-    def lookup_similar_def_name(name, args_length, block)
+    def lookup_similar_def_name(name, args_size, block)
       return nil unless name =~ SuggestableName
 
       if (defs = self.defs)
@@ -26,7 +26,7 @@ module Crystal
           defs.each do |def_name, hash|
             if def_name =~ SuggestableName
               hash.each do |filter, overload|
-                if filter.max_length == args_length && filter.yields == !!block
+                if filter.max_size == args_size && filter.yields == !!block
                   finder.test(def_name)
                 end
               end
@@ -37,7 +37,7 @@ module Crystal
       end
 
       parents.try &.each do |parent|
-        similar_def_name = parent.lookup_similar_def_name(name, args_length, block)
+        similar_def_name = parent.lookup_similar_def_name(name, args_size, block)
         return similar_def_name if similar_def_name
       end
 

@@ -17,7 +17,23 @@ describe "Code gen: no return" do
         fun exit2 : NoReturn
       end
 
-      if (a = LibC.exit2) && a.length == 3
+      if (a = LibC.exit2) && a.size == 3
+      end
+      ))
+  end
+
+  it "codegen types exception handler as NoReturn if ensure is NoReturn" do
+    codegen(%(
+      require "prelude"
+
+      lib LibC
+        fun foo : NoReturn
+      end
+
+      begin
+        1
+      ensure
+        LibC.foo
       end
       ))
   end

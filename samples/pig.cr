@@ -58,9 +58,9 @@ end
 
 # roundRobin simulates a series of games between every pair of strategies.
 def round_robin(strategies)
-  wins = Array.new(strategies.length, 0)
-  (0 ... strategies.length).each do |i|
-    (i + 1 ... strategies.length).each do |j|
+  wins = Array.new(strategies.size, 0)
+  (0 ... strategies.size).each do |i|
+    (i + 1 ... strategies.size).each do |j|
       (0 ... GamesPerSeries).each do |k|
         winner = play strategies[i], strategies[j]
         if winner == 0
@@ -72,7 +72,7 @@ def round_robin(strategies)
     end
   end
 
-  games_per_strategy = GamesPerSeries * (strategies.length - 1)
+  games_per_strategy = GamesPerSeries * (strategies.size - 1)
   {wins, games_per_strategy}
 end
 

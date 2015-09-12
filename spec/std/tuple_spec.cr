@@ -12,8 +12,13 @@ class TupleSpecObj
 end
 
 describe "Tuple" do
-  it "does length" do
-    {1, 2, 1, 2}.length.should eq(4)
+  it "does size" do
+    {1, 2, 1, 2}.size.should eq(4)
+  end
+
+  it "checks empty?" do
+    Tuple.new.empty?.should be_true
+    {1}.empty?.should be_false
   end
 
   it "does []" do
@@ -76,7 +81,7 @@ describe "Tuple" do
     a.should_not eq(d)
   end
 
-  it "does == with differnt types but same length" do
+  it "does == with differnt types but same size" do
     {1, 2}.should eq({1.0, 2.0})
   end
 
@@ -94,7 +99,7 @@ describe "Tuple" do
     [a, b, c, d, e].min.should eq(e)
   end
 
-  it "does compare with different lengths" do
+  it "does compare with different sizes" do
     a = {2}
     b = {1, 2, 3}
     c = {1, 2}
@@ -120,7 +125,7 @@ describe "Tuple" do
     r1, r2 = TupleSpecObj.new(10), TupleSpecObj.new(20)
     t = {r1, r2}
     u = t.dup
-    u.length.should eq(2)
+    u.size.should eq(2)
     u[0].should be(r1)
     u[1].should be(r2)
   end
@@ -129,7 +134,7 @@ describe "Tuple" do
     r1, r2 = TupleSpecObj.new(10), TupleSpecObj.new(20)
     t = {r1, r2}
     u = t.clone
-    u.length.should eq(2)
+    u.size.should eq(2)
     u[0].x.should eq(r1.x)
     u[0].should_not be(r1)
     u[1].x.should eq(r2.x)

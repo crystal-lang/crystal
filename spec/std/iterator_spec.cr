@@ -49,6 +49,15 @@ describe Iterator do
     end
   end
 
+  describe "compact_map" do
+    it "does not return nil values" do
+      iter = [1, nil, 2, nil].each.compact_map {|e| e.try &.*(2)}
+      iter.next.should eq 2
+      iter.next.should eq 4
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
   describe "cons" do
     it "conses" do
       iter = (1..5).each.cons(3)
@@ -101,6 +110,32 @@ describe Iterator do
     it "does not cycle provided a negative size" do
       iter = (1..2).each.cycle(-1)
       iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
+  describe "each" do
+    it "yields the individual elements to the block" do
+      iter = ["a", "b", "c"].each
+      concatinated = ""
+      iter.each {|e| concatinated += e}
+      concatinated.should eq "abc"
+    end
+  end
+
+  describe "each_slice" do
+    it "gets all the slices of the size n" do
+      iter = (1..9).each.each_slice(3)
+      iter.next.should eq [1, 2, 3]
+      iter.next.should eq [4, 5, 6]
+      iter.next.should eq [7, 8, 9]
+      iter.next.should be_a Iterator::Stop
+    end
+
+    it "also works if it does not add up" do
+      iter = (1..4).each.each_slice(3)
+      iter.next.should eq [1, 2, 3]
+      iter.next.should eq [4]
+      iter.next.should be_a Iterator::Stop
     end
   end
 
@@ -412,6 +447,88 @@ describe Iterator do
               .take(3)
               .to_a
               .should eq([100, 102, 104])
+    end
+  end
+
+  describe "flatten" do
+    it "flattens an iterator of mixed-type iterators" do
+      iter = [(1..2).each, ('a'..'b').each, {c: 3}.each].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq(:c)
+      iter.next.should eq(3)
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', :c, 3])
+    end
+
+    it "flattens an iterator of mixed-type elements and iterators" do
+      iter = [(1..2).each, 'a'].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a'])
+    end
+
+    it "flattens an iterator of mixed-type elements and iterators and iterators of iterators" do
+      iter = [(1..2).each, [['a', 'b'].each].each, "foo"].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq("foo")
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', "foo"])
+    end
+
+    it "flattens deeply-nested and mixed type iterators" do
+      iter = [[[1], 2], [3, [[4, 5], 6], 7], "a"].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.next.should eq(5)
+      iter.next.should eq(6)
+      iter.next.should eq(7)
+      iter.next.should eq("a")
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 3, 4, 5, 6, 7, "a"])
+    end
+
+    it "flattens a variety of edge cases" do
+      ([] of Nil).each.flatten.to_a.should eq([] of Nil)
+      ['a'].each.flatten.to_a.should eq(['a'])
+      [[[[[["hi"]]]]]].each.flatten.to_a.should eq(["hi"])
     end
   end
 end

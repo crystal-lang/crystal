@@ -44,21 +44,25 @@ class HTTP::WebSocketHandler < HTTP::Handler
       @ws.send(message)
     end
 
+    def send_masked(message)
+      @ws.send_masked(message)
+    end
+
     def run
       loop do
         info = @ws.receive(@buffer)
-        case info.type
-        when :text
-          @current_message.write(@buffer, info.length)
-          if info.final?
+        case info.opcode
+        when WebSocket::Opcode::TEXT
+          @current_message.write @buffer[0, info.size]
+          if info.final
             if handler = @on_message
               handler.call(@current_message.to_s)
             end
             @current_message.clear
           end
-        when :close
-          @current_message.write(@buffer, info.length)
-          if info.final?
+        when WebSocket::Opcode::CLOSE
+          @current_message.write @buffer[0, info.size]
+          if info.final
             if handler = @on_close
               handler.call(@current_message.to_s)
             end

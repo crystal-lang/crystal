@@ -33,7 +33,7 @@ module Crystal
     def self.and(filters)
       set = Set.new(filters)
       uniq = set.to_a
-      if uniq.length == 1
+      if uniq.size == 1
         return uniq.first
       else
         AndTypeFilter.new(uniq)
@@ -164,7 +164,7 @@ module Crystal
         resulting_types << bool_type
       end
 
-      case resulting_types.length
+      case resulting_types.size
       when 0
         if @filter.is_a?(TruthyFilter)
           other

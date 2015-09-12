@@ -36,7 +36,7 @@ struct LLVM::Builder
     LibLLVM.add_incoming phi_node,
       (incoming_values.buffer as LibLLVM::ValueRef*),
       (incoming_blocks.buffer as LibLLVM::BasicBlockRef*),
-      incoming_blocks.length
+      incoming_blocks.size
     Value.new phi_node
   end
 
@@ -50,7 +50,7 @@ struct LLVM::Builder
   end
 
   def call(func, args : Array(LLVM::Value), name = "" : String)
-    Value.new LibLLVM.build_call(self, func, (args.buffer as LibLLVM::ValueRef*), args.length, name)
+    Value.new LibLLVM.build_call(self, func, (args.buffer as LibLLVM::ValueRef*), args.size, name)
   end
 
   def alloca(type, name = "")
@@ -75,7 +75,7 @@ struct LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.length.to_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.size.to_u32, name)
     end
 
     def {{method_name.id}}(value, index : LLVM::Value, name = "")
@@ -130,7 +130,7 @@ struct LLVM::Builder
   end
 
   def landing_pad(type, personality, clauses, name = "")
-    lpad = LibLLVM.build_landing_pad self, type, personality, clauses.length.to_u32, name
+    lpad = LibLLVM.build_landing_pad self, type, personality, clauses.size.to_u32, name
     LibLLVM.set_cleanup lpad, 1
     clauses.each do |clause|
       LibLLVM.add_clause lpad, clause
@@ -139,15 +139,23 @@ struct LLVM::Builder
   end
 
   def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, name = "")
-    Value.new LibLLVM.build_invoke self, fn, (args.buffer as LibLLVM::ValueRef*), args.length.to_u32, a_then, a_catch, name
+    Value.new LibLLVM.build_invoke self, fn, (args.buffer as LibLLVM::ValueRef*), args.size.to_u32, a_then, a_catch, name
   end
 
   def switch(value, otherwise, cases)
-    switch = LibLLVM.build_switch self, value, otherwise, cases.length.to_u32
+    switch = LibLLVM.build_switch self, value, otherwise, cases.size.to_u32
     cases.each do |case_value, block|
       LibLLVM.add_case switch, case_value, block
     end
     switch
+  end
+
+  def set_current_debug_location(line, column, scope, inlined_at = nil)
+    LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  end
+
+  def current_debug_location
+    Value.new LibLLVM.get_current_debug_location(self)
   end
 
   def to_unsafe

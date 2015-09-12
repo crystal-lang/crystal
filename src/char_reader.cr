@@ -8,7 +8,7 @@
 #
 # Note that the null character '\0' will be returned in `current_char` when
 # the end is reached (as well as when the string is empty). Thus, `has_next?`
-# will return `false` only when `pos` is equal to the string's length, in which
+# will return `false` only when `pos` is equal to the string's bytesize, in which
 # case `current_char` will always be '\0'.
 struct CharReader
   include Enumerable(Char)

@@ -106,15 +106,15 @@ end
 
 private def it_lexes_symbols(symbols)
   symbols.each do |symbol|
-    value = symbol[1, symbol.length - 1]
-    value = value[1, value.length - 2] if value.starts_with?("\"")
+    value = symbol[1, symbol.size - 1]
+    value = value[1, value.size - 2] if value.starts_with?("\"")
     it_lexes symbol, :SYMBOL, value
   end
 end
 
 private def it_lexes_global_match_data_index(globals)
   globals.each do |global|
-    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.length - 1]
+    it_lexes global, :GLOBAL_MATCH_DATA_INDEX, global[1, global.size - 1]
   end
 end
 
@@ -130,7 +130,7 @@ describe "Lexer" do
                      :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                      :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
                      :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :typeof, :for, :in,
-                     :undef, :with, :self, :super, :private, :protected, :asm]
+                     :with, :self, :super, :private, :protected, :asm]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",

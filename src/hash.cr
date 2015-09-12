@@ -27,12 +27,12 @@ class Hash(K, V)
     end
   end
 
-  getter length
+  getter size
 
   def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
     @buckets = Pointer(Entry(K, V)?).malloc(11)
-    @buckets_length = 11
-    @length = 0
+    @buckets_size = 11
+    @size = 0
     @block = block
   end
 
@@ -49,13 +49,13 @@ class Hash(K, V)
   end
 
   def []=(key : K, value : V)
-    rehash if @length > 5 * @buckets_length
+    rehash if @size > 5 * @buckets_size
 
     index = bucket_index key
     entry = insert_in_bucket index, key, value
     return value unless entry
 
-    @length += 1
+    @size += 1
 
     if last = @last
       last.fore = entry
@@ -84,7 +84,7 @@ class Hash(K, V)
       if block = @block
         block.call(self, key)
       else
-        raise KeyError.new "Missing hash value: #{key.inspect}"
+        raise KeyError.new "Missing hash key: #{key.inspect}"
       end
     end
   end
@@ -139,7 +139,7 @@ class Hash(K, V)
         else
           @buckets[index] = entry.next
         end
-        @length -= 1
+        @size -= 1
         return entry.value
       end
       previous_entry = entry
@@ -160,7 +160,7 @@ class Hash(K, V)
   end
 
   def empty?
-    @length == 0
+    @size == 0
   end
 
   def each
@@ -206,19 +206,19 @@ class Hash(K, V)
   end
 
   def keys
-    keys = Array(K).new(@length)
+    keys = Array(K).new(@size)
     each { |key| keys << key }
     keys
   end
 
   def values
-    values = Array(V).new(@length)
+    values = Array(V).new(@size)
     each { |key, value| values << value }
     values
   end
 
   def to_a
-    ary = Array({K, V}).new(@length)
+    ary = Array({K, V}).new(@size)
     each do |key, value|
       ary << {key, value}
     end
@@ -233,7 +233,7 @@ class Hash(K, V)
   end
 
   def map(&block : K, V -> U)
-    array = Array(U).new(@length)
+    array = Array(U).new(@size)
     each do |k, v|
       array.push yield k, v
     end
@@ -319,22 +319,18 @@ class Hash(K, V)
     end
   end
 
-  def size
-    @length
-  end
-
   def clear
-    @buckets_length.times do |i|
+    @buckets_size.times do |i|
       @buckets[i] = nil
     end
-    @length = 0
+    @size = 0
     @first = nil
     @last = nil
     self
   end
 
   def ==(other : Hash)
-    return false unless length == other.length
+    return false unless size == other.size
     each do |key, value|
       entry = other.find_entry(key)
       return false unless entry && entry.value == value
@@ -343,7 +339,7 @@ class Hash(K, V)
   end
 
   def hash
-    hash = length
+    hash = size
     each do |key, value|
       hash = 31 * hash + key.hash
       hash = 31 * hash + value.hash
@@ -392,10 +388,10 @@ class Hash(K, V)
   end
 
   def rehash
-    new_size = calculate_new_size(@length)
+    new_size = calculate_new_size(@size)
     @buckets = @buckets.realloc(new_size)
     new_size.times { |i| @buckets[i] = nil }
-    @buckets_length = new_size
+    @buckets_size = new_size
     entry = @first
     while entry
       entry.next = nil
@@ -489,7 +485,7 @@ class Hash(K, V)
   end
 
   private def bucket_index(key)
-    (@comp.hash(key).abs % @buckets_length).to_i
+    (@comp.hash(key).abs % @buckets_size).to_i
   end
 
   private def calculate_new_size(size)

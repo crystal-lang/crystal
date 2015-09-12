@@ -2,9 +2,9 @@ require "spec"
 require "bit_array"
 
 describe "BitArray" do
-  it "has length" do
+  it "has size" do
     ary = BitArray.new(100)
-    ary.length.should eq(100)
+    ary.size.should eq(100)
   end
 
   it "is initially empty" do
@@ -90,6 +90,6 @@ describe "BitArray" do
 
   it "initializes with true by default" do
     ary = BitArray.new(64, true)
-    ary.length.times { |i| ary[i].should be_true }
+    ary.size.times { |i| ary[i].should be_true }
   end
 end

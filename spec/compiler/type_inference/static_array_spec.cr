@@ -72,14 +72,14 @@ describe "Type inference: static array" do
   it "types staic array new with size being a computed constant, and use N (bug)" do
     assert_type(%(
       struct StaticArray(T, N)
-        def length
+        def size
           N
         end
       end
 
       SIZE = 1 * 2
       x :: UInt8[SIZE]
-      x.length
+      x.size
       a = 1
       )) { int32 }
   end

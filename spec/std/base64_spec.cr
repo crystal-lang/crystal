@@ -92,7 +92,7 @@ describe "Base64" do
       end
     end
 
-    it "raise error when incorrect length" do
+    it "raise error when incorrect size" do
       expect_raises Base64::Error do
         Base64.decode("a")
       end

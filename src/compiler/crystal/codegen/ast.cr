@@ -40,6 +40,10 @@ module Crystal
     property :ensure_exception_handler
   end
 
+  class Call
+    property :ensure_exception_handler
+  end
+
   class Def
     property :ensure_exception_handler
 
@@ -71,12 +75,12 @@ module Crystal
 
         needs_self_type = self_type.try &.passed_as_self?
 
-        if args.length > 0 || needs_self_type || uses_block_arg
+        if args.size > 0 || needs_self_type || uses_block_arg
           str << "<"
           if needs_self_type
             self_type.not_nil!.llvm_name(str)
           end
-          if args.length > 0
+          if args.size > 0
             str << ", " if needs_self_type
             args.each_with_index do |arg, i|
               str << ", " if i > 0
@@ -84,7 +88,7 @@ module Crystal
             end
           end
           if uses_block_arg
-            str << ", " if needs_self_type || args.length > 0
+            str << ", " if needs_self_type || args.size > 0
             str << "&"
             block_arg.not_nil!.type.llvm_name(str)
           end

@@ -13,9 +13,9 @@ end
 
 describe "Hash" do
   describe "empty" do
-    it "length should be zero" do
+    it "size should be zero" do
       h = {} of Int32 => Int32
-      h.length.should eq(0)
+      h.size.should eq(0)
       h.empty?.should be_true
     end
   end
@@ -125,7 +125,7 @@ describe "Hash" do
 
     it "fetches and raises" do
       a = {1 => 2}
-      expect_raises KeyError, "Missing hash value: 2" do
+      expect_raises KeyError, "Missing hash key: 2" do
         a.fetch(2)
       end
     end
@@ -167,7 +167,7 @@ describe "Hash" do
       a.has_key?(1).should be_false
       a.has_key?(3).should be_true
       a.has_key?(5).should be_true
-      a.length.should eq(2)
+      a.size.should eq(2)
       a.should eq({3 => 4, 5 => 6})
     end
 
@@ -177,7 +177,7 @@ describe "Hash" do
       a.has_key?(1).should be_true
       a.has_key?(3).should be_false
       a.has_key?(5).should be_true
-      a.length.should eq(2)
+      a.size.should eq(2)
       a.should eq({1 => 2, 5 => 6})
     end
 
@@ -187,7 +187,7 @@ describe "Hash" do
       a.has_key?(1).should be_true
       a.has_key?(3).should be_true
       a.has_key?(5).should be_false
-      a.length.should eq(2)
+      a.size.should eq(2)
       a.should eq({1 => 2, 3 =>4})
     end
 
@@ -195,7 +195,7 @@ describe "Hash" do
       a = {1 => 2}
       a.delete(1).should eq(2)
       a.has_key?(1).should be_false
-      a.length.should eq(0)
+      a.size.should eq(0)
       a.should eq({} of Int32 => Int32)
     end
 
@@ -206,15 +206,15 @@ describe "Hash" do
   end
 
   describe "size" do
-    it "is the same as length" do
+    it "is the same as size" do
       a = {} of Int32 => Int32
-      a.size.should eq(a.length)
+      a.size.should eq(a.size)
 
       a = {1 => 2}
-      a.size.should eq(a.length)
+      a.size.should eq(a.size)
 
       a = {1 => 2, 3 => 4, 5 => 6, 7 => 8}
-      a.size.should eq(a.length)
+      a.size.should eq(a.size)
     end
   end
 
@@ -389,7 +389,7 @@ describe "Hash" do
     h = {} of Int32 => Int32
     times.times do |i|
       h[i] = i
-      h.length.should eq(i + 1)
+      h.size.should eq(i + 1)
     end
     times.times do |i|
       h[i].should eq(i)
@@ -399,7 +399,7 @@ describe "Hash" do
     times.times do |i|
       h.delete(i).should eq(i)
       h.has_key?(i).should be_false
-      h.length.should eq(times - i - 1)
+      h.size.should eq(times - i - 1)
     end
   end
 
@@ -407,7 +407,7 @@ describe "Hash" do
     h = {11 => 1}
     h.delete(0).should be_nil
     h.has_key?(11).should be_true
-    h.length.should eq(1)
+    h.size.should eq(1)
   end
 
   it "does to_a" do
@@ -419,7 +419,7 @@ describe "Hash" do
     h = {1 => 2, 3 => 4}
     h.clear
     h.empty?.should be_true
-    h.to_a.length.should eq(0)
+    h.to_a.size.should eq(0)
   end
 
   it "computes hash" do
@@ -454,7 +454,7 @@ describe "Hash" do
     h1.invert.should eq({1 => "one", 2 => "two", 3 => "three"})
 
     h3 = h2.invert
-    h3.length.should eq(2)
+    h3.size.should eq(2)
     %w[a c].should contain h3[1]
   end
 

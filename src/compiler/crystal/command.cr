@@ -1,3 +1,5 @@
+require "json"
+
 module Crystal
   def self.tempfile(basename)
     Dir.mkdir_p Config.cache_dir
@@ -12,16 +14,26 @@ Usage: crystal [command] [switches] [program file] [--] [arguments]
 Command:
     init                     generate new crystal project
     build                    compile program file
-    browser                  open an http server to browse program file
     deps                     install project dependencies
     docs                     generate documentation
     eval                     eval code from args or standard input
-    hierarchy                show type hierarchy
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
-    types                    show type of main variables
+    tool                     run a tool
     --help, -h               show this help
     --version, -v            show version
+USAGE
+
+  COMMANDS_USAGE = <<-USAGE
+Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
+
+Tool:
+    browser                  open an http server to browse program file
+    context                  show context for given location
+    hierarchy                show type hierarchy
+    implementations          show implementations for given call in location
+    types                    show type of main variables
+    --help, -h               show this help
 USAGE
 
   VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
@@ -32,46 +44,40 @@ USAGE
     command = options.first?
 
     if command
-      if File.file?(command)
+      case
+      when "init".starts_with?(command)
+        options.shift
+        init options
+      when "build".starts_with?(command)
+        options.shift
+        build options
+      when "deps".starts_with?(command)
+        options.shift
+        deps options
+      when "docs".starts_with?(command)
+        options.shift
+        docs options
+      when "eval".starts_with?(command)
+        options.shift
+        eval options
+      when "run".starts_with?(command)
+        options.shift
         run_command options
+      when "spec/".starts_with?(command)
+        options.shift
+        run_specs options
+      when "tool".starts_with?(command)
+        options.shift
+        tool options
+      when "--help" == command, "-h" == command
+        puts USAGE
+        exit
+      when "--version" == command, "-v" == command
+        puts "Crystal #{Crystal.version_string}"
+        exit
       else
-        case
-        when "init".starts_with?(command)
-          options.shift
-          init options
-        when "build".starts_with?(command)
-          options.shift
-          build options
-        when "browser" == command
-          options.shift
-          browser options
-        when "deps".starts_with?(command)
-          options.shift
-          deps options
-        when "docs".starts_with?(command)
-          options.shift
-          docs options
-        when "eval".starts_with?(command)
-          options.shift
-          eval options
-        when "hierarchy".starts_with?(command)
-          options.shift
-          hierarchy options
-        when "run".starts_with?(command)
-          options.shift
+        if File.file?(command)
           run_command options
-        when "spec/".starts_with?(command)
-          options.shift
-          run_specs options
-        when "types".starts_with?(command)
-          options.shift
-          types options
-        when "--help" == command, "-h" == command
-          puts USAGE
-          exit
-        when "--version" == command, "-v" == command
-          puts "Crystal #{Crystal.version_string}"
-          exit
         else
           error "unknown command: #{command}"
         end
@@ -82,7 +88,11 @@ USAGE
     end
   rescue ex : Crystal::Exception
     ex.color = @@color
-    puts ex
+    if @@json
+      puts ex.to_json
+    else
+      puts ex
+    end
     exit 1
   rescue ex
     puts ex
@@ -93,17 +103,49 @@ USAGE
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/manastech/crystal/issues"
   end
 
+  private def self.tool(options)
+    tool = options.first?
+    if tool
+      case
+      when "browser".starts_with?(tool)
+        options.shift
+        browser options
+      when "context".starts_with?(tool)
+        options.shift
+        context options
+      when "hierarchy".starts_with?(tool)
+        options.shift
+        hierarchy options
+      when "implementations".starts_with?(tool)
+        options.shift
+        implementations options
+      when "types".starts_with?(tool)
+        options.shift
+        types options
+      when "--help" == tool, "-h" == tool
+        puts COMMANDS_USAGE
+        exit
+      else
+        error "unknown tool: #{tool}"
+      end
+    else
+      puts COMMANDS_USAGE
+      exit
+    end
+  end
+
   private def self.init(options)
     Init.run(options)
   end
 
   private def self.build(options)
     config = create_compiler "build", options
+    @@json = config.output_format == "json"
     config.compile
   end
 
   private def self.browser(options)
-    config, result = compile_no_codegen "browser", options
+    config, result = compile_no_codegen "tool browser", options
     Browser.open result.original_node
   end
 
@@ -132,8 +174,46 @@ USAGE
   end
 
   private def self.hierarchy(options)
-    config, result = compile_no_codegen "hierarchy", options, hierarchy: true
+    config, result = compile_no_codegen "tool hierarchy", options, hierarchy: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
+  end
+
+  private def self.implementations(options)
+    cursor_command("implementations", options) do |location, config, result|
+      result = ImplementationsVisitor.new(location).process(result)
+    end
+  end
+
+  private def self.context(options)
+    cursor_command("context", options) do |location, config, result|
+      result = ContextVisitor.new(location).process(result)
+    end
+  end
+
+  private def self.cursor_command(command, options)
+    config, result = compile_no_codegen command, options, cursor_command: true
+
+    format = config.output_format
+
+    file = ""
+    line = ""
+    col = ""
+
+    loc = config.cursor_location.not_nil!.split(':')
+    if loc.size == 3
+      file, line, col = loc
+    end
+
+    file = File.expand_path(file)
+
+    result = yield Location.new(line.to_i, col.to_i, file), config, result
+
+    case format
+    when "json"
+      result.to_json(STDOUT)
+    else
+      result.to_text(STDOUT)
+    end
   end
 
   private def self.run_command(options)
@@ -158,9 +238,9 @@ USAGE
         options.shift
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.length .. -1]}"
+          target_filename = "#{target_filename[cwd.size .. -1]}"
         end
-        if splitted.length == 2
+        if splitted.size == 2
           target_line = splitted[1]
           options << "-l" << target_line
         end
@@ -215,12 +295,12 @@ USAGE
   end
 
   private def self.types(options)
-    config, result = compile_no_codegen "types", options
+    config, result = compile_no_codegen "tool types", options
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false)
-    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy
+  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false, cursor_command = false)
+    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
     {config, config.compile}
@@ -244,14 +324,14 @@ USAGE
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp do
+  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
     end
   end
 
-  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false)
+  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false, cursor_command = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -259,6 +339,8 @@ USAGE
     opt_output_filename = nil
     specified_output = false
     hierarchy_exp = nil
+    cursor_location = nil
+    output_format = nil
 
     option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
@@ -288,6 +370,16 @@ USAGE
         opts.on("-e NAME", "Filter types by NAME regex") do |exp|
           hierarchy_exp = exp
         end
+      end
+
+      if cursor_command
+        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+          cursor_location = cursor
+        end
+      end
+
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        output_format = f
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -361,7 +453,7 @@ USAGE
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if filenames.length == 0
+    if filenames.size == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
       exit 1
     end
@@ -369,8 +461,9 @@ USAGE
     sources = gather_sources(filenames)
     original_output_filename = output_filename_from_sources(sources)
     output_filename ||= original_output_filename
+    output_format ||= "text"
 
-    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp
+    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
   end
@@ -403,8 +496,8 @@ USAGE
     # This is for the case where the main command is wrong
     @@color = false if ARGV.includes?("--no-color")
 
-    print colorize("Error: ").red.bold
-    puts colorize(msg).toggle(@@color).bold
+    STDERR.print colorize("Error: ").red.bold
+    STDERR.puts colorize(msg).toggle(@@color).bold
     exit 1
   end
 

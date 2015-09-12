@@ -224,8 +224,8 @@ describe "macro methods" do
       assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1\\n", "2\\n", "3"])
     end
 
-    it "executes length" do
-      assert_macro "", %({{"hello".length}}), [] of ASTNode, "5"
+    it "executes size" do
+      assert_macro "", %({{"hello".size}}), [] of ASTNode, "5"
     end
 
     it "executes empty" do
@@ -370,8 +370,8 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3][3]}}), [] of ASTNode, "nil"
     end
 
-    it "executes length" do
-      assert_macro "", %({{[1, 2, 3].length}}), [] of ASTNode, "3"
+    it "executes size" do
+      assert_macro "", %({{[1, 2, 3].size}}), [] of ASTNode, "3"
     end
 
     it "executes empty?" do
@@ -487,11 +487,16 @@ describe "macro methods" do
     it "executes push" do
       assert_macro "", %({% x = [1]; x.push(2); x << 3 %}{{x}}), [] of ASTNode, %([1, 2, 3])
     end
+
+    it "executes includes?" do
+      assert_macro "", %({{ [1, 2, 3].includes?(1) }}), [] of ASTNode, %(true)
+      assert_macro "", %({{ [1, 2, 3].includes?(4) }}), [] of ASTNode, %(false)
+    end
   end
 
   describe "hash methods" do
-    it "executes length" do
-      assert_macro "", %({{{a: 1, b: 3}.length}}), [] of ASTNode, "2"
+    it "executes size" do
+      assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
     end
 
     it "executes empty?" do
@@ -533,8 +538,8 @@ describe "macro methods" do
   end
 
   describe "tuple methods" do
-    it "executes length" do
-      assert_macro "", %({{{1, 2, 3}.length}}), [] of ASTNode, "3"
+    it "executes size" do
+      assert_macro "", %({{{1, 2, 3}.size}}), [] of ASTNode, "3"
     end
 
     it "executes empty?" do
@@ -607,14 +612,14 @@ describe "macro methods" do
       end
     end
 
-    it "executes length of tuple" do
-      assert_macro("x", "{{x.length}}", "2") do |program|
+    it "executes size of tuple" do
+      assert_macro("x", "{{x.size}}", "2") do |program|
         [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar))] of ASTNode
       end
     end
 
-    it "executes length of tuple metaclass" do
-      assert_macro("x", "{{x.length}}", "2") do |program|
+    it "executes size of tuple metaclass" do
+      assert_macro("x", "{{x.size}}", "2") do |program|
         [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar).metaclass)] of ASTNode
       end
     end
@@ -662,7 +667,7 @@ describe "macro methods" do
       assert_macro "x", %({{x.name}}), [Call.new(nil, "some_call")] of ASTNode, "some_call"
     end
 
-    it "executes args length" do
+    it "executes args" do
       assert_macro "x", %({{x.args}}), [Call.new(nil, "some_call", [NumberLiteral.new(1), NumberLiteral.new(3)] of ASTNode)] of ASTNode, "[1, 3]"
     end
 
@@ -708,6 +713,40 @@ describe "macro methods" do
 
     it "executes to" do
       assert_macro "x", %({{x.to}}), [Cast.new(Call.new(nil, "x"), Path.new(["Int32"]))] of ASTNode, "Int32"
+    end
+  end
+
+  describe "case methods" do
+    case_node = Case.new(NumberLiteral.new(1), [When.new([NumberLiteral.new(2), NumberLiteral.new(3)] of ASTNode, NumberLiteral.new(4))], NumberLiteral.new(5))
+
+    it "executes cond" do
+      assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+    end
+
+    it "executes whens" do
+      assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
+    end
+
+    it "executes when conds" do
+      assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
+    end
+
+    it "executes when body" do
+      assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
+    end
+
+    it "executes else" do
+      assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+    end
+  end
+
+  describe "assign methods" do
+    it "executes target" do
+      assert_macro "x", %({{x.target}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "foo"
+    end
+
+    it "executes value" do
+      assert_macro "x", %({{x.value}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "2"
     end
   end
 

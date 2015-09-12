@@ -5,9 +5,9 @@ class OpenSSL::MD5
     hash(data.cstr, LibC::SizeT.cast(data.bytesize))
   end
 
-  def self.hash(data : UInt8*, length : LibC::SizeT)
+  def self.hash(data : UInt8*, bytesize : LibC::SizeT)
     buffer :: UInt8[16]
-    LibCrypto.md5(data, length, buffer)
+    LibCrypto.md5(data, bytesize, buffer)
     buffer
   end
 end

@@ -8,7 +8,7 @@
 # successful match, since the block argument can't be `nil`.
 #
 # ```
-# "Crystal".match(/[p-s]/).length #=> undefined method 'length' for Nil
+# "Crystal".match(/[p-s]/).size #=> undefined method 'size' for Nil
 #
 # "Crystal".match(/[p-s]/) do |md|
 #   md.string #=> "Crystal"
@@ -32,11 +32,11 @@ class MatchData
   # Returns the number of capture groups, including named capture groups.
   #
   # ```
-  # "Crystal".match(/[p-s]/) { |md| md.length }          #=> 0
-  # "Crystal".match(/r(ys)/) { |md| md.length }          #=> 1
-  # "Crystal".match(/r(ys)(?<ok>ta)/) { |md| md.length } #=> 2
+  # "Crystal".match(/[p-s]/) { |md| md.size }          #=> 0
+  # "Crystal".match(/r(ys)/) { |md| md.size }          #=> 1
+  # "Crystal".match(/r(ys)(?<ok>ta)/) { |md| md.size } #=> 2
   # ```
-  getter length
+  getter size
 
   # Returns the original string.
   #
@@ -46,7 +46,7 @@ class MatchData
   getter string
 
   # :nodoc:
-  def initialize(@regex, @code, @string, @pos, @ovector, @length)
+  def initialize(@regex, @code, @string, @pos, @ovector, @size)
   end
 
   # Return the position of the first character of the `n`th match.
@@ -196,9 +196,9 @@ class MatchData
 
     io << "#<MatchData "
     self[0].inspect(io)
-    if length > 0
+    if size > 0
       io << " "
-      length.times do |i|
+      size.times do |i|
         io << " " if i > 0
         io << name_table.fetch(i + 1) { i + 1 }
         io << ":"
@@ -223,6 +223,6 @@ class MatchData
   end
 
   private def valid_group?(index)
-    index <= @length
+    index <= @size
   end
 end

@@ -37,11 +37,11 @@ module LLVM
   end
 
   def self.array(type, values : Array(LLVM::Value))
-    Value.new LibLLVM.const_array(type, (values.buffer as LibLLVM::ValueRef*), values.length.to_u32)
+    Value.new LibLLVM.const_array(type, (values.buffer as LibLLVM::ValueRef*), values.size.to_u32)
   end
 
   def self.struct(values : Array(LLVM::Value), packed = false)
-    Value.new LibLLVM.const_struct((values.buffer as LibLLVM::ValueRef*), values.length.to_u32, packed ? 1 : 0)
+    Value.new LibLLVM.const_struct((values.buffer as LibLLVM::ValueRef*), values.size.to_u32, packed ? 1 : 0)
   end
 
   def self.string(string)

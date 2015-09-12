@@ -1,14 +1,24 @@
 require "spec"
 
+class SpecEnumerable
+  include Enumerable(Int32)
+
+  def each
+    yield 1
+    yield 2
+    yield 3
+  end
+end
+
 describe "Enumerable" do
 
   describe "all? with block" do
     it "returns true" do
-      ["ant", "bear", "cat"].all? { |word| word.length >= 3 }.should be_true
+      ["ant", "bear", "cat"].all? { |word| word.size >= 3 }.should be_true
     end
 
     it "returns false" do
-      ["ant", "bear", "cat"].all? { |word| word.length >= 4 }.should be_false
+      ["ant", "bear", "cat"].all? { |word| word.size >= 4 }.should be_false
     end
   end
 
@@ -24,11 +34,11 @@ describe "Enumerable" do
 
   describe "any? with block" do
     it "returns true if at least one element fulfills the condition" do
-      ["ant", "bear", "cat"].any? { |word| word.length >= 4 }.should be_true
+      ["ant", "bear", "cat"].any? { |word| word.size >= 4 }.should be_true
     end
 
     it "returns false if all elements dose not fulfill the condition" do
-      ["ant", "bear", "cat"].any? { |word| word.length > 4 }.should be_false
+      ["ant", "bear", "cat"].any? { |word| word.size > 4 }.should be_false
     end
   end
 
@@ -46,9 +56,9 @@ describe "Enumerable" do
     assert { Set { 1, nil, 2, nil, 3 }.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
-  describe "count without block" do
+  describe "size without block" do
     it "returns the number of elements in the Enumerable" do
-      (1..3).count.should eq 3
+      SpecEnumerable.new.size.should eq 3
     end
   end
 
@@ -207,13 +217,7 @@ describe "Enumerable" do
       end
     end
 
-    it "returns the first n elements with the optional argument" do
-      (1..5).first(2).should eq [1, 2]
-    end
-
     assert { [-1, -2, -3].first.should eq(-1) }
-    assert { [-1, -2, -3].first(1).should eq([-1]) }
-    assert { [-1, -2, -3].first(4).should eq([-1, -2, -3]) }
   end
 
   describe "first?" do
@@ -249,8 +253,8 @@ describe "Enumerable" do
   describe "group_by" do
     assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
-    it "groups can group by length (like the doc example)" do
-      %w(Alice Bob Ary).group_by{|e| e.length}.should eq({ 3 => ["Bob", "Ary"],
+    it "groups can group by size (like the doc example)" do
+      %w(Alice Bob Ary).group_by{|e| e.size}.should eq({ 3 => ["Bob", "Ary"],
                                                            5 => ["Alice"]})
     end
   end
@@ -286,11 +290,11 @@ describe "Enumerable" do
 
   describe "index with a block" do
     it "returns the index of the first element where the blcok returns true" do
-      ["Alice", "Bob"].index { |name| name.length < 4 }.should eq 1
+      ["Alice", "Bob"].index { |name| name.size < 4 }.should eq 1
     end
 
     it "returns nil if no object could be found" do
-      ["Alice", "Bob"].index { |name| name.length < 3 }.should eq nil
+      ["Alice", "Bob"].index { |name| name.size < 3 }.should eq nil
     end
   end
 
@@ -306,12 +310,12 @@ describe "Enumerable" do
 
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
-      hash = ["Anna", "Ary", "Alice"].index_by {|e| e.length }
+      hash = ["Anna", "Ary", "Alice"].index_by {|e| e.size }
       hash.should eq({4 => "Anna", 3 => "Ary", 5 => "Alice"})
     end
 
     it "overrides values if a value is returned twice" do
-      hash = ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.length }
+      hash = ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.size }
       hash.should eq({4 => "Anna", 3 => "Bob", 5 => "Alice"})
     end
   end
@@ -384,12 +388,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "max?" do
+    it "returns nil if empty" do
+      ([] of Int32).max?.should be_nil
+    end
+  end
+
   describe "max_by" do
     assert { [-1, -2, -3].max_by { |x| -x }.should eq(-3) }
   end
 
+  describe "max_by?" do
+    it "returns nil if empty" do
+      ([] of Int32).max_by? {|x| -x }.should be_nil
+    end
+  end
+
   describe "max_of" do
     assert { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+  end
+
+  describe "max_of?" do
+    it "returns nil if empty" do
+      ([] of Int32).max_of? {|x| -x }.should be_nil
+    end
   end
 
   describe "min" do
@@ -402,12 +424,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "min?" do
+    it "returns nil if empty" do
+      ([] of Int32).min?.should be_nil
+    end
+  end
+
   describe "min_by" do
     assert { [1, 2, 3].min_by { |x| -x }.should eq(3) }
   end
 
+  describe "min_by?" do
+    it "returns nil if empty" do
+      ([] of Int32).max_by? {|x| -x }.should be_nil
+    end
+  end
+
   describe "min_of" do
     assert { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+  end
+
+  describe "min_of?" do
+    it "returns nil if empty" do
+      ([] of Int32).min_of? {|x| -x }.should be_nil
+    end
   end
 
   describe "minmax" do
@@ -420,12 +460,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "minmax?" do
+    it "returns two nils if empty" do
+      ([] of Int32).minmax?.should eq({nil, nil})
+    end
+  end
+
   describe "minmax_by" do
     assert { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
   end
 
+  describe "minmax_by?" do
+    it "returns two nils if empty" do
+      ([] of Int32).minmax_by? {|x| -x }.should eq({nil, nil})
+    end
+  end
+
   describe "minmax_of" do
     assert { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+  end
+
+  describe "minmax_of?" do
+    it "returns two nils if empty" do
+      ([] of Int32).minmax_of? {|x| -x }.should eq({nil, nil})
+    end
   end
 
   describe "none?" do

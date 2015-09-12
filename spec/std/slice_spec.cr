@@ -1,11 +1,11 @@
 require "spec"
 
 describe "Slice" do
-  it "gets pointer and length" do
+  it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
     slice.pointer(0).should eq(pointer)
-    slice.length.should eq(1)
+    slice.size.should eq(1)
   end
 
   it "does []" do
@@ -34,12 +34,12 @@ describe "Slice" do
     slice = Slice.new(3) { |i| i + 1}
 
     slice1 = slice + 1
-    slice1.length.should eq(2)
+    slice1.size.should eq(2)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
     slice3 = slice + 3
-    slice3.length.should eq(0)
+    slice3.size.should eq(0)
 
     expect_raises(IndexError) { slice + 4 }
     expect_raises(IndexError) { slice + (-1) }
@@ -48,7 +48,7 @@ describe "Slice" do
   it "does [] with start and count" do
     slice = Slice.new(4) { |i| i + 1}
     slice1 = slice[1, 2]
-    slice1.length.should eq(2)
+    slice1.size.should eq(2)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
@@ -63,7 +63,7 @@ describe "Slice" do
     Slice.new(1, 0).empty?.should be_false
   end
 
-  it "raises if length is negative on new" do
+  it "raises if size is negative on new" do
     expect_raises(ArgumentError) { Slice.new(-1, 0) }
   end
 
@@ -123,5 +123,18 @@ describe "Slice" do
     slice = "foobar".to_slice
     slice.rindex('o'.ord.to_u8).should eq(2)
     slice.rindex('z'.ord.to_u8).should be_nil
+  end
+
+  it "does bytesize" do
+    slice = Slice(Int32).new(2)
+    slice.bytesize.should eq(8)
+  end
+
+  it "does ==" do
+    a = Slice.new(3) { |i| i }
+    b = Slice.new(3) { |i| i }
+    c = Slice.new(3) { |i| i + 1 }
+    a.should eq(b)
+    a.should_not eq(c)
   end
 end

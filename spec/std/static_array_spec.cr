@@ -3,14 +3,12 @@ require "spec"
 describe "StaticArray" do
   it "creates with new" do
     a = StaticArray(Int32, 3).new 0
-    a.length.should eq(3)
     a.size.should eq(3)
-    a.count.should eq(3)
   end
 
   it "creates with new and value" do
     a = StaticArray(Int32, 3).new 1
-    a.length.should eq(3)
+    a.size.should eq(3)
     a[0].should eq(1)
     a[1].should eq(1)
     a[2].should eq(1)
@@ -18,7 +16,7 @@ describe "StaticArray" do
 
   it "creates with new and block" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
-    a.length.should eq(3)
+    a.size.should eq(3)
     a[0].should eq(1)
     a[1].should eq(2)
     a[2].should eq(3)

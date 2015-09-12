@@ -2,18 +2,31 @@ module Crystal
   # Base class for nodes in the grammar.
   abstract class ASTNode
     property location
+    property end_location
 
     def at(@location : Location?)
       self
     end
 
     def at(node : ASTNode)
-      at node.location
+      @location = node.location
+      @end_location = node.end_location
+      self
+    end
+
+    def at_end(node : ASTNode)
+      @end_location = node.end_location
+      self
+    end
+
+    def at_end(@end_location : Location?)
+      self
     end
 
     def clone
       clone = clone_without_location
       clone.location = location
+      clone.end_location = end_location
       clone.attributes = attributes
       clone
     end
@@ -38,7 +51,7 @@ module Crystal
       @location.try(&.column_number) || 0
     end
 
-    def name_length
+    def name_size
       0
     end
 
@@ -80,7 +93,7 @@ module Crystal
     end
 
     def self.from(obj : Array)
-      case obj.length
+      case obj.size
       when 0
         Nop.new
       when 1
@@ -107,6 +120,10 @@ module Crystal
 
     def last
       @expressions.last
+    end
+
+    def end_location
+      @end_location || @expressions.last?.try &.end_location
     end
 
     def accept_children(visitor)
@@ -373,8 +390,8 @@ module Crystal
       end
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
     def clone_without_location
@@ -396,6 +413,7 @@ module Crystal
   class Block < ASTNode
     property :args
     property :body
+    property :call
 
     def initialize(@args = [] of Var, body = nil)
       @body = Expressions.from body
@@ -439,11 +457,14 @@ module Crystal
     property :global
     property :name_column_number
     property :has_parenthesis
-    property :name_length
+    property :name_size
     property :doc
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
-      @name_length = nil
+      @name_size = nil
+      if block = @block
+        block.call = self
+      end
     end
 
     def self.new(obj, name, arg : ASTNode)
@@ -462,8 +483,8 @@ module Crystal
       new nil, name, [arg1, arg2] of ASTNode, global: true
     end
 
-    def name_length
-      @name_length ||= name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.length - 1 : name.length
+    def name_size
+      @name_size ||= name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.size - 1 : name.size
     end
 
     def accept_children(visitor)
@@ -476,9 +497,19 @@ module Crystal
 
     def clone_without_location
       clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parenthesis)
-      clone.name_length = name_length
+      clone.name_size = name_size
       clone.is_expansion = is_expansion?
       clone
+    end
+
+    def name_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number, loc.filename)
+    end
+
+    def name_end_location
+      loc = location.not_nil!
+      Location.new(loc.line_number, name_column_number + name_size, loc.filename)
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global
@@ -616,6 +647,10 @@ module Crystal
       @value.accept visitor
     end
 
+    def end_location
+      @end_location || value.end_location
+    end
+
     def clone_without_location
       Assign.new(@target.clone, @value.clone)
     end
@@ -639,6 +674,10 @@ module Crystal
       @values.each &.accept visitor
     end
 
+    def end_location
+      @end_location || @values.last.end_location
+    end
+
     def ==(other : self)
       other.targets == targets && other.values == values
     end
@@ -657,8 +696,8 @@ module Crystal
     def initialize(@name)
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
     def clone_without_location
@@ -708,8 +747,8 @@ module Crystal
     def initialize(@name)
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
     def clone_without_location
@@ -729,6 +768,10 @@ module Crystal
     def accept_children(visitor)
       @left.accept visitor
       @right.accept visitor
+    end
+
+    def end_location
+      @end_location || @right.end_location
     end
 
     def_equals_and_hash left, right
@@ -769,8 +812,8 @@ module Crystal
       @restriction.try &.accept visitor
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
     def clone_without_location
@@ -816,8 +859,8 @@ module Crystal
       @fun.try &.accept visitor
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
     def clone_without_location
@@ -879,23 +922,23 @@ module Crystal
       @body.accept visitor
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
-    def min_max_args_lengths
-      max_length = args.length
+    def min_max_args_sizes
+      max_size = args.size
       default_value_index = args.index(&.default_value)
-      min_length = default_value_index || max_length
+      min_size = default_value_index || max_size
       if splat_index
-        min_length -= 1 unless default_value_index
-        max_length = Int32::MAX
+        min_size -= 1 unless default_value_index
+        max_size = Int32::MAX
       end
-      {min_length, max_length}
+      {min_size, max_size}
     end
 
     def has_default_arguments?
-      args.length > 0 && args.last.default_value
+      args.size > 0 && args.last.default_value
     end
 
     def clone_without_location
@@ -933,27 +976,27 @@ module Crystal
       @block_arg.try &.accept visitor
     end
 
-    def name_length
-      name.length
+    def name_size
+      name.size
     end
 
-    def matches?(args_length, named_args)
-      my_args_length = args.length
-      min_args_length = args.index(&.default_value) || my_args_length
-      max_args_length = my_args_length
+    def matches?(args_size, named_args)
+      my_args_size = args.size
+      min_args_size = args.index(&.default_value) || my_args_size
+      max_args_size = my_args_size
       if splat_index
-        min_args_length -= 1
-        max_args_length = Int32::MAX
+        min_args_size -= 1
+        max_args_size = Int32::MAX
       end
 
-      unless min_args_length <= args_length <= max_args_length
+      unless min_args_size <= args_size <= max_args_size
         return false
       end
 
       named_args.try &.each do |named_arg|
         index = args.index { |arg| arg.name == named_arg.name }
         if index
-          if index < args_length
+          if index < args_size
             return false
           end
         else
@@ -1150,10 +1193,10 @@ module Crystal
   class Path < ASTNode
     property :names
     property :global
-    property :name_length
+    property :name_size
 
     def initialize(@names : Array, @global = false)
-      @name_length = 0
+      @name_size = 0
     end
 
     def self.new(name : String, global = false)
@@ -1166,7 +1209,7 @@ module Crystal
 
     def clone_without_location
       ident = Path.new(@names.clone, @global)
-      ident.name_length = name_length
+      ident.name_size = name_size
       ident
     end
 
@@ -1321,13 +1364,13 @@ module Crystal
       declared_type.accept visitor
     end
 
-    def name_length
+    def name_size
       var = @var
       case var
       when Var
-        var.name.length
+        var.name.size
       when InstanceVar
-        var.name.length
+        var.name.size
       else
         raise "can't happen"
       end
@@ -1480,6 +1523,10 @@ module Crystal
       @exp.try &.accept visitor
     end
 
+    def end_location
+      @end_location || @exp.try(&.end_location)
+    end
+
     def_equals_and_hash exp
   end
 
@@ -1517,6 +1564,10 @@ module Crystal
       Yield.new(@exps.clone, @scope.clone)
     end
 
+    def end_location
+      @end_location || @exps.last?.try(&.end_location)
+    end
+
     def_equals_and_hash @exps, @scope
   end
 
@@ -1532,6 +1583,10 @@ module Crystal
 
     def clone_without_location
       Include.new(@name)
+    end
+
+    def end_location
+      @end_location || @name.end_location
     end
 
     def_equals_and_hash name
@@ -1551,17 +1606,8 @@ module Crystal
       Extend.new(@name)
     end
 
-    def_equals_and_hash name
-  end
-
-  class Undef < ASTNode
-    property :name
-
-    def initialize(@name)
-    end
-
-    def clone_without_location
-      Undef.new(@name)
+    def end_location
+      @end_location || @name.end_location
     end
 
     def_equals_and_hash name
@@ -1718,7 +1764,7 @@ module Crystal
     end
 
     def compatible_with?(other)
-      return false if args.length != other.args.length
+      return false if args.size != other.args.size
       return false if varargs != other.varargs
 
       args.each_with_index do |arg, i|
@@ -1793,6 +1839,10 @@ module Crystal
 
     def clone_without_location
       Cast.new(@obj.clone, @to.clone)
+    end
+
+    def end_location
+      @end_location || @to.end_location
     end
 
     def_equals_and_hash @obj, @to

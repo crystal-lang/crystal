@@ -19,6 +19,10 @@ struct LLVM::Function
     LibLLVM.add_function_attr self, attribute
   end
 
+  def add_target_dependent_attribute(name, value)
+    LibLLVM.add_target_dependent_function_attr self, name, value
+  end
+
   def attributes
     LibLLVM.get_function_attr(self)
   end

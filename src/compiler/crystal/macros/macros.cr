@@ -12,14 +12,14 @@ module Crystal
       macro_expander.expand scope, node
     end
 
-    def expand_def_macros
+    def expand_macro_defs
       until @def_macros.empty?
         def_macro = @def_macros.pop
-        expand_def_macro def_macro
+        expand_macro_def def_macro
       end
     end
 
-    def expand_def_macro(target_def)
+    def expand_macro_def(target_def)
       the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
       the_macro.location = target_def.location
 
@@ -55,6 +55,7 @@ module Crystal
 
       type_visitor = TypeVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
+      type_visitor.types << owner
       generated_nodes.accept type_visitor
 
       target_def.bind_to generated_nodes
@@ -66,23 +67,24 @@ module Crystal
       target_def.body = generated_nodes
     end
 
-    def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false)
-      parse_macro_source expanded_macro, the_macro, node, vars, inside_def, &.parse
+    def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)
+      parse_macro_source expanded_macro, the_macro, node, vars, inside_def, inside_type, inside_exp, &.parse
     end
 
-    def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false)
+    def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)
       generated_source = expanded_macro.source
       begin
         parser = Parser.new(generated_source, [vars.dup])
         parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
         parser.visibility = node.visibility
         parser.def_nest = 1 if inside_def
+        parser.type_nest = 1 if inside_type
         parser.wants_doc = @program.wants_doc?
         generated_node = yield parser
         if yields = expanded_macro.yields
           generated_node = generated_node.transform(YieldsTransformer.new(yields))
         end
-        normalize(generated_node)
+        normalize(generated_node, inside_exp: inside_exp)
       rescue ex : Crystal::SyntaxException
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s_with_source(generated_source)}\n#{"=" * 80}"
       end
@@ -155,8 +157,8 @@ module Crystal
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
 
-        macro_args_length = a_macro.args.length
-        call_args_length = call.args.length
+        marg_args_size = a_macro.args.size
+        call_args_size = call.args.size
         splat_index = a_macro.splat_index || -1
 
         # Args before the splat argument
@@ -169,15 +171,15 @@ module Crystal
 
         # The splat argument
         if splat_index == -1
-          splat_length = 0
+          splat_size = 0
           offset = 0
         else
-          splat_length = call_args_length - (macro_args_length - 1)
-          splat_length = 0 if splat_length < 0
-          offset = splat_index + splat_length
+          splat_size = call_args_size - (marg_args_size - 1)
+          splat_size = 0 if splat_size < 0
+          offset = splat_index + splat_size
           splat_arg = a_macro.args[splat_index]
-          splat_elements = if splat_index < call.args.length
-                             call.args[splat_index, splat_length]
+          splat_elements = if splat_index < call.args.size
+                             call.args[splat_index, splat_size]
                            else
                              [] of ASTNode
                            end
@@ -186,7 +188,7 @@ module Crystal
 
         # Args after the splat argument
         base = splat_index + 1
-        base.upto(macro_args_length - 1) do |index|
+        base.upto(marg_args_size - 1) do |index|
           macro_arg = a_macro.args[index]
           call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
           call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
@@ -437,6 +439,8 @@ module Crystal
 
           begin
             @last = receiver.interpret(node.name, args, node.block, self)
+          rescue ex : Crystal::Exception
+            node.raise ex.message, inner: ex
           rescue ex
             node.raise ex.message
           end
@@ -546,13 +550,13 @@ module Crystal
       end
 
       def execute_env(node)
-        if node.args.length == 1
+        if node.args.size == 1
           node.args[0].accept self
           cmd = @last.to_macro_id
           env_value = ENV[cmd]?
           @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
         else
-          node.raise "wrong number of arguments for macro call 'env' (#{node.args.length} for 1)"
+          node.raise "wrong number of arguments for macro call 'env' (#{node.args.size} for 1)"
         end
       end
 
@@ -604,7 +608,7 @@ module Crystal
       end
 
       def execute_run(node)
-        if node.args.length == 0
+        if node.args.size == 0
           node.raise "wrong number of arguments for macro run (0 for 1..)"
         end
 
@@ -627,7 +631,7 @@ module Crystal
           node.raise "error executing macro run: can't find file '#{filename}'"
         end
 
-        if found_filenames.length > 1
+        if found_filenames.size > 1
           node.raise "error executing macro run: '#{filename}' is a directory"
         end
 
@@ -651,22 +655,9 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@length"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(TupleInstanceType)
-            return @last = NumberLiteral.new(scope.tuple_types.length)
-          end
         when "@type"
           target = @scope == @mod.class_type ? @scope : @scope.instance_type
           return @last = TypeNode.new(target)
-        when "@constants"
-          scope = @scope.try &.instance_type
-          return @last = TypeNode.constants(scope)
-        when "@enum_flags"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(EnumType)
-            return @last = BoolLiteral.new(scope.flags?)
-          end
         end
 
         node.raise "unknown macro instance var: '#{node.name}'"

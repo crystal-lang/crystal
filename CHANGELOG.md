@@ -1,3 +1,49 @@
+## Next
+
+* **(breaking change)** Reimplemented `Process.run` to allow configuring input, output and error, as well as behaving well regarding non-blocking IO (thanks @technorama)
+* **(breaking change)** Removed the `alias_method` macro.
+* **(breaking change)** Disallow declaring defs, classes and other declarations "dynamically" (for example inside an `if`... this of course didn't work, but incorrectly compiled).
+* **(breaking change)** `require` is now only allowed at the top-level, never inside other types or methods.
+* **(breaking change)** Removed `Nil#to_i`
+* **(breaking change)** Changed API of `Channel#select` toward a thread-safe one.
+* **(breaking change)** The two methods that IO must implement are now `read(slice : Slice(UInt8))` and `write(slice : Slice(UInt8))`.
+* New beautiful, searchable and more functional API docs. Thanks @rosylilly for the initial design, and @BlaxPirit for some improvements.
+* CLI: Moved `browser`, `hierarchy` and `types` to `crystal tool ...`
+* Added `crystal tool context` and `crystal tool implementations` for IDEs (thanks @bcardiff!!)
+* `Int#>>(amount)` and `Int#<<(amount)` now give zero when `amount` is greater than the number of bits of the integer representation.
+* Added `\%` escape sequence inside macros.
+* Added aliases for the many C types (thanks @BlaxPirit)
+* Added `Iterator#in_groups_of` (thanks @PragTob)
+* Added optional `offset` argument to `Hash#each_with_index` (thanks @sergey-kucher)
+* Added `Array#combinations`, `Array#each_combination`, `Array#repeated_combinations`, `Array#each_repeated_combination`, `Array#repeated_permutations`, `Array#each_repeated_permutation`, `Array.product` and `Array.each_product` (thanks @kostya)
+* Added `Array#rotate` and `Array#rotate!` (thanks @kostya)
+* Added `MatchData#pre_match` and `MatchData#post_match` (thanks @bjmllr)
+* Added `Array#flatten`
+* Added `Range.reverse_each`, along with `Int#pred` and `Char#pred` (thanks @BlaxPirit)
+* Added `XML.parse_html` (thanks @ryanworl)
+* Added `ENV.keys` and`ENV.values` (thanks @will)
+* Added `StaticArray==(other : StaticArray)` (thanks @tatey)
+* Added `String#sub` in many variants (thanks @jhass)
+* Added `Readline.bind_key`, `Readline.unbind_key`, `Readline.done` and `Readline.done=` (thanks @daphee)
+* Added `Hash#all?`, `Hash#any?` and `Hash#inject` (thanks @jreinert)
+* Added `File#pos` and `File#pos=`
+* Added `Enum.from_value` and `Enum.from_value?`
+* Added `Deque` (thanks @BlaxPirit)
+* Added lots of methods to `StringScanner`, and documented it, making it usable (thanks @will)
+* `StringIO` now quacks like a `File`.
+* Allow sending masked data through a `WebSocket`, and sending long data (thanks @kumpelblase2)
+* `File.new` now accepts an optional `perm` argument (thanks @technorama)
+* `FileDescriptorIO` now has configurable read/write timeouts (thanks @technorama)
+* Signal handling is more robust and allows any kind of code (thanks @technorama)
+* Correctly handle `WebSocket` close packet (thanks @bebac)
+* Correctly implement `seek` and `tell` in buffered IOs (thanks @lbguilherme)
+* Allow setting several options on sockets (thanks @technorama)
+* Some improvements to `crystal init` for the "app" case (thanks @krisleech)
+* `sleep` and IO timeouts can receive `TimeSpan` as arguments (thanks @BlaxPirit)
+* Handle `HTTP::Response` without content-length (thanks @lbguilherme)
+* Added docs for OptionParser, ENV, Regex, Enumerable, Iterator and some Array methods (thanks @porras, @will, @bjmllr, @PragTob, @decioferreira)
+* Lots of bug fixes and small improvements
+
 ## 0.7.6 (2015-08-13)
 
 * **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/manastech/crystal/wiki/FAQ#why-trailing-whileuntil-is-not-supported-unlike-ruby))

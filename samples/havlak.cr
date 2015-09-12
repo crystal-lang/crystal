@@ -58,7 +58,7 @@ class CFG
   end
 
   def getNumNodes
-    @basicBlockMap.length
+    @basicBlockMap.size
   end
 end
 
@@ -331,7 +331,7 @@ class HavlakLoopFinder
           # The algorithm has degenerated. Break and
           # return in this case.
           #
-          nonBackSize = nonBackPreds[x.dfsNumber].length
+          nonBackSize = nonBackPreds[x.dfsNumber].size
           return 0 if nonBackSize > MAXNONBACKPREDS
 
           nonBackPreds[x.dfsNumber].each do |iter|

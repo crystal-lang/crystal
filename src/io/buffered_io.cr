@@ -20,11 +20,11 @@ module BufferedIO
   #   @flush_on_newline = false
   # end
 
-  # Reads at most *count* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
-  abstract def unbuffered_read(slice : Slice(UInt8), count)
+  # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
+  abstract def unbuffered_read(slice : Slice(UInt8))
 
-  # Writes at most *count* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
-  abstract def unbuffered_write(slice : Slice(UInt8), count)
+  # Writes at most *slice.size* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
+  abstract def unbuffered_write(slice : Slice(UInt8))
 
   # Flushes the wrapped IO.
   abstract def unbuffered_flush
@@ -74,8 +74,8 @@ module BufferedIO
     # or we reach the limit
     String.build do |buffer|
       loop do
-        available = Math.min(@in_buffer_rem.length, limit)
-        buffer.write @in_buffer_rem, available
+        available = Math.min(@in_buffer_rem.size, limit)
+        buffer.write @in_buffer_rem[0, available]
         @in_buffer_rem += available
         limit -= available
 
@@ -100,7 +100,7 @@ module BufferedIO
           else
             index += 1
           end
-          buffer.write @in_buffer_rem, index
+          buffer.write @in_buffer_rem[0, index]
           @in_buffer_rem += index
           break
         end
@@ -121,7 +121,7 @@ module BufferedIO
   end
 
   private def read_char_with_bytesize
-    return super unless @in_buffer_rem.length >= 4
+    return super unless @in_buffer_rem.size >= 4
 
     first = @in_buffer_rem[0].to_u32
     if first < 0x80
@@ -150,55 +150,50 @@ module BufferedIO
     raise InvalidByteSequenceError.new
   end
 
-  # Buffered implementation of `IO#read(slice, count)`.
-  def read(slice : Slice(UInt8), count)
-    total_read = 0
+  # Buffered implementation of `IO#read(slice)`.
+  def read(slice : Slice(UInt8))
+    count = slice.size
+    return 0 if count == 0
 
-    while count > 0
-      if @in_buffer_rem.empty?
-        # If we are asked to read more than the buffer's size,
-        # read directly into the slice.
-        if count >= BUFFER_SIZE
-          to_read = unbuffered_read(slice, count).to_i
-          total_read += to_read
-          break
-        else
-          fill_buffer
-          break if @in_buffer_rem.empty?
-        end
+    if @in_buffer_rem.empty?
+      # If we are asked to read more than the buffer's size,
+      # read directly into the slice.
+      if count >= BUFFER_SIZE
+        return unbuffered_read(slice[0, count]).to_i
+      else
+        fill_buffer
+        return 0 if @in_buffer_rem.empty?
       end
-
-      to_read = Math.min(count, @in_buffer_rem.length)
-      slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
-      @in_buffer_rem += to_read
-      count -= to_read
-      slice += to_read
-      total_read += to_read
     end
 
-    total_read
+    to_read = Math.min(count, @in_buffer_rem.size)
+    slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
+    @in_buffer_rem += to_read
+    to_read
   end
 
   # :nodoc:
-  def read(length : Int)
-    raise ArgumentError.new "negative length" if length < 0
+  def read(count : Int)
+    raise ArgumentError.new "negative count" if count < 0
 
     fill_buffer if @in_buffer_rem.empty?
 
     # If we have enough content in the buffer, use it
-    if length <= @in_buffer_rem.length
-      string = String.new(@in_buffer_rem[0, length])
-      @in_buffer_rem += length
+    if count <= @in_buffer_rem.size
+      string = String.new(@in_buffer_rem[0, count])
+      @in_buffer_rem += count
       return string
     end
 
     super
   end
 
-  # Buffered implementation of `IO#write(slice, count)`.
-  def write(slice : Slice(UInt8), count)
+  # Buffered implementation of `IO#write(slice)`.
+  def write(slice : Slice(UInt8))
+    count = slice.size
+
     if sync?
-      return unbuffered_write(slice, count).to_i
+      return unbuffered_write(slice).to_i
     end
 
     if flush_on_newline?
@@ -206,7 +201,7 @@ module BufferedIO
       if index
         flush
         index += 1
-        unbuffered_write(slice, index)
+        unbuffered_write slice[0, index]
         slice += index
         count -= index
       end
@@ -214,7 +209,7 @@ module BufferedIO
 
     if count >= BUFFER_SIZE
       flush
-      unbuffered_write(slice, count)
+      unbuffered_write slice[0, count]
       return
     end
 
@@ -270,7 +265,7 @@ module BufferedIO
 
   # Flushes any buffered data and the underlying IO.
   def flush
-    unbuffered_write(Slice.new(out_buffer, BUFFER_SIZE), @out_count) if @out_count > 0
+    unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
     @out_count = 0
   end
@@ -289,8 +284,8 @@ module BufferedIO
 
   private def fill_buffer
     in_buffer = in_buffer()
-    length = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE), BUFFER_SIZE).to_i
-    @in_buffer_rem = Slice.new(in_buffer, length)
+    size = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE)).to_i
+    @in_buffer_rem = Slice.new(in_buffer, size)
   end
 
   private def in_buffer

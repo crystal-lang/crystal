@@ -5,10 +5,6 @@ class FileDescriptorIO
   private getter! readers
   private getter! writers
 
-  # Seconds to wait when reading before raising IO::Timeout
-  property read_timeout
-  # Seconds to wait when writing before raising IO::Timeout
-  property write_timeout
   # :nodoc:
   property read_timed_out, write_timed_out # only used in event callbacks
 
@@ -34,6 +30,36 @@ class FileDescriptorIO
         @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
       end
     end
+  end
+
+  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  def read_timeout=(read_timeout : Number)
+    @read_timeout = read_timeout.to_f
+  end
+
+  # ditto
+  def read_timeout=(read_timeout : TimeSpan)
+    self.read_timeout = read_timeout.total_seconds
+  end
+
+  # Sets no timeout on read operations, so an `IO::Timeout` will never be raised.
+  def read_timeout=(read_timeout : Nil)
+    @read_timeout = nil
+  end
+
+  # Set the number of seconds to wait when writing before raising an `IO::Timeout`.
+  def write_timeout=(write_timeout : Number)
+    @write_timeout = write_timeout.to_f
+  end
+
+  # ditto
+  def write_timeout=(write_timeout : TimeSpan)
+    self.write_timeout = write_timeout.total_seconds
+  end
+
+  # Sets no timeout on write operations, so an `IO::Timeout` will never be raised.
+  def write_timeout=(write_timeout : Nil)
+    @write_timeout = nil
   end
 
   def blocking
@@ -101,21 +127,6 @@ class FileDescriptorIO
     close rescue nil
   end
 
-  def close
-    return if closed?
-
-    super()
-
-    @read_event.try &.free
-    @read_event = nil
-    @write_event.try &.free
-    @write_event = nil
-    Scheduler.enqueue @readers
-    @readers.clear
-    Scheduler.enqueue @writers
-    @writers.clear
-  end
-
   def closed?
     @closed
   end
@@ -139,7 +150,8 @@ class FileDescriptorIO
     self
   end
 
-  private def unbuffered_read(slice : Slice(UInt8), count)
+  private def unbuffered_read(slice : Slice(UInt8))
+    count = slice.size
     loop do
       bytes_read = LibC.read(@fd, slice.pointer(count), LibC::SizeT.cast(count))
       if bytes_read != -1
@@ -156,7 +168,8 @@ class FileDescriptorIO
     add_read_event unless readers.empty?
   end
 
-  private def unbuffered_write(slice : Slice(UInt8), count)
+  private def unbuffered_write(slice : Slice(UInt8))
+    count = slice.size
     total = count
     loop do
       bytes_written = LibC.write(@fd, slice.pointer(count), LibC::SizeT.cast(count))
@@ -168,6 +181,8 @@ class FileDescriptorIO
         if LibC.errno == Errno::EAGAIN
           wait_writable
           next
+        elsif LibC.errno == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
         else
           raise Errno.new "Error writing file"
         end
@@ -232,7 +247,7 @@ class FileDescriptorIO
   end
 
   private def unbuffered_close
-    check_open
+    return if @closed
 
     if LibC.close(@fd) != 0
       raise Errno.new("Error closing file")
@@ -240,9 +255,14 @@ class FileDescriptorIO
 
     @closed = true
 
-    if event = @event
-      event.free
-    end
+    @read_event.try &.free
+    @read_event = nil
+    @write_event.try &.free
+    @write_event = nil
+    Scheduler.enqueue @readers
+    @readers.clear
+    Scheduler.enqueue @writers
+    @writers.clear
   end
 
   private def unbuffered_flush

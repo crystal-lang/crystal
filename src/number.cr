@@ -22,11 +22,11 @@ struct Number
   # ints.class                   #=> Array(Int64)
   # ```
   def self.[](*nums)
-    Array(self).build(nums.length) do |buffer|
+    Array(self).build(nums.size) do |buffer|
       nums.each_with_index do |num, i|
         buffer[i] = cast(num)
       end
-      nums.length
+      nums.size
     end
   end
 

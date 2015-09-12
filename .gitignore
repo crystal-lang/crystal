@@ -11,3 +11,4 @@ coverage/
 all_spec
 /tmp
 /doc/
+/src/llvm/ext/llvm_ext.o

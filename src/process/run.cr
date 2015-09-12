@@ -210,7 +210,7 @@ class Process
   end
 
   private def close_io(io)
-    io.close if io && !io.closed?
+    io.close if io
   end
 end
 

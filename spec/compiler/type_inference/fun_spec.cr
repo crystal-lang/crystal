@@ -154,7 +154,7 @@ describe "Type inference: fun" do
       "no overload matches"
   end
 
-  it "has fun literal as restriction and errors if lengths is different" do
+  it "has fun literal as restriction and errors if sizes are different" do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -199,7 +199,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to ( -> Float64)"
   end
 
-  it "disallows casting a fun type to one accepting same length argument but different output" do
+  it "disallows casting a fun type to one accepting same size argument but different output" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Int32 -> Int32
@@ -207,7 +207,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to (Int32 -> Int32)"
   end
 
-  it "disallows casting a fun type to one accepting same length argument but different input" do
+  it "disallows casting a fun type to one accepting same size argument but different input" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Float64 -> Float64
@@ -231,7 +231,7 @@ describe "Type inference: fun" do
       ->(f : Foo) do
         {Foo.new(f.x), 0}
       end
-      )) { fun_of(types["Foo"], tuple_of([no_return, int32])) }
+      )) { fun_of(types["Foo"], no_return) }
   end
 
   it "allows implicit cast of fun to return void in non-generic restriction" do
@@ -260,19 +260,6 @@ describe "Type inference: fun" do
   it "types nil or fun type" do
     result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
     result.node.type.should be_a(NilableFunType)
-  end
-
-  it "undefs fun" do
-    assert_error %(
-      fun foo : Int32
-        1
-      end
-
-      undef foo
-
-      foo
-      ),
-      "undefined local variable or method 'foo'"
   end
 
   it "allows passing NoReturn type for any return type (1)" do
@@ -792,5 +779,15 @@ describe "Type inference: fun" do
         ),
         "as a Proc argument type"
     end
+  end
+
+  it "..." do
+    assert_type(%(
+      def foo
+        ->{ a = 1; return 0 }.call
+      end
+
+      foo
+      )) { int32 }
   end
 end

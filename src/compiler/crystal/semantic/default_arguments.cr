@@ -1,14 +1,14 @@
 require "../syntax/ast"
 
 class Crystal::Def
-  def expand_default_arguments(args_length, named_args = nil)
+  def expand_default_arguments(args_size, named_args = nil)
     # If the named arguments cover all arguments with a default value and
     # they come in the same order, we can safely return this def without
     # needing a useless indirection.
-    if named_args && args_length + named_args.length == args.length
+    if named_args && args_size + named_args.size == args.size
       all_match = true
       named_args.each_with_index do |named_arg, i|
-        arg = args[args_length + i]
+        arg = args[args_size + i]
         unless arg.name == named_arg
           all_match = false
           break
@@ -23,7 +23,7 @@ class Crystal::Def
     # constants we can return outself (magic constants will be filled later)
     if !named_args && !splat_index
       all_magic = true
-      args_length.upto(args.length - 1) do |index|
+      args_size.upto(args.size - 1) do |index|
         unless args[index].default_value.is_a?(MagicConstant)
           all_magic = false
           break
@@ -41,28 +41,30 @@ class Crystal::Def
     new_args = [] of Arg
 
     # Args before splat index
-    0.upto(Math.min(args_length, splat_index) - 1) do |index|
-      new_args << args[index].clone
+    if splat_index == -1
+      before_size = 0
+    else
+      before_size = Math.min(args_size, splat_index)
+      before_size.times do |index|
+        new_args << args[index].clone
+      end
     end
 
     # Splat arg
     if splat_index == -1
-      splat_length = 0
-      offset = 0
+      splat_size = 0
     else
-      splat_length = args_length - (args.length - 1)
-      offset = splat_index + splat_length
+      splat_size = args_size - (args.size - 1)
+      splat_size = 0 if splat_size < 0
+      splat_size.times do |index|
+        new_args << Arg.new("_arg#{index}")
+      end
     end
 
-    splat_length.times do |index|
-      new_args << Arg.new("_arg#{index}")
-    end
-
-    # Args after splat index
     base = splat_index + 1
-    min_length = Math.min(args_length, args.length)
-    base.upto(min_length - 1) do |index|
-      new_args << args[index].clone
+    after_size = args_size - before_size - splat_size
+    after_size.times do |i|
+      new_args << args[base + i].clone
     end
 
     if named_args
@@ -93,13 +95,13 @@ class Crystal::Def
 
       # Default values
       if splat_index == -1
-        end_index = args.length - 1
+        end_index = args.size - 1
       else
-        end_index = Math.min(args_length, splat_index - 1)
+        end_index = Math.min(args_size, splat_index - 1)
       end
 
       # Declare variables that are not covered
-      args_length.upto(end_index) do |index|
+      args_size.upto(end_index) do |index|
         arg = args[index]
 
         # But first check if we already have it in the named arguments
@@ -119,7 +121,7 @@ class Crystal::Def
       # Splat argument
       if splat_index != -1
         tuple_args = [] of ASTNode
-        splat_length.times do |index|
+        splat_size.times do |index|
           tuple_args << Var.new("_arg#{index}")
         end
         tuple = TupleLiteral.new(tuple_args)
@@ -145,13 +147,13 @@ class Crystal::Def
       body = [] of ASTNode
 
       # Append variables that are already covered
-      0.upto(args_length - 1) do |index|
+      0.upto(args_size - 1) do |index|
         arg = args[index]
         new_args.push Var.new(arg.name)
       end
 
       # Append default values for those not covered
-      args_length.upto(args.length - 1) do |index|
+      args_size.upto(args.size - 1) do |index|
         arg = args[index]
 
         # But first check if we already have it in the named arguments

@@ -294,4 +294,50 @@ describe "Type inference: super" do
       Child.new.a
       )) { int32 }
   end
+
+  it "doesn't error if invoking super and match isn't found in direct superclass (even though it's find in one superclass)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo(x)
+          'a'
+        end
+      end
+
+      class Baz < Bar
+        def foo
+          super()
+        end
+      end
+
+      Baz.new.foo
+      )) { int32 }
+  end
+
+  it "errors if invoking super and match isn't found in direct superclass in initialize (even though it's find in one superclass)" do
+    assert_error %(
+      class Foo
+        def initialize
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+        end
+      end
+
+      class Baz < Bar
+        def initialize
+          super()
+        end
+      end
+
+      Baz.new
+      ), "wrong number of argument"
+  end
 end

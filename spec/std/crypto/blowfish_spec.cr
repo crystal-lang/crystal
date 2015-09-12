@@ -21,19 +21,19 @@ describe "Blowfish" do
     end
   end
 
-  it "raises if the key length is bigger than 56" do
+  it "raises if the key size is bigger than 56" do
     expect_raises ArgumentError, /Invalid key size/ do
       Crypto::Blowfish.new("a" * 57)
     end
   end
 
   it "folds the salt during the key schedule" do
-    length = 32
-    salt = String.build {|io| length.times {|i| io << (i + length).chr} }
+    size = 32
+    salt = String.build {|io| size.times {|i| io << (i + size).chr} }
     orig_l, orig_r = 0x00, 0x00
-    
+
     bf = Crypto::Blowfish.new
-    bf.salted_expand_key("a" * length, salt)
+    bf.salted_expand_key("a" * size, salt)
 
     l, r = bf.encrypt_pair(orig_l, orig_r)
     l.should eq(0xc8f07bef)

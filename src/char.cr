@@ -487,7 +487,7 @@ struct Char
       appender = buffer.appender
       each_byte { |byte| appender << byte }
       appender << 0_u8
-      {appender.count - 1, 1}
+      {appender.size - 1, 1}
     end
   end
 
@@ -503,7 +503,7 @@ struct Char
         chars[i] = byte
         i += 1
       end
-      io.write chars.to_slice, i
+      io.write chars.to_slice[0, i]
     end
   end
 

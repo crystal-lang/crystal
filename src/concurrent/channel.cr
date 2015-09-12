@@ -63,6 +63,23 @@ abstract class Channel(T)
     raise ChannelClosed.new if @closed
   end
 
+  def self.receive_first(*channels)
+    receive_first channels
+  end
+
+  def self.receive_first(channels : Tuple | Array)
+    select(channels.map(&.receive_op))[1]
+  end
+
+  def self.send_first(value, *channels)
+    send_first value, channels
+  end
+
+  def self.send_first(value, channels : Tuple | Array)
+    select(channels.map(&.send_op(value)))
+    nil
+  end
+
   def self.select(*ops : SendOp | ReceiveOp)
     select ops
   end
@@ -167,7 +184,7 @@ class BufferedChannel(T) < Channel(T)
   end
 
   def full?
-    @queue.length >= @capacity
+    @queue.size >= @capacity
   end
 
   def empty?

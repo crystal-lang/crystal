@@ -20,16 +20,15 @@ module Crystal
     #
     # To:
     #
-    #     ary = Array(typeof(1, 2, 3)).new(3)
-    #     ary.length = 3
-    #     buffer = ary.buffer
-    #     buffer[0] = 1
-    #     buffer[1] = 2
-    #     buffer[2] = 3
-    #     ary
+    #     Array(typeof(1, 2, 3)).new(3) do |buffer|
+    #       buffer[0] = 1
+    #       buffer[1] = 2
+    #       buffer[2] = 3
+    #       3
+    #     end
     def expand(node : ArrayLiteral)
       if node_of = node.of
-        if node.elements.length == 0
+        if node.elements.size == 0
           generic = Generic.new(Path.global("Array"), node_of).at(node)
           call = Call.new(generic, "new").at(node)
           return call
@@ -40,30 +39,21 @@ module Crystal
         type_var = TypeOf.new(node.elements.clone)
       end
 
-      length = node.elements.length
-      capacity = length
-
-      generic = Generic.new(Path.global("Array"), type_var).at(node)
-      constructor = Call.new(generic, "new", NumberLiteral.new(capacity)).at(node)
-
-      temp_var = new_temp_var
-      assign = Assign.new(temp_var.clone, constructor).at(node)
-
-      set_length = Call.new(temp_var.clone, "length=", NumberLiteral.new(length)).at(node)
-      get_buffer = Call.new(temp_var.clone, "buffer").at(node)
+      capacity = node.elements.size
 
       buffer = new_temp_var.at(node)
 
-      assign_buffer = Assign.new(buffer.clone, get_buffer).at(node)
-
-      exps = Array(ASTNode).new(node.elements.length + 4)
-      exps.push assign, set_length, assign_buffer
+      exps = Array(ASTNode).new(node.elements.size + 1)
       node.elements.each_with_index do |elem, i|
-        exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i), elem).at(node)
+        exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
       end
-      exps << temp_var.clone
+      exps << NumberLiteral.new(capacity).at(node)
+      block_body = Expressions.new(exps).at(node)
 
-      Expressions.new(exps).at(node)
+      block = Block.new([buffer.clone], block_body).at(node)
+
+      generic = Generic.new(Path.global("Array"), type_var).at(node)
+      Call.new(generic, "build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode, block: block).at(node)
     end
 
     def expand_named(node : ArrayLiteral)
@@ -75,7 +65,7 @@ module Crystal
         return constructor
       end
 
-      exps = Array(ASTNode).new(node.elements.length + 2)
+      exps = Array(ASTNode).new(node.elements.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.elements.each do |elem|
         exps << Call.new(temp_var.clone, "<<", elem).at(node)
@@ -94,7 +84,7 @@ module Crystal
 
       temp_var = new_temp_var
 
-      exps = Array(ASTNode).new(node.entries.length + 2)
+      exps = Array(ASTNode).new(node.entries.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.entries.each do |entry|
         exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone]).at(node)
@@ -141,7 +131,7 @@ module Crystal
       else
         temp_var = new_temp_var
 
-        exps = Array(ASTNode).new(node.entries.length + 2)
+        exps = Array(ASTNode).new(node.entries.size + 2)
         exps << Assign.new(temp_var.clone, constructor).at(node)
         node.entries.each do |entry|
           exps << Call.new(temp_var.clone, "[]=", entry.key.clone, entry.value.clone).at(node)
@@ -177,7 +167,7 @@ module Crystal
         key = {string, node.options}
         index = @regexes.index key
         unless index
-          index = @regexes.length
+          index = @regexes.size
           @regexes << key
         end
 
@@ -209,7 +199,7 @@ module Crystal
     def expand(node : And)
       left = node.left
 
-      if left.is_a?(Expressions) && left.expressions.length == 1
+      if left.is_a?(Expressions) && left.expressions.size == 1
         left = left.expressions.first
       end
 
@@ -242,7 +232,7 @@ module Crystal
     def expand(node : Or)
       left = node.left
 
-      if left.is_a?(Expressions) && left.expressions.length == 1
+      if left.is_a?(Expressions) && left.expressions.size == 1
         left = left.expressions.first
       end
 
@@ -298,7 +288,7 @@ module Crystal
       node.expressions.each do |piece|
         case piece
         when StringLiteral
-          capacity += piece.value.length
+          capacity += piece.value.size
         else
           capacity += 15
         end
