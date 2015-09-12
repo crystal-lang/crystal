@@ -122,8 +122,23 @@ describe "Array" do
       [1, 2, 3, 4, 5, 6][-5 ... -2].should eq([2, 3, 4])
     end
 
-    it "gets on empty range" do
+    it "gets on range with start higher than end" do
+      [1, 2, 3][2 .. 1].should eq([] of Int32)
       [1, 2, 3][3 .. 1].should eq([] of Int32)
+      expect_raises IndexError do
+        [1, 2, 3][4 .. 1]
+      end
+    end
+
+    it "gets on range with start higher than negative end" do
+      [1, 2, 3][1 .. -1].should eq([2, 3] of Int32)
+      [1, 2, 3][2 .. -2].should eq([] of Int32)
+    end
+
+    it "raises on index out of bounds with range" do
+      expect_raises IndexError do
+        [1, 2, 3][4 .. 6]
+      end
     end
 
     it "gets with start and count" do
@@ -134,11 +149,11 @@ describe "Array" do
       [1, 2, 3][1, 3].should eq([2, 3])
     end
 
-    it "gets with negative start " do
+    it "gets with negative start" do
       [1, 2, 3, 4, 5, 6][-4, 2].should eq([3, 4])
     end
 
-    it "raises on index out of bounds with range" do
+    it "raises on index out of bounds with start and count" do
       expect_raises IndexError do
         [1, 2, 3][4, 0]
       end
@@ -159,6 +174,12 @@ describe "Array" do
     it "raises on negative count" do
       expect_raises ArgumentError, /negative count: -1/ do
         [1, 2, 3][1, -1]
+      end
+    end
+
+    it "raises on negative count on empty Array" do
+      expect_raises ArgumentError, /negative count: -1/ do
+        Array(Int32).new[0,-1]
       end
     end
 
