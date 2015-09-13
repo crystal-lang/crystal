@@ -1020,7 +1020,7 @@ module Crystal
       @str << keyword("type")
       @str << " "
       @str << node.name.to_s
-      @str << " : "
+      @str << " = "
       node.type_spec.accept self
       false
     end
