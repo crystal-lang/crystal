@@ -7,12 +7,12 @@ class UNIXServer < UNIXSocket
     sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
 
     addr = LibC::SockAddrUn.new
-    addr.family = typeof(addr.family).cast(LibC::AF_UNIX)
+    addr.family = typeof(addr.family).new(LibC::AF_UNIX)
     if path.bytesize + 1 > addr.path.size
       raise "Path size exceeds the maximum size of #{addr.path.size - 1} bytes"
     end
     addr.path.buffer.copy_from(path.cstr, path.bytesize + 1)
-    if LibC.bind(sock, (pointerof(addr) as LibC::SockAddr*), LibC::SocklenT.cast(sizeof(LibC::SockAddrUn))) != 0
+    if LibC.bind(sock, (pointerof(addr) as LibC::SockAddr*), LibC::SocklenT.new(sizeof(LibC::SockAddrUn))) != 0
       LibC.close(sock)
       raise Errno.new("Error binding UNIX server at #{path}")
     end

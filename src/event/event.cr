@@ -38,16 +38,16 @@ module Event
 
     private def to_timeval(time : Int)
       t :: LibC::TimeVal
-      t.tv_sec = typeof(t.tv_sec).cast(time)
-      t.tv_usec = typeof(t.tv_usec).cast(0)
+      t.tv_sec = typeof(t.tv_sec).new(time)
+      t.tv_usec = typeof(t.tv_usec).new(0)
       t
     end
 
     private def to_timeval(time : Float)
       t :: LibC::TimeVal
 
-      seconds = typeof(t.tv_sec).cast(time)
-      useconds = typeof(t.tv_usec).cast((time - seconds) * 1e6)
+      seconds = typeof(t.tv_sec).new(time)
+      useconds = typeof(t.tv_usec).new((time - seconds) * 1e6)
 
       t.tv_sec = seconds
       t.tv_usec = useconds

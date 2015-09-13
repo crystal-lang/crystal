@@ -31,7 +31,7 @@ struct OpenSSL::BIO
         STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
         0
       end
-      LibCrypto::Long.cast(val)
+      LibCrypto::Long.new(val)
     end
 
     crystal_bio.create = LibCrypto::BioMethodCreate.new do |bio|

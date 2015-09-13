@@ -15,7 +15,7 @@ struct BigInt < Int
 
   def initialize(num : SignedInt)
     if LibC::Long::MIN <= num <= LibC::Long::MAX
-      LibGMP.init_set_si(out @mpz, LibC::Long.cast(num))
+      LibGMP.init_set_si(out @mpz, LibC::Long.new(num))
     else
       LibGMP.init_set_str(out @mpz, num.to_s, 10)
     end
@@ -23,7 +23,7 @@ struct BigInt < Int
 
   def initialize(num : UnsignedInt)
     if num <= LibC::ULong::MAX
-      LibGMP.init_set_ui(out @mpz, LibC::ULong.cast(num))
+      LibGMP.init_set_ui(out @mpz, LibC::ULong.new(num))
     else
       LibGMP.init_set_str(out @mpz, num.to_s, 10)
     end
@@ -38,17 +38,13 @@ struct BigInt < Int
     new(mpz)
   end
 
-  def self.cast(value)
-    value.to_big_i
-  end
-
   def <=>(other : BigInt)
     LibGMP.cmp(mpz, other)
   end
 
   def <=>(other : SignedInt)
     if LibC::Long::MIN <= other <= LibC::Long::MAX
-      LibGMP.cmp_si(mpz, LibC::Long.cast(other))
+      LibGMP.cmp_si(mpz, LibC::Long.new(other))
     else
       self <=> BigInt.new(other)
     end
@@ -56,7 +52,7 @@ struct BigInt < Int
 
   def <=>(other : UnsignedInt)
     if other <= LibC::ULong::MAX
-      LibGMP.cmp_ui(mpz, LibC::ULong.cast(other))
+      LibGMP.cmp_ui(mpz, LibC::ULong.new(other))
     else
       self <=> BigInt.new(other)
     end
@@ -70,7 +66,7 @@ struct BigInt < Int
     if other < 0
       self - other.abs
     else
-      BigInt.new { |mpz| LibGMP.add_ui(mpz, self, LibC::ULong.cast(other)) }
+      BigInt.new { |mpz| LibGMP.add_ui(mpz, self, LibC::ULong.new(other)) }
     end
   end
 
@@ -82,7 +78,7 @@ struct BigInt < Int
     if other < 0
       self + other.abs
     else
-      BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, LibC::ULong.cast(other)) }
+      BigInt.new { |mpz| LibGMP.sub_ui(mpz, self, LibC::ULong.new(other)) }
     end
   end
 
@@ -99,11 +95,11 @@ struct BigInt < Int
   end
 
   def *(other : SignedInt)
-    BigInt.new { |mpz| LibGMP.mul_si(mpz, self, LibC::Long.cast(other)) }
+    BigInt.new { |mpz| LibGMP.mul_si(mpz, self, LibC::Long.new(other)) }
   end
 
   def *(other : UnsignedInt)
-    BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, LibC::ULong.cast(other)) }
+    BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, LibC::ULong.new(other)) }
   end
 
   def /(other : BigInt)
@@ -118,7 +114,7 @@ struct BigInt < Int
     if other < 0
       -(self / other.abs)
     else
-      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, LibC::ULong.cast(other)) }
+      BigInt.new { |mpz| LibGMP.fdiv_q_ui(mpz, self, LibC::ULong.new(other)) }
     end
   end
 
@@ -131,7 +127,7 @@ struct BigInt < Int
   def %(other : Int)
     check_division_by_zero other
 
-    BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, LibC::ULong.cast(other.abs)) }
+    BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, LibC::ULong.new(other.abs)) }
   end
 
   def ~
@@ -151,11 +147,11 @@ struct BigInt < Int
   end
 
   def >>(other : Int)
-    BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, LibGMP::BitcntT.cast(other)) }
+    BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, LibGMP::BitcntT.new(other)) }
   end
 
   def <<(other : Int)
-    BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, LibGMP::BitcntT.cast(other)) }
+    BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, LibGMP::BitcntT.new(other)) }
   end
 
   def inspect

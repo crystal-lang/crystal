@@ -292,7 +292,7 @@ class Dir
   end
 
   def self.mkdir(path, mode=0o777)
-    if LibC.mkdir(path, LibC::ModeT.cast(mode)) == -1
+    if LibC.mkdir(path, LibC::ModeT.new(mode)) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0

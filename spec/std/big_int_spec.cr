@@ -152,16 +152,6 @@ describe "BigInt" do
     a.to_s(32).should eq(d)
   end
 
-  it "casts other ints and strings" do
-    a = BigInt.new(123456)
-    b = BigInt.cast(123456)
-    a.should eq(b)
-
-    a = BigInt.new("123456789012345678901234567890")
-    b = BigInt.cast("123456789012345678901234567890")
-    a.should eq(b)
-  end
-
   it "can use Number::[]" do
     a = BigInt[146, "3464", 97, "545"]
     b = [BigInt.new(146), BigInt.new(3464), BigInt.new(97), BigInt.new(545)]

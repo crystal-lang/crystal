@@ -242,29 +242,29 @@ describe "Int" do
   end
 
   it "casts" do
-    Int8.cast(1).should be_a(Int8)
-    Int8.cast(1).should eq(1)
+    Int8.new(1).should be_a(Int8)
+    Int8.new(1).should eq(1)
 
-    Int16.cast(1).should be_a(Int16)
-    Int16.cast(1).should eq(1)
+    Int16.new(1).should be_a(Int16)
+    Int16.new(1).should eq(1)
 
-    Int32.cast(1).should be_a(Int32)
-    Int32.cast(1).should eq(1)
+    Int32.new(1).should be_a(Int32)
+    Int32.new(1).should eq(1)
 
-    Int64.cast(1).should be_a(Int64)
-    Int64.cast(1).should eq(1)
+    Int64.new(1).should be_a(Int64)
+    Int64.new(1).should eq(1)
 
-    UInt8.cast(1).should be_a(UInt8)
-    UInt8.cast(1).should eq(1)
+    UInt8.new(1).should be_a(UInt8)
+    UInt8.new(1).should eq(1)
 
-    UInt16.cast(1).should be_a(UInt16)
-    UInt16.cast(1).should eq(1)
+    UInt16.new(1).should be_a(UInt16)
+    UInt16.new(1).should eq(1)
 
-    UInt32.cast(1).should be_a(UInt32)
-    UInt32.cast(1).should eq(1)
+    UInt32.new(1).should be_a(UInt32)
+    UInt32.new(1).should eq(1)
 
-    UInt64.cast(1).should be_a(UInt64)
-    UInt64.cast(1).should eq(1)
+    UInt64.new(1).should be_a(UInt64)
+    UInt64.new(1).should eq(1)
   end
 
   it "raises when divides by zero" do

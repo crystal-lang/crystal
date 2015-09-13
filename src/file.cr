@@ -88,7 +88,7 @@ class File < FileDescriptorIO
     check_open
 
     flush
-    seek_value = LibC.lseek(@fd, LibC::OffT.cast(offset), whence.to_i)
+    seek_value = LibC.lseek(@fd, LibC::OffT.new(offset), whence.to_i)
     if seek_value == -1
       raise Errno.new "Unable to seek"
     end

@@ -59,7 +59,7 @@ lib LibC
     MAP_ANON = 0x0020
   end
 
-  MAP_FAILED = Pointer(Void).new(SizeT.cast(-1))
+  MAP_FAILED = Pointer(Void).new(SizeT.new(-1))
 
   fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : SSizeT) : Void*
   fun munmap(addr : Void*, len : SizeT)
@@ -77,45 +77,45 @@ lib LibC
   end
 end
 
-# These cast definitions are here because they are required before defining
+# These new definitions are here because they are required before defining
 # all of Number, Int, etc., functionality (for example in GC)
 
-def Int8.cast(value)
+def Int8.new(value)
   value.to_i8
 end
 
-def Int16.cast(value)
+def Int16.new(value)
   value.to_i16
 end
 
-def Int32.cast(value)
+def Int32.new(value)
   value.to_i32
 end
 
-def Int64.cast(value)
+def Int64.new(value)
   value.to_i64
 end
 
-def UInt8.cast(value)
+def UInt8.new(value)
   value.to_u8
 end
 
-def UInt16.cast(value)
+def UInt16.new(value)
   value.to_u16
 end
 
-def UInt32.cast(value)
+def UInt32.new(value)
   value.to_u32
 end
 
-def UInt64.cast(value)
+def UInt64.new(value)
   value.to_u64
 end
 
-def Float32.cast(value)
+def Float32.new(value)
   value.to_f32
 end
 
-def Float64.cast(value)
+def Float64.new(value)
   value.to_f64
 end

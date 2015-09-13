@@ -4,7 +4,7 @@ class YAML::PullParser
     @event = LibYAML::Event.new
 
     LibYAML.yaml_parser_initialize(@parser)
-    LibYAML.yaml_parser_set_input_string(@parser, content, LibC::SizeT.cast(content.bytesize))
+    LibYAML.yaml_parser_set_input_string(@parser, content, LibC::SizeT.new(content.bytesize))
 
     read_next
     parse_exception "Expected STREAM_START" unless kind == LibYAML::EventType::STREAM_START

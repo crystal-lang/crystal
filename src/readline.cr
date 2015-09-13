@@ -16,7 +16,7 @@ lib LibReadline
 end
 
 private def malloc_match(match)
-  match_ptr = LibC.malloc(LibC::SizeT.cast(match.bytesize) + 1) as UInt8*
+  match_ptr = LibC.malloc(LibC::SizeT.new(match.bytesize) + 1) as UInt8*
   match_ptr.copy_from(match.to_unsafe, match.bytesize)
   match_ptr[match.bytesize] = 0_u8
   match_ptr
@@ -31,9 +31,9 @@ module Readline
   KeyBindingHandler = ->(count : LibReadline::Int, key : LibReadline::Int) do
     if (handlers = @@key_bind_handlers) && handlers[key.to_i32]?
       res = handlers[key].call(count.to_i32, key.to_i32)
-      LibReadline::Int.cast(res)
+      LibReadline::Int.new(res)
     else
-      LibReadline::Int.cast(1)
+      LibReadline::Int.new(1)
     end
   end
 
@@ -68,14 +68,14 @@ module Readline
     handlers[c.ord] = f
     @@key_bind_handlers = handlers
 
-    res = LibReadline.rl_bind_key(LibReadline::Int.cast(c.ord), KeyBindingHandler).to_i32
+    res = LibReadline.rl_bind_key(LibReadline::Int.new(c.ord), KeyBindingHandler).to_i32
     raise ArgumentError.new "invalid key: '#{c.inspect}'" unless res == 0
   end
 
   def unbind_key(c : Char)
     if (handlers = @@key_bind_handlers) && handlers[c.ord]?
       handlers.delete(c.ord)
-      res = LibReadline.rl_unbind_key(LibReadline::Int.cast(c.ord)).to_i32
+      res = LibReadline.rl_unbind_key(LibReadline::Int.new(c.ord)).to_i32
       raise Exception.new "error unbinding key: '#{c.inspect}'" unless res == 0
     else
       raise KeyError.new "key not bound: '#{c.inspect}'"
@@ -83,7 +83,7 @@ module Readline
   end
 
   def done
-    LibReadline.rl_done != LibReadline::Int.cast(0)
+    LibReadline.rl_done != LibReadline::Int.new(0)
   end
 
   def done=(val : Bool)
@@ -129,7 +129,7 @@ module Readline
 
     # We *must* to create the results using malloc (readline later frees that).
     # We create an extra result for the first element.
-    result = LibC.malloc(LibC::SizeT.cast(sizeof(UInt8*)) * (matches.size + 2)) as UInt8**
+    result = LibC.malloc(LibC::SizeT.new(sizeof(UInt8*)) * (matches.size + 2)) as UInt8**
     matches.each_with_index do |match, i|
       result[i + 1] = malloc_match(match)
     end
