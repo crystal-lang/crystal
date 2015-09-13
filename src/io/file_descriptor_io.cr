@@ -242,7 +242,7 @@ class FileDescriptorIO
   end
 
   private def unbuffered_rewind
-    seek(0, SEEK_SET)
+    seek(0, IO::Seek::Set)
     self
   end
 

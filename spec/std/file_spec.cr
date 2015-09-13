@@ -446,4 +446,12 @@ describe "File" do
       i += 1
     end
   end
+
+  it "rewinds" do
+    file = File.new("#{__DIR__}/data/test_file.txt")
+    content = file.read
+    content.size.should_not eq(0)
+    file.rewind
+    file.read.should eq(content)
+  end
 end
