@@ -689,6 +689,7 @@ module Crystal
     end
 
     def visit(node : ExternalVar)
+      @str << "$"
       @str << node.name
       if real_name = node.real_name
         @str << " = "
