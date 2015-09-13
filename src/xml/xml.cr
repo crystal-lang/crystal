@@ -6,8 +6,7 @@ module XML
   def self.parse(io : IO, options = ParserOptions.default : ParserOptions)
     from_ptr LibXML.xmlReadIO(
       ->(ctx, buffer, len) {
-        Box(IO).unbox(ctx).read Slice.new(buffer, len)
-        len
+        LibC::Int.cast(Box(IO).unbox(ctx).read Slice.new(buffer, len))
       },
       ->(ctx) { 0 },
       Box(IO).box(io),
@@ -24,8 +23,7 @@ module XML
   def self.parse_html(io : IO, options = HTMLParserOptions.default : HTMLParserOptions)
     from_ptr LibXML.htmlReadIO(
       ->(ctx, buffer, len) {
-        Box(IO).unbox(ctx).read Slice.new(buffer, len)
-        len
+        LibC::Int.cast(Box(IO).unbox(ctx).read Slice.new(buffer, len))
       },
       ->(ctx) { 0 },
       Box(IO).box(io),

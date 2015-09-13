@@ -183,4 +183,11 @@ XML
       "xmlns:openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
     })
   end
+
+  it "reads big xml file (#1455)" do
+    content = "." * 20_000
+    string = %(<?xml version="1.0"?><root>#{content}</root>)
+    parsed = XML.parse(StringIO.new(string))
+    parsed.root.not_nil!.children[0].text.should eq(content)
+  end
 end
