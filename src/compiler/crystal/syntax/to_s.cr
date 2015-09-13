@@ -754,10 +754,21 @@ module Crystal
     end
 
     def visit(node : Generic)
-      if @inside_lib && node.name.names.size == 1 && node.name.names.first == "Pointer"
-        node.type_vars.first.accept self
-        @str << "*"
-        return false
+      if @inside_lib && node.name.names.size == 1
+        case node.name.names.first
+        when "Pointer"
+          node.type_vars.first.accept self
+          @str << "*"
+          return false
+        when "StaticArray"
+          if node.type_vars.size == 2
+            node.type_vars[0].accept self
+            @str << "["
+            node.type_vars[1].accept self
+            @str << "]"
+            return false
+          end
+        end
       end
 
       node.name.accept self
