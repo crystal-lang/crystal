@@ -40,7 +40,7 @@ class Socket < FileDescriptorIO
   end
 
   protected def create_socket(family, stype, protocol = 0)
-    sock = LibC.socket(LibC::Int.cast(family), stype, protocol)
+    sock = LibC.socket(LibC::Int.new(family), stype, protocol)
     raise Errno.new("Error opening socket") if sock <= 0
     init_close_on_exec sock
     sock
@@ -88,7 +88,7 @@ class Socket < FileDescriptorIO
 
   # returns the modified optval
   def getsockopt optname, optval, level = LibC::SOL_SOCKET
-    optsize = LibC::SocklenT.cast(sizeof(typeof(optval)))
+    optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval) as Void*), pointerof(optsize))
     raise Errno.new("getsockopt") if ret == -1
     optval
@@ -96,7 +96,7 @@ class Socket < FileDescriptorIO
 
   # optval is restricted to Int32 until sizeof works on variables
   def setsockopt optname, optval : Int32, level = LibC::SOL_SOCKET
-    optsize = LibC::SocklenT.cast(sizeof(typeof(optval)))
+    optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval) as Void*), optsize)
     raise Errno.new("setsockopt") if ret == -1
     ret
@@ -105,14 +105,14 @@ class Socket < FileDescriptorIO
   def self.inet_ntop(sa : LibC::SockAddrIn6)
     ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::SocklenT.cast(LibC::INET6_ADDRSTRLEN))
+    LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::SocklenT.new(LibC::INET6_ADDRSTRLEN))
     String.new(ip_address)
   end
 
   def self.inet_ntop(sa : LibC::SockAddrIn)
     ip_address = GC.malloc_atomic(LibC::INET_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::SocklenT.cast(LibC::INET_ADDRSTRLEN))
+    LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::SocklenT.new(LibC::INET_ADDRSTRLEN))
     String.new(ip_address)
   end
 

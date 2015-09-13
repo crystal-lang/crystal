@@ -246,7 +246,7 @@ struct Slice(T)
 
   def ==(other : self)
     return false if bytesize != other.bytesize
-    sz = LibC::SizeT.cast(bytesize)
+    sz = LibC::SizeT.new(bytesize)
     return LibC.memcmp(to_unsafe as Void*, other.to_unsafe as Void*, sz) == 0
   end
 

@@ -45,10 +45,10 @@ class Fiber
   end
 
   protected def self.allocate_stack
-    @@stack_pool.pop? || LibC.mmap(nil, LibC::SizeT.cast(Fiber::STACK_SIZE),
+    @@stack_pool.pop? || LibC.mmap(nil, LibC::SizeT.new(Fiber::STACK_SIZE),
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
-      -1, LibC::SSizeT.cast(0)).tap do |pointer|
+      -1, LibC::SSizeT.new(0)).tap do |pointer|
         raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
       end
   end
@@ -58,7 +58,7 @@ class Fiber
     free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
     free_count.times do
       stack = @@stack_pool.pop
-      LibC.munmap(stack, LibC::SizeT.cast(Fiber::STACK_SIZE))
+      LibC.munmap(stack, LibC::SizeT.new(Fiber::STACK_SIZE))
     end
   end
 

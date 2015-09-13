@@ -160,7 +160,7 @@ module IO
     error_fdset = FdSet.from_ios(error_ios)
 
     if timeout_sec
-      sec = LibC::TimeT.cast(timeout_sec)
+      sec = LibC::TimeT.new(timeout_sec)
 
       if timeout_sec.is_a? Float
         usec = (timeout_sec-sec) * 10e6
@@ -170,7 +170,7 @@ module IO
 
       timeout = LibC::TimeVal.new
       timeout.tv_sec = sec
-      timeout.tv_usec = LibC::UsecT.cast(usec)
+      timeout.tv_usec = LibC::UsecT.new(usec)
       timeout_ptr = pointerof(timeout)
     else
       timeout_ptr = Pointer(LibC::TimeVal).null

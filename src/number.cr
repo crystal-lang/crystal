@@ -3,7 +3,7 @@ struct Number
   include Comparable(Number)
 
   def self.zero
-    cast(0)
+    new(0)
   end
 
   # Returns self.
@@ -24,7 +24,7 @@ struct Number
   def self.[](*nums)
     Array(self).build(nums.size) do |buffer|
       nums.each_with_index do |num, i|
-        buffer[i] = cast(num)
+        buffer[i] = new(num)
       end
       nums.size
     end
@@ -161,7 +161,7 @@ struct Number
       base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
     end
 
-    self.class.cast((x / y).round * y)
+    self.class.new((x / y).round * y)
   end
 
   # Rounds this number to a given precision in decimal digits.
@@ -172,7 +172,7 @@ struct Number
   def round(digits, base = 10)
     x = self.to_f
     y = base ** digits
-    self.class.cast((x * y).round / y)
+    self.class.new((x * y).round / y)
   end
 
   # :nodoc:

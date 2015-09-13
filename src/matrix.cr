@@ -221,7 +221,7 @@ class Matrix(T)
     pos = -1
     @rows.times do |i|
       other.column_count.times do |j|
-        matrix[pos += 1] = typeof(self[0] * other[0]).cast((0...@columns).inject(0) do |memo, k|
+        matrix[pos += 1] = typeof(self[0] * other[0]).new((0...@columns).inject(0) do |memo, k|
           memo + at(i, k) * other[k, j]
         end)
       end
