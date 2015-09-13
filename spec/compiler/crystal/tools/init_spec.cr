@@ -105,7 +105,7 @@ end
 
     describe_file "example/src/example/version.cr" do |version|
       version.should eq(%{module Example
-  VERSION = "0.0.1"
+  VERSION = "0.1.0"
 end
 })
     end
