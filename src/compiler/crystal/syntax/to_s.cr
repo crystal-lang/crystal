@@ -17,6 +17,7 @@ module Crystal
     def initialize(@str = StringIO.new)
       @indent = 0
       @inside_macro = 0
+      @inside_lib = false
     end
 
     def visit(node : Primitive)
@@ -753,6 +754,12 @@ module Crystal
     end
 
     def visit(node : Generic)
+      if @inside_lib && node.name.names.size == 1 && node.name.names.first == "Pointer"
+        node.type_vars.first.accept self
+        @str << "*"
+        return false
+      end
+
       node.name.accept self
       @str << "("
       node.type_vars.each_with_index do |var, i|
@@ -961,7 +968,9 @@ module Crystal
       @str << " "
       @str << node.name
       newline
+      @inside_lib = true
       accept_with_indent(node.body)
+      @inside_lib = false
       append_indent
       @str << keyword("end")
       false
@@ -981,7 +990,10 @@ module Crystal
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
-          arg.accept self
+          if arg_name = arg.name
+            @str << arg_name << " : "
+          end
+          arg.restriction.not_nil!.accept self
         end
         if node.varargs
           @str << ", ..."
