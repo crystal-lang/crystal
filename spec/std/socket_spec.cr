@@ -14,6 +14,8 @@ describe "UNIXSocket" do
         client.addr.path.should eq(path)
 
         server.accept do |sock|
+          sock.sync?.should eq(server.sync?)
+
           sock.addr.family.should eq("AF_UNIX")
           sock.addr.path.should eq("")
 
@@ -24,6 +26,16 @@ describe "UNIXSocket" do
           sock.read(4).should eq("ping")
           sock << "pong"
           client.read(4).should eq("pong")
+        end
+      end
+
+
+      # test sync flag propagation after accept
+      server.sync = !server.sync?
+
+      UNIXSocket.open(path) do |client|
+        server.accept do |sock|
+          sock.sync?.should eq(server.sync?)
         end
       end
     end
@@ -104,6 +116,7 @@ describe "TCPSocket" do
         # client.addr.ip_address.should eq("127.0.0.1")
 
         sock = server.accept
+        sock.sync?.should eq(server.sync?)
 
         # sock.addr.family.should eq("AF_INET6")
         # sock.addr.ip_port.should eq(12345)
@@ -122,6 +135,15 @@ describe "TCPSocket" do
         sock.read(4).should eq("ping")
         sock << "pong"
         client.read(4).should eq("pong")
+      end
+
+
+      # test sync flag propagation after accept
+      server.sync = !server.sync?
+
+      TCPSocket.open("localhost", 12345) do |client|
+        sock = server.accept
+        sock.sync?.should eq(server.sync?)
       end
     end
   end
