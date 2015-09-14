@@ -530,6 +530,11 @@ module Crystal
     def type_assign(target : Path, value, node)
       return if @lib_def_pass == 2
 
+      # We are inside the assign, so we go outside it to check if we are inside an outer expression
+      @exp_nest -= 1
+      check_outside_block_or_exp node, "declare constant"
+      @exp_nest += 1
+
       type = current_type.types[target.names.first]?
       if type
         target.raise "already initialized constant #{type}"

@@ -221,4 +221,26 @@ describe "Type inference: const" do
       A
       )) { |mod| mod.nil }
   end
+
+  it "errors on dynamic constant assignment inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        A = 1
+      end
+      ),
+      "can't declare constant inside block"
+  end
+
+  it "errors on dynamic constant assignment inside if" do
+    assert_error %(
+      if 1 == 1
+        A = 1
+      end
+      ),
+      "can't declare constant dynamically"
+  end
 end
