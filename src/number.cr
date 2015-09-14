@@ -175,6 +175,30 @@ struct Number
     self.class.new((x * y).round / y)
   end
 
+  # Clamps a value within `range`.
+  # ```
+  # 5.clamp(10..100) #=> 10
+  # 50.clamp(10..100) #=> 50
+  # 500.clamp(10..100) #=> 100
+  # ```
+  def clamp(range : Range)
+    raise ArgumentError.new("can't clamp an exclusive range") if range.exclusive?
+    clamp range.begin, range.end
+  end
+
+  # Clamps a value between `min` and `max`.
+  # ```
+  # 5.clamp(10, 100) #=> 10
+  # 50.clamp(10, 100) #=> 50
+  # 500.clamp(10, 100) #=> 100
+  # ```
+  def clamp(min, max)
+    return max if self > max
+    return min if self < min
+    self
+  end
+
+
   # :nodoc:
   class StepIterator(T, L, B)
     include Iterator(T)

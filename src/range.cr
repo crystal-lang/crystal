@@ -69,6 +69,10 @@ struct Range(B, E)
   # ```
   getter :end
 
+  # Returns `true` if the range is exclusive.
+  # Returns `false` otherwise (default).
+  getter? :exclusive
+
   # Constructs a range using the given begining and end.
   #
   # ```

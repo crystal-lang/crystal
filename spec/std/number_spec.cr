@@ -55,6 +55,35 @@ describe "Number" do
     end
   end
 
+  describe "clamp" do
+    it "clamps integers" do
+      -5.clamp(-10, 100).should eq(-5)
+      -5.clamp(10, 100).should eq(10)
+      5.clamp(10, 100).should eq(10)
+      50.clamp(10, 100).should eq(50)
+      500.clamp(10, 100).should eq(100)
+
+      50.clamp(10..100).should eq(50)
+    end
+
+    it "clamps floats" do
+      -5.5.clamp(-10.1, 100.1).should eq(-5.5)
+      -5.5.clamp(10.1, 100.1).should eq(10.1)
+      5.5.clamp(10.1, 100.1).should eq(10.1)
+      50.5.clamp(10.1, 100.1).should eq(50.5)
+      500.5.clamp(10.1, 100.1).should eq(100.1)
+
+      50.5.clamp(10.1..100.1).should eq(50.5)
+    end
+
+   it "fails with an exclusive range" do
+     expect_raises(ArgumentError) do
+       range = Range.new(1, 2, exclusive: true)
+       5.clamp(range)
+     end
+   end
+  end
+
   it "creates an array with [] and some elements" do
     ary = Int64[1, 2, 3]
     ary.should eq([1, 2, 3])
