@@ -20,7 +20,7 @@ class HTTP::Response
     end
 
     if (body = @body)
-      @headers["Content-length"] = body.bytesize.to_s
+      @headers["Content-Length"] = body.bytesize.to_s
     end
   end
 
@@ -37,26 +37,26 @@ class HTTP::Response
   end
 
   def self.not_found
-    new(404, "Not Found", Headers{"Content-type": "text/plain"})
+    new(404, "Not Found", Headers{"Content-Type": "text/plain"})
   end
 
   def self.ok(content_type, body)
-    new(200, body, Headers{"Content-type": content_type})
+    new(200, body, Headers{"Content-Type": content_type})
   end
 
   def self.error(content_type, body)
-    new(500, body, Headers{"Content-type": content_type})
+    new(500, body, Headers{"Content-Type": content_type})
   end
 
   def self.unauthorized
-    new(401, "Unauthorized", Headers{"Content-type": "text/plain"})
+    new(401, "Unauthorized", Headers{"Content-Type": "text/plain"})
   end
 
   def to_io(io)
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
     HTTP.serialize_headers_and_body(io, @headers, @body)
   end
-  
+
   # :nodoc:
   def consume_body_io
     if io = @body_io
@@ -64,7 +64,7 @@ class HTTP::Response
       @body_io = nil
     end
   end
-  
+
   def self.mandatory_body?(status_code)
     !(status_code / 100 == 1 || status_code == 204 || status_code == 304)
   end

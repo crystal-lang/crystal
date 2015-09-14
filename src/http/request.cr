@@ -10,9 +10,9 @@ class HTTP::Request
 
   def initialize(@method : String, @path, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
     if body = @body
-      @headers["Content-length"] = body.bytesize.to_s
+      @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
-      @headers["Content-length"] = "0"
+      @headers["Content-Length"] = "0"
     end
   end
 
