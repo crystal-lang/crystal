@@ -77,6 +77,7 @@ class Crystal::CodeGenVisitor
         new_entry_block
 
         if is_closure
+          clear_current_debug_location if @debug
           setup_closure_vars context.closure_vars.not_nil!
         else
           context.reset_closure
