@@ -102,12 +102,14 @@ class Logger(T)
     return if severity < level
     format(severity, Time.now, progname || @progname, message, @io)
     @io.puts
+    @io.flush
   end
 
   def log(severity, progname = nil)
     return if severity < level
     format(severity, Time.now, progname || @progname, yield, @io)
     @io.puts
+    @io.flush
   end
 
   def format(severity, datetime, progname, message, io)
