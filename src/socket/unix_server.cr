@@ -27,7 +27,9 @@ class UNIXServer < UNIXSocket
 
   def accept
     client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
-    UNIXSocket.new(client_fd)
+    sock = UNIXSocket.new(client_fd)
+    sock.sync = sync?
+    sock
   end
 
   def accept

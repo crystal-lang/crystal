@@ -59,7 +59,9 @@ class TCPServer < TCPSocket
           raise Errno.new "Error accepting socket"
         end
       else
-        return TCPSocket.new(client_fd)
+        sock = TCPSocket.new(client_fd)
+        sock.sync = sync?
+        return sock
       end
     end
   end
