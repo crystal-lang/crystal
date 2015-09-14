@@ -135,7 +135,7 @@ struct Set(T)
   end
 end
 
-class Array
+module Enumerable
   def to_set
     Set.new(self)
   end
