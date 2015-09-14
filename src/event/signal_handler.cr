@@ -64,7 +64,7 @@ class Event::SignalHandler
     end
   rescue ex
     ex.inspect_with_backtrace STDERR
-    STDERR.puts "FATAL ERROR: uncaught signal exception, exiting"
+    STDERR.puts "FATAL ERROR: uncaught signal #{sig} exception, exiting"
     STDERR.flush
     LibC._exit 1
   end
