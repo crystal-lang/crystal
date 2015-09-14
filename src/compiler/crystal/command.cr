@@ -313,11 +313,20 @@ USAGE
       File.delete output_filename
     end
 
-    if status.exit_status == 11
-      puts "Program exited because of a segmentation fault: 11"
-    end
+    if status.normal_exit?
+      exit status.exit_code
+    else
+      case status.exit_signal
+      when Signal::KILL
+        STDERR.puts "Program was killed"
+      when Signal::SEGV
+        STDERR.puts "Program exited because of a segmentation fault (11)"
+      else
+        STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
+      end
 
-    exit status.exit_code
+      exit 1
+    end
   end
 
   private def self.tempfile(basename)
