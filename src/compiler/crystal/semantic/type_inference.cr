@@ -1290,7 +1290,7 @@ module Crystal
       @exp_nest -= 1
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro (macro_scope || @scope || current_type), the_macro, node
+        @mod.expand_macro the_macro, node, (macro_scope || @scope || current_type)
       end
 
       @exp_nest += 1
@@ -1335,7 +1335,7 @@ module Crystal
       the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro (@scope || current_type), node
+        @mod.expand_macro node, (@scope || current_type), @free_vars
       end
 
       node.expanded = generated_nodes
@@ -1639,7 +1639,7 @@ module Crystal
           next if hook.kind != kind
 
           expanded = expand_macro(hook.macro, node) do
-            @mod.expand_macro current_type.instance_type, hook.macro.body
+            @mod.expand_macro hook.macro.body, current_type.instance_type
           end
           expanded.accept self
           node.add_runtime_initializer(expanded)

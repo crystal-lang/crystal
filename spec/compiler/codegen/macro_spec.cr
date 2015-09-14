@@ -1216,4 +1216,14 @@ describe "Code gen: macro" do
       Foo.bar
       )).to_i.should eq(123)
   end
+
+  it "can access free variables" do
+    run(%(
+      def foo(x : T)
+        {{ T.stringify }}
+      end
+
+      foo(1)
+      )).to_string.should eq("Int32")
+  end
 end

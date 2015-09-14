@@ -4,12 +4,12 @@ module Crystal
       @def_macros << a_def
     end
 
-    def expand_macro(scope : Type, a_macro : Macro, call)
-      macro_expander.expand scope, a_macro, call
+    def expand_macro(a_macro : Macro, call : Call, scope : Type)
+      macro_expander.expand a_macro, call, scope
     end
 
-    def expand_macro(scope : Type, node)
-      macro_expander.expand scope, node
+    def expand_macro(node : ASTNode, scope : Type, free_vars = nil)
+      macro_expander.expand node, scope, free_vars
     end
 
     def expand_macro_defs
@@ -33,7 +33,7 @@ module Crystal
       end
 
       begin
-        expanded_macro = @program.expand_macro owner, target_def.body
+        expanded_macro = @program.expand_macro target_def.body, owner
       rescue ex : Crystal::Exception
         target_def.raise "expanding macro", ex
       end
@@ -105,15 +105,16 @@ module Crystal
       @cache = {} of String => String
     end
 
-    def expand(scope : Type, a_macro, call)
+    def expand(a_macro : Macro, call : Call, scope : Type)
       visitor = MacroVisitor.new self, @mod, scope, a_macro, call
       a_macro.body.accept visitor
       source = visitor.to_s
       ExpandedMacro.new source, visitor.yields
     end
 
-    def expand(scope : Type, node)
+    def expand(node : ASTNode, scope : Type, free_vars = nil)
       visitor = MacroVisitor.new self, @mod, scope, node.location
+      visitor.free_vars = free_vars
       node.accept visitor
       source = visitor.to_s
       ExpandedMacro.new source, visitor.yields
@@ -153,6 +154,7 @@ module Crystal
     class MacroVisitor < Visitor
       getter last
       getter yields
+      property free_vars
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
@@ -472,7 +474,12 @@ module Crystal
       end
 
       def visit(node : Path)
-        matched_type = @scope.lookup_type(node)
+        if node.names.size == 1 && (match = @free_vars.try &.[node.names.first])
+          matched_type = match
+        else
+          matched_type = @scope.lookup_type(node)
+        end
+
         unless matched_type
           node.raise "undefined constant #{node}"
         end
