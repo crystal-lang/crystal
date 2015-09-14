@@ -12,7 +12,7 @@ struct Number
   end
 
   # Creates an Array of self with the given values, which will be casted
-  # to this type with the `cast` method (defined in each Number type).
+  # to this type with the `new` method (defined in each Number type).
   #
   # ```
   # floats = Float64[1, 2, 3, 4]
