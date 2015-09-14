@@ -3,7 +3,7 @@ require "./project"
 project = Crystal::Project.new
 begin
   project.eval do
-    {{ `cat Projectfile` }}
+    {{ `cat Projectfile 2> /dev/null || true` }}
   end
 
   command = ARGV.shift? || "install"
