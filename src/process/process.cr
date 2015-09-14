@@ -1,4 +1,6 @@
 lib LibC
+  WNOHANG = 0x00000001
+
   @[ReturnsTwice]
   fun fork : PidT
   fun getpgid(pid : PidT) : PidT
@@ -53,35 +55,47 @@ class Process
     LibC.getppid()
   end
 
-  def self.fork(&block)
-    pid = self.fork()
+  def self.fork run_hooks = true : Bool, &block
+    pid = self.fork(run_hooks)
 
     unless pid
-      yield
-      exit
+      begin
+        yield
+        LibC._exit 0
+      rescue ex
+        ex.inspect STDERR
+        STDERR.flush
+        LibC._exit 1
+      ensure
+        LibC._exit 254 # not reached
+      end
     end
 
     pid
   end
 
-  def self.fork
+  # run_hooks should ALWAYS be true unless exec* is used immediately after fork.
+  # Channels, IO and other will not work reliably if run_hooks is false.
+  def self.fork run_hooks = true : Bool
     pid = LibC.fork
     case pid
     when 0
       pid = nil
-      Scheduler.after_fork
+      @@after_fork_child_callbacks.each(&.call) if run_hooks
     when -1
       raise Errno.new("fork")
     end
     pid
   end
 
-  def self.waitpid(pid)
-    if LibC.waitpid(pid, out exit_code, 0) == -1
-      raise Errno.new("Error during waitpid")
+  def self.waitpid pid
+    chan = Event::SignalChildHandler.instance.waitpid pid
+    status = chan.receive
+    if status
+      return status
+    else
+      raise "waitpid channel closed"
     end
-
-    exit_code
   end
 
   record Tms, utime, stime, cutime, cstime

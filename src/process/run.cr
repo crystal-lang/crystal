@@ -110,7 +110,7 @@ class Process
       end
     end
 
-    @pid = fork do
+    @pid = Process.fork(run_hooks: false) do
       begin
         # File.umask(umask) if umask
 
@@ -156,8 +156,7 @@ class Process
       raise ex if ex
     end
 
-    exit_code = Process.waitpid(@pid)
-    Status.new(exit_code)
+    Process.waitpid(@pid)
   ensure
     close
   end
