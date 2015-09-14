@@ -56,17 +56,27 @@ class Process
   #
   # By default the process is configured without input, output or error.
   def initialize(command : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = false : Stdio, output = false : Stdio, error = false : Stdio, chdir = nil : String?)
-    cmd, argv = if shell
-      raise "args not allowed with shell" if args
-      {"/bin/sh", ["/bin/sh".to_unsafe, "-c".to_unsafe, command.to_unsafe, Pointer(UInt8).null]}
-    else
-      a = [command.to_unsafe]
-      args.try &.each do |arg|
-        a << arg.to_unsafe
+    if shell
+      command = %(#{command} "${@}") unless command.includes?(' ')
+      shell_args = ["-c", command, "--"]
+
+      if args
+        unless command.includes?(%("${@}"))
+          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+        end
+
+        shell_args.concat(args)
       end
-      a << Pointer(UInt8).null
-      {command, a}
+
+      command = "/bin/sh"
+      args = shell_args
     end
+
+    argv = [command.to_unsafe]
+    args.try &.each do |arg|
+      argv << arg.to_unsafe
+    end
+    argv << Pointer(UInt8).null
 
     @wait_count = 0
 
@@ -119,7 +129,7 @@ class Process
 
         Dir.chdir(chdir) if chdir
 
-        LibC.execvp(cmd, argv)
+        LibC.execvp(command, argv)
       rescue ex
         ex.inspect_with_backtrace STDERR
       ensure
@@ -219,6 +229,14 @@ end
 # Returns `true` if the command gives zero exit code, `false` otherwise.
 # The special `$?` variable is set to a `Process::Status` associated with this execution.
 #
+# If *command* contains no spaces and *args* is given, it will become
+# its argument list.
+#
+# If *command* contains spaces and *args* is given, *command* must include
+# `"${@}"` (including the quotes) to receive the argument list.
+#
+# No shell interpretation is done in *args*.
+#
 # Example:
 #
 # ```
@@ -230,8 +248,8 @@ end
 # ```text
 # LICENSE Projectfile Readme.md spec src
 # ```
-def system(command : String) : Bool
-  status = Process.run(command, shell: true, input: true, output: true, error: true)
+def system(command : String, args = nil) : Bool
+  status = Process.run(command, args, shell: true, input: true, output: true, error: true)
   $? = status
   status.success?
 end
