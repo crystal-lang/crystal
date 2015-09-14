@@ -142,10 +142,11 @@ end
 
 class Process
   # hooks defined here due to load order problems
-  scheduler_after_cb = -> { Scheduler.after_fork; nil }
-  signal_after_cb = -> { Event::SignalHandler.after_fork; nil }
-  signal_child_after_cb = -> { Event::SignalChildHandler.instance.after_fork; nil }
-  @@after_fork_child_callbacks = [scheduler_after_cb, signal_after_cb, signal_child_after_cb]
+  @@after_fork_child_callbacks = [
+    -> { Scheduler.after_fork; nil },
+    -> { Event::SignalHandler.after_fork; nil },
+    -> { Event::SignalChildHandler.instance.after_fork; nil }
+  ]
 end
 
 Signal::PIPE.ignore

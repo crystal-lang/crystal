@@ -40,7 +40,7 @@ class Event::SignalHandler
     loop do
      bytes = read_pipe.read slice
      break if bytes == 0
-     raise "bad read #{bytes} : #{slice.length}" if bytes != slice.length
+     raise "bad read #{bytes} : #{slice.size}" if bytes != slice.size
      handle_signal Signal.new(sig)
     end
   end
