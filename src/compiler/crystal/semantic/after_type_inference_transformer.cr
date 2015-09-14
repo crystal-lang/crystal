@@ -573,13 +573,12 @@ module Crystal
       then_is_truthy, then_is_falsey = @last_is_truthy, @last_is_falsey
 
       node.else = node.else.transform(self)
-      else_is_truthy, else_is_falsey = @last_is_truthy, @last_is_falsey
 
       reset_last_status
 
       if node.binary == :and
-        @last_is_falsey = then_is_falsey
-        @last_is_truthy = then_is_truthy
+        @last_is_truthy = cond_is_truthy && then_is_truthy
+        @last_is_falsey = cond_is_falsey || then_is_falsey
       end
 
       node
