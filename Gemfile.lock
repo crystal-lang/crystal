@@ -52,7 +52,7 @@ GEM
       typhoeus (~> 0.7)
     haml (4.0.7)
       tilt
-    hitimes (1.2.2)
+    hitimes (1.2.3)
     html-pipeline (1.9.0)
       activesupport (>= 2)
       nokogiri (~> 1.4)
