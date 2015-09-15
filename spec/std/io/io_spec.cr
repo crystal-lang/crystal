@@ -373,6 +373,18 @@ describe IO do
       io.read.should eq("ab")
     end
 
+    it "writes a tuple of bytes" do
+      io = SimpleStringIO.new
+      io.write({'a'.ord.to_u8, 'b'.ord.to_u8})
+      io.read.should eq("ab")
+    end
+
+    it "writes a collection of bytes" do
+      io = SimpleStringIO.new
+      io.write Set {'a'.ord.to_u8, 'b'.ord.to_u8 }
+      io.read.should eq("ab")
+    end
+
     it "writes with printf" do
       io = SimpleStringIO.new
       io.printf "Hello %d", 123

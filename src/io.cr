@@ -622,6 +622,13 @@ module IO
     write Slice.new(array.buffer, array.size)
   end
 
+  # Writes the bytes in the given enumerable to this IO.
+  def write(bytes : Enumerable(UInt8))
+    bytes.each do |byte|
+      write_byte byte
+    end
+  end
+
   # Writes a single byte into this IO.
   #
   # ```
