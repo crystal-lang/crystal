@@ -1401,4 +1401,11 @@ describe "Array" do
   it "flattens" do
     [[1, 'a'], [[[[true], "hi"]]]].flatten.should eq([1, 'a', true, "hi"])
   end
+
+  it "flatten!" do
+    ary = [1,'a',true,"foo", [2, 'b'], [[[[false], "hello"]]]]
+    expect = [1, 'a', true, "foo", 2, 'b', false, "hello"]
+    ary.flatten!.should eq(expect)
+    ary.should eq(expect)
+  end
 end

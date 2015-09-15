@@ -992,6 +992,19 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
+  # Removes `Array#flatten` elements from `self`. Returns `self`.
+  #
+  # ```
+  # s = [1, [2]]
+  # s.flatten!                 #=> [1,2]
+  # s                          #=> [1,2]
+  # [1,['1']].flatten!         #=> Gives compile error because the array doesn't accept Char type.
+  # ```
+  def flatten!
+    ary = FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
+    replace ary
+  end
+
   def repeated_combinations(size = self.size : Int)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
