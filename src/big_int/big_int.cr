@@ -1,8 +1,8 @@
 require "./lib_gmp"
 
 struct BigInt < Int
-  include Comparable(SignedInt)
-  include Comparable(UnsignedInt)
+  include Comparable(Int::Signed)
+  include Comparable(Int::Unsigned)
   include Comparable(BigInt)
 
   def initialize
@@ -13,7 +13,7 @@ struct BigInt < Int
     LibGMP.init_set_str(out @mpz, str, base)
   end
 
-  def initialize(num : SignedInt)
+  def initialize(num : Int::Signed)
     if LibC::Long::MIN <= num <= LibC::Long::MAX
       LibGMP.init_set_si(out @mpz, LibC::Long.new(num))
     else
@@ -21,7 +21,7 @@ struct BigInt < Int
     end
   end
 
-  def initialize(num : UnsignedInt)
+  def initialize(num : Int::Unsigned)
     if num <= LibC::ULong::MAX
       LibGMP.init_set_ui(out @mpz, LibC::ULong.new(num))
     else
@@ -42,7 +42,7 @@ struct BigInt < Int
     LibGMP.cmp(mpz, other)
   end
 
-  def <=>(other : SignedInt)
+  def <=>(other : Int::Signed)
     if LibC::Long::MIN <= other <= LibC::Long::MAX
       LibGMP.cmp_si(mpz, LibC::Long.new(other))
     else
@@ -50,7 +50,7 @@ struct BigInt < Int
     end
   end
 
-  def <=>(other : UnsignedInt)
+  def <=>(other : Int::Unsigned)
     if other <= LibC::ULong::MAX
       LibGMP.cmp_ui(mpz, LibC::ULong.new(other))
     else
@@ -94,11 +94,11 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end
 
-  def *(other : SignedInt)
+  def *(other : Int::Signed)
     BigInt.new { |mpz| LibGMP.mul_si(mpz, self, LibC::Long.new(other)) }
   end
 
-  def *(other : UnsignedInt)
+  def *(other : Int::Unsigned)
     BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, LibC::ULong.new(other)) }
   end
 

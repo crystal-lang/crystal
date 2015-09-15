@@ -56,6 +56,9 @@
 # 0xfe012d # == 16646445
 # ```
 struct Int
+  alias Signed = Int8 | Int16 | Int32 | Int64
+  alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
+
   def ~
     self ^ -1
   end
@@ -475,6 +478,3 @@ struct UInt64
     self
   end
 end
-
-alias SignedInt = Int8 | Int16 | Int32 | Int64
-alias UnsignedInt = UInt8 | UInt16 | UInt32 | UInt64
