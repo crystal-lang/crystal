@@ -6,7 +6,7 @@ class Event::SignalChildHandler
     @@instance ||= new
   end
 
-  alias ChanType = BufferedChannel(Process::Status?)
+  alias ChanType = Channel::Buffered(Process::Status?)
 
   def initialize
     @pending = Hash(LibC::PidT, Process::Status).new
