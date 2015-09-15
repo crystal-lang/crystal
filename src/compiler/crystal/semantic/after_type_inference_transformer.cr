@@ -72,6 +72,7 @@ module Crystal
     end
 
     def transform(node : Def)
+      node.runtime_initializers.try &.map! &.transform self
       node
     end
 

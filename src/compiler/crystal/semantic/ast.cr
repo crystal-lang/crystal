@@ -628,6 +628,10 @@ module Crystal
     include RuntimeInitializable
   end
 
+  class Def
+    include RuntimeInitializable
+  end
+
   class External
     property :dead
     @dead = false

@@ -627,6 +627,8 @@ module Crystal
         return add_hook :included, a_def
       when "extended"
         return add_hook :extended, a_def
+      when "method_added"
+        return add_hook :method_added, a_def, args_size: 1
       when "method_missing"
         if a_def.args.size != 3 && a_def.args.size != 1
           raise TypeException.new "macro 'method_missing' expects 1 or 3 arguments: (call) or (name, args, block)"
@@ -638,9 +640,16 @@ module Crystal
       array.push a_def
     end
 
-    def add_hook(kind, a_def)
-      if a_def.args.size != 0
-        raise TypeException.new "macro '#{kind}' must not have arguments"
+    def add_hook(kind, a_def, args_size = 0)
+      if a_def.args.size != args_size
+        case args_size
+        when 0
+          raise TypeException.new "macro '#{kind}' must not have arguments"
+        when 1
+          raise TypeException.new "macro '#{kind}' must have a argument"
+        else
+          raise TypeException.new "macro '#{kind}' must have #{args_size} arguments"
+        end
       end
 
       hooks = @hooks ||= [] of Hook

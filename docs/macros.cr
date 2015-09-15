@@ -860,9 +860,6 @@ module Macros
   # class Extend < ASTNode
   # end
 
-  # class Undef < ASTNode
-  # end
-
   # class LibDef < ASTNode
   # end
 

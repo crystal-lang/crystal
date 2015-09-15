@@ -54,6 +54,22 @@ describe "Type inference: hooks" do
       ") { int32 }
   end
 
+  it "does added method macro" do
+    assert_type("
+      class Foo
+        macro method_added(d)
+          def self.{{d.name.downcase.id}}
+            1
+          end
+        end
+
+        def foo; end
+      end
+
+      Foo.foo
+      ") { int32 }
+  end
+
   it "errors if wrong inherited args size" do
     assert_error %(
       class Foo
@@ -102,6 +118,15 @@ describe "Type inference: hooks" do
 
       $bar.name
       )) { string }
+  end
+
+  it "errors if wrong extended args length" do
+    assert_error %(
+      class Foo
+        macro method_added
+        end
+      end
+      ), "macro 'method_added' must have a argument"
   end
 
   it "includes error message in included hook (#889)" do
