@@ -88,13 +88,13 @@ class IPSocket < Socket
         LibEvent2.evutil_freeaddrinfo value
       end
     elsif value.is_a?(Int)
-      raise SocketError.new("getaddrinfo: #{String.new(LibC.gai_strerror(value))}")
+      raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(value))}")
     else
       raise "unknown type #{value.inspect}"
     end
 
     # shouldn't raise
-    raise SocketError.new("getaddrinfo: unspecified error") unless success
+    raise Socket::Error.new("getaddrinfo: unspecified error") unless success
   end
 
   private def dns_timeout dns_base, req, timeout

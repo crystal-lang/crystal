@@ -1,9 +1,9 @@
 require "./libc"
 
-class SocketError < Exception
-end
-
 class Socket < FileDescriptorIO
+  class Error < Exception
+  end
+
   enum Type
     STREAM = LibC::SOCK_STREAM
     DGRAM  = LibC::SOCK_DGRAM
