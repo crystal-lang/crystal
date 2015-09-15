@@ -74,7 +74,7 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          measurements = [] of TimeSpan
+          measurements = [] of Time::Span
           target = Time.now + @calculation_time
 
           loop do

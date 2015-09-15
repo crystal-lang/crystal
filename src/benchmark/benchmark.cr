@@ -106,7 +106,7 @@ module Benchmark
                      t1.stime  - t0.stime,
                      t1.cutime - t0.cutime,
                      t1.cstime - t0.cstime,
-                     (r1.ticks - r0.ticks).to_f / TimeSpan::TicksPerSecond,
+                     (r1.ticks - r0.ticks).to_f / Time::Span::TicksPerSecond,
                      label)
   end
 
@@ -115,7 +115,7 @@ module Benchmark
   # ```
   # Benchmark.realtime { "a" * 100_000 } #=> 00:00:00.0005840
   # ```
-  def realtime : TimeSpan
+  def realtime : Time::Span
     r0 = Time.now
     yield
     Time.now - r0

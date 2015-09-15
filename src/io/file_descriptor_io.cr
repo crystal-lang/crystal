@@ -38,7 +38,7 @@ class FileDescriptorIO
   end
 
   # ditto
-  def read_timeout=(read_timeout : TimeSpan)
+  def read_timeout=(read_timeout : Time::Span)
     self.read_timeout = read_timeout.total_seconds
   end
 
@@ -53,7 +53,7 @@ class FileDescriptorIO
   end
 
   # ditto
-  def write_timeout=(write_timeout : TimeSpan)
+  def write_timeout=(write_timeout : Time::Span)
     self.write_timeout = write_timeout.total_seconds
   end
 

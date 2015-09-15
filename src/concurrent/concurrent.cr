@@ -9,7 +9,7 @@ def sleep(seconds : Number)
   Scheduler.sleep(seconds)
 end
 
-def sleep(time : TimeSpan)
+def sleep(time : Time::Span)
   sleep(time.total_seconds)
 end
 

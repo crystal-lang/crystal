@@ -248,7 +248,7 @@ struct Tuple
   end
 end
 
-struct TimeFormat
+struct Time::Format
   def to_json(value : Time, io : IO)
     format(value).to_json(io)
   end

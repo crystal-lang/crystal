@@ -1,36 +1,36 @@
 require "spec"
 
 private def expect_overflow
-  expect_raises ArgumentError, "TimeSpan too big or too small" do
+  expect_raises ArgumentError, "Time::Span too big or too small" do
     yield
   end
 end
 
-describe TimeSpan do
+describe Time::Span do
   it "initializes" do
-    t1 = TimeSpan.new 1234567890
+    t1 = Time::Span.new 1234567890
     t1.to_s.should eq("00:02:03.4567890")
 
-    t1 = TimeSpan.new 1, 2, 3
+    t1 = Time::Span.new 1, 2, 3
     t1.to_s.should eq("01:02:03")
 
-    t1 = TimeSpan.new 1, 2, 3, 4
+    t1 = Time::Span.new 1, 2, 3, 4
     t1.to_s.should eq("1.02:03:04")
 
-    t1 = TimeSpan.new 1, 2, 3, 4, 5
+    t1 = Time::Span.new 1, 2, 3, 4, 5
     t1.to_s.should eq("1.02:03:04.0050000")
 
-    t1 = TimeSpan.new -1, 2, -3, 4, -5
+    t1 = Time::Span.new -1, 2, -3, 4, -5
     t1.to_s.should eq("-22:02:56.0050000")
 
-    t1 = TimeSpan.new 0, 25, 0, 0, 0
+    t1 = Time::Span.new 0, 25, 0, 0, 0
     t1.to_s.should eq("1.01:00:00")
   end
 
   it "days overflows" do
     expect_overflow do
-      days = (Int64::MAX / TimeSpan::TicksPerDay).to_i32 + 1
-      TimeSpan.new days, 0, 0, 0, 0
+      days = (Int64::MAX / Time::Span::TicksPerDay).to_i32 + 1
+      Time::Span.new days, 0, 0, 0, 0
     end
   end
 
@@ -87,7 +87,7 @@ describe TimeSpan do
   end
 
   it "negative timespan" do
-    ts = TimeSpan.new -23, -59, -59
+    ts = Time::Span.new -23, -59, -59
     ts.days.should eq(0)
     ts.hours.should eq(-23)
     ts.minutes.should eq(-59)
@@ -97,7 +97,7 @@ describe TimeSpan do
   end
 
   it "test properties" do
-    t1 = TimeSpan.new 1, 2, 3, 4, 5
+    t1 = Time::Span.new 1, 2, 3, 4, 5
     t2 = -t1
 
     t1.days.should eq(1)
@@ -114,8 +114,8 @@ describe TimeSpan do
   end
 
   it "test add" do
-    t1 = TimeSpan.new 2, 3, 4, 5, 6
-    t2 = TimeSpan.new 1, 2, 3, 4, 5
+    t1 = Time::Span.new 2, 3, 4, 5, 6
+    t2 = Time::Span.new 1, 2, 3, 4, 5
     t3 = t1 + t2;
 
     t3.days.should eq(3)
@@ -129,13 +129,13 @@ describe TimeSpan do
   end
 
   it "test compare" do
-    t1 = TimeSpan.new -1
-    t2 = TimeSpan.new 1
+    t1 = Time::Span.new -1
+    t2 = Time::Span.new 1
 
     (t1 <=> t2).should eq(-1)
     (t2 <=> t1).should eq(1)
     (t2 <=> t2).should eq(0)
-    (TimeSpan::MinValue <=> TimeSpan::MaxValue).should eq(-1)
+    (Time::Span::MinValue <=> Time::Span::MaxValue).should eq(-1)
 
     (t1 == t2).should be_false
     (t1 > t2).should be_false
@@ -146,8 +146,8 @@ describe TimeSpan do
   end
 
   it "test equals" do
-    t1 = TimeSpan.new 1
-    t2 = TimeSpan.new 2
+    t1 = Time::Span.new 1
+    t2 = Time::Span.new 2
 
     (t1 == t1).should be_true
     (t1 == t2).should be_false
@@ -168,20 +168,20 @@ describe TimeSpan do
   end
 
   it "test negate and duration" do
-    (-TimeSpan.new(12345)).to_s.should eq("-00:00:00.0012345")
-    TimeSpan.new(-12345).duration.to_s.should eq("00:00:00.0012345")
-    TimeSpan.new(-12345).abs.to_s.should eq("00:00:00.0012345")
-    (-TimeSpan.new(77)).to_s.should eq("-00:00:00.0000077")
-    (+TimeSpan.new(77)).to_s.should eq("00:00:00.0000077")
+    (-Time::Span.new(12345)).to_s.should eq("-00:00:00.0012345")
+    Time::Span.new(-12345).duration.to_s.should eq("00:00:00.0012345")
+    Time::Span.new(-12345).abs.to_s.should eq("00:00:00.0012345")
+    (-Time::Span.new(77)).to_s.should eq("-00:00:00.0000077")
+    (+Time::Span.new(77)).to_s.should eq("00:00:00.0000077")
   end
 
   it "test hash code" do
-    TimeSpan.new(77).hash.should eq(77)
+    Time::Span.new(77).hash.should eq(77)
   end
 
   it "test subtract" do
-    t1 = TimeSpan.new 2, 3, 4, 5, 6
-    t2 = TimeSpan.new 1, 2, 3, 4, 5
+    t1 = Time::Span.new 2, 3, 4, 5, 6
+    t2 = Time::Span.new 1, 2, 3, 4, 5
     t3 = t1 - t2
 
     t3.to_s.should eq("1.01:01:01.0010000")
@@ -190,18 +190,18 @@ describe TimeSpan do
   end
 
   it "test to_s" do
-    t1 = TimeSpan.new 1, 2, 3, 4, 5
+    t1 = Time::Span.new 1, 2, 3, 4, 5
     t2 = -t1
 
     t1.to_s.should eq("1.02:03:04.0050000")
     t2.to_s.should eq("-1.02:03:04.0050000")
-    TimeSpan::MaxValue.to_s.should eq("10675199.02:48:05.4775807")
-    TimeSpan::MinValue.to_s.should eq("-10675199.02:48:05.4775808")
-    TimeSpan::Zero.to_s.should eq("00:00:00")
+    Time::Span::MaxValue.to_s.should eq("10675199.02:48:05.4775807")
+    Time::Span::MinValue.to_s.should eq("-10675199.02:48:05.4775808")
+    Time::Span::Zero.to_s.should eq("00:00:00")
   end
 
   it "test totals" do
-    t1 = TimeSpan.new 1, 2, 3, 4, 5
+    t1 = Time::Span.new 1, 2, 3, 4, 5
     t1.total_days.should be_close(1.08546, 1e-05)
     t1.total_hours.should be_close(26.0511, 1e-04)
     t1.total_minutes.should be_close(1563.07, 1e-02)

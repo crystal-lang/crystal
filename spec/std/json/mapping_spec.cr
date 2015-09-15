@@ -35,13 +35,13 @@ end
 
 class JSONWithTime
   json_mapping({
-    value: {type: Time, converter: TimeFormat.new("%F %T")},
+    value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
 class JSONWithNilableTime
   json_mapping({
-    value: {type: Time, converter: TimeFormat.new("%F")},
+    value: {type: Time, converter: Time::Format.new("%F")},
   })
 
   def initialize
@@ -50,7 +50,7 @@ end
 
 class JSONWithNilableTimeEmittingNull
   json_mapping({
-    value: {type: Time, converter: TimeFormat.new("%F"), emit_null: true},
+    value: {type: Time, converter: Time::Format.new("%F"), emit_null: true},
   })
 
   def initialize
@@ -130,7 +130,7 @@ describe "JSON mapping" do
     json.value.should be_false
   end
 
-  it "parses json with TimeFormat converter" do
+  it "parses json with Time::Format converter" do
     json = JSONWithTime.from_json(%({"value": "2014-10-31 23:37:16"}))
     json.value.should be_a(Time)
     json.value.to_s.should eq("2014-10-31 23:37:16")

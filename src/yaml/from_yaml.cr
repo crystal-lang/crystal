@@ -92,7 +92,7 @@ def Tuple.new(pull : YAML::PullParser)
  {% end %}
 end
 
-struct TimeFormat
+struct Time::Format
   def from_yaml(pull : YAML::PullParser)
     string = pull.read_scalar
     parse(string)
