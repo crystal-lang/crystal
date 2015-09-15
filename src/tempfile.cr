@@ -2,7 +2,7 @@ lib LibC
   fun mkstemp(result : Char*) : Int
 end
 
-class Tempfile < FileDescriptorIO
+class Tempfile < IO::FileDescriptor
   def initialize(name)
     if tmpdir = ENV["TMPDIR"]?
       tmpdir = tmpdir + File::SEPARATOR unless tmpdir.ends_with? File::SEPARATOR

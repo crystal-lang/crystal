@@ -239,8 +239,8 @@ module IO
       raise Errno.new("Could not create pipe")
     end
 
-    r = FileDescriptorIO.new(pipe_fds[0], read_blocking)
-    w = FileDescriptorIO.new(pipe_fds[1], write_blocking)
+    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
     r.close_on_exec = true
     w.close_on_exec = true
     w.sync = true

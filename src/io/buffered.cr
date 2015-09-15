@@ -1,10 +1,10 @@
-# The BufferedIO mixin enhances the IO module with input/output buffering.
+# The IO::Buffered mixin enhances the IO module with input/output buffering.
 #
 # The buffering behaviour can be turned on/off with the `#sync=` method.
 #
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
-module BufferedIO
+module IO::Buffered
   include IO
 
   BUFFER_SIZE = 8192
