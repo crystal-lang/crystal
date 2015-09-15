@@ -14,7 +14,8 @@ These are the most important things in need right now:
 
 The main site and official language documentation is on the `gh-pages` branch.
 We use [GitBook](https://www.gitbook.com/) for the documentation.
-Check the `_gitbook` directory, that's where you can edit the documentation.
+Check the `_gitbook` directory, that's where you can edit the documentation, the HTML files in the `docs` directory are
+generated from it and should not be edited manually.
 
 To get started getting the documentation working locally follow these steps (assuming you already have ruby and node/npm installed):
 
@@ -28,7 +29,7 @@ Then you can check it out by doing `rake build && jekyll serve` to [browse it](h
 
 The standard library documentation is on the code itself.
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
-of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicalble. To generate
+of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicable. To generate
 the docs execute `make doc`.
 
 ## Contributing to the standard library
