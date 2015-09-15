@@ -1,27 +1,27 @@
-# `Regex::MatchData` is the type of the special variable `$~`, and is the type
-# returned by `Regex#match` and `String#match`. It encapsulates all the
-# results of a regular expression match.
-#
-# `Regex#match` and `String#match` can return `nil`, to represent an
-# unsuccessful match, but there are overloads of both methods that accept a
-# block. These overloads are convenient to access the `Regex::MatchData` of a
-# successful match, since the block argument can't be `nil`.
-#
-# ```
-# "Crystal".match(/[p-s]/).size #=> undefined method 'size' for Nil
-#
-# "Crystal".match(/[p-s]/) do |md|
-#   md.string #=> "Crystal"
-#   md[0]     #=> "r"
-#   md[1]?    #=> nil
-# end
-# ```
-#
-# Many `Regex::MatchData` methods deal with capture groups, and accept an integer
-# argument to select the desired capture group. Capture groups are numbered
-# starting from `1`, so that `0` can be used to refer to the entire regular
-# expression without needing to capture it explicitly.
 class Regex
+  # `Regex::MatchData` is the type of the special variable `$~`, and is the type
+  # returned by `Regex#match` and `String#match`. It encapsulates all the
+  # results of a regular expression match.
+  #
+  # `Regex#match` and `String#match` can return `nil`, to represent an
+  # unsuccessful match, but there are overloads of both methods that accept a
+  # block. These overloads are convenient to access the `Regex::MatchData` of a
+  # successful match, since the block argument can't be `nil`.
+  #
+  # ```
+  # "Crystal".match(/[p-s]/).size #=> undefined method 'size' for Nil
+  #
+  # "Crystal".match(/[p-s]/) do |md|
+  #   md.string #=> "Crystal"
+  #   md[0]     #=> "r"
+  #   md[1]?    #=> nil
+  # end
+  # ```
+  #
+  # Many `Regex::MatchData` methods deal with capture groups, and accept an integer
+  # argument to select the desired capture group. Capture groups are numbered
+  # starting from `1`, so that `0` can be used to refer to the entire regular
+  # expression without needing to capture it explicitly.
   class MatchData
     # Returns the original regular expression.
     #
