@@ -70,8 +70,8 @@ module Enumerable(T)
 
   # Returns an array with the results of running the block against each element of the collection, removing `nil` values.
   #
-  #     ["Alice", "Bob"].map { |name| name.match(/^A./) }         #=> [#<MatchData "Al">, nil]
-  #     ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } #=> [#<MatchData "Al">]
+  #     ["Alice", "Bob"].map { |name| name.match(/^A./) }         #=> [#<Regex::MatchData "Al">, nil]
+  #     ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } #=> [#<Regex::MatchData "Al">]
   #
   def compact_map
     ary = [] of typeof((yield first).not_nil!)
