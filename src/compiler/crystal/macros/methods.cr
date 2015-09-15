@@ -113,7 +113,7 @@ module Crystal
       when "-"
         if args.empty?
           num = to_number
-          if num.is_a?(UnsignedInt)
+          if num.is_a?(Int::Unsigned)
             raise "undefined method '-' for unsigned integer literal: #{self}"
           else
             NumberLiteral.new(-num)
