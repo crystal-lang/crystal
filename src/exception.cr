@@ -157,6 +157,17 @@ class ArgumentError < Exception
   end
 end
 
+# Raised when the type cast failed.
+#
+# ```
+# [1, "hi"][1] as Int32 #=> TypeCastError: cast to Int32 failed
+# ```
+class TypeCastError < Exception
+  def initialize(message = "Type Cast error")
+    super(message)
+  end
+end
+
 class DomainError < Exception
   def initialize(message = "Argument out of domain")
     super(message)
