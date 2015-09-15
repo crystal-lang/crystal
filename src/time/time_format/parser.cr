@@ -305,5 +305,13 @@ struct TimeFormat
     def raise(message)
       ::raise Error.new(message)
     end
+
+    def week_of_year_monday_1_7
+      consume_number(2)
+    end
+
+    def week_of_year_sunday_0_6
+      consume_number(2)
+    end
   end
 end

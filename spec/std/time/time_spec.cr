@@ -325,12 +325,13 @@ describe Time do
     # TODO %G
     # TODO %g
     # TODO %V
-    # TODO %U
-    # TODO %W
     # TODO %s
     # TODO %n
     # TODO %t
     # TODO %%
+
+    t.to_s("%W").should eq("0")
+    t.to_s("%U").should eq("1")
 
     t.to_s("%%").should eq("%")
     t.to_s("%c").should eq(t.to_s("%a %b %e %T %Y"))
@@ -404,8 +405,6 @@ describe Time do
   # TODO %G
   # TODO %g
   # TODO %V
-  # TODO %U
-  # TODO %W
   # TODO %s
   # TODO %n
   # TODO %t

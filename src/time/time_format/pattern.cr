@@ -67,8 +67,17 @@ struct TimeFormat
           twenty_four_hour_time_with_seconds
         when 'u'
           day_of_week_monday_1_7
+        when 'U'
+          # Week of year, Sunday is first day of week
+          week_of_year_monday_1_7
+        when 'V'
+          # Week of year according ISO 8601
+          iso8601_week_of_year
         when 'w'
           day_of_week_sunday_0_6
+        when 'W'
+          # Week of year, Monday is first day of week
+          week_of_year_sunday_0_6
         when 'X'
           twenty_four_hour_time_with_seconds
         when 'y'
