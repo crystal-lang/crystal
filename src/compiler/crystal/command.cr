@@ -245,12 +245,12 @@ USAGE
           options << "-l" << target_line
         end
       elsif File.directory?(target_filename)
-        target_filename = "#{target_filename}/**"
+        target_filename = "#{target_filename}/**_spec.cr"
       else
         error "'#{target_filename}' is not a file"
       end
     else
-      target_filename = "spec/**"
+      target_filename = "spec/**_spec.cr"
     end
 
     sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
