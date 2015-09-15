@@ -1926,27 +1926,25 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="page-inner">
                 
-                
-                    <section class="normal" id="section-">
-                    
-                        <h1 id="local-variables">Local variables</h1>
+                  <section class="normal" id="section-">
+
+                    <h1 id="local-variables">Local variables</h1>
 <p>Local variables start with lowercase letters. They are declared when you first assign them a value.</p>
 <pre><code class="lang-crystal">name = <span class="hljs-string">&quot;Crystal&quot;</span>
 age = <span class="hljs-number">1</span>
 </code></pre>
 <p>Their type is inferred from their usage, not only from their initializer. In general, they are just value holders associated with the type that the programmer expects them to have according to their location and usage on the program.</p>
 <p>For example, reassigning a variable with a different expression makes it have that expression&#x2019;s type:</p>
-<pre><code class="lang-crystal">var = <span class="hljs-string">&quot;Hello&quot;</span>
-<span class="hljs-comment"># At this point &apos;var&apos; is a String</span>
+<pre><code class="lang-crystal">flower = <span class="hljs-string">&quot;Tulip&quot;</span>
+<span class="hljs-comment"># At this point &apos;flower&apos; is a String</span>
 
-var = <span class="hljs-number">1</span>
-<span class="hljs-comment"># At this point &apos;var&apos; is an Int32</span>
+flower = <span class="hljs-number">116</span>
+<span class="hljs-comment"># At this point &apos;flower&apos; is an Int32</span>
 </code></pre>
 <p>Underscores are allowed at the beginning of a variable name, but these names are reserved for the compiler, so their use is not recommended (and it also makes the code uglier to read).</p>
 
-                    
-                    </section>
-                
+
+                </section>
                 
                 </div>
             </div>
