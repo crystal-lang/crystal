@@ -12,11 +12,11 @@ Their type is inferred from their usage, not only from their initializer. In gen
 For example, reassigning a variable with a different expression makes it have that expression’s type:
 
 ```crystal
-var = "Hello"
-# At this point 'var' is a String
+flower = "Tulip"
+# At this point 'flower' is a String
 
-var = 1
-# At this point 'var' is an Int32
+flower = 1
+# At this point 'flower' is an Int32
 ```
 
 Underscores are allowed at the beginning of a variable name, but these names are reserved for the compiler, so their use is not recommended (and it also makes the code uglier to read).
