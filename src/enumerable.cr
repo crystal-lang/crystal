@@ -222,10 +222,10 @@ module Enumerable(T)
     if_none
   end
 
-  # Returns the first element in the collection. Raises `EmptyEnumerable` if the collection is empty.
+  # Returns the first element in the collection. Raises `Enumerable::EmptyError` if the collection is empty.
   def first
     each { |e| return e }
-    raise EmptyEnumerable.new
+    raise Enumerable::EmptyError.new
   end
 
   # Returns the first element in the collection. When the collection is empty, returns `nil`.
@@ -384,7 +384,7 @@ module Enumerable(T)
       found = true
     end
 
-    found ? memo : raise EmptyEnumerable.new
+    found ? memo : raise Enumerable::EmptyError.new
   end
 
   # Just like the other variant, but you can set the initial value of the accumulator.
@@ -477,7 +477,7 @@ module Enumerable(T)
   #     [1, 2, 3].max         #=> 3
   #     ["Alice", "Bob"].max  #=> "Bob"
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def max
     max_by &.itself
   end
@@ -493,10 +493,10 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob"].max_by { |name| name.size }  #=> "Alice"
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def max_by(&block : T -> U)
     found, value = max_by_internal {|value| yield value }
-    raise EmptyEnumerable.new unless found
+    raise Enumerable::EmptyError.new unless found
     value
   end
 
@@ -529,7 +529,7 @@ module Enumerable(T)
   #
   def max_of(&block : T -> U)
     found, value = max_of_internal {|value| yield value }
-    raise EmptyEnumerable.new unless found
+    raise Enumerable::EmptyError.new unless found
     value
   end
 
@@ -561,7 +561,7 @@ module Enumerable(T)
   #     [1, 2, 3].min         #=> 1
   #     ["Alice", "Bob"].min  #=> "Alice"
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def min
     min_by &.itself
   end
@@ -577,10 +577,10 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob"].min_by { |name| name.size }  #=> "Bob"
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def min_by(&block : T -> U)
     found, value = min_by_internal {|value| yield value }
-    raise EmptyEnumerable.new unless found
+    raise Enumerable::EmptyError.new unless found
     value
   end
 
@@ -613,7 +613,7 @@ module Enumerable(T)
   #
   def min_of(&block : T -> U)
     found, value = min_of_internal {|value| yield value }
-    raise EmptyEnumerable.new unless found
+    raise Enumerable::EmptyError.new unless found
     value
   end
 
@@ -642,7 +642,7 @@ module Enumerable(T)
   #
   #     [1, 2, 3].minmax  #=> {1, 3}
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def minmax
     minmax_by &.itself
   end
@@ -656,10 +656,10 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob", "Carl"].minmax_by { |name| name.size }  #=> {"Bob", "Alice"}
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def minmax_by(&block : T -> U)
     found, value = minmax_by_internal {|value| yield value }
-    raise EmptyEnumerable.new unless found
+    raise Enumerable::EmptyError.new unless found
     value
   end
 
@@ -697,10 +697,10 @@ module Enumerable(T)
   #
   #     ["Alice", "Bob", "Carl"].minmax_of { |name| name.size }  #=> {3, 5}
   #
-  # Raises `EmptyEnumerable` if the collection is empty.
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   def minmax_of(&block : T -> U)
     found, value = minmax_of_internal {|value| yield value }
-    raise EmptyEnumerable.new unless found
+    raise Enumerable::EmptyError.new unless found
     value
   end
 

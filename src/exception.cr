@@ -128,9 +128,11 @@ class Exception
   end
 end
 
-class EmptyEnumerable < Exception
-  def initialize(message = "Empty enumerable")
-    super(message)
+module Enumerable(T)
+  class EmptyError < Exception
+    def initialize(message = "Empty enumerable")
+      super(message)
+    end
   end
 end
 
@@ -164,12 +166,6 @@ end
 # ```
 class TypeCastError < Exception
   def initialize(message = "Type Cast error")
-    super(message)
-  end
-end
-
-class DomainError < Exception
-  def initialize(message = "Argument out of domain")
     super(message)
   end
 end

@@ -155,7 +155,7 @@ describe "TCPSocket" do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(SocketError, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution)$/i) do
+    expect_raises(Socket::Error, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution)$/i) do
       TCPSocket.new("localhostttttt", 12345)
     end
   end

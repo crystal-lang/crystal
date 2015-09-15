@@ -212,7 +212,7 @@ describe "Enumerable" do
     end
 
     it "raises if enumerable empty" do
-      expect_raises EmptyEnumerable do
+      expect_raises Enumerable::EmptyError do
         (1...1).first
       end
     end
@@ -325,7 +325,7 @@ describe "Enumerable" do
     assert { [1, 2, 3].inject(10) { |memo, i| memo + i }.should eq(16) }
 
     it "raises if empty" do
-      expect_raises EmptyEnumerable do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).inject { |memo, i| memo + i }
       end
     end
@@ -382,7 +382,7 @@ describe "Enumerable" do
     assert { [1, 2, 3].max.should eq(3) }
 
     it "raises if empty" do
-      expect_raises EmptyEnumerable do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).max
       end
     end
@@ -418,7 +418,7 @@ describe "Enumerable" do
     assert { [1, 2, 3].min.should eq(1) }
 
     it "raises if empty" do
-      expect_raises EmptyEnumerable do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).min
       end
     end
@@ -454,7 +454,7 @@ describe "Enumerable" do
     assert { [1, 2, 3].minmax.should eq({1, 3}) }
 
     it "raises if empty" do
-      expect_raises EmptyEnumerable do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).minmax
       end
     end
