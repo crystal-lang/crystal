@@ -1,12 +1,13 @@
 require "fiber"
 
-class ChannelClosed < Exception
-  def initialize
-    super("Channel is closed")
-  end
-end
 
 abstract class Channel(T)
+  class ClosedError < Exception
+    def initialize
+      super("Channel is closed")
+    end
+  end
+
   def initialize
     @closed = false
     @senders = [] of Fiber
@@ -14,11 +15,11 @@ abstract class Channel(T)
   end
 
   def self.new
-    UnbufferedChannel(T).new
+    Unbuffered(T).new
   end
 
   def self.new(capacity)
-    BufferedChannel(T).new(capacity)
+    Buffered(T).new(capacity)
   end
 
   def close
@@ -32,7 +33,7 @@ abstract class Channel(T)
   end
 
   def receive
-    receive_impl { raise ChannelClosed.new }
+    receive_impl { raise ClosedError.new }
   end
 
   def receive?
@@ -60,7 +61,7 @@ abstract class Channel(T)
   end
 
   protected def raise_if_closed
-    raise ChannelClosed.new if @closed
+    raise ClosedError.new if @closed
   end
 
   def self.receive_first(*channels)
@@ -150,7 +151,7 @@ abstract class Channel(T)
   end
 end
 
-class BufferedChannel(T) < Channel(T)
+class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
     @queue = Array(T).new(@capacity)
     super()
@@ -192,7 +193,7 @@ class BufferedChannel(T) < Channel(T)
   end
 end
 
-class UnbufferedChannel(T) < Channel(T)
+class Channel::Unbuffered(T) < Channel(T)
   def initialize
     @has_value = false
     @value :: T
