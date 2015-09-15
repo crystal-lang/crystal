@@ -331,6 +331,23 @@ struct Tuple
    {% end %}
   end
 
+
+  # Returns a new tuple where the elements are in reverse order.
+  #
+  # ```
+  # tuple = {1, 2.5, "a"}
+  # tuple.reverse #=> {"a", 2.5, 1}
+  # ```
+  def reverse
+    {% if true %}
+      Tuple.new(
+        {% for i in 1 .. @type.length %}
+          self[{{@type.length - i}}],
+        {%end %}
+      )
+    {% end %}
+  end
+
   # Returns the first element of this tuple. Doesn't compile
   # if the tuple is empty.
   #

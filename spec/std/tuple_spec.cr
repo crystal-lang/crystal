@@ -168,6 +168,10 @@ describe "Tuple" do
     tuple2.should eq({"1", "2.5", "a"})
   end
 
+  it "does reverse" do
+    {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
+  end
+
   it "gets first element" do
     tuple = {1, 2.5}
     tuple.first.should eq(1)
