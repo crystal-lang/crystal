@@ -9,7 +9,7 @@ require "./*"
 #
 # ```
 # /hay/ =~ "haystack"   #=> 0
-# /y/.match("haystack") #=> #<MatchData "y">
+# /y/.match("haystack") #=> #<Regex::MatchData "y">
 # ```
 #
 # Interpolation works in regular expression literals just as it does in string
@@ -19,7 +19,7 @@ require "./*"
 #
 # ```
 # x = "a"
-# /#{x}/.match("asdf") #=> #<MatchData "a">
+# /#{x}/.match("asdf") #=> #<Regex::MatchData "a">
 # x = "("
 # /#{x}/ #=> ArgumentError
 # ```
@@ -39,12 +39,12 @@ require "./*"
 # Here `"haystack"` contains the pattern `/hay/`, so it matches:
 #
 # ```
-# /hay/.match("haystack")    #=> #<MatchData "hay">
+# /hay/.match("haystack")    #=> #<Regex::MatchData "hay">
 # ```
 #
 # Regex methods that perform a match usually return a truthy value if there was
 # a match and `nil` if there was no match. After performing a match, the
-# special variable `$~` will be an instance of `MatchData` if it matched, `nil`
+# special variable `$~` will be an instance of `Regex::MatchData` if it matched, `nil`
 # otherwise.
 #
 # When matching a regular expression using `=~` (either `String#=~` or
@@ -54,20 +54,20 @@ require "./*"
 # ```
 # /stack/ =~ "haystack"  #=> 3
 # "haystack" =~ /stack/  #=> 3
-# $~                     #=> #<MatchData "stack">
+# $~                     #=> #<Regex::MatchData "stack">
 # /needle/ =~ "haystack" #=> nil
 # "haystack" =~ /needle/ #=> nil
 # $~                     #=> nil
 # ```
 #
 # When matching a regular expression using `#match` (either `String#match` or
-# `Regex#match`), the returned value will be a `MatchData` if the expression
+# `Regex#match`), the returned value will be a `Regex::MatchData` if the expression
 # matched, `nil` otherwise.
 #
 # ```
-# /hay/.match("haystack")    #=> #<MatchData "hay">
-# "haystack".match(/hay/)    #=> #<MatchData "hay">
-# $~                         #=> #<MatchData "hay">
+# /hay/.match("haystack")    #=> #<Regex::MatchData "hay">
+# "haystack".match(/hay/)    #=> #<Regex::MatchData "hay">
+# $~                         #=> #<Regex::MatchData "hay">
 # /needle/.match("haystack") #=> nil
 # "haystack".match(/needle/) #=> nil
 # $~                         #=> nil
@@ -101,9 +101,9 @@ require "./*"
 # each capture group can be extracted on a successful match:
 #
 # ```
-# /a(sd)f/.match("_asdf_")  #=> #<MatchData "asdf" 1:"sd">
+# /a(sd)f/.match("_asdf_")  #=> #<Regex::MatchData "asdf" 1:"sd">
 # /a(sd)f/.match("_asdf_") { |md| md[1] } } #=> "sd"
-# /a(?<grp>sd)f/.match("_asdf_") #=> #<MatchData "asdf" grp:"sd">
+# /a(?<grp>sd)f/.match("_asdf_") #=> #<Regex::MatchData "asdf" grp:"sd">
 # /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } } #=> "sd"
 # ```
 #
@@ -120,17 +120,17 @@ require "./*"
 # (`?`) (zero or one).
 #
 # ```
-# /fo*/.match("_f_")         #=> #<MatchData "f">
+# /fo*/.match("_f_")         #=> #<Regex::MatchData "f">
 # /fo+/.match("_f_")         #=> nil
-# /fo*/.match("_foo_")       #=> #<MatchData "foo">
+# /fo*/.match("_foo_")       #=> #<Regex::MatchData "foo">
 # /fo{3,}/.match("_foo_")    #=> nil
-# /fo{1,3}/.match("_foo_")   #=> #<MatchData "foo">
-# /fo*/.match("_foo_")       #=> #<MatchData "foo">
-# /fo*/.match("_foooooooo_") #=> #<MatchData "foooooooo">
+# /fo{1,3}/.match("_foo_")   #=> #<Regex::MatchData "foo">
+# /fo*/.match("_foo_")       #=> #<Regex::MatchData "foo">
+# /fo*/.match("_foooooooo_") #=> #<Regex::MatchData "foooooooo">
 # /fo{,3}/.match("_foooo_")  #=> nil
-# /f(op)*/.match("fopopo")   #=> #<MatchData "fopop" 1: "op">
-# /foo?bar/.match("foobar")  #=> #<MatchData "foobar">
-# /foo?bar/.match("fobar")   #=> #<MatchData "fobar">
+# /f(op)*/.match("fopopo")   #=> #<Regex::MatchData "fopop" 1: "op">
+# /foo?bar/.match("foobar")  #=> #<Regex::MatchData "foobar">
+# /foo?bar/.match("fobar")   #=> #<Regex::MatchData "fobar">
 # ```
 #
 # Alternatives can be separated using a
@@ -143,17 +143,17 @@ require "./*"
 # enclosed in square brackets (`[]`):
 #
 # ```
-# /foo|bar/.match("foo")     #=> #<MatchData "foo">
-# /foo|bar/.match("bar")     #=> #<MatchData "bar">
-# /_(x|y)_/.match("_x_")     #=> #<MatchData "_x_" 1: "x">
-# /_(x|y)_/.match("_y_")     #=> #<MatchData "_y_" 1: "y">
+# /foo|bar/.match("foo")     #=> #<Regex::MatchData "foo">
+# /foo|bar/.match("bar")     #=> #<Regex::MatchData "bar">
+# /_(x|y)_/.match("_x_")     #=> #<Regex::MatchData "_x_" 1: "x">
+# /_(x|y)_/.match("_y_")     #=> #<Regex::MatchData "_y_" 1: "y">
 # /_(x|y)_/.match("_(x|y)_") #=> nil
 # /_(x|y)_/.match("_(x|y)_") #=> nil
-# /_._/.match("_x_")         #=> #<MatchData "_x_">
-# /_[xyz]_/.match("_x_")     #=> #<MatchData "_x_">
-# /_[a-z]_/.match("_x_")     #=> #<MatchData "_x_">
+# /_._/.match("_x_")         #=> #<Regex::MatchData "_x_">
+# /_[xyz]_/.match("_x_")     #=> #<Regex::MatchData "_x_">
+# /_[a-z]_/.match("_x_")     #=> #<Regex::MatchData "_x_">
 # /_[^a-z]_/.match("_x_")    #=> nil
-# /_[^a-wy-z]_/.match("_x_") #=> #<MatchData "_x_">
+# /_[^a-wy-z]_/.match("_x_") #=> #<Regex::MatchData "_x_">
 # ```
 #
 # Regular expressions can be defined with these 3
@@ -277,11 +277,11 @@ class Regex
   #
   # ```
   # re = Regex.union([/skiing/i, "sledding"])
-  # re.match("Skiing")   #=> #<MatchData "Skiing">
-  # re.match("sledding") #=> #<MatchData "sledding">
+  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
+  # re.match("sledding") #=> #<Regex::MatchData "sledding">
   # re = Regex.union({/skiing/i, "sledding"})
-  # re.match("Skiing")   #=> #<MatchData "Skiing">
-  # re.match("sledding") #=> #<MatchData "sledding">
+  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
+  # re.match("sledding") #=> #<Regex::MatchData "sledding">
   # ```
   def self.union(patterns : Enumerable(Regex | String))
     new patterns.map { |pattern| union_part pattern }.join("|")
@@ -295,8 +295,8 @@ class Regex
   #
   # ```
   # re = Regex.union(/skiing/i, "sledding")
-  # re.match("Skiing")   #=> #<MatchData "Skiing">
-  # re.match("sledding") #=> #<MatchData "sledding">
+  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
+  # re.match("sledding") #=> #<Regex::MatchData "sledding">
   # ```
   def self.union(*patterns : Regex | String)
     union patterns
@@ -318,8 +318,8 @@ class Regex
   #
   # ```
   # re = /skiing/i + /sledding/
-  # re.match("Skiing")   #=> #<MatchData "Skiing">
-  # re.match("sledding") #=> #<MatchData "sledding">
+  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
+  # re.match("sledding") #=> #<Regex::MatchData "sledding">
   # ```
   def +(other)
     Regex.union(self, other)
@@ -338,7 +338,7 @@ class Regex
 
   # Case equality. This is equivalent to `#match` or `#=~` but only returns
   # `true` or `false`. Used in `case` expressions. The special variable
-  # `$~` will contain a `MatchData` if there was a match, `nil` otherwise.
+  # `$~` will contain a `Regex::MatchData` if there was a match, `nil` otherwise.
   #
   # ```
   # a = "HELLO"
@@ -360,7 +360,7 @@ class Regex
 
   # Match. Matches a regular expression against `other` and returns
   # the starting position of the match if `other` is a matching String,
-  # otherwise `nil`. `$~` will contain a MatchData if there was a match,
+  # otherwise `nil`. `$~` will contain a Regex::MatchData if there was a match,
   # `nil` otherwise.
   #
   # ```
@@ -401,7 +401,7 @@ class Regex
 
   # Match at character index. Matches a regular expression against String
   # `str`. Starts at the character index given by `pos` if given, otherwise at
-  # the start of `str`. Returns a `MatchData` if `str` matched, otherwise
+  # the start of `str`. Returns a `Regex::MatchData` if `str` matched, otherwise
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
@@ -421,7 +421,7 @@ class Regex
 
   # Match at byte index. Matches a regular expression against String
   # `str`. Starts at the byte index given by `pos` if given, otherwise at
-  # the start of `str`. Returns a MatchData if `str` matched, otherwise
+  # the start of `str`. Returns a Regex::MatchData if `str` matched, otherwise
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
@@ -483,7 +483,7 @@ class Regex
   # ```
   # re = /A*/i                 #=> /A*/i
   # re.to_s                    #=> "(?i-msx:A*)"
-  # "Crystal".match(/t#{re}l/) #=> #<MatchData "tal">
+  # "Crystal".match(/t#{re}l/) #=> #<Regex::MatchData "tal">
   # re = /A*/                  #=> "(?-imsx:A*)"
   # "Crystal".match(/t#{re}l/) #=> nil
   # ```

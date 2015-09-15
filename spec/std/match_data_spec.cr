@@ -1,16 +1,16 @@
 require "spec"
 
-describe "MatchData" do
+describe "Regex::MatchData" do
   it "does inspect" do
-    /f(o)(x)/.match("the fox").inspect.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
-    /f(o)(x)?/.match("the fort").inspect.should eq(%(#<MatchData "fo" 1:"o" 2:nil>))
-    /fox/.match("the fox").inspect.should eq(%(#<MatchData "fox">))
+    /f(o)(x)/.match("the fox").inspect.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
+    /f(o)(x)?/.match("the fort").inspect.should eq(%(#<Regex::MatchData "fo" 1:"o" 2:nil>))
+    /fox/.match("the fox").inspect.should eq(%(#<Regex::MatchData "fox">))
   end
 
   it "does to_s" do
-    /f(o)(x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" 1:"o" 2:"x">))
-    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<MatchData "fox" lettero:"o" letterx:"x">))
-    /fox/.match("the fox").to_s.should eq(%(#<MatchData "fox">))
+    /f(o)(x)/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
+    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox" lettero:"o" letterx:"x">))
+    /fox/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox">))
   end
 
   describe "#[]" do

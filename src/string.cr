@@ -2044,7 +2044,7 @@ class String
   end
 
   def scan(pattern : Regex)
-    matches = [] of MatchData
+    matches = [] of Regex::MatchData
     scan(pattern) do |match|
       matches << match
     end
