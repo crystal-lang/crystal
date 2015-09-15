@@ -1,6 +1,11 @@
+require "./buffered/*"
+
 # An IO over a file descriptor.
 class FileDescriptorIO
-  include BufferedIO
+  include IO::Buffered::Common
+  include IO::Buffered::Reader
+  include IO::Buffered::Writer
+  include IO::Buffered::Seeker
 
   private getter! readers
   private getter! writers

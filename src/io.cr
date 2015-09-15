@@ -825,5 +825,5 @@ module IO
   end
 end
 
-require "./io/*"
+require "./io/**"
 
