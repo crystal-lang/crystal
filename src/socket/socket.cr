@@ -1,6 +1,6 @@
 require "./libc"
 
-class Socket < FileDescriptorIO
+class Socket < IO::FileDescriptor
   class Error < Exception
   end
 

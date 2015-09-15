@@ -1,7 +1,7 @@
 require "spec"
 
-class BufferedIOWrapper(T)
-  include BufferedIO
+class IO::BufferedWrapper(T)
+  include IO::Buffered
 
   getter called_unbuffered_read
 
@@ -54,9 +54,9 @@ class BufferedIOWrapper(T)
   end
 end
 
-describe "BufferedIO" do
+describe "IO::Buffered" do
   it "does gets" do
-    io = BufferedIOWrapper.new(StringIO.new("hello\nworld\n"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello\nworld\n"))
     io.gets.should eq("hello\n")
     io.gets.should eq("world\n")
     io.gets.should be_nil
@@ -64,12 +64,12 @@ describe "BufferedIO" do
 
   it "does gets with big line" do
     big_line = "a" * 20_000
-    io = BufferedIOWrapper.new(StringIO.new("#{big_line}\nworld\n"))
+    io = IO::BufferedWrapper.new(StringIO.new("#{big_line}\nworld\n"))
     io.gets.should eq("#{big_line}\n")
   end
 
   it "does gets with char delimiter" do
-    io = BufferedIOWrapper.new(StringIO.new("hello world"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello world"))
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
     io.gets('r').should eq("ld")
@@ -77,14 +77,14 @@ describe "BufferedIO" do
   end
 
   it "does gets with unicode char delimiter" do
-    io = BufferedIOWrapper.new(StringIO.new("こんにちは"))
+    io = IO::BufferedWrapper.new(StringIO.new("こんにちは"))
     io.gets('ち').should eq("こんにち")
     io.gets('ち').should eq("は")
     io.gets('ち').should be_nil
   end
 
   it "does gets with limit" do
-    io = BufferedIOWrapper.new(StringIO.new("hello\nworld\n"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello\nworld\n"))
     io.gets(3).should eq("hel")
     io.gets(10_000).should eq("lo\n")
     io.gets(10_000).should eq("world\n")
@@ -92,7 +92,7 @@ describe "BufferedIO" do
   end
 
   it "does gets with char and limit" do
-    io = BufferedIOWrapper.new(StringIO.new("hello\nworld\n"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello\nworld\n"))
     io.gets('o', 2).should eq("he")
     io.gets('w', 10_000).should eq("llo\nw")
     io.gets('z', 10_000).should eq("orld\n")
@@ -100,18 +100,18 @@ describe "BufferedIO" do
   end
 
   it "does gets with char and limit when not found in buffer" do
-    io = BufferedIOWrapper.new(StringIO.new(("a" * (BufferedIO::BUFFER_SIZE + 10)) + "b"))
+    io = IO::BufferedWrapper.new(StringIO.new(("a" * (IO::Buffered::BUFFER_SIZE + 10)) + "b"))
     io.gets('b', 2).should eq("aa")
   end
 
   it "does gets with char and limit when not found in buffer (2)" do
-    base = "a" * (BufferedIO::BUFFER_SIZE + 10)
-    io = BufferedIOWrapper.new(StringIO.new(base + "aabaaa"))
-    io.gets('b', BufferedIO::BUFFER_SIZE + 11).should eq(base + "a")
+    base = "a" * (IO::Buffered::BUFFER_SIZE + 10)
+    io = IO::BufferedWrapper.new(StringIO.new(base + "aabaaa"))
+    io.gets('b', IO::Buffered::BUFFER_SIZE + 11).should eq(base + "a")
   end
 
   it "raises if invoking gets with negative limit" do
-    io = BufferedIOWrapper.new(StringIO.new("hello\nworld\n"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello\nworld\n"))
     expect_raises ArgumentError, "negative limit" do
       io.gets(-1)
     end
@@ -119,14 +119,14 @@ describe "BufferedIO" do
 
   it "writes bytes" do
     str = StringIO.new
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     10_000.times { io.write_byte 'a'.ord.to_u8 }
     io.flush
     str.to_s.should eq("a" * 10_000)
   end
 
   it "reads char" do
-    io = BufferedIOWrapper.new(StringIO.new("hi 世界"))
+    io = IO::BufferedWrapper.new(StringIO.new("hi 世界"))
     io.read_char.should eq('h')
     io.read_char.should eq('i')
     io.read_char.should eq(' ')
@@ -136,7 +136,7 @@ describe "BufferedIO" do
   end
 
   it "reads byte" do
-    io = BufferedIOWrapper.new(StringIO.new("hello"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello"))
     io.read_byte.should eq('h'.ord)
     io.read_byte.should eq('e'.ord)
     io.read_byte.should eq('l'.ord)
@@ -147,14 +147,14 @@ describe "BufferedIO" do
 
   it "does new with block" do
     str = StringIO.new
-    res = BufferedIOWrapper.new str, &.print "Hello"
+    res = IO::BufferedWrapper.new str, &.print "Hello"
     res.should be(str)
     str.to_s.should eq("Hello")
   end
 
   it "rewinds" do
     str = StringIO.new("hello\nworld\n")
-    io = BufferedIOWrapper.new str
+    io = IO::BufferedWrapper.new str
     io.gets.should eq("hello\n")
     io.rewind
     io.gets.should eq("hello\n")
@@ -168,7 +168,7 @@ describe "BufferedIO" do
         end
       end
     end
-    io = BufferedIOWrapper.new(StringIO.new(s))
+    io = IO::BufferedWrapper.new(StringIO.new(s))
 
     slice = Slice(UInt8).new(9000)
     count = io.read(slice)
@@ -182,14 +182,14 @@ describe "BufferedIO" do
   end
 
   it "does read with limit" do
-    io = BufferedIOWrapper.new(StringIO.new("hello world"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello world"))
     io.read(5).should eq("hello")
     io.read(10).should eq(" world")
     io.read(5).should eq("")
   end
 
   it "raises argument error if reads negative count" do
-    io = BufferedIOWrapper.new(StringIO.new("hello world"))
+    io = IO::BufferedWrapper.new(StringIO.new("hello world"))
     expect_raises(ArgumentError, "negative count") do
       io.read(-1)
     end
@@ -197,7 +197,7 @@ describe "BufferedIO" do
 
   it "does puts" do
     str = StringIO.new
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     io.puts "Hello"
     str.to_s.should eq("")
     io.flush
@@ -206,7 +206,7 @@ describe "BufferedIO" do
 
   it "does puts with big string" do
     str = StringIO.new
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     s = "*" * 20_000
     io << "hello"
     io << s
@@ -216,7 +216,7 @@ describe "BufferedIO" do
 
   it "does puts many times" do
     str = StringIO.new
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     10_000.times { io << "hello" }
     io.flush
     str.to_s.should eq("hello" * 10_000)
@@ -224,7 +224,7 @@ describe "BufferedIO" do
 
   it "flushes on \n" do
     str = StringIO.new
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     io.flush_on_newline = true
 
     io << "hello\nworld"
@@ -235,7 +235,7 @@ describe "BufferedIO" do
 
   it "doesn't write past count" do
     str = StringIO.new
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     io.flush_on_newline = true
 
     slice = Slice.new(10) { |i| i == 9 ? '\n'.ord.to_u8 : ('a'.ord + i).to_u8 }
@@ -247,7 +247,7 @@ describe "BufferedIO" do
   it "syncs" do
     str = StringIO.new
 
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     io.sync?.should be_false
 
     io.sync = true
@@ -261,7 +261,7 @@ describe "BufferedIO" do
 
   it "shouldn't call unbuffered read if reading to an empty slice" do
     str = StringIO.new("foo")
-    io = BufferedIOWrapper.new(str)
+    io = IO::BufferedWrapper.new(str)
     io.read(Slice(UInt8).new(0))
     io.called_unbuffered_read.should be_false
   end

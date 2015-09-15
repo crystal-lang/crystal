@@ -1,6 +1,6 @@
 # An IO over a file descriptor.
-class FileDescriptorIO
-  include BufferedIO
+class IO::FileDescriptor
+  include Buffered
 
   private getter! readers
   private getter! writers
@@ -135,7 +135,7 @@ class FileDescriptorIO
     LibC.isatty(fd) == 1
   end
 
-  def reopen(other : FileDescriptorIO)
+  def reopen(other : IO::FileDescriptor)
     if LibC.dup2(other.fd, self.fd) == -1
       raise Errno.new("Could not reopen file descriptor")
     end

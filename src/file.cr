@@ -11,7 +11,7 @@ lib LibC
   R_OK = 1 << 2
 end
 
-class File < FileDescriptorIO
+class File < IO::FileDescriptor
   # The file/directory separator character. '/' in unix, '\\' in windows.
   SEPARATOR = ifdef windows; '\\'; else; '/'; end
 

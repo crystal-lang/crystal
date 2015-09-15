@@ -173,7 +173,7 @@ class Process
   end
 
   private def needs_pipe?(io)
-    io.nil? || (io.is_a?(IO) && !io.is_a?(FileDescriptorIO))
+    io.nil? || (io.is_a?(IO) && !io.is_a?(IO::FileDescriptor))
   end
 
   private def copy_io(src, dst, channel, close_src = false, close_dst = false)
@@ -201,7 +201,7 @@ class Process
 
   private def reopen_io(src_io, dst_io, mode)
     case src_io
-    when FileDescriptorIO
+    when IO::FileDescriptor
       src_io.blocking = true
       dst_io.reopen(src_io)
     when true
