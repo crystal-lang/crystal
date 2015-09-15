@@ -66,27 +66,27 @@ struct Time
       raise ArgumentError.new "invalid time"
     end
 
-    @encoded = TimeSpan.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
+    @encoded = Span.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
     @encoded |= kind.value << KindShift
   end
 
   def self.new(time : LibC::TimeSpec, kind = Kind::Unspecified)
-    new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
+    new(UnixEpoch + time.tv_sec.to_i64 * Span::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
 
   def self.epoch(seconds : Int)
-    new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, Kind::Utc)
+    new(UnixEpoch + seconds.to_i64 * Span::TicksPerSecond, Kind::Utc)
   end
 
   def self.epoch_ms(milliseconds : Int)
-    new(UnixEpoch + milliseconds.to_i64 * TimeSpan::TicksPerMillisecond, Kind::Utc)
+    new(UnixEpoch + milliseconds.to_i64 * Span::TicksPerMillisecond, Kind::Utc)
   end
 
-  def +(other : TimeSpan)
+  def +(other : Span)
     add_ticks other.ticks
   end
 
-  def -(other : TimeSpan)
+  def -(other : Span)
     add_ticks -other.ticks
   end
 
@@ -134,7 +134,7 @@ struct Time
   end
 
   def -(other : Time)
-    TimeSpan.new(ticks - other.ticks)
+    Span.new(ticks - other.ticks)
   end
 
   def self.now
@@ -166,27 +166,27 @@ struct Time
   end
 
   def hour
-    ((encoded & TicksMask) % TimeSpan::TicksPerDay / TimeSpan::TicksPerHour).to_i32
+    ((encoded & TicksMask) % Span::TicksPerDay / Span::TicksPerHour).to_i32
   end
 
   def minute
-    ((encoded & TicksMask) % TimeSpan::TicksPerHour / TimeSpan::TicksPerMinute).to_i32
+    ((encoded & TicksMask) % Span::TicksPerHour / Span::TicksPerMinute).to_i32
   end
 
   def second
-    ((encoded & TicksMask) % TimeSpan::TicksPerMinute / TimeSpan::TicksPerSecond).to_i32
+    ((encoded & TicksMask) % Span::TicksPerMinute / Span::TicksPerSecond).to_i32
   end
 
   def millisecond
-    ((encoded & TicksMask) % TimeSpan::TicksPerSecond / TimeSpan::TicksPerMillisecond).to_i32
+    ((encoded & TicksMask) % Span::TicksPerSecond / Span::TicksPerMillisecond).to_i32
   end
 
   def time_of_day
-    TimeSpan.new((encoded & TicksMask) % TimeSpan::TicksPerDay)
+    Span.new((encoded & TicksMask) % Span::TicksPerDay)
   end
 
   def day_of_week
-    value = (((encoded & TicksMask) / TimeSpan::TicksPerDay) + 1) % 7
+    value = (((encoded & TicksMask) / Span::TicksPerDay) + 1) % 7
     DayOfWeek.new value.to_i
   end
 
@@ -242,35 +242,35 @@ struct Time
   end
 
   def inspect(io : IO)
-    TimeFormat.new("%F %T").format(self, io)
+    Format.new("%F %T").format(self, io)
     io << " UTC" if utc?
-    TimeFormat.new(" %z").format(self, io) if local?
+    Format.new(" %z").format(self, io) if local?
     io
   end
 
   def to_s(format : String)
-    TimeFormat.new(format).format(self)
+    Format.new(format).format(self)
   end
 
   def to_s(format : String, io : IO)
-    TimeFormat.new(format).format(self, io)
+    Format.new(format).format(self, io)
   end
 
   def self.parse(time, pattern, kind = Time::Kind::Unspecified)
-    TimeFormat.new(pattern, kind).parse(time)
+    Format.new(pattern, kind).parse(time)
   end
 
   # Returns the number of seconds since the Epoch
   def epoch
-    (ticks - UnixEpoch) / TimeSpan::TicksPerSecond
+    (ticks - UnixEpoch) / Span::TicksPerSecond
   end
 
   def epoch_ms
-    (ticks - UnixEpoch) / TimeSpan::TicksPerMillisecond
+    (ticks - UnixEpoch) / Span::TicksPerMillisecond
   end
 
   def epoch_f
-    (ticks - UnixEpoch) / TimeSpan::TicksPerSecond.to_f
+    (ticks - UnixEpoch) / Span::TicksPerSecond.to_f
   end
 
   def to_utc
@@ -378,7 +378,7 @@ struct Time
     m = 1
 
     days = DAYS_MONTH
-    totaldays = ((encoded & TicksMask) / TimeSpan::TicksPerDay).to_i32
+    totaldays = ((encoded & TicksMask) / Span::TicksPerDay).to_i32
 
     num400 = totaldays / DP400
     totaldays -= num400 * DP400
@@ -425,7 +425,7 @@ struct Time
 
   def self.local_ticks
     compute_ticks do |ticks, tp, tzp|
-      ticks - (tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute)
+      ticks - (tzp.tz_minuteswest.to_i64 * Span::TicksPerMinute)
     end
   end
 
@@ -448,19 +448,19 @@ struct Time
 
   protected def self.compute_utc_ticks(ticks)
     compute_ticks do |t, tp, tzp|
-      ticks + tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute
+      ticks + tzp.tz_minuteswest.to_i64 * Span::TicksPerMinute
     end
   end
 
   protected def self.compute_local_ticks(ticks)
     compute_ticks do |t, tp, tzp|
-      ticks - tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute
+      ticks - tzp.tz_minuteswest.to_i64 * Span::TicksPerMinute
     end
   end
 
   private def self.compute_ticks
     LibC.gettimeofday(out tp, out tzp)
-    ticks = tp.tv_sec.to_i64 * TimeSpan::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
+    ticks = tp.tv_sec.to_i64 * Span::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
     yield ticks, tp, tzp
   end

@@ -109,8 +109,8 @@ class HTTP::Client
     @read_timeout = read_timeout.to_f
   end
 
-  # Set the read timeout with a TimeSpan, to wait when reading before raising an `IO::Timeout`.
-  def read_timeout=(read_timeout : TimeSpan)
+  # Set the read timeout with a Time::Span, to wait when reading before raising an `IO::Timeout`.
+  def read_timeout=(read_timeout : Time::Span)
     self.read_timeout = read_timeout.total_seconds
   end
 

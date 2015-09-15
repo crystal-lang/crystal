@@ -1,6 +1,6 @@
-struct TimeSpan
-  # *Heavily* inspired by Mono's TimeSpan class:
-  # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/TimeSpan.cs
+struct Time::Span
+  # *Heavily* inspired by Mono's Time::Span class:
+  # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs
 
   include Comparable(self)
 
@@ -81,7 +81,7 @@ struct TimeSpan
 
     if overflow
       if raise_exception
-        raise ArgumentError.new "TimeSpan too big or too small"
+        raise ArgumentError.new "Time::Span too big or too small"
       end
       return nil
     end
@@ -146,7 +146,7 @@ struct TimeSpan
   end
 
   def abs
-    TimeSpan.new(ticks.abs)
+    Span.new(ticks.abs)
   end
 
   def from_now
@@ -159,17 +159,17 @@ struct TimeSpan
 
   def -(other : self)
     # TODO check overflow
-    TimeSpan.new(ticks - other.ticks)
+    Span.new(ticks - other.ticks)
   end
 
   def -
     # TODO check overflow
-    TimeSpan.new(-ticks)
+    Span.new(-ticks)
   end
 
   def +(other : self)
     # TODO check overflow
-    TimeSpan.new(ticks + other.ticks)
+    Span.new(ticks + other.ticks)
   end
 
   def +
@@ -186,9 +186,9 @@ struct TimeSpan
     end
 
     # We need to take absolute values of all components.
-    # Can't handle negative timespans by negating the TimeSpan
+    # Can't handle negative timespans by negating the Time::Span
     # as a whole. This would lead to an overflow for the
-    # degenerate case `TimeSpan.MinValue`.
+    # degenerate case `Time::Span.MinValue`.
     if days != 0
       io << days.abs
       io << '.'
@@ -228,7 +228,7 @@ struct TimeSpan
     # TODO check infinity and overflow
     value = value * (tick_multiplicator / TicksPerMillisecond)
       val = (value < 0 ? (value - 0.5)  : (value + 0.5)).to_i64 # round away from zero
-    TimeSpan.new(val * TicksPerMillisecond)
+    Span.new(val * TicksPerMillisecond)
   end
 end
 
@@ -238,7 +238,7 @@ struct Int
   end
 
   def weeks
-    TimeSpan.new 7 * self, 0, 0, 0
+    Time::Span.new 7 * self, 0, 0, 0
   end
 
   def day
@@ -246,7 +246,7 @@ struct Int
   end
 
   def days
-    TimeSpan.new self, 0, 0, 0
+    Time::Span.new self, 0, 0, 0
   end
 
   def hour
@@ -254,7 +254,7 @@ struct Int
   end
 
   def hours
-    TimeSpan.new self, 0, 0
+    Time::Span.new self, 0, 0
   end
 
   def minute
@@ -262,7 +262,7 @@ struct Int
   end
 
   def minutes
-    TimeSpan.new 0, self, 0
+    Time::Span.new 0, self, 0
   end
 
   def second
@@ -270,7 +270,7 @@ struct Int
   end
 
   def seconds
-    TimeSpan.new 0, 0, self
+    Time::Span.new 0, 0, self
   end
 
   def millisecond
@@ -278,33 +278,33 @@ struct Int
   end
 
   def milliseconds
-    TimeSpan.new 0, 0, 0, 0, self
+    Time::Span.new 0, 0, 0, 0, self
   end
 end
 
 struct Float
   def days
-    TimeSpan.from self, TimeSpan::TicksPerDay
+    Time::Span.from self, Time::Span::TicksPerDay
   end
 
   def hours
-    TimeSpan.from self, TimeSpan::TicksPerHour
+    Time::Span.from self, Time::Span::TicksPerHour
   end
 
   def minutes
-    TimeSpan.from self, TimeSpan::TicksPerMinute
+    Time::Span.from self, Time::Span::TicksPerMinute
   end
 
   def seconds
-    TimeSpan.from self, TimeSpan::TicksPerSecond
+    Time::Span.from self, Time::Span::TicksPerSecond
   end
 
   def milliseconds
-    TimeSpan.from self, TimeSpan::TicksPerMillisecond
+    Time::Span.from self, Time::Span::TicksPerMillisecond
   end
 end
 
-struct MonthSpan
+struct Time::MonthSpan
   getter value
 
   def initialize(value)
@@ -326,7 +326,7 @@ struct Int
   end
 
   def months
-    MonthSpan.new(self)
+    Time::MonthSpan.new(self)
   end
 
   def year
@@ -334,7 +334,7 @@ struct Int
   end
 
   def years
-    MonthSpan.new(self * 12)
+    Time::MonthSpan.new(self * 12)
   end
 end
 

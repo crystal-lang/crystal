@@ -54,11 +54,11 @@ describe "YAML serialization" do
       Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n").should eq({1, "foo", true})
     end
 
-    it "does TimeFormat#from_yaml" do
+    it "does Time::Format#from_yaml" do
       pull = YAML::PullParser.new("--- 2014-01-02\n...\n")
       pull.read_stream do
         pull.read_document do
-          TimeFormat.new("%F").from_yaml(pull).should eq(Time.new(2014, 1, 2))
+          Time::Format.new("%F").from_yaml(pull).should eq(Time.new(2014, 1, 2))
         end
       end
     end

@@ -28,7 +28,7 @@ end
 
 class YAMLWithTime
   yaml_mapping({
-    value: {type: Time, converter: TimeFormat.new("%F %T")},
+    value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
@@ -87,7 +87,7 @@ describe "YAML mapping" do
     yaml.value.should be_false
   end
 
-  it "parses json with TimeFormat converter" do
+  it "parses json with Time::Format converter" do
     json = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
     json.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
   end

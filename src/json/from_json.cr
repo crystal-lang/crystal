@@ -91,7 +91,7 @@ def Tuple.new(pull : JSON::PullParser)
  {% end %}
 end
 
-struct TimeFormat
+struct Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string
     parse(string)
