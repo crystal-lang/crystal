@@ -205,4 +205,8 @@ describe HTTP::WebSocket do
       end
     end
   end
+
+  typeof(HTTP::WebSocket.open(URI.parse("ws://localhost")))
+  typeof(HTTP::WebSocket.open("localhost", "/"))
+  typeof(HTTP::WebSocket.open("ws://localhost"))
 end

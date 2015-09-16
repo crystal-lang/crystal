@@ -354,7 +354,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(url)
+  private def self.exec(uri)
     if url.is_a?(URI)
       uri = url
     else

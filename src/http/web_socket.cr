@@ -184,7 +184,9 @@ class HTTP::WebSocket
   # WebSocket.open(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with SSL to `websocket.example.com`
   # WebSocket.open(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
   # ```
-  def self.open(uri : URI)
+  def self.open(uri : URI | String)
+    uri = URI.parse(uri) if uri.is_a?(String)
+
     if host = uri.host
       if path = uri.path
         ssl = uri.scheme == "https" || uri.scheme == "wss"
