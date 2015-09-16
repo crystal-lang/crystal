@@ -111,9 +111,21 @@ module Base64
     end
   end
 
-  # Returns the Base64-decoded version of `data`.
+  # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data)
+    slice = data.to_slice
+    buf = Pointer(UInt8).malloc(decode_size(slice.size))
+    appender = buf.appender
+    from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
+    Slice.new(buf, appender.size.to_i32)
+  end
+
+  # Returns the Base64-decoded version of `data` as a string.
+  # If the data doesn't decode to a valid UTF8 string,
+  # *InvalidByteSequenceError* will be raised.
+  # This will decode either the normal or urlsafe alphabets.
+  def decode_string(data)
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender

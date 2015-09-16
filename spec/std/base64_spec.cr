@@ -12,7 +12,8 @@ describe "Base64" do
         Base64.encode(a).should eq(b)
       end
       it "decode from #{b.inspect} to #{a.inspect}" do
-        Base64.decode(b).should eq(a)
+        Base64.decode(b).should eq(a.to_slice)
+        Base64.decode_string(b).should eq(a)
       end
     end
   end
@@ -41,19 +42,20 @@ describe "Base64" do
         Base64.encode(a).should eq(b)
       end
       it "decode from #{b.inspect} to #{a.inspect}" do
-        Base64.decode(b).should eq(a)
+        Base64.decode(b).should eq(a.to_slice)
+        Base64.decode_string(b).should eq(a)
       end
     end
 
     it "decode from strict form" do
-      Base64.decode("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
+      Base64.decode_string("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
        "Now is the time for all good coders\nto learn Crystal")
     end
 
     it "big message" do
       a = "a" * 100000
       b = Base64.encode(a)
-      Crypto::MD5.hex_digest(Base64.decode(b)).should eq(Crypto::MD5.hex_digest(a))
+      Crypto::MD5.hex_digest(Base64.decode_string(b)).should eq(Crypto::MD5.hex_digest(a))
     end
 
     it "works for most characters" do
@@ -61,28 +63,36 @@ describe "Base64" do
         65536.times { |i| buf << (i + 1).chr }
       end
       b = Base64.encode(a)
-      Crypto::MD5.hex_digest(Base64.decode(b)).should eq(Crypto::MD5.hex_digest(a))
+      Crypto::MD5.hex_digest(Base64.decode_string(b)).should eq(Crypto::MD5.hex_digest(a))
     end
   end
 
   describe "decode cases" do
     it "decode \r\n" do
-      Base64.decode("aGFo\r\nYWjiipnik6fiipk=\r\n").should eq("hahah⊙ⓧ⊙")
-      Base64.decode("aGFo\r\nYWjiipnik6fiipk=\r\n\r\n").should eq("hahah⊙ⓧ⊙")
+      decoded = "hahah⊙ⓧ⊙"
+      {"aGFo\r\nYWjiipnik6fiipk=\r\n", "aGFo\r\nYWjiipnik6fiipk=\r\n\r\n"}.each do |encoded|
+        Base64.decode(encoded).should eq(decoded.to_slice)
+        Base64.decode_string(encoded).should eq(decoded)
+      end
     end
 
     it "decode \n in multiple places" do
-      Base64.decode("aGFoYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode("aGFo\nYWjiipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode("aGFo\nYWji\nipnik6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode("aGFo\nYWji\nipni\nk6fiipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode("aGFo\nYWji\nipni\nk6fi\nipk=").should eq("hahah⊙ⓧ⊙")
-      Base64.decode("aGFo\nYWji\nipni\nk6fi\nipk=\n").should eq("hahah⊙ⓧ⊙")
+      decoded = "hahah⊙ⓧ⊙"
+      {"aGFoYWjiipnik6fiipk=", "aGFo\nYWjiipnik6fiipk=", "aGFo\nYWji\nipnik6fiipk=",
+       "aGFo\nYWji\nipni\nk6fiipk=", "aGFo\nYWji\nipni\nk6fi\nipk=",
+       "aGFo\nYWji\nipni\nk6fi\nipk=\n"}.each do |encoded|
+        Base64.decode(encoded).should eq(decoded.to_slice)
+        Base64.decode_string(encoded).should eq(decoded)
+      end
     end
 
     it "raise error when \n in incorrect place" do
       expect_raises Base64::Error do
         Base64.decode("aG\nFoYWjiipnik6fiipk=")
+      end
+
+      expect_raises Base64::Error do
+        Base64.decode_string("aG\nFoYWjiipnik6fiipk=")
       end
     end
 
@@ -90,11 +100,19 @@ describe "Base64" do
       expect_raises Base64::Error do
         Base64.decode("()")
       end
+
+      expect_raises Base64::Error do
+        Base64.decode_string("()")
+      end
     end
 
     it "raise error when incorrect size" do
       expect_raises Base64::Error do
         Base64.decode("a")
+      end
+
+      expect_raises Base64::Error do
+        Base64.decode_string("a")
       end
     end
   end
