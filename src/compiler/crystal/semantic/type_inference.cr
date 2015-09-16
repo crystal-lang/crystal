@@ -3421,6 +3421,13 @@ module Crystal
 
     def visit(node : StringInterpolation)
       expand(node)
+
+      # This allows some methods to be resolved even if the interpolated expressions doesn't
+      # end up with a type because of recursive methods. We should really do something more
+      # clever and robust here for the general case.
+      node.type = mod.string
+
+      false
     end
 
     def visit(node : Case)

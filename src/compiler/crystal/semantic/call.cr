@@ -563,7 +563,7 @@ class Crystal::Call
 
     previous_item = enclosing_def.previous
     unless previous_item
-      raise "there is no previous definition of '#{enclosing_def.name}'"
+      return raise "there is no previous definition of '#{enclosing_def.name}'"
     end
 
     previous = previous_item.def

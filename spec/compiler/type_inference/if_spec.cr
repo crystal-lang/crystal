@@ -50,4 +50,24 @@ describe "Type inference: if" do
       ),
       "can't require dynamically"
   end
+
+  it "correctly filters type of varaible if there's a raise with an interpolation that can't be typed" do
+    assert_type(%(
+      require "prelude"
+
+      def bar
+        bar
+      end
+
+      def foo
+        a = 1 || nil
+        unless a
+          raise "Oh no \#{bar}"
+        end
+        a + 2
+      end
+
+      foo
+      )) { int32 }
+  end
 end
