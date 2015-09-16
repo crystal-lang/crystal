@@ -96,5 +96,38 @@ module HTTP
       cookie.expires.should eq(time)
     end
   end
+
+  describe Cookies do
+    it "allows adding cookies and retrieving" do
+      cookies = Cookies.new
+      cookies << Cookie.new("a", "b")
+      cookies["c"] = Cookie.new("c", "d")
+      cookies["d"] = "e"
+
+      cookies["a"].value.should eq "b"
+      cookies["c"].value.should eq "d"
+      cookies["d"].value.should eq "e"
+    end
+
+    it "disallows adding inconsistent state" do
+      cookies = Cookies.new
+
+      expect_raises ArgumentError do
+        cookies["a"] = Cookie.new("b", "c")
+      end
+    end
+
+    it "allows to iterate over the cookies" do
+      cookies = Cookies.new
+      cookies["a"] = "b"
+      cookies.each do |cookie|
+        cookie.name.should eq "a"
+        cookie.value.should eq "b"
+      end
+
+      cookie = cookies.each.next
+      cookie.should eq Cookie.new("a", "b")
+    end
+  end
 end
 

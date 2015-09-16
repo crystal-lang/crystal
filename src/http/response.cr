@@ -32,6 +32,8 @@ class HTTP::Response
     @body
   end
 
+  # Returns a convenience wrapper around querying and setting cookie related
+  # headers, see `HTTP::Cookies`.
   def cookies
     @cookies ||= Cookies.from_headers(headers)
   end
