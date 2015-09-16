@@ -16,6 +16,10 @@ class HTTP::Request
     end
   end
 
+  def cookies
+    @cookies ||= Cookies.from_headers(headers)
+  end
+
   def uri
     URI.parse(@path)
   end
@@ -26,7 +30,9 @@ class HTTP::Request
 
   def to_io(io)
     io << @method << " " << @path << " " << @version << "\r\n"
-    HTTP.serialize_headers_and_body(io, @headers, @body)
+    cookies = @cookies
+    headers = cookies ? cookies.add_request_headers(@headers) : @headers
+    HTTP.serialize_headers_and_body(io, headers, @body)
   end
 
   def self.from_io(io)

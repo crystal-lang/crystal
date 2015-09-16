@@ -1,4 +1,6 @@
 module HTTP
+  DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+
   def self.parse_headers_and_body(io, mandatory_body = false)
     headers = Headers.new
 
@@ -78,6 +80,7 @@ module HTTP
         end
       end
     end
+
     io << "\r\n"
     io << body if body
   end
@@ -97,9 +100,26 @@ module HTTP
       true
     end
   end
+
+  def self.parse_time(time_str : String)
+    DATE_PATTERNS.each do |pattern|
+      begin
+        return Time.parse(time_str, pattern)
+      rescue Time::Format::Error
+      end
+    end
+
+    nil
+  end
+
+  def self.rfc1123_date(time : Time) : String
+    # TODO: GMT should come from the Time classes instead
+    time.to_s("%a, %d %b %Y %H:%M:%S GMT")
+  end
 end
 
 require "./request"
 require "./response"
 require "./headers"
 require "./content"
+require "./cookie"

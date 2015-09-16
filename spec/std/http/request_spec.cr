@@ -13,6 +13,29 @@ module HTTP
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
     end
 
+    it "serialize GET (with cookie)" do
+      headers = HTTP::Headers.new
+      headers["Host"] = "host.example.org"
+      request = Request.new "GET", "/", headers
+      request.cookies << Cookie.new("foo", "bar")
+
+      io = StringIO.new
+      request.to_io(io)
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar; path=/\r\n\r\n")
+    end
+
+    it "serialize GET (with cookie, from headers)" do
+      headers = HTTP::Headers.new
+      headers["Host"] = "host.example.org"
+      headers["Cookie"] = "foo=bar; path=/"
+
+      request = Request.new "GET", "/", headers
+
+      io = StringIO.new
+      request.to_io(io)
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar; path=/\r\n\r\n")
+    end
+
     it "serialize POST (with body)" do
       request = Request.new "POST", "/", body: "thisisthebody"
       io = StringIO.new
@@ -40,6 +63,14 @@ module HTTP
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
+    end
+
+    it "parses GET with cookie" do
+      request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: a=b\r\n\r\n")).not_nil!
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.cookies["a"].value.should eq("b")
+      request.headers.should eq({"Host" => "host.example.org"})
     end
 
     it "headers are case insensitive" do

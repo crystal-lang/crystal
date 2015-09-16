@@ -60,8 +60,14 @@ module HTTP
     end
 
     it "parses response with duplicated headers" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nWarning: 111 Revalidation failed\r\nWarning: 110 Response is stale\r\n\r\nhelloworld"))
+      response.headers.get("Warning").should eq(["111 Revalidation failed", "110 Response is stale"])
+    end
+
+    it "parses response with cookies" do
       response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: a=b\r\nSet-Cookie: c=d\r\n\r\nhelloworld"))
-      response.headers.get("Set-Cookie").should eq(["a=b", "c=d"])
+      response.cookies["a"].value.should eq("b")
+      response.cookies["c"].value.should eq("d")
     end
 
     it "parses response with chunked body" do
@@ -106,6 +112,19 @@ module HTTP
       io = StringIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
+    end
+
+    it "serialize with body and cookie" do
+      headers = HTTP::Headers.new
+      headers["Content-Type"] = "text/plain"
+      headers["Content-Length"] = "5"
+
+      response = Response.new(200, "hello", headers)
+      response.cookies << Cookie.new("foo", "bar")
+
+      io = StringIO.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=bar; path=/\r\n\r\nhello")
     end
 
     it "sets content length from body" do
