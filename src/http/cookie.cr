@@ -2,6 +2,8 @@ require "cgi"
 require "./common"
 
 module HTTP
+  # Represents a cookie with all its attributes. Provides convenient
+  # access and modification of them.
   class Cookie
     def self.parse(str : String) : Cookie
       # TODO: error handling, empty string + no name=value pair
@@ -38,25 +40,36 @@ module HTTP
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
-    def initialize(@name, value, @path = "/",  @expires = nil, @domain = nil, @secure = false, @http_only = false)
+    def initialize(@name : String, value : String, @path = "/" : String,
+                   @expires = nil : Time?, @domain = nil : String?,
+                   @secure = false : Bool, @http_only = false : Bool)
       @value = CGI.unescape value
     end
 
     def to_header
+      path    = @path
+      expires = @expires
+      domain  = @domain
       String.build do |header|
         header << "#{@name}=#{CGI.escape value}"
-        header << "; path=#{@path}" if @path
-        header << "; expires=#{HTTP.rfc1123_date(@expires as Time)}" if @expires
-        header << "; domain=#{@domain}" if @domain
+        header << "; path=#{path}" if path
+        header << "; expires=#{HTTP.rfc1123_date(expires)}" if expires
+        header << "; domain=#{domain}" if domain
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
       end
     end
   end
 
+  # Represents a collection of cookies as it can be present inside
+  # a HTTP request or response.
   class Cookies
     include Enumerable(Cookie)
 
+    # Create a new instance by parsing the `Cookie` and `Set-Cookie`
+    # headers in the given `HTTP::Headers`.
+    #
+    # See `HTTP::Request#cookies` and `HTTP::Response#cookies`.
     def self.from_headers(headers)
       new.tap do |cookies|
         {"Cookie", "Set-Cookie"}.each do |key|
@@ -70,14 +83,29 @@ module HTTP
       end
     end
 
+    # Create a new empty instance
     def initialize
       @cookies = {} of String => Cookie
     end
 
-    def []=(key, value)
+    # Set a new cookie in the collection with a string value.
+    # This creates a never expiring, insecure, not HTTP only cookie with
+    # no explicit domain restriction and the path `/`.
+    #
+    # ```
+    # request.cookies["foo"] = "bar"
+    # ```
+    def []=(key, value : String)
       self[key] = Cookie.new(key, value)
     end
 
+    # Set a new cookie in the collection to the given `HTTP::Cookie`
+    # instance. The name attribute must match the given key, else
+    # `ArgumentError` is raised.
+    #
+    # ```
+    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.now + 12.hours, secure: true)
+    # ```
     def []=(key, value : Cookie)
       unless key == value.name
         raise ArgumentError.new("Cookie name must match the given key")
@@ -86,28 +114,47 @@ module HTTP
       @cookies[key] = value
     end
 
+    # Get the current `HTTP::Cookie` for the given key.
+    #
+    # ```
+    # request.cookies["foo"].value #=> "bar"
+    # ```
     def [](key)
       @cookies[key]
     end
 
+    # Add the given cookie to this collection, overrides an existing cookie
+    # with the same name if present.
+    #
+    # ```
+    # response.cookies << Cookie.new("foo", "bar", http_only: true)
+    # ```
     def <<(cookie : Cookie)
       self[cookie.name] = cookie
     end
 
+    # Yields each `HTTP::Cookie` in the collection.
     def each(&block : T -> _)
       @cookies.values.each do |cookie|
         yield cookie
       end
     end
 
+    # Returns an iterator over the cookies of this collection.
     def each
       @cookies.each_value
     end
 
+    # Adds `Cookie` headers for the cookies in this collection to the
+    # given `HTTP::Header` instance and returns it. Removes any existing
+    # `Cookie` headers in it.
     def add_request_headers(headers)
       add_headers "Cookie", headers
     end
 
+    # Adds `Set-Cookie` headers for the cookies in this collection to the
+    # given `HTTP::Header` instance and returns it. Removes any existing
+    # `Set-Cookie` headers in it.
     def add_response_headers(headers)
       add_headers "Set-Cookie", headers
     end
