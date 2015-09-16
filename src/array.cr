@@ -862,11 +862,28 @@ class Array(T)
     self
   end
 
+  # Removes all elements from `self` for which the given block returns falsy value.
+  #
+  # ```
+  # ary = [1,2,3,4]
+  # ary.select!{|elem| elem % 2 == 0 }  #=>[2,4]
+  # ary                                 #=>[2,4]
+  # ary.select!{|elem| elem % 2 == 1 }  #=>[]
+  # ary                                 #=>[]
+  # ```
   def select!
     delete_if { |elem| !(yield elem) }
     self
   end
 
+  # Removes all elements from `self` for which the given block returns a truthy value.
+  #
+  # ```
+  # ary = [1,2,3,4]
+  # ary.reject!{|elem| elem % 2 == 0 }  #=>[1,3]
+  # ary                                 #=>[1,3]
+  # ary.reject!{|elem| elem % 2 == 1 }  #=>[]
+  # ary                                 #=>[]
   def reject!
     delete_if { |elem| yield elem }
     self
