@@ -40,7 +40,7 @@ module Crystal
     def parse
       next_token_skip_statement_end
 
-      expressions = parse_expressions
+      expressions = parse_expressions.tap { check :EOF }
 
       check :EOF
 
@@ -985,8 +985,7 @@ module Crystal
       when :INSTANCE_VAR
         name = @token.value.to_s
         add_instance_var name
-        ivar = InstanceVar.new(name)
-        ivar.location = @token.location
+        ivar = InstanceVar.new(name).at(@token.location)
         ivar.end_location = token_end_location
         @wants_regex = false
         next_token_skip_space
@@ -1058,7 +1057,7 @@ module Crystal
       named_args = nil
 
       if @token.type == :"("
-        open(:attribute) do
+        open("attribute") do
           next_token_skip_space
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'
@@ -1463,12 +1462,11 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :")"
           location = @token.location
-          arg = parse_fun_literal_arg
+          arg = parse_fun_literal_arg.at(location)
           if args.any? &.name.==(arg.name)
             raise "duplicated argument name: #{arg.name}", location
           end
 
-          arg.location = location
           args << arg
         end
         next_token_skip_space_or_newline
@@ -1775,7 +1773,7 @@ module Crystal
       exps = [] of ASTNode
       end_location = nil
 
-      open(:array_literal) do
+      open("array literal") do
         next_token_skip_space_or_newline
         while @token.type != :"]"
           exps << parse_expression
@@ -1849,7 +1847,7 @@ module Crystal
 
       entries = [] of HashLiteral::Entry
 
-      open(:hash_literal, location) do
+      open("hash literal", location) do
         entries << HashLiteral::Entry.new(first_key, parse_op_assign)
         skip_space_or_newline
         if @token.type == :","
@@ -1894,7 +1892,7 @@ module Crystal
       exps = [] of ASTNode
       end_location = nil
 
-      open(:tuple_literal, location) do
+      open("tuple literal", location) do
         exps << first_exp
         while @token.type != :"}"
           exps << parse_expression
@@ -2040,8 +2038,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.keyword?(:self)
-        name = Self.new
-        name.location = @token.location
+        name = Self.new.at(@token.location)
         name.end_location = token_end_location
         next_token_skip_space
       else
@@ -3116,7 +3113,7 @@ module Crystal
         args = [] of ASTNode
         end_location = nil
 
-        open(:call) do
+        open("call") do
           next_token_skip_space_or_newline
           while @token.type != :")"
             if call_block_arg_follows?
@@ -3530,8 +3527,7 @@ module Crystal
           if allow_primitives
             case @token.type
             when :NUMBER
-              num = NumberLiteral.new(@token.value.to_s, @token.number_kind)
-              num.location = @token.location
+              num = NumberLiteral.new(@token.value.to_s, @token.number_kind).at(@token.location)
               types << node_and_next_token(num)
               skip_space
               return types
@@ -4175,21 +4171,13 @@ module Crystal
     end
 
     def parse_struct_or_union_fields(exps)
-      args = [] of Arg
-
-      arg = Arg.new(@token.value.to_s)
-      arg.location = @token.location
-      args << arg
+      args = [Arg.new(@token.value.to_s).at(@token.location)]
 
       next_token_skip_space_or_newline
 
       while @token.type == :","
         next_token_skip_space_or_newline
-
-        arg = Arg.new(check_ident)
-        arg.location = @token.location
-        args << arg
-
+        args << Arg.new(check_ident).at(@token.location)
         next_token_skip_space_or_newline
       end
 
@@ -4273,18 +4261,14 @@ module Crystal
             unexpected_token
           end
         when :CLASS_VAR
-          class_var = ClassVar.new(@token.value.to_s)
-          class_var.location = @token.location
+          class_var = ClassVar.new(@token.value.to_s).at(@token.location)
 
           next_token_skip_space
           check :"="
           next_token_skip_space_or_newline
           value = parse_op_assign
 
-          assign = Assign.new(class_var, value)
-          assign.location = class_var.location
-
-          members << assign
+          members << Assign.new(class_var, value).at(class_var)
         when :";", :NEWLINE
           skip_statement_end
         else
@@ -4446,18 +4430,7 @@ module Crystal
 
     def unexpected_token_in_atomic
       if unclosed = @unclosed_stack.last?
-        case unclosed.name
-        when :array_literal
-          raise "unterminated array literal", unclosed.location
-        when :hash_literal
-          raise "unterminated hash literal", unclosed.location
-        when :tuple_literal
-          raise "unterminated tuple literal", unclosed.location
-        when :call
-          raise "unterminated call", unclosed.location
-        when :attribute
-          raise "unterminated attribute", unclosed.location
-        end
+        raise "unterminated #{unclosed.name}", unclosed.location
       end
 
       unexpected_token

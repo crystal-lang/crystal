@@ -283,9 +283,8 @@ class Crystal::CodeGenVisitor
     end
 
     # Reuse this call for each dispatch branch
-    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block)
+    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block).at(node)
     call.scope = node.scope
-    call.location = node.location
 
     with_cloned_context do
       context.vars = new_vars

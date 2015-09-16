@@ -20,8 +20,7 @@ module Crystal
     end
 
     def expand_macro_def(target_def)
-      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
-      the_macro.location = target_def.location
+      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body).at(target_def)
 
       owner = target_def.owner
 
