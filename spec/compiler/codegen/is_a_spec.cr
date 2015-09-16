@@ -632,17 +632,6 @@ describe "Codegen: is_a?" do
       )).to_i.should eq(4)
   end
 
-  it "does is_a?/responds_to? twice (#1451)" do
-    run(%(
-      a = 1 == 2 ? 1 : false
-      if a.is_a?(Int32) && a.is_a?(Int32)
-        3
-      else
-        4
-      end
-      )).to_i.should eq(4)
-  end
-
   it "does is_a? with && and true condition" do
     run(%(
       a = 1 == 1 ? 1 : false

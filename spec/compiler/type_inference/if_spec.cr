@@ -51,7 +51,7 @@ describe "Type inference: if" do
       "can't require dynamically"
   end
 
-  it "correctly filters type of varaible if there's a raise with an interpolation that can't be typed" do
+  it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
     assert_type(%(
       require "prelude"
 

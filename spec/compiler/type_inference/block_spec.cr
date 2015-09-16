@@ -284,7 +284,7 @@ describe "Block inference" do
       "expected block to return Foo, not Int32"
   end
 
-  it "errors when using local varaible with block argument name" do
+  it "errors when using local variable with block argument name" do
     assert_error "def foo; yield; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
   end

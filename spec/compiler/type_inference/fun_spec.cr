@@ -66,7 +66,7 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  it "errors when using local varaible with fun argument name" do
+  it "errors when using local variable with fun argument name" do
     assert_error "->(a : Int32) { }; a",
       "undefined local variable or method 'a'"
   end
