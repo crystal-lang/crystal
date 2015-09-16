@@ -114,17 +114,31 @@ module HTTP
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end
 
-    it "serialize with body and cookie" do
+    it "serialize with body and cookies" do
       headers = HTTP::Headers.new
       headers["Content-Type"] = "text/plain"
       headers["Content-Length"] = "5"
+      headers["Set-Cookie"] = "foo=bar; path=/"
 
       response = Response.new(200, "hello", headers)
-      response.cookies << Cookie.new("foo", "bar")
 
       io = StringIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=bar; path=/\r\n\r\nhello")
+
+      response.cookies["foo"].value.should eq "bar" # Force lazy initialization
+
+      io.clear
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=bar; path=/\r\n\r\nhello")
+
+
+      response.cookies["foo"] = "baz"
+      response.cookies << Cookie.new("quux", "baz")
+
+      io.clear
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=baz; path=/\r\nSet-Cookie: quux=baz; path=/\r\n\r\nhello")
     end
 
     it "sets content length from body" do

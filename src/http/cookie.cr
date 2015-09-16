@@ -113,6 +113,8 @@ module HTTP
     end
 
     private def add_headers key, headers
+      headers.delete(key)
+
       each do |cookie|
         headers.add(key, cookie.to_header)
       end
