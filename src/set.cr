@@ -38,11 +38,7 @@ struct Set(T)
   #     s = Set.new [1,3,5]
   #     s.empty? => false
   def self.new(enumerable : Enumerable(T))
-    set = Set(T).new
-    enumerable.each do |elem|
-      set << elem
-    end
-    set
+    Set(T).new.merge(enumerable)
   end
 
   # Alias for `add`
@@ -165,9 +161,7 @@ struct Set(T)
 
   # Returns a new set with all of the same elements
   def dup
-    set = Set(T).new
-    each { |value| set.add value }
-    set
+    Set(T).new.merge(self)
   end
 
   # Returns the elements as an array

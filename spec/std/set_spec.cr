@@ -55,6 +55,18 @@ describe "Set" do
     end
   end
 
+  describe "dup" do
+    it "creates an independant copy" do
+      set1 = Set{1, 2, 3}
+      set2 = set1.dup
+
+      set1 << 4
+      set2 << 5
+
+      set2.should eq(Set{1, 2, 3, 5})
+    end
+  end
+
   describe "==" do
     it "compares two sets" do
       set1 = Set{1, 2, 3}
