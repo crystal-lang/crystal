@@ -12,15 +12,15 @@ module HTTP
       (1...parts.size).each do |i|
         part = parts[i]
         case part
-        when .=~ /^\s*path=(.+)/i
+        when /^\s*path=(.+)/i
           cookie.path = $~[1] if $~
-        when .=~ /^\s*domain=(.+)/i
+        when /^\s*domain=(.+)/i
           cookie.domain = $~[1] if $~
-        when .=~ /Secure/
+        when /Secure/
           cookie.secure = true
-        when .=~ /HttpOnly/
+        when /HttpOnly/
           cookie.http_only = true
-        when .=~ /^\s*expires=(.+)/
+        when /^\s*expires=(.+)/
           cookie.expires = HTTP.parse_time($~[1]) if $~
         end
       end
@@ -35,6 +35,8 @@ module HTTP
     property domain
     property secure
     property http_only
+
+    def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
     def initialize(@name, value, @path = "/",  @expires = nil, @domain = nil, @secure = false, @http_only = false)
       @value = CGI.unescape value
@@ -73,6 +75,14 @@ module HTTP
     end
 
     def []=(key, value)
+      self[key] = Cookie.new(key, value)
+    end
+
+    def []=(key, value : Cookie)
+      unless key == value.name
+        raise ArgumentError.new("Cookie name must match the given key")
+      end
+
       @cookies[key] = value
     end
 
@@ -88,6 +98,10 @@ module HTTP
       @cookies.values.each do |cookie|
         yield cookie
       end
+    end
+
+    def each
+      @cookies.each_value
     end
 
     def add_request_headers(headers)
