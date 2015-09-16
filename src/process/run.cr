@@ -110,7 +110,7 @@ class Process
       end
     end
 
-    @pid = Process.fork(run_hooks: false) do
+    @pid = Process.fork_internal(run_hooks: false) do
       begin
         # File.umask(umask) if umask
 
@@ -140,6 +140,10 @@ class Process
     fork_input.try &.close
     fork_output.try &.close
     fork_error.try &.close
+  end
+
+  def initialize @pid
+    @wait_count = 0
   end
 
   # See Process.kill
