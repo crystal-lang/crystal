@@ -380,6 +380,12 @@ class Crystal::Call
           # Special case: private setter can be called with self
           return
         end
+
+        if name == "initialize" && parent_visitor.call.try(&.name) == "new"
+          # Special case: initialize call inside automatically defined new
+          return
+        end
+
         raise "private method '#{match.def.name}' called for #{match.def.owner}"
       end
     when :protected

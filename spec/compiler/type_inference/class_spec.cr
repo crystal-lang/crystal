@@ -886,4 +886,16 @@ describe "Type inference: class" do
       ),
       "can't declare class dynamically"
   end
+
+  it "can mark initialize as private" do
+    assert_error %(
+      class Foo
+        private def initialize
+        end
+      end
+
+      Foo.new
+      ),
+      "private method 'new' called for Foo"
+  end
 end
