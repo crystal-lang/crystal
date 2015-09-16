@@ -12,7 +12,9 @@ module Crystal
 
     abstract def to_s_with_source(source, io)
 
-    abstract def to_json(io)
+    def to_json(io)
+      io.json_array { |ar| json_obj(ar) }
+    end
 
     def true_filename(filename=@filename) : String
       if filename.is_a? VirtualFile
@@ -80,9 +82,9 @@ module Crystal
       @filename || @line
     end
 
-    def to_json(io)
-      {file: true_filename, line: @line_number, column: @column_number,
-       size: @size, message: @message}.to_json(io)
+    def json_obj(ar)
+      ar << {file: true_filename, line: @line_number, column: @column_number,
+             size: @size, message: @message}
     end
 
     def append_to_s(source, io)
@@ -167,12 +169,11 @@ module Crystal
       new message, nil, 0, nil, 0
     end
 
-    def to_json(io)
-      if (inner = @inner) && !inner.is_a? MethodTraceException
-        inner.to_json(io)
-      else
-        {file: true_filename, line: @line, column: @column,
-         size: @size, message: deepest_error_message || @message}.to_json(io)
+    def json_obj(ar)
+      ar << {file: true_filename, line: @line, column: @column,
+             size: @size, message: @message}
+      if inner = @inner
+        inner.json_obj(ar)
       end
     end
 
@@ -276,8 +277,7 @@ module Crystal
       true
     end
 
-    def to_json(io)
-      nil.to_json(io)
+    def json_obj(ar)
     end
 
     def to_s_with_source(source, io)
