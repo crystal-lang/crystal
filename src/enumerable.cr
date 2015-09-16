@@ -934,3 +934,5 @@ module Enumerable(T)
     end
   end
 end
+
+require "enumerable/*"

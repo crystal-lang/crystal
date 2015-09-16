@@ -5,6 +5,7 @@
 # In this way, a slice is a safe alternative to Pointer.
 struct Slice(T)
   include Enumerable(T)
+  include Enumerable::FixedSizeCompare(T)
   include Iterable
 
   # Returns the size of this slice.
@@ -242,12 +243,6 @@ struct Slice(T)
 
   def bytesize
     sizeof(T) * size
-  end
-
-  def ==(other : self)
-    return false if bytesize != other.bytesize
-    sz = LibC::SizeT.new(bytesize)
-    return LibC.memcmp(to_unsafe as Void*, other.to_unsafe as Void*, sz) == 0
   end
 
   def to_slice

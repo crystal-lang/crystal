@@ -262,7 +262,7 @@ describe "Enumerable" do
   describe "in_groups_of" do
     assert { [1, 2, 3].in_groups_of(1).should eq([[1], [2], [3]]) }
     assert { [1, 2, 3].in_groups_of(2).should eq([[1, 2], [3, nil]]) }
-    assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Array(Int32 | Nil))) }
+    assert { ([] of Int32).in_groups_of(2).should eq([] of Array(Int32 | Nil)) }
     assert { [1, 2, 3].in_groups_of(2, "x").should eq([[1, 2], [3, "x"]]) }
 
     it "raises argument error if size is less than 0" do

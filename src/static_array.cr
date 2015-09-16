@@ -1,6 +1,8 @@
 # A fixed-size, stack allocated array.
 struct StaticArray(T, N)
   include Enumerable(T)
+  include Enumerable::FixedSizeCompare(T)
+  include Iterable
 
   # Creates a new static array and invokes the
   # block once for each index of the array, assigning the
@@ -26,16 +28,8 @@ struct StaticArray(T, N)
     new { value }
   end
 
-  def ==(other : StaticArray)
-    return false unless size == other.size
-    each_with_index do |e, i|
-      return false unless e == other[i]
-    end
-    true
-  end
-
-  def ==(other)
-    false
+  def each
+    ItemIterator(T).new(buffer, N)
   end
 
   def each
@@ -72,6 +66,10 @@ struct StaticArray(T, N)
 
   def size
     N
+  end
+
+  def bytesize
+    sizeof(T) * size
   end
 
   def []=(value : T)
@@ -114,5 +112,28 @@ struct StaticArray(T, N)
       raise IndexError.new
     end
     index
+  end
+
+  # :nodoc:
+  class ItemIterator(T)
+    include Iterator(T)
+
+    def initialize(@pointer, @size, @index = 0)
+    end
+
+    def next
+      value = if @index < @size
+        (@pointer + @index).value
+      else
+        stop
+      end
+      @index += 1
+      value
+    end
+
+    def rewind
+      @index = 0
+      self
+    end
   end
 end
