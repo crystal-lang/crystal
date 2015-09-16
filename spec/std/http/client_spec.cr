@@ -19,6 +19,8 @@ module HTTP
     typeof(Client.new("host").before_request { |req| HTTP::Response.ok("text/plain", "OK") })
     typeof(Client.new("host").close)
     typeof(Client.get(URI.parse("http://www.example.com")))
+    typeof(Client.get(URI.parse("http://www.example.com")))
+    typeof(Client.get("http://www.example.com"))
 
     it "raises if URI is missing scheme" do
       expect_raises(ArgumentError) do

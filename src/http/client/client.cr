@@ -355,11 +355,7 @@ class HTTP::Client
   end
 
   private def self.exec(uri)
-    if url.is_a?(URI)
-      uri = url
-    else
-      uri = URI.parse(url)
-    end
+    uri = URI.parse(uri) if uri.is_a?(String)
 
     unless uri.scheme
       raise ArgumentError.new %(Request URI must have schema. Possibly add "http://" to the request URI?)
