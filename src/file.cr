@@ -385,4 +385,4 @@ class File < IO::FileDescriptor
   end
 end
 
-require "file/stat"
+require "file/*"
