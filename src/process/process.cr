@@ -105,16 +105,6 @@ class Process
     pid
   end
 
-  def self.waitpid pid
-    chan = Event::SignalChildHandler.instance.waitpid pid
-    status = chan.receive
-    if status
-      return status
-    else
-      raise "waitpid channel closed"
-    end
-  end
-
   record Tms, utime, stime, cutime, cstime
 
   def self.times

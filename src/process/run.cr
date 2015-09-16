@@ -137,12 +137,15 @@ class Process
       end
     end
 
+    @waitpid_future = WaitpidFuture.new @pid
+
     fork_input.try &.close
     fork_output.try &.close
     fork_error.try &.close
   end
 
-  def initialize @pid
+  protected def initialize @pid
+    @waitpid_future = WaitpidFuture.new @pid
     @wait_count = 0
   end
 
@@ -159,8 +162,9 @@ class Process
       ex = channel.receive
       raise ex if ex
     end
+    @wait_count = 0
 
-    Process.waitpid(@pid)
+    @waitpid_future.value
   ensure
     close
   end
