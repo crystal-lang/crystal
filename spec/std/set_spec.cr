@@ -33,6 +33,11 @@ describe "Set" do
       set.includes?(1).should be_true
       set.size.should eq(1)
     end
+
+    it "returns self" do
+      set = Set(Int32).new
+      set.add(1).should eq(set)
+    end
   end
 
   describe "delete" do
@@ -42,6 +47,11 @@ describe "Set" do
       set.size.should eq(2)
       set.includes?(1).should be_true
       set.includes?(3).should be_true
+    end
+
+    it "returns self" do
+      set = Set{1, 2, 3}
+      set.delete(2).should eq(set)
     end
   end
 
@@ -54,6 +64,19 @@ describe "Set" do
       set1.should eq(set1)
       set1.should eq(set2)
       set1.should_not eq(set3)
+    end
+  end
+
+  describe "merge" do
+    it "adds all the other elements"do
+      set = Set{1, 4, 8}
+      set.merge [1,9,10]
+      set.should eq(Set{1,4,8,9,10})
+    end
+
+    it "returns self" do
+      set = Set{1, 4, 8}
+      set.merge([1,9,10]).should eq(Set{1,4,8,9,10})
     end
   end
 

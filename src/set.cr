@@ -50,7 +50,7 @@ struct Set(T)
     add object
   end
 
-  # Adds `object` to the set
+  # Adds `object` to the set and returns `self`
   #
   #     s = Set.new [1,5]
   #     s.includes? 8     # => false
@@ -58,15 +58,17 @@ struct Set(T)
   #     s.includes? 8     # => true
   def add(object : T)
     @hash[object] = nil
+    self
   end
 
-  # Adds `#each` element of `elms` to the set
+  # Adds `#each` element of `elms` to the set and returns `self`
   #
   #     s = Set.new [1,5]
   #     s.merge [5,5,8,9]
   #     s.size            # => 4
   def merge(elems)
     elems.each { |elem| self << elem }
+    self
   end
 
   # Returns `true` if `object` exists in the set
@@ -78,7 +80,7 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the `object` from the set
+  # Removes the `object` from the set and returns `self`
   #
   #     s = Set.new [1,5]
   #     s.includes? 5  # => true
@@ -86,6 +88,7 @@ struct Set(T)
   #     s.includes? 5  # => false
   def delete(object)
     @hash.delete(object)
+    self
   end
 
   # Returns the number of elements in the set
@@ -96,7 +99,7 @@ struct Set(T)
     @hash.size
   end
 
-  # Removes all elements in the set
+  # Removes all elements in the set, and returns `self`
   #
   #     s = Set.new [1,5]
   #     s.size  # => 2
@@ -117,7 +120,7 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yeilds each element of the set
+  # Yeilds each element of the set, and returns `self`
   def each
     @hash.each_key do |key|
       yield key
