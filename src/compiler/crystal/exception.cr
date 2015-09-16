@@ -13,7 +13,7 @@ module Crystal
     abstract def to_s_with_source(source, io)
 
     def to_json(io)
-      io.json_array { |ar| json_obj(ar) }
+      io.json_array { |ar| json_obj(ar, io) }
     end
 
     def true_filename(filename=@filename) : String
@@ -82,9 +82,16 @@ module Crystal
       @filename || @line
     end
 
-    def json_obj(ar)
-      ar << {file: true_filename, line: @line_number, column: @column_number,
-             size: @size, message: @message}
+    def json_obj(ar, io)
+      ar.push do
+        io.json_object do |obj|
+          obj.field "file", true_filename
+          obj.field "line", @line_number
+          obj.field "column", @column_number
+          obj.field "size", @size
+          obj.field "message", @message
+        end
+      end
     end
 
     def append_to_s(source, io)
@@ -169,11 +176,18 @@ module Crystal
       new message, nil, 0, nil, 0
     end
 
-    def json_obj(ar)
-      ar << {file: true_filename, line: @line, column: @column,
-             size: @size, message: @message}
+    def json_obj(ar, io)
+      ar.push do
+        io.json_object do |obj|
+          obj.field "file", true_filename
+          obj.field "line", @line
+          obj.field "column", @column
+          obj.field "size", @size
+          obj.field "message", @message
+        end
+      end
       if inner = @inner
-        inner.json_obj(ar)
+        inner.json_obj(ar, io)
       end
     end
 
@@ -277,7 +291,7 @@ module Crystal
       true
     end
 
-    def json_obj(ar)
+    def json_obj(ar, io)
     end
 
     def to_s_with_source(source, io)
