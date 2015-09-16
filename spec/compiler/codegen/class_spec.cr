@@ -685,4 +685,17 @@ describe "Code gen: class" do
       x.bar
       )).to_i.should eq(123)
   end
+
+  it "codegens method of class union including Int (#1476)" do
+    run(%(
+      class Class
+        def foo
+          1
+        end
+      end
+
+      x = Int || Int32
+      x.foo
+      )).to_i.should eq(1)
+  end
 end
