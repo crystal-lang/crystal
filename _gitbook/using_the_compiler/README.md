@@ -73,16 +73,14 @@ Usage: crystal [command] [switches] [program file] [--] [arguments]
 Command:
     init                     generate new crystal project
     build                    compile program file
-    browser                  open an http server to browse program file
     deps                     install project dependencies
     docs                     generate documentation
-    eval                     eval code
-    hierarchy                show type hierarchy
+    eval                     eval code from args or standard input
     run (default)            compile and run program file
     spec                     compile and run specs (in spec directory)
-    types                    show type of main variables
-    --help                   show this help
-    --version                show version
+    tool                     run a tool
+    --help, -h               show this help
+    --version, -v            show version
 ```
 
 To see the available options for a particuar command, use `--help` after a command:
@@ -101,7 +99,7 @@ Options:
     --link-flags FLAGS               Additional flags to pass to the linker
     --mcpu CPU                       Target specific cpu type
     --no-color                       Disable colored output
-    --no-build                       Disable build output
+    --no-codegen                     Don't do code generation
     -o                               Output filename
     --prelude                        Use given file as prelude
     --release                        Compile in release mode

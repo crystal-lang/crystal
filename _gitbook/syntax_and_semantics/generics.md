@@ -19,7 +19,7 @@ For example, if we take the above code and add this:
 MyBox.new(1)
 ```
 
-and then check what the compiler inferred with `crystal hierarchy file.cr`, we get:
+and then check what the compiler inferred with `crystal tool hierarchy file.cr`, we get:
 
 ```
 +- class MyBox
@@ -74,7 +74,7 @@ box = MyBox(String).new("hello")
 box.value.size #=> 5
 ```
 
-The above now works, because `MyBox` is now not a single type, but a family of types identified with a `T` type: `MyBox(Int32)` is a different type than `MyBox(String)`, and their `@value` variable is not shared. If we run the `hierarchy` command again, we get:
+The above now works, because `MyBox` is now not a single type, but a family of types identified with a `T` type: `MyBox(Int32)` is a different type than `MyBox(String)`, and their `@value` variable is not shared. If we run the `tool hierarchy` command again, we get:
 
 ```
 +- generic class MyBox(T)
