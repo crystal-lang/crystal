@@ -107,6 +107,16 @@ describe "TCPSocket" do
       (server.reuse_address = true).should be_true
       server.reuse_address?.should be_true
 
+      (server.keepalive = false).should be_false
+      server.keepalive?.should be_false
+      (server.keepalive = true).should be_true
+      server.keepalive?.should be_true
+
+      (server.linger = nil).should be_nil
+      server.linger.should be_nil
+      (server.linger = 42).should eq 42
+      server.linger.should eq 42
+
       TCPSocket.open("localhost", 12345) do |client|
         # The commented lines are actually dependant on the system configuration,
         # so for now we keep it commented. Once we can force the family
@@ -130,6 +140,13 @@ describe "TCPSocket" do
         client.tcp_nodelay?.should be_true
         (client.tcp_nodelay = false).should be_false
         client.tcp_nodelay?.should be_false
+
+        (client.tcp_keepalive_idle = 42).should eq 42
+        client.tcp_keepalive_idle.should eq 42
+        (client.tcp_keepalive_interval = 42).should eq 42
+        client.tcp_keepalive_interval.should eq 42
+        (client.tcp_keepalive_count = 42).should eq 42
+        client.tcp_keepalive_count.should eq 42
 
         client << "ping"
         sock.read(4).should eq("ping")

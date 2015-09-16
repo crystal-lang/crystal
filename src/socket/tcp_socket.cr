@@ -28,15 +28,42 @@ class TCPSocket < IPSocket
     end
   end
 
+  # If set, disable the Nagle algorithm.
   def tcp_nodelay?
-    v = 0
-    ret = getsockopt LibC::TCP_NODELAY, v, level: LibC::IPPROTO_TCP
-    ret != 0
+    getsockopt_bool LibC::TCP_NODELAY, level: LibC::IPPROTO_TCP
   end
 
   def tcp_nodelay= val : Bool
-    v = val ? 1 : 0
-    setsockopt LibC::TCP_NODELAY, v, level: LibC::IPPROTO_TCP
+    setsockopt_bool LibC::TCP_NODELAY, val, level: LibC::IPPROTO_TCP
+  end
+
+  # The amount of time in seconds the connection must be idle before sending keepalive probes.
+  def tcp_keepalive_idle
+    getsockopt LibC::TCP_KEEPIDLE, 0, level: LibC::IPPROTO_TCP
+  end
+
+  def tcp_keepalive_idle= val : Int
+    setsockopt LibC::TCP_KEEPIDLE, val, level: LibC::IPPROTO_TCP
+    val
+  end
+
+  # The amount of time in seconds between keepalive probes.
+  def tcp_keepalive_interval
+    getsockopt LibC::TCP_KEEPINTVL, 0, level: LibC::IPPROTO_TCP
+  end
+
+  def tcp_keepalive_interval= val : Int
+    setsockopt LibC::TCP_KEEPINTVL, val, level: LibC::IPPROTO_TCP
+    val
+  end
+
+  # The number of probes sent, without response before dropping the connectino.
+  def tcp_keepalive_count
+    getsockopt LibC::TCP_KEEPCNT, 0, level: LibC::IPPROTO_TCP
+  end
+
+  def tcp_keepalive_count= val : Int
+    setsockopt LibC::TCP_KEEPCNT, val, level: LibC::IPPROTO_TCP
     val
   end
 end
