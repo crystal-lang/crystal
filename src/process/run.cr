@@ -245,7 +245,7 @@ end
 # Produces:
 #
 # ```text
-# LICENSE Projectfile Readme.md spec src
+# LICENSE shard.yml Readme.md spec src
 # ```
 def system(command : String, args = nil) : Bool
   status = Process.run(command, args, shell: true, input: true, output: true, error: true)
@@ -260,7 +260,7 @@ end
 # Example:
 #
 # ```
-# `echo *` #=> "LICENSE Projectfile Readme.md spec src\n"
+# `echo *` #=> "LICENSE shard.yml Readme.md spec src\n"
 # ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)
