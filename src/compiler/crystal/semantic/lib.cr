@@ -65,38 +65,8 @@ class Crystal::Call
 
   def check_fun_args_types_match(obj_type, typed_def)
     typed_def.args.each_with_index do |typed_def_arg, i|
-      expected_type = typed_def_arg.type
       self_arg = self.args[i]
-      actual_type = self_arg.type
-      actual_type = mod.pointer_of(actual_type) if self.args[i].is_a?(Out)
-      unless actual_type.compatible_with?(expected_type) || actual_type.is_implicitly_converted_in_c_to?(expected_type)
-        implicit_call = try_to_unsafe(self_arg) do |ex|
-          if to_unsafe_lookup_failed?(ex)
-            arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
-
-            if expected_type.is_a?(FunInstanceType) &&
-               actual_type.is_a?(FunInstanceType) &&
-               expected_type.arg_types == actual_type.arg_types
-              self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a function returning #{expected_type.return_type}, not #{actual_type.return_type}"
-            else
-              self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
-            end
-          else
-            self_arg.raise ex.message, ex
-          end
-        end
-        implicit_call_type = implicit_call.type?
-        if implicit_call_type
-          if implicit_call_type.compatible_with?(expected_type)
-            self.args[i] = implicit_call
-          else
-            arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
-            self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type} (nor #{implicit_call_type} returned by '#{actual_type}#to_unsafe')"
-          end
-        else
-          self_arg.raise "tried to convert #{actual_type} to #{expected_type} invoking to_unsafe, but can't deduce its type"
-        end
-      end
+      check_fun_arg_type_matches(obj_type, self_arg, typed_def_arg, i)
     end
 
     # Need to call to_unsafe on variadic args too
@@ -131,6 +101,50 @@ class Crystal::Call
     end
   end
 
+  def check_fun_arg_type_matches(obj_type, self_arg, typed_def_arg, index)
+    expected_type = typed_def_arg.type
+    actual_type = self_arg.type
+    actual_type = mod.pointer_of(actual_type) if self_arg.is_a?(Out)
+    return if actual_type.compatible_with?(expected_type)
+    return if actual_type.is_implicitly_converted_in_c_to?(expected_type)
+
+    unaliased_type = expected_type.remove_alias
+    case unaliased_type
+    when IntegerType
+      return if convert_numeric_argument self_arg, unaliased_type, expected_type, actual_type, index
+    when FloatType
+      return if convert_numeric_argument self_arg, unaliased_type, expected_type, actual_type, index
+    end
+
+    implicit_call = try_to_unsafe(self_arg) do |ex|
+      if to_unsafe_lookup_failed?(ex)
+        arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{index + 1}"
+
+        if expected_type.is_a?(FunInstanceType) &&
+           actual_type.is_a?(FunInstanceType) &&
+           expected_type.arg_types == actual_type.arg_types
+          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a function returning #{expected_type.return_type}, not #{actual_type.return_type}"
+        else
+          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+        end
+      else
+        self_arg.raise ex.message, ex
+      end
+    end
+
+    implicit_call_type = implicit_call.type?
+    if implicit_call_type
+      if implicit_call_type.compatible_with?(expected_type)
+        self.args[index] = implicit_call
+      else
+        arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{index + 1}"
+        self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type} (nor #{implicit_call_type} returned by '#{actual_type}#to_unsafe')"
+      end
+    else
+      self_arg.raise "tried to convert #{actual_type} to #{expected_type} invoking to_unsafe, but can't deduce its type"
+    end
+  end
+
   def check_not_lib_out_args
     args.find(&.is_a?(Out)).try &.raise "out can only be used with lib funs"
   end
@@ -147,5 +161,41 @@ class Crystal::Call
       yield ex
     end
     implicit_call
+  end
+
+  def convert_numeric_argument(self_arg, unaliased_type, expected_type, actual_type, index)
+    if self_arg.is_a?(NumberLiteral)
+      # TODO: check that the number literal fits, error otherwise
+
+      # If converting from a float to integer, we need to remove the dot
+      # so that later the codegen finds a correct value
+      if unaliased_type.is_a?(IntegerType) && (dot_index = self_arg.value.index('.'))
+        self_arg.value = self_arg.value[0 ... dot_index]
+      end
+
+      self_arg.kind = unaliased_type.kind
+      self_arg.type = unaliased_type
+      return true
+    end
+
+    convert_call_name = "to_#{unaliased_type.kind}"
+    convert_call = Call.new(self_arg.clone, convert_call_name).at(self_arg)
+
+    begin
+      convert_call.accept parent_visitor
+    rescue ex : Crystal::Exception
+      if ex.message.try(&.includes?("undefined method '#{convert_call_name}'")) || ex.message.try(&.includes?("has no field '#{convert_call_name}'"))
+        return false
+      end
+
+      self_arg.raise "converting from #{actual_type} to #{expected_type} by invoking '#{convert_call_name}'", ex
+    end
+
+    if convert_call.type? != unaliased_type
+      self_arg.raise "invoked '#{convert_call_name}' to convert from #{actual_type} to #{expected_type}, but got #{convert_call.type?}"
+    end
+
+    self.args[index] = convert_call
+    true
   end
 end

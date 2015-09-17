@@ -14,7 +14,7 @@ describe "Type inference: lib" do
   end
 
   it "raises wrong argument type" do
-    assert_error("lib LibC; fun foo(x : Int32) : Int32; end; LibC.foo 1.5", "argument 'x' of 'LibC#foo' must be Int32, not Float64")
+    assert_error("lib LibC; fun foo(x : Int32) : Int32; end; LibC.foo 'a'", "argument 'x' of 'LibC#foo' must be Int32, not Char")
   end
 
   it "reports error when changing var type and something breaks" do
@@ -509,5 +509,71 @@ it "errors if unknown named arg" do
       LibFoo.foo(bar)
       ),
       "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
+  end
+
+  it "passes int as another integer type in variable" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      a = 1_u8
+      LibFoo.foo a
+      )) { float64 }
+  end
+
+  it "passes float as another integer type in variable" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Float32) : Int32
+      end
+
+      a = 1_f64
+      LibFoo.foo a
+      )) { int32 }
+  end
+
+  it "passes int as another integer type with literal" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      LibFoo.foo 1_u8
+      )) { float64 }
+  end
+
+  it "errors if invoking to_i32 and got error in that call" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      class Foo
+        def to_i32
+          1 + 'a'
+        end
+      end
+
+      LibFoo.foo Foo.new
+      ),
+      "converting from Foo to Int32 by invoking 'to_i32'"
+  end
+
+  it "errors if invoking to_i32 and got wrong type" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      class Foo
+        def to_i32
+          'a'
+        end
+      end
+
+      LibFoo.foo Foo.new
+      ),
+      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
   end
 end

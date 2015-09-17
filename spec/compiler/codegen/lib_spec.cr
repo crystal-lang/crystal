@@ -172,4 +172,14 @@ describe "Code gen: lib" do
       Lib.foo out _
       ))
   end
+
+  it "passes int as another float type in literal" do
+    codegen(%(
+      lib LibFoo
+        fun foo(x : Int32)
+      end
+
+      LibFoo.foo 1234.5
+      ))
+  end
 end

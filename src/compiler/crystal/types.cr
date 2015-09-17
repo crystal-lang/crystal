@@ -1231,6 +1231,10 @@ module Crystal
     def float?
       true
     end
+
+    def kind
+      @bytes == 4 ? :f32 : :f64
+    end
   end
 
   class SymbolType < PrimitiveType
