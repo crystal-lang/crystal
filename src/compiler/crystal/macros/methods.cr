@@ -727,10 +727,8 @@ module Crystal
   class SymbolLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name"
+      when "==", "!=", "stringify", "class_name", "symbolize"
         return super
-      when "symbolize"
-        return self
       end
 
       value = StringLiteral.new(@value).interpret(method, args, block, interpreter)
