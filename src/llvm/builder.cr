@@ -154,6 +154,10 @@ struct LLVM::Builder
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
   end
 
+  def set_metadata(value, kind, node)
+    LibLLVM.set_metadata(value, kind, node)
+  end
+
   def current_debug_location
     Value.new LibLLVM.get_current_debug_location(self)
   end

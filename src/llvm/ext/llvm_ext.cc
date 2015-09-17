@@ -131,6 +131,45 @@ LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref, LLVMMetadataRef File,
   return wrap(CT);
 }
 
+LLVMMetadataRef LLVMDIBuilderCreateLocalVariable(
+    LLVMDIBuilderRef Dref, unsigned Tag, LLVMMetadataRef Scope,
+    const char *Name, LLVMMetadataRef File, unsigned Line, LLVMMetadataRef Ty,
+    int AlwaysPreserve, unsigned Flags, unsigned ArgNo) {
+  DIBuilder *D = unwrap(Dref);
+  DIVariable V = D->createLocalVariable(
+      Tag, unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      unwrapDI<DIType>(Ty), AlwaysPreserve, Flags, ArgNo);
+  return wrap(V);
+}
+
+LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,
+                                             LLVMValueRef Storage,
+                                             LLVMMetadataRef VarInfo,
+                                             LLVMMetadataRef Expr,
+                                             LLVMBasicBlockRef Block) {
+  DIBuilder *D = unwrap(Dref);
+  Instruction *Instr =
+      D->insertDeclare(unwrap(Storage),
+        unwrapDI<DIVariable>(VarInfo),
+#ifdef HAVE_LLVM_35
+#else
+        unwrapDI<DIExpression>(Expr),
+#endif
+        unwrap(Block));
+  return wrap(Instr);
+}
+
+LLVMMetadataRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef Dref,
+                                              int64_t *Addr, size_t Length) {
+#ifdef HAVE_LLVM_35
+  return nullptr;
+#else
+  DIBuilder *D = unwrap(Dref);
+  DIExpression Expr = D->createExpression(ArrayRef<int64_t>(Addr, Length));
+  return wrap(Expr);
+#endif
+}
+
 void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
                                   unsigned Col, LLVMMetadataRef Scope,
                                   LLVMMetadataRef InlinedAt) {

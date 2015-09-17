@@ -22,9 +22,38 @@ module Crystal
     end
 
     def fun_type
-      int = di_builder.create_basic_type("int", 32_u64, 32_u64, 0_u32)
+      int = di_builder.create_basic_type("int", 32_u64, 32_u64, LLVM::DwarfTypeEncoding::Signed)
       int1 = di_builder.get_or_create_type_array([int])
       di_builder.create_subroutine_type(nil, int1)
+    end
+
+    def get_debug_type(type : IntegerType)
+      di_builder.create_basic_type(type.to_s, type.bits, type.bits,
+        type.signed? ? LLVM::DwarfTypeEncoding::Signed : LLVM::DwarfTypeEncoding::Unsigned)
+    end
+
+    def get_debug_type(type)
+      # puts "Unsupported type for debugging: #{type} (#{type.class})"
+    end
+
+    def declare_variable(var_name, var_type, alloca, target_def)
+      location = target_def.location
+      return unless location
+
+      debug_type = get_debug_type(var_type)
+      return unless debug_type
+
+      scope = get_current_debug_scope(location)
+      return unless scope
+      file, dir = file_and_dir(location.filename)
+      file = di_builder.create_file(file, dir)
+
+      var = di_builder.create_local_variable LLVM::DwarfTag::AutoVariable,
+        scope, var_name, file, location.line_number, debug_type
+      expr = di_builder.create_expression(nil, 0)
+
+      declare = di_builder.insert_declare_at_end(alloca, var, expr, alloca_block)
+      builder.set_metadata(declare, @dbg_kind, builder.current_debug_location)
     end
 
     def file_and_dir(file)
@@ -69,19 +98,22 @@ module Crystal
       end
     end
 
-    def set_current_debug_location(location)
-      return unless location
-
+    def get_current_debug_scope(location)
       if context.fun.name == MAIN_NAME
         main_scopes = (@main_scopes ||= {} of {String, String} => LibLLVMExt::Metadata)
         file, dir = file_and_dir(location.filename)
-        scope = main_scopes[{file, dir}] ||= begin
+        main_scopes[{file, dir}] ||= begin
           file = di_builder.create_file(file, dir)
           di_builder.create_lexical_block(fun_metadatas[context.fun], file, 1, 1)
         end
       else
-        scope = fun_metadatas[context.fun]?
+        fun_metadatas[context.fun]?
       end
+    end
+
+    def set_current_debug_location(location)
+      return unless location
+      scope = get_current_debug_scope(location)
 
       if scope
         builder.set_current_debug_location(location.line_number || 1, location.column_number, scope)

@@ -8,7 +8,8 @@ struct LLVM::DIBuilder
   end
 
   def create_basic_type(name, size_in_bits, align_in_bits, encoding)
-    LibLLVMExt.di_builder_create_basic_type(self, name, size_in_bits, align_in_bits, encoding)
+    LibLLVMExt.di_builder_create_basic_type(self, name, size_in_bits.to_u64, align_in_bits.to_u64,
+      LibC::UInt.new(encoding.value))
   end
 
   def get_or_create_type_array(types : Array(LibLLVMExt::Metadata))
@@ -31,6 +32,19 @@ struct LLVM::DIBuilder
                       scope_line, flags, is_optimized, func)
     LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, LibC::UInt.new(line), composite_type, is_local_to_unit, is_definition,
                                           LibC::UInt.new(scope_line), flags, is_optimized, func)
+  end
+
+  def create_local_variable(tag, scope, name, file, line, type)
+    LibLLVMExt.di_builder_create_local_variable(self, LibC::UInt.new(tag.value), scope, name,
+      file, LibC::UInt.new(line), type, 0, 0_u32, 0_u32)
+  end
+
+  def create_expression(addr, length)
+    LibLLVMExt.di_builder_create_expression(self, addr, LibC::SizeT.new(length))
+  end
+
+  def insert_declare_at_end(storage, var_info, expr, block)
+    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, block)
   end
 
   def finalize

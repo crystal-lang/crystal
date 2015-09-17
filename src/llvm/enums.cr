@@ -147,4 +147,29 @@ module LLVM
     X86_StdCall  = 64
     X86_FastCall = 65
   end
+
+  enum DwarfTag
+    AutoVariable = 0x100
+  end
+
+  enum DwarfTypeEncoding
+    Address         = 0x01
+    Boolean         = 0x02
+    ComplexFloat    = 0x03
+    Float           = 0x04
+    Signed          = 0x05
+    SignedChar      = 0x06
+    Unsigned        = 0x07
+    UnsignedChar    = 0x08
+    ImaginaryFloat  = 0x09
+    PackedDecimal   = 0x0a
+    NumericString   = 0x0b
+    Edited          = 0x0c
+    SignedFixed     = 0x0d
+    UnsignedFixed   = 0x0e
+    DecimalFloat    = 0x0f
+    Utf             = 0x10
+    LoUser          = 0x80
+    HiUser          = 0xff
+  end
 end
