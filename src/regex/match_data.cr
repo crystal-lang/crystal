@@ -210,7 +210,7 @@ class Regex
     end
 
     private def byte_index_to_char_index(index)
-      reader = CharReader.new(@string)
+      reader = Char::Reader.new(@string)
       i = 0
       reader.each do |char|
         break if reader.pos == index

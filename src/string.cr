@@ -635,7 +635,7 @@ class String
     start_pos = nil
     end_pos = nil
 
-    reader = CharReader.new(self)
+    reader = Char::Reader.new(self)
     i = 0
 
     reader.each_with_index do |char|
@@ -937,7 +937,7 @@ class String
   def tr(from : String, to : String)
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
-    reader = CharReader.new(to)
+    reader = Char::Reader.new(to)
     char = reader.current_char
     next_char = reader.next_char
     from.each_char do |ch|
@@ -984,7 +984,7 @@ class String
     return self if empty?
 
     String.build(bytesize) do |buffer|
-      reader = CharReader.new(self)
+      reader = Char::Reader.new(self)
       buffer << yield reader.current_char
       reader.next_char
       buffer.write unsafe_byte_slice(reader.pos)
@@ -1001,7 +1001,7 @@ class String
   def sub(char : Char, replacement)
     if includes?(char)
       String.build(bytesize) do |buffer|
-        reader = CharReader.new(self)
+        reader = Char::Reader.new(self)
         while reader.has_next?
           if reader.current_char == char
             buffer << replacement
@@ -1103,7 +1103,7 @@ class String
     return self if empty?
 
     String.build(bytesize) do |buffer|
-      reader = CharReader.new(self)
+      reader = Char::Reader.new(self)
       while reader.has_next?
         if hash.has_key?(reader.current_char)
           buffer << hash[reader.current_char]
@@ -1504,7 +1504,7 @@ class String
 
     end_pos = bytesize - c.bytesize
 
-    reader = CharReader.new(self)
+    reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if reader.pos <= end_pos
         if i >= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
@@ -1541,7 +1541,7 @@ class String
 
     last_index = nil
 
-    reader = CharReader.new(self)
+    reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if i <= end_size && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
         last_index = i
@@ -1582,7 +1582,7 @@ class String
   # "こんにちは".char_index_to_byte_index(1) #=> 3
   # ```
   def char_index_to_byte_index(index)
-    reader = CharReader.new(self)
+    reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if i == index
         return reader.pos
@@ -1664,7 +1664,7 @@ class String
     byte_offset = 0
     single_byte_optimizable = single_byte_optimizable?
 
-    reader = CharReader.new(self)
+    reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
@@ -1821,7 +1821,7 @@ class String
     mem = nil
 
     String.build(bytesize + 10) do |str|
-      reader = CharReader.new(self)
+      reader = Char::Reader.new(self)
       while reader.has_next?
         char = reader.current_char
         reader.next_char
@@ -1900,7 +1900,7 @@ class String
   def reverse
     String.new(bytesize) do |buffer|
       buffer += bytesize
-      reader = CharReader.new(self)
+      reader = Char::Reader.new(self)
       reader.each do |char|
         buffer -= reader.current_char_width
         i = 0
@@ -2092,7 +2092,7 @@ class String
         yield byte.chr
       end
     else
-      CharReader.new(self).each do |char|
+      Char::Reader.new(self).each do |char|
         yield char
       end
     end
@@ -2108,7 +2108,7 @@ class String
   # chars.next #=> '☃'
   # ```
   def each_char
-    CharIterator.new(CharReader.new(self))
+    CharIterator.new(Char::Reader.new(self))
   end
 
   # Yields each character and its index in the string to the block.
@@ -2269,7 +2269,7 @@ class String
   end
 
   private def dump_or_inspect_unquoted(io)
-    reader = CharReader.new(self)
+    reader = Char::Reader.new(self)
     while reader.has_next?
       current_char = reader.current_char
       case current_char
