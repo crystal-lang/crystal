@@ -1153,6 +1153,9 @@ describe "String" do
     "FooBar".underscore.should eq("foo_bar")
     "ABCde".underscore.should eq("ab_cde")
     "FOO_bar".underscore.should eq("foo_bar")
+    "Char_S".underscore.should eq("char_s")
+    "Char_".underscore.should eq("char_")
+    "C_".underscore.should eq("c_")
   end
 
   it "does camelcase" do

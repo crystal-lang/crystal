@@ -1821,7 +1821,11 @@ class String
     mem = nil
 
     String.build(bytesize + 10) do |str|
-      each_char do |char|
+      reader = CharReader.new(self)
+      while reader.has_next?
+        char = reader.current_char
+        reader.next_char
+
         downcase = 'a' <= char <= 'z'
         upcase = 'A' <= char <= 'Z'
 
@@ -1856,12 +1860,18 @@ class String
             end
             mem = nil
           end
-          str << char
+
+          if reader.has_next?
+            str << char
+          else
+            str << char.downcase
+          end
         end
 
         last_is_downcase = downcase
         last_is_upcase = upcase
         first = false
+
       end
     end
   end
