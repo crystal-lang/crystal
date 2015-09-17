@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: declare var" do
   it "types declare var" do
-    assert_type("a :: Int32") { int32 }
+    assert_type("a :: Int32") { |mod| mod.nil }
   end
 
   it "types declare var and reads it" do

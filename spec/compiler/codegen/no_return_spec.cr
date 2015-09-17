@@ -37,4 +37,28 @@ describe "Code gen: no return" do
       end
       ))
   end
+
+  it "codegens no return variable declaration (#1508)" do
+    run(%(
+      foo :: NoReturn
+      1
+      )).to_i.should eq(1)
+  end
+
+  it "codegens no return instance variable declaration (#1508)" do
+    run(%(
+      class Foo
+        def initialize
+          @foo :: NoReturn
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )).to_i.should eq(1)
+  end
 end

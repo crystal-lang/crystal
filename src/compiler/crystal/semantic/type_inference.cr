@@ -192,17 +192,17 @@ module Crystal
         end
 
         node.declared_type.accept self
-        node.type = check_declare_var_type node
 
-        var.bind_to node
+        var_type = check_declare_var_type node
+        var.type = var_type
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
-        if (existing_type = meta_var.type?) && existing_type != node.type
+        if (existing_type = meta_var.type?) && existing_type != var_type
           node.raise "variable '#{var.name}' already declared with type #{existing_type}"
         end
 
         meta_var.bind_to(var)
-        meta_var.freeze_type = node.type
+        meta_var.freeze_type = var_type
 
         @vars[var.name] = meta_var
 
@@ -211,21 +211,23 @@ module Crystal
         type = scope? || current_type
         if @untyped_def
           node.declared_type.accept self
-          node.type = check_declare_var_type node
+
+          var_type = check_declare_var_type node
+
           ivar = lookup_instance_var var
-          ivar.bind_to node
-          var.bind_to node
+          ivar.type = var_type
+          var.type = var_type
 
           if @is_initialize
-            @vars[var.name] = MetaVar.new(var.name, node.type)
+            @vars[var.name] = MetaVar.new(var.name, var_type)
           end
         end
 
         case type
         when NonGenericClassType
           node.declared_type.accept self
-          node.type = check_declare_var_type node
-          type.declare_instance_var(var.name, node.type)
+          var_type = check_declare_var_type node
+          type.declare_instance_var(var.name, var_type)
         when GenericClassType
           type.declare_instance_var(var.name, node.declared_type)
         when GenericClassInstanceType
@@ -234,6 +236,8 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       end
+
+      node.type = @mod.nil
 
       false
     end

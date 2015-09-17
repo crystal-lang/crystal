@@ -784,13 +784,15 @@ module Crystal
       var = node.var
       case var
       when Var
-        llvm_var = declare_var var
-        @last = llvm_var.pointer
+        declare_var var
       when InstanceVar
         if context.type.is_a?(InstanceVarContainer)
           var.accept self
         end
       end
+
+      @last = llvm_nil
+
       false
     end
 
@@ -916,6 +918,8 @@ module Crystal
     end
 
     def declare_var(var)
+      return if var.no_returns?
+
       context.vars[var.name] ||= LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
     end
 
