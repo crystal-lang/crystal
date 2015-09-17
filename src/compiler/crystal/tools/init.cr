@@ -34,12 +34,18 @@ DIR  - directory where project will be generated,
       end
 
       config.author = fetch_author
+      config.email = fetch_email
       InitProject.new(config).run
     end
 
     def self.fetch_author
       return "[your-name-here]" unless system(WHICH_GIT_COMMAND)
       `git config --get user.name`.strip
+    end
+
+    def self.fetch_email
+      return "[your-email-here]" unless system(WHICH_GIT_COMMAND)
+      `git config --get user.email`.strip
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -66,17 +72,17 @@ DIR  - directory where project will be generated,
       property name
       property dir
       property author
+      property email
       property silent
 
-      def initialize
-        @skeleton_type = "none"
-        @name = "none"
-        @dir = "none"
-        @author = "none"
-        @silent = false
-      end
-
-      def initialize(@skeleton_type, @name, @dir, @author, @silent = false)
+      def initialize(
+                     @skeleton_type = "none",
+                     @name = "none",
+                     @dir = "none",
+                     @author = "none",
+                     @email = "none",
+                     @silent = false
+                    )
       end
     end
 
@@ -103,7 +109,7 @@ DIR  - directory where project will be generated,
       end
 
       def log_message
-        "      #{"create".colorize(:light_green)}  #{full_path}" 
+        "      #{"create".colorize(:light_green)}  #{full_path}"
       end
 
       def module_name
@@ -163,7 +169,7 @@ DIR  - directory where project will be generated,
     template LicenseView, "license.ecr", "LICENSE"
     template ReadmeView, "readme.md.ecr", "README.md"
     template TravisView, "travis.yml.ecr", ".travis.yml"
-    template ProjectileView, "projectfile.ecr", "Projectfile"
+    template ShardView, "shard.yml.ecr", "shard.yml"
 
     template SrcExampleView, "example.cr.ecr", "src/#{config.name}.cr"
     template SrcVersionView, "version.cr.ecr", "src/#{config.name}/version.cr"

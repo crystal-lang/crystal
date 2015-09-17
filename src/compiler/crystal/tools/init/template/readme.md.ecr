@@ -5,12 +5,12 @@ TODO: Write a description here
 ## Installation
 
 <% if config.skeleton_type == "lib" %>
-Add this line to your application's `Projectfile`:
+Add this to your application's `shard.yml`:
 
-```crystal
-deps do
-  github "[your-github-name]/<%= config.name %>"
-end
+```yaml
+dependencies:
+  <%= config.name %>:
+    github: [your-github-name]/<%= config.name %>
 ```
 <% else %>
 TODO: Write installation instructions here

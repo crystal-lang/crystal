@@ -10,9 +10,9 @@ def describe_file(name)
   end
 end
 
-def run_init_project(skeleton_type, name, dir, author)
+def run_init_project(skeleton_type, name, dir, author, email)
   Crystal::Init::InitProject.new(
-    Crystal::Init::Config.new(skeleton_type, name, dir, author, true)
+    Crystal::Init::Config.new(skeleton_type, name, dir, author, email, true)
   ).run
 end
 
@@ -21,10 +21,10 @@ module Crystal
     `[ -d tmp/example ] && rm -r tmp/example`
     `[ -d tmp/example_app ] && rm -r tmp/example_app`
 
-    run_init_project("lib", "example", "tmp/example", "John Smith")
-    run_init_project("app", "example_app", "tmp/example_app", "John Smith")
-    run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith")
-    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith")
+    run_init_project("lib", "example", "tmp/example", "John Smith", "john@smith.com")
+    run_init_project("app", "example_app", "tmp/example_app", "John Smith", "john@smith.com")
+    run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith", "john@smith.com")
+    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith", "john@smith.com")
 
     describe_file "example-lib/src/example-lib.cr" do |file|
       file.should contain("Example::Lib")
@@ -35,15 +35,15 @@ module Crystal
     end
 
     describe_file "example/.gitignore" do |gitignore|
-      gitignore.should contain("/.deps/")
-      gitignore.should contain("/.deps.lock")
+      gitignore.should contain("/.shards/")
+      gitignore.should contain("/shard.lock")
       gitignore.should contain("/libs/")
       gitignore.should contain("/.crystal/")
     end
 
     describe_file "example_app/.gitignore" do |gitignore|
-      gitignore.should contain("/.deps/")
-      gitignore.should_not contain("/.deps.lock")
+      gitignore.should contain("/.shards/")
+      gitignore.should_not contain("/.shard.lock")
       gitignore.should contain("/libs/")
       gitignore.should contain("/.crystal/")
     end
@@ -55,10 +55,10 @@ module Crystal
     describe_file "example/README.md" do |readme|
       readme.should contain("# example")
 
-      readme.should contain(%{```crystal
-deps do
-  github "[your-github-name]/example"
-end
+      readme.should contain(%{```yaml
+dependencies:
+  example:
+    github: [your-github-name]/example
 ```})
 
       readme.should contain(%{TODO: Write a description here})
@@ -71,10 +71,10 @@ end
     describe_file "example_app/README.md" do |readme|
       readme.should contain("# example")
 
-      readme.should_not contain(%{```crystal
-deps do
-  github "[your-github-name]/example"
-end
+      readme.should_not contain(%{```yaml
+dependencies:
+  example:
+    github: [your-github-name]/example
 ```})
 
       readme.should contain(%{TODO: Write a description here})
@@ -84,8 +84,13 @@ end
       readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
     end
 
-    describe_file "example/Projectfile" do |projectfile|
-      projectfile.should eq(%{deps do\n  # github "[your-github-name]/example"\nend\n})
+    describe_file "example/shard.yml" do |shard_yml|
+      parsed = YAML.load(shard_yml) as Hash
+      parsed["name"].should eq("example")
+      parsed["version"].should eq("0.1.0")
+      authors = (parsed["authors"] as Array)
+      authors.should eq(["John Smith <john@smith.com>"])
+      parsed["license"].should eq("MIT")
     end
 
     describe_file "example/.travis.yml" do |travis|

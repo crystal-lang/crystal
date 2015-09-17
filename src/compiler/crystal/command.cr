@@ -270,15 +270,12 @@ USAGE
   end
 
   private def deps
-    gather_sources(["./Projectfile"])
+    path_to_shards = `which shards`.chomp
+    if path_to_shards.empty?
+      error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
+    end
 
-    sources = Compiler::Source.new("require", %(require "crystal/project_cli"))
-
-    output_filename = tempfile "deps"
-
-    compiler = Compiler.new
-    compiler.compile sources, output_filename
-    execute output_filename, options
+    Process.run(path_to_shards, args: options, output: true, error: true)
   end
 
   private def docs
