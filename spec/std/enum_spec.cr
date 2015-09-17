@@ -36,6 +36,9 @@ describe Enum do
   it "gets value with to_i" do
     SpecEnum::Two.to_i.should eq(1)
     SpecEnum::Two.to_i.should be_a(Int32)
+
+    SpecEnum::Two.to_i64.should eq(1)
+    SpecEnum::Two.to_i64.should be_a(Int64)
   end
 
   it "does +" do
