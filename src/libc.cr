@@ -40,7 +40,6 @@ lib LibC
   fun malloc(size : SizeT) : Void*
   fun realloc(ptr : Void*, size : SizeT) : Void*
   fun free(ptr : Void*)
-  fun time(t : TimeT) : TimeT
   fun free(ptr : Void*)
   fun memcmp(p1 : Void*, p2 : Void*, size : SizeT) : Int32
   fun _exit(status : Int) : NoReturn
