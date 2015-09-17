@@ -57,7 +57,7 @@ struct Set(T)
     self
   end
 
-  # Adds `#each` element of `elms` to the set and returns `self`
+  # Adds `#each` element of `elems` to the set and returns `self`
   #
   #     s = Set.new [1,5]
   #     s.merge [5,5,8,9]
@@ -204,24 +204,48 @@ struct Set(T)
 
   # Returns `true` if the set is a subset of the `other` set
   #
-  # This set must have fewer elements than the `other` set, and all of elements
-  # in this set must be present in the `other` set.
+  # This set must have the same or fewer elements than the `other` set, and all
+  # of elements in this set must be present in the `other` set.
   #
-  #     Set.new([1,5]).subset? Set.new([1,3,5]) # => true
+  #     Set.new([1,5]).subset? Set.new([1,3,5])   # => true
+  #     Set.new([1,3,5]).subset? Set.new([1,3,5]) # => true
   def subset?(other : Set)
     return false if other.size < size
     all? { |value| other.includes?(value) }
   end
 
+  # Returns `true` if the set is a proper subset of the `other` set
+  #
+  # This set must have fewer elements than the `other` set, and all
+  # of elements in this set must be present in the `other` set.
+  #
+  #     Set.new([1,5]).subset? Set.new([1,3,5])   # => true
+  #     Set.new([1,3,5]).subset? Set.new([1,3,5]) # => false
+  def proper_subset?(other : Set)
+    return false if other.size <= size
+    all? { |value| other.includes?(value) }
+  end
+
   # Returns `true` if the set is a superset of the `other` set
   #
-  # This set must have more elements than the `other` set, and all of elements
-  # in the `other` set must be present in this set.
+  # The `other` must have the same or fewer elements than this set, and all of
+  # elements in the `other` set must be present in this set.
   #
-  #     Set.new([1,3,5]).superset? Set.new([1,5]) # => true
+  #     Set.new([1,3,5]).superset? Set.new([1,5])   # => true
+  #     Set.new([1,3,5]).superset? Set.new([1,3,5]) # => true
   def superset?(other : Set)
-    return false if other.size > size
-    other.all? { |value| includes?(value) }
+    other.subset?(self)
+  end
+
+  # Returns `true` if the set is a superset of the `other` set
+  #
+  # The `other` must have the same or fewer elements than this set, and all of
+  # elements in the `other` set must be present in this set.
+  #
+  #     Set.new([1,3,5]).superset? Set.new([1,5])   # => true
+  #     Set.new([1,3,5]).superset? Set.new([1,3,5]) # => false
+  def proper_superset?(other : Set)
+    other.proper_subset?(self)
   end
 
   # :nodoc:
