@@ -215,6 +215,49 @@ class URI
     new scheme: scheme, host: host, port: port, path: path, query: query, user: user, password: password, fragment: fragment, opaque: opaque
   end
 
+  # URL-decode a string.
+  #
+  #     URI.unescape("%27Stop%21%27+said+Fred") #=> "'Stop!' said Fred"
+  def self.unescape(string : String)
+    String.build { |io| unescape(string, io) }
+  end
+
+  # URL-decode a string and write the result to an `IO`.
+  def self.unescape(string : String, io : IO)
+    i = 0
+    bytesize = string.bytesize
+    while i < bytesize
+      byte = string.unsafe_byte_at(i)
+      char = byte.chr
+      i = unescape_one string, bytesize, i, byte, char, io
+    end
+    io
+  end
+
+  # URL-encode a string.
+  #
+  #     URI.escape("'Stop!' said Fred") #=> "%27Stop%21%27+said+Fred"
+  def self.escape(string : String)
+    String.build { |io| escape(string, io) }
+  end
+
+  # URL-encode a string and write the result to an `IO`.
+  def self.escape(string : String, io : IO)
+    string.each_char do |char|
+      if char.alphanumeric? || char == '_' || char == '.' || char == '-'
+        io.write_byte char.ord.to_u8
+      else
+        char.each_byte do |byte|
+          io.write_byte '%'.ord.to_u8
+          io.write_byte '0'.ord.to_u8 if byte < 16
+          byte.to_s(16, io, upcase: true)
+        end
+      end
+    end
+    io
+  end
+
+
   # Returns the user-information component containing the provided username and password.
   #
   # ```
@@ -245,5 +288,40 @@ class URI
         io.write_byte byte
       end
     end
+  end
+
+  private def self.unescape_one(string, bytesize, i, byte, char, io)
+    if char == '+'
+      io.write_byte ' '.ord.to_u8
+      i += 1
+      return i
+    end
+
+    if char == '%' && i < bytesize - 2
+      i += 1
+      first = string.unsafe_byte_at(i)
+      first_num = first.chr.to_i 16, or_else: nil
+      unless first_num
+        io.write_byte byte
+        return i
+      end
+
+      i += 1
+      second = string.unsafe_byte_at(i)
+      second_num = second.chr.to_i 16, or_else: nil
+      unless second_num
+        io.write_byte byte
+        io.write_byte first
+        return i
+      end
+
+      io.write_byte (first_num * 16 + second_num).to_u8
+      i += 1
+      return i
+    end
+
+    io.write_byte byte
+    i += 1
+    i
   end
 end
