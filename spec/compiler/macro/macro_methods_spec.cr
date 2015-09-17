@@ -22,11 +22,15 @@ describe "macro methods" do
 
     describe "symbolize" do
       it "expands macro with symbolize call on string" do
-        assert_macro "x", "{{x.symbolize}}", [StringLiteral.new("hello")] of ASTNode, ":hello"
+        assert_macro "x", "{{x.symbolize}}", [StringLiteral.new("hello")] of ASTNode, ":\"\\\"hello\\\"\""
       end
 
       it "expands macro with symbolize call on symbol" do
         assert_macro "x", "{{x.symbolize}}", [SymbolLiteral.new("hello")] of ASTNode, ":hello"
+      end
+
+      it "expands macro with symbolize call on id" do
+        assert_macro "x", "{{x.id.symbolize}}", [StringLiteral.new("hello")] of ASTNode, ":hello"
       end
     end
 

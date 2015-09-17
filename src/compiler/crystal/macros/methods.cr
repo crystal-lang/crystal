@@ -346,8 +346,6 @@ module Crystal
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
-      when "symbolize"
-        interpret_argless_method(method, args) { SymbolLiteral.new(@value) }
       when "to_i"
         case args.size
         when 0
