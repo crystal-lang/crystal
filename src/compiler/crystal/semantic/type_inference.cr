@@ -2056,6 +2056,9 @@ module Crystal
             if enum_type.types.has_key?(member.name)
               member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
             end
+
+            define_enum_question_method(enum_type, member, is_flags)
+
             const_member = enum_type.add_constant member
             const_member.doc = member.doc
             check_ditto const_member
@@ -2093,6 +2096,12 @@ module Crystal
       node.type = mod.nil
 
       false
+    end
+
+    def define_enum_question_method(enum_type, member, is_flags)
+      method_name = is_flags ? "includes?" : "=="
+      a_def = Def.new("#{member.name.underscore}?", body: Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member))).at(member)
+      enum_type.add_def a_def
     end
 
     def interpret_enum_value(node : NumberLiteral, target_type)

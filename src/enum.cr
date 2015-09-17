@@ -55,6 +55,34 @@
 # ```
 #
 # This method is mainly intended to convert integers from C to enums in Crystal.
+#
+# ### Question methods
+#
+# An enum automatically defines question methods for each member, using `String#underscore` for the
+# method name. If the case of regular enums, this compares by equality (`==`). In the case of flags enums,
+# this invokes `includes?`. For example:
+#
+# ```
+# color = Color::Blue
+# color.red?  #=> false
+# color.blue? #=> true
+#
+# mode = IOMode::Read | IOMode::Async
+# mode.read?  #=> true
+# mode.write? #=> false
+# mode.async? #=> true
+# ```
+#
+# This is very convenient in `case` expressions:
+#
+# ```
+# case color
+# when .red?
+#   puts "Got red"
+# when .blue?
+#   puts "Got blue"
+# end
+# ```
 struct Enum
   include Comparable(self)
 

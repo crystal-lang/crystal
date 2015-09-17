@@ -143,4 +143,80 @@ describe "Code gen: enum" do
       Foo.class_var
       )).to_i.should eq(1)
   end
+
+  it "automatically defines question method for each enum member (false case)" do
+    run(%(
+      struct Enum
+        def ==(other : self)
+          value == other.value
+        end
+      end
+
+      enum Day
+        SomeMonday
+        SomeTuesday
+      end
+
+      day = Day::SomeTuesday
+      day.some_monday?
+      )).to_b.should be_false
+  end
+
+  it "automatically defines question method for each enum member (true case)" do
+    run(%(
+      struct Enum
+        def ==(other : self)
+          value == other.value
+        end
+      end
+
+      enum Day
+        SomeMonday
+        SomeTuesday
+      end
+
+      day = Day::SomeTuesday
+      day.some_tuesday?
+      )).to_b.should be_true
+  end
+
+  it "automatically defines question method for each enum member (flags, false case)" do
+    run(%(
+      struct Enum
+        def includes?(other : self)
+          (value & other.value) != 0
+        end
+      end
+
+      @[Flags]
+      enum Day
+        SomeMonday
+        SomeTuesday
+        SomeWednesday
+      end
+
+      day = Day.new(3)
+      day.some_wednesday?
+      )).to_b.should be_false
+  end
+
+  it "automatically defines question method for each enum member (flags, true case)" do
+    run(%(
+      struct Enum
+        def includes?(other : self)
+          (value & other.value) != 0
+        end
+      end
+
+      @[Flags]
+      enum Day
+        SomeMonday
+        SomeTuesday
+        SomeWednesday
+      end
+
+      day = Day.new(3)
+      day.some_tuesday?
+      )).to_b.should be_true
+  end
 end
