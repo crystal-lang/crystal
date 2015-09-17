@@ -957,6 +957,7 @@ describe "Parser" do
   it_parses "@[Foo(\"hello\")]", Attribute.new("Foo", ["hello".string] of ASTNode)
   it_parses "@[Foo(1, foo: 2)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
   it_parses "@[Foo(1, foo: 2\n)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+  it_parses "@[Foo(\n1, foo: 2\n)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
 
   it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC", Attribute.new("Bar"))
 

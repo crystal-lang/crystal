@@ -1058,7 +1058,7 @@ module Crystal
 
       if @token.type == :"("
         open("attribute") do
-          next_token_skip_space
+          next_token_skip_space_or_newline
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'
               named_args = parse_named_args(allow_newline: true)
