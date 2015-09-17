@@ -146,6 +146,20 @@ module HTTP
       response.headers["Content-Length"].should eq("5")
     end
 
+    it "serialize as chunked with body_io" do
+      response = Response.new(200, body_io: StringIO.new("hello"))
+      io = StringIO.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")
+    end
+
+    it "serialize as not chunked with body_io if HTTP/1.0" do
+      response = Response.new(200, version: "HTTP/1.0", body_io: StringIO.new("hello"))
+      io = StringIO.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\nhello")
+    end
+
     it "builds default not found" do
       response = Response.not_found
       io = StringIO.new

@@ -82,7 +82,22 @@ module HTTP
     end
 
     io << "\r\n"
-    io << body if body
+
+    if body
+      if body.is_a?(IO)
+        if headers["Transfer-Encoding"] == "chunked"
+          buf = Slice(UInt8).new(8192)
+          while (buf_length = body.read(buf)) > 0
+            io << buf_length.to_s(16) << "\r\n"
+            io.write(buf[0, buf_length])
+            io << "\r\n"
+          end
+          io << "0\r\n\r\n"
+        end
+      else
+        io << body
+      end
+    end
   end
 
   def self.keep_alive?(message)
