@@ -8,7 +8,7 @@ class HTTP::Response
   getter! body_io
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil, for_sending = true)
+  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
     if Response.mandatory_body?(@status_code)
@@ -16,21 +16,6 @@ class HTTP::Response
     else
       if @body || @body_io
         raise ArgumentError.new("status #{status_code} should not have a body")
-      end
-    end
-
-    if for_sending
-      if body_io = @body_io
-        if Response.supports_chunked?(@version)
-          @headers["Transfer-Encoding"] = "chunked"
-        else
-          @body = body_io.read
-          @body_io = nil
-        end
-      end
-
-      if (body = @body)
-        @headers["Content-Length"] = body.bytesize.to_s
       end
     end
   end
@@ -73,7 +58,7 @@ class HTTP::Response
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_response_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, @body || @body_io)
+    HTTP.serialize_headers_and_body(io, headers, @body || @body_io, @version)
   end
 
   # :nodoc:
@@ -108,7 +93,7 @@ class HTTP::Response
       mandatory_body = mandatory_body?(status_code)
 
       HTTP.parse_headers_and_body(io, mandatory_body) do |headers, body|
-        return yield new status_code, nil, headers, status_message, http_version, body, false
+        return yield new status_code, nil, headers, status_message, http_version, body
       end
     end
 

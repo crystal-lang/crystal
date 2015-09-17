@@ -72,12 +72,26 @@ module HTTP
     end
   end
 
-  def self.serialize_headers_and_body(io, headers, body)
-    if headers
-      headers.each do |name, values|
-        values.each do |value|
-          io << name << ": " << value << "\r\n"
+  def self.serialize_headers_and_body(io, headers, body, version)
+    # prepare either chunked response headers if protocol supports it
+    # or consume the io to get the Content-Length header
+    if body
+      if body.is_a?(IO)
+        if Response.supports_chunked?(version)
+          headers["Transfer-Encoding"] = "chunked"
+        else
+          body = body.read
         end
+      end
+
+      unless body.is_a?(IO)
+        headers["Content-Length"] = body.bytesize.to_s
+      end
+    end
+
+    headers.each do |name, values|
+      values.each do |value|
+        io << name << ": " << value << "\r\n"
       end
     end
 
@@ -85,15 +99,13 @@ module HTTP
 
     if body
       if body.is_a?(IO)
-        if headers["Transfer-Encoding"] == "chunked"
-          buf = Slice(UInt8).new(8192)
-          while (buf_length = body.read(buf)) > 0
-            io << buf_length.to_s(16) << "\r\n"
-            io.write(buf[0, buf_length])
-            io << "\r\n"
-          end
-          io << "0\r\n\r\n"
+        buf = Slice(UInt8).new(8192)
+        while (buf_length = body.read(buf)) > 0
+          io << buf_length.to_s(16) << "\r\n"
+          io.write(buf[0, buf_length])
+          io << "\r\n"
         end
+        io << "0\r\n\r\n"
       else
         io << body
       end
