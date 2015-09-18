@@ -13,6 +13,7 @@
 * **(breaking change)** Removed `undef`
 * **(breaking change)** Removed `length()` and `count()` methods from collections. The only method for this is now `size`.
 * **(breaking change)** Removed the ability to invoke methods on a union class
+* Improved debugger support
 * `crystal deps` now delegates to [shards](https://github.com/ysbaddaden/shards). Removed `Projecfile` support.
 * Automatically convert numeric types when invoking C functions
 * Automatically define questions methods for enum members
@@ -33,6 +34,8 @@
 * Added `WebSocket.open` (thanks @kumpelblase2)
 * Added `Enum.flags` macro
 * Added support for sending chunked content in HTTP server (thanks @bcardiff)
+# Added `future`, `lazy` and `delay` concurrency methods (thanks @technorama)
+* `fork` now returns a `Process` (thanks @technorama)
 * Documented `Set`, and added a couple of methods (thanks @will)
 * Nicer formatting in `Benchmark.ips`, and interactive mode (thanks @will)
 * The `-f` format output is now honored in compiler errors (thanks @kirbyfan64)
