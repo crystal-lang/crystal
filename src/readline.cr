@@ -92,8 +92,8 @@ module Readline
 
   # :nodoc:
   def common_prefix_bytesize(str1 : String, str2 : String)
-    r1 = CharReader.new str1
-    r2 = CharReader.new str2
+    r1 = Char::Reader.new str1
+    r2 = Char::Reader.new str2
 
     while r1.has_next? && r2.has_next?
       break if r1.current_char != r2.current_char

@@ -2,7 +2,7 @@
 class CSV::Lexer::StringBased < CSV::Lexer
   def initialize(string)
     super()
-    @reader = CharReader.new(string)
+    @reader = Char::Reader.new(string)
     if @reader.current_char == '\n'
       @line_number += 1
       @column_number = 0

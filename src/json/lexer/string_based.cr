@@ -2,7 +2,7 @@
 class JSON::Lexer::StringBased < JSON::Lexer
   def initialize(string)
     super()
-    @reader = CharReader.new(string)
+    @reader = Char::Reader.new(string)
   end
 
   # Consume a string by remembering the start position of it and then

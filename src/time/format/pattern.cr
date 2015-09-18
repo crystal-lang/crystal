@@ -5,7 +5,7 @@ struct Time::Format
     DAY_NAMES = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
 
     def visit(pattern)
-      reader = CharReader.new(pattern)
+      reader = Char::Reader.new(pattern)
       while reader.has_next?
         char = reader.current_char
         reader = check_char reader, char

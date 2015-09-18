@@ -1,7 +1,7 @@
 # :nodoc:
 struct String::Formatter
   def initialize(string, @args, @io)
-    @reader = CharReader.new(string)
+    @reader = Char::Reader.new(string)
     @arg_index = 0
     @temp_buf_len = 0
     @format_buf_len = 0
