@@ -406,6 +406,11 @@ module Crystal
           while true
             char = next_char
             case char
+            when '\\'
+              if peek_next_char == '"'
+                next_char
+                count += 1
+              end
             when '"'
               break
             when '\0'
