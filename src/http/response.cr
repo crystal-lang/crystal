@@ -18,10 +18,6 @@ class HTTP::Response
         raise ArgumentError.new("status #{status_code} should not have a body")
       end
     end
-
-    if (body = @body)
-      @headers["Content-Length"] = body.bytesize.to_s
-    end
   end
 
   def body
@@ -62,7 +58,7 @@ class HTTP::Response
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_response_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, @body)
+    HTTP.serialize_headers_and_body(io, headers, @body || @body_io, @version)
   end
 
   # :nodoc:
@@ -75,6 +71,10 @@ class HTTP::Response
 
   def self.mandatory_body?(status_code)
     !(status_code / 100 == 1 || status_code == 204 || status_code == 304)
+  end
+
+  def self.supports_chunked?(version)
+    version == "HTTP/1.1"
   end
 
   def self.from_io(io)
