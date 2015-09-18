@@ -38,12 +38,12 @@ describe "Bcrypt" do
     end
   end
 
-  it "verified whether the password is correct" do
+  it "verifies whether the password is correct" do
     hash = Crypto::Bcrypt.digest("secret", 5)
     Crypto::Bcrypt.verify("secret", hash).should be_true
   end
 
-  it "verified whether the password is incorrect" do
+  it "verifies whether the password is incorrect" do
     hash = Crypto::Bcrypt.digest("secret", 5)
     Crypto::Bcrypt.verify("Secret", hash).should be_false
   end

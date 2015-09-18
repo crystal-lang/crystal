@@ -5,7 +5,7 @@ module Crypto::Subtle
     v = 0_u8
 
     x.size.times do |i|
-      v = v | x[i] ^ y[i]
+      v |= x[i] ^ y[i]
     end
 
     constant_time_byte_eq(v, 0)
