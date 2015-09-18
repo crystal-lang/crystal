@@ -68,7 +68,12 @@ module LLVM
 
   def self.default_target_triple
     chars = LibLLVM.get_default_target_triple
-    String.new(chars).tap { LibLLVM.dispose_message(chars) }
+    triple = String.new(chars).tap { LibLLVM.dispose_message(chars) }
+    if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
+      "x86_64-apple-macosx"
+    else
+      triple
+    end
   end
 
   def self.to_io(chars, io)
