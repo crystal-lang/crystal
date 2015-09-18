@@ -3,6 +3,7 @@ lib LibC
   fun strtof(str : Char*, endp : Char**) : Float
   fun strlen(s : Char*) : SizeT
   fun snprintf(str : Char*, n : SizeT, format : Char*, ...) : Int
+  fun strcmp(Char*, Char*) : LibC::Int
 end
 
 # A String represents an immutable sequence of UTF-8 characters.

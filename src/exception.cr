@@ -1,39 +1,6 @@
 require "unwind"
 require "dl"
 
-def caller
-  backtrace = [] of String
-  backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
-    bt = data as Array(String)
-    ip = LibUnwind.get_ip(context)
-    LibDL.dladdr(Pointer(Void).new(ip), out info)
-    offset = ip - info.saddr.address
-
-    if offset == 0
-      LibDL.dladdr(Pointer(Void).new(ip - 1), pointerof(info))
-      offset = ip - info.saddr.address
-    end
-
-    if info.sname.nil?
-      bt << "[#{ip}] ???"
-      LibUnwind::ReasonCode::NO_REASON
-    else
-      sname = String.new(info.sname)
-      bt << "[#{ip}] #{sname} +#{offset}"
-      ifdef i686
-        # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
-        # The unwind info is corrupted when `makecontext` is used.
-        # Stop the backtrace here. There is nothing interest beyond this point anyway.
-        sname == "makecontext" ? LibUnwind::ReasonCode::END_OF_STACK : LibUnwind::ReasonCode::NO_REASON
-      else
-        LibUnwind::ReasonCode::NO_REASON
-      end
-    end
-  end
-  LibUnwind.backtrace(backtrace_fn, backtrace as Void*)
-  backtrace
-end
-
 class Exception
   getter message
   getter cause
@@ -42,17 +9,78 @@ class Exception
   def initialize(message = nil : String?, cause = nil : Exception?)
     @message = message
     @cause = cause
-    @backtrace = caller
+    @callstack = Exception.callstack
   end
 
   def backtrace
-    backtrace = @backtrace
-    ifdef linux
-      backtrace = backtrace.map do |frame|
-        Exception.unescape_linux_backtrace_frame(frame)
+    @backtrace ||= decode_backtrace
+  end
+
+  # This is only used for the workaround described in `Exception.callstack`
+  protected def self.makecontext_range
+    @@makecontext_range ||= begin
+      makecontext_start = makecontext_end = LibDL.dlsym(LibDL::RTLD_DEFAULT, "makecontext")
+
+      while true
+        ret = LibDL.dladdr(makecontext_end, out info)
+        break if ret == 0 || info.sname.nil?
+        break unless LibC.strcmp(info.sname, "makecontext") == 0
+        makecontext_end += 1
+      end
+
+      (makecontext_start...makecontext_end)
+    end
+  end
+
+  protected def self.callstack
+    callstack = [] of Void*
+    backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+      bt = data as typeof(callstack)
+      ip = Pointer(Void).new(LibUnwind.get_ip(context))
+      bt << ip
+
+      ifdef i686
+        # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
+        # The unwind info is corrupted when `makecontext` is used.
+        # Stop the backtrace here. There is nothing interest beyond this point anyway.
+        if Exception.makecontext_range.includes?(ip)
+          return LibUnwind::ReasonCode::END_OF_STACK
+        end
+      end
+
+      LibUnwind::ReasonCode::NO_REASON
+    end
+
+    LibUnwind.backtrace(backtrace_fn, callstack as Void*)
+    callstack
+  end
+
+  private def decode_backtrace
+    backtrace = Array(String).new(@callstack.size)
+    @callstack.each do |ip|
+      frame = decode_frame(ip)
+      if frame
+        offset, sname = frame
+        backtrace << "[#{ip.address}] #{sname} +#{offset}"
+      else
+        backtrace << "[#{ip.address}] ???"
       end
     end
     backtrace
+  end
+
+  private def decode_frame(ip, original_ip = ip)
+    if LibDL.dladdr(ip, out info) != 0
+      offset = original_ip - info.saddr
+
+      if offset == 0
+        return decode_frame(ip - 1, original_ip)
+      end
+
+      unless info.sname.nil?
+        {offset, String.new(info.sname)}
+      end
+    end
   end
 
   def to_s(io : IO)
