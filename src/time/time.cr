@@ -425,7 +425,7 @@ struct Time
 
   def self.local_ticks
     compute_ticks do |ticks, tp, tzp|
-      ticks - (tzp.tz_minuteswest.to_i64 * Span::TicksPerMinute)
+      ticks - (tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute) + (tzp.tz_dsttime.to_i64 * 60 * TimeSpan::TicksPerMinute)
     end
   end
 
@@ -443,7 +443,7 @@ struct Time
   # ```
   def self.local_offset_in_minutes
     LibC.gettimeofday(nil, out tzp)
-    -tzp.tz_minuteswest.to_i32
+    -tzp.tz_minuteswest.to_i32 + tzp.tz_dsttime.to_i32 * 60
   end
 
   protected def self.compute_utc_ticks(ticks)
