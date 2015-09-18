@@ -14,6 +14,8 @@ module Crystal
         interpret_argless_method("id", args) { MacroId.new(to_macro_id) }
       when "stringify"
         interpret_argless_method("stringify", args) { stringify }
+      when "symbolize"
+        interpret_argless_method("symbolize", args) { symbolize }
       when "class_name"
         interpret_argless_method("class_name", args) { class_name }
       when "raise"
@@ -58,6 +60,10 @@ module Crystal
 
     def stringify
       StringLiteral.new(to_s)
+    end
+
+    def symbolize
+      SymbolLiteral.new(to_s)
     end
 
     def class_name
@@ -702,7 +708,7 @@ module Crystal
   class MacroId
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name"
+      when "==", "!=", "stringify", "class_name", "symbolize"
         return super
       end
 
@@ -721,7 +727,7 @@ module Crystal
   class SymbolLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name"
+      when "==", "!=", "stringify", "class_name", "symbolize"
         return super
       end
 
