@@ -8,6 +8,36 @@
   `FileDescriptorIO` -> `IO::FileDescriptor`, `BufferedIO` -> `IO::Buffered`, `CharReader` -> `Char::Reader`,
   `PointerAppender` -> `Pointer::Appender`.
 * **(breaking change)** All places that raised `DomainError` raise `ArgumentError` now.
+* **(breaking change)** Renamed `Type.cast` to `Type.new` (for example, `Int32.new` instead of `Int32.cast`)
+* **(breaking change)** Removed all macro instance variables except `@type`
+* **(breaking change)** Removed `undef`
+* **(breaking change)** Removed `length()` and `count()` methods from collections. The only method for this is now `size`.
+* **(breaking change)** Removed the ability to invoke methods on a union class
+* `crystal deps` now delegates to [shards](https://github.com/ysbaddaden/shards). Removed `Projecfile` support.
+* Automatically convert numeric types when invoking C functions
+* Automatically define questions methods for enum members
+* Support quotes inside quoted symbols (thanks @wolflee)
+* Allow marking `initialize` as private
+* Added `method_added` macro hook (thanks @MakeNowJust)
+* Added `ArrayLiteral#includes?(obj)` in macros
+* Added `ASTNode#symbolize` in macros (thanks @kirbyfan64)
+* Added experimental `yaml_mapping`
+* Added nilable variants to `Enumerable#max`, `Enumerable#min`, and others (thanks @technorama)
+* Added `Iterator#flatten` (thanks @jpellerin)
+* Added setting a read timeout to `HTTP::Client` (thanks @benoist)
+* Added `Array#delete_at(index, count)` and `Array#delete_at(range)` (thanks @tebakane)
+* Added `HTTP::Cookies` (thanks @netfeed)
+* Added `Tuple#reverse` (thanks @jhass)
+* Added `Number#clamp` (thanks @technorama)
+* Added serveral socket options (thanks @technorama)
+* Added `WebSocket.open` (thanks @kumpelblase2)
+* Added support for sending chunked content in HTTP server (thanks @bcardiff)
+* Documented `Set`, and added a couple of methods (thanks @will)
+* Nicer formatting in `Benchmark.ips`, and interactive mode (thanks @will)
+* The `-f` format output is now honored in compiler errors (thanks @kirbyfan64)
+* Fixed an ambiguity with the `crystal build` command (thanks @MakeNowJust)
+* Cast exceptions now raise `TypeCastError` instead of `Exception` (thanks @will)
+* Many bugs fixes
 
 ## 0.7.7 (2015-09-05)
 
