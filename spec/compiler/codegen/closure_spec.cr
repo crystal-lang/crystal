@@ -589,4 +589,38 @@ describe "Code gen: closure" do
       Foo.new(1).foo.call
       )).to_i.should eq(1)
   end
+
+  it "doesn't form a closure if invoking class method" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def self.foo
+          ->{ bar }.closure?
+        end
+
+        def self.bar
+        end
+      end
+
+      Foo.foo
+      )).to_b.should be_false
+  end
+
+  it "doesn't form a closure if invoking class method with self" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def self.foo
+          ->{ self.bar }.closure?
+        end
+
+        def self.bar
+        end
+      end
+
+      Foo.foo
+      )).to_b.should be_false
+  end
 end

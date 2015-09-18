@@ -3508,17 +3508,23 @@ module Crystal
     end
 
     def check_self_closured
-      if @scope && (context = @fun_literal_context) && context.is_a?(Def)
-        context.self_closured = true
+      scope = @scope
+      return unless scope
 
-        # Go up and mark fun literal defs as closured until the top
-        # (which should be when we leave the top Def)
-        visitor = self
-        while visitor
-          visitor_context = visitor.closure_context
-          visitor_context.closure = true if visitor_context.is_a?(Def)
-          visitor = visitor.parent
-        end
+      return if scope.metaclass? && !scope.virtual_metaclass?
+
+      context = @fun_literal_context
+      return unless context.is_a?(Def)
+
+      context.self_closured = true
+
+      # Go up and mark fun literal defs as closured until the top
+      # (which should be when we leave the top Def)
+      visitor = self
+      while visitor
+        visitor_context = visitor.closure_context
+        visitor_context.closure = true if visitor_context.is_a?(Def)
+        visitor = visitor.parent
       end
     end
 
