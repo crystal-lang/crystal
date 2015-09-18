@@ -372,7 +372,7 @@ struct Enum
   # Convenience macro to create an *or*ed enum from the given members.
   #
   # ```
-  # IOMode.flags(read, write) #=> IOMode::Read | IOMode::Write
+  # IOMode.flags(Read, Write) #=> IOMode::Read | IOMode::Write
   # ```
   macro flags(*values)
     {% for value, i in values %}\

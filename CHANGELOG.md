@@ -34,7 +34,7 @@
 * Added `WebSocket.open` (thanks @kumpelblase2)
 * Added `Enum.flags` macro
 * Added support for sending chunked content in HTTP server (thanks @bcardiff)
-# Added `future`, `lazy` and `delay` concurrency methods (thanks @technorama)
+* Added `future`, `lazy` and `delay` concurrency methods (thanks @technorama)
 * `fork` now returns a `Process` (thanks @technorama)
 * Documented `Set`, and added a couple of methods (thanks @will)
 * Nicer formatting in `Benchmark.ips`, and interactive mode (thanks @will)
