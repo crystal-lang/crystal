@@ -239,7 +239,7 @@ module Crystal
 
     private def codegen_single_unit(unit, target_triple, multithreaded)
       unit.llvm_mod.target = target_triple
-      ifdef x86_64
+      if target_triple =~ /^x86_64/
         unit.llvm_mod.data_layout = DataLayout64
       else
         unit.llvm_mod.data_layout = DataLayout32

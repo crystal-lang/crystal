@@ -1,5 +1,24 @@
 class Crystal::Program
   def flags
+    unless @flags
+      # Try to reconstruct the expected best "uname" info from the triple.
+      # Running real "uname" is not always a good idea because it may be,
+      # for example, a 32-bit x86 system running with a 64-bit linux kernel.
+      case LLVM.default_target_triple
+      when /^x86_64\-.*\-linux\-gnu/
+        @flags = parse_flags("Linux x86_64")
+      when /^i(\d)86.*\-linux\-gnu/
+        if $1.to_i > 3
+          @flags = parse_flags("Linux i686")
+        else
+          @flags = parse_flags("Linux i386")
+        end
+      when /^armv7.*\-linux/
+        @flags = parse_flags("Linux armv7l")
+      when /^arm.*\-linux/
+        @flags = parse_flags("Linux armv6l")
+      end
+    end
     @flags ||= parse_flags(`uname -m -s`)
   end
 
