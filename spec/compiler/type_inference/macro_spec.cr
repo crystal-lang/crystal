@@ -476,4 +476,19 @@ describe "Type inference: macro" do
       ),
       "can't require dynamically"
   end
+
+  it "can define constant via macro included" do
+    assert_type(%(
+      module Mod
+        macro included
+          CONST = 1
+        end
+      end
+
+      include Mod
+
+
+      CONST
+      )) { int32 }
+  end
 end

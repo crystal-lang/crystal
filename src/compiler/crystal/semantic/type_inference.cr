@@ -1656,7 +1656,7 @@ module Crystal
               @mod.expand_macro hook.macro.body, current_type.instance_type
             end
           end
-          expanded.accept self
+
           node.add_runtime_initializer(expanded)
         end
       end
