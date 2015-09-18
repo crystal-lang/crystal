@@ -99,10 +99,11 @@ module HTTP
 
     if body
       if body.is_a?(IO)
-        buf = Slice(UInt8).new(8192)
-        while (buf_length = body.read(buf)) > 0
-          io << buf_length.to_s(16) << "\r\n"
-          io.write(buf[0, buf_length])
+        buf :: UInt8[8192]
+        while (buf_length = body.read(buf.to_slice)) > 0
+          buf_length.to_s(16, io)
+          io << "\r\n"
+          io.write(buf.to_slice[0, buf_length])
           io << "\r\n"
         end
         io << "0\r\n\r\n"
