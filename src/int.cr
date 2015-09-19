@@ -172,7 +172,7 @@ struct Int
   end
 
   def bit(bit)
-    self & (1 << bit) == 0 ? 0 : 1
+    self >> bit & 1
   end
 
   def gcd(other : Int)
