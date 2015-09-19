@@ -56,7 +56,7 @@ alias Int32Ptr = Int32*
 is the same as:
 
 ```crystal
-alias Int32 = Pointer(Int32)
+alias Int32Ptr = Pointer(Int32)
 ```
 
 In regular code, `Int32*` means invoking the `*` method on `Int32`.
