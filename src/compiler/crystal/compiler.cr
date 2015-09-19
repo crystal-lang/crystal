@@ -64,6 +64,8 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
 
+      @link_flags = "#{@link_flags} -rdynamic"
+
       node, original_node = parse program, sources
       node = infer_type program, node
       codegen program, node, sources, output_filename unless @no_codegen
