@@ -1,4 +1,4 @@
-## Next
+## 0.8.0 (2015-09-19)
 
 * **(breaking change)** Renamed a couple of types: `ChannelClosed` -> `Channel::ClosedError`,
   `UnbufferedChannel` -> `Channel::Unbuffered`, `BufferedChannel` -> `Channel::Buffered`,
