@@ -309,7 +309,7 @@ module Crystal
         end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
         interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
@@ -443,7 +443,7 @@ module Crystal
         end
       when "last"
         interpret_argless_method(method, args) { elements.last? || NilLiteral.new }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(elements.size) }
       when "map"
         interpret_argless_method(method, args) do
@@ -520,7 +520,7 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
       when "keys"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.key }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(entries.size) }
       when "to_a"
         interpret_argless_method(method, args) do
@@ -564,7 +564,7 @@ module Crystal
       case method
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(elements.size) }
       when "[]"
         case args.size
@@ -776,7 +776,7 @@ module Crystal
           end
           BoolLiteral.new(type.has_attribute?(value))
         end
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) do
           type = type.instance_type
           if type.is_a?(TupleInstanceType)

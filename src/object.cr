@@ -476,7 +476,7 @@ class Object
   # ```
   macro def_hash(*fields)
     def hash
-      {% if fields.length == 1 %}
+      {% if fields.size == 1 %}
         {{fields[0]}}.hash
       {% else %}
         hash = 0

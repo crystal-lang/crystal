@@ -615,7 +615,7 @@ class Array(T)
     delete_at(from, size)
   end
 
-  # Deletes count or less (if there aren't enough) elements at the given start index, 
+  # Deletes count or less (if there aren't enough) elements at the given start index,
   # returning that elements.
   # Raises `IndexError` if the index is out of range.
   #
@@ -840,12 +840,6 @@ class Array(T)
 
   def last?
     last { nil }
-  end
-
-  # :nodoc:
-  # TODO: remove after 0.7.7
-  def length=(length : Int)
-    @size = length.to_i
   end
 
   # :nodoc:
