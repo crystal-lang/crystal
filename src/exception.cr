@@ -1,18 +1,17 @@
 require "unwind"
 require "dl"
 
-class Exception
-  getter message
-  getter cause
-  getter backtrace
+def caller
+  CallStack.new.printable_backtrace
+end
 
-  def initialize(message = nil : String?, cause = nil : Exception?)
-    @message = message
-    @cause = cause
-    @callstack = Exception.callstack
+# :nodoc:
+struct CallStack
+  def initialize
+    @callstack = CallStack.unwind
   end
 
-  def backtrace
+  def printable_backtrace
     @backtrace ||= decode_backtrace
   end
 
@@ -32,7 +31,7 @@ class Exception
     end
   end
 
-  protected def self.callstack
+  protected def self.unwind
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       bt = data as typeof(callstack)
@@ -43,7 +42,7 @@ class Exception
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
         # The unwind info is corrupted when `makecontext` is used.
         # Stop the backtrace here. There is nothing interest beyond this point anyway.
-        if Exception.makecontext_range.includes?(ip)
+        if CallStack.makecontext_range.includes?(ip)
           return LibUnwind::ReasonCode::END_OF_STACK
         end
       end
@@ -58,7 +57,7 @@ class Exception
   private def decode_backtrace
     backtrace = Array(String).new(@callstack.size)
     @callstack.each do |ip|
-      frame = decode_frame(ip)
+      frame = CallStack.decode_frame(ip)
       if frame
         offset, sname = frame
         backtrace << "[#{ip.address}] #{sname} +#{offset}"
@@ -69,7 +68,7 @@ class Exception
     backtrace
   end
 
-  private def decode_frame(ip, original_ip = ip)
+  protected def self.decode_frame(ip, original_ip = ip)
     if LibDL.dladdr(ip, out info) != 0
       offset = original_ip - info.saddr
 
@@ -81,6 +80,21 @@ class Exception
         {offset, String.new(info.sname)}
       end
     end
+  end
+end
+
+class Exception
+  getter message
+  getter cause
+
+  def initialize(message = nil : String?, cause = nil : Exception?)
+    @message = message
+    @cause = cause
+    @callstack = CallStack.new
+  end
+
+  def backtrace
+    @callstack.printable_backtrace
   end
 
   def to_s(io : IO)
@@ -101,15 +115,6 @@ class Exception
       io.puts frame
     end
     io.flush
-  end
-
-  def self.unescape_linux_backtrace_frame(frame)
-    frame.gsub(/_(\d|A|B|C|D|E|F)(\d|A|B|C|D|E|F)_/) do |match|
-      first = match[1].to_i(16) * 16
-      second = match[2].to_i(16)
-      value = first + second
-      value.chr
-    end
   end
 end
 
