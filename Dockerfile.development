@@ -1,0 +1,26 @@
+# This Dockerfile contains the dependencies and environment variables needed
+# to compile and run Crystal. It is useful for guaranteeing a clean environment
+# for hacking on features or bugs, running the test suite, etc.
+# 
+# Use `docker-compose run dev bash` to build and connect to this image, with
+# the local host directory mounted at /opt/crystal/host.
+#
+# After you connect you should run `make clean crystal`.
+#
+# Remember that the executables you compile inside the container aren't
+# necessarily valid for outside of the container, and that you should run 
+# `make clean` to avoid confusion between the two environments.
+
+FROM jhass/crystal-build-x86_64
+
+WORKDIR /opt/crystal
+
+RUN curl http://crystal-lang.s3.amazonaws.com/pcl/libpcl-1.12-1-linux-x86_64.tar.gz | tar xz -C /opt/crystal/embedded --strip-components=1
+
+RUN apt-get install -y bash-completion vim
+
+ENV CRYSTAL_CONFIG_VERSION HEAD
+ENV LIBRARY_PATH /opt/crystal/embedded/lib
+ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+WORKDIR /opt/crystal/host

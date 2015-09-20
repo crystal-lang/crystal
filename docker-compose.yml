@@ -1,0 +1,5 @@
+dev:
+  build: .
+  dockerfile: Dockerfile.development
+  volumes:
+   - .:/opt/crystal/host
