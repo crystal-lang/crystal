@@ -3268,6 +3268,8 @@ module Crystal
       end
 
       unless target_type
+        TypeLookup.check_cant_infer_generic_type_parameter(@scope, node)
+
         error_msg = String.build do |msg|
           msg << "undefined constant #{node}"
           msg << @mod.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name

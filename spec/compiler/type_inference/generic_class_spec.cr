@@ -515,4 +515,29 @@ describe "Type inference: generic class" do
       ),
       "tuple type too nested"
   end
+
+  it "gives helpful error message when generic type var is missing (#1526)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(x)
+        end
+      end
+
+      Foo.new(1)
+      ),
+      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+  end
+
+  it "gives helpful error message when generic type var is missing in block spec (#1526)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(&block : T -> )
+          block
+        end
+      end
+
+      Foo.new { |x| }
+      ),
+      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+  end
 end
