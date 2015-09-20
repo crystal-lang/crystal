@@ -10,5 +10,11 @@ module Zlib
       actual = Inflate.new(Deflate.new(StringIO.new(expected))).read
       expected.should eq(actual)
     end
+
+    it "inflate deflate should be inverse (utf-8)" do
+      expected = "日本さん語日本さん語"
+      actual = Inflate.new(Deflate.new(StringIO.new(expected))).read
+      expected.should eq(actual)
+    end
   end
 end
