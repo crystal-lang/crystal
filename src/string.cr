@@ -1822,11 +1822,7 @@ class String
     mem = nil
 
     String.build(bytesize + 10) do |str|
-      reader = Char::Reader.new(self)
-      while reader.has_next?
-        char = reader.current_char
-        reader.next_char
-
+      each_char do |char|
         downcase = 'a' <= char <= 'z'
         upcase = 'A' <= char <= 'Z'
 
@@ -1853,27 +1849,23 @@ class String
           if mem
             if char == '_'
               # case 3
-              str << mem.downcase
             else
               # case 1
               str << '_'
-              str << mem.downcase
             end
+            str << mem.downcase
             mem = nil
           end
 
-          if reader.has_next?
-            str << char
-          else
-            str << char.downcase
-          end
+          str << char.downcase
         end
 
         last_is_downcase = downcase
         last_is_upcase = upcase
         first = false
-
       end
+
+      str << mem.downcase if mem
     end
   end
 
