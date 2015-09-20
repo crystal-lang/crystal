@@ -729,6 +729,8 @@ describe "Parser" do
   it_parses "macro def foo : String; 1; end", Def.new("foo", body: [MacroLiteral.new(" 1; ")] of ASTNode, return_type: "String".path, macro_def: true)
   it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], [MacroLiteral.new(" 1; ")] of ASTNode, return_type: "String".path, macro_def: true)
 
+  it_parses "macro foo;bar{% begin %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new(true.bool, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+
   it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
   it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
 

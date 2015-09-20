@@ -2343,6 +2343,17 @@ module Crystal
             end
           end
           return macro_if
+        when :begin
+          next_token_skip_space
+          check :"%}"
+
+          body, end_location = parse_macro_body(start_line, start_column, macro_state)
+
+          check_ident :end
+          next_token_skip_space
+          check :"%}"
+
+          return MacroIf.new(BoolLiteral.new(true), body)
         when :else, :elsif, :end
           return nil
         end
