@@ -2613,13 +2613,13 @@ module Crystal
       when :struct_new
         node.type = scope.instance_type
       when :struct_set
-        node.bind_to @vars["value"]
+        visit_struct_or_union_set node
       when :struct_get
         visit_struct_get node
       when :union_new
         node.type = scope.instance_type
       when :union_set
-        node.bind_to @vars["value"]
+        visit_struct_or_union_set node
       when :union_get
         visit_union_get node
       when :external_var_set
@@ -2731,6 +2731,48 @@ module Crystal
       end
 
       node.type = scope.instance_type
+    end
+
+    def visit_struct_or_union_set(node)
+      scope = @scope as CStructOrUnionType
+
+      field_name = call.not_nil!.name[0 ... -1]
+      expected_type = scope.vars[field_name].type
+      value = @vars["value"]
+      actual_type = value.type
+
+      node.type = actual_type
+
+      actual_type = actual_type.remove_alias
+      unaliased_type = expected_type.remove_alias
+
+      return if actual_type.compatible_with?(unaliased_type)
+      return if actual_type.is_implicitly_converted_in_c_to?(unaliased_type)
+
+      case unaliased_type
+      when IntegerType
+        if convert_call = convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
+          node.extra = convert_call
+          return
+        end
+      when FloatType
+        if convert_call = convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
+          node.extra = convert_call
+          return
+        end
+      end
+
+      unsafe_call = Conversions.to_unsafe(node, Var.new("value"), self, actual_type, expected_type)
+      if unsafe_call
+        node.extra = unsafe_call
+        return
+      end
+
+      node.raise "field '#{field_name}' of #{scope.type_desc} #{scope} has type #{expected_type}, not #{actual_type}"
+    end
+
+    def convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
+      Conversions.numeric_argument(node, Var.new("value"), self, unaliased_type, expected_type, actual_type)
     end
 
     def visit_struct_get(node)

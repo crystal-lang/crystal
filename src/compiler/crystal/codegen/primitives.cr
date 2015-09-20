@@ -304,8 +304,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_struct_set(node, target_def, call_args)
-    set_aggregate_field(node, target_def, call_args, true) do
-      type = context.type as CStructType
+    set_aggregate_field(node, target_def, call_args) do
+      type = context.type as CStructOrUnionType
       name = target_def.name[0 .. -2]
 
       struct_field_ptr(type, name, call_args[0])
@@ -329,38 +329,55 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_union_set(node, target_def, call_args)
-    set_aggregate_field(node, target_def, call_args, true) do
-      union_field_ptr(node, call_args[0])
+    set_aggregate_field(node, target_def, call_args) do |field_type|
+      union_field_ptr(field_type, call_args[0])
     end
   end
 
   def codegen_primitive_union_get(node, target_def, call_args)
-    value = to_lhs union_field_ptr(node, call_args[0]), node.type
+    value = to_lhs union_field_ptr(node.type, call_args[0]), node.type
     value = check_c_fun node.type, value
     value
   end
 
-  def set_aggregate_field(node, target_def, call_args, check_c_fun = false)
-    original_call_arg = call_args[1]
-    call_arg = original_call_arg
+  def set_aggregate_field(node, target_def, call_args)
+    call_arg = call_args[1]
+    original_call_arg = call_arg
 
-    if check_c_fun && node.type.fun?
-      call_arg = check_fun_is_not_closure(call_arg, node.type)
+    # Check if we need to do a numeric conversion
+    if (extra = node.extra)
+      existing_value = context.vars["value"]?
+      context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
+      request_value { extra.accept self }
+      call_arg = @last
+      context.vars["value"] = existing_value if existing_value
     end
 
-    value = to_rhs call_arg, node.type
-    store value, yield
+    var_name = target_def.name[0 ... -1]
+    scope = context.type as CStructOrUnionType
+    field_type = scope.vars[var_name].type
+
+    # Check nil to pointer
+    if node.type.nil_type? && (field_type.pointer? || field_type.fun?)
+      call_arg = llvm_c_type(field_type).null
+    end
+
+    if field_type.fun?
+      call_arg = check_fun_is_not_closure(call_arg, field_type)
+    end
+
+    value = to_rhs call_arg, field_type
+    store value, yield(field_type)
 
     original_call_arg
   end
 
-  def union_field_ptr(node, pointer)
+  def union_field_ptr(field_type, pointer)
     ptr = aggregate_index pointer, 0
-    node_type = node.type
-    if node_type.is_a?(FunInstanceType)
-      bit_cast ptr, @llvm_typer.fun_type(node_type).pointer
+    if field_type.is_a?(FunInstanceType)
+      bit_cast ptr, @llvm_typer.fun_type(field_type).pointer
     else
-      cast_to_pointer ptr, node.type
+      cast_to_pointer ptr, field_type
     end
   end
 

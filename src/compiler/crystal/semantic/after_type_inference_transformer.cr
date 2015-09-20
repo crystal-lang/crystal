@@ -772,6 +772,13 @@ module Crystal
       node
     end
 
+    def transform(node : Primitive)
+      if extra = node.extra
+        node.extra = extra.transform(self)
+      end
+      node
+    end
+
     def rebind_node(node, dependency)
       node.unbind_from node.dependencies?
       if dependency

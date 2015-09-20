@@ -81,7 +81,7 @@ describe "Type inference: struct" do
     assert_error %(
       lib LibFoo
         struct Bar
-          x : ->
+          x : -> Int32
         end
       end
 
@@ -304,5 +304,99 @@ describe "Type inference: struct" do
       f = LibFoo::Foo.new x: 123
       f.@x
       )) { int32 }
+  end
+
+  it "automatically converts numeric type in struct field assignment" do
+    assert_type(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = 1_u8
+      foo.x
+      )) { int32 }
+  end
+
+  it "errors if invoking to_i32 and got error in that call" do
+    assert_error %(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      class Foo
+        def to_i32
+          1 + 'a'
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Foo.new
+      ),
+      "converting from Foo to Int32 by invoking 'to_i32'"
+  end
+
+  it "errors if invoking to_i32 and got wrong type" do
+    assert_error %(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      class Foo
+        def to_i32
+          'a'
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Foo.new
+      ),
+      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+  end
+
+  it "errors if invoking to_unsafe and got error in that call" do
+    assert_error %(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      class Foo
+        def to_unsafe
+          1 + 'a'
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Foo.new
+      ),
+      "no overload matches 'Int32#+' with types Char"
+  end
+
+  it "errors if invoking to_unsafe and got different type" do
+    assert_error %(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      class Foo
+        def to_unsafe
+          'a'
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Foo.new
+      ),
+      "invoked 'to_unsafe' to convert from Foo to Int32, but got Char"
   end
 end
