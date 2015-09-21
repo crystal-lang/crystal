@@ -4,6 +4,7 @@ lib LibC
   fun rename(oldname : Char*, newname : Char*) : Int
   fun symlink(oldpath : Char*, newpath : Char*) : Int
   fun unlink(filename : Char*) : Int
+  fun ftruncate(fd : Int, size : OffT) : Int
 
   F_OK = 0
   X_OK = 1 << 0
@@ -462,6 +463,16 @@ class File < IO::FileDescriptor
 
   def size
     stat.size
+  end
+
+  # Truncates the file to the specified size. Requires a write file descriptor
+  def truncate(size = 0)
+    flush
+    code = LibC.ftruncate(fd, size)
+    if code != 0
+      raise Errno.new("Error truncating file '#{path}'")
+    end
+    code
   end
 
   def to_s(io)

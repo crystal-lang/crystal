@@ -455,6 +455,45 @@ describe "File" do
     file.gets_to_end.should eq(content)
   end
 
+  describe "truncate" do
+    it "truncates" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "0123456789")
+      File.open(filename, "r+") do |f|
+        f.gets_to_end.should eq("0123456789")
+        f.rewind
+        f.puts("333")
+        f.truncate(4)
+      end
+
+      File.read(filename).should eq("333\n")
+      File.delete filename
+    end
+
+    it "truncates completely when no size is passed" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "0123456789")
+      File.open(filename, "r+") do |f|
+        f.puts("333")
+        f.truncate
+      end
+
+      File.read(filename).should eq("")
+      File.delete filename
+    end
+
+    it "requires a file opened for writing" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "0123456789")
+      File.open(filename, "r") do |f|
+        expect_raises(Errno) do
+          f.truncate(4)
+        end
+      end
+      File.delete filename
+    end
+  end
+
   describe "flock" do
     it "exlusively locks a file" do
       File.open(__FILE__) do |file1|
