@@ -43,6 +43,12 @@ lib LibLLVMExt
   fun di_builder_create_expression = LLVMDIBuilderCreateExpression(builder : DIBuilder,
     addr : Int64*, length : LibC::SizeT) : Metadata
 
+  fun di_builder_get_or_create_array = LLVMDIBuilderGetOrCreateArray(builder : DIBuilder, data : Metadata*, length : LibC::SizeT) : Metadata
+  fun di_builder_create_enumerator = LLVMDIBuilderCreateEnumerator(builder : DIBuilder, name : LibC::Char*, value : Int64) : Metadata
+  fun di_builder_create_enumeration_type = LLVMDIBuilderCreateEnumerationType(builder : DIBuilder,
+    scope : Metadata, name : LibC::Char*, file : Metadata, line_number : LibC::UInt,
+    size_in_bits : UInt64, align_in_bits : UInt64, elements : Metadata, underlying_type : Metadata) : Metadata
+
   fun di_builder_get_or_create_type_array = LLVMDIBuilderGetOrCreateTypeArray(builder : DIBuilder, data : Metadata*, length : LibC::SizeT) : Metadata
   fun di_builder_create_subroutine_type = LLVMDIBuilderCreateSubroutineType(builder : DIBuilder, file : Metadata, parameter_types : Metadata) : Metadata
   fun set_current_debug_location = LLVMSetCurrentDebugLocation2(LibLLVM::BuilderRef, LibC::Int, LibC::Int, Metadata, Metadata)

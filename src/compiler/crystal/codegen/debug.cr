@@ -45,6 +45,19 @@ module Crystal
       di_builder.create_basic_type(type.to_s, 8, 8, LLVM::DwarfTypeEncoding::Boolean)
     end
 
+    def get_debug_type(type : EnumType)
+      elements = type.types.map do |name, item|
+        value = if item.is_a?(Const) && (value = item.value).is_a?(NumberLiteral)
+          value.value.to_i
+        else
+          0
+        end
+        di_builder.create_enumerator(name, value)
+      end
+      elements = di_builder.get_or_create_array(elements)
+      di_builder.create_enumeration_type(nil, type.to_s, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
+    end
+
     def get_debug_type(type)
       # puts "Unsupported type for debugging: #{type} (#{type.class})"
     end

@@ -19,6 +19,7 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
 
 #if HAVE_LLVM_35
 typedef LLVMValueRef LLVMMetadataRef;
+typedef Value Metadata;
 #else
 typedef struct LLVMOpaqueMetadata *LLVMMetadataRef;
 DEFINE_ISA_CONVERSION_FUNCTIONS(Metadata, LLVMMetadataRef)
@@ -117,6 +118,14 @@ LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Dref,
   return wrap(A);
 }
 
+LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef dref, LLVMMetadataRef *data, size_t length) {
+  DIBuilder *D = unwrap(dref);
+  ArrayRef<Metadata *> elements(unwrap(data), length);
+  DIArray a = D->getOrCreateArray(elements);
+
+  return wrap(a);
+}
+
 
 LLVMMetadataRef
 LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref, LLVMMetadataRef File,
@@ -168,6 +177,24 @@ LLVMMetadataRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef Dref,
   DIExpression Expr = D->createExpression(ArrayRef<int64_t>(Addr, Length));
   return wrap(Expr);
 #endif
+}
+
+LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(LLVMDIBuilderRef Dref,
+  LLVMMetadataRef scope, const char* name, LLVMMetadataRef file, unsigned lineNumber,
+  uint64_t sizeInBits, uint64_t alignInBits, LLVMMetadataRef elements, LLVMMetadataRef underlyingType) {
+
+  DIBuilder *D = unwrap(Dref);
+  DICompositeType enumType = D->createEnumerationType(unwrapDI<DIDescriptor>(scope), name,
+        unwrapDI<DIFile>(file), lineNumber, sizeInBits, alignInBits, unwrapDI<DIArray>(elements),
+        unwrapDI<DIType>(underlyingType));
+
+  return wrap(enumType);
+}
+
+LLVMMetadataRef LLVMDIBuilderCreateEnumerator(LLVMDIBuilderRef dref, const char* name, int64_t value) {
+  DIBuilder *D = unwrap(dref);
+  DIEnumerator e = D->createEnumerator(name, value);
+  return wrap(e);
 }
 
 void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,

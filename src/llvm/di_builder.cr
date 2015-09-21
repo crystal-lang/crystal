@@ -47,6 +47,19 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, block)
   end
 
+  def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
+    LibLLVMExt.di_builder_get_or_create_array(self, elements.buffer, elements.size)
+  end
+
+  def create_enumerator(name, value)
+    LibLLVMExt.di_builder_create_enumerator(self, name, value)
+  end
+
+  def create_enumeration_type(scope, name, file, line_number, size_in_bits, align_in_bits, elements, underlying_type)
+    LibLLVMExt.di_builder_create_enumeration_type(self, scope, name, file, line_number, size_in_bits,
+      align_in_bits, elements, underlying_type)
+  end
+
   def finalize
     LibLLVMExt.di_builder_finalize(self)
   end
