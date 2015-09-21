@@ -79,6 +79,8 @@ class Hash(K, V)
     !!find_entry(key)
   end
 
+  # Retrieve a value corresponding to a key. Raises a KeyError exception if the
+  # key does not exist.
   def fetch(key)
     fetch(key) do
       if block = @block
@@ -89,10 +91,14 @@ class Hash(K, V)
     end
   end
 
+  # Retrieve a value corresponding to a key. Return the second argument's value
+  # if the key does not exist.
   def fetch(key, default)
     fetch(key) { default }
   end
 
+  # Retrieve a value corresponding to a key. Return the value of the block if
+  # the key does not exist.
   def fetch(key)
     entry = find_entry(key)
     entry ? entry.value : yield key
