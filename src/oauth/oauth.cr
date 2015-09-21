@@ -1,6 +1,5 @@
 require "http/client"
 require "uri"
-require "cgi"
 require "secure_random"
 require "openssl/hmac"
 require "base64"

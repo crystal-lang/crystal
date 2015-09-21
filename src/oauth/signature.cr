@@ -9,10 +9,10 @@ struct OAuth::Signature
 
   def key
     String.build do |str|
-      CGI.escape @client_shared_secret, str
+      URI.escape @client_shared_secret, str
       str << '&'
       if token_shared_secret = @token_shared_secret
-        CGI.escape token_shared_secret, str
+        URI.escape token_shared_secret, str
       end
     end
   end
@@ -47,14 +47,14 @@ struct OAuth::Signature
       str << '&'
       str << (ssl ? "https" : "http")
       str << "%3A%2F%2F"
-      CGI.escape host, str
+      URI.escape host, str
       if port
         str << ':'
         str << port
       end
       uri_path = request.uri.path || "/"
       uri_path = "/" if uri_path.empty?
-      CGI.escape(uri_path, str)
+      URI.escape(uri_path, str)
       str << '&'
       str << params
     end

@@ -38,7 +38,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    "#" + CGI.escape(id)
+    "#" + URI.escape(id)
   end
 
   def prefix

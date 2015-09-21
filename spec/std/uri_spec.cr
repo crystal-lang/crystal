@@ -61,5 +61,59 @@ describe "URI" do
     assert { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
     assert { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
   end
+
+  describe ".unescape" do
+    {
+      {"hello", "hello"},
+      {"hello+world", "hello world"},
+      {"hello%20world", "hello world"},
+      {"hello%", "hello%"},
+      {"hello%2", "hello%2"},
+      {"hello%2B", "hello+"},
+      {"hello%2Bworld", "hello+world"},
+      {"hello%2%2Bworld", "hello%2+world"},
+      {"%E3%81%AA%E3%81%AA", "なな"},
+      {"%e3%81%aa%e3%81%aa", "なな"},
+      {"%27Stop%21%27+said+Fred", "'Stop!' said Fred"},
+    }.each do |tuple|
+      from, to = tuple
+
+      it "unescapes #{from}" do
+        URI.unescape(from).should eq(to)
+      end
+
+      it "unescapes #{from} to IO" do
+        String.build do |str|
+          URI.unescape(from, str)
+        end.should eq(to)
+      end
+    end
+  end
+
+  describe ".escape" do
+    [
+      {"hello", "hello"},
+      {"hello%20world", "hello world"},
+      {"hello%25", "hello%"},
+      {"hello%252", "hello%2"},
+      {"hello%2B", "hello+"},
+      {"hello%2Bworld", "hello+world"},
+      {"hello%252%2Bworld", "hello%2+world"},
+      {"%E3%81%AA%E3%81%AA", "なな"},
+      {"%27Stop%21%27%20said%20Fred", "'Stop!' said Fred"},
+      {"%0A", "\n"},
+    ].each do |tuple|
+      from, to = tuple
+      it "escapes #{to}" do
+        URI.escape(to).should eq(from)
+      end
+
+      it "escapes #{to} to IO" do
+        String.build do |str|
+          URI.escape(to, str)
+        end.should eq(from)
+      end
+    end
+  end
 end
 

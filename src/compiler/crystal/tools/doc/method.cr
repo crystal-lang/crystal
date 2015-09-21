@@ -59,7 +59,7 @@ class Crystal::Doc::Method
   end
 
   def anchor
-    "#" + CGI.escape(id)
+    "#" + URI.escape(id)
   end
 
   def to_s(io)
