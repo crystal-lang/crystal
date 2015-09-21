@@ -11,7 +11,7 @@ struct OAuth::Params
   end
 
   def add_query(query)
-    CGI.parse(query) do |key, value|
+    HTTP::Form.parse(query) do |key, value|
       add key, value
     end
   end

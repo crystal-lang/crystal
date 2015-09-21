@@ -1,4 +1,3 @@
-require "cgi"
 require "markdown"
 
 module Crystal

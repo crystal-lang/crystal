@@ -257,7 +257,6 @@ class URI
     io
   end
 
-
   # Returns the user-information component containing the provided username and password.
   #
   # ```
@@ -270,27 +269,9 @@ class URI
     end
   end
 
-  private def userinfo(user, io)
-    escape(user, io)
-    if password = @password
-      io << ':'
-      escape(password, io)
-    end
-  end
-
-  private def escape(str, io)
-    str.each_byte do |byte|
-      case byte
-      when ':', '@', '/'
-        io << '%'
-        byte.to_s(16, io, upcase: true)
-      else
-        io.write_byte byte
-      end
-    end
-  end
-
-  private def self.unescape_one(string, bytesize, i, byte, char, io)
+  # :nodoc:
+  # Unescapes one character. Private API
+  def self.unescape_one(string, bytesize, i, byte, char, io)
     if char == '+'
       io.write_byte ' '.ord.to_u8
       i += 1
@@ -323,5 +304,25 @@ class URI
     io.write_byte byte
     i += 1
     i
+  end
+
+  private def userinfo(user, io)
+    escape(user, io)
+    if password = @password
+      io << ':'
+      escape(password, io)
+    end
+  end
+
+  private def escape(str, io)
+    str.each_byte do |byte|
+      case byte
+      when ':', '@', '/'
+        io << '%'
+        byte.to_s(16, io, upcase: true)
+      else
+        io.write_byte byte
+      end
+    end
   end
 end
