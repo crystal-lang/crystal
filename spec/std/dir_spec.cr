@@ -87,6 +87,49 @@ describe "Dir" do
       result.includes?(File.join(__DIR__, file)).should be_true
     end
   end
+  
+  it "tests a recursive glob" do
+    result = Dir["**/*.cr"]
+    result.all? { |path| path.ends_with? ".cr" }.should be_true
+    result.any? { |path| path.ends_with? "/compiler.cr" }.should be_true
+    result.any? { |path| path.ends_with? "xml.cr" }.should be_true
+    result.any? { |path| path.ends_with? "dir.cr" }.should be_true
+  end
+
+  it "tests a recursive glob with '?'" do
+    result = Dir["**/??r.cr"]
+    result.all? { |path| path.ends_with? ".cr" }.should be_true
+    result.any? { |path| path.ends_with? "/compiler.cr" }.should be_false
+    result.any? { |path| path.ends_with? "xml.cr" }.should be_false
+    result.any? { |path| path.ends_with? "dir.cr" }.should be_true
+  end
+  
+  it "tests a recursive glob with alternation" do
+    result = Dir["{spec/std,src}/**/*.cr"]
+    result.any? { |path| path.ends_with? "array_spec.cr" }.should be_true
+    result.any? { |path| path.ends_with? "compiler.cr" }.should be_true
+    result.any? { |path| path.ends_with? "brainfuck.cr" }.should be_false
+  end
+
+  it "tests a glob with alternation" do
+    result = Dir["src/file{/*.cr,.cr}"]
+    result.any? { |path| path.ends_with? "stat.cr" }.should be_true
+    result.any? { |path| path.ends_with? "file.cr" }.should be_true
+    result.any? { |path| path.ends_with? "file_utils.cr" }.should be_false
+  end
+
+  it "tests a glob with recursion inside alternation" do
+    result = Dir["spec/{**/*_spec,spec_helper}.cr"]
+    result.any? { |path| path.ends_with? "all_spec.cr" }.should be_true
+    result.any? { |path| path.ends_with? "spec_helper.cr" }.should be_true
+  end
+
+  it "tests a recursive glob with nested alternations" do
+    result = Dir["src/i{?,{terable,terator}}.cr"]
+    result.any? { |path| path.ends_with? "iterable.cr" }.should be_true
+    result.any? { |path| path.ends_with? "iterator.cr" }.should be_true
+    result.any? { |path| path.ends_with? "io.cr" }.should be_true
+  end
 
   describe "chdir" do
     it "should work" do
