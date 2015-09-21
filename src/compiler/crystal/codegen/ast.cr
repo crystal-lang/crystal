@@ -54,6 +54,10 @@ module Crystal
         if owner = @owner
           if owner.metaclass?
             owner.instance_type.llvm_name(str)
+            if original_owner != self_type
+              str << "@"
+              original_owner.instance_type.llvm_name(str)
+            end
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
             owner.llvm_name(str)

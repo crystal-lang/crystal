@@ -348,4 +348,29 @@ describe "Codegen: super" do
       $a
       )).to_i.should eq(1)
   end
+
+  it "calls super in metaclass (#1522)" do
+    # We include the prelude so this is codegened for real, because that's where the issue lies
+    run(%(
+      require "prelude"
+
+      $a = 0
+
+      class Base
+        def self.foo
+          $a += 1
+        end
+      end
+
+      class One < Base
+        def self.foo
+          $a += 3
+          super
+        end
+      end
+
+      Base.foo
+      One.foo
+      )).to_i.should eq(5)
+  end
 end
