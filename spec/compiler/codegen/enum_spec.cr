@@ -219,4 +219,14 @@ describe "Code gen: enum" do
       day.some_tuesday?
       )).to_b.should be_true
   end
+
+  it "does ~ at compile time for enum member" do
+    run(%(
+      enum Foo
+        Bar = ~1
+      end
+
+      Foo::Bar.value
+      )).to_i.should eq(~1)
+  end
 end

@@ -2133,23 +2133,43 @@ module Crystal
       unless obj
         node.raise "invalid constant value"
       end
-      if node.args.size != 1
-        node.raise "invalid constant value"
-      end
 
-      left = interpret_enum_value(obj, target_type)
-      right = interpret_enum_value(node.args.first, target_type)
+      case node.args.size
+      when 0
+        left = interpret_enum_value(obj, target_type)
 
-      case node.name
-      when "+"  then left + right
-      when "-"  then left - right
-      when "*"  then left * right
-      when "/"  then left / right
-      when "&"  then left & right
-      when "|"  then left | right
-      when "<<" then left << right
-      when ">>" then left >> right
-      when "%"  then left % right
+        case node.name
+        when "+" then +left
+        when "-"
+          case left
+          when Int8 then -left
+          when Int16 then -left
+          when Int32 then -left
+          when Int64 then -left
+          else
+            node.raise "invalid constant value"
+          end
+        when "~" then ~left
+        else
+          node.raise "invalid constant value"
+        end
+      when 1
+        left = interpret_enum_value(obj, target_type)
+        right = interpret_enum_value(node.args.first, target_type)
+
+        case node.name
+        when "+"  then left + right
+        when "-"  then left - right
+        when "*"  then left * right
+        when "/"  then left / right
+        when "&"  then left & right
+        when "|"  then left | right
+        when "<<" then left << right
+        when ">>" then left >> right
+        when "%"  then left % right
+        else
+          node.raise "invalid constant value"
+        end
       else
         node.raise "invalid constant value"
       end
