@@ -60,33 +60,41 @@ class Concurrent::Future(R)
     nil
   end
 
+  private def compute
+    return if @state >= State::Delayed
+    run_compute
+  end
+
   private def spawn_compute
     return if @state >= State::Delayed
 
+    @state = @delay > 0 ? State::Delayed : State::Running
+
+    spawn { run_compute }
+  end
+
+  private def run_compute
     delay = @delay
-    @state = delay > 0 ? State::Delayed : State::Running
 
-    spawn do
-      if delay > 0
-        sleep delay
-        return if @state >= State::Canceled
-        @state = State::Running
-      end
+    if delay > 0
+      sleep delay
+      return if @state >= State::Canceled
+      @state = State::Running
+    end
 
-      begin
-        @value = @block.call
-      rescue ex
-        @error = ex
-      ensure
-        @channel.close
-        @state = State::Completed
-      end
+    begin
+      @value = @block.call
+    rescue ex
+      @error = ex
+    ensure
+      @channel.close
+      @state = State::Completed
     end
   end
 
   private def wait
     return if @state >= State::Completed
-    spawn_compute
+    compute
     @channel.receive?
   end
 
