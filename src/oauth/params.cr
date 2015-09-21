@@ -11,7 +11,7 @@ struct OAuth::Params
   end
 
   def add_query(query)
-    HTTP::Form.parse(query) do |key, value|
+    HTTP::Params.parse(query) do |key, value|
       add key, value
     end
   end

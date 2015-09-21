@@ -14,7 +14,7 @@ class OAuth::AccessToken
     secret = nil
     extra = {} of String => String
 
-    HTTP::Form.parse(response) do |key, value|
+    HTTP::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value

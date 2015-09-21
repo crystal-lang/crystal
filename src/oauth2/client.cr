@@ -10,7 +10,7 @@ class OAuth2::Client
   end
 
   def get_authorize_uri(scope = nil, state = nil)
-    query = HTTP::Form.build do |form|
+    query = HTTP::Params.build do |form|
       form.add "client_id", @client_id
       form.add "redirect_uri", @redirect_uri
       form.add "response_type", "code"
@@ -45,7 +45,7 @@ class OAuth2::Client
   end
 
   private def get_access_token
-    body = HTTP::Form.build do |form|
+    body = HTTP::Params.build do |form|
       form.add("client_id", @client_id)
       form.add("client_secret", @client_secret)
       yield form

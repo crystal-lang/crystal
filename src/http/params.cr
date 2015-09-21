@@ -1,10 +1,10 @@
 require "uri"
 
 module HTTP
-  module Form
+  module Params
     # Parses an HTTP query string into a `Hash(String, Array(String))`
     #
-    #     HTTP::Form.parse("foo=bar&foo=baz&qux=zoo") #=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
+    #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo") #=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
     def self.parse(query : String)
       parsed = {} of String => Array(String)
       parse(query) do |key, value|
@@ -16,7 +16,7 @@ module HTTP
 
     # Parses an HTTP query and yields each key-value pair
     #
-    #     HTTP::Form.parse(query) do |key, value|
+    #     HTTP::Params.parse(query) do |key, value|
     #       # ...
     #     end
     def self.parse(query : String)
@@ -65,7 +65,7 @@ module HTTP
     # using `URI#escape`.
     #
     # ```
-    # params = HTTP::Form.build do |form|
+    # params = HTTP::Params.build do |form|
     #   form.add "color", "black"
     #   form.add "name", "crystal"
     #   form.add "year", "2012 - today"
