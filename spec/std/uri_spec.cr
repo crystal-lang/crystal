@@ -63,7 +63,7 @@ describe "URI" do
   end
 
   describe ".unescape" do
-    [
+    {
       {"hello", "hello"},
       {"hello+world", "hello world"},
       {"hello%20world", "hello world"},
@@ -75,8 +75,9 @@ describe "URI" do
       {"%E3%81%AA%E3%81%AA", "なな"},
       {"%e3%81%aa%e3%81%aa", "なな"},
       {"%27Stop%21%27+said+Fred", "'Stop!' said Fred"},
-    ].each do |tuple|
+    }.each do |tuple|
       from, to = tuple
+
       it "unescapes #{from}" do
         URI.unescape(from).should eq(to)
       end
