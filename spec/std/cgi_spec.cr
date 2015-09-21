@@ -18,8 +18,4 @@ describe "CGI" do
       CGI.parse(from).should eq(to)
     end
   end
-
-  it "escapes newline char" do
-    CGI.escape("\n").should eq("%0A")
-  end
 end

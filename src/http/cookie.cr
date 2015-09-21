@@ -43,7 +43,7 @@ module HTTP
     def initialize(@name : String, value : String, @path = "/" : String,
                    @expires = nil : Time?, @domain = nil : String?,
                    @secure = false : Bool, @http_only = false : Bool)
-      @value = CGI.unescape value
+      @value = URI.unescape value
     end
 
     def to_header
@@ -51,7 +51,7 @@ module HTTP
       expires = @expires
       domain  = @domain
       String.build do |header|
-        header << "#{@name}=#{CGI.escape value}"
+        header << "#{@name}=#{URI.escape value}"
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.rfc1123_date(expires)}" if expires
         header << "; domain=#{domain}" if domain

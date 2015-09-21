@@ -59,7 +59,7 @@ module CGI
   #
   # The yielded object has an `add` method that accepts two arguments,
   # a key (String) and a value (String or Nil). Keys and values are escaped
-  # using `CGI#escape`.
+  # using `URI#escape`.
   #
   # ```
   # params = CGI.build_form do |form|
@@ -83,9 +83,9 @@ module CGI
 
     def add(key, value)
       @string << '&' unless @string.empty?
-      CGI.escape key, @string
+      URI.escape key, @string
       @string << '='
-      CGI.escape value, @string if value
+      URI.escape value, @string if value
       self
     end
 
