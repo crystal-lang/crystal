@@ -22,6 +22,14 @@ module HTTP
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
 
+    server = HTTP::Server.new(8081) do |req|
+      sleep 0.5
+      HTTP::Response.ok("text/plain", "OK")
+    end
+    spawn do
+      server.listen
+    end
+
     it "raises if URI is missing scheme" do
       expect_raises(ArgumentError) do
         HTTP::Client.get "www.example.com"
@@ -29,24 +37,22 @@ module HTTP
     end
 
     it "tests read_timeout" do
-      server = HTTP::Server.new(8081) do |req|
-        sleep 0.5
-        HTTP::Response.ok("text/plain", "OK")
-      end
-      spawn do
-        server.listen
-      end
-
       client = Client.new("localhost", 8081)
-      client.read_timeout = 1.second
+      client.read_timeout = 1
       client.get("/")
 
       expect_raises(IO::Timeout, "read timed out") do
         client.read_timeout = 0.0001
         client.get("/")
       end
-
-      server.close
     end
+
+    it "tests connect_timeout" do
+      client = Client.new("localhost", 8081)
+      client.connect_timeout = 1.second
+      client.get("/")
+    end
+
+    server.close
   end
 end
