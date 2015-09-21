@@ -2,10 +2,10 @@ require "spec"
 require "yaml"
 require "compiler/crystal/tools/init"
 
-def describe_file(name)
+def describe_file(name, &block : String ->)
   describe name do
     it "has proper contents" do
-      yield(File.read("tmp/#{name}"))
+      block.call(File.read("tmp/#{name}"))
     end
   end
 end

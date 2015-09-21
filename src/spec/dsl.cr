@@ -9,7 +9,7 @@ module Spec::DSL
     describe(description.to_s, file, line) { |ctx| yield ctx }
   end
 
-  def it(description, file = __FILE__, line = __LINE__)
+  def it(description, file = __FILE__, line = __LINE__, &block)
     return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
@@ -17,7 +17,7 @@ module Spec::DSL
 
     begin
       Spec.run_before_each_hooks
-      yield
+      block.call
       Spec::RootContext.report(:success, description, file, line)
     rescue ex : Spec::AssertionFailed
       Spec::RootContext.report(:fail, description, file, line, ex)
@@ -39,8 +39,8 @@ module Spec::DSL
     Spec::RootContext.report(:pending, description, file, line)
   end
 
-  def assert(file = __FILE__, line = __LINE__)
-    it("assert", file, line) { yield }
+  def assert(file = __FILE__, line = __LINE__, &block)
+    it("assert", file, line, &block)
   end
 
   def fail(msg, file = __FILE__, line = __LINE__)

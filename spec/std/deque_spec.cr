@@ -70,26 +70,22 @@ describe "Deque" do
       end
     end
 
-    DequeTester.new.test do
-      it "works the same as array when inserting at 1/8 size" do
+    it "works the same as array when inserting at 1/8 size and deleting at 3/4 size" do
+      DequeTester.new.test do
         1000.times do
           step { c.insert(c.size / 8, i) }
         end
-      end
-      it "works the same as array when deleting at 3/4 size" do
         1000.times do
           step { c.delete_at(c.size * 3 / 4) }
         end
       end
     end
 
-    DequeTester.new.test do
-      it "works the same as array when inserting at 3/4 size" do
+    it "works the same as array when inserting at 3/4 size and deleting at 1/8 size" do
+      DequeTester.new.test do
         1000.times do
           step { c.insert(c.size * 3 / 4, i) }
         end
-      end
-      it "works the same as array when deleting at 1/8 size" do
         1000.times do
           step { c.delete_at(c.size / 8) }
         end
