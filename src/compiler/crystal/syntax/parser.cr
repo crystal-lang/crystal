@@ -508,10 +508,11 @@ module Crystal
       column_number = @token.column_number
       case token_type = @token.type
       when :"!", :"+", :"-", :"~"
+        location = @token.location
         next_token_skip_space_or_newline
         check_void_expression_keyword
         arg = parse_prefix
-        Call.new(arg, token_type.to_s, name_column_number: column_number).at_end(arg)
+        Call.new(arg, token_type.to_s, name_column_number: column_number).at(location).at_end(arg)
       else
         parse_pow
       end

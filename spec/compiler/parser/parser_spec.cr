@@ -1272,6 +1272,13 @@ describe "Parser" do
     assert_end_location "1 as Int32"
     assert_end_location "puts obj.foo"
 
+    it "gets corrects of ~" do
+      node = Parser.parse("\n  ~1")
+      loc = node.location.not_nil!
+      loc.line_number.should eq(2)
+      loc.column_number.should eq(3)
+    end
+
     it "gets corrects end location for var" do
       parser = Parser.new("foo = 1\nfoo; 1")
       node = (parser.parse as Expressions).expressions[1]
