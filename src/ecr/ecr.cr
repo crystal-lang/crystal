@@ -1,3 +1,22 @@
+# ECR is a template engine for embedding Crystal in HTML.
+# 
+# Quick example:
+#
+#     require "ecr"
+#
+#     class Greeting
+#       def initialize(name)
+#         @name = name
+#       end
+#       ecr_file "greeting.ecr"
+#     end
+#     
+#     # greeting.ecr
+#     <h1>Greeting, <%= @name %>!</h1>
+#
+#     Greeting.new("John")
+#     #=> <h1>Greeting, John!</h1>
+
 module ECR
   extend self
 
