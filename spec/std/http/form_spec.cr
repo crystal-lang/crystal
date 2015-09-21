@@ -23,7 +23,7 @@ module HTTP
       end
     end
 
-    describe ".build_form" do
+    describe ".build" do
       [
         { "foo=bar", {"foo" => ["bar"]} },
         { "foo=bar&foo=baz", {"foo" => ["bar", "baz"]} },
@@ -35,8 +35,8 @@ module HTTP
       ].each do |tuple|
         to, from = tuple
 
-        it "build form from #{from}" do
-          encoded = Form.build_form do |form|
+        it "builds form from #{from}" do
+          encoded = Form.build do |form|
             from.each do |key, values|
               values.each do |value|
                 form.add(key, value)

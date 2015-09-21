@@ -65,21 +65,21 @@ module HTTP
     # using `URI#escape`.
     #
     # ```
-    # params = HTTP::Form.build_form do |form|
+    # params = HTTP::Form.build do |form|
     #   form.add "color", "black"
     #   form.add "name", "crystal"
     #   form.add "year", "2012 - today"
     # end
     # params #=> "color=black&name=crystal&year=2012%20-%20today"
     # ```
-    def self.build_form
-      form_builder = FormBuilder.new
+    def self.build
+      form_builder = Builder.new
       yield form_builder
       form_builder.to_s
     end
 
     # :nodoc:
-    struct FormBuilder
+    struct Builder
       def initialize
         @string = StringIO.new
       end

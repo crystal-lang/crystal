@@ -18,7 +18,7 @@ class OAuth::Consumer
   end
 
   def get_authorize_uri(request_token, oauth_callback = nil)
-    query = HTTP::Form.build_form do |form|
+    query = HTTP::Form.build do |form|
       form.add "oauth_token", request_token.token
       if oauth_callback
         form.add "oauth_callback", oauth_callback

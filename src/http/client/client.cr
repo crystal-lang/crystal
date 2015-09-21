@@ -202,7 +202,7 @@ class HTTP::Client
   # response = client.post_form "/", {"foo": "bar"}
   # ```
   def post_form(path, form : Hash, headers = nil : HTTP::Headers?) : HTTP::Response
-    body = HTTP::Form.build_form do |form_builder|
+    body = HTTP::Form.build do |form_builder|
       form.each do |key, value|
         form_builder.add key, value
       end
