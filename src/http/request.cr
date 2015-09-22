@@ -23,7 +23,7 @@ class HTTP::Request
   end
 
   def uri
-    URI.parse(@path)
+    (@uri ||= URI.parse(@path)).not_nil!
   end
 
   def keep_alive?

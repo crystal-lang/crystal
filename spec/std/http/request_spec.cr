@@ -127,5 +127,16 @@ module HTTP
         request.keep_alive?.should be_false
       end
     end
+
+    describe "#uri" do
+      it "returns parsed URI" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test#iamafragment HTTP/1.1\r\n\r\n")).not_nil!
+        uri = request.uri
+
+        uri.path.should eq("/api/v3/some/resource")
+        uri.query.should eq("filter=hello&world=test")
+        uri.fragment.should eq("iamafragment")
+      end
+    end
   end
 end
