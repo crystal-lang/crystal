@@ -1056,7 +1056,7 @@ module Crystal
           if next_char_no_column_increment != '\n'
             raise "expected '\\n' after '\\r'"
           end
-          next_char
+          next_char_no_column_increment
           @line_number += 1
           @token.doc_buffer = nil
         else

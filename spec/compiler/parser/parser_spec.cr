@@ -1325,6 +1325,7 @@ describe "Parser" do
       nodes = Parser.parse("class Foo\r\nend\r\n\r\n1") as Expressions
       loc = nodes.last.location.not_nil!
       loc.line_number.should eq(4)
+      loc.column_number.should eq(1)
     end
   end
 end
