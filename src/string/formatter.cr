@@ -233,7 +233,7 @@ struct String::Formatter
 
   # Here we rebuild the original format string, like %f or %.2g and use snprintf
   def recreate_float_format_string(flags)
-    capacity = 2 # percent + type
+    capacity = 3 # percent + type + \0
     capacity += flags.width_size
     capacity += flags.precision_size
     capacity += 1 if flags.plus
@@ -256,6 +256,7 @@ struct String::Formatter
       io << precision if precision != 0
     end
     io << flags.type
+    io.write_byte 0_u8
 
     original_format_buf
   end

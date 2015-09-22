@@ -1355,6 +1355,10 @@ describe "String" do
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")
   end
 
+  it "formats floats (#1562)" do
+    sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
+  end
+
   it "gets each_char iterator" do
     iter = "abc".each_char
     iter.next.should eq('a')
