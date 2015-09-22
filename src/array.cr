@@ -571,7 +571,7 @@ class Array(T)
   # a #=> ["a", "c"]
   # ```
   def delete(obj)
-    delete_if { |e| e == obj }
+    reject! { |e| e == obj } != nil
   end
 
   # Deletes the element at the given index, returning that element.
@@ -632,42 +632,6 @@ class Array(T)
     @size -= count
     (@buffer + @size).clear(count)
     val
-  end
-
-  # Deletes every element of `self` for which block evaluates to true.
-  # The array is changed after the iteration is over,
-  # not every time the block is called.
-  #
-  # ```
-  # a = ["a", "b", "b", "c"]
-  # a.delete_if { |x| x == "b" } #=> true
-  # a                            #=> ["a", "c"]
-  # a.delete_if { |x| x == "z" } #=> false
-  # ```
-  #
-  # See also: `#reject!`.
-  def delete_if
-    i1 = 0
-    i2 = 0
-    while i1 < @size
-      e = @buffer[i1]
-      unless yield e
-        if i1 != i2
-          @buffer[i2] = e
-        end
-        i2 += 1
-      end
-
-      i1 += 1
-    end
-    if i2 != i1
-      count = i1 - i2
-      @size -= count
-      (@buffer + @size).clear(count)
-      true
-    else
-      false
-    end
   end
 
   # Returns a new Array that has exactly this array's elements.
@@ -856,31 +820,35 @@ class Array(T)
     self
   end
 
-  # Removes all elements from `self` for which the given block returns falsy value.
-  #
-  # ```
-  # ary = [1,2,3,4]
-  # ary.select!{|elem| elem % 2 == 0 }  #=>[2,4]
-  # ary                                 #=>[2,4]
-  # ary.select!{|elem| elem % 2 == 1 }  #=>[]
-  # ary                                 #=>[]
-  # ```
+  # Equivalent to `Array#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
   def select!
-    delete_if { |elem| !(yield elem) }
-    self
+    reject! { |elem| !yield(elem) }
   end
 
-  # Removes all elements from `self` for which the given block returns a truthy value.
-  #
-  # ```
-  # ary = [1,2,3,4]
-  # ary.reject!{|elem| elem % 2 == 0 }  #=>[1,3]
-  # ary                                 #=>[1,3]
-  # ary.reject!{|elem| elem % 2 == 1 }  #=>[]
-  # ary                                 #=>[]
+  # Equivalent to `Array#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
   def reject!
-    delete_if { |elem| yield elem }
-    self
+    i1 = 0
+    i2 = 0
+    while i1 < @size
+      e = @buffer[i1]
+      unless yield e
+        if i1 != i2
+          @buffer[i2] = e
+        end
+        i2 += 1
+      end
+
+      i1 += 1
+    end
+
+    if i2 != i1
+      count = i1 - i2
+      @size -= count
+      (@buffer + @size).clear(count)
+      self
+    else
+      nil
+    end
   end
 
   def map_with_index(&block : T, Int32 -> U)

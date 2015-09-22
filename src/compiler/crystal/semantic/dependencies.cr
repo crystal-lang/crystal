@@ -53,7 +53,7 @@ module Crystal
 
     def delete_if
       if all = @all
-        all.delete_if do |node|
+        all.reject! do |node|
           yield node
         end
       elsif second = @second

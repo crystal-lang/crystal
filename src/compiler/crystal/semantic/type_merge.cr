@@ -75,7 +75,7 @@ module Crystal
     def compact_types(objects)
       all_types = Array(Type).new(objects.size)
       objects.each { |obj| add_type all_types, yield(obj) }
-      all_types.delete_if &.no_return? if all_types.size > 1
+      all_types.reject! &.no_return? if all_types.size > 1
       all_types
     end
 

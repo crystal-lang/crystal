@@ -3207,7 +3207,7 @@ module Crystal
 
       call_convention = nil
 
-      attributes.delete_if do |attr|
+      attributes.reject! do |attr|
         next false unless attr.name == "CallConvention"
 
         if call_convention

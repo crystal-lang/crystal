@@ -149,7 +149,7 @@ module Crystal
     end
 
     def remove_observer(observer)
-      @observers.try &.delete_if &.same?(observer)
+      @observers.try &.reject! &.same?(observer)
     end
 
     def add_input_observer(observer)
@@ -158,7 +158,7 @@ module Crystal
     end
 
     def remove_input_observer(observer)
-      @input_observers.try &.delete_if &.same?(observer)
+      @input_observers.try &.reject! &.same?(observer)
     end
 
     def notify_observers
