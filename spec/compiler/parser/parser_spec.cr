@@ -1320,5 +1320,11 @@ describe "Parser" do
       loc = node.location.not_nil!
       loc.line_number.should eq(6)
     end
+
+    it "gets correct location with \r\n (#1558)" do
+      nodes = Parser.parse("class Foo\r\nend\r\n\r\n1") as Expressions
+      loc = nodes.last.location.not_nil!
+      loc.line_number.should eq(4)
+    end
   end
 end
