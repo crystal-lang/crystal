@@ -2988,7 +2988,7 @@ module Crystal
       end
 
       call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do
-        parse_call_args stop_on_do_after_space: !@last_call_has_parenthesis
+        parse_call_args stop_on_do_after_space: (is_var || !@last_call_has_parenthesis)
       end
       if call_args
         args = call_args.args
