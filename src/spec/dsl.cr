@@ -1,12 +1,10 @@
 module Spec::DSL
-  def describe(description, file = __FILE__, line = __LINE__)
-    Spec::RootContext.describe(description.to_s, file, line) do |context|
-      yield
-    end
+  def describe(description, file = __FILE__, line = __LINE__, &block)
+    Spec::RootContext.describe(description.to_s, file, line, &block)
   end
 
-  def context(description, file = __FILE__, line = __LINE__)
-    describe(description.to_s, file, line) { |ctx| yield ctx }
+  def context(description, file = __FILE__, line = __LINE__, &block)
+    describe(description.to_s, file, line, &block)
   end
 
   def it(description, file = __FILE__, line = __LINE__, &block)
