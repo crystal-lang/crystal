@@ -29,8 +29,11 @@ struct Set(T)
   #
   #     s = Set(Int32).new
   #     set.empty? # => true
-  def initialize
-    @hash = Hash(T, Nil).new
+  #
+  # An initial capacity can be specified, and it will be set as the initial capacity
+  # of the internal Hash.
+  def initialize(initial_capacity = nil)
+    @hash = Hash(T, Nil).new(initial_capacity: initial_capacity)
   end
 
   # Creates a new set from the elements in `enumerable`

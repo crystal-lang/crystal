@@ -29,19 +29,22 @@ class Hash(K, V)
 
   getter size
 
-  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
-    @buckets = Pointer(Entry(K, V)?).malloc(11)
-    @buckets_size = 11
+  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator, initial_capacity = nil)
+    initial_capacity ||= 11
+    initial_capacity = 11 if initial_capacity < 11
+    initial_capacity = initial_capacity.to_i
+    @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
+    @buckets_size = initial_capacity
     @size = 0
     @block = block
   end
 
-  def self.new(comp = StandardComparator, &block : (Hash(K, V), K -> V))
+  def self.new(comp = StandardComparator, initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, comp
   end
 
-  def self.new(default_value : V, comp = StandardComparator)
-    new(comp) { default_value }
+  def self.new(default_value : V, comp = StandardComparator, initial_capacity = nil)
+    new(comp, initial_capacity: initial_capacity) { default_value }
   end
 
   def self.new(comparator)
@@ -354,7 +357,7 @@ class Hash(K, V)
   end
 
   def dup
-    hash = Hash(K, V).new
+    hash = Hash(K, V).new(initial_capacity: @buckets_size)
     each do |key, value|
       hash[key] = value
     end
@@ -362,7 +365,7 @@ class Hash(K, V)
   end
 
   def clone
-    hash = Hash(K, V).new
+    hash = Hash(K, V).new(initial_capacity: @buckets_size)
     each do |key, value|
       hash[key] = value.clone
     end
@@ -408,7 +411,7 @@ class Hash(K, V)
   end
 
   def invert
-    hash = Hash(V, K).new
+    hash = Hash(V, K).new(initial_capacity: @buckets_size)
     self.each do |k, v|
       hash[v] = k
     end

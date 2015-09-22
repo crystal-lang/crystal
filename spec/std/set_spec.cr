@@ -217,4 +217,6 @@ describe "Set" do
   it "has object_id" do
     Set(Int32).new.object_id.should be > 0
   end
+
+  typeof(Set(Int32).new(initial_capacity: 1234))
 end
