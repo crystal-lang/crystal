@@ -5,7 +5,7 @@ class HTTP::LogHandler < HTTP::Handler
     elapsed = Time.now - time
     elapsed_text = elapsed_text(elapsed)
 
-    puts "#{request.method} #{request.path} - #{response.status_code} (#{elapsed_text})"
+    puts "#{request.method} #{request.resource} - #{response.status_code} (#{elapsed_text})"
     response
   end
 

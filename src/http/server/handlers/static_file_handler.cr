@@ -5,9 +5,9 @@ class HTTP::StaticFileHandler < HTTP::Handler
   end
 
   def call(request)
-    file_path = @publicdir + request.path
+    file_path = @publicdir + request.resource
     if Dir.exists?(file_path)
-      HTTP::Response.new(200, directory_listing(request.path, file_path), HTTP::Headers{"Content-Type": "text/html"})
+      HTTP::Response.new(200, directory_listing(request.resource, file_path), HTTP::Headers{"Content-Type": "text/html"})
     elsif File.exists?(file_path)
       HTTP::Response.new(200, File.read(file_path), HTTP::Headers{"Content-Type": mime_type(file_path)})
     else
