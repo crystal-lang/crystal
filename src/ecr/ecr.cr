@@ -1,21 +1,59 @@
-# ECR is a template engine for embedding Crystal in HTML.
+# Embedded Crystal (ECR) is a template language for embedding Crystal code into other text, 
+# that includes but is not limited to HTML. The template is read and transformed 
+# at compile time and then embedded into the binary.
 # 
-# Quick example:
+# There are `<%= %>` and `<% %>` syntax. The former will render returned values.
+# The latter will not, but instead serve to control the structure as we do in normal Crystal.
 #
+# Quick Example:
+# 
 #     require "ecr"
 #
 #     class Greeting
-#       def initialize(name)
-#         @name = name
+#       def initialize(@name)
 #       end
 #       ecr_file "greeting.ecr"
 #     end
 #     
 #     # greeting.ecr
-#     <h1>Greeting, <%= @name %>!</h1>
+#     Greeting, <%= @name %>!
 #
 #     Greeting.new("John")
-#     #=> <h1>Greeting, John!</h1>
+#     #=> Greeting, John!
+#
+# Using logical statements:
+#
+#     # greeing.ecr
+#     <% if @name %>
+#       Greeting, <%= @name %>!
+#     <% else %>
+#       Greeting!
+#     <% end %>
+#
+#     Greeting.new(nil)
+#     #=> Greeting!
+#
+# Using loops:
+#
+#     class Greeting
+#       def initialize(*names)
+#        @names = names
+#       end
+#       ecr_file "greeting.ecr"
+#     end
+#     
+#     # greeting.ecr
+#     <% @names.each do |name| %>
+#       Hi, <%= name %>!
+#     <% end %>
+#
+#     Greeting.new("John","Zoe","Ben")
+#     #=> Hi, John!
+#     #=> Hi, Zoe!
+#     #=> Hi, Ben!
+#
+# Likewise, other Crystal logic can be implemented in ECR text.
+
 
 module ECR
   extend self
