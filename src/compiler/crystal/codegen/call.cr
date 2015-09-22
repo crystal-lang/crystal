@@ -425,7 +425,7 @@ class Crystal::CodeGenVisitor
     node.args.each_with_index do |arg, i|
       next unless arg.type.passed_by_value?
 
-      LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
     end
   end
 
@@ -443,19 +443,19 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]?
       if abi_arg_type
         if (attr = abi_arg_type.attr)
-          LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, attr)
+          @last.add_instruction_attribute(i + arg_offset, attr)
         end
       else
         # TODO: this is for variadic arguments, which is still not handled properly (in regards to the ABI for structs)
         arg_type = arg.type
         next unless arg_type.passed_by_value?
 
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
       end
     end
 
     if sret
-      LibLLVM.add_instr_attribute(@last, 1_u32, LLVM::Attribute::StructRet)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet)
     end
   end
 
@@ -465,7 +465,7 @@ class Crystal::CodeGenVisitor
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       next unless arg_type.passed_by_value?
-      LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
     end
   end
 end
