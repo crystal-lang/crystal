@@ -296,9 +296,11 @@ module Crystal
     private def system(command, args=nil)
       puts command if verbose?
 
-      success = ::system(command, args)
-      unless success
-        error "execution of command failed with code: #{$?.exit_code}: `#{command}`", exit_code: $?.exit_code
+      ::system(command, args)
+      unless $?.success?
+        msg  = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
+        code = $?.normal_exit? ? $?.exit_code : 1
+        error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
     end
 
