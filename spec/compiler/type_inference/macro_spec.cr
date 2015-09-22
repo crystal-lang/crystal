@@ -491,4 +491,14 @@ describe "Type inference: macro" do
       CONST
       )) { int32 }
   end
+
+  it "errors if using private on non-top-level macro" do
+    assert_error %(
+      class Foo
+        private macro bar
+        end
+      end
+      ),
+      "private macros can only be declared at the top-level"
+  end
 end
