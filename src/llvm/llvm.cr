@@ -68,7 +68,7 @@ module LLVM
 
   def self.default_target_triple
     chars = LibLLVM.get_default_target_triple
-    triple = String.new(chars).tap { LibLLVM.dispose_message(chars) }
+    triple = string_and_dispose(chars)
     if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
       "x86_64-apple-macosx"
     else
@@ -83,6 +83,12 @@ module LLVM
 
   def self.const_inline_asm(type, asm_string, constraints, has_side_effects = false, is_align_stack = false)
     Value.new LibLLVM.const_inline_asm(type, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+  end
+
+  def self.string_and_dispose(chars)
+    string = String.new(chars)
+    LibLLVM.dispose_message(chars)
+    string
   end
 
   Void = Type.new LibLLVM.void_type

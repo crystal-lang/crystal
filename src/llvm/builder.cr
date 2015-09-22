@@ -1,4 +1,4 @@
-struct LLVM::Builder
+class LLVM::Builder
   def initialize
     @unwrap = LibLLVM.create_builder
   end
@@ -164,5 +164,9 @@ struct LLVM::Builder
 
   def to_unsafe
     @unwrap
+  end
+
+  def finalize
+    LibLLVM.dispose_builder(@unwrap)
   end
 end

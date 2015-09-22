@@ -1,4 +1,4 @@
-struct LLVM::FunctionPassManager
+class LLVM::FunctionPassManager
   def initialize(@unwrap)
   end
 
@@ -29,6 +29,10 @@ struct LLVM::FunctionPassManager
 
   def to_unsafe
     @unwrap
+  end
+
+  def finalize
+    LibLLVM.dipose_pass_manager(@unwrap)
   end
 
   struct Runner

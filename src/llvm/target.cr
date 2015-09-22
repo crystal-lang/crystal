@@ -13,7 +13,7 @@ struct LLVM::Target
 
   def self.from_triple(triple)
     return_code = LibLLVM.get_target_from_triple triple, out target, out error
-    raise String.new(error) unless return_code == 0
+    raise LLVM.string_and_dispose(error) unless return_code == 0
     new target
   end
 
