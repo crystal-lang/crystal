@@ -43,10 +43,30 @@ layout: default
               ["Marshal Chen"],
               ["nodegin"],
               ["Martin Luder"],
-             ].compact.sort { |x, y| cmp = x.length <=> y.length; cmp == 0 ? x <=> y : -cmp }
+              ["J. Brandt Buckley", "https://github.com/brandt"],
+              ["Tom de Bruijn", "https://tomdebruijn.com/"],
+              ["Myroslav Rys", "http://www.stone.org.ua/"],
+              ["Yaroslav Ravlinko", "https://github.com/Y4Rv1K"],
+              ["jcraigk"],
+              ["Alan Michel Willms Quinot", "http://alanwillms.com/"],
+              ["Kota Yoshitsugu", "https://github.com/yoshitsugu"],
+              ["007lva", "https://github.com/007lva"],
+              ["Shannon Skipper", "https://github.com/havenwood"],
+              ["Ivan Bolgar", "https://github.com/Myuzu"],
+              ["Serdar Dogruyol", "http://www.serdardogruyol.com/"],
+              ["Theo Felippe", "https://github.com/theocodes"],
+              ["Thomas Peter Berntsen", "https://github.com/tpberntsen"],
+              ["Avi Leavitt"],
+              ["Daniel Marvin", "https://github.com/drippdropp"],
+             ].compact.sort { |x, y| cmp = x.length <=> y.length; cmp == 0 ? x.dup.tap { |z| z[0] = z[0].downcase } <=> y.dup.tap { |z| z[0] = z[0].downcase } : -cmp }
 
 %section
   %h1 Our sponsors
+
+  %p
+    These are the companies and individuals contributing a monthly amount to help sustain Crystal's development. See the
+    %a{href: "https://salt.bountysource.com/teams/crystal-lang", target: "_blank"} Bountysource campaing
+    for more details.
 
   %img{src: "/images/sponsors/ironin.png"}
   %a{href: "http://iRonin.pl", target: "_blank"} iRonin.pl - Ruby on Rails, Web & Mobile Samurais
