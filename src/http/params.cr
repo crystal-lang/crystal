@@ -95,6 +95,14 @@ module HTTP
       raw_params[name].first
     end
 
+    # Returns true if param with provided name exists.
+    #
+    # ```
+    # params.has_key?("email")       # => true
+    # params.has_key?("garbage")     # => false
+    # ```
+    delegate has_key?, raw_params
+
     # Sets first value for specified param name.
     def []=(name, value)
       raw_params[name] ||= [""]
