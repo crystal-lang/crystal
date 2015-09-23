@@ -32,7 +32,7 @@ class LLVM::FunctionPassManager
   end
 
   def finalize
-    LibLLVM.dipose_pass_manager(@unwrap)
+    LibLLVM.dispose_pass_manager(@unwrap)
   end
 
   struct Runner

@@ -16,6 +16,6 @@ class LLVM::ModulePassManager
   end
 
   def finalize
-    LibLLVM.dipose_pass_manager(@unwrap)
+    LibLLVM.dispose_pass_manager(@unwrap)
   end
 end

@@ -248,7 +248,7 @@ lib LibLLVM
   fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
   fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
   fun dispose_context = LLVMContextDispose(ContextRef)
-  fun dipose_pass_manager = LLVMDisposePassManager(PassManagerRef)
+  fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
   fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
 end
