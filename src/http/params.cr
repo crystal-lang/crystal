@@ -146,7 +146,8 @@ module HTTP
     # params.fetch("non_existent_param", "default value")      # => "default value"
     # ```
     def fetch(name, default)
-      raw_params.fetch(name, [default]).first
+      return default unless has_key?(name)
+      fetch(name)
     end
 
     # Returns first value for specified param name. Fallbacks to return value
@@ -156,8 +157,9 @@ module HTTP
     # params.fetch("email") { raise InvalidUser("email is missing") }    # InvalidUser "email is missing"
     # params.fetch("non_existent_param") { "default computed value" }    # => "default computed value"
     # ```
-    def fetch(name, &block : -> String)
-      raw_params.fetch(name) { [block.call] }.first
+    def fetch(name)
+      return yield unless has_key?(name)
+      fetch(name)
     end
 
     # Appends new value for specified param name. Creates param when there was
