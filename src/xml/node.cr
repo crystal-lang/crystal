@@ -380,4 +380,14 @@ struct XML::Node
   def xpath_string(path, namespaces = nil, variables = nil)
     xpath(path, namespaces) as String
   end
+
+  # :nodoc:
+  def errors=(errors)
+    @node.value._private = errors as Void*
+  end
+
+  def errors
+    ptr = @node.value._private
+    ptr ? (ptr as Array(XML::Error)) : nil
+  end
 end

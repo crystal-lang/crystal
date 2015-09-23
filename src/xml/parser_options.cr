@@ -70,6 +70,6 @@ enum XML::ParserOptions
   BIG_LINES = 4194304
 
   def self.default
-    NOERROR | NOWARNING
+    RECOVER | NOERROR | NOWARNING | NONET
   end
 end

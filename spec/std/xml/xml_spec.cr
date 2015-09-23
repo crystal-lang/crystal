@@ -149,11 +149,13 @@ XML
   end
 
   it "handles errors" do
-    expect_raises(XML::Error, "Premature end of data in tag people line 2") do
-      XML.parse(%(
-        <people>
-        ))
-    end
+    xml = XML.parse(%(<people>))
+    xml.root.not_nil!.name.should eq("people")
+    errors = xml.errors.not_nil!
+    errors.size.should eq(1)
+    errors[0].message.should eq("Premature end of data in tag people line 1")
+    errors[0].line_number.should eq(1)
+    errors[0].to_s.should eq("Premature end of data in tag people line 1")
   end
 
   it "gets root namespaces scopes" do

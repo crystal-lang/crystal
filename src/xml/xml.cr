@@ -34,11 +34,11 @@ module XML
   end
 
   protected def self.from_ptr(doc : LibXML::DocPtr)
-    if doc
-      Node.new doc
-    else
-      raise Error.new LibXML.xmlGetLastError
-    end
+    raise Error.new(LibXML.xmlGetLastError) unless doc
+
+    node = Node.new(doc)
+    XML::Error.set_errors(node)
+    node
   end
 end
 

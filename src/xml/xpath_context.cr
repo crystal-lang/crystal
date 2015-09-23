@@ -6,6 +6,8 @@ struct XML::XPathContext
 
   def evaluate(search_path : String)
     xpath = LibXML.xmlXPathEvalExpression(search_path, self)
+    raise XML::Error.new("error in '#{search_path}' expression", 0) unless xpath.value
+
     case xpath.value.type
     when LibXML::XPathObjectType::STRING
       String.new(xpath.value.stringval)
