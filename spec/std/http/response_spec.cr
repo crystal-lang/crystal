@@ -184,5 +184,15 @@ module HTTP
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nError!")
     end
+
+    it "builds main content_type from header" do
+      response = Response.ok("text/html; charset=ISO-8859-4", "<html></html>")
+      response.content_type.should eq("text/html")
+    end
+
+    it "returns no content_type when header is missing" do
+      response = Response.new(200, "")
+      response.content_type.should be_nil
+    end
   end
 end
