@@ -10,7 +10,7 @@ class UNIXSocket < Socket
       raise "Path size exceeds the maximum size of #{addr.path.size - 1} bytes"
     end
     addr.path.buffer.copy_from(path.cstr, path.bytesize + 1)
-    if LibC.connect(sock, (pointerof(addr) as LibC::SockAddr*), LibC::SocklenT.new(sizeof(LibC::SockAddrUn))) != 0
+    if LibC.connect(sock, (pointerof(addr) as LibC::SockAddr*), sizeof(LibC::SockAddrUn)) != 0
       LibC.close(sock)
       raise Errno.new("Error connecting to '#{path}'")
     end

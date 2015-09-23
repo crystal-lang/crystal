@@ -75,24 +75,24 @@ class LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.size.to_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.size, name)
     end
 
     def {{method_name.id}}(value, index : LLVM::Value, name = "")
       indices = pointerof(index) as LibLLVM::ValueRef*
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
     end
 
     def {{method_name.id}}(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
       indices :: LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), 2_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 
   def extract_value(value, index, name = "")
-    Value.new LibLLVM.build_extract_value(self, value, index.to_u32, name)
+    Value.new LibLLVM.build_extract_value(self, value, index, name)
   end
 
   {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
@@ -130,7 +130,7 @@ class LLVM::Builder
   end
 
   def landing_pad(type, personality, clauses, name = "")
-    lpad = LibLLVM.build_landing_pad self, type, personality, clauses.size.to_u32, name
+    lpad = LibLLVM.build_landing_pad self, type, personality, clauses.size, name
     LibLLVM.set_cleanup lpad, 1
     clauses.each do |clause|
       LibLLVM.add_clause lpad, clause
@@ -139,11 +139,11 @@ class LLVM::Builder
   end
 
   def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, name = "")
-    Value.new LibLLVM.build_invoke self, fn, (args.buffer as LibLLVM::ValueRef*), args.size.to_u32, a_then, a_catch, name
+    Value.new LibLLVM.build_invoke self, fn, (args.buffer as LibLLVM::ValueRef*), args.size, a_then, a_catch, name
   end
 
   def switch(value, otherwise, cases)
-    switch = LibLLVM.build_switch self, value, otherwise, cases.size.to_u32
+    switch = LibLLVM.build_switch self, value, otherwise, cases.size
     cases.each do |case_value, block|
       LibLLVM.add_case switch, case_value, block
     end

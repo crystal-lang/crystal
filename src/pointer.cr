@@ -262,7 +262,7 @@ struct Pointer(T)
   # ptr1.memcmp(ptr1, 4) #=> 0
   # ```
   def memcmp(other : Pointer(T), count : Int)
-    LibC.memcmp(self as Void*, (other as Void*), LibC::SizeT.new(count * sizeof(T)))
+    LibC.memcmp(self as Void*, (other as Void*), (count * sizeof(T)))
   end
 
   # Swaps the contents pointed at the offsets `i` and `j`.

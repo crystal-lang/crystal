@@ -88,7 +88,7 @@ class File < IO::FileDescriptor
     check_open
 
     flush
-    seek_value = LibC.lseek(@fd, LibC::OffT.new(offset), whence.to_i)
+    seek_value = LibC.lseek(@fd, offset, whence)
     if seek_value == -1
       raise Errno.new "Unable to seek"
     end
@@ -112,7 +112,7 @@ class File < IO::FileDescriptor
   def pos
     check_open
 
-    seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
+    seek_value = LibC.lseek(@fd, 0, Seek::Current)
     raise Errno.new "Unable to tell" if seek_value == -1
 
     seek_value - @in_buffer_rem.size

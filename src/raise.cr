@@ -64,8 +64,8 @@ fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exceptio
         end
 
         if actions.includes? LibUnwind::Action::HANDLER_FRAME
-          LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_0, LibC::SizeT.new(exception_object.address))
-          LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_1, LibC::SizeT.new(exception_object.value.exception_type_id))
+          LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_0, exception_object.address)
+          LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_1, exception_object.value.exception_type_id)
           LibUnwind.set_ip(context, start + cs_addr)
           # puts "install"
           return LibUnwind::ReasonCode::INSTALL_CONTEXT

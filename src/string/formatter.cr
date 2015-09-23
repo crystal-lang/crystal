@@ -223,7 +223,7 @@ struct String::Formatter
 
       len = flags.width + (flags.precision || 0) + 23
       temp_buf = temp_buf(len)
-      count = LibC.snprintf(temp_buf, LibC::SizeT.new(len), format_buf, float)
+      count = LibC.snprintf(temp_buf, len, format_buf, float)
 
       @io.write Slice.new(temp_buf, count)
     else

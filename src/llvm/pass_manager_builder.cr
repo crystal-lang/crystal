@@ -4,11 +4,11 @@ class LLVM::PassManagerBuilder
   end
 
   def opt_level=(level)
-    LibLLVM.pass_manager_builder_set_opt_level self, level.to_u32
+    LibLLVM.pass_manager_builder_set_opt_level self, level
   end
 
   def size_level=(level)
-    LibLLVM.pass_manager_builder_set_size_level self, level.to_u32
+    LibLLVM.pass_manager_builder_set_size_level self, level
   end
 
   def disable_unroll_loops=(value)
@@ -20,7 +20,7 @@ class LLVM::PassManagerBuilder
   end
 
   def use_inliner_with_threshold=(threshold)
-    LibLLVM.pass_manager_builder_use_inliner_with_threshold self, threshold.to_u32
+    LibLLVM.pass_manager_builder_use_inliner_with_threshold self, threshold
   end
 
   def populate(pm : FunctionPassManager)

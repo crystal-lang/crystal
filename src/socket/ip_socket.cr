@@ -16,7 +16,7 @@ class IPSocket < Socket
         result_addr = (pointerof(addr) as LibC::SockAddrIn*).value
       end
 
-      Addr.new(family_name, LibC.htons(LibC::UInt16T.new(result_addr.port)).to_u16, Socket.inet_ntop(result_addr))
+      Addr.new(family_name, LibC.htons(result_addr.port).to_u16, Socket.inet_ntop(result_addr))
     end
   end
 

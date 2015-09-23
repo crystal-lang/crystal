@@ -26,7 +26,7 @@ module Math
   {% for name in %w(besselj0 besselj1 bessely0 bessely1) %}
     def {{name.id}}(value : Float32)
       {{:ifdef.id}} darwin
-        LibM.{{name.id}}_f64(value.to_f64).to_f32
+        LibM.{{name.id}}_f64(value).to_f32
       else
         LibM.{{name.id}}_f32(value)
       {{:end.id}}
@@ -50,12 +50,12 @@ module Math
   end
 
   def gamma(value)
-    LibM.tgamma(value.to_f)
+    LibM.tgamma(value)
   end
 
   def lgamma(value : Float32)
     ifdef darwin
-      LibM.gamma_f64(value.to_f64).to_f32
+      LibM.gamma_f64(value).to_f32
     else
       LibM.gamma_f32(value)
     end
@@ -97,7 +97,7 @@ module Math
   # end
   #
   # def div(value1, value2)
-  #   LibM.div(value1.to_f, value2.to_f)
+  #   LibM.div(value1, value2)
   # end
 
   def log(numeric, base)
@@ -144,13 +144,13 @@ module Math
   # end
 
   # def rem(value1, value2)
-  #   LibM.rem(value1.to_f, value2.to_f)
+  #   LibM.rem(value1, value2)
   # end
 
   {% for name in %w(besselj bessely) %}
     def {{name.id}}(value1 : Int32, value2 : Float32)
       {{:ifdef.id}} darwin
-        LibM.{{name.id}}_f64(value1, value2.to_f64).to_f32
+        LibM.{{name.id}}_f64(value1, value2).to_f32
       else
         LibM.{{name.id}}_f32(value1, value2)
       {{:end.id}}

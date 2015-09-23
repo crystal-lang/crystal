@@ -8,12 +8,11 @@ struct LLVM::DIBuilder
   end
 
   def create_basic_type(name, size_in_bits, align_in_bits, encoding)
-    LibLLVMExt.di_builder_create_basic_type(self, name, size_in_bits.to_u64, align_in_bits.to_u64,
-      LibC::UInt.new(encoding.value))
+    LibLLVMExt.di_builder_create_basic_type(self, name, size_in_bits, align_in_bits, encoding.value)
   end
 
   def get_or_create_type_array(types : Array(LibLLVMExt::Metadata))
-    LibLLVMExt.di_builder_get_or_create_type_array(self, types.buffer, LibC::SizeT.new(types.size))
+    LibLLVMExt.di_builder_get_or_create_type_array(self, types.buffer, types.size)
   end
 
   def create_subroutine_type(file, parameter_types)
@@ -30,17 +29,16 @@ struct LLVM::DIBuilder
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
                       scope_line, flags, is_optimized, func)
-    LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, LibC::UInt.new(line), composite_type, is_local_to_unit, is_definition,
-                                          LibC::UInt.new(scope_line), flags, is_optimized, func)
+    LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
+                                          scope_line, flags, is_optimized, func)
   end
 
   def create_local_variable(tag, scope, name, file, line, type)
-    LibLLVMExt.di_builder_create_local_variable(self, LibC::UInt.new(tag.value), scope, name,
-      file, LibC::UInt.new(line), type, 0, 0_u32, 0_u32)
+    LibLLVMExt.di_builder_create_local_variable(self, tag.value, scope, name, file, line, type, 0, 0, 0)
   end
 
   def create_expression(addr, length)
-    LibLLVMExt.di_builder_create_expression(self, addr, LibC::SizeT.new(length))
+    LibLLVMExt.di_builder_create_expression(self, addr, length)
   end
 
   def insert_declare_at_end(storage, var_info, expr, block)

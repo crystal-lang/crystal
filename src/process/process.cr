@@ -45,7 +45,7 @@ class Process
 
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
-      ret = LibC.kill(pid.to_i32, signal.value)
+      ret = LibC.kill(pid, signal.value)
       raise Errno.new(ret) if ret < 0
     end
     nil

@@ -7,7 +7,7 @@ struct Curses::Window
   end
 
   def box(vert : Char, hor : Char)
-    LibCurses.box self, LibCurses::Chtype.new(vert.ord), LibCurses::Chtype.new(hor.ord)
+    LibCurses.box self, vert.ord, hor.ord
   end
 
   def setpos(x, y)
