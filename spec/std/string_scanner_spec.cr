@@ -15,7 +15,7 @@ describe StringScanner, "#scan" do
     s.scan(/\w+/  ).should_not be_nil # => "test"
     s.scan(/\w+/  ).should     be_nil
     s.scan(/\s\w+/).should_not be_nil # => " string"
-    s.scan(/.*/   ).should     be_nil
+    s.scan(/.*/   ).should_not be_nil # => ""
   end
 end
 
