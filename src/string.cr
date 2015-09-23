@@ -1577,18 +1577,23 @@ class String
   end
 
   # Returns the byte index of a char index, or nil if out of bounds.
+  # It is valid to pass `size` to *index*, and in this case the answer
+  # will be the bytesize of this string.
   #
   # ```
   # "hello".char_index_to_byte_index(1)     #=> 1
+  # "hello".char_index_to_byte_index(5)     #=> 5
   # "こんにちは".char_index_to_byte_index(1) #=> 3
+  # "こんにちは".char_index_to_byte_index(5) #=> 15
   # ```
   def char_index_to_byte_index(index)
     reader = Char::Reader.new(self)
-    reader.each_with_index do |char, i|
-      if i == index
-        return reader.pos
-      end
+    i = 0
+    reader.each do |char|
+      return reader.pos if i == index
+      i += 1
     end
+    return reader.pos if i == index
     nil
   end
 

@@ -1260,6 +1260,12 @@ describe "String" do
     end
   end
 
+  it "matches empty string" do
+    match = "".match(/.*/).not_nil!
+    match.size.should eq(0)
+    match[0].should eq("")
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
@@ -1434,6 +1440,23 @@ describe "String" do
 
   it "gets size of \0 string" do
     "\0\0".size.should eq(2)
+  end
+
+  describe "char_index_to_byte_index" do
+    it "with ascii" do
+      "foo".char_index_to_byte_index(0).should eq(0)
+      "foo".char_index_to_byte_index(1).should eq(1)
+      "foo".char_index_to_byte_index(2).should eq(2)
+      "foo".char_index_to_byte_index(3).should eq(3)
+      "foo".char_index_to_byte_index(4).should be_nil
+    end
+
+    it "with utf-8" do
+      "これ".char_index_to_byte_index(0).should eq(0)
+      "これ".char_index_to_byte_index(1).should eq(3)
+      "これ".char_index_to_byte_index(2).should eq(6)
+      "これ".char_index_to_byte_index(3).should be_nil
+    end
   end
 
   context "%" do
