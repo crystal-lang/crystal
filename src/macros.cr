@@ -30,7 +30,7 @@ macro record(name, *properties)
   struct {{name.id}}
     getter {{*properties}}
 
-    def initialize({{ *properties.map { |field| "@#{field.id}".id } }})
+    def initialize({{ *properties.map { |field| "@#{field.id}".id + " = nil" } }})
     end
 
     {{yield}}
