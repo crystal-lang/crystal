@@ -129,6 +129,14 @@ class File < IO::FileDescriptor
     seek value
   end
 
+  # Returns a `File::Stat` object for the named file or raises 
+  # `Errno` in case of an error.
+  #
+  # ```
+  # echo "foo" > foo
+  # File.stat("foo").size    #=> 4
+  # File.stat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # ```
   def self.stat(path)
     if LibC.stat(path, out stat) != 0
       raise Errno.new("Unable to get stat for '#{path}'")
@@ -136,6 +144,14 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
+  # Returns a `File::Stat` object for the named file or raises 
+  # `Errno` in case of an error.
+  #
+  # ```
+  # echo "foo" > foo
+  # File.stat("foo").size    #=> 4
+  # File.stat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # ```
   def self.lstat(path)
     if LibC.lstat(path, out stat) != 0
       raise Errno.new("Unable to get lstat for '#{path}'")
@@ -143,6 +159,13 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
+  # Returns true if file exists else returns false
+  #
+  # ```
+  # File.exists?("foo")    #=> false
+  # echo "foo" > foo
+  # File.exists?("foo")    #=> true
+  # ```
   def self.exists?(filename)
     LibC.access(filename, LibC::F_OK) == 0
   end
