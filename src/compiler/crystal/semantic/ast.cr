@@ -127,7 +127,7 @@ module Crystal
     end
 
     def unbind_from(node : ASTNode)
-      @dependencies.try &.delete_if &.same?(node)
+      @dependencies.try &.reject! &.same?(node)
       node.remove_observer self
     end
 

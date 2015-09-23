@@ -51,7 +51,7 @@ module Crystal
       end
     end
 
-    def delete_if
+    def reject!
       if all = @all
         all.reject! do |node|
           yield node
