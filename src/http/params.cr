@@ -5,7 +5,8 @@ module HTTP
   struct Params
     # Parses an HTTP query string into a `HTTP::Params`
     #
-    #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo") #=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
+    #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo") 
+    #     #=> #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
     def self.parse(query : String)
       parsed = {} of String => Array(String)
       parse(query) do |key, value|
@@ -151,7 +152,7 @@ module HTTP
     end
 
     # Returns first value for specified param name. Fallbacks to return value
-    # of provided block.
+    # of provided block when there is no such param.
     #
     # ```
     # params.fetch("email") { raise InvalidUser("email is missing") }    # InvalidUser "email is missing"
@@ -178,7 +179,7 @@ module HTTP
     # Sets all values for specified param name at once.
     #
     # ```
-    # params.set_add("item", ["keychain", "keynote"])
+    # params.set_all("item", ["keychain", "keynote"])
     # params.fetch_all("item")        # => ["keychain", "keynote"]
     # ```
     def set_all(name, values)
@@ -227,7 +228,7 @@ module HTTP
     # values.
     #
     # ```
-    # params.delete_all("comments")
+    # params.delete_all("comments")   # => ["hello, world!", ":+1:"]
     # params.has_key?("comments")     # => false
     # ```
     def delete_all(name)
