@@ -190,4 +190,27 @@ XML
     parsed = XML.parse(StringIO.new(string))
     parsed.root.not_nil!.children[0].text.should eq(content)
   end
+
+  it "sets node text/content" do
+    doc = XML.parse(%(\
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      ))
+    root = doc.root.not_nil!
+    root.text = "Peter"
+    root.text.should eq("Peter")
+
+    root.content = "Foo"
+    root.content.should eq("Foo")
+  end
+
+  it "sets node name" do
+    doc = XML.parse(%(\
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      ))
+    root = doc.root.not_nil!
+    root.name = "last-name"
+    root.name.should eq("last-name")
+  end
 end
