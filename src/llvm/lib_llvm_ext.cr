@@ -51,5 +51,23 @@ lib LibLLVMExt
 
   fun di_builder_get_or_create_type_array = LLVMDIBuilderGetOrCreateTypeArray(builder : DIBuilder, data : Metadata*, length : LibC::SizeT) : Metadata
   fun di_builder_create_subroutine_type = LLVMDIBuilderCreateSubroutineType(builder : DIBuilder, file : Metadata, parameter_types : Metadata) : Metadata
+
+  fun di_builder_create_struct_type = LLVMDIBuilderCreateStructType(builder : DIBuilder,
+    scope : Metadata, name : LibC::Char*, file : Metadata, line : LibC::UInt, size_in_bits : UInt64
+    align_in_bits : UInt64, flags : LibC::UInt, derived_from : Metadata, element_types : Metadata) : Metadata
+
+  fun di_builder_create_member_type = LLVMDIBuilderCreateMemberType(builder : DIBuilder,
+    scope : Metadata, name : LibC::Char*, file : Metadata, line : LibC::UInt, size_in_bits : UInt64,
+    align_in_bits : UInt64, offset_in_bits : UInt64, flags : LibC::UInt, ty : Metadata) : Metadata
+
+  fun di_builder_create_pointer_type = LLVMDIBuilderCreatePointerType(builder : DIBuilder,
+                                                                      pointee_type : Metadata,
+                                                                      size_in_bits : UInt64,
+                                                                      align_in_bits : UInt64,
+                                                                      name : LibC::Char*) : Metadata
+
+  fun temporary_md_node = LLVMTemporaryMDNode(context : LibLLVM::ContextRef, mds : Metadata*, count : LibC::UInt) : Metadata
+  fun metadata_replace_all_uses_with = LLVMMetadataReplaceAllUsesWith(Metadata, Metadata)
+
   fun set_current_debug_location = LLVMSetCurrentDebugLocation2(LibLLVM::BuilderRef, LibC::Int, LibC::Int, Metadata, Metadata)
 end
