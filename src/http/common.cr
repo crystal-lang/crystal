@@ -129,6 +129,10 @@ module HTTP
     end
   end
 
+  def self.content_type(message)
+    message.headers["Content-Type"]?.try &.[/[^;]*/]
+  end
+
   def self.parse_time(time_str : String)
     DATE_PATTERNS.each do |pattern|
       begin

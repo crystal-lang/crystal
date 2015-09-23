@@ -1,7 +1,12 @@
 require "zlib"
 
 class HTTP::DeflateHandler < HTTP::Handler
-  DEFLATE_TYPES = %w(text/html text/plain text/xml text/css text/javascript application/javascript)
+  DEFAULT_DEFLATE_TYPES = %w(text/html text/plain text/xml text/css text/javascript application/javascript application/json)
+
+  property deflate_types
+
+  def initialize(@deflate_types = DEFAULT_DEFLATE_TYPES)
+  end
 
   def call(request)
     response = call_next(request)
@@ -26,8 +31,11 @@ class HTTP::DeflateHandler < HTTP::Handler
   end
 
   private def should_deflate?(request, response)
+    return false unless HTTP::Response.mandatory_body?(response.status_code)
+    return false if response.headers["Cache-Control"]? =~ /\bno-transform\b/
+
     accept_encoding = request.headers["Accept-encoding"]?
-    content_type = response.headers["Content-Type"]?
-    accept_encoding && accept_encoding =~ /deflate/ && response.version == "HTTP/1.1" && content_type && DEFLATE_TYPES.includes?(content_type)
+    content_type = response.content_type
+    accept_encoding && accept_encoding =~ /deflate/ && response.version == "HTTP/1.1" && content_type && deflate_types.includes?(content_type)
   end
 end

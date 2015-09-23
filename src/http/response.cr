@@ -38,6 +38,10 @@ class HTTP::Response
     HTTP.keep_alive?(self)
   end
 
+  def content_type
+    HTTP.content_type(self)
+  end
+
   def self.not_found
     new(404, "Not Found", Headers{"Content-Type": "text/plain"})
   end
