@@ -54,7 +54,7 @@ $ crystal init lib MyCoolLib
       create  MyCoolLib/LICENSE
       create  MyCoolLib/README.md
       create  MyCoolLib/.travis.yml
-      create  MyCoolLib/Projectfile
+      create  MyCoolLib/shard.yml
       create  MyCoolLib/src/MyCoolLib.cr
       create  MyCoolLib/src/MyCoolLib/version.cr
       create  MyCoolLib/spec/spec_helper.cr
