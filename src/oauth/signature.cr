@@ -52,7 +52,7 @@ struct OAuth::Signature
         str << ':'
         str << port
       end
-      uri_path = request.uri.path || "/"
+      uri_path = request.path || "/"
       uri_path = "/" if uri_path.empty?
       URI.escape(uri_path, str)
       str << '&'
@@ -73,7 +73,7 @@ struct OAuth::Signature
       params.add key, value
     end
 
-    if query = request.uri.query
+    if query = request.query
       params.add_query query
     end
 

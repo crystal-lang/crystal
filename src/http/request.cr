@@ -3,12 +3,11 @@ require "uri"
 
 class HTTP::Request
   getter method
-  getter path
   getter headers
   getter body
   getter version
 
-  def initialize(@method : String, @path, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
@@ -22,8 +21,8 @@ class HTTP::Request
     @cookies ||= Cookies.from_headers(headers)
   end
 
-  def uri
-    URI.parse(@path)
+  def resource
+    @uri.try(&.full_path) || @resource
   end
 
   def keep_alive?
@@ -31,7 +30,7 @@ class HTTP::Request
   end
 
   def to_io(io)
-    io << @method << " " << @path << " " << @version << "\r\n"
+    io << @method << " " << resource << " " << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
     HTTP.serialize_headers_and_body(io, headers, @body, @version)
@@ -41,12 +40,28 @@ class HTTP::Request
     request_line = io.gets
     return unless request_line
 
-    method, path, http_version = request_line.split
+    method, resource, http_version = request_line.split
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, path, headers, body.try &.read, http_version
+      return new method, resource, headers, body.try &.read, http_version
     end
 
     # Unexpected end of http request
     nil
+  end
+
+  # Lazily parses request's path component.
+  delegate "path", uri
+
+  # Sets request's path component.
+  delegate "path=", uri
+
+  # Lazily parses request's query component.
+  delegate "query", uri
+
+  # Sets request's query component.
+  delegate "query=", uri
+
+  private def uri
+    (@uri ||= URI.parse(@resource)).not_nil!
   end
 end
