@@ -2,7 +2,7 @@ require "uri"
 
 module HTTP
   # Represents a collection of http parameters and their respective values.
-  class Params
+  struct Params
     # Parses an HTTP query string into a `HTTP::Params`
     #
     #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo") #=> {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
