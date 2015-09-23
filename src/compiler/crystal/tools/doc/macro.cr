@@ -1,4 +1,5 @@
 require "html"
+require "uri"
 require "./item"
 
 class Crystal::Doc::Macro
