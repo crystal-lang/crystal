@@ -129,8 +129,9 @@ class File < IO::FileDescriptor
     seek value
   end
 
-  # Returns a `File::Stat` object for the named file or raises 
-  # `Errno` in case of an error.
+  # Returns a `File::Stat` object for the named file or raises
+  # `Errno` in case of an error. In case of a symbolic link
+  # it is followed and information about the target is returned.
   #
   # ```
   # echo "foo" > foo
@@ -144,13 +145,14 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
-  # Returns a `File::Stat` object for the named file or raises 
-  # `Errno` in case of an error.
+  # Returns a `File::Stat` object for the named file or raises
+  # `Errno` in case of an error. In case of a symbolic link
+  # information about it is returned.
   #
   # ```
   # echo "foo" > foo
-  # File.stat("foo").size    #=> 4
-  # File.stat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # File.lstat("foo").size    #=> 4
+  # File.lstat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path)
     if LibC.lstat(path, out stat) != 0
