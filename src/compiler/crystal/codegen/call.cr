@@ -161,8 +161,14 @@ class Crystal::CodeGenVisitor
             # Nil to pointer
             call_arg = llvm_c_type(def_arg.type).null
           else
-            # Def argument might be missing if it's a variadic call
-            call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+            if def_arg
+              call_arg = downcast(call_arg, def_arg.type, arg.type, true)
+            else
+              # Def argument might be missing if it's a variadic call
+              if arg.is_a?(NilLiteral)
+                call_arg = LLVM::VoidPointer.null
+              end
+            end
           end
         end
       end
@@ -176,7 +182,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
       when LLVM::ABI::ArgKind::Direct
-        if cast = abi_arg_type.cast
+        if (cast = abi_arg_type.cast) && !arg.is_a?(NilLiteral)
           final_value = alloca cast
           final_value_casted = bit_cast final_value, LLVM::VoidPointer
           gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer

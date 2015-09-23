@@ -182,4 +182,14 @@ describe "Code gen: lib" do
       LibFoo.foo 1234.5
       ))
   end
+
+  it "passes nil to varargs (#1570)" do
+    codegen(%(
+      lib LibFoo
+        fun foo(...)
+      end
+
+      LibFoo.foo(nil)
+      ))
+  end
 end
