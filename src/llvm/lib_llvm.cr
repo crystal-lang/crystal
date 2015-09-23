@@ -160,6 +160,7 @@ lib LibLLVM
   fun md_string = LLVMMDString(str : UInt8*, length : Int32) : ValueRef
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : UInt8*) : ModuleRef
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
+  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : Int64
   fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
   fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
   fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)
