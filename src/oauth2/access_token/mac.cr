@@ -20,7 +20,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     ts = Time.now.epoch
     nonce = "#{ts - @issued_at}:#{SecureRandom.hex}"
     method = request.method
-    uri = request.uri.full_path
+    uri = request.resource
     host, port = host_and_port request, ssl
     ext = ""
 
