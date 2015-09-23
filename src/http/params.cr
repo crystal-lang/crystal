@@ -240,29 +240,27 @@ module HTTP
     # params.to_s     # => "item=keychain&item=keynote&email=john@example.org"
     # ```
     def to_s(io)
-      io << HTTP::Params.build do |builder|
-        each do |name, value|
-          builder.add(name, value)
-        end
+      builder = Builder.new(io)
+      each do |name, value|
+        builder.add(name, value)
       end
     end
 
     # :nodoc:
     struct Builder
-      def initialize
-        @string = StringIO.new
+      def initialize(@io = StringIO.new)
       end
 
       def add(key, value)
-        @string << '&' unless @string.empty?
-        URI.escape key, @string
-        @string << '='
-        URI.escape value, @string if value
+        @io << '&' unless @io.empty?
+        URI.escape key, @io
+        @io << '='
+        URI.escape value, @io if value
         self
       end
 
       def to_s(io)
-        io << @string.to_s
+        io << @io.to_s
       end
     end
   end
