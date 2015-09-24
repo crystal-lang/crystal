@@ -35,6 +35,7 @@ DIR  - directory where project will be generated,
 
       config.author = fetch_author
       config.email = fetch_email
+      config.github_name = fetch_github_name
       InitProject.new(config).run
     end
 
@@ -46,6 +47,13 @@ DIR  - directory where project will be generated,
     def self.fetch_email
       return "[your-email-here]" unless system(WHICH_GIT_COMMAND)
       `git config --get user.email`.strip
+    end
+
+    def self.fetch_github_name
+      default = "[your-github-name]"
+      return default unless system(WHICH_GIT_COMMAND)
+      github_user = `git config --get github.user`.strip
+      github_user.empty? ? default : github_user
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -73,6 +81,7 @@ DIR  - directory where project will be generated,
       property dir
       property author
       property email
+      property github_name
       property silent
 
       def initialize(
@@ -81,6 +90,7 @@ DIR  - directory where project will be generated,
                      @dir = "none",
                      @author = "none",
                      @email = "none",
+                     @github_name = "none",
                      @silent = false
                     )
       end

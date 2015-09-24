@@ -10,9 +10,9 @@ def describe_file(name, &block : String ->)
   end
 end
 
-def run_init_project(skeleton_type, name, dir, author, email)
+def run_init_project(skeleton_type, name, dir, author, email, github_name)
   Crystal::Init::InitProject.new(
-    Crystal::Init::Config.new(skeleton_type, name, dir, author, email, true)
+    Crystal::Init::Config.new(skeleton_type, name, dir, author, email, github_name, true)
   ).run
 end
 
@@ -21,10 +21,10 @@ module Crystal
     `[ -d tmp/example ] && rm -r tmp/example`
     `[ -d tmp/example_app ] && rm -r tmp/example_app`
 
-    run_init_project("lib", "example", "tmp/example", "John Smith", "john@smith.com")
-    run_init_project("app", "example_app", "tmp/example_app", "John Smith", "john@smith.com")
-    run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith", "john@smith.com")
-    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith", "john@smith.com")
+    run_init_project("lib", "example", "tmp/example", "John Smith", "john@smith.com", "jsmith")
+    run_init_project("app", "example_app", "tmp/example_app", "John Smith", "john@smith.com", "jsmith")
+    run_init_project("lib", "example-lib", "tmp/example-lib", "John Smith", "john@smith.com", "jsmith")
+    run_init_project("lib", "camel_example-camel_lib", "tmp/camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
 
     describe_file "example-lib/src/example-lib.cr" do |file|
       file.should contain("Example::Lib")
@@ -58,14 +58,14 @@ module Crystal
       readme.should contain(%{```yaml
 dependencies:
   example:
-    github: [your-github-name]/example
+    github: jsmith/example
 ```})
 
       readme.should contain(%{TODO: Write a description here})
       readme.should_not contain(%{TODO: Write installation instructions here})
       readme.should contain(%{require "example"})
-      readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example/fork )})
-      readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
+      readme.should contain(%{1. Fork it ( https://github.com/jsmith/example/fork )})
+      readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
     end
 
     describe_file "example_app/README.md" do |readme|
@@ -74,14 +74,14 @@ dependencies:
       readme.should_not contain(%{```yaml
 dependencies:
   example:
-    github: [your-github-name]/example
+    github: jsmith/example
 ```})
 
       readme.should contain(%{TODO: Write a description here})
       readme.should contain(%{TODO: Write installation instructions here})
       readme.should_not contain(%{require "example"})
-      readme.should contain(%{1. Fork it ( https://github.com/[your-github-name]/example_app/fork )})
-      readme.should contain(%{[your-github-name](https://github.com/[your-github-name]) John Smith - creator, maintainer})
+      readme.should contain(%{1. Fork it ( https://github.com/jsmith/example_app/fork )})
+      readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
     end
 
     describe_file "example/shard.yml" do |shard_yml|
