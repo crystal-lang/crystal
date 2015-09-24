@@ -22,7 +22,7 @@ class Mutex
     unlock
   end
 
-  def destroy
+  def finalize
     LibPThread.mutex_destroy(self)
   end
 
