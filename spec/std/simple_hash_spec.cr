@@ -74,24 +74,6 @@ describe "SimpleHash" do
     end
   end
 
-  describe "delete_if" do
-    it "deletes {K, V} pairs when the block returns true" do
-      a = SimpleHash {1 => 2, 3 => 4, 5 => 6, 7 => 8}
-      a.delete_if { |k, v| v > 4 }
-      a[1]?.should eq(2)
-      a[3]?.should eq(4)
-      a[5]?.should eq(nil)
-      a[7]?.should eq(nil)
-
-      a = SimpleHash {1 => 2, 3 => 4, 5 => 6, 7 => 8}
-      a.delete_if { |k, v| k < 4 }
-      a[1]?.should eq(nil)
-      a[3]?.should eq(nil)
-      a[5]?.should eq(6)
-      a[7]?.should eq(8)
-    end
-  end
-
   describe "dup" do
     it "returns a duplicate of the SimpleHash" do
       a = SimpleHash {"one": "1", "two": "2"}
@@ -130,6 +112,25 @@ describe "SimpleHash" do
     end
   end
 
+  describe "each_with_object" do
+    it "passes memo, key and value into block" do
+      hash = SimpleHash {a: 'b'}
+      hash.each_with_object(:memo) do |memo, k, v|
+        memo.should eq(:memo)
+        k.should eq(:a)
+        v.should eq('b')
+      end
+    end
+
+    it "reduces the hash to the accumulated value of memo" do
+      hash = SimpleHash {a: 'b', c: 'd', e: 'f'}
+      result = hash.each_with_object(SimpleHash(Char, Symbol).new) do |memo, k, v|
+        memo[v] = k
+      end
+      result.should eq(SimpleHash {'b' => :a, 'd' => :c, 'f' => :e})
+    end
+  end
+
   describe "keys" do
     it "returns an array of all the keys" do
       a = SimpleHash {1 => 2, 3 => 4, 5 => 6, 7 => 8}
@@ -144,6 +145,54 @@ describe "SimpleHash" do
       b = [2, 4, 6, 8]
       a.values.should eq(b)
     end
+  end
+
+  it "selects" do
+    h1 = SimpleHash {a: 1, b: 2, c: 3}
+
+    h2 = h1.select{ |k, v| k == :b}
+    h2.should eq(SimpleHash {b: 2})
+    h2.object_id.should_not eq(h1.object_id)
+  end
+
+  it "selects!" do
+    h1 = SimpleHash {a: 1, b: 2, c: 3}
+
+    h2 = h1.select!{ |k, v| k == :b}
+    h2.should eq(SimpleHash {b: 2})
+    h2.object_id.should eq(h1.object_id)
+  end
+
+  it "returns nil when using select! and no changes were made" do 
+    h1 = SimpleHash {a: 1, b: 2, c: 3}
+
+    h2 = h1.select!{ true }
+    h2.should eq(nil)
+    h1.should eq(SimpleHash {a: 1, b: 2, c: 3})
+  end
+
+  it "rejects" do
+    h1 = SimpleHash {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject{ |k, v| k == :b}
+    h2.should eq(SimpleHash {a: 1, c: 3})
+    h2.object_id.should_not eq(h1.object_id)
+  end
+
+  it "rejects!" do
+    h1 = SimpleHash {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject!{|k, v| k == :b}
+    h2.should eq(SimpleHash {a: 1, c: 3})
+    h2.object_id.should eq(h1.object_id)
+  end
+
+  it "returns nil when using reject! and no changes were made" do 
+    h1 = SimpleHash {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject!{ false }
+    h2.should eq(nil)
+    h1.should eq(SimpleHash {a: 1, b: 2, c: 3})
   end
 
   describe "size" do

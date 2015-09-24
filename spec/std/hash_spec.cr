@@ -334,6 +334,54 @@ describe "Hash" do
     h3.should eq({1 => "2", 2 => "4", 3 => "x"})
   end
 
+  it "selects" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.select{|k, v| k == :b}
+    h2.should eq({b: 2})
+    h2.should_not be(h1)
+  end
+
+  it "selects!" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.select!{|k, v| k == :b}
+    h2.should eq({b: 2})
+    h2.should be(h1)
+  end
+
+  it "returns nil when using select! and no changes were made" do 
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.select!{ true }
+    h2.should eq(nil)
+    h1.should eq({a: 1, b: 2, c: 3})
+  end
+
+  it "rejects" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject{|k, v| k == :b}
+    h2.should eq({a: 1, c: 3})
+    h2.should_not be(h1)
+  end
+
+  it "rejects!" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject!{|k, v| k == :b}
+    h2.should eq({a: 1, c: 3})
+    h2.should be(h1)
+  end
+
+  it "returns nil when using reject! and no changes were made" do 
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject!{ false }
+    h2.should eq(nil)
+    h1.should eq({a: 1, b: 2, c: 3})
+  end
+
   it "zips" do
     ary1 = [1, 2, 3]
     ary2 = ['a', 'b', 'c']
@@ -441,12 +489,6 @@ describe "Hash" do
     x.to_s.should eq("{}")
   end
 
-  it "deletes if" do
-    x = {a: 1, b: 2, c: 3, d: 4}
-    x.delete_if { |k, v| v % 2 == 0 }
-    x.should eq({a: 1, c: 3})
-  end
-
   it "inverts" do
     h1 = {"one" => 1, "two" => 2, "three" => 3}
     h2 = {"a" => 1, "b" => 2, "c" => 1}
@@ -501,6 +543,25 @@ describe "Hash" do
       results = [] of Int32
       hash.each_with_index(3) { |k, v, i| results << k + v + i }
       results.should eq [9, 19, 26]
+    end
+  end
+
+  describe "each_with_object" do
+    it "passes memo, key and value into block" do
+      hash = {a: 'b'}
+      hash.each_with_object(:memo) do |memo, k, v|
+        memo.should eq(:memo)
+        k.should eq(:a)
+        v.should eq('b')
+      end
+    end
+
+    it "reduces the hash to the accumulated value of memo" do
+      hash = {a: 'b', c: 'd', e: 'f'}
+      result = hash.each_with_object({} of Char => Symbol) do |memo, k, v|
+        memo[v] = k
+      end
+      result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end
 

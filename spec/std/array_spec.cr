@@ -374,14 +374,6 @@ describe "Array" do
     end
   end
 
-  describe "delete_if" do
-    it "deletes many" do
-      a = [1, 2, 3, 1, 2, 3]
-      a.delete_if { |i| i > 2 }
-      a.should eq([1, 2, 1, 2])
-    end
-  end
-
   it "does dup" do
     x = {1 => 2}
     a = [x]
@@ -1062,18 +1054,36 @@ describe "Array" do
     ary.should eq([1, 2])
   end
 
-  it "does select!" do
-    ary = [1, 2, 3, 4]
-    ary2 = ary.select! { |x| x % 2 == 0 }
-    ary2.should be(ary)
+  it "selects!" do
+    ary1 = [1, 2, 3, 4, 5]
+
+    ary2 = ary1.select!{ |elem| elem % 2 == 0 }
     ary2.should eq([2, 4])
+    ary2.should be(ary1)
   end
 
-  it "does reject!" do
-    ary = [1, 2, 3, 4]
-    ary2 = ary.reject! { |x| x % 2 == 0 }
-    ary2.should be(ary)
-    ary2.should eq([1, 3])
+  it "returns nil when using select! and no changes were made" do 
+    ary1 = [1, 2, 3, 4, 5]
+
+    ary2 = ary1.select!{ true }
+    ary2.should eq(nil)
+    ary1.should eq([1, 2, 3, 4, 5])
+  end
+
+  it "rejects!" do
+    ary1 = [1, 2, 3, 4, 5]
+
+    ary2 = ary1.reject!{ |elem| elem % 2 == 0 }
+    ary2.should eq([1, 3, 5])
+    ary2.should be(ary1)
+  end
+
+  it "returns nil when using reject! and no changes were made" do 
+    ary1 = [1, 2, 3, 4, 5]
+
+    ary2 = ary1.reject!{ false }
+    ary2.should eq(nil)
+    ary1.should eq([1, 2, 3, 4, 5])
   end
 
   it "does map_with_index" do
