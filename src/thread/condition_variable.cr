@@ -12,7 +12,7 @@ class ConditionVariable
   end
 
   def finalize
-    LibPThread.cond_destroy(pointerof(@cond))
+    LibPThread.cond_destroy(self)
   end
 
   def to_unsafe
