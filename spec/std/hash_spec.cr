@@ -648,44 +648,44 @@ describe "Hash" do
     end
   end
 
-  describe "omit" do
-    assert { { a: 2, b: 3 }.omit(:b, :d).should eq({ a: 2 }) }
-    assert { { a: 2, b: 3 }.omit(:b, :a).should eq({ } of Symbol => Int32) }
+  describe "reject" do
+    assert { { a: 2, b: 3 }.reject(:b, :d).should eq({ a: 2 }) }
+    assert { { a: 2, b: 3 }.reject(:b, :a).should eq({ } of Symbol => Int32) }
     it "does not change currrent hash" do
       h = { a: 3, b: 6, c: 9 }
-      h2 = h.omit(:b, :c)
+      h2 = h.reject(:b, :c)
       h.should eq({ a: 3, b: 6, c: 9 })
     end
   end
 
-  describe "omit!" do
-    assert { { a: 2, b: 3 }.omit!(:b, :d).should eq({ a: 2 }) }
-    assert { { a: 2, b: 3 }.omit!(:b, :a).should eq({ } of Symbol => Int32) }
+  describe "reject!" do
+    assert { { a: 2, b: 3 }.reject!(:b, :d).should eq({ a: 2 }) }
+    assert { { a: 2, b: 3 }.reject!(:b, :a).should eq({ } of Symbol => Int32) }
     it "changes currrent hash" do
       h = { a: 3, b: 6, c: 9 }
-      h.omit!(:b, :c)
+      h.reject!(:b, :c)
       h.should eq({ a: 3 })
     end
   end
 
-  describe "pick" do
-    assert { { a: 2, b: 3 }.pick(:b, :d).should eq({ b: 3 }) }
-    assert { { a: 2, b: 3 }.pick.should eq({ } of Symbol => Int32) }
-    assert { { a: 2, b: 3 }.pick(:b, :a).should eq({ a: 2, b: 3 }) }
+  describe "select" do
+    assert { { a: 2, b: 3 }.select(:b, :d).should eq({ b: 3 }) }
+    assert { { a: 2, b: 3 }.select.should eq({ } of Symbol => Int32) }
+    assert { { a: 2, b: 3 }.select(:b, :a).should eq({ a: 2, b: 3 }) }
     it "does not change currrent hash" do
       h = { a: 3, b: 6, c: 9 }
-      h2 = h.pick(:b, :c)
+      h2 = h.select(:b, :c)
       h.should eq({ a: 3, b: 6, c: 9 })
     end
   end
 
-  describe "pick!" do
-    assert { { a: 2, b: 3 }.pick!(:b, :d).should eq({ b: 3 }) }
-    assert { { a: 2, b: 3 }.pick!.should eq({ } of Symbol => Int32) }
-    assert { { a: 2, b: 3 }.pick!(:b, :a).should eq({ a: 2, b: 3 }) }
-    it "does not change currrent hash" do
+  describe "select!" do
+    assert { { a: 2, b: 3 }.select!(:b, :d).should eq({ b: 3 }) }
+    assert { { a: 2, b: 3 }.select!.should eq({ } of Symbol => Int32) }
+    assert { { a: 2, b: 3 }.select!(:b, :a).should eq({ a: 2, b: 3 }) }
+    it "does change currrent hash" do
       h = { a: 3, b: 6, c: 9 }
-      h.pick!(:b, :c)
+      h.select!(:b, :c)
       h.should eq({ b: 6, c: 9 })
     end
   end

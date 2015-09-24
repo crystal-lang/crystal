@@ -508,20 +508,20 @@ class Hash(K, V)
   # Returns a new hash without the given keys.
   #
   # ```
-  # {"a": 1, "b": 2, "c": 3, "d": 4}.omit("a", "c") #=> {"b": 2, "d": 4}
+  # {"a": 1, "b": 2, "c": 3, "d": 4}.reject("a", "c") #=> {"b": 2, "d": 4}
   # ```
-  def omit(*keys)
+  def reject(*keys)
     hash = self.dup
-    hash.omit!(*keys)
+    hash.reject!(*keys)
   end
 
   # Removes a list of keys out of hash.
   #
   # ```
-  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.omit!("a", "c")
+  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.reject!("a", "c")
   # h #=> {"b": 2, "d": 4}
   # ```
-  def omit!(*keys)
+  def reject!(*keys)
     keys.each { |k| delete(k) }
     self
   end
@@ -529,9 +529,9 @@ class Hash(K, V)
   # Returns a new hash with the given keys.
   #
   # ```
-  # {"a": 1, "b": 2, "c": 3, "d": 4}.pick("a", "c") #=> {"a": 1, "c": 3}
+  # {"a": 1, "b": 2, "c": 3, "d": 4}.select("a", "c") #=> {"a": 1, "c": 3}
   # ```
-  def pick(*keys)
+  def select(*keys)
     hash = {} of K => V
     keys.each { |k| hash[k] = self[k] if has_key?(k) }
     hash
@@ -540,10 +540,10 @@ class Hash(K, V)
   # Removes every element except the given ones.
   #
   # ```
-  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.pick!("a", "c")
+  # h = {"a": 1, "b": 2, "c": 3, "d": 4}.select!("a", "c")
   # h #=> {"a": 1, "c": 3}
   # ```
-  def pick!(*keys)
+  def select!(*keys)
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end
