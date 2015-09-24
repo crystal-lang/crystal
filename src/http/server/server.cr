@@ -38,7 +38,8 @@ class HTTP::Server
   def listen
     server = TCPServer.new(@port)
     until @wants_close
-      spawn handle_client(server.accept)
+      client = server.accept
+      spawn { handle_client(client) }
     end
   end
 
@@ -46,7 +47,10 @@ class HTTP::Server
     server = TCPServer.new(@port)
     workers.times do
       fork do
-        loop { spawn handle_client(server.accept) }
+        loop do
+          client = server.accept
+          spawn { handle_client(client) }
+        end
       end
     end
 
