@@ -236,21 +236,19 @@ class Crystal::Doc::Generator
     remotes = `git remote -v`
     return unless  $?.success?
 
-    remotes.lines.each do |line|
-      if line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
-        user, repo = $1, $2.gsub(/\.git$/, "")
-        rev = `git rev-parse HEAD`.chomp
+    github_remote_pattern = /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
+    github_remotes = remotes.lines.select &.match(github_remote_pattern)
+    remote = github_remotes.find(&.starts_with?("origin")) || github_remotes.first?
+    return unless remote
 
-        @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
-        @repo_name = "github.com/#{user}/#{repo}"
+    _, user, repo = remote.match(github_remote_pattern).not_nil!
+    repo = repo.gsub(/\.git$/, "")
+    rev = `git rev-parse HEAD`.chomp
 
-        if user == "manastech" && repo == "crystal"
-          @is_crystal_repository = true
-        end
+    @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
+    @repo_name = "github.com/#{user}/#{repo}"
 
-        break
-      end
-    end
+    @is_crystal_repository ||= (user == "manastech" && repo == "crystal")
   end
 
   def source_link(node)
