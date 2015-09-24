@@ -104,6 +104,7 @@ struct Slice(T)
   # slice[-1] #=> 14
   # slice[5]  #=> IndexError
   # ```
+  @[AlwaysInline]
   def [](index : Int)
     at(index)
   end
@@ -121,6 +122,7 @@ struct Slice(T)
   #
   # slice[4] = 1 #=> IndexError
   # ```
+  @[AlwaysInline]
   def []=(index : Int, value : T)
     index += size if index < 0
     unless 0 <= index < size
@@ -154,6 +156,7 @@ struct Slice(T)
     Slice.new(@pointer + start, count)
   end
 
+  @[AlwaysInline]
   def at(index : Int)
     at(index) { raise IndexError.new }
   end

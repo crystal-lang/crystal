@@ -44,11 +44,13 @@ struct StaticArray(T, N)
     end
   end
 
+  @[AlwaysInline]
   def [](index : Int)
     index = check_index_out_of_bounds index
     buffer[index]
   end
 
+  @[AlwaysInline]
   def []=(index : Int, value : T)
     index = check_index_out_of_bounds index
     buffer[index] = value

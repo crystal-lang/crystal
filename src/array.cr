@@ -318,6 +318,7 @@ class Array(T)
   # ary[3]  # raises IndexError
   # ary[-4] # raises IndexError
   # ```
+  @[AlwaysInline]
   def [](index : Int)
     at(index)
   end
@@ -337,6 +338,7 @@ class Array(T)
   # ary[3]?  # nil
   # ary[-4]? # nil
   # ```
+  @[AlwaysInline]
   def []?(index : Int)
     at(index) { nil }
   end
@@ -353,6 +355,7 @@ class Array(T)
   #
   # ary[3] = 5 # => IndexError
   # ```
+  @[AlwaysInline]
   def []=(index : Int, value : T)
     index = check_index_out_of_bounds index
     @buffer[index] = value
@@ -433,6 +436,7 @@ class Array(T)
   # a.at(0) #=> :foo
   # a.at(2) #=> IndexError
   # ```
+  @[AlwaysInline]
   def at(index : Int)
     at(index) { raise IndexError.new }
   end
