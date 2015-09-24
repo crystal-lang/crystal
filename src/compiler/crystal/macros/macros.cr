@@ -59,7 +59,7 @@ module Crystal
 
       target_def.bind_to generated_nodes
 
-      if target_def.type != expected_type
+      unless target_def.type.covariant?(expected_type)
         target_def.raise "expected '#{target_def.name}' to return #{expected_type}, not #{target_def.type}"
       end
 
