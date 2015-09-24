@@ -249,11 +249,15 @@ module HTTP
 
     # :nodoc:
     struct Builder
+      @io :: IO
+
       def initialize(@io = StringIO.new)
+        @first = true
       end
 
       def add(key, value)
-        @io << '&' unless @io.empty?
+        @io << '&' unless @first
+        @first = false
         URI.escape key, @io
         @io << '='
         URI.escape value, @io if value
