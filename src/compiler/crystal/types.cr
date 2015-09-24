@@ -2222,7 +2222,7 @@ module Crystal
 
     def add_var(var)
       @vars[var.name] = var
-      add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:struct_set))
+      add_def Def.new("#{var.name}=", [Arg.new("value")], Primitive.new(:struct_set))
       add_def Def.new(var.name, body: Primitive.new(:struct_get))
     end
 
@@ -2242,7 +2242,7 @@ module Crystal
   class CUnionType < CStructOrUnionType
     def add_var(var)
       @vars[var.name] = var
-      add_def Def.new("#{var.name}=", [Arg.new("value", type: var.type)], Primitive.new(:union_set))
+      add_def Def.new("#{var.name}=", [Arg.new("value")], Primitive.new(:union_set))
       add_def Def.new(var.name, body: Primitive.new(:union_get))
     end
 

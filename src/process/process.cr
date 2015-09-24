@@ -45,18 +45,35 @@ class Process
 
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
-      ret = LibC.kill(pid.to_i32, signal.value)
+      ret = LibC.kill(pid, signal.value)
       raise Errno.new(ret) if ret < 0
     end
-    0
+    nil
   end
 
   def self.ppid
     LibC.getppid()
   end
 
-  def self.fork run_hooks = true : Bool, &block
-    pid = self.fork(run_hooks)
+  # Returns a `Process`.
+  def self.fork
+    pid = fork_internal do
+      with self yield self
+    end
+    Process.new pid
+  end
+
+  # Returns a `Process`.
+  def self.fork
+    if pid = fork_internal
+      Process.new pid
+    else
+      nil
+    end
+  end
+
+  protected def self.fork_internal run_hooks = true : Bool, &block
+    pid = self.fork_internal(run_hooks)
 
     unless pid
       begin
@@ -76,7 +93,7 @@ class Process
 
   # run_hooks should ALWAYS be true unless exec* is used immediately after fork.
   # Channels, IO and other will not work reliably if run_hooks is false.
-  def self.fork run_hooks = true : Bool
+  protected def self.fork_internal run_hooks = true : Bool
     pid = LibC.fork
     case pid
     when 0
@@ -86,16 +103,6 @@ class Process
       raise Errno.new("fork")
     end
     pid
-  end
-
-  def self.waitpid pid
-    chan = Event::SignalChildHandler.instance.waitpid pid
-    status = chan.receive
-    if status
-      return status
-    else
-      raise "waitpid channel closed"
-    end
   end
 
   record Tms, utime, stime, cutime, cstime

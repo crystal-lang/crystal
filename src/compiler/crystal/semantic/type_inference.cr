@@ -1656,7 +1656,7 @@ module Crystal
               @mod.expand_macro hook.macro.body, current_type.instance_type
             end
           end
-          expanded.accept self
+
           node.add_runtime_initializer(expanded)
         end
       end
@@ -2133,23 +2133,43 @@ module Crystal
       unless obj
         node.raise "invalid constant value"
       end
-      if node.args.size != 1
-        node.raise "invalid constant value"
-      end
 
-      left = interpret_enum_value(obj, target_type)
-      right = interpret_enum_value(node.args.first, target_type)
+      case node.args.size
+      when 0
+        left = interpret_enum_value(obj, target_type)
 
-      case node.name
-      when "+"  then left + right
-      when "-"  then left - right
-      when "*"  then left * right
-      when "/"  then left / right
-      when "&"  then left & right
-      when "|"  then left | right
-      when "<<" then left << right
-      when ">>" then left >> right
-      when "%"  then left % right
+        case node.name
+        when "+" then +left
+        when "-"
+          case left
+          when Int8 then -left
+          when Int16 then -left
+          when Int32 then -left
+          when Int64 then -left
+          else
+            node.raise "invalid constant value"
+          end
+        when "~" then ~left
+        else
+          node.raise "invalid constant value"
+        end
+      when 1
+        left = interpret_enum_value(obj, target_type)
+        right = interpret_enum_value(node.args.first, target_type)
+
+        case node.name
+        when "+"  then left + right
+        when "-"  then left - right
+        when "*"  then left * right
+        when "/"  then left / right
+        when "&"  then left & right
+        when "|"  then left | right
+        when "<<" then left << right
+        when ">>" then left >> right
+        when "%"  then left % right
+        else
+          node.raise "invalid constant value"
+        end
       else
         node.raise "invalid constant value"
       end
@@ -2613,13 +2633,13 @@ module Crystal
       when :struct_new
         node.type = scope.instance_type
       when :struct_set
-        node.bind_to @vars["value"]
+        visit_struct_or_union_set node
       when :struct_get
         visit_struct_get node
       when :union_new
         node.type = scope.instance_type
       when :union_set
-        node.bind_to @vars["value"]
+        visit_struct_or_union_set node
       when :union_get
         visit_union_get node
       when :external_var_set
@@ -2731,6 +2751,48 @@ module Crystal
       end
 
       node.type = scope.instance_type
+    end
+
+    def visit_struct_or_union_set(node)
+      scope = @scope as CStructOrUnionType
+
+      field_name = call.not_nil!.name[0 ... -1]
+      expected_type = scope.vars[field_name].type
+      value = @vars["value"]
+      actual_type = value.type
+
+      node.type = actual_type
+
+      actual_type = actual_type.remove_alias
+      unaliased_type = expected_type.remove_alias
+
+      return if actual_type.compatible_with?(unaliased_type)
+      return if actual_type.is_implicitly_converted_in_c_to?(unaliased_type)
+
+      case unaliased_type
+      when IntegerType
+        if convert_call = convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
+          node.extra = convert_call
+          return
+        end
+      when FloatType
+        if convert_call = convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
+          node.extra = convert_call
+          return
+        end
+      end
+
+      unsafe_call = Conversions.to_unsafe(node, Var.new("value"), self, actual_type, expected_type)
+      if unsafe_call
+        node.extra = unsafe_call
+        return
+      end
+
+      node.raise "field '#{field_name}' of #{scope.type_desc} #{scope} has type #{expected_type}, not #{actual_type}"
+    end
+
+    def convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
+      Conversions.numeric_argument(node, Var.new("value"), self, unaliased_type, expected_type, actual_type)
     end
 
     def visit_struct_get(node)
@@ -3008,6 +3070,10 @@ module Crystal
       when Def
         return false
       when Macro
+        if current_type != @mod.program
+          node.raise "#{node.modifier} macros can only be declared at the top-level"
+        end
+
         return false
       when Call
         if exp.expanded
@@ -3268,6 +3334,8 @@ module Crystal
       end
 
       unless target_type
+        TypeLookup.check_cant_infer_generic_type_parameter(@scope, node)
+
         error_msg = String.build do |msg|
           msg << "undefined constant #{node}"
           msg << @mod.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
@@ -3508,17 +3576,23 @@ module Crystal
     end
 
     def check_self_closured
-      if @scope && (context = @fun_literal_context) && context.is_a?(Def)
-        context.self_closured = true
+      scope = @scope
+      return unless scope
 
-        # Go up and mark fun literal defs as closured until the top
-        # (which should be when we leave the top Def)
-        visitor = self
-        while visitor
-          visitor_context = visitor.closure_context
-          visitor_context.closure = true if visitor_context.is_a?(Def)
-          visitor = visitor.parent
-        end
+      return if scope.metaclass? && !scope.virtual_metaclass?
+
+      context = @fun_literal_context
+      return unless context.is_a?(Def)
+
+      context.self_closured = true
+
+      # Go up and mark fun literal defs as closured until the top
+      # (which should be when we leave the top Def)
+      visitor = self
+      while visitor
+        visitor_context = visitor.closure_context
+        visitor_context.closure = true if visitor_context.is_a?(Def)
+        visitor = visitor.parent
       end
     end
 

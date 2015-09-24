@@ -72,17 +72,45 @@ module HTTP
     end
   end
 
-  def self.serialize_headers_and_body(io, headers, body)
-    if headers
-      headers.each do |name, values|
-        values.each do |value|
-          io << name << ": " << value << "\r\n"
+  def self.serialize_headers_and_body(io, headers, body, version)
+    # prepare either chunked response headers if protocol supports it
+    # or consume the io to get the Content-Length header
+    if body
+      if body.is_a?(IO)
+        if Response.supports_chunked?(version)
+          headers["Transfer-Encoding"] = "chunked"
+        else
+          body = body.read
         end
+      end
+
+      unless body.is_a?(IO)
+        headers["Content-Length"] = body.bytesize.to_s
+      end
+    end
+
+    headers.each do |name, values|
+      values.each do |value|
+        io << name << ": " << value << "\r\n"
       end
     end
 
     io << "\r\n"
-    io << body if body
+
+    if body
+      if body.is_a?(IO)
+        buf :: UInt8[8192]
+        while (buf_length = body.read(buf.to_slice)) > 0
+          buf_length.to_s(16, io)
+          io << "\r\n"
+          io.write(buf.to_slice[0, buf_length])
+          io << "\r\n"
+        end
+        io << "0\r\n\r\n"
+      else
+        io << body
+      end
+    end
   end
 
   def self.keep_alive?(message)
@@ -99,6 +127,10 @@ module HTTP
     else
       true
     end
+  end
+
+  def self.content_type(message)
+    message.headers["Content-Type"]?.try &.[/[^;]*/]
   end
 
   def self.parse_time(time_str : String)

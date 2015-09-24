@@ -369,6 +369,17 @@ struct Enum
     end
   end
 
+  # Convenience macro to create an *or*ed enum from the given members.
+  #
+  # ```
+  # IOMode.flags(Read, Write) #=> IOMode::Read | IOMode::Write
+  # ```
+  macro flags(*values)
+    {% for value, i in values %}\
+      {% if i != 0 %} | {% end %}\
+      {{ @type }}::{{ value }}{% end %}\
+  end
+
   # def self.each
   #   to_h.each do |key, value|
   #     yield key, value

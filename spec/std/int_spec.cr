@@ -132,6 +132,10 @@ describe "Int" do
     assert { 5.bit(1).should eq(0) }
     assert { 5.bit(2).should eq(1) }
     assert { 5.bit(3).should eq(0) }
+    assert { 0.bit(63).should eq(0) }
+    assert { Int64::MAX.bit(63).should eq(0) }
+    assert { UInt64::MAX.bit(63).should eq(1) }
+    assert { UInt64::MAX.bit(64).should eq(0) }
   end
 
   describe "divmod" do

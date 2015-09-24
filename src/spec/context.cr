@@ -130,11 +130,11 @@ module Spec
     @@instance = RootContext.new
     @@contexts_stack = [@@instance] of Context
 
-    def self.describe(description, file, line)
+    def self.describe(description, file, line, &block)
       describe = Spec::NestedContext.new(description, file, line, @@contexts_stack.last)
       @@contexts_stack.push describe
       Spec.formatter.push describe
-      yield describe
+      block.call
       Spec.formatter.pop
       @@contexts_stack.pop
     end

@@ -13,6 +13,16 @@ module HTTP
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
     end
 
+    it "serialize GET (with query params)" do
+      headers = HTTP::Headers.new
+      headers["Host"] = "host.example.org"
+      request = Request.new "GET", "/greet?q=hello&name=world", headers
+
+      io = StringIO.new
+      request.to_io(io)
+      io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
+    end
+
     it "serialize GET (with cookie)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
@@ -63,6 +73,12 @@ module HTTP
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
+    it "parses GET with query params" do
+      request = Request.from_io(StringIO.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
+      request.method.should eq("GET")
+      request.path.should eq("/greet")
+      request.headers.should eq({"Host" => "host.example.org"})
+    end
 
     it "parses GET without \\r" do
       request = Request.from_io(StringIO.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).not_nil!
@@ -125,6 +141,66 @@ module HTTP
         headers["Connection"] = "close"
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.1"
         request.keep_alive?.should be_false
+      end
+    end
+
+    describe "#path" do
+      it "returns parsed path" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.path.should eq("/api/v3/some/resource")
+      end
+    end
+
+    describe "#path=" do
+      it "sets path" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.path = "/api/v2/greet"
+        request.path.should eq("/api/v2/greet")
+      end
+
+      it "updates @resource" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.path = "/api/v2/greet"
+        request.resource.should eq("/api/v2/greet?filter=hello&world=test")
+      end
+
+      it "updates serialized form" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.path = "/api/v2/greet"
+
+        io = StringIO.new
+        request.to_io(io)
+        io.to_s.should eq("GET /api/v2/greet?filter=hello&world=test HTTP/1.1\r\n\r\n")
+      end
+    end
+
+    describe "#query" do
+      it "returns request's query" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.query.should eq("filter=hello&world=test")
+      end
+    end
+
+    describe "#query=" do
+      it "sets query" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.query = "q=isearchforsomething&locale=de"
+        request.query.should eq("q=isearchforsomething&locale=de")
+      end
+
+      it "updates @resource" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.query = "q=isearchforsomething&locale=de"
+        request.resource.should eq("/api/v3/some/resource?q=isearchforsomething&locale=de")
+      end
+
+      it "updates serialized form" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).not_nil!
+        request.query = "q=isearchforsomething&locale=de"
+
+        io = StringIO.new
+        request.to_io(io)
+        io.to_s.should eq("GET /api/v3/some/resource?q=isearchforsomething&locale=de HTTP/1.1\r\n\r\n")
       end
     end
   end

@@ -26,7 +26,8 @@ struct Slice(T)
   #
   # String.new(slice) #=> "abc"
   # ```
-  def initialize(@pointer : Pointer(T), @size : Int32)
+  def initialize(@pointer : Pointer(T), size : Int)
+    @size = size.to_i32
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to zero
@@ -39,7 +40,7 @@ struct Slice(T)
   # slice = Slice(UInt8).new(3)
   # slice #=> [0, 0, 0]
   # ```
-  def self.new(size : Int32)
+  def self.new(size : Int)
     pointer = Pointer(T).malloc(size)
     new(pointer, size)
   end
@@ -55,7 +56,7 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice #=> [10, 11, 12]
   # ```
-  def self.new(size : Int32)
+  def self.new(size : Int)
     pointer = Pointer.malloc(size) { |i| yield i }
     new(pointer, size)
   end
@@ -70,7 +71,7 @@ struct Slice(T)
   # slice = Slice.new(3, 10)
   # slice #=> [10, 10, 10]
   # ```
-  def self.new(size : Int32, value : T)
+  def self.new(size : Int, value : T)
     new(size) { value }
   end
 
@@ -246,8 +247,7 @@ struct Slice(T)
 
   def ==(other : self)
     return false if bytesize != other.bytesize
-    sz = LibC::SizeT.new(bytesize)
-    return LibC.memcmp(to_unsafe as Void*, other.to_unsafe as Void*, sz) == 0
+    return LibC.memcmp(to_unsafe as Void*, other.to_unsafe as Void*, bytesize) == 0
   end
 
   def to_slice

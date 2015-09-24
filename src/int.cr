@@ -171,8 +171,17 @@ struct Int
     self === char.ord
   end
 
+  # Returns this number's *bit*th bit, starting with the least-significant.
+  #
+  # ```
+  # 11.bit(0) #=> 1
+  # 11.bit(1) #=> 1
+  # 11.bit(2) #=> 0
+  # 11.bit(3) #=> 1
+  # 11.bit(4) #=> 0
+  # ```
   def bit(bit)
-    self & (1 << bit) == 0 ? 0 : 1
+    self >> bit & 1
   end
 
   def gcd(other : Int)

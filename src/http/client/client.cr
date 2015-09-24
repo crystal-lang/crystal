@@ -1,7 +1,6 @@
 require "openssl"
 require "socket"
 require "uri"
-require "cgi"
 require "base64"
 require "../common"
 
@@ -105,13 +104,63 @@ class HTTP::Client
   end
 
   # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  #
+  # ```
+  # client = HTTP::Client.new("example.org")
+  # client.read_timeout = 1.5
+  # begin
+  #   response = client.get("/")
+  # rescue IO::Timeout
+  #   puts "Timeout!"
+  # end
+  # ```
   def read_timeout=(read_timeout : Number)
     @read_timeout = read_timeout.to_f
   end
 
-  # Set the read timeout with a Time::Span, to wait when reading before raising an `IO::Timeout`.
+  # Set the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
+  #
+  # ```
+  # client = HTTP::Client.new("example.org")
+  # client.read_timeout = 5.minutes
+  # begin
+  #   response = client.get("/")
+  # rescue IO::Timeout
+  #   puts "Timeout!"
+  # end
+  # ```
   def read_timeout=(read_timeout : Time::Span)
     self.read_timeout = read_timeout.total_seconds
+  end
+
+  # Set the number of seconds to wait when connecting, before raising an `IO::Timeout`.
+  #
+  # ```
+  # client = HTTP::Client.new("example.org")
+  # client.connect_timeout = 1.5
+  # begin
+  #   response = client.get("/")
+  # rescue IO::Timeout
+  #   puts "Timeout!"
+  # end
+  # ```
+  def connect_timeout=(connect_timeout : Number)
+    @connect_timeout = connect_timeout.to_f
+  end
+
+  # Set the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
+  #
+  # ```
+  # client = HTTP::Client.new("example.org")
+  # client.connect_timeout = 5.minutes
+  # begin
+  #   response = client.get("/")
+  # rescue IO::Timeout
+  #   puts "Timeout!"
+  # end
+  # ```
+  def connect_timeout=(connect_timeout : Time::Span)
+    self.connect_timeout = connect_timeout.total_seconds
   end
 
   # Sets a callback to execute before each request. This is usually
@@ -203,7 +252,7 @@ class HTTP::Client
   # response = client.post_form "/", {"foo": "bar"}
   # ```
   def post_form(path, form : Hash, headers = nil : HTTP::Headers?) : HTTP::Response
-    body = CGI.build_form do |form_builder|
+    body = HTTP::Params.build do |form_builder|
       form.each do |key, value|
         form_builder.add key, value
       end
@@ -336,7 +385,7 @@ class HTTP::Client
   end
 
   private def socket
-    socket = @socket ||= TCPSocket.new @host, @port
+    socket = @socket ||= TCPSocket.new @host, @port, nil, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
     if @ssl

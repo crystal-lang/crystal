@@ -8,7 +8,7 @@ module Crystal
     property? count_whitespace
 
     def initialize(string)
-      @reader = CharReader.new(string)
+      @reader = Char::Reader.new(string)
       @token = Token.new
       @line_number = 1
       @column_number = 1
@@ -406,6 +406,11 @@ module Crystal
           while true
             char = next_char
             case char
+            when '\\'
+              if peek_next_char == '"'
+                next_char
+                count += 1
+              end
             when '"'
               break
             when '\0'
@@ -1051,6 +1056,7 @@ module Crystal
           if next_char_no_column_increment != '\n'
             raise "expected '\\n' after '\\r'"
           end
+          next_char_no_column_increment
           @line_number += 1
           @token.doc_buffer = nil
         else

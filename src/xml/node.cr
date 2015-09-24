@@ -69,6 +69,10 @@ struct XML::Node
     end
   end
 
+  def content=(content)
+    LibXML.xmlNodeSetContent(self, content.to_s)
+  end
+
   def document
     Node.new @node.value.doc
   end
@@ -198,6 +202,13 @@ struct XML::Node
     end
   end
 
+  def name=(name)
+    if document? || text? || cdata? || fragment?
+      raise XML::Error.new("can't set name of XML #{type}", 0)
+    end
+    LibXML.xmlNodeSetName(self, name.to_s)
+  end
+
   def namespace
     case type
     when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
@@ -277,6 +288,10 @@ struct XML::Node
 
   def text
     content
+  end
+
+  def text=(text)
+    self.content = text
   end
 
   def text?
@@ -364,5 +379,15 @@ struct XML::Node
 
   def xpath_string(path, namespaces = nil, variables = nil)
     xpath(path, namespaces) as String
+  end
+
+  # :nodoc:
+  def errors=(errors)
+    @node.value._private = errors as Void*
+  end
+
+  def errors
+    ptr = @node.value._private
+    ptr ? (ptr as Array(XML::Error)) : nil
   end
 end

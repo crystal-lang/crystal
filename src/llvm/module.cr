@@ -1,8 +1,10 @@
-struct LLVM::Module
-  getter :unwrap
+class LLVM::Module
+  getter unwrap
+  getter name
 
-  def initialize(name)
-    @unwrap = LibLLVM.module_create_with_name name
+  def initialize(@name)
+    @unwrap = LibLLVM.module_create_with_name @name
+    @owned = false
   end
 
   def target=(target)
@@ -30,14 +32,19 @@ struct LLVM::Module
   end
 
   def verify
-    if LibLLVM.verify_module(self, LLVM::VerifierFailureAction::ReturnStatusAction, out message) == 1
-      raise "Module validation failed: #{String.new(message)}"
+    error = LibLLVM.verify_module(self, LLVM::VerifierFailureAction::ReturnStatusAction, out message)
+    begin
+      if error == 1
+        raise "Module validation failed: #{LLVM.string_and_dispose(message)}"
+      end
+    ensure
+      LibLLVM.dispose_message(message)
     end
   end
 
   def print_to_file(filename)
     if LibLLVM.print_module_to_file(self, filename, out error_msg) != 0
-      raise String.new(error_msg)
+      raise LLVM.string_and_dispose(error_msg)
     end
     self
   end
@@ -46,12 +53,25 @@ struct LLVM::Module
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
-  def inspect(io)
+  def to_s(io)
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
   end
 
   def to_unsafe
     @unwrap
+  end
+
+  def take_ownership
+    if @owned
+      yield
+    else
+      @owned = true
+    end
+  end
+
+  def finalize
+    return if @owned
+    LibLLVM.dispose_module(@unwrap)
   end
 end

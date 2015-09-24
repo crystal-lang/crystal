@@ -161,8 +161,14 @@ class Crystal::CodeGenVisitor
             # Nil to pointer
             call_arg = llvm_c_type(def_arg.type).null
           else
-            # Def argument might be missing if it's a variadic call
-            call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+            if def_arg
+              call_arg = downcast(call_arg, def_arg.type, arg.type, true)
+            else
+              # Def argument might be missing if it's a variadic call
+              if arg.is_a?(NilLiteral)
+                call_arg = LLVM::VoidPointer.null
+              end
+            end
           end
         end
       end
@@ -176,7 +182,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
       when LLVM::ABI::ArgKind::Direct
-        if cast = abi_arg_type.cast
+        if (cast = abi_arg_type.cast) && !arg.is_a?(NilLiteral)
           final_value = alloca cast
           final_value_casted = bit_cast final_value, LLVM::VoidPointer
           gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
@@ -425,7 +431,7 @@ class Crystal::CodeGenVisitor
     node.args.each_with_index do |arg, i|
       next unless arg.type.passed_by_value?
 
-      LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
     end
   end
 
@@ -443,19 +449,19 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]?
       if abi_arg_type
         if (attr = abi_arg_type.attr)
-          LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, attr)
+          @last.add_instruction_attribute(i + arg_offset, attr)
         end
       else
         # TODO: this is for variadic arguments, which is still not handled properly (in regards to the ABI for structs)
         arg_type = arg.type
         next unless arg_type.passed_by_value?
 
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
       end
     end
 
     if sret
-      LibLLVM.add_instr_attribute(@last, 1_u32, LLVM::Attribute::StructRet)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet)
     end
   end
 
@@ -465,7 +471,7 @@ class Crystal::CodeGenVisitor
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       next unless arg_type.passed_by_value?
-      LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
     end
   end
 end

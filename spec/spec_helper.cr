@@ -28,21 +28,14 @@ class Crystal::Program
   end
 end
 
-record InferTypeResult, program, node
+record InferTypeResult, program, node, type
 
 def assert_type(str, flags = nil)
-  program = Program.new
-  program.flags = flags if flags
-  input = parse str
-  input = program.normalize input
-  input = program.infer_type input
+  result = infer_type_result(str, flags)
+  program = result.program
   expected_type = with program yield program
-  if input.is_a?(Expressions)
-    input.last.type.should eq(expected_type)
-  else
-    input.type.should eq(expected_type)
-  end
-  InferTypeResult.new(program, input)
+  result.type.should eq(expected_type)
+  result
 end
 
 def infer_type(code : String, wants_doc = false)
@@ -54,7 +47,17 @@ def infer_type(node : ASTNode, wants_doc = false)
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.infer_type node
-  InferTypeResult.new(program, node)
+  InferTypeResult.new(program, node, node.type)
+end
+
+def infer_type_result(str, flags = nil)
+  program = Program.new
+  program.flags = flags if flags
+  input = parse str
+  input = program.normalize input
+  input = program.infer_type input
+  input_type = input.is_a?(Expressions) ? input.last.type : input.type
+  InferTypeResult.new(program, input, input_type)
 end
 
 def assert_normalize(from, to, flags = nil)
@@ -92,9 +95,9 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
       parse str
       fail "expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
-      ex.message.not_nil!.includes?(message).should be_true, metafile, metaline if message
-      ex.line_number.should eq(line), metafile, metaline if line
-      ex.column_number.should eq(column), metafile, metaline if column
+      ex.message.not_nil!.includes?(message.not_nil!).should be_true, metafile, metaline if message
+      ex.line_number.should eq(line.not_nil!), metafile, metaline if line
+      ex.column_number.should eq(column.not_nil!), metafile, metaline if column
     end
   end
 end
@@ -111,11 +114,16 @@ def assert_macro(macro_args, macro_body, call_args, expected)
 end
 
 def assert_macro(macro_args, macro_body, expected)
+  program = Program.new
+  sub_node = yield program
+  assert_macro_internal program, sub_node, macro_args, macro_body, expected
+end
+
+def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
   macro_def = "macro foo(#{macro_args});#{macro_body};end"
   a_macro = Parser.parse(macro_def) as Macro
 
-  program = Program.new
-  call = Call.new(nil, "", yield program)
+  call = Call.new(nil, "", sub_node)
   result = program.expand_macro a_macro, call, program
   result = result.source
   result = result[0 .. -2] if result.ends_with?(';')

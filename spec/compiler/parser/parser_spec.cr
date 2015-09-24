@@ -177,6 +177,9 @@ describe "Parser" do
   it_parses ":foo", "foo".symbol
   it_parses ":[]=", "[]=".symbol
   it_parses ":[]?", "[]?".symbol
+  it_parses ":\"\\\\foo\"", "\\\\foo".symbol
+  it_parses ":\"\\\"foo\"", "\\\"foo".symbol
+  it_parses ":\"\\\"foo\\\"\"", "\\\"foo\\\"".symbol
 
   it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
   it_parses "[\n1, 2]", ([1.int32, 2.int32] of ASTNode).array
@@ -384,6 +387,7 @@ describe "Parser" do
   it_parses "foo x do\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new)
   it_parses "foo x, y do\nend", Call.new(nil, "foo", ["x".call, "y".call] of ASTNode, Block.new)
   it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
+  it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!")] of ASTNode)
   it_parses "!a && b", And.new(Call.new("a".call, "!"), "b".call)
@@ -725,6 +729,8 @@ describe "Parser" do
 
   it_parses "macro def foo : String; 1; end", Def.new("foo", body: [MacroLiteral.new(" 1; ")] of ASTNode, return_type: "String".path, macro_def: true)
   it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], [MacroLiteral.new(" 1; ")] of ASTNode, return_type: "String".path, macro_def: true)
+
+  it_parses "macro foo;bar{% begin %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new(true.bool, "body".macro_literal), "baz;".macro_literal] of ASTNode))
 
   it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
   it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
@@ -1267,6 +1273,13 @@ describe "Parser" do
     assert_end_location "1 as Int32"
     assert_end_location "puts obj.foo"
 
+    it "gets corrects of ~" do
+      node = Parser.parse("\n  ~1")
+      loc = node.location.not_nil!
+      loc.line_number.should eq(2)
+      loc.column_number.should eq(3)
+    end
+
     it "gets corrects end location for var" do
       parser = Parser.new("foo = 1\nfoo; 1")
       node = (parser.parse as Expressions).expressions[1]
@@ -1306,6 +1319,13 @@ describe "Parser" do
       node = (parser.parse as Expressions).expressions[1]
       loc = node.location.not_nil!
       loc.line_number.should eq(6)
+    end
+
+    it "gets correct location with \r\n (#1558)" do
+      nodes = Parser.parse("class Foo\r\nend\r\n\r\n1") as Expressions
+      loc = nodes.last.location.not_nil!
+      loc.line_number.should eq(4)
+      loc.column_number.should eq(1)
     end
   end
 end

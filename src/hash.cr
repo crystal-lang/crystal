@@ -29,25 +29,35 @@ class Hash(K, V)
 
   getter size
 
-  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator)
-    @buckets = Pointer(Entry(K, V)?).malloc(11)
-    @buckets_size = 11
+  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator, initial_capacity = nil)
+    initial_capacity ||= 11
+    initial_capacity = 11 if initial_capacity < 11
+    initial_capacity = initial_capacity.to_i
+    @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
+    @buckets_size = initial_capacity
     @size = 0
     @block = block
   end
 
-  def self.new(comp = StandardComparator, &block : (Hash(K, V), K -> V))
+  def self.new(comp = StandardComparator, initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, comp
   end
 
-  def self.new(default_value : V, comp = StandardComparator)
-    new(comp) { default_value }
+  def self.new(default_value : V, comp = StandardComparator, initial_capacity = nil)
+    new(comp, initial_capacity: initial_capacity) { default_value }
   end
 
   def self.new(comparator)
     new nil, comparator
   end
 
+  # Set the value of *key* to the given *value*.
+  #
+  # ```
+  # h = {} of String => String
+  # h["foo"] = "bar"
+  # h["foo"] #=> "bar"
+  # ```
   def []=(key : K, value : V)
     rehash if @size > 5 * @buckets_size
 
@@ -67,18 +77,53 @@ class Hash(K, V)
     value
   end
 
+  # See `Hash#fetch`
   def [](key)
     fetch(key)
   end
 
+  # Returns the value for the key given by *key*.
+  # If not found, returns `nil`. This ignores the default value set by `Hash.new`.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h["foo"]? #=> "bar"
+  # h["bar"]? #=> nil
+  #
+  # h = Hash(String, String).new("bar")
+  # h["foo"]? #=> nil
+  # ```
   def []?(key)
     fetch(key, nil)
   end
 
+  # Returns `true` when key given by *key* exists, otherwise `false`.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.has_key?("foo") #=> true
+  # h.has_key?("bar") #=> false
+  # ```
   def has_key?(key)
     !!find_entry(key)
   end
 
+  # Returns the value for the key given by *key*.
+  # If not found, returns the default value given by `Hash.new`, otherwise raises `KeyError`.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h["foo"] #=> "bar"
+  #
+  # h = Hash(String, String).new("bar")
+  # h["foo"] #=> "bar"
+  #
+  # h = Hash(String, String).new { "bar" }
+  # h["foo"] #=> "bar"
+  #
+  # h = Hash(String, String).new
+  # h["foo"] # raises KeyError
+  # ```
   def fetch(key)
     fetch(key) do
       if block = @block
@@ -89,10 +134,25 @@ class Hash(K, V)
     end
   end
 
+  # Returns the value for the key given by *key*, or when not found the value given by *default*.
+  # This ignores the default value set by `Hash.new`.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.fetch("foo", "foo") #=> "bar"
+  # h.fetch("bar", "foo") #=> "foo"
+  # ```
   def fetch(key, default)
     fetch(key) { default }
   end
 
+  # Returns the value for the key given by *key*, or when not found calls the given block with the key.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.fetch("foo") { |key| key.upcase } #=> "bar"
+  # h.fetch("bar") { |key| key.upcase } #=> "BAR"
+  # ```
   def fetch(key)
     entry = find_entry(key)
     entry ? entry.value : yield key
@@ -108,6 +168,13 @@ class Hash(K, V)
     indexes.map {|index| self[index] }
   end
 
+  # Deletes the key-value pair and returns the value.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.delete("foo")     #=> "bar"
+  # h.fetch("foo", nil) #=> nil
+  # ```
   def delete(key)
     index = bucket_index(key)
     entry = @buckets[index]
@@ -148,6 +215,13 @@ class Hash(K, V)
     nil
   end
 
+  # Deletes each key-value pair for which the given block returns `true`.
+  #
+  # ```
+  # h = { "foo" => "bar", "fob" => "baz", "bar" => "qux" }
+  # h.delete_if { |key, value| key.starts_with?("fo") }
+  # h #=> { "bar" => "qux" }
+  # ```
   def delete_if
     keys_to_delete = [] of K
     each do |key, value|
@@ -159,10 +233,28 @@ class Hash(K, V)
     self
   end
 
+  # Returns `true` when hash contains no key-value pairs.
+  #
+  # ```
+  # h = Hash(String, String).new
+  # h.empty? #=> true
+  #
+  # h = { "foo" => "bar" }
+  # h.empty? #=> false
+  # ```
   def empty?
     @size == 0
   end
 
+  # Calls the given block for each key-value pair and passes in the key and the value.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.each do |key, value|
+  #   key   #=> "foo"
+  #   value #=> "bar"
+  # end
+  # ```
   def each
     current = @first
     while current
@@ -172,30 +264,104 @@ class Hash(K, V)
     self
   end
 
+  # Returns an iterator over the hash entries.
+  # Which behaves like an `Iterator` returning a `Tuple` consisting of the key and value types.
+  #
+  # ```
+  # hsh = { "foo" => "bar", "baz" => "qux" }
+  # iterator = hsh.each
+  #
+  # entry = iterator.next
+  # entry[0] #=> "foo"
+  # entry[1] #=> "bar"
+  #
+  # entry = iterator.next
+  # entry[0] #=> "baz"
+  # entry[1] #=> "qux"
+  # ```
   def each
     EntryIterator(K, V).new(self, @first)
   end
 
+  # Calls the given block for each key-value pair and passes in the key.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.each_key do |key|
+  #   key #=> "foo"
+  # end
+  # ```
   def each_key
     each do |key, value|
       yield key
     end
   end
 
+  # Returns an iterator over the hash keys.
+  # Which behaves like an `Iterator` consisting of the key's types.
+  #
+  # ```
+  # hsh = { "foo" => "bar", "baz" => "qux" }
+  # iterator = hsh.each_key
+  #
+  # key = iterator.next
+  # key #=> "foo"
+  #
+  # key = iterator.next
+  # key #=> "baz"
+  # ```
   def each_key
     KeyIterator(K, V).new(self, @first)
   end
 
+  # Calls the given block for each key-value pair and passes in the value.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # h.each_value do |key|
+  #   key #=> "bar"
+  # end
+  # ```
   def each_value
     each do |key, value|
       yield value
     end
   end
 
+  # Returns an iterator over the hash values.
+  # Which behaves like an `Iterator` consisting of the value's types.
+  #
+  # ```
+  # hsh = { "foo" => "bar", "baz" => "qux" }
+  # iterator = hsh.each_value
+  #
+  # value = iterator.next
+  # value #=> "bar"
+  #
+  # value = iterator.next
+  # value #=> "qux"
+  # ```
   def each_value
     ValueIterator(K, V).new(self, @first)
   end
 
+  # Calls the given block for each key-value pair and passes in the key, value, and index.
+  #
+  # ```
+  # h = { "foo" => "bar" }
+  # 
+  # h.each_with_index do |key, value, index|
+  #   key   #=> "foo"
+  #   value #=> "bar"
+  #   index #=> 0
+  # end
+  # 
+  # h.each_with_index(3) do |key, value, index|
+  #   key   #=> "foo"
+  #   value #=> "bar"
+  #   index #=> 3
+  # end
+  # ```
   def each_with_index(offset = 0)
     i = offset
     each do |key, value|
@@ -205,18 +371,36 @@ class Hash(K, V)
     self
   end
 
+  # Returns a new `Array` with all the keys.
+  #
+  # ```
+  # h = { "foo" => "bar", "baz" => "bar" }
+  # h.keys #=> ["foo", "baz"]
+  # ```
   def keys
     keys = Array(K).new(@size)
     each { |key| keys << key }
     keys
   end
 
+  # Returns a new `Array` with all the values.
+  #
+  # ```
+  # h = { "foo" => "bar", "baz" => "qux" }
+  # h.values #=> ["bar", "qux"]
+  # ```
   def values
     values = Array(V).new(@size)
     each { |key, value| values << value }
     values
   end
 
+  # Returns a new `Array` of tuples populated with each key-value pair.
+  #
+  # ```
+  # h = { "foo" => "bar", "baz" => "qux" }
+  # h.to_a #=> [{"foo", "bar"}, {"baz", "qux}]
+  # ```
   def to_a
     ary = Array({K, V}).new(@size)
     each do |key, value|
@@ -225,6 +409,14 @@ class Hash(K, V)
     ary
   end
 
+  # Returns the index of the given key, or `nil` when not found.
+  # The keys are ordered based on when they were inserted.
+  #
+  # ```
+  # h = { "foo" => "bar", "baz" => "qux" }
+  # h.key_index("foo") #=> 0
+  # h.key_index("qux") #=> nil
+  # ```
   def key_index(key)
     each_with_index do |my_key, my_value, i|
       return i if key == my_key
@@ -348,7 +540,7 @@ class Hash(K, V)
   end
 
   def dup
-    hash = Hash(K, V).new
+    hash = Hash(K, V).new(initial_capacity: @buckets_size)
     each do |key, value|
       hash[key] = value
     end
@@ -356,7 +548,7 @@ class Hash(K, V)
   end
 
   def clone
-    hash = Hash(K, V).new
+    hash = Hash(K, V).new(initial_capacity: @buckets_size)
     each do |key, value|
       hash[key] = value.clone
     end
@@ -402,7 +594,7 @@ class Hash(K, V)
   end
 
   def invert
-    hash = Hash(V, K).new
+    hash = Hash(V, K).new(initial_capacity: @buckets_size)
     self.each do |k, v|
       hash[v] = k
     end

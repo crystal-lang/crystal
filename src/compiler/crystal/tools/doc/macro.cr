@@ -1,4 +1,5 @@
 require "html"
+require "uri"
 require "./item"
 
 class Crystal::Doc::Macro
@@ -38,7 +39,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    "#" + CGI.escape(id)
+    "#" + URI.escape(id)
   end
 
   def prefix

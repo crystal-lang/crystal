@@ -88,7 +88,7 @@ class File < IO::FileDescriptor
     check_open
 
     flush
-    seek_value = LibC.lseek(@fd, LibC::OffT.new(offset), whence.to_i)
+    seek_value = LibC.lseek(@fd, offset, whence)
     if seek_value == -1
       raise Errno.new "Unable to seek"
     end
@@ -112,7 +112,7 @@ class File < IO::FileDescriptor
   def pos
     check_open
 
-    seek_value = LibC.lseek(@fd, LibC::OffT.zero, Seek::Current.to_i)
+    seek_value = LibC.lseek(@fd, 0, Seek::Current)
     raise Errno.new "Unable to tell" if seek_value == -1
 
     seek_value - @in_buffer_rem.size
@@ -129,6 +129,15 @@ class File < IO::FileDescriptor
     seek value
   end
 
+  # Returns a `File::Stat` object for the named file or raises
+  # `Errno` in case of an error. In case of a symbolic link
+  # it is followed and information about the target is returned.
+  #
+  # ```
+  # echo "foo" > foo
+  # File.stat("foo").size    #=> 4
+  # File.stat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # ```
   def self.stat(path)
     if LibC.stat(path, out stat) != 0
       raise Errno.new("Unable to get stat for '#{path}'")
@@ -136,6 +145,15 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
+  # Returns a `File::Stat` object for the named file or raises
+  # `Errno` in case of an error. In case of a symbolic link
+  # information about it is returned.
+  #
+  # ```
+  # echo "foo" > foo
+  # File.lstat("foo").size    #=> 4
+  # File.lstat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # ```
   def self.lstat(path)
     if LibC.lstat(path, out stat) != 0
       raise Errno.new("Unable to get lstat for '#{path}'")
@@ -143,6 +161,13 @@ class File < IO::FileDescriptor
     Stat.new(stat)
   end
 
+  # Returns true if file exists else returns false
+  #
+  # ```
+  # File.exists?("foo")    #=> false
+  # echo "foo" > foo
+  # File.exists?("foo")    #=> true
+  # ```
   def self.exists?(filename)
     LibC.access(filename, LibC::F_OK) == 0
   end

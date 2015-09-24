@@ -74,8 +74,8 @@ lib LibGMP
 end
 
 LibGMP.set_memory_functions(
-  ->(size) { GC.malloc(size.to_u32) },
-  ->(ptr, old_size, new_size) { GC.realloc(ptr, new_size.to_u32) },
+  ->(size) { GC.malloc(size) },
+  ->(ptr, old_size, new_size) { GC.realloc(ptr, new_size) },
   ->(ptr, size) { GC.free(ptr) }
   )
 

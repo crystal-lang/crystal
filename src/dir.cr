@@ -255,29 +255,189 @@ class Dir
   end
 
   def self.glob(patterns : Enumerable(String))
-    paths = LibC::Glob.new
-    flags = LibC::GlobFlags::BRACE | LibC::GlobFlags::TILDE
-    errfunc = -> (_path : UInt8*, _errno : Int32) { 0 }
-
-    patterns.each do |pattern|
-      result = LibC.glob(pattern, flags, errfunc, pointerof(paths))
-
-      if result == LibC::GlobErrors::NOSPACE
-        raise GlobError.new "Ran out of memory"
-      elsif result == LibC::GlobErrors::ABORTED
-        raise GlobError.new "Read error"
+    special = {'*', '?', '{', '}'}
+    cwd = self.working_directory
+    root = "/"  # assuming Linux or OS X
+    patterns.each do |ptrn|
+      next if ptrn.empty?
+      recursion_depth = ptrn.count(File::SEPARATOR)
+      if ptrn[0] == File::SEPARATOR
+        dir = root
+      else
+        dir = cwd
+      end
+      if ptrn.includes? "**"
+        recursion_depth = Int32::MAX
       end
 
-      flags |= LibC::GlobFlags::APPEND
+      # optimize the glob by starting with the directory
+      # which is as nested as possible:
+      lastidx = 0
+      depth = 0
+      escaped = false
+      ptrn.each_char_with_index do |c, i|
+        if c == '\\'
+          escaped = true
+          next
+        elsif c == File::SEPARATOR
+          depth += 1
+          lastidx = i
+        elsif !escaped && special.includes? c
+          break
+        end
+        escaped = false
+      end
+
+      recursion_depth -= depth if recursion_depth != Int32::MAX
+      nested_path = ptrn[0...lastidx]
+      dir = File.join(dir, nested_path)
+      if !nested_path.empty? && nested_path[0] == File::SEPARATOR
+        nested_path = nested_path[1..-1]
+      end
+
+      regex = glob2regex(ptrn)
+
+      scandir(dir, nested_path, regex, 0, recursion_depth) do |path|
+        if ptrn[0] == File::SEPARATOR
+          yield "#{File::SEPARATOR}#{path}"
+        else
+          yield path
+        end
+      end
+    end
+  end
+
+  private def self.glob2regex(pattern)
+    if pattern.size == 0 || pattern == File::SEPARATOR
+      raise ArgumentError.new "Empty glob pattern"
     end
 
-    Slice(UInt8*).new(paths.pathv, paths.pathc.to_i32).each do |path|
-      yield String.new(path)
-    end
+    # characters which are escapable by a backslash in a glob pattern;
+    # Windows paths must have double backslashes:
+    escapable = {'?', '{', '}', '*', ',', '\\'}
+    # characters which must be escaped in a PCRE regex:
+    escaped = {'$', '(', ')', '+', '.', '[', '^', '|', '/'}
 
-    nil
-  ensure
-    LibC.globfree(pointerof(paths))
+    regex_pattern = String.build do |str|
+      idx = 0
+      nest = 0
+
+      idx = 1 if pattern[0] == File::SEPARATOR
+
+      while idx < pattern.size
+        if pattern[idx] == '\\'
+          if idx + 1 < pattern.size && escapable.includes? pattern[idx + 1]
+            str << '\\'
+            str << pattern[idx + 1]
+            idx += 2
+            next
+          end
+        elsif pattern[idx] == '*'
+          if idx + 2 < pattern.size &&
+                       pattern[idx + 1] == '*' &&
+                       pattern[idx + 2] == File::SEPARATOR
+            str << "(?:.*\\#{File::SEPARATOR})?"
+            idx += 3
+            next
+          elsif idx + 1 < pattern.size && pattern[idx + 1] == '*'
+            str << ".*"
+            idx += 2
+            next
+          else
+            str << "[^\\#{File::SEPARATOR}]*"
+          end
+        elsif escaped.includes? pattern[idx]
+          str << "\\"
+          str << pattern[idx]
+        elsif pattern[idx] == '?'
+          str << "[^\\#{File::SEPARATOR}]"
+        elsif pattern[idx] == '{'
+          str << "(?:"
+          nest += 1
+        elsif pattern[idx] == '}'
+          str << ")"
+          nest -= 1
+        elsif pattern[idx] == ',' && nest > 0
+          str << "|"
+        else
+          str << pattern[idx]
+        end
+        idx += 1
+      end
+    end
+    return Regex.new("\\A#{regex_pattern}\\z")
+  end
+
+  private def self.scandir(dir_path, rel_path, regex, level, max_level)
+    dir_path_stack = [dir_path]
+    rel_path_stack = [rel_path]
+    level_stack = [level]
+    dir_stack = [] of Dir
+    recurse = true
+    until dir_path_stack.empty?
+      if recurse
+        begin
+          dir = Dir.new(dir_path)
+        rescue e
+          dir_path_stack.pop
+          rel_path_stack.pop
+          level_stack.pop
+          break if dir_path_stack.empty?
+          dir_path = dir_path_stack.last
+          rel_path = rel_path_stack.last
+          level = level_stack.last
+          next
+        ensure
+          recurse = false
+        end
+        dir_stack.push dir
+      end
+      begin
+        f = dir.read if dir
+      rescue e
+        f = nil
+      end
+      if f
+        fullpath = File.join dir_path, f
+        if rel_path.empty?
+          relpath = f
+        else
+          relpath = File.join rel_path, f
+        end
+        begin
+          isdir = Dir.exists?(fullpath) && !File.symlink?(fullpath)
+        rescue e
+          isdir = false
+        end
+        if isdir
+          if f != "." && f != ".." && level < max_level
+            dir_path_stack.push fullpath
+            rel_path_stack.push relpath
+            level_stack.push level + 1
+            dir_path = dir_path_stack.last
+            rel_path = rel_path_stack.last
+            level = level_stack.last
+            recurse = true
+            next
+          end
+        else
+          if level <= max_level || max_level == Int32::MAX
+            yield relpath if relpath =~ regex
+          end
+        end
+      else
+        dir.close if dir
+        dir_path_stack.pop
+        rel_path_stack.pop
+        level_stack.pop
+        dir_stack.pop
+        break if dir_path_stack.empty?
+        dir_path = dir_path_stack.last
+        rel_path = rel_path_stack.last
+        level = level_stack.last
+        dir = dir_stack.last
+      end
+    end
   end
 
   def self.exists?(path)
@@ -292,7 +452,7 @@ class Dir
   end
 
   def self.mkdir(path, mode=0o777)
-    if LibC.mkdir(path, LibC::ModeT.new(mode)) == -1
+    if LibC.mkdir(path, mode) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0

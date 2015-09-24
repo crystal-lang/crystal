@@ -61,7 +61,7 @@ macro parallel(*jobs)
     end
   {% end %}
 
-  {{ jobs.length }}.times { %channel.receive }
+  {{ jobs.size }}.times { %channel.receive }
 
   {
     {% for job, i in jobs %}

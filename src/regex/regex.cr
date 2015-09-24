@@ -224,7 +224,7 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.nil? && studyerrptr
@@ -239,7 +239,7 @@ class Regex
   # Regex.error?("(foo|bar") #=> "missing ) at 8"
   # ```
   def self.error?(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK).value, out errptr, out erroffset, nil)
+    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
     if re
       nil
     else
@@ -434,7 +434,7 @@ class Regex
 
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK).value, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK), ovector, ovector_size)
     if ret > 0
       match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
     else

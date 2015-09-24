@@ -1,6 +1,8 @@
 module HTTP
   # :nodoc:
   abstract class Content
+    include IO
+
     def close
       buffer :: UInt8[1024]
       while read(buffer.to_slice) > 0
@@ -10,8 +12,6 @@ module HTTP
 
   # :nodoc:
   class FixedLengthContent < Content
-    include IO
-
     def initialize(@io, size)
       @remaining = size
     end
@@ -30,8 +30,6 @@ module HTTP
 
   # :nodoc:
   class UnknownLengthContent < Content
-    include IO
-
     def initialize(@io)
     end
 
@@ -46,8 +44,6 @@ module HTTP
 
   # :nodoc:
   class ChunkedContent < Content
-    include IO
-
     def initialize(@io)
       @chunk_remaining = io.gets.not_nil!.to_i(16)
     end

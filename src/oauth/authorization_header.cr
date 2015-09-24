@@ -12,7 +12,7 @@ struct OAuth::AuthorizationHeader
     @str << ", " unless @first
     @str << key
     @str << %(=")
-    CGI.escape value, @str
+    URI.escape value, @str
     @str << '"'
     @first = false
   end

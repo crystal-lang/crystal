@@ -33,6 +33,11 @@ describe "Set" do
       set.includes?(1).should be_true
       set.size.should eq(1)
     end
+
+    it "returns self" do
+      set = Set(Int32).new
+      set.add(1).should eq(set)
+    end
   end
 
   describe "delete" do
@@ -42,6 +47,23 @@ describe "Set" do
       set.size.should eq(2)
       set.includes?(1).should be_true
       set.includes?(3).should be_true
+    end
+
+    it "returns self" do
+      set = Set{1, 2, 3}
+      set.delete(2).should eq(set)
+    end
+  end
+
+  describe "dup" do
+    it "creates an independant copy" do
+      set1 = Set{1, 2, 3}
+      set2 = set1.dup
+
+      set1 << 4
+      set2 << 5
+
+      set2.should eq(Set{1, 2, 3, 5})
     end
   end
 
@@ -54,6 +76,19 @@ describe "Set" do
       set1.should eq(set1)
       set1.should eq(set2)
       set1.should_not eq(set3)
+    end
+  end
+
+  describe "merge" do
+    it "adds all the other elements"do
+      set = Set{1, 4, 8}
+      set.merge [1,9,10]
+      set.should eq(Set{1,4,8,9,10})
+    end
+
+    it "returns self" do
+      set = Set{1, 4, 8}
+      set.merge([1,9,10]).should eq(Set{1,4,8,9,10})
     end
   end
 
@@ -137,6 +172,20 @@ describe "Set" do
     empty_set.subset?(empty_set).should be_true
   end
 
+  it "check proper_subset" do
+    set = Set{1, 2, 3}
+    empty_set = Set(Int32).new
+
+    set.proper_subset?(Set{1, 2, 3, 4}).should be_true
+    set.proper_subset?(Set{1, 2, 3, "4"}).should be_true
+    set.proper_subset?(Set{1, 2, 3}).should be_false
+    set.proper_subset?(Set{1, 2}).should be_false
+    set.proper_subset?(empty_set).should be_false
+
+    empty_set.proper_subset?(Set{1}).should be_true
+    empty_set.proper_subset?(empty_set).should be_false
+  end
+
   it "check superset" do
     set = Set{1, 2, "3"}
     empty_set = Set(Int32).new
@@ -151,7 +200,23 @@ describe "Set" do
     empty_set.superset?(empty_set).should be_true
   end
 
+  it "check proper_superset" do
+    set = Set{1, 2, "3"}
+    empty_set = Set(Int32).new
+
+    set.proper_superset?(empty_set).should be_true
+    set.proper_superset?(Set{1, 2}).should be_true
+    set.proper_superset?(Set{1, 2, "3"}).should be_false
+    set.proper_superset?(Set{1, 2, 3}).should be_false
+    set.proper_superset?(Set{1, 2, 3, 4}).should be_false
+    set.proper_superset?(Set{1, 4}).should be_false
+
+    empty_set.proper_superset?(empty_set).should be_false
+  end
+
   it "has object_id" do
     Set(Int32).new.object_id.should be > 0
   end
+
+  typeof(Set(Int32).new(initial_capacity: 1234))
 end

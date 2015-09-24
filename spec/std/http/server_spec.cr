@@ -10,6 +10,7 @@ module HTTP
     Server.new(8080, [
         ErrorHandler.new,
         LogHandler.new,
+        DeflateHandler.new,
         StaticFileHandler.new("."),
       ]
       ).listen

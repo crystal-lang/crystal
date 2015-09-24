@@ -149,11 +149,13 @@ XML
   end
 
   it "handles errors" do
-    expect_raises(XML::Error, "Premature end of data in tag people line 2") do
-      XML.parse(%(
-        <people>
-        ))
-    end
+    xml = XML.parse(%(<people>))
+    xml.root.not_nil!.name.should eq("people")
+    errors = xml.errors.not_nil!
+    errors.size.should eq(1)
+    errors[0].message.should eq("Premature end of data in tag people line 1")
+    errors[0].line_number.should eq(1)
+    errors[0].to_s.should eq("Premature end of data in tag people line 1")
   end
 
   it "gets root namespaces scopes" do
@@ -189,5 +191,28 @@ XML
     string = %(<?xml version="1.0"?><root>#{content}</root>)
     parsed = XML.parse(StringIO.new(string))
     parsed.root.not_nil!.children[0].text.should eq(content)
+  end
+
+  it "sets node text/content" do
+    doc = XML.parse(%(\
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      ))
+    root = doc.root.not_nil!
+    root.text = "Peter"
+    root.text.should eq("Peter")
+
+    root.content = "Foo"
+    root.content.should eq("Foo")
+  end
+
+  it "sets node name" do
+    doc = XML.parse(%(\
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      ))
+    root = doc.root.not_nil!
+    root.name = "last-name"
+    root.name.should eq("last-name")
   end
 end

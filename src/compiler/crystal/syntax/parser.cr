@@ -508,10 +508,11 @@ module Crystal
       column_number = @token.column_number
       case token_type = @token.type
       when :"!", :"+", :"-", :"~"
+        location = @token.location
         next_token_skip_space_or_newline
         check_void_expression_keyword
         arg = parse_prefix
-        Call.new(arg, token_type.to_s, name_column_number: column_number).at_end(arg)
+        Call.new(arg, token_type.to_s, name_column_number: column_number).at(location).at_end(arg)
       else
         parse_pow
       end
@@ -2343,6 +2344,17 @@ module Crystal
             end
           end
           return macro_if
+        when :begin
+          next_token_skip_space
+          check :"%}"
+
+          body, end_location = parse_macro_body(start_line, start_column, macro_state)
+
+          check_ident :end
+          next_token_skip_space
+          check :"%}"
+
+          return MacroIf.new(BoolLiteral.new(true), body)
         when :else, :elsif, :end
           return nil
         end
@@ -2976,7 +2988,7 @@ module Crystal
       end
 
       call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do
-        parse_call_args stop_on_do_after_space: !@last_call_has_parenthesis
+        parse_call_args stop_on_do_after_space: (is_var || !@last_call_has_parenthesis)
       end
       if call_args
         args = call_args.args

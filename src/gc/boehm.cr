@@ -45,17 +45,17 @@ end
 
 # :nodoc:
 fun __crystal_malloc(size : UInt32) : Void*
-  LibGC.malloc(LibC::SizeT.new(size))
+  LibGC.malloc(size)
 end
 
 # :nodoc:
 fun __crystal_malloc_atomic(size : UInt32) : Void*
-  LibGC.malloc_atomic(LibC::SizeT.new(size))
+  LibGC.malloc_atomic(size)
 end
 
 # :nodoc:
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  LibGC.realloc(ptr, LibC::SizeT.new(size))
+  LibGC.realloc(ptr, size)
 end
 
 module GC

@@ -132,21 +132,22 @@ describe Process do
 
   describe "kill" do
     it "kills a process" do
-      pid = fork { loop {} }
-      Process.kill(Signal::KILL, pid).should eq(0)
+      process = fork { loop {} }
+      process.kill(Signal::KILL).should be_nil
     end
 
     it "kills many process" do
-      pid1 = fork { loop {} }
-      pid2 = fork { loop {} }
-      Process.kill(Signal::KILL, pid1, pid2).should eq(0)
+      process1 = fork { loop {} }
+      process2 = fork { loop {} }
+      process1.kill(Signal::KILL).should be_nil
+      process2.kill(Signal::KILL).should be_nil
     end
   end
 
   it "gets the pgid of a process id" do
-    pid = fork { loop {} }
-    Process.getpgid(pid).should be_a(Int32)
-    Process.kill(Signal::KILL, pid)
+    process = fork { loop {} }
+    Process.getpgid(process.pid).should be_a(Int32)
+    process.kill(Signal::KILL)
   end
 
   it "can link processes together" do

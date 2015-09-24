@@ -1,101 +1,100 @@
-ifdef darwin
-  lib Unwind
-    type Cursor = LibC::SizeT[140]
-    type Context = LibC::SizeT[128]
-
-    REG_IP = -1
-
-    fun get_context = unw_getcontext(context : Context*) : Int32
-    fun init_local = unw_init_local(cursor : Cursor*, context : Context*) : Int32
-    fun step = unw_step(cursor : Cursor*) : Int32
-    fun get_reg = unw_get_reg(cursor : Cursor*, regnum : Int32, reg : LibC::SizeT*) : Int32
-    fun get_proc_name = unw_get_proc_name(cursor : Cursor*, name : UInt8*, size : Int32, offset : LibC::SizeT*) : Int32
-  end
-elsif linux
-  ifdef x86_64
-    @[Link("unwind")]
-    lib Unwind
-      type Cursor = LibC::SizeT[140]
-      type Context = LibC::SizeT[128]
-
-      REG_IP = -1
-
-      fun get_context = _Ux86_64_getcontext(context : Context*) : Int32
-      fun init_local = _ULx86_64_init_local(cursor : Cursor*, context : Context*) : Int32
-      fun step = _ULx86_64_step(cursor : Cursor*) : Int32
-      fun get_reg = _ULx86_64_get_reg(cursor : Cursor*, regnum : Int32, reg : LibC::SizeT*) : Int32
-      fun get_proc_name = _ULx86_64_get_proc_name(cursor : Cursor*, name : UInt8*, size : Int32, offset : LibC::SizeT*) : Int32
-    end
-  else
-    @[Link("unwind")]
-    lib Unwind
-      type Cursor = LibC::SizeT[127]
-      type Context = LibC::SizeT[87]
-
-      REG_IP = -1
-
-      fun get_context = getcontext(context : Context*) : Int32
-      fun init_local = _ULx86_init_local(cursor : Cursor*, context : Context*) : Int32
-      fun step = _ULx86_step(cursor : Cursor*) : Int32
-      fun get_reg = _ULx86_get_reg(cursor : Cursor*, regnum : Int32, reg : LibC::SizeT*) : Int32
-      fun get_proc_name = _ULx86_get_proc_name(cursor : Cursor*, name : UInt8*, size : Int32, offset : LibC::SizeT*) : Int32
-    end
-  end
-end
+require "unwind"
+require "dl"
 
 def caller
-  cursor :: Unwind::Cursor
-  context :: Unwind::Context
+  CallStack.new.printable_backtrace
+end
 
-  cursor_ptr = pointerof(cursor)
-  context_ptr = pointerof(context)
+# :nodoc:
+struct CallStack
+  def initialize
+    @callstack = CallStack.unwind
+  end
 
-  Unwind.get_context(context_ptr)
-  Unwind.init_local(cursor_ptr, context_ptr)
-  fname_size = 64
-  fname_buffer = Pointer(UInt8).malloc(fname_size)
+  def printable_backtrace
+    @backtrace ||= decode_backtrace
+  end
 
-  backtrace = [] of String
-  while Unwind.step(cursor_ptr) > 0
-    Unwind.get_reg(cursor_ptr, Unwind::REG_IP, out pc)
-    while true
-      Unwind.get_proc_name(cursor_ptr, fname_buffer, fname_size, out offset)
-      fname = String.new(fname_buffer)
-      break if fname.size < fname_size - 1
+  # This is only used for the workaround described in `Exception.callstack`
+  protected def self.makecontext_range
+    @@makecontext_range ||= begin
+      makecontext_start = makecontext_end = LibDL.dlsym(LibDL::RTLD_DEFAULT, "makecontext")
 
-      fname_size += 64
-      fname_buffer = fname_buffer.realloc(fname_size)
-    end
-    backtrace << "#{fname} +#{offset} [#{pc}]"
-    ifdef i686
-      # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
-      # The unwind info is corrupted when `makecontext` is used.
-      # Stop the backtrace here. There is nothing interest beyond this point anyway.
-      break if fname == "makecontext"
+      while true
+        ret = LibDL.dladdr(makecontext_end, out info)
+        break if ret == 0 || info.sname.nil?
+        break unless LibC.strcmp(info.sname, "makecontext") == 0
+        makecontext_end += 1
+      end
+
+      (makecontext_start...makecontext_end)
     end
   end
-  backtrace
+
+  protected def self.unwind
+    callstack = [] of Void*
+    backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+      bt = data as typeof(callstack)
+      ip = Pointer(Void).new(LibUnwind.get_ip(context))
+      bt << ip
+
+      ifdef i686
+        # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
+        # The unwind info is corrupted when `makecontext` is used.
+        # Stop the backtrace here. There is nothing interest beyond this point anyway.
+        if CallStack.makecontext_range.includes?(ip)
+          return LibUnwind::ReasonCode::END_OF_STACK
+        end
+      end
+
+      LibUnwind::ReasonCode::NO_REASON
+    end
+
+    LibUnwind.backtrace(backtrace_fn, callstack as Void*)
+    callstack
+  end
+
+  private def decode_backtrace
+    backtrace = Array(String).new(@callstack.size)
+    @callstack.each do |ip|
+      frame = CallStack.decode_frame(ip)
+      if frame
+        offset, sname = frame
+        backtrace << "[#{ip.address}] #{sname} +#{offset}"
+      else
+        backtrace << "[#{ip.address}] ???"
+      end
+    end
+    backtrace
+  end
+
+  protected def self.decode_frame(ip, original_ip = ip)
+    if LibDL.dladdr(ip, out info) != 0
+      offset = original_ip - info.saddr
+
+      if offset == 0
+        return decode_frame(ip - 1, original_ip)
+      end
+
+      unless info.sname.nil?
+        {offset, String.new(info.sname)}
+      end
+    end
+  end
 end
 
 class Exception
   getter message
   getter cause
-  getter backtrace
 
   def initialize(message = nil : String?, cause = nil : Exception?)
     @message = message
     @cause = cause
-    @backtrace = caller
+    @callstack = CallStack.new
   end
 
   def backtrace
-    backtrace = @backtrace
-    ifdef linux
-      backtrace = backtrace.map do |frame|
-        Exception.unescape_linux_backtrace_frame(frame)
-      end
-    end
-    backtrace
+    @callstack.printable_backtrace
   end
 
   def to_s(io : IO)
@@ -116,15 +115,6 @@ class Exception
       io.puts frame
     end
     io.flush
-  end
-
-  def self.unescape_linux_backtrace_frame(frame)
-    frame.gsub(/_(\d|A|B|C|D|E|F)(\d|A|B|C|D|E|F)_/) do |match|
-      first = match[1].to_i(16) * 16
-      second = match[2].to_i(16)
-      value = first + second
-      value.chr
-    end
   end
 end
 

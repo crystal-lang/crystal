@@ -32,12 +32,12 @@ module Crystal
     end
 
     def visit(node : FunPointer)
-      node.call.try &.accept self
+      node.call?.try &.accept self
       false
     end
 
     def end_visit(node : FunPointer)
-      unless node.type?
+      if !node.type? && node.call?
         arg_types = node.call.args.map &.type
         arg_types.push @mod.no_return
         node.type = node.call.type = @mod.fun_of(arg_types)

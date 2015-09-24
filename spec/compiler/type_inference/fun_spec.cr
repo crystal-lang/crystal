@@ -790,4 +790,15 @@ describe "Type inference: fun" do
       foo
       )) { int32 }
   end
+
+  it "doesn't crash on constant to fun pointer" do
+    assert_type(%(
+      lib LibC
+        fun foo
+      end
+
+      FOO = ->LibC.foo
+      1
+      )) { int32 }
+  end
 end

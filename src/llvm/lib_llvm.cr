@@ -159,6 +159,7 @@ lib LibLLVM
   fun md_node = LLVMMDNode(values : ValueRef*, count : Int32) : ValueRef
   fun md_string = LLVMMDString(str : UInt8*, length : Int32) : ValueRef
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : UInt8*) : ModuleRef
+  fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
   fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
   fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
   fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)
@@ -240,4 +241,14 @@ lib LibLLVM
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
+  fun create_context = LLVMContextCreate : ContextRef
+  fun dispose_module = LLVMDisposeModule(ModuleRef)
+  fun dispose_builder = LLVMDisposeBuilder(BuilderRef)
+  fun dispose_target_machine = LLVMDisposeTargetMachine(TargetMachineRef)
+  fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
+  fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
+  fun dispose_context = LLVMContextDispose(ContextRef)
+  fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
+  fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
+  fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
 end

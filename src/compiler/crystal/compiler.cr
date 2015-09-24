@@ -64,6 +64,8 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
 
+      @link_flags = "#{@link_flags} -rdynamic"
+
       node, original_node = parse program, sources
       node = infer_type program, node
       codegen program, node, sources, output_filename unless @no_codegen
@@ -212,6 +214,11 @@ module Crystal
         end
       end
 
+      # We check again because maybe this directory was created in between (maybe with a macro run)
+      if Dir.exists?(output_filename)
+        error "can't use `#{output_filename}` as output filename because it's a directory"
+      end
+
       timing("Codegen (clang)") do
         system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
       end
@@ -291,10 +298,12 @@ module Crystal
 
       success = ::system(command, args)
       unless success
-        print colorize("Error: ").red.bold
-        puts colorize("execution of command failed with code: #{$?.exit_code}: `#{command}`").bright
-        exit $?.exit_code
+        error "execution of command failed with code: #{$?.exit_code}: `#{command}`", exit_code: $?.exit_code
       end
+    end
+
+    private def error(msg, exit_code = 1)
+      Crystal.error msg, @color, exit_code
     end
 
     private def timing(label)
@@ -406,6 +415,12 @@ module Crystal
         "#{@output_dir}/#{@name}.ll"
       end
     end
+  end
+
+  def self.error(msg, color, exit_code = 1)
+    STDERR.print "Error: ".colorize.toggle(color).red.bold
+    STDERR.puts msg.colorize.toggle(color).bright
+    exit exit_code
   end
 
   def self.relative_filename(filename : String)

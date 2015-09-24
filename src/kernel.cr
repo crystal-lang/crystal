@@ -32,19 +32,19 @@ def read_line(*args)
   STDIN.read_line(*args)
 end
 
-# Prints objects to STDIN. See `IO#print`.
+# Prints objects to STDOUT. See `IO#print`.
 def print(*objects : _)
   STDOUT.print *objects
 end
 
-# Prints objects to STDIN and then invokes `STDIN.flush`. See `IO#print`.
+# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
 def print!(*objects : _)
   print *objects
   STDOUT.flush
   nil
 end
 
-# Prints a formatted string to STDIN. See `IO#printf`.
+# Prints a formatted string to STDOUT. See `IO#printf`.
 def printf(format_string, *args)
   printf format_string, args
 end

@@ -26,6 +26,28 @@
 #
 # For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
 struct Pointer(T)
+  # Unsafe wrapper around a `Pointer` that allows to write values to
+  # it while advancing Athe location and keeping track of how many elements
+  # where written. See `Pointer#appender`
+  struct Appender(T)
+    def initialize(@pointer : Pointer(T))
+      @start = @pointer
+    end
+
+    def <<(value : T)
+      @pointer.value = value
+      @pointer += 1
+    end
+
+    def size
+      @pointer - @start
+    end
+
+    def pointer
+      @pointer
+    end
+  end
+
   include Comparable(self)
 
   # Returns true if this pointer's address is zero.
@@ -240,7 +262,7 @@ struct Pointer(T)
   # ptr1.memcmp(ptr1, 4) #=> 0
   # ```
   def memcmp(other : Pointer(T), count : Int)
-    LibC.memcmp(self as Void*, (other as Void*), LibC::SizeT.new(count * sizeof(T)))
+    LibC.memcmp(self as Void*, (other as Void*), (count * sizeof(T)))
   end
 
   # Swaps the contents pointed at the offsets `i` and `j`.
@@ -422,9 +444,9 @@ struct Pointer(T)
     ptr
   end
 
-  # Returns a `PointerAppender` for this pointer.
+  # Returns a `Pointer::Appender` for this pointer.
   def appender
-    PointerAppender.new(self)
+    Pointer::Appender.new(self)
   end
 
   # Returns a `Slice` that points to this pointer and is bounded by the given *size*.
@@ -448,24 +470,5 @@ struct Pointer(T)
   def clear(count = 1)
     ptr = self as Pointer(Void)
     Intrinsics.memset(self as Void*, 0_u8, (count * sizeof(T)).to_u32, 0_u32, false)
-  end
-end
-
-struct PointerAppender(T)
-  def initialize(@pointer : Pointer(T))
-    @start = @pointer
-  end
-
-  def <<(value : T)
-    @pointer.value = value
-    @pointer += 1
-  end
-
-  def size
-    @pointer - @start
-  end
-
-  def pointer
-    @pointer
   end
 end

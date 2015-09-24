@@ -1,4 +1,4 @@
-struct LLVM::TargetMachine
+class LLVM::TargetMachine
   def initialize(@unwrap)
   end
 
@@ -14,9 +14,7 @@ struct LLVM::TargetMachine
 
   def triple
     triple_c = LibLLVM.get_target_machine_triple(self)
-    triple = String.new(triple_c)
-    LibLLVM.dispose_message(triple_c)
-    triple
+    LLVM.string_and_dispose(triple_c)
   end
 
   def emit_obj_to_file(llvm_mod, filename)
@@ -30,7 +28,7 @@ struct LLVM::TargetMachine
   private def emit_to_file(llvm_mod, filename, type)
     status = LibLLVM.target_machine_emit_to_file(self, llvm_mod, filename, type, out error_msg)
     unless status == 0
-      raise String.new(error_msg)
+      raise LLVM.string_and_dispose(error_msg)
     end
     true
   end
@@ -49,5 +47,9 @@ struct LLVM::TargetMachine
 
   def to_unsafe
     @unwrap
+  end
+
+  def finalize
+    LibLLVM.dispose_target_machine(@unwrap)
   end
 end

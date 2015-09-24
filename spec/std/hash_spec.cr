@@ -586,4 +586,9 @@ describe "Hash" do
       result.should eq("bdf")
     end
   end
+
+  # Check that Hash can be created with an initial capacity
+  typeof(Hash(Int32, Int32).new(initial_capacity: 1234))
+  typeof(Hash(Int32, Int32).new(0, initial_capacity: 1234))
+  typeof(Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 0 })
 end

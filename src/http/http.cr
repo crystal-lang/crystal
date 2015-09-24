@@ -1,2 +1,2 @@
+require "uri"
 require "./**"
-

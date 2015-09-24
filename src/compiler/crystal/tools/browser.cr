@@ -12,7 +12,7 @@ class Crystal::Browser
     while true
       server.accept do |sock|
         if request = HTTP::Request.from_io(sock)
-          html = browser.handle(request.path)
+          html = browser.handle(request.path.not_nil!)
 
           response = HTTP::Response.new(200, html, HTTP::Headers{"Content-Type": "text/html"})
           response.to_io sock

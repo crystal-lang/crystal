@@ -320,4 +320,69 @@ describe "Code gen: struct" do
       f.@x
       )).to_i.should eq(123)
   end
+
+  it "automatically converts numeric type in struct field assignment" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = 123_u8
+      foo.x
+      )).to_i.should eq(123)
+  end
+
+  it "automatically converts numeric union type in struct field assignment" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int8
+        end
+      end
+
+      a = 12345 || 12346_u16
+
+      foo = LibFoo::Foo.new
+      foo.x = a
+      foo.x
+      )).to_i.should eq(57)
+  end
+
+  it "automatically converts nil to pointer" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32*
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Pointer(Int32).new(1234_u64)
+      foo.x = nil
+      foo.x.address
+      )).to_i.should eq(0)
+  end
+
+  it "automatically converts by invoking to_unsafe" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+      end
+
+      class Foo
+        def to_unsafe
+          123
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Foo.new
+      foo.x
+      )).to_i.should eq(123)
+  end
 end

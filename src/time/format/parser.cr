@@ -4,7 +4,7 @@ struct Time::Format
     include Pattern
 
     def initialize(string)
-      @reader = CharReader.new(string)
+      @reader = Char::Reader.new(string)
       @year = 1
       @month = 1
       @day = 1

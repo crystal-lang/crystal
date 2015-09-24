@@ -28,6 +28,8 @@ module Crystal
       if the_type && the_type.is_a?(Type)
         @type = the_type.remove_alias_if_simple
       else
+        TypeLookup.check_cant_infer_generic_type_parameter(@root, node)
+
         node.raise("undefined constant #{node}")
       end
     end
@@ -117,6 +119,15 @@ module Crystal
 
     def visit(node : Underscore)
       node.raise "can't use underscore as generic type argument"
+    end
+
+    def self.check_cant_infer_generic_type_parameter(scope, node : Path)
+      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
+        first_name = node.names.first
+        if instance_type.type_vars.includes?(first_name)
+          node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
+        end
+      end
     end
   end
 

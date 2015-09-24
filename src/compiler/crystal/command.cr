@@ -476,6 +476,10 @@ USAGE
     output_filename ||= original_output_filename
     output_format ||= "text"
 
+    if !no_codegen && Dir.exists?(output_filename)
+      error "can't use `#{output_filename}` as output filename because it's a directory"
+    end
+
     @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
@@ -508,13 +512,6 @@ USAGE
   private def error(msg)
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color")
-
-    STDERR.print colorize("Error: ").red.bold
-    STDERR.puts colorize(msg).toggle(@color).bold
-    exit 1
-  end
-
-  private def colorize(obj)
-    obj.colorize.toggle(@color)
+    Crystal.error msg, @color
   end
 end

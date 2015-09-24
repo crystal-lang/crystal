@@ -16,7 +16,7 @@ lib LibReadline
 end
 
 private def malloc_match(match)
-  match_ptr = LibC.malloc(LibC::SizeT.new(match.bytesize) + 1) as UInt8*
+  match_ptr = LibC.malloc(match.bytesize + 1) as UInt8*
   match_ptr.copy_from(match.to_unsafe, match.bytesize)
   match_ptr[match.bytesize] = 0_u8
   match_ptr
@@ -68,14 +68,14 @@ module Readline
     handlers[c.ord] = f
     @@key_bind_handlers = handlers
 
-    res = LibReadline.rl_bind_key(LibReadline::Int.new(c.ord), KeyBindingHandler).to_i32
+    res = LibReadline.rl_bind_key(c.ord, KeyBindingHandler).to_i32
     raise ArgumentError.new "invalid key: '#{c.inspect}'" unless res == 0
   end
 
   def unbind_key(c : Char)
     if (handlers = @@key_bind_handlers) && handlers[c.ord]?
       handlers.delete(c.ord)
-      res = LibReadline.rl_unbind_key(LibReadline::Int.new(c.ord)).to_i32
+      res = LibReadline.rl_unbind_key(c.ord).to_i32
       raise Exception.new "error unbinding key: '#{c.inspect}'" unless res == 0
     else
       raise KeyError.new "key not bound: '#{c.inspect}'"
@@ -83,7 +83,7 @@ module Readline
   end
 
   def done
-    LibReadline.rl_done != LibReadline::Int.new(0)
+    LibReadline.rl_done != 0
   end
 
   def done=(val : Bool)
@@ -92,8 +92,8 @@ module Readline
 
   # :nodoc:
   def common_prefix_bytesize(str1 : String, str2 : String)
-    r1 = CharReader.new str1
-    r2 = CharReader.new str2
+    r1 = Char::Reader.new str1
+    r2 = Char::Reader.new str2
 
     while r1.has_next? && r2.has_next?
       break if r1.current_char != r2.current_char
@@ -129,7 +129,7 @@ module Readline
 
     # We *must* to create the results using malloc (readline later frees that).
     # We create an extra result for the first element.
-    result = LibC.malloc(LibC::SizeT.new(sizeof(UInt8*)) * (matches.size + 2)) as UInt8**
+    result = LibC.malloc(sizeof(UInt8*) * (matches.size + 2)) as UInt8**
     matches.each_with_index do |match, i|
       result[i + 1] = malloc_match(match)
     end

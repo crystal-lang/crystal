@@ -9,7 +9,7 @@ class OAuth::RequestToken
     token = nil
     secret = nil
 
-    CGI.parse(response) do |key, value|
+    HTTP::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value

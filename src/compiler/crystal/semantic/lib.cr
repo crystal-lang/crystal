@@ -76,8 +76,8 @@ class Crystal::Call
         self_arg_type = self_arg.type?
         if self_arg_type
           unless self_arg_type.nil_type? || self_arg_type.primitive_like?
-            implicit_call = try_to_unsafe(self_arg) do |ex|
-              if to_unsafe_lookup_failed?(ex)
+            implicit_call = Conversions.try_to_unsafe(self_arg.clone, parent_visitor) do |ex|
+              if Conversions.to_unsafe_lookup_failed?(ex)
                 self_arg.raise "argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
               else
                 self_arg.raise ex.message, ex
@@ -116,8 +116,8 @@ class Crystal::Call
       return if convert_numeric_argument self_arg, unaliased_type, expected_type, actual_type, index
     end
 
-    implicit_call = try_to_unsafe(self_arg) do |ex|
-      if to_unsafe_lookup_failed?(ex)
+    implicit_call = Conversions.try_to_unsafe(self_arg.clone, parent_visitor) do |ex|
+      if Conversions.to_unsafe_lookup_failed?(ex)
         arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{index + 1}"
 
         if expected_type.is_a?(FunInstanceType) &&
@@ -149,20 +149,6 @@ class Crystal::Call
     args.find(&.is_a?(Out)).try &.raise "out can only be used with lib funs"
   end
 
-  def to_unsafe_lookup_failed?(ex)
-    ex.message.try(&.includes?("undefined method 'to_unsafe'")) || ex.message.try(&.includes?("has no field 'to_unsafe'"))
-  end
-
-  def try_to_unsafe(self_arg)
-    implicit_call = Call.new(self_arg.clone, "to_unsafe")
-    begin
-      implicit_call.accept parent_visitor
-    rescue ex : TypeException
-      yield ex
-    end
-    implicit_call
-  end
-
   def convert_numeric_argument(self_arg, unaliased_type, expected_type, actual_type, index)
     if self_arg.is_a?(NumberLiteral)
       # TODO: check that the number literal fits, error otherwise
@@ -178,22 +164,8 @@ class Crystal::Call
       return true
     end
 
-    convert_call_name = "to_#{unaliased_type.kind}"
-    convert_call = Call.new(self_arg.clone, convert_call_name).at(self_arg)
-
-    begin
-      convert_call.accept parent_visitor
-    rescue ex : Crystal::Exception
-      if ex.message.try(&.includes?("undefined method '#{convert_call_name}'")) || ex.message.try(&.includes?("has no field '#{convert_call_name}'"))
-        return false
-      end
-
-      self_arg.raise "converting from #{actual_type} to #{expected_type} by invoking '#{convert_call_name}'", ex
-    end
-
-    if convert_call.type? != unaliased_type
-      self_arg.raise "invoked '#{convert_call_name}' to convert from #{actual_type} to #{expected_type}, but got #{convert_call.type?}"
-    end
+    convert_call = Conversions.numeric_argument(self_arg, self_arg.clone, parent_visitor, unaliased_type, expected_type, actual_type)
+    return false unless convert_call
 
     self.args[index] = convert_call
     true

@@ -16,6 +16,10 @@ module LLVM::ValueMethods
     LibLLVM.add_attribute self, attribute
   end
 
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
+    LibLLVM.add_instr_attribute(self, index, attribute)
+  end
+
   def attributes
     LibLLVM.get_attribute(self)
   end

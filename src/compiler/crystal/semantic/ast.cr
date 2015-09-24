@@ -650,6 +650,10 @@ module Crystal
     property :expanded
   end
 
+  class Primitive
+    property :extra
+  end
+
   class NilReason
     getter name
     getter reason

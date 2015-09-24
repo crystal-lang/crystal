@@ -14,6 +14,8 @@ module Crystal
         interpret_argless_method("id", args) { MacroId.new(to_macro_id) }
       when "stringify"
         interpret_argless_method("stringify", args) { stringify }
+      when "symbolize"
+        interpret_argless_method("symbolize", args) { symbolize }
       when "class_name"
         interpret_argless_method("class_name", args) { class_name }
       when "raise"
@@ -58,6 +60,10 @@ module Crystal
 
     def stringify
       StringLiteral.new(to_s)
+    end
+
+    def symbolize
+      SymbolLiteral.new(to_s)
     end
 
     def class_name
@@ -303,7 +309,7 @@ module Crystal
         end
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
         interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
@@ -437,7 +443,7 @@ module Crystal
         end
       when "last"
         interpret_argless_method(method, args) { elements.last? || NilLiteral.new }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(elements.size) }
       when "map"
         interpret_argless_method(method, args) do
@@ -514,7 +520,7 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
       when "keys"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.key }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(entries.size) }
       when "to_a"
         interpret_argless_method(method, args) do
@@ -558,7 +564,7 @@ module Crystal
       case method
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(elements.size) }
       when "[]"
         case args.size
@@ -702,7 +708,7 @@ module Crystal
   class MacroId
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name"
+      when "==", "!=", "stringify", "class_name", "symbolize"
         return super
       end
 
@@ -721,7 +727,7 @@ module Crystal
   class SymbolLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name"
+      when "==", "!=", "stringify", "class_name", "symbolize"
         return super
       end
 
@@ -770,7 +776,7 @@ module Crystal
           end
           BoolLiteral.new(type.has_attribute?(value))
         end
-      when "size", "length" # TODO: remove length after 0.7.7
+      when "size"
         interpret_argless_method(method, args) do
           type = type.instance_type
           if type.is_a?(TupleInstanceType)
