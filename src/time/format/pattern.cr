@@ -63,14 +63,12 @@ struct Time::Format
           twenty_four_hour_time
         when 'S'
           second
-        when 'T'
+        when 'T', 'X'
           twenty_four_hour_time_with_seconds
         when 'u'
           day_of_week_monday_1_7
         when 'w'
           day_of_week_sunday_0_6
-        when 'X'
-          twenty_four_hour_time_with_seconds
         when 'y'
           year_modulo_100
         when 'Y'
