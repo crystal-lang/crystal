@@ -106,6 +106,132 @@ describe "Set" do
     set3.should eq(Set{1, 2, 3, 4, 5, "3"})
   end
 
+  it "does -" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = Set{2, 4, 6}
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 5})
+  end
+
+  it "does -" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = Set{2, 4, 'a'}
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 5})
+  end
+
+  it "does -" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = Set{2, 4, 5}
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 'b'})
+  end
+
+  it "does -" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = [2, 4, 6]
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 5})
+  end
+
+  it "does -" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = [2, 4, 'a']
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 5})
+  end
+
+  it "does -" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = [2, 4, 5]
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 'b'})
+  end
+
+  it "does ^" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = Set{2, 4, 6}
+    set3 = set1 ^ set2
+    set3.should eq(Set{1, 3, 5, 6})
+  end
+
+  it "does ^" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = Set{2, 4, 'a'}
+    set3 = set1 ^ set2
+    set3.should eq(Set{1, 3, 5, 'a'})
+  end
+
+  it "does ^" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = Set{2, 4, 5}
+    set3 = set1 ^ set2
+    set3.should eq(Set{1, 3, 5, 'b'})
+  end
+
+  it "does ^" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = [2, 4, 6]
+    set3 = set1 ^ set2
+    set3.should eq(Set{1, 3, 5, 6})
+  end
+
+  it "does ^" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = [2, 4, 'a']
+    set3 = set1 ^ set2
+    set3.should eq(Set{1, 3, 5, 'a'})
+  end
+
+  it "does ^" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = [2, 4, 5]
+    set3 = set1 ^ set2
+    set3.should eq(Set{1, 3, 5, 'b'})
+  end
+
+  it "does subtract" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = Set{2, 4, 6}
+    set1.subtract set2
+    set1.should eq(Set{1, 3, 5})
+  end
+
+  it "does subtract" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = Set{2, 4, 'a'}
+    set1.subtract set2
+    set1.should eq(Set{1, 3, 5})
+  end
+
+  it "does subtract" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = Set{2, 4, 5}
+    set1.subtract set2
+    set1.should eq(Set{1, 3, 'b'})
+  end
+
+  it "does subtract" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = [2, 4, 6]
+    set1.subtract set2
+    set1.should eq(Set{1, 3, 5})
+  end
+
+  it "does subtract" do
+    set1 = Set{1, 2, 3, 4, 5}
+    set2 = [2, 4, 'a']
+    set1.subtract set2
+    set1.should eq(Set{1, 3, 5})
+  end
+
+  it "does subtract" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = [2, 4, 5]
+    set1.subtract set2
+    set1.should eq(Set{1, 3, 'b'})
+  end
+
   it "does to_a" do
     Set{1, 2, 3}.to_a.should eq([1, 2, 3])
   end

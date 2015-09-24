@@ -155,6 +155,73 @@ struct Set(T)
     set
   end
 
+  # Difference: returns a new set containing elements in this set that are not
+  # present in the other.
+  #
+  #     Set.new([1,2,3,4,5]) - Set.new([2,4])               #=> Set{1, 3, 5}
+  #     Set.new(['a','b','b','z']) - Set.new(['a','b','c']) #=> Set{'z'}
+  def -(other : Set)
+    set = Set(T).new
+    each do |value|
+      set.add value unless other.includes?(value)
+    end
+    set
+  end
+
+  # Difference: returns a new set containing elements in this set that are not
+  # present in the other enumerable.
+  #
+  #     Set.new([1,2,3,4,5]) - [2,4]               #=> Set{1, 3, 5}
+  #     Set.new(['a','b','b','z']) - ['a','b','c'] #=> Set{'z'}
+  def -(other : Enumerable)
+    dup.subtract other
+  end
+
+  # Symmetric Difference: returns a new set `(self - other) | (other - self)`.
+  # Equivalently, returns `(self | other) - (self & other)`.
+  #
+  #     Set.new([1,2,3,4,5]) ^ Set.new([2,4,6])             #=> Set{1, 3, 5, 6}
+  #     Set.new(['a','b','b','z']) ^ Set.new(['a','b','c']) #=> Set{'z', 'c'}
+  def ^(other : Set(U))
+    set = Set(T | U).new
+    each do |value|
+      set.add value unless other.includes?(value)
+    end
+    other.each do |value|
+      set.add value unless includes?(value)
+    end
+    set
+  end
+
+  # Symmetric Difference: returns a new set `(self - other) | (other - self)`.
+  # Equivalently, returns `(self | other) - (self & other)`.
+  #
+  #     Set.new([1,2,3,4,5]) ^ [2,4,6]             #=> Set{1, 3, 5, 6}
+  #     Set.new(['a','b','b','z']) ^ ['a','b','c'] #=> Set{'z', 'c'}
+  def ^(other : Enumerable(U))
+    set = Set(T | U).new.merge(self)
+    other.each do |value|
+      if includes?(value)
+        set.delete value
+      else
+        set.add value
+      end
+    end
+    set
+  end
+
+  # Returns `self` after removing from it those elements that are present in
+  # the given enumerable.
+  #
+  #     Set.new(['a','b','b','z']).subtract Set.new(['a','b','c']) #=> Set{'z'}
+  #     Set.new([1,2,3,4,5]).subtract [2,4,6] #=> Set{1, 3, 5}
+  def subtract(other : Enumerable)
+    other.each do |value|
+      delete value
+    end
+    self
+  end
+
   # Returns `true` if both sets have the same elements
   #
   #     Set.new([1,5]) == Set.new([1,5]) # => true
