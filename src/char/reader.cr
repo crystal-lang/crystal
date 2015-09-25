@@ -1,16 +1,16 @@
-# A Char::Reader allows iterating a String by Chars.
-#
-# As soon as you instantiate a Char::Reader it will decode the first
-# char in the String, which can be accesed by invoking `current_char`.
-# At this point `pos`, the current position in the string, will equal zero.
-# Successive calls to `next_char` return the next chars in the string,
-# advancing `pos`.
-#
-# Note that the null character '\0' will be returned in `current_char` when
-# the end is reached (as well as when the string is empty). Thus, `has_next?`
-# will return `false` only when `pos` is equal to the string's bytesize, in which
-# case `current_char` will always be '\0'.
 struct Char
+  # A Char::Reader allows iterating a String by Chars.
+  #
+  # As soon as you instantiate a Char::Reader it will decode the first
+  # char in the String, which can be accesed by invoking `current_char`.
+  # At this point `pos`, the current position in the string, will equal zero.
+  # Successive calls to `next_char` return the next chars in the string,
+  # advancing `pos`.
+  #
+  # Note that the null character '\0' will be returned in `current_char` when
+  # the end is reached (as well as when the string is empty). Thus, `has_next?`
+  # will return `false` only when `pos` is equal to the string's bytesize, in which
+  # case `current_char` will always be '\0'.
   struct Reader
     include Enumerable(Char)
 
