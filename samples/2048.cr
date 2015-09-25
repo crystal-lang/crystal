@@ -37,7 +37,8 @@ module Screen
 
   def self.read_keypress
     STDIN.raw do |io|
-      input = io.read 1
+      input = io.gets 1
+      return :unknown unless input
       if input == "\e"
         next_two_bytes = io.read_nonblock(2) rescue nil
         # third_byte = io.read_nonblock(1) rescue nil
