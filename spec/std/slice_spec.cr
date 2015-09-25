@@ -137,4 +137,65 @@ describe "Slice" do
     a.should eq(b)
     a.should_not eq(c)
   end
+
+  it "does extend_to size" do
+    a = Slice.new(3) { |i| i }
+    a.extend_to(4)
+    a.size.should eq(4)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "does extend_by size" do
+    a = Slice.new(3) { |i| i }
+    a.extend_by(1)
+    a.size.should eq(4)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "raises if trying to extend_to less than size" do
+    a = Slice.new(3) { |i| i }
+    expect_raises Exception, "use 'truncate_to!' for reducing size" do
+      a.extend_to(2)
+    end
+  end
+
+  it "does truncate_to! size" do
+    a = Slice.new(3) { |i| i }
+    a.truncate_to!(2)
+    a.size.should eq(2)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "raises if trying to truncate_to greater than size" do
+    a = Slice.new(3) { |i| i }
+    expect_raises Exception, "use 'extend_to' for increasing size" do
+      a.truncate_to!(4)
+    end
+  end
+
+  it "does truncate_by! size" do
+    a = Slice.new(3) { |i| i }
+    a.truncate_by!(1)
+    a.size.should eq(2)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "raises if trying to truncate_by! greater than size" do
+    a = Slice.new(3) { |i| i }
+    expect_raises Exception, "cannot truncate by more than size" do
+      a.truncate_by!(4)
+    end
+  end
 end
