@@ -41,7 +41,7 @@ describe Process do
 
   it "gets output" do
     value = Process.run("/bin/sh", {"-c", "echo hello"}) do |proc|
-      proc.output.read
+      proc.output.gets_to_end
     end
     value.should eq("hello\n")
   end
@@ -49,7 +49,7 @@ describe Process do
   it "sends input in IO" do
     value = Process.run("/bin/cat", input: StringIO.new("hello")) do |proc|
       proc.input?.should be_nil
-      proc.output.read
+      proc.output.gets_to_end
     end
     value.should eq("hello")
   end
@@ -70,7 +70,7 @@ describe Process do
     value = Process.run("/bin/cat") do |proc|
       proc.input.print "hello"
       proc.input.close
-      proc.output.read
+      proc.output.gets_to_end
     end
     value.should eq("hello")
   end
@@ -93,14 +93,14 @@ describe Process do
 
   it "allows passing huge argument lists to a shell" do
     proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: nil)
-    output = proc.output.read
+    output = proc.output.gets_to_end
     proc.wait
     output.should eq "a b\n"
   end
 
   it "does not run shell code in the argument list" do
     proc = Process.new("echo", {"`echo hi`"}, shell: true, output: nil)
-    output = proc.output.read
+    output = proc.output.gets_to_end
     proc.wait
     output.should eq "`echo hi`\n"
   end
@@ -108,7 +108,7 @@ describe Process do
   describe "environ" do
     it "clears the environment" do
       value = Process.run("env", clear_env: true) do |proc|
-        proc.output.read
+        proc.output.gets_to_end
       end
       value.should eq("")
     end
@@ -116,7 +116,7 @@ describe Process do
     it "sets an environment variable" do
       env = { "FOO" => "bar" }
       value = Process.run("env", clear_env: true, env: env) do |proc|
-        proc.output.read
+        proc.output.gets_to_end
       end
       value.should eq("FOO=bar\n")
     end
@@ -124,7 +124,7 @@ describe Process do
     it "deletes an environment variable" do
       env = { "HOME" => nil }
       value = Process.run("env | egrep '^HOME='", env: env, shell: true) do |proc|
-        proc.output.read
+        proc.output.gets_to_end
       end
       value.should eq("")
     end

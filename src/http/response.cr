@@ -68,7 +68,7 @@ class HTTP::Response
   # :nodoc:
   def consume_body_io
     if io = @body_io
-      @body = io.read
+      @body = io.gets_to_end
       @body_io = nil
     end
   end

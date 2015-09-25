@@ -7,7 +7,7 @@ describe "StringIO" do
     io.write Slice.new("hello".cstr, 3)
     io.bytesize.should eq(3)
     io.rewind
-    io.read.should eq("hel")
+    io.gets_to_end.should eq("hel")
   end
 
   it "writes big" do
@@ -15,7 +15,7 @@ describe "StringIO" do
     io = StringIO.new
     io.write Slice.new(s.cstr, s.bytesize)
     io.rewind
-    io.read.should eq(s)
+    io.gets_to_end.should eq(s)
   end
 
   it "reads byte" do
@@ -79,13 +79,6 @@ describe "StringIO" do
     end
   end
 
-  it "raises argument error if reads negative count" do
-    io = StringIO.new("hello world")
-    expect_raises(ArgumentError, "negative count") do
-      io.read(-1)
-    end
-  end
-
   it "write single byte" do
     io = StringIO.new
     io.write_byte 97_u8
@@ -112,15 +105,15 @@ describe "StringIO" do
   it "reads more than available (#1229)" do
     s = "h" * (10 * 1024)
     str = StringIO.new(s)
-    str.read(11 * 1024).should eq(s)
+    str.gets(11 * 1024).should eq(s)
   end
 
   it "writes after reading" do
     io = StringIO.new("abcdefghi")
-    io.read(3)
+    io.gets(3)
     io.print("xyz")
     io.rewind
-    io.read.should eq("abcxyzghi")
+    io.gets_to_end.should eq("abcxyzghi")
   end
 
   it "has a size" do
@@ -130,7 +123,7 @@ describe "StringIO" do
   it "can tell" do
     io = StringIO.new("foo")
     io.tell.should eq(0)
-    io.read(2)
+    io.gets(2)
     io.tell.should eq(2)
   end
 
@@ -138,7 +131,7 @@ describe "StringIO" do
     io = StringIO.new("abcdef")
     io.seek(3)
     io.tell.should eq(3)
-    io.read(1).should eq("d")
+    io.gets(1).should eq("d")
   end
 
   it "raises if seek set is negative" do
@@ -151,17 +144,17 @@ describe "StringIO" do
   it "can seek past the end" do
     io = StringIO.new("abc")
     io.seek(6)
-    io.read.should eq("")
+    io.gets_to_end.should eq("")
     io.print("xyz")
     io.rewind
-    io.read.should eq("abc\u{0}\u{0}\u{0}xyz")
+    io.gets_to_end.should eq("abc\u{0}\u{0}\u{0}xyz")
   end
 
   it "can seek current" do
     io = StringIO.new("abcdef")
     io.seek(2)
     io.seek(1, IO::Seek::Current)
-    io.read(1).should eq("d")
+    io.gets(1).should eq("d")
   end
 
   it "raises if seek current leads to negative value" do
@@ -175,7 +168,7 @@ describe "StringIO" do
   it "can seek from the end" do
     io = StringIO.new("abcdef")
     io.seek(-2, IO::Seek::End)
-    io.read(1).should eq("e")
+    io.gets(1).should eq("e")
   end
 
   it "can be closed" do
@@ -183,7 +176,7 @@ describe "StringIO" do
     io.close
     io.closed?.should be_true
 
-    expect_raises(IO::Error, "closed stream") { io.read }
+    expect_raises(IO::Error, "closed stream") { io.gets_to_end }
     expect_raises(IO::Error, "closed stream") { io.print "hi" }
     expect_raises(IO::Error, "closed stream") { io.seek(1) }
     expect_raises(IO::Error, "closed stream") { io.gets }
@@ -193,16 +186,16 @@ describe "StringIO" do
   it "seeks with pos and pos=" do
     io = StringIO.new("abcdef")
     io.pos = 4
-    io.read(1).should eq("e")
+    io.gets(1).should eq("e")
     io.pos -= 2
-    io.read(1).should eq("d")
+    io.gets(1).should eq("d")
   end
 
   it "clears" do
     io = StringIO.new("abc")
-    io.read(1)
+    io.gets(1)
     io.clear
     io.pos.should eq(0)
-    io.read.should eq("")
+    io.gets_to_end.should eq("")
   end
 end

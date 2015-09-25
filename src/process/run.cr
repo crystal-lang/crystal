@@ -272,7 +272,7 @@ end
 # ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)
-  output = process.output.read
+  output = process.output.gets_to_end
   status = process.wait
   $? = status
   output

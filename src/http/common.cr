@@ -62,16 +62,6 @@ module HTTP
     {name, value}
   end
 
-  def self.read_chunked_body(io)
-    String.build do |builder|
-      while (chunk_size = io.gets.not_nil!.to_i(16)) > 0
-        builder << io.read(chunk_size)
-        io.read(2) # Read \r\n
-      end
-      io.read(2) # Read \r\n
-    end
-  end
-
   def self.serialize_headers_and_body(io, headers, body, version)
     # prepare either chunked response headers if protocol supports it
     # or consume the io to get the Content-Length header
@@ -80,7 +70,7 @@ module HTTP
         if Response.supports_chunked?(version)
           headers["Transfer-Encoding"] = "chunked"
         else
-          body = body.read
+          body = body.gets_to_end
         end
       end
 

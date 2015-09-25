@@ -23,9 +23,9 @@ describe "UNIXSocket" do
           sock.peeraddr.path.should eq("")
 
           client << "ping"
-          sock.read(4).should eq("ping")
+          sock.gets(4).should eq("ping")
           sock << "pong"
-          client.read(4).should eq("pong")
+          client.gets(4).should eq("pong")
         end
       end
 
@@ -47,9 +47,9 @@ describe "UNIXSocket" do
       left.addr.path.should eq("")
 
       left << "ping"
-      right.read(4).should eq("ping")
+      right.gets(4).should eq("ping")
       right << "pong"
-      left.read(4).should eq("pong")
+      left.gets(4).should eq("pong")
     end
   end
 
@@ -149,9 +149,9 @@ describe "TCPSocket" do
         client.tcp_keepalive_count.should eq 42
 
         client << "ping"
-        sock.read(4).should eq("ping")
+        sock.gets(4).should eq("ping")
         sock << "pong"
-        client.read(4).should eq("pong")
+        client.gets(4).should eq("pong")
       end
 
 
@@ -197,7 +197,7 @@ describe "UDPSocket" do
     client.peeraddr.ip_address.should eq("127.0.0.1")
 
     client << "message"
-    server.read(7).should eq("message")
+    server.gets(7).should eq("message")
 
     client.close
     server.close

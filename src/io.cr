@@ -100,7 +100,7 @@ end
 # String.new(slice) #=> "abcdefghi"
 #
 # io = SimpleSliceIO.new(slice)
-# io.read(3) #=> "abc"
+# io.gets(3) #=> "abc"
 # io.print "xyz"
 # String.new(slice) #=> "abcxyzghi"
 # ```
@@ -459,35 +459,11 @@ module IO
   # io.read #=> "hello world"
   # io.read #=> ""
   # ```
-  def read : String
+  def gets_to_end : String
     buffer :: UInt8[2048]
     String.build do |str|
       while (read_bytes = read(buffer.to_slice)) > 0
         str.write buffer.to_slice[0, read_bytes]
-      end
-    end
-  end
-
-  # Reads at most `count` bytes from this IO as a `String`.
-  # If less than `count` bytes are read it's because the end was reached.
-  #
-  # ```
-  # io = StringIO.new "abcde"
-  # io.read(3) #=> "abc"
-  # io.read(3) #=> "ab"
-  # io.read(3) #=> ""
-  # ```
-  def read(count : Int) : String
-    raise ArgumentError.new "negative count" if count < 0
-
-    buffer :: UInt8[2048]
-    String.build(count) do |str|
-      while count > 0
-        read_size = read buffer.to_slice[0, Math.min(count, buffer.size)]
-        break if read_size == 0
-
-        str.write buffer.to_slice[0, read_size]
-        count -= read_size
       end
     end
   end
@@ -578,7 +554,7 @@ module IO
   def gets(delimiter : String) : String?
     # Empty string: read all
     if delimiter.empty?
-      return read
+      return gets_to_end
     end
 
     # One byte: use gets(Char)
@@ -614,6 +590,22 @@ module IO
   # Same as `gets`, but raises `EOFError` if called at the end of this IO.
   def read_line(*args) : String?
     gets(*args) || raise EOFError.new
+  end
+
+  # Reads and discards *bytes_count* bytes.
+  #
+  # ```
+  # io = StringIO.new "hello world"
+  # io.skip(6)
+  # io.gets #=> "world"
+  # ```
+  def skip(bytes_count : Int) : Nil
+    buffer :: UInt8[1024]
+    while bytes_count > 0
+      read_count = read(buffer.to_slice[0, bytes_count])
+      bytes_count -= read_count
+    end
+    nil
   end
 
   # Writes the bytes in the given array to this IO.

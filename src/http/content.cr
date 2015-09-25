@@ -57,15 +57,17 @@ module HTTP
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read
       if @chunk_remaining == 0
-        @io.read(2) # Read \r\n
+        read_chunk_end
         @chunk_remaining = @io.gets.not_nil!.to_i(16)
-
-        if @chunk_remaining == 0
-          @io.read(2) # Read \r\n
-        end
       end
 
       bytes_read
+    end
+
+    private def read_chunk_end
+      # Read "\r\n"
+      buf :: UInt8[2]
+      @io.read_fully(buf.to_slice)
     end
 
     def write(slice : Slice(UInt8))

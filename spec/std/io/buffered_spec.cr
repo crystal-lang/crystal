@@ -181,20 +181,6 @@ describe "IO::Buffered" do
     end
   end
 
-  it "does read with limit" do
-    io = IO::BufferedWrapper.new(StringIO.new("hello world"))
-    io.read(5).should eq("hello")
-    io.read(10).should eq(" world")
-    io.read(5).should eq("")
-  end
-
-  it "raises argument error if reads negative count" do
-    io = IO::BufferedWrapper.new(StringIO.new("hello world"))
-    expect_raises(ArgumentError, "negative count") do
-      io.read(-1)
-    end
-  end
-
   it "does puts" do
     str = StringIO.new
     io = IO::BufferedWrapper.new(str)

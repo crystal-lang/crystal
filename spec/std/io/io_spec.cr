@@ -237,21 +237,7 @@ describe IO do
     it "reads all remaining content" do
       io = SimpleStringIO.new("foo\nbar\nbaz\n")
       io.gets.should eq("foo\n")
-      io.read.should eq("bar\nbaz\n")
-    end
-
-    it "does read with limit" do
-      io = SimpleStringIO.new("hello world")
-      io.read(5).should eq("hello")
-      io.read(10).should eq(" world")
-      io.read(5).should eq("")
-    end
-
-    it "raises argument error if reads negative count" do
-      io = SimpleStringIO.new("hello world")
-      expect_raises(ArgumentError, "negative count") do
-        io.read(-1)
-      end
+      io.gets_to_end.should eq("bar\nbaz\n")
     end
 
     it "reads char" do
@@ -326,7 +312,7 @@ describe IO do
     it "does puts" do
       io = SimpleStringIO.new
       io.puts "Hello"
-      io.read.should eq("Hello\n")
+      io.gets_to_end.should eq("Hello\n")
     end
 
     it "does puts with big string" do
@@ -334,55 +320,62 @@ describe IO do
       s = "*" * 20_000
       io << "hello"
       io << s
-      io.read.should eq("hello#{s}")
+      io.gets_to_end.should eq("hello#{s}")
     end
 
     it "does puts many times" do
       io = SimpleStringIO.new
       10_000.times { io << "hello" }
-      io.read.should eq("hello" * 10_000)
+      io.gets_to_end.should eq("hello" * 10_000)
     end
 
     it "puts several arguments" do
       io = SimpleStringIO.new
       io.puts(1, "aaa", "\n")
-      io.read.should eq("1\naaa\n\n")
+      io.gets_to_end.should eq("1\naaa\n\n")
     end
 
     it "prints" do
       io = SimpleStringIO.new
       io.print "foo"
-      io.read.should eq("foo")
+      io.gets_to_end.should eq("foo")
     end
 
     it "prints several arguments" do
       io = SimpleStringIO.new
       io.print "foo", "bar", "baz"
-      io.read.should eq("foobarbaz")
+      io.gets_to_end.should eq("foobarbaz")
     end
 
     it "writes bytes" do
       io = SimpleStringIO.new
       10_000.times { io.write_byte 'a'.ord.to_u8 }
-      io.read.should eq("a" * 10_000)
+      io.gets_to_end.should eq("a" * 10_000)
     end
 
     it "writes an array of bytes" do
       io = SimpleStringIO.new
       io.write ['a'.ord.to_u8, 'b'.ord.to_u8]
-      io.read.should eq("ab")
+      io.gets_to_end.should eq("ab")
     end
 
     it "writes with printf" do
       io = SimpleStringIO.new
       io.printf "Hello %d", 123
-      io.read.should eq("Hello 123")
+      io.gets_to_end.should eq("Hello 123")
     end
 
     it "writes with printf as an array" do
       io = SimpleStringIO.new
       io.printf "Hello %d", [123]
-      io.read.should eq("Hello 123")
+      io.gets_to_end.should eq("Hello 123")
+    end
+
+    it "skips a few bytes" do
+      io = SimpleStringIO.new
+      io << "hello world"
+      io.skip(6)
+      io.gets_to_end.should eq("world")
     end
   end
 end

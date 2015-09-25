@@ -78,11 +78,11 @@ class File < IO::FileDescriptor
   #
   # ```
   # file = File.new("testfile")
-  # file.read(3) #=> "abc"
+  # file.gets(3) #=> "abc"
   # file.seek(1, IO::Seek::Set)
-  # file.read(2) #=> "bc"
+  # file.gets(2) #=> "bc"
   # file.seek(-1, IO::Seek::Current)
-  # file.read(1) #=> "c"
+  # file.gets(1) #=> "c"
   # ```
   def seek(offset, whence = Seek::Set : Seek)
     check_open
@@ -106,7 +106,7 @@ class File < IO::FileDescriptor
   # ```
   # io = StringIO.new "hello"
   # io.pos     #=> 0
-  # io.read(2) #=> "he"
+  # io.gets(2) #=> "he"
   # io.pos     #=> 2
   # ```
   def pos
@@ -123,7 +123,7 @@ class File < IO::FileDescriptor
   # ```
   # io = StringIO.new "hello"
   # io.pos = 3
-  # io.read #=> "lo"
+  # io.gets_to_end #=> "lo"
   # ```
   def pos=(value)
     seek value

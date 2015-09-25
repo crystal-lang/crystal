@@ -21,7 +21,7 @@ module HTTP
         response.headers["content-type"].should eq("text/plain")
         response.headers["content-length"].should eq("5")
         response.body?.should be_nil
-        response.body_io.read.should eq("hello")
+        response.body_io.gets_to_end.should eq("hello")
       end
     end
 
@@ -78,7 +78,7 @@ module HTTP
 
     it "parses response with streamed chunked body" do
       Response.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n")) do |response|
-        response.body_io.read.should eq("abcde0123456789")
+        response.body_io.gets_to_end.should eq("abcde0123456789")
         io.gets.should be_nil
       end
     end

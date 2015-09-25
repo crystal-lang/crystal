@@ -32,7 +32,7 @@ class StringIO
   # ```
   # io = StringIO.new "hello"
   # io.pos #=> 0
-  # io.read(2).should eq("he")
+  # io.gets(2).should eq("he")
   # ```
   def self.new(string : String)
     io = new(string.bytesize)
@@ -105,19 +105,6 @@ class StringIO
   end
 
   # :nodoc:
-  def read(count : Int)
-    raise ArgumentError.new "negative count" if count < 0
-
-    if count <= @bytesize - @pos
-      string = String.new(@buffer + @pos, count)
-      @pos += count
-      return string
-    end
-
-    super
-  end
-
-  # :nodoc:
   def read_byte
     check_open
 
@@ -133,7 +120,7 @@ class StringIO
   end
 
   # :nodoc:
-  def read
+  def gets_to_end
     check_open
 
     pos = Math.min(@pos, @bytesize)
@@ -149,10 +136,10 @@ class StringIO
   #
   # ```
   # io = StringIO.new "hello"
-  # io.read(3) #=> "hel"
+  # io.gets(3) #=> "hel"
   # io.clear
   # io.pos     #=> 0
-  # io.read    #=> ""
+  # io.gets_to_end    #=> ""
   # ```
   def clear
     @bytesize = 0
@@ -175,9 +162,9 @@ class StringIO
   #
   # ```
   # io = StringIO.new "hello"
-  # io.read(2) => "he"
+  # io.gets(2) => "he"
   # io.rewind
-  # io.read(2) #=> "he"
+  # io.gets(2) #=> "he"
   # ```
   def rewind
     @pos = 0
@@ -203,11 +190,11 @@ class StringIO
   #
   # ```
   # io = StringIO.new("abcdef")
-  # io.read(3) #=> "abc"
+  # io.gets(3) #=> "abc"
   # io.seek(1, IO::Seek::Set)
-  # io.read(2) #=> "bc"
+  # io.gets(2) #=> "bc"
   # io.seek(-1, IO::Seek::Current)
-  # io.read(1) #=> "c"
+  # io.gets(1) #=> "c"
   # ```
   def seek(offset, whence = Seek::Set : Seek)
     check_open
@@ -229,7 +216,7 @@ class StringIO
   # ```
   # io = StringIO.new "hello"
   # io.pos     #=> 0
-  # io.read(2) #=> "he"
+  # io.gets(2) #=> "he"
   # io.pos     #=> 2
   # ```
   def pos
@@ -241,7 +228,7 @@ class StringIO
   # ```
   # io = StringIO.new "hello"
   # io.pos = 3
-  # io.read #=> "lo"
+  # io.gets #=> "lo"
   # ```
   def pos=(value)
     raise ArgumentError.new("negative pos") if value < 0
@@ -254,7 +241,7 @@ class StringIO
   # ```
   # io = StringIO.new "hello"
   # io.close
-  # io.read #=> IO::Error: closed stream
+  # io.gets_to_end #=> IO::Error: closed stream
   # ```
   def close
     @closed = true
@@ -290,7 +277,7 @@ class StringIO
   # io = StringIO.new "hello"
   # slice = io.to_slice
   # slice[0] = 97_u8
-  # io.read #=> "aello"
+  # io.gets_to_end #=> "aello"
   # ```
   def to_slice
     Slice.new(@buffer, @bytesize)

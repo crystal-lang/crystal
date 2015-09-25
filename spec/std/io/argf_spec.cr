@@ -7,7 +7,7 @@ describe IO::ARGF do
 
     argf = IO::ARGF.new argv, stdin
     argf.path.should eq("-")
-    argf.read.should eq("hello")
+    argf.gets_to_end.should eq("hello")
     argf.read_byte.should be_nil
   end
 
@@ -21,12 +21,12 @@ describe IO::ARGF do
     argf.path.should eq(path1)
     argv.should eq([path1, path2])
 
-    str = argf.read(5)
+    str = argf.gets(5)
     str.should eq("12345")
 
     argv.should eq([path2])
 
-    str = argf.read
+    str = argf.gets_to_end
     str.should eq("\n67890\n")
 
     argv.empty?.should be_true
@@ -34,7 +34,7 @@ describe IO::ARGF do
     argf.read_byte.should be_nil
 
     argv << path1
-    str = argf.read(5)
+    str = argf.gets(5)
     str.should eq("12345")
   end
 end

@@ -172,22 +172,6 @@ module IO::Buffered
     to_read
   end
 
-  # :nodoc:
-  def read(count : Int)
-    raise ArgumentError.new "negative count" if count < 0
-
-    fill_buffer if @in_buffer_rem.empty?
-
-    # If we have enough content in the buffer, use it
-    if count <= @in_buffer_rem.size
-      string = String.new(@in_buffer_rem[0, count])
-      @in_buffer_rem += count
-      return string
-    end
-
-    super
-  end
-
   # Buffered implementation of `IO#write(slice)`.
   def write(slice : Slice(UInt8))
     count = slice.size

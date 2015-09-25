@@ -158,7 +158,7 @@ USAGE
 
   private def eval
     if options.empty?
-      program_source = STDIN.read
+      program_source = STDIN.gets_to_end
       program_args = [] of String
     else
       double_dash_index = options.index("--")
