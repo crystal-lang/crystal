@@ -92,6 +92,31 @@ struct Slice(T)
     Slice.new(@pointer + offset, @size - offset)
   end
 
+  def extend_to(new_size)
+    raise "use 'truncate_to!' for reducing size" if new_size < size
+    reallocate(new_size)
+  end
+
+  def extend_by(size)
+    reallocate(self.size + size)
+  end
+
+  def truncate_to!(new_size)
+    raise "use 'extend_to' for increasing size" if new_size > size
+    reallocate(new_size)
+  end
+
+  def truncate_by!(size)
+    raise "cannot truncate by more than size" if size > self.size
+    reallocate(self.size - size)
+  end
+
+  private def reallocate(new_size)
+    return if size == new_size
+    @pointer = @pointer.realloc(new_size)
+    @size = new_size
+  end
+
   # Returns the element at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the slice.
