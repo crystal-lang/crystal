@@ -92,6 +92,21 @@ struct Slice(T)
     Slice.new(@pointer + offset, @size - offset)
   end
 
+  def +(other : Slice(T))
+    pointer = Pointer(T).malloc(size + other.size)
+    slice = Slice.new(pointer, size + other.size)
+    pointer.copy_from(@pointer, size)
+    (pointer + size).copy_from(other.pointer(other.size), other.size)
+    slice
+  end
+
+  def concat(other : Slice(T))
+    index = size
+    extend_by(other.size)
+    (@pointer + index).copy_from(other.pointer(other.size), other.size)
+    self
+  end
+
   def extend_to(new_size)
     raise "use 'truncate_to!' for reducing size" if new_size < size
     reallocate(new_size)
