@@ -1,3 +1,63 @@
+# The `Time` library allows you to inspect, analyze, calculate, and format time. Here are some examples:
+# 
+# ### Basic Usage
+# 
+#     time = Time.now
+#     #=> 2016-02-15 10:20:30 UTC
+#     
+#     time.year    #=> 2015
+#     time.month   #=> 2
+#     time.day     #=> 15
+#     time.hour    #=> 10
+#     time.minute  #=> 20
+#     time.second  #=> 30
+#     time.monday? #=> true
+#
+#     # Creating a time instance with a date only
+#     Time.new(2016,2,15)
+#     #=> 2016-02-15 00:00:00
+# 
+#     # Specifying a time
+#     Time.new(2016,2,15,10,20,30)
+#     #=> 2016-02-15 10:20:30 UTC 
+#     
+# ### Formatting Time
+# 
+# The `to_s` method returns a `String` value in the assigned format.
+# 
+#     Time.now.to_s("%Y-%m-%d")
+#     #=> "2015-10-12"
+#     
+#     # Format specifiers include but are not limited to:
+#     %Y  => year
+#     %m  => month
+#     %d  => day
+#     %H  => hour
+#     %M  => minute
+#     %S  => second
+#     %D  => date
+#     %u  => weekday
+#     
+# ### Calculation
+# 
+#     Time.new(2015,10,10) - 5.day
+#     #=> 2015-10-05 00:00:00
+#     
+#     # Time calculation returns a Time::Span instance,
+#     # which can be analyzed with its methods.
+#     span = Time.new(2015,10,10) - Time.new(2015,9,10)
+#     span.days          #=> 30
+#     span.total_hours   #=> 720     
+#     span.total_minutes #=> 43200
+#     
+#     # Calculation between Time::Span instances
+#     span_a = Time::Span.new(3,0,0)
+#     span_b = Time::Span.new(2,0,0)
+#     span = span_a - span_b
+#     span       #=> 02:00:00
+#     span.class #=> Time::Span
+#     span.hours #=> 2
+
 lib LibC
   struct TimeZone
     tz_minuteswest : Int
