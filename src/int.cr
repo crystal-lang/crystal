@@ -58,6 +58,7 @@
 struct Int
   alias Signed = Int8 | Int16 | Int32 | Int64
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
+  alias Primitive = Signed | Unsigned
 
   def ~
     self ^ -1
@@ -342,6 +343,10 @@ struct Int
 
     count = (ptr_end - ptr).to_i32
     yield ptr, count
+  end
+
+  def to_io(io : IO, format : IO::ByteFormat)
+    format.encode(self, io)
   end
 
   # :nodoc:

@@ -31,6 +31,8 @@
 # 1_000_000.111_111 # better than 1000000.111111
 # ```
 struct Float
+  alias Primitive = Float32 | Float64
+
   def %(other)
     modulo(other)
   end
@@ -74,6 +76,10 @@ struct Float
 
       mod - other
     end
+  end
+
+  def to_io(io : IO, format : IO::ByteFormat)
+    format.encode(self, io)
   end
 end
 

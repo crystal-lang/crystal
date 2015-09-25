@@ -626,6 +626,10 @@ module IO
     write Slice.new(pointerof(x), 1)
   end
 
+  def write_bytes(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+    object.to_io(self, format)
+  end
+
   # Returns `true` if this IO is associated with a terminal device (tty), `false` otherwise.
   #
   # IO returns `false`, but including types may override.
