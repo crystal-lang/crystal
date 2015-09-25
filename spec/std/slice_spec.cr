@@ -45,6 +45,26 @@ describe "Slice" do
     expect_raises(IndexError) { slice + (-1) }
   end
 
+  it "does + with other slice" do
+    a = Slice.new(3) { |i| i }
+    b = Slice.new(3) { |i| i + 3 }
+    c = a + b
+    c.size.should eq(6)
+    6.times do |i|
+      c[i].should eq(i)
+    end
+  end
+
+  it "does concat with other slice" do
+    a = Slice.new(3) { |i| i }
+    b = Slice.new(3) { |i| i + 3 }
+    a.concat(b)
+    a.size.should eq(6)
+    6.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
   it "does [] with start and count" do
     slice = Slice.new(4) { |i| i + 1}
     slice1 = slice[1, 2]
