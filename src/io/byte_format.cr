@@ -14,29 +14,23 @@ module IO::ByteFormat
 
   module LittleEndian
     extend ByteFormat
-
-    {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-      def self.encode(int : {{type.id}}, io : IO)
-        sizeof(typeof(int)).times do |i|
-          io.write_byte((int & 0xFF).to_u8)
-          int >>= 8
-        end
-      end
-    {% end %}
   end
 
   module BigEndian
     extend ByteFormat
-
-    {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-      def self.encode(int : {{type.id}}, io : IO)
-        sizeof(typeof(int)).times do |i|
-          shift = 8 * (sizeof(typeof(int)) - i - 1)
-          io.write_byte(((int & (typeof(int).new(0xFF) << shift)) >> shift).to_u8)
-        end
-      end
-    {% end %}
   end
 
   alias SystemEndian = LittleEndian
+
+  {% for mod in %w(LittleEndian BigEndian) %}
+    module {{mod.id}}
+      {% for type, i in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64) %}
+        def self.encode(int : {{type.id}}, io : IO)
+          buffer = (pointerof(int) as UInt8[{{2 ** (i / 2)}}]*).value
+          buffer.reverse! unless SystemEndian == self
+          io.write(buffer.to_slice)
+        end
+      {% end %}
+    end
+  {% end %}
 end

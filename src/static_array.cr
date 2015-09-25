@@ -92,6 +92,17 @@ struct StaticArray(T, N)
     self
   end
 
+  def reverse!
+    i = 0
+    j = size - 1
+    while i < j
+      buffer.swap i, j
+      i += 1
+      j -= 1
+    end
+    self
+  end
+
   def buffer
     pointerof(@buffer)
   end

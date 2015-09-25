@@ -5,6 +5,7 @@ private def assert_bytes(io, *bytes)
   bytes.each do |byte|
     io.read_byte.should eq(byte)
   end
+  io.read_byte.should be_nil
 end
 
 private def assert_bytes_reversed(io, *bytes)
