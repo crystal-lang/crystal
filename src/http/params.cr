@@ -248,7 +248,7 @@ module HTTP
     end
 
     # :nodoc:
-    struct Builder
+    class Builder
       @io :: IO
 
       def initialize(@io = StringIO.new)
