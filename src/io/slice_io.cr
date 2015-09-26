@@ -1,4 +1,4 @@
-struct SliceIO
+class SliceIO
   include IO
 
   def initialize(@slice : Slice(UInt8))
