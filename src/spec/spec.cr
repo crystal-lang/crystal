@@ -82,9 +82,22 @@ module Spec
     pending: '*',
   }
 
+  @@use_colors = true
+
   # :nodoc:
   def self.color(str, status)
-    str.colorize(COLORS[status])
+    if use_colors?
+      str.colorize(COLORS[status])
+    else
+      str
+    end
+  end
+
+  def self.use_colors?
+    @@use_colors
+  end
+
+  def self.use_colors=(@@use_colors)
   end
 
   # :nodoc:
@@ -197,6 +210,9 @@ OptionParser.parse! do |opts|
   end
   opts.on("-v", "--verbose", "verbose output") do
     Spec.formatter = Spec::VerboseFormatter.new
+  end
+  opts.on("--no-color", "Disable colored output") do
+    Spec.use_colors = false
   end
 end
 
