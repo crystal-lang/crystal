@@ -507,6 +507,21 @@ describe "Enumerable" do
     assert { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
   end
 
+  describe "pmap" do
+    it "should perform parallel map" do
+      sleep_time = 0.001
+      t = Time.now
+      res = (0...10).to_a.reverse.pmap do |i|
+        sleep(sleep_time + rand * sleep_time / 10)
+        i * i
+      end
+      res.should eq([81, 64, 49, 36, 25, 16, 9, 4, 1, 0])
+      delay = (Time.now - t).to_f
+      (delay > sleep_time).should eq(true)
+      (delay < sleep_time * 2).should eq(true)
+    end
+  end
+
   describe "reject" do
     it "rejects the values for which the block returns true" do
       [1, 2, 3, 4].reject(&.even?).should eq([1, 3])

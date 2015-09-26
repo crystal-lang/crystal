@@ -777,6 +777,12 @@ module Enumerable(T)
     {a, b}
   end
 
+  # Parallel map
+  #
+  def pmap(&block : T -> U)
+    map { |el| future { block.call(el) } }.map &.get
+  end
+
   # Returns an array with all the elements in the collection for which the passed block returns `false`.
   #
   #     [1, 2, 3, 4, 5, 6].reject { |i| i % 2 == 0}  #=> [1, 3, 5]
