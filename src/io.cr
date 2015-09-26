@@ -630,6 +630,10 @@ module IO
     object.to_io(self, format)
   end
 
+  def read_object(klass, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+    klass.from_io(self, format)
+  end
+
   # Returns `true` if this IO is associated with a terminal device (tty), `false` otherwise.
   #
   # IO returns `false`, but including types may override.
