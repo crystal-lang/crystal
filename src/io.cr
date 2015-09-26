@@ -626,7 +626,7 @@ module IO
     write Slice.new(pointerof(x), 1)
   end
 
-  def write_bytes(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+  def write_object(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
     object.to_io(self, format)
   end
 
