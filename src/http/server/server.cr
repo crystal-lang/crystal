@@ -16,34 +16,103 @@ end
 
 require "./handlers/*"
 
+# An HTTP::Server
+#
+# ### Simple Setup
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new(8080) do |request|
+#   HTTP::Response.ok "text/plain", "Hello world!"
+# end
+#
+# puts "Listening on http://127.0.0.1:8080"
+# server.listen
+# ```
+#
+# ### With non-localhost bind address
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new("0.0.0.0", 8080) do |request|
+#   HTTP::Response.ok "text/plain", "Hello world!"
+# end
+#
+# puts "Listening on http://0.0.0.0:8080"
+# server.listen
+# ```
+#
+# ### Add handlers
+# ```
+# require "http/server"
+#
+# Server.new("127.0.0.1", 8080, [
+#         ErrorHandler.new,
+#         LogHandler.new,
+#         DeflateHandler.new,
+#         StaticFileHandler.new("."),
+# ]
+# ).listen
+#
+# ### Add handlers and block
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new("0.0.0.0", 8080,
+#       [
+#         ErrorHandler.new,
+#         LogHandler.new
+#        ]) do |request|
+#   HTTP::Response.ok "text/plain", "Hello world!"
+# end
+#
+# server.listen
+# ```
+
 class HTTP::Server
   property ssl
 
   @wants_close = false
 
-  def initialize(@port, &@handler : Request -> Response)
+  def self.new(port, &handler : Request -> Response)
+    new("127.0.0.1", port, &handler)
   end
 
-  def initialize(@port, handlers : Array(HTTP::Handler), &block : Request -> Response)
-    @handler = HTTP::Server.build_middleware handlers, block
+  def self.new(port, handlers : Array(HTTP::Handler), &handler : Request -> Response)
+    new("127.0.0.1", port, handlers, &handler)
   end
 
-  def initialize(@port, handlers : Array(HTTP::Handler))
+  def self.new(port, handlers : Array(HTTP::Handler))
+    new("127.0.0.1", port, handlers)
+  end
+
+  def self.new(port, handler)
+    new("127.0.0.1", port, handler)
+  end
+
+  def initialize(@host, @port, &@handler : Request -> Response)
+  end
+
+  def initialize(@host, @port, handlers : Array(HTTP::Handler), &handler : Request -> Response)
+    @handler = HTTP::Server.build_middleware handlers, handler
+  end
+
+  def initialize(@host, @port, handlers : Array(HTTP::Handler))
     @handler = HTTP::Server.build_middleware handlers
   end
 
-  def initialize(@port, @handler)
+  def initialize(@host, @port, @handler)
   end
 
   def listen
-    server = TCPServer.new(@port)
+    server = TCPServer.new(@host, @port)
     until @wants_close
       spawn handle_client(server.accept)
     end
   end
 
   def listen_fork(workers = 8)
-    server = TCPServer.new(@port)
+    server = TCPServer.new(@host, @port)
     workers.times do
       fork do
         loop { spawn handle_client(server.accept) }
