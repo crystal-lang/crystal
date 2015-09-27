@@ -173,6 +173,22 @@ class Object
     self
   end
 
+  def delay secs
+    Concurrent::FutureDelegate.new self, delay: secs
+  end
+
+  def future
+    Concurrent::FutureDelegate.new self
+  end
+
+  def lazy
+    Concurrent::FutureDelegate.new self, run_immediately: false
+  end
+
+  def spawn
+    Concurrent::SpawnDelegate.new self
+  end
+
   # Defines getter methods for each of the given arguments.
   #
   # Writing:

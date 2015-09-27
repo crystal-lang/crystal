@@ -1,5 +1,11 @@
 require "spec"
 
+class FutureTestClass
+  def foo
+    "foo"
+  end
+end
+
 describe Concurrent::Future do
   describe "delay" do
     it "computes a value" do
@@ -29,6 +35,13 @@ describe Concurrent::Future do
 
       expect_raises(IndexError) { d.get }
       d.completed?.should be_true
+    end
+
+    it "create a delay delegate" do
+      obj = FutureTestClass.new
+      f = obj.delay(0.0001).foo
+      f.delayed?.should be_true
+      f.get.should eq("foo")
     end
   end
 
@@ -68,6 +81,13 @@ describe Concurrent::Future do
       expect_raises(IndexError) { f.get }
       f.completed?.should be_true
     end
+
+    it "create a future delegate" do
+      obj = FutureTestClass.new
+      f = obj.future.foo
+      f.running?.should be_true
+      f.get.should eq("foo")
+    end
   end
 
   describe "lazy" do
@@ -104,6 +124,20 @@ describe Concurrent::Future do
 
       expect_raises(IndexError) { f.get }
       f.completed?.should be_true
+    end
+
+    it "create a lazy delegate" do
+      obj = FutureTestClass.new
+      f = obj.lazy.foo
+      f.running?.should be_false
+      f.get.should eq("foo")
+    end
+  end
+
+  describe "spawn" do
+    it "create a spawn delegate" do
+      obj = FutureTestClass.new
+      obj.spawn.foo
     end
   end
 end
