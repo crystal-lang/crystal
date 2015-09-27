@@ -641,6 +641,12 @@ describe "macro methods" do
         [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar).metaclass)] of ASTNode
       end
     end
+
+    it "executes type_vars" do
+      assert_macro("x", "{{x.type_vars.map &.stringify}}", %(["A", "B"])) do |program|
+        [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+      end
+    end
   end
 
   describe "declare var methods" do
