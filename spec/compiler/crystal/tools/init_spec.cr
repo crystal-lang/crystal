@@ -137,4 +137,24 @@ end
     describe_file "example/.git/config" {}
 
   end
+
+  describe Init do
+    it "prints error if a directory already present" do
+
+      Dir.mkdir_p("#{__DIR__}/tmp")
+
+      `bin/crystal init lib "#{__DIR__}/tmp"`.should contain("file or directory #{__DIR__}/tmp already exists")
+
+      Dir.rmdir("#{__DIR__}/tmp")
+    end
+
+    it "prints error if a file already present" do
+
+      File.open("#{__DIR__}/tmp", "w")
+
+      `bin/crystal init lib "#{__DIR__}/tmp"`.should contain("file or directory #{__DIR__}/tmp already exists")
+
+      File.delete("#{__DIR__}/tmp")
+    end
+  end
 end

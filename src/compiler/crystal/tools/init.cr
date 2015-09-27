@@ -28,7 +28,7 @@ DIR  - directory where project will be generated,
 
         opts.unknown_args do |args, after_dash|
           config.skeleton_type = fetch_skeleton_type(opts, args)
-          config.name = fetch_required_parameter(opts, args, "NAME")
+          config.name = fetch_name(opts, args)
           config.dir = args.empty? ? config.name : args.shift
         end
       end
@@ -54,6 +54,15 @@ DIR  - directory where project will be generated,
       return default unless system(WHICH_GIT_COMMAND)
       github_user = `git config --get github.user`.strip
       github_user.empty? ? default : github_user
+    end
+
+    def self.fetch_name(opts, args)
+      name = fetch_required_parameter(opts, args, "NAME")
+      if Dir.exists?(name) || File.exists?(name)
+        puts "file or directory #{name} already exists"
+        exit 1
+      end
+      name
     end
 
     def self.fetch_skeleton_type(opts, args)
