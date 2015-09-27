@@ -106,7 +106,7 @@ module Crystal
 
       # Windows only allows alphanumeric, dot, dollar and underscore
       # for mangled names.
-      ifdef windows
+      ifdef windows || freebsd
         name = name.gsub do |char|
           case char
           when '<', '>', '(', ')', '*', ':', ',', '#', ' '

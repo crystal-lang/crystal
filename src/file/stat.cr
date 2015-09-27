@@ -1,5 +1,5 @@
 lib LibC
-  ifdef darwin
+  ifdef darwin || freebsd
     struct Stat
       st_dev : Int32
       st_ino : Int32

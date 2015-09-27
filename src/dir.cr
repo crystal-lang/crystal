@@ -9,6 +9,14 @@ lib LibC
       namelen : UInt8
       name : UInt8[1024]
     end
+  elsif freebsd
+    struct DirEntry
+      d_ino : Int32
+      reclen : UInt16
+      type : UInt8
+      namelen : UInt8
+      name : UInt8[256]
+    end
   elsif linux
    struct DirEntry
       d_ino : UInt64
@@ -27,6 +35,15 @@ lib LibC
       flags : Int32
       dummy : UInt8[40]
     end
+  elsif freebsd
+    struct Glob
+      pathc : C::SizeT
+      matchc : C::SizeT
+      offs : C::SizeT
+      flags : Int32
+      pathv : UInt8**
+      dummy : UInt8[48]
+    end
   elsif darwin
     struct Glob
       pathc : LibC::SizeT
@@ -44,7 +61,7 @@ lib LibC
       BRACE  = 1 << 10
       TILDE  = 1 << 12
     end
-  elsif darwin
+  elsif darwin || freebsd
     enum GlobFlags
       APPEND = 0x0001
       BRACE  = 0x0080
@@ -66,10 +83,10 @@ lib LibC
   fun mkdir(path : UInt8*, mode : LibC::ModeT) : Int32
   fun rmdir(path : UInt8*) : Int32
 
-  ifdef darwin
-    fun readdir(dir : Dir*) : DirEntry*
-  elsif linux
+  ifdef linux
     fun readdir = readdir64(dir : Dir*) : DirEntry*
+  elsif darwin || freebsd
+    fun readdir(dir : Dir*) : DirEntry*
   end
 
   fun rewinddir(dir : Dir*)
