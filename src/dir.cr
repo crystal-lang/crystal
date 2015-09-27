@@ -37,9 +37,9 @@ lib LibC
     end
   elsif freebsd
     struct Glob
-      pathc : C::SizeT
-      matchc : C::SizeT
-      offs : C::SizeT
+      pathc : LibC::SizeT
+      matchc : LibC::SizeT
+      offs : LibC::SizeT
       flags : Int32
       pathv : UInt8**
       dummy : UInt8[48]
