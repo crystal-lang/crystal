@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.15.9" data-basepath="../.." data-revision="Mon Sep 21 2015 09:25:29 GMT+0000 (UTC)">
+    <div class="book" data-level="4.15.9" data-basepath="../.." data-revision="Sun Sep 27 2015 09:35:43 GMT-0700 (PDT)">
     
 
 <div class="book-summary">
@@ -1962,9 +1962,9 @@
 <p>An <code>alias</code> is most useful to avoid writing long types over and over, but also to declare a type based on compile-time flags:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">C</span></span>
   <span class="hljs-keyword">ifdef</span> x86_64
-    <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">Int64</span>
+    <span class="hljs-keyword">alias</span> <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">Int64</span>
   <span class="hljs-keyword">else</span>
-    <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">Int32</span>
+    <span class="hljs-keyword">alias</span> <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">Int32</span>
   <span class="hljs-keyword">end</span>
 
   <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">memcmp</span></span>(p1 <span class="hljs-symbol">:</span> <span class="hljs-constant">Void</span>*, p2 <span class="hljs-symbol">:</span> <span class="hljs-constant">Void</span>*, size <span class="hljs-symbol">:</span> <span class="hljs-constant">C::SizeT</span>) <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
