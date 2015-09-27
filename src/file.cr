@@ -172,6 +172,15 @@ class File < IO::FileDescriptor
     LibC.access(filename, LibC::F_OK) == 0
   end
 
+  # Returns true if given path exists and is a file
+  # 
+  # ```crystal
+  # # touch foo
+  # # mkdir bar
+  # File.file?("foo")    #=> true
+  # File.file?("bar")    #=> false
+  # File.file?("foobar") #=> false
+  # ```
   def self.file?(path)
     if LibC.stat(path, out stat) != 0
       if LibC.errno == Errno::ENOENT
@@ -183,6 +192,15 @@ class File < IO::FileDescriptor
     File::Stat.new(stat).file?
   end
 
+  # Returns true if given path exists and is a directory
+  # 
+  # ```crystal
+  # # touch foo
+  # # mkdir bar
+  # File.directory?("foo")    #=> false
+  # File.directory?("bar")    #=> true
+  # File.directory?("foobar") #=> false
+  # ```
   def self.directory?(path)
     Dir.exists?(path)
   end
@@ -220,6 +238,15 @@ class File < IO::FileDescriptor
     basename
   end
 
+  # Delete a file. Deleting non-existent file will raise an exception.
+  #
+  # ```crystal
+  # # touch foo
+  # File.delete("./foo")
+  # #=> nil
+  # File.delete("./bar")
+  # #=> Error deleting file './bar': No such file or directory (Errno)
+  # ```
   def self.delete(filename)
     err = LibC.unlink(filename)
     if err == -1
@@ -227,6 +254,12 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns a file's extension, or an empty string if the file has no extension.
+  # 
+  # ```crystal
+  # File.extname("foo.cr")
+  # #=> .cr
+  # ```
   def self.extname(filename)
     dot_index = filename.rindex('.')
 
@@ -313,7 +346,14 @@ class File < IO::FileDescriptor
       file.close
     end
   end
-
+  
+  # Returns the content of the given file as a string.
+  # 
+  # ```crystal
+  # # echo "foo" >> bar
+  # File.read("./bar")
+  # #=> foo
+  # ```
   def self.read(filename)
     File.open(filename, "r") do |file|
       size = file.size.to_i
@@ -324,6 +364,13 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Yields each line of the given file to the given block.
+  # 
+  # ```crystal
+  # File.each_line("./foo") do |line|
+  #   # loop
+  # end
+  # ```
   def self.each_line(filename)
     File.open(filename, "r") do |file|
       file.each_line do |line|
@@ -332,6 +379,14 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns all lines of the given file as an array of strings.
+  # 
+  # ```crystal
+  # # echo "foo" >> foobar
+  # # echo "bar" >> foobar
+  # File.read_lines("./foobar")
+  # #=> ["foo\n","bar\n"]
+  # ```
   def self.read_lines(filename)
     lines = [] of String
     each_line(filename) do |line|
@@ -340,6 +395,12 @@ class File < IO::FileDescriptor
     lines
   end
 
+  # Write the given content to the given filename.
+  # An existing file will be overwritten, or a file will be created with the given filename.
+  #
+  # ```crystal
+  # File.write("./foo", "bar")
+  # ```
   def self.write(filename, content, perm = DEFAULT_CREATE_MODE)
     File.open(filename, "w", perm) do |file|
       file.print(content)
@@ -386,6 +447,7 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns the size of the given file in bytes.
   def self.size(filename)
     stat(filename).size
   end
