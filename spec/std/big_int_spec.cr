@@ -24,6 +24,10 @@ describe "BigInt" do
     BigInt.new("12345678").to_s.should eq("12345678")
   end
 
+  it "creates from float" do
+    BigInt.new(12.3).to_s.should eq("12")
+  end
+
   it "compares" do
     1.to_big_i.should eq(1.to_big_i)
     1.to_big_i.should eq(1)
@@ -140,6 +144,12 @@ describe "BigInt" do
     expect_raises DivisionByZero do
       10 % 0.to_big_i
     end
+  end
+
+  it "exponentiates" do
+    result = (2.to_big_i ** 1000)
+    result.should be_a(BigInt)
+    result.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
   end
 
   it "does to_s in the given base" do

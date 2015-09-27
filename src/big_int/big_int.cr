@@ -29,6 +29,10 @@ struct BigInt < Int
     end
   end
 
+  def initialize(num : Float)
+    LibGMP.init_set_d(out @mpz, num)
+  end
+
   def initialize(@mpz : LibGMP::MPZ)
   end
 
@@ -152,6 +156,13 @@ struct BigInt < Int
 
   def <<(other : Int)
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
+  end
+
+  def **(other : Int)
+    if other < 0
+      raise ArgumentError.new("negative exponent isn't supported")
+    end
+    BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
   def inspect
@@ -294,6 +305,12 @@ struct Int
     to_big_i % other
   end
 
+  def to_big_i
+    BigInt.new(self)
+  end
+end
+
+struct Float
   def to_big_i
     BigInt.new(self)
   end
