@@ -872,8 +872,7 @@ module Crystal
     end
 
     def self.has_constant?(type, name)
-      result = type.types.any? { |const_name, member_type| const_name == name }
-      BoolLiteral.new result
+      BoolLiteral.new(type.types.has_key?(name))
     end
 
     def self.methods(type)
