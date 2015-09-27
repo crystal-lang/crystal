@@ -3,15 +3,24 @@ require "./**"
 module LLVM
   @@initialized = false
 
-  def self.init_x86
+  def self.init_all_targets
     return if @@initialized
     @@initialized = true
 
-    LibLLVM.initialize_x86_target_info
-    LibLLVM.initialize_x86_target
-    LibLLVM.initialize_x86_target_mc
-    LibLLVM.initialize_x86_asm_printer
-    LibLLVM.initialize_x86_asm_parser
+    {% for target in `(llvm-config-3.6 --targets-built 2>/dev/null) || (llvm-config-3.5 --targets-built 2>/dev/null) || (llvm-config --targets-built 2>/dev/null)`.chomp.split(" ") %}
+      LibLLVM.initialize_{{target.downcase.id}}_target_info
+      LibLLVM.initialize_{{target.downcase.id}}_target
+      LibLLVM.initialize_{{target.downcase.id}}_target_mc
+
+      {% unless ["XCore", "MSP430", "CppBackend", "NVPTX", "Hexagon"].find {|skip| target == skip } %}
+        LibLLVM.initialize_{{target.downcase.id}}_asm_parser
+      {% end %}
+
+      {% unless ["CppBackend"].find {|skip| target == skip } %}
+        LibLLVM.initialize_{{target.downcase.id}}_asm_printer
+      {% end %}
+    {% end %}
+
     # LibLLVM.link_in_jit
     LibLLVM.link_in_mc_jit
   end
