@@ -1,4 +1,20 @@
 lib LibPThread
+  ifdef darwin
+    enum MutexAttrType
+      Normal = 0
+      Recursive = 2
+      ErrorCheck = 1
+      Default = 0
+    end
+  elsif linux
+    enum MutexAttrType
+      Normal = 0
+      Recursive = 1
+      ErrorCheck = 2
+      Default = 0
+    end
+  end
+
   alias Int = LibC::Int
 
   type Thread = Void*
@@ -32,6 +48,10 @@ lib LibPThread
   fun mutex_trylock = pthread_mutex_trylock(mutex : Mutex*) : Int
   fun mutex_unlock = pthread_mutex_unlock(mutex : Mutex*) : Int
   fun mutex_destroy = pthread_mutex_destroy(mutex : Mutex*) : Int
+
+  fun mutexattr_init    = pthread_mutexattr_init(attr : MutexAttr*) : Int
+  fun mutexattr_settype = pthread_mutexattr_settype(attr : MutexAttr*, type : MutexAttrType) : Int
+  fun mutexattr_destroy = pthread_mutexattr_destroy(attr : MutexAttr*) : Int
 
   fun cond_init = pthread_cond_init(cond : Cond*, cond_attr : CondAttr) : Int
   fun cond_signal = pthread_cond_signal(cond : Cond*) : Int
