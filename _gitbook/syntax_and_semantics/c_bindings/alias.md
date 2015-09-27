@@ -25,9 +25,9 @@ An `alias` is most useful to avoid writing long types over and over, but also to
 ```crystal
 lib C
   ifdef x86_64
-    SizeT = Int64
+    alias SizeT = Int64
   else
-    SizeT = Int32
+    alias SizeT = Int32
   end
 
   fun memcmp(p1 : Void*, p2 : Void*, size : C::SizeT) : Int32
