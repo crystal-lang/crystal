@@ -785,6 +785,17 @@ module Crystal
             raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple type)"
           end
         end
+      when "type_vars"
+        interpret_argless_method(method, args) do
+          case(type)
+          when GenericType
+            ArrayLiteral.map((type as GenericType).type_vars) do |type_var|
+              MacroId.new(type_var)
+            end
+          else
+            raise "undefined method 'type_vars' for TypeNode of type #{type} (must be a generic type)"
+          end
+        end
       else
         super
       end
