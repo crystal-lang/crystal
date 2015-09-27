@@ -1099,6 +1099,12 @@ module Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
+    # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
+    # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
+    # in this cases).
+    def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
+    end
+
     # Returns the number of elements in this tuple type or tuple metaclass type.
     # Gives a compile error if this is not one of those types.
     def size : NumberLiteral
