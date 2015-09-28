@@ -8,14 +8,16 @@ class String::Builder
 
   getter bytesize
 
-  def initialize(capacity = 64)
+  def initialize(capacity = 64 : Int)
+    String.check_capacity_in_bounds(capacity)
+
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @bytesize = 0
     @capacity = capacity
     @finished = false
   end
 
-  def self.build(capacity = 64)
+  def self.build(capacity = 64 : Int)
     builder = new(capacity)
     yield builder
     builder.to_s
