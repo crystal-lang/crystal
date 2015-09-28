@@ -8,7 +8,7 @@ describe "Type inference: macro" do
       end
 
       foo
-      )) { int32 }
+    )) { int32 }
   end
 
   it "errors if macro uses undefined variable" do
@@ -34,6 +34,94 @@ describe "Type inference: macro" do
   it "errors if macro def type doesn't match found" do
     assert_error "macro def foo : Int32; 'a'; end; foo",
       "expected 'foo' to return Int32, not Char"
+  end
+
+  it "allows subclasses of return type for macro def" do
+    run(%{
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      macro def foobar : Foo
+        Bar.new
+      end
+
+      foobar.foo
+    }).to_i.should eq(2)
+  end
+
+  it "allows return values that include the return type of the macro def" do
+    run(%{
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        include Foo
+
+        def foo
+          2
+        end
+      end
+
+      macro def foobar : Foo
+        Bar.new
+      end
+
+      foobar.foo
+    }).to_i.should eq(2)
+  end
+
+  it "allows generic return types for macro def" do
+    run(%{
+      class Foo(T)
+        def foo
+          @foo
+        end
+
+        def initialize(@foo : T)
+        end
+      end
+
+      macro def foobar : Foo(Int32)
+        Foo.new(2)
+      end
+
+      foobar.foo
+    }).to_i.should eq(2)
+
+    assert_error %{
+      class Foo(T)
+        def initialize(@foo : T)
+        end
+      end
+
+      macro def bar : Foo(String)
+        Foo.new(3)
+      end
+
+      bar
+    }, "Error in line 7: expected 'bar' to return Foo(String), not Foo(Int32)"
+  end
+
+  it "allows union return types for macro def" do
+    assert_type(%{
+      macro def foo : String | Int32
+        1
+      end
+
+      foo
+    }) { int32 }
   end
 
   it "types macro def that calls another method" do
