@@ -1597,12 +1597,14 @@ class String
     nil
   end
 
-  def includes?(c : Char)
-    !!index(c)
-  end
-
-  def includes?(str : String)
-    !!index(str)
+  # Returns true if `str` contains `search`.
+  #
+  # ```
+  # "Team".includes?('i')             #=> false
+  # "Dysfunctional".includes?("fun")  #=> true
+  # ```
+  def includes?(search : Char | String)
+    !!index(search)
   end
 
   def split(limit = nil : Int32?)
