@@ -1660,40 +1660,6 @@ class String
     ary
   end
 
-  def split(separator : Char, limit = nil)
-    if separator == ' '
-      return split(limit)
-    end
-
-    if limit && limit <= 1
-      return [self]
-    end
-
-    ary = Array(String).new
-
-    byte_offset = 0
-    single_byte_optimizable = single_byte_optimizable?
-
-    reader = Char::Reader.new(self)
-    reader.each_with_index do |char, i|
-      if char == separator
-        piece_bytesize = reader.pos - byte_offset
-        piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
-        byte_offset = reader.pos + reader.current_char_width
-        break if limit && ary.size + 1 == limit
-      end
-    end
-
-    if byte_offset != bytesize
-      piece_bytesize = bytesize - byte_offset
-      piece_size = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
-    end
-
-    ary
-  end
-
   def split(separator : String, limit = nil)
     ary = Array(String).new
     byte_offset = 0
@@ -1742,6 +1708,10 @@ class String
       ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
     end
     ary
+  end
+
+  def split(separator : Char, limit = nil)
+    split(separator.to_s, limit)
   end
 
   def split(separator : Regex, limit = nil)
