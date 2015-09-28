@@ -1493,4 +1493,35 @@ describe "String" do
       res.should eq "change 23.46"
     end
   end
+
+  it "raises if string capacity is negative" do
+    expect_raises(ArgumentError, "negative capacity") do
+      String.new(-1) { |buf| {0, 0} }
+    end
+  end
+
+  it "raises if capacity too big on new with UInt32::MAX" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.new(UInt32::MAX) { {0, 0} }
+    end
+  end
+
+  it "raises if capacity too big on new with UInt64::MAX" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.new(UInt64::MAX) { {0, 0} }
+    end
+  end
+
+  # TODO: investigate why the exception raises here isn't captured, must be a bug in the type inference phase
+  pending "raises if String.build negative capacity" do
+    expect_raises(ArgumentError, "negative capacity") do
+      String.build(-1) { }
+    end
+  end
+
+  it "raises if String.build capacity too big" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.build(UInt32::MAX) { }
+    end
+  end
 end

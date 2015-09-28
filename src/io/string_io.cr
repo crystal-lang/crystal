@@ -16,7 +16,9 @@ class StringIO
   # io.pos  #=> 0
   # io.read #=> ""
   # ```
-  def initialize(capacity = 64)
+  def initialize(capacity = 64 : Int)
+    String.check_capacity_in_bounds(capacity)
+
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @bytesize = 0
     @capacity = capacity

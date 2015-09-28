@@ -193,7 +193,9 @@ class String
   #
   # Note: if the buffer doesn't end up denoting a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
-  def self.new(capacity)
+  def self.new(capacity : Int)
+    check_capacity_in_bounds(capacity)
+
     str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
     buffer = (str as String).cstr
     bytesize, size = yield buffer
@@ -1466,7 +1468,7 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer as Void*, cstr[0], times.to_u32, 0_u32, false)
+        Intrinsics.memset(buffer as Void*, cstr[0], times, 0, false)
         {times, times}
       end
     end
@@ -2445,6 +2447,17 @@ class String
 
   def unsafe_byte_slice(byte_offset)
     Slice.new(cstr + byte_offset, bytesize - byte_offset)
+  end
+
+  # :nodoc:
+  def self.check_capacity_in_bounds(capacity)
+    if capacity < 0
+      raise ArgumentError.new("negative capacity")
+    end
+
+    if capacity.to_u64 > (UInt32::MAX - HEADER_SIZE - 1)
+      raise ArgumentError.new("capacity too big")
+    end
   end
 
   # :nodoc:
