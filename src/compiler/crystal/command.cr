@@ -237,12 +237,13 @@ USAGE
   end
 
   private def run_specs
-    target_filename_and_line_number = options.first?
-    if target_filename_and_line_number
+    target_index = options.index{|o| !o.starts_with? '-'}
+    if target_index
+      target_filename_and_line_number = options[target_index]
       splitted = target_filename_and_line_number.split ':', 2
       target_filename = splitted[0]
       if File.file?(target_filename)
-        options.shift
+        options.delete_at target_index
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
           target_filename = "#{target_filename[cwd.size .. -1]}"

@@ -19,12 +19,14 @@ lib LibGMP
   fun init2 = __gmpz_init2(x : MPZ*, bits : BitcntT)
   fun init_set_ui = __gmpz_init_set_ui(rop : MPZ*, op : ULong)
   fun init_set_si = __gmpz_init_set_si(rop : MPZ*, op : Long)
+  fun init_set_d = __gmpz_init_set_d(rop : MPZ*, op : Double)
   fun init_set_str = __gmpz_init_set_str(rop : MPZ*, str : UInt8*, base : Int)
 
   ## I/O
 
   fun set_ui = __gmpz_set_ui(rop : MPZ*, op : ULong)
   fun set_si = __gmpz_set_si(rop : MPZ*, op : Long)
+  fun set_d = __gmpz_set_d(rop : MPZ*, op : Double)
   fun set_str = __gmpz_set_str(rop : MPZ*, str : UInt8*, base : Int) : Int
   fun get_str = __gmpz_get_str(str : UInt8*, base : Int, op : MPZ*) : UInt8*
   fun get_si = __gmpz_get_si(op : MPZ*) : Long
@@ -51,6 +53,8 @@ lib LibGMP
 
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
+
+  fun pow_ui = __gmpz_pow_ui(rop : MPZ*, base : MPZ*, exp : ULong)
 
   ## Bitwise operations
 

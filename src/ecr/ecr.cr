@@ -53,8 +53,6 @@
 #     #=> Hi, Ben!
 #
 # Likewise, other Crystal logic can be implemented in ECR text.
-
-
 module ECR
   extend self
 

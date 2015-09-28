@@ -1,18 +1,32 @@
 class ConditionVariable
   def initialize
-    LibPThread.cond_init(out @cond, nil)
+    if LibPThread.cond_init(out @cond, nil) != 0
+      raise Errno.new("pthread_cond_init")
+    end
   end
 
   def signal
-    LibPThread.cond_signal(self)
+    if LibPThread.cond_signal(self) != 0
+      raise Errno.new("pthread_cond_signal")
+    end
+  end
+
+  def broadcast
+    if LibPThread.cond_broadcast(self) != 0
+      raise Errno.new("pthread_cond_broadcast")
+    end
   end
 
   def wait(mutex : Mutex)
-    LibPThread.cond_wait(self, mutex)
+    if LibPThread.cond_wait(self, mutex) != 0
+      raise Errno.new("pthread_cond_wait")
+    end
   end
 
   def finalize
-    LibPThread.cond_destroy(self)
+    if LibPThread.cond_destroy(self) != 0
+      raise Errno.new("pthread_cond_broadcast")
+    end
   end
 
   def to_unsafe

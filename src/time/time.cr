@@ -1,3 +1,12 @@
+lib LibC
+  struct TimeZone
+    tz_minuteswest : Int
+    tz_dsttime     : Int
+  end
+
+  fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
+end
+
 # The `Time` library allows you to inspect, analyze, calculate, and format time. Here are some examples:
 # 
 # ### Basic Usage
@@ -57,16 +66,6 @@
 #     span       #=> 02:00:00
 #     span.class #=> Time::Span
 #     span.hours #=> 2
-
-lib LibC
-  struct TimeZone
-    tz_minuteswest : Int
-    tz_dsttime     : Int
-  end
-
-  fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
-end
-
 struct Time
   # *Heavily* inspired by Mono's DateTime class:
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/DateTime.cs
