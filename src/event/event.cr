@@ -16,6 +16,7 @@ module Event
 
     def add
       LibEvent2.event_add(@event, nil)
+      nil
     end
 
     def add(timeout)
@@ -30,6 +31,7 @@ module Event
     def free
       LibEvent2.event_free(@event) unless @freed
       @freed = true
+      nil
     end
 
     def finalize
@@ -65,6 +67,7 @@ module Event
       unless LibEvent2.event_reinit(@base) == 0
         raise "Error reinitializing libevent"
       end
+      nil
     end
 
     def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
@@ -74,14 +77,17 @@ module Event
 
     def run_loop
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
+      nil
     end
 
     def run_once
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
+      nil
     end
 
     def loop_break
       LibEvent2.event_base_loopbreak(@base)
+      nil
     end
 
     def dns_base

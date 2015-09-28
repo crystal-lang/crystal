@@ -26,6 +26,7 @@ abstract class Channel(T)
     @closed = true
     Scheduler.enqueue @receivers
     @receivers.clear
+    nil
   end
 
   def closed?
@@ -46,18 +47,22 @@ abstract class Channel(T)
 
   def wait_for_receive
     @receivers << Fiber.current
+    nil
   end
 
   def unwait_for_receive
     @receivers.delete Fiber.current
+    nil
   end
 
   def wait_for_send
     @senders << Fiber.current
+    nil
   end
 
   def unwait_for_send
     @senders.delete Fiber.current
+    nil
   end
 
   protected def raise_if_closed
@@ -169,6 +174,7 @@ class Channel::Buffered(T) < Channel(T)
     @queue << value
     Scheduler.enqueue @receivers
     @receivers.clear
+    nil
   end
 
   private def receive_impl
