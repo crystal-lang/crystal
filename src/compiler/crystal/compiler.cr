@@ -173,12 +173,12 @@ module Crystal
         llvm_mod.data_layout = DataLayout32
       end
 
-      if dump_ll?
-        llvm_mod.print_to_file o_name.gsub(/\.o/, ".ll")
-      end
-
       if @release
         optimize llvm_mod
+      end
+
+      if dump_ll?
+        llvm_mod.print_to_file o_name.gsub(/\.o/, ".ll")
       end
 
       target_machine.emit_obj_to_file llvm_mod, o_name
