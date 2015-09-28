@@ -1,3 +1,7 @@
+# :nodoc:
+class Thread(T, R)
+end
+
 require "./*"
 
 # :nodoc:
