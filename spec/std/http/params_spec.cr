@@ -5,6 +5,8 @@ module HTTP
   describe Params do
     describe ".parse" do
       {
+        { "", {} of String => Array(String) },
+        { "   ", {"   " => [""]} },
         { "foo=bar", {"foo" => ["bar"]} },
         { "foo=bar&foo=baz", {"foo" => ["bar", "baz"]} },
         { "foo=bar&baz=qux", {"foo" => ["bar"], "baz" => ["qux"]} },
