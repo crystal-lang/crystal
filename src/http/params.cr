@@ -5,7 +5,7 @@ module HTTP
   struct Params
     # Parses an HTTP query string into a `HTTP::Params`
     #
-    #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo") 
+    #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
     #     #=> #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
     def self.parse(query : String)
       parsed = {} of String => Array(String)
@@ -22,6 +22,8 @@ module HTTP
     #       # ...
     #     end
     def self.parse(query : String)
+      return if query.empty?
+
       key = nil
       buffer = StringIO.new
 
