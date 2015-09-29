@@ -152,7 +152,7 @@ box = MyBox(Int32).new(1) # OK
 box.value = "hello"       # Error
 ```
 
-More then one type arguments are allowed:
+More than one type argument is allowed:
 
 ```crystal
 class MyDictionary(K, V)
