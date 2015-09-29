@@ -765,8 +765,8 @@ module IO
     count = 0
     while (read_len = src.read(buffer.to_slice).to_i32) > 0
       write_len = dst.write buffer.to_slice[0, read_len]
+      break unless write_len > 0
       count += write_len
-      break if write_len != read_len
     end
     read_len < 0 ? read_len : count
   end
