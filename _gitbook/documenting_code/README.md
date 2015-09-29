@@ -60,8 +60,8 @@ Some details:
 * Code blocks that have Crystal code can be surrounded with triple backticks or indented with four spaces
 * Text blocks, for example to show program output, must be surrounded with triple backticks followed by the "text" word.
 * To automatically link to other types, enclose them with single backticks.
-* To automaitcally link to methods of the currently documented type, use a hash, like `#horns` or `#index(char)`.
-* To automatically link to methods in other types, do `OtherType#method(arg1, arg2)` or just `OtherType#method`.
+* To automaitcally link to methods of the currently documented type, enclose them with single backticks and use a hash, like `#horns` or `#index(char)`.
+* To automatically link to methods in other types, enclose them with sigle backticks and use `OtherType#method(arg1, arg2)` or just `OtherType#method`.
 * To show expression values inside code blocks, use `#=>`, as in `1 + 2 #=> 3`.
 * Use "ditto" to use the same comment as in the previous declaration
 * Use ":nodoc:" to hide public declarations from the generated documentation. Private and protected methods are always hidden.
