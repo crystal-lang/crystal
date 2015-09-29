@@ -247,6 +247,17 @@ module HTTP
       end
     end
 
+    # Returns internal representation of +HTTP::Params+ as
+    # +Hash(String, Array(String))+
+    #
+    # ```
+    # param_hash = HTTP::Params.parse(query).to_h
+    # # => {"foo" => ["bar", "baz"], "baz" => ["qux"]}
+    # ```
+    def to_h
+      raw_params
+    end
+
     # :nodoc:
     class Builder
       @io :: IO
