@@ -30,7 +30,8 @@ Then you can check it out by doing `rake build && jekyll serve` to [browse it](h
 The standard library documentation is on the code itself.
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
 of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicable. To generate
-the docs execute `make doc`.
+the docs execute `make doc`. Please follow the guidelines described [here](http://crystal-lang.org/docs/documenting_code/index.html),
+like the use of the third person.
 
 ## Contributing to the standard library
 
