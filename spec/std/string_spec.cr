@@ -1527,6 +1527,7 @@ describe "String" do
     "foo".compare("FOO", case_insensitive: true).should eq(0)
     "foo".compare("FOX", case_insensitive: true).should eq(-1)
     "fox".compare("FOO", case_insensitive: true).should eq(1)
+    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
   end
 
   # TODO: investigate why the exception raises here isn't captured, must be a bug in the type inference phase

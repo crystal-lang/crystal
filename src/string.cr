@@ -1457,7 +1457,7 @@ class String
     ch1 = reader1.current_char
     ch2 = reader2.current_char
 
-    while reader1.has_next? && reader1.has_next?
+    while reader1.has_next? && reader2.has_next?
       cmp = ch1.downcase <=> ch2.downcase
       return cmp.sign if cmp != 0
 
