@@ -479,6 +479,10 @@ module Macros
     def select(&block) : ArrayLiteral
     end
 
+    # Similar to `Enumerable#reject`
+    def reject(&block) : ArrayLiteral
+    end
+
     # Similar to `Array#shuffle`
     def shuffle : ArrayLiteral
     end
