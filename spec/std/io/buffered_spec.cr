@@ -181,6 +181,21 @@ describe "IO::Buffered" do
     end
   end
 
+  it "writes more than the buffer's internal capacity" do
+    s = String.build do |str|
+      900.times do
+        10.times do |i|
+          str << ('a'.ord + i).chr
+        end
+      end
+    end
+    strio = StringIO.new(s)
+    io = IO::BufferedWrapper.new(strio)
+    count = io.write(s.to_slice)
+    count.should eq(s.bytesize)
+    strio.rewind.gets_to_end.should eq(s)
+  end
+
   it "does puts" do
     str = StringIO.new
     io = IO::BufferedWrapper.new(str)

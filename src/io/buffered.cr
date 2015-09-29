@@ -193,8 +193,7 @@ module IO::Buffered
 
     if count >= BUFFER_SIZE
       flush
-      unbuffered_write slice[0, count]
-      return
+      return unbuffered_write slice[0, count]
     end
 
     if count > BUFFER_SIZE - @out_count
@@ -203,6 +202,7 @@ module IO::Buffered
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
+    count
   end
 
   # :nodoc:
