@@ -1215,6 +1215,9 @@ describe "Parser" do
   assert_syntax_error %(module Foo; require "bar"; end), "can't require inside type declarations"
   assert_syntax_error %(def foo; require "bar"; end), "can't require inside def"
 
+  assert_syntax_error "def foo(x: Int32); end", "space required before colon in type restriction"
+  assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

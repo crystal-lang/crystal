@@ -2700,11 +2700,16 @@ module Crystal
 
       default_value = nil
       restriction = nil
+      found_space = false
 
       if parenthesis
-        next_token_skip_space_or_newline
+        next_token
+        found_space = @token.type == :SPACE || @token.type == :NEWLINE
+        skip_space_or_newline
       else
-        next_token_skip_space
+        next_token
+        found_space = @token.type == :SPACE
+        skip_space
       end
 
       unless splat
@@ -2731,8 +2736,17 @@ module Crystal
         end
       end
 
+      if @token.type == :SYMBOL
+        raise "space required after colon in type restriction", @token
+      end
+
       if allow_restrictions && @token.type == :":"
+        if !default_value && !found_space
+          raise "space required before colon in type restriction", @token
+        end
+
         next_token_skip_space_or_newline
+
         location = @token.location
         restriction = parse_single_type
       end
