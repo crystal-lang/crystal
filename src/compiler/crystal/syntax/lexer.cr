@@ -109,6 +109,8 @@ module Crystal
         case next_char
         when '='
           next_char :"!="
+        when '~'
+          next_char :"!~"
         else
           @token.type = :"!"
         end
