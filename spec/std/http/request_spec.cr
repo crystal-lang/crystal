@@ -203,5 +203,59 @@ module HTTP
         io.to_s.should eq("GET /api/v3/some/resource?q=isearchforsomething&locale=de HTTP/1.1\r\n\r\n")
       end
     end
+
+    describe "#query_params" do
+      it "returns parsed HTTP::Params" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).not_nil!
+        params = request.query_params
+
+        params["foo"].should eq("bar")
+        params.fetch_all("foo").should eq(["bar", "baz"])
+        params["baz"].should eq("qux")
+      end
+
+      it "happily parses when query is not a canonical url-encoded string" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?{\"hello\":\"world\"} HTTP/1.1\r\n\r\n")).not_nil!
+        params = request.query_params
+        params["{\"hello\":\"world\"}"].should eq("")
+        params.to_s.should eq("%7B%22hello%22%3A%22world%22%7D=")
+      end
+
+      it "affects #query when modified" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).not_nil!
+        params = request.query_params
+
+        params["foo"] = "not-bar"
+        request.query.should eq("foo=not-bar&foo=baz&baz=qux")
+      end
+
+      it "updates @resource when modified" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).not_nil!
+        params = request.query_params
+
+        params["foo"] = "not-bar"
+        request.resource.should eq("/api/v3/some/resource?foo=not-bar&foo=baz&baz=qux")
+      end
+
+      it "updates serialized form when modified" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).not_nil!
+        params = request.query_params
+
+        params["foo"] = "not-bar"
+
+        io = StringIO.new
+        request.to_io(io)
+        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")
+      end
+
+      it "is affected when #query is modified" do
+        request = Request.from_io(StringIO.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).not_nil!
+        params = request.query_params
+
+        new_query = "foo=not-bar&foo=not-baz&not-baz=hello&name=world"
+        request.query = new_query
+        request.query_params.to_s.should eq(new_query)
+      end
+    end
   end
 end
