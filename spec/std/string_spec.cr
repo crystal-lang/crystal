@@ -1512,6 +1512,24 @@ describe "String" do
     end
   end
 
+  it "compares non-case insensitive" do
+    "fo".compare("foo").should eq(-1)
+    "foo".compare("fo").should eq(1)
+    "foo".compare("foo").should eq(0)
+    "foo".compare("fox").should eq(-1)
+    "fox".compare("foo").should eq(1)
+    "foo".compare("Foo").should eq(1)
+  end
+
+  it "compares case insensitive" do
+    "fo".compare("FOO", case_insensitive: true).should eq(-1)
+    "foo".compare("FO", case_insensitive: true).should eq(1)
+    "foo".compare("FOO", case_insensitive: true).should eq(0)
+    "foo".compare("FOX", case_insensitive: true).should eq(-1)
+    "fox".compare("FOO", case_insensitive: true).should eq(1)
+    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+  end
+
   # TODO: investigate why the exception raises here isn't captured, must be a bug in the type inference phase
   pending "raises if String.build negative capacity" do
     expect_raises(ArgumentError, "negative capacity") do
