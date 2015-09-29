@@ -1408,12 +1408,70 @@ class String
     cstr.memcmp(other.cstr, bytesize) == 0
   end
 
+  # Compares this string with *other*, returning -1, 0 or +1 depending on whether
+  # this string is less, equal or greater than *other*.
+  #
+  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
+  # byte, -1 is returned and so on.
+  #
+  # If the strings are of different lengths, and the strings are equal when compared
+  # up to the shortest length, then the longer string is considered greater than
+  # the shorter one.
+  #
+  # ```
+  # "abcdef" <=> "abcde"     #=> 1
+  # "abcdef" <=> "abcdef"    #=> 0
+  # "abcdef" <=> "abcdefg"   #=> -1
+  # "abcdef" <=> "ABCDEF"    #=> 1
+  # ```
   def <=>(other : self)
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
 
     cmp = cstr.memcmp(other.cstr, bytesize)
-    cmp == 0 ? (bytesize <=> other.bytesize) : cmp
+    cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
+  end
+
+  # Compares this string with *other*, returning -1, 0 or +1 depending on whether
+  # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
+  # manner.
+  #
+  # If *case_insitive* if `false`, this method delegates to `<=>`. Otherwise,
+  # the strings are compared char-by-char, and ASCII characters are compared in a
+  # case-insensitive way.
+  #
+  # ```
+  # "abcdef".compare("abcde")     #=> 1
+  # "abcdef".compare("abcdef")    #=> 0
+  # "abcdef".compare("abcdefg")   #=> -1
+  # "abcdef".compare("ABCDEF")    #=> 1
+  #
+  # "abcdef".compare("ABCDEF", case_insensitive: true)    #=> 0
+  # "abcdef".compare("ABCDEG", case_insensitive: true)    #=> -1
+  # ```
+  def compare(other : String, case_insensitive = false)
+    return self <=> other unless case_insensitive
+
+    reader1 = Char::Reader.new(self)
+    reader2 = Char::Reader.new(other)
+    ch1 = reader1.current_char
+    ch2 = reader2.current_char
+
+    while reader1.has_next? && reader1.has_next?
+      cmp = ch1.downcase <=> ch2.downcase
+      return cmp.sign if cmp != 0
+
+      ch1 = reader1.next_char
+      ch2 = reader2.next_char
+    end
+
+    if reader1.has_next?
+      1
+    elsif reader2.has_next?
+      -1
+    else
+      0
+    end
   end
 
   # Tests whether *str* matches *regex*.
