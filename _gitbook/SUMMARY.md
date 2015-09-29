@@ -111,5 +111,6 @@
        * [alias](syntax_and_semantics/c_bindings/alias.md)
        * [Callbacks](syntax_and_semantics/c_bindings/callbacks.md)
    * [Type grammar](syntax_and_semantics/type_grammar.md)
+   * [Documenting code](documenting_code/README.md)
    * [Unsafe code](syntax_and_semantics/unsafe.md)
 
