@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Hello World! | Crystal Programming Language</title>
+        <title>Documenting code | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,10 @@
         
     
     
-    <link rel="next" href="../overview/http_server.html" />
+    <link rel="next" href="../syntax_and_semantics/unsafe.html" />
     
     
-    <link rel="prev" href="../overview/index.html" />
+    <link rel="prev" href="../syntax_and_semantics/type_grammar.html" />
     
 
         
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="3.1" data-basepath=".." data-revision="Tue Sep 29 2015 14:51:21 GMT+0000 (UTC)">
+    <div class="book" data-level="4.17" data-basepath=".." data-revision="Tue Sep 29 2015 14:51:21 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -208,7 +208,7 @@
             <ul class="articles">
                 
     
-        <li class="chapter active" data-level="3.1" data-path="overview/hello_world.html">
+        <li class="chapter " data-level="3.1" data-path="overview/hello_world.html">
             
                 
                     <a href="../overview/hello_world.html">
@@ -1819,7 +1819,7 @@
             
         </li>
     
-        <li class="chapter " data-level="4.17" data-path="documenting_code/index.html">
+        <li class="chapter active" data-level="4.17" data-path="documenting_code/index.html">
             
                 
                     <a href="../documenting_code/index.html">
@@ -1959,11 +1959,72 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="hello-world">Hello World!</h1>
-<p>The classic &quot;hello world&quot; program looks like this in Crystal:</p>
-<pre><code class="lang-crystal">puts <span class="hljs-string">&quot;Hello world!&quot;</span>
+                        <h1 id="documenting-code">Documenting code</h1>
+<p>Crystal documentation comments use a subset of <a href="https://daringfireball.net/projects/markdown/" target="_blank">Markdown</a>. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># A unicorn is a **legendary animal** (see the `Legendary` module) that has been</span>
+<span class="hljs-comment"># described since antiquity as a beast with a large, spiraling horn projecting</span>
+<span class="hljs-comment"># from its forhead.</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># To create a unicorn:</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># ```</span>
+<span class="hljs-comment"># unicorn = Unicorn.new</span>
+<span class="hljs-comment"># unicorn.speak</span>
+<span class="hljs-comment"># ```</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># The above produces:</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># ```text</span>
+<span class="hljs-comment"># &quot;I&apos;m a unicorn&quot;</span>
+<span class="hljs-comment"># ```</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># Check the number of horns with `#horns`.</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Unicorn</span></span>
+  <span class="hljs-keyword">include</span> <span class="hljs-constant">Legendary</span>
+
+  <span class="hljs-comment"># Creates a unicorn with the specified number of *horns*.</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@horns</span> = <span class="hljs-number">1</span>)
+    raise <span class="hljs-string">&quot;Not a unicorn&quot;</span> <span class="hljs-keyword">if</span> <span class="hljs-variable">@horns</span> != <span class="hljs-number">1</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-comment"># Returns the number of horns this unicorn has</span>
+  <span class="hljs-comment">#</span>
+  <span class="hljs-comment"># ```</span>
+  <span class="hljs-comment"># Unicorn.new.horns #=&gt; 1</span>
+  <span class="hljs-comment"># ```</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">horns</span></span>
+    <span class="hljs-variable">@horns</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-comment"># ditto</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">number_of_horns</span></span>
+    horns
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-comment"># Makes the unicorn speak to STDOUT</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">speak</span></span>
+    puts <span class="hljs-string">&quot;I&apos;m a unicorn&quot;</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-comment"># :nodoc:</span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Helper</span></span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 </code></pre>
-<p>From this you can see that the main routine is simply the program itself: there&apos;s no need to define a &quot;main&quot; function or something similar.</p>
+<p>Some details:</p>
+<ul>
+<li>Use the third person: &quot;Returns the number of horns&quot; instead of &quot;Return the number of horns&quot;.</li>
+<li>Parameter names should be <em>italicized</em> (surrounded with single asterisks or underscores).</li>
+<li>Code blocks that have Crystal code can be surrounded with triple backticks or indented with four spaces</li>
+<li>Text blocks, for example to show program output, must be surrounded with triple backticks followed by the &quot;text&quot; word.</li>
+<li>To automatically link to other types, enclose them with single backticks.</li>
+<li>To automaitcally link to methods of the currently documented type, use a hash, like <code>#horns</code> or <code>#index(char)</code>.</li>
+<li>To automatically link to methods in other types, do <code>OtherType#method(arg1, arg2)</code> or just <code>OtherType#method</code>.</li>
+<li>To show expression values inside code blocks, use <code>#=&gt;</code>, as in <code>1 + 2 #=&gt; 3</code>.</li>
+<li>Use &quot;ditto&quot; to use the same comment as in the previous declaration</li>
+<li>Use &quot;:nodoc:&quot; to hide public declarations from the generated documentation. Private and protected methods are always hidden.</li>
+</ul>
+<p>To generate documentation for a project, invoke <code>crystal doc</code>. This will create a <code>doc</code> directory, with a <code>doc/index.html</code> entry point. All files inside the root <code>src</code> directory will be considered.</p>
 
                     
                     </section>
@@ -1974,10 +2035,10 @@
         </div>
 
         
-        <a href="../overview/index.html" class="navigation navigation-prev " aria-label="Previous page: Overview and Examples"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/type_grammar.html" class="navigation navigation-prev " aria-label="Previous page: Type grammar"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../overview/http_server.html" class="navigation navigation-next " aria-label="Next page: HTTP Server"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/unsafe.html" class="navigation navigation-next " aria-label="Next page: Unsafe code"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
