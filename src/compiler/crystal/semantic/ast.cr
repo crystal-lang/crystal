@@ -259,20 +259,11 @@ module Crystal
   end
 
   class PointerOf
-    # This is to detect cases like `x = pointerof(x)`, where
-    # the type keeps growing indefinitely
-    @growth = 0
-
     def map_type(type)
       old_type = self.type?
       new_type = type.try &.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
-        @growth += 1
-        if @growth > 4
-          raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
-        end
-      else
-        @growth = 0
+        raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end
 
       new_type
@@ -281,7 +272,20 @@ module Crystal
     def grew?(old_type, new_type)
       new_type = new_type as PointerInstanceType
       element_type = new_type.element_type
-      element_type.is_a?(UnionType) && element_type.includes_type?(old_type)
+      type_includes?(element_type, old_type)
+    end
+
+    def type_includes?(haystack, needle)
+      return true if haystack == needle
+
+      case haystack
+      when UnionType
+        haystack.union_types.any? { |sub| type_includes?(sub, needle) }
+      when GenericClassInstanceType
+        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+      else
+        false
+      end
     end
   end
 
