@@ -1,17 +1,25 @@
 module HTTP
   DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
-  def self.parse_headers_and_body(io, mandatory_body = false)
+  enum BodyType
+    OnDemand
+    Prohibited
+    Mandatory
+  end
+
+  def self.parse_headers_and_body(io, body_type = BodyType::OnDemand : BodyType)
     headers = Headers.new
 
     while line = io.gets
       if line == "\r\n" || line == "\n"
         body = nil
-        if content_length = headers["Content-length"]?
+        if body_type.prohibited?
+          body = nil
+        elsif content_length = headers["Content-length"]?
           body = FixedLengthContent.new(io, content_length.to_i)
         elsif headers["Transfer-encoding"]? == "chunked"
           body = ChunkedContent.new(io)
-        elsif mandatory_body
+        elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
         end
 

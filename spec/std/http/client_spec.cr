@@ -41,6 +41,20 @@ module HTTP
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
 
+    it "doesn't read the body if request was HEAD" do
+      resp_get = TestServer.open("localhost", 8080, 0) do
+        client = Client.new("localhost", 8080)
+        break client.get("/")
+      end
+
+      TestServer.open("localhost", 8080, 0) do
+        client = Client.new("localhost", 8080)
+        resp_head = client.head("/")
+        resp_head.headers.should eq(resp_get.headers)
+        resp_head.body.should eq("")
+      end
+    end
+
     it "raises if URI is missing scheme" do
       expect_raises(ArgumentError) do
         HTTP::Client.get "www.example.com"

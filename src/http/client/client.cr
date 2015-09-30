@@ -285,7 +285,7 @@ class HTTP::Client
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
-    HTTP::Response.from_io(socket).tap do |response|
+    HTTP::Response.from_io(socket, request.ignore_body?).tap do |response|
       close unless response.keep_alive?
     end
   end
@@ -303,7 +303,7 @@ class HTTP::Client
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
-    HTTP::Response.from_io(socket) do |response|
+    HTTP::Response.from_io(socket, request.ignore_body?) do |response|
       value = yield response
       response.body_io.try &.close
       close unless response.keep_alive?
