@@ -11,6 +11,10 @@ class Class
     crystal_type_id == other.crystal_type_id
   end
 
+  def ===(other)
+    other.is_a?(self)
+  end
+
   # Returns the name of this class.
   #
   # ```
