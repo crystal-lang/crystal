@@ -511,14 +511,14 @@ describe "Enumerable" do
     it "should perform parallel map" do
       sleep_time = 0.001
       t = Time.now
-      res = (0...10).to_a.reverse.pmap do |i|
+      res = (0...10).to_a.reverse.parallel_map do |i|
         sleep(sleep_time + rand * sleep_time / 10)
         i * i
       end
       res.should eq([81, 64, 49, 36, 25, 16, 9, 4, 1, 0])
       delay = (Time.now - t).to_f
       delay.should be > sleep_time
-      delay.should be < sleep_time * 2
+      delay.should be < sleep_time * 3
     end
   end
 

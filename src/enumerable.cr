@@ -779,8 +779,8 @@ module Enumerable(T)
 
   # Parallel map
   #
-  def pmap(&block : T -> U)
-    map { |el| future { block.call(el) } }.map &.get
+  def parallel_map(&block : T -> U)
+    map { |e| future { block.call(e) } }.map &.get
   end
 
   # Returns an array with all the elements in the collection for which the passed block returns `false`.
