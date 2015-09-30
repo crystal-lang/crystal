@@ -83,6 +83,16 @@ module HTTP
       end
     end
 
+    it "parses response ignoring body" do
+      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"), true)
+      response.version.should eq("HTTP/1.1")
+      response.status_code.should eq(200)
+      response.status_message.should eq("OK")
+      response.headers["content-type"].should eq("text/plain")
+      response.headers["content-length"].should eq("5")
+      response.body.should eq("")
+    end
+
     it "doesn't sets content length for 1xx, 204 or 304" do
       [100, 101, 204, 304].each do |status|
         response = Response.new(status)
