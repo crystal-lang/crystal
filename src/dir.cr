@@ -19,45 +19,6 @@ lib LibC
     end
   end
 
-  ifdef linux
-    struct Glob
-      pathc : LibC::SizeT
-      pathv : UInt8**
-      offs : LibC::SizeT
-      flags : Int32
-      dummy : UInt8[40]
-    end
-  elsif darwin
-    struct Glob
-      pathc : LibC::SizeT
-      matchc : Int32
-      offs : LibC::SizeT
-      flags : Int32
-      pathv : UInt8**
-      dummy : UInt8[48]
-    end
-  end
-
-  ifdef linux
-    enum GlobFlags
-      APPEND = 1 << 5
-      BRACE  = 1 << 10
-      TILDE  = 1 << 12
-    end
-  elsif darwin
-    enum GlobFlags
-      APPEND = 0x0001
-      BRACE  = 0x0080
-      TILDE  = 0x0800
-    end
-  end
-
-  enum GlobErrors
-    NOSPACE = 1
-    ABORTED = 2
-    NOMATCH = 3
-  end
-
   fun getcwd(buffer : UInt8*, size : Int32) : UInt8*
   fun chdir = chdir(path : UInt8*) : Int32
   fun opendir(name : UInt8*) : Dir*
@@ -73,9 +34,6 @@ lib LibC
   end
 
   fun rewinddir(dir : Dir*)
-
-  fun glob(pattern : UInt8*, flags : GlobFlags, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
-  fun globfree(result : Glob*)
 end
 
 # Objects of class Dir are directory streams representing directories in the underlying file system.
@@ -323,20 +281,22 @@ class Dir
       nest = 0
 
       idx = 1 if pattern[0] == File::SEPARATOR
+      size = pattern.size
 
-      while idx < pattern.size
-        if pattern[idx] == '\\'
-          if idx + 1 < pattern.size && escapable.includes? pattern[idx + 1]
+      while idx < size
+        char = pattern[idx]
+        if char == '\\'
+          if idx + 1 < size && escapable.includes?(peek = pattern[idx + 1])
             str << '\\'
-            str << pattern[idx + 1]
+            str << peek
             idx += 2
             next
           end
-        elsif pattern[idx] == '*'
-          if idx + 2 < pattern.size &&
+        elsif char == '*'
+          if idx + 2 < size &&
                        pattern[idx + 1] == '*' &&
                        pattern[idx + 2] == File::SEPARATOR
-            str << "(?:.*\\#{File::SEPARATOR})?"
+            str << "(?:.*\\" << File::SEPARATOR << ")?"
             idx += 3
             next
           elsif idx + 1 < pattern.size && pattern[idx + 1] == '*'
@@ -344,23 +304,23 @@ class Dir
             idx += 2
             next
           else
-            str << "[^\\#{File::SEPARATOR}]*"
+            str << "[^\\" << File::SEPARATOR << "]*"
           end
-        elsif escaped.includes? pattern[idx]
+        elsif escaped.includes? char
           str << "\\"
-          str << pattern[idx]
-        elsif pattern[idx] == '?'
-          str << "[^\\#{File::SEPARATOR}]"
-        elsif pattern[idx] == '{'
+          str << char
+        elsif char == '?'
+          str << "[^\\" << File::SEPARATOR << "]"
+        elsif char == '{'
           str << "(?:"
           nest += 1
-        elsif pattern[idx] == '}'
+        elsif char == '}'
           str << ")"
           nest -= 1
-        elsif pattern[idx] == ',' && nest > 0
+        elsif char == ',' && nest > 0
           str << "|"
         else
-          str << pattern[idx]
+          str << char
         end
         idx += 1
       end
@@ -405,7 +365,8 @@ class Dir
           relpath = File.join rel_path, f
         end
         begin
-          isdir = Dir.exists?(fullpath) && !File.symlink?(fullpath)
+          stat = File.stat(fullpath)
+          isdir = stat.directory? && !stat.symlink?
         rescue e
           isdir = false
         end
