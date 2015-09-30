@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.17" data-basepath=".." data-revision="Tue Sep 29 2015 16:29:04 GMT+0000 (UTC)">
+    <div class="book" data-level="4.17" data-basepath=".." data-revision="Wed Sep 30 2015 09:24:58 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1960,7 +1960,108 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="documenting-code">Documenting code</h1>
-<p>Crystal documentation comments use a subset of <a href="https://daringfireball.net/projects/markdown/" target="_blank">Markdown</a>. For example:</p>
+<p>Crystal documentation comments use a subset of <a href="https://daringfireball.net/projects/markdown/" target="_blank">Markdown</a>. </p>
+<ul>
+<li>Documentation should be positioned right above definitions of classes, modules, and methods. Leave no blanks between them.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-comment"># A unicorn is a **legendary animal** (see the `Legendary` module) that has been</span>
+<span class="hljs-comment"># described since antiquity as a beast with a large, spiraling horn projecting</span>
+<span class="hljs-comment"># from its forehead.</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Unicorn</span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Bad: This is not attached to any class.</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Legendary</span></span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
+<li><p>The documentation of a method is included into the method summary and the method details. The former includes only the first line, the latter includes the entire documentation. In short, it is preferred to:</p>
+<ol>
+<li>State a method&apos;s purpose or functionality in the first line.</li>
+<li>Supplement it with details and usages after that.</li>
+</ol>
+</li>
+</ul>
+<p>For instance:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># Returns the number of horns this unicorn has.</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># ```</span>
+<span class="hljs-comment"># Unicorn.new.horns #=&gt; 1</span>
+<span class="hljs-comment"># ```</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">horns</span></span>
+  <span class="hljs-variable">@horns</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
+<li><p>Use the third person: <code>Returns the number of horns this unicorn has</code> instead of <code>Return the number of horns this unicorn has</code>.</p>
+</li>
+<li><p>Parameter names should be <em>italicized</em> (surrounded with single asterisks <code>*</code> or underscores <code>_</code>):</p>
+</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-comment"># Creates a unicorn with the specified number of *horns*.</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@horns</span> = <span class="hljs-number">1</span>)
+  raise <span class="hljs-string">&quot;Not a unicorn&quot;</span> <span class="hljs-keyword">if</span> <span class="hljs-variable">@horns</span> != <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
+<li>Code blocks that have Crystal code can be surrounded with triple backticks or indented with four spaces.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-comment"># ```</span>
+<span class="hljs-comment"># unicorn = Unicorn.new</span>
+<span class="hljs-comment"># unicorn.speak</span>
+<span class="hljs-comment"># ```</span>
+</code></pre>
+<p>or </p>
+<pre><code class="lang-crystal"><span class="hljs-comment">#     unicorn = Unicorn.new</span>
+<span class="hljs-comment">#     unicorn.speak</span>
+</code></pre>
+<ul>
+<li>Text blocks, for example to show program output, must be surrounded with triple backticks followed by the &quot;text&quot; keyword.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-comment"># ```text</span>
+<span class="hljs-comment"># &quot;I&apos;m a unicorn&quot;</span>
+<span class="hljs-comment"># ```</span>
+</code></pre>
+<ul>
+<li>To automatically link to other types, enclose them with single backticks.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-comment"># the `Legendary` module</span>
+</code></pre>
+<ul>
+<li><p>To automatically link to methods of the currently documented type, use a hash like <code>#horns</code> or <code>#index(char)</code>, and enclose it with single backticks.</p>
+</li>
+<li><p>To automatically link to methods in other types, do <code>OtherType#method(arg1, arg2)</code> or just <code>OtherType#method</code>, and enclose it with single backticks.</p>
+</li>
+</ul>
+<p>For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># Check the number of horns with `#horns`.</span>
+<span class="hljs-comment"># See what a unicorn would say with `Unicorn#speak`.</span>
+</code></pre>
+<ul>
+<li>To show the value of an expression inside code blocks, use <code>#=&gt;</code>.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-number">1</span> + <span class="hljs-number">2</span> <span class="hljs-comment">#=&gt; 3</span>
+<span class="hljs-constant">Unicorn</span>.new.speak <span class="hljs-comment">#=&gt; &quot;I&apos;m a unicorn&quot;</span>
+</code></pre>
+<ul>
+<li>Use <code>ditto</code> to use the same comment as in the previous declaration.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-comment"># ditto</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">number_of_horns</span></span>
+  horns
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
+<li>Use <code>:nodoc:</code> to hide public declarations from the generated documentation. Private and protected methods are always hidden.</li>
+</ul>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Unicorn</span></span>
+  <span class="hljs-comment"># :nodoc:</span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Helper</span></span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h3 id="a-complete-example">A Complete Example</h3>
 <pre><code class="lang-crystal"><span class="hljs-comment"># A unicorn is a **legendary animal** (see the `Legendary` module) that has been</span>
 <span class="hljs-comment"># described since antiquity as a beast with a large, spiraling horn projecting</span>
 <span class="hljs-comment"># from its forhead.</span>
@@ -2011,19 +2112,7 @@
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>Some details:</p>
-<ul>
-<li>Use the third person: &quot;Returns the number of horns&quot; instead of &quot;Return the number of horns&quot;.</li>
-<li>Parameter names should be <em>italicized</em> (surrounded with single asterisks or underscores).</li>
-<li>Code blocks that have Crystal code can be surrounded with triple backticks or indented with four spaces</li>
-<li>Text blocks, for example to show program output, must be surrounded with triple backticks followed by the &quot;text&quot; word.</li>
-<li>To automatically link to other types, enclose them with single backticks.</li>
-<li>To automaitcally link to methods of the currently documented type, enclose them with single backticks and use a hash, like <code>#horns</code> or <code>#index(char)</code>.</li>
-<li>To automatically link to methods in other types, enclose them with sigle backticks and use <code>OtherType#method(arg1, arg2)</code> or just <code>OtherType#method</code>.</li>
-<li>To show expression values inside code blocks, use <code>#=&gt;</code>, as in <code>1 + 2 #=&gt; 3</code>.</li>
-<li>Use &quot;ditto&quot; to use the same comment as in the previous declaration</li>
-<li>Use &quot;:nodoc:&quot; to hide public declarations from the generated documentation. Private and protected methods are always hidden.</li>
-</ul>
+<h3 id="generate-documentation">Generate Documentation</h3>
 <p>To generate documentation for a project, invoke <code>crystal doc</code>. This will create a <code>doc</code> directory, with a <code>doc/index.html</code> entry point. All files inside the root <code>src</code> directory will be considered.</p>
 
                     
