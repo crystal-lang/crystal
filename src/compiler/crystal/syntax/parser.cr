@@ -2563,6 +2563,10 @@ module Crystal
         end
         next_token_skip_space
       when :IDENT, :INSTANCE_VAR, :"*"
+        if @token.keyword?(:end)
+          unexpected_token @token.to_s, "expected ';' or newline"
+        end
+
         while @token.type != :NEWLINE && @token.type != :";"
           extras = parse_arg(args, extra_assigns, false, found_default_value, found_splat)
           if !found_default_value && extras.default_value
