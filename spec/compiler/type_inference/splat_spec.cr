@@ -260,11 +260,11 @@ describe "Type inference: splat" do
 
   it "splats arg and splat against splat (1) (#1042)" do
     assert_type(%(
-      def foo(a: Bool, *b: Int32)
+      def foo(a : Bool, *b : Int32)
         1
       end
 
-      def foo(*b: Int32)
+      def foo(*b : Int32)
         'a'
       end
 
@@ -274,11 +274,11 @@ describe "Type inference: splat" do
 
   it "splats arg and splat against splat (2) (#1042)" do
     assert_type(%(
-      def foo(a: Bool, *b: Int32)
+      def foo(a : Bool, *b : Int32)
         1
       end
 
-      def foo(*b: Int32)
+      def foo(*b : Int32)
         'a'
       end
 

@@ -459,13 +459,12 @@ module Crystal
       when "select"
         interpret_argless_method(method, args) do
           raise "select expects a block" unless block
-
-          block_arg = block.args.first?
-
-          ArrayLiteral.new(elements.select do |elem|
-            interpreter.define_var(block_arg.name, elem) if block_arg
-            interpreter.accept(block.body).truthy?
-          end)
+          filter(block, interpreter)
+        end
+      when "reject"
+        interpret_argless_method(method, args) do
+          raise "reject expects a block" unless block
+          filter(block, interpreter, keep: false)
         end
       when "shuffle"
         ArrayLiteral.new(elements.shuffle)
@@ -510,6 +509,16 @@ module Crystal
       else
         super
       end
+    end
+
+    def filter(block, interpreter, keep = true)
+      block_arg = block.args.first?
+
+      ArrayLiteral.new(elements.select { |elem|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        block_result = interpreter.accept(block.body).truthy?
+        keep ? block_result : !block_result
+      })
     end
   end
 

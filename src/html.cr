@@ -7,11 +7,11 @@ module HTML
     '>'  => "&gt;",
   }
 
-  def self.escape(string: String)
+  def self.escape(string : String)
     string.gsub(SUBSTITUTIONS)
   end
 
-  def self.escape(string: String, io: IO)
+  def self.escape(string : String, io : IO)
     string.each_char do |char|
       io << SUBSTITUTIONS.fetch(char, char)
     end

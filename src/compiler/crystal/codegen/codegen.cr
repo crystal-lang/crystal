@@ -139,8 +139,10 @@ module Crystal
         @symbol_table_values << build_string_constant(sym, sym)
       end
 
-      symbol_table = define_symbol_table @llvm_mod
-      symbol_table.initializer = LLVM.array(llvm_type(@mod.string), @symbol_table_values)
+      unless mod.symbols.empty?
+        symbol_table = define_symbol_table @llvm_mod
+        symbol_table.initializer = LLVM.array(llvm_type(@mod.string), @symbol_table_values)
+      end
 
       @last = llvm_nil
       @fun_literal_count = 0

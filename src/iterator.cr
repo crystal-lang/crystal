@@ -638,7 +638,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @func: T -> U)
+    def initialize(@iterator : Iterator(T), @func : T -> U)
       @returned_false = false
     end
 
@@ -753,7 +753,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    def initialize(@iterator : Iterator(T), @func: T -> U)
+    def initialize(@iterator : Iterator(T), @func : T -> U)
       @returned_false = false
     end
 

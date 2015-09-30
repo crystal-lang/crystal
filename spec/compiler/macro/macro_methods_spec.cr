@@ -421,6 +421,10 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
     end
 
+    it "executes reject" do
+      assert_macro "", %({{[1, 2, 3].reject { |e| e == 1 }}}), [] of ASTNode, "[2, 3]"
+    end
+
     it "executes find (finds)" do
       assert_macro "", %({{[1, 2, 3].find { |e| e == 2 }}}), [] of ASTNode, "2"
     end

@@ -1493,4 +1493,53 @@ describe "String" do
       res.should eq "change 23.46"
     end
   end
+
+  it "raises if string capacity is negative" do
+    expect_raises(ArgumentError, "negative capacity") do
+      String.new(-1) { |buf| {0, 0} }
+    end
+  end
+
+  it "raises if capacity too big on new with UInt32::MAX" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.new(UInt32::MAX) { {0, 0} }
+    end
+  end
+
+  it "raises if capacity too big on new with UInt64::MAX" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.new(UInt64::MAX) { {0, 0} }
+    end
+  end
+
+  it "compares non-case insensitive" do
+    "fo".compare("foo").should eq(-1)
+    "foo".compare("fo").should eq(1)
+    "foo".compare("foo").should eq(0)
+    "foo".compare("fox").should eq(-1)
+    "fox".compare("foo").should eq(1)
+    "foo".compare("Foo").should eq(1)
+  end
+
+  it "compares case insensitive" do
+    "fo".compare("FOO", case_insensitive: true).should eq(-1)
+    "foo".compare("FO", case_insensitive: true).should eq(1)
+    "foo".compare("FOO", case_insensitive: true).should eq(0)
+    "foo".compare("FOX", case_insensitive: true).should eq(-1)
+    "fox".compare("FOO", case_insensitive: true).should eq(1)
+    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+  end
+
+  # TODO: investigate why the exception raises here isn't captured, must be a bug in the type inference phase
+  pending "raises if String.build negative capacity" do
+    expect_raises(ArgumentError, "negative capacity") do
+      String.build(-1) { }
+    end
+  end
+
+  it "raises if String.build capacity too big" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.build(UInt32::MAX) { }
+    end
+  end
 end

@@ -193,7 +193,9 @@ class String
   #
   # Note: if the buffer doesn't end up denoting a valid UTF-8 sequence, this method still succeeds.
   # However, when iterating it or indexing it, an `InvalidByteSequenceError` will be raised.
-  def self.new(capacity)
+  def self.new(capacity : Int)
+    check_capacity_in_bounds(capacity)
+
     str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
     buffer = (str as String).cstr
     bytesize, size = yield buffer
@@ -1395,6 +1397,7 @@ class String
     squeeze { true }
   end
 
+  # Returns true if this is the empty string, `""`.
   def empty?
     bytesize == 0
   end
@@ -1405,24 +1408,101 @@ class String
     cstr.memcmp(other.cstr, bytesize) == 0
   end
 
+  # Compares this string with *other*, returning -1, 0 or +1 depending on whether
+  # this string is less, equal or greater than *other*.
+  #
+  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
+  # byte, -1 is returned and so on.
+  #
+  # If the strings are of different lengths, and the strings are equal when compared
+  # up to the shortest length, then the longer string is considered greater than
+  # the shorter one.
+  #
+  # ```
+  # "abcdef" <=> "abcde"     #=> 1
+  # "abcdef" <=> "abcdef"    #=> 0
+  # "abcdef" <=> "abcdefg"   #=> -1
+  # "abcdef" <=> "ABCDEF"    #=> 1
+  # ```
   def <=>(other : self)
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
 
     cmp = cstr.memcmp(other.cstr, bytesize)
-    cmp == 0 ? (bytesize <=> other.bytesize) : cmp
+    cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
   end
 
+  # Compares this string with *other*, returning -1, 0 or +1 depending on whether
+  # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
+  # manner.
+  #
+  # If *case_insitive* if `false`, this method delegates to `<=>`. Otherwise,
+  # the strings are compared char-by-char, and ASCII characters are compared in a
+  # case-insensitive way.
+  #
+  # ```
+  # "abcdef".compare("abcde")     #=> 1
+  # "abcdef".compare("abcdef")    #=> 0
+  # "abcdef".compare("abcdefg")   #=> -1
+  # "abcdef".compare("ABCDEF")    #=> 1
+  #
+  # "abcdef".compare("ABCDEF", case_insensitive: true)    #=> 0
+  # "abcdef".compare("ABCDEG", case_insensitive: true)    #=> -1
+  # ```
+  def compare(other : String, case_insensitive = false)
+    return self <=> other unless case_insensitive
+
+    reader1 = Char::Reader.new(self)
+    reader2 = Char::Reader.new(other)
+    ch1 = reader1.current_char
+    ch2 = reader2.current_char
+
+    while reader1.has_next? && reader2.has_next?
+      cmp = ch1.downcase <=> ch2.downcase
+      return cmp.sign if cmp != 0
+
+      ch1 = reader1.next_char
+      ch2 = reader2.next_char
+    end
+
+    if reader1.has_next?
+      1
+    elsif reader2.has_next?
+      -1
+    else
+      0
+    end
+  end
+
+  # Tests whether *str* matches *regex*.
+  # If successful, it returns the position of the first match.
+  # If unsuccessful, it returns `nil`.
+  #
+  # If the argument isn't a `Regex`, it returns `nil`.
+  #
+  # ```
+  # "Haystack" =~ /ay/  #=> 1
+  # "Haystack" =~ /z/   #=> nil
+  #
+  # "Haystack" =~ 45    #=> nil
+  # ```
   def =~(regex : Regex)
     match = regex.match(self)
     $~ = match
     match.try &.begin(0)
   end
 
+  # ditto
   def =~(other)
     nil
   end
 
+  # Concatenates *str* and *other*.
+  #
+  # ```
+  # "abc" + "def" #=> "abcdef"
+  # "abc" + 'd'   #=> "abcd"
+  # ```
   def +(other : self)
     size = bytesize + other.bytesize
     String.new(size) do |buffer|
@@ -1437,6 +1517,7 @@ class String
     end
   end
 
+  # ditto
   def +(char : Char)
     bytes :: UInt8[4]
 
@@ -1459,6 +1540,12 @@ class String
     end
   end
 
+  # Makes a new string by adding *str* to itself *times* times.
+  #
+  # ```
+  # "Developers! " * 4
+  # #=> "Developers! Developers! Developers! Developers!"
+  # ```
   def *(times : Int)
     raise ArgumentError.new "negative argument" if times < 0
 
@@ -1466,7 +1553,7 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer as Void*, cstr[0], times.to_u32, 0_u32, false)
+        Intrinsics.memset(buffer as Void*, cstr[0], times, 0, false)
         {times, times}
       end
     end
@@ -1486,12 +1573,21 @@ class String
     end
   end
 
-  def index(c : Char, offset = 0)
+  # Returns the index of *search* in the string, or `nil` if the string is not present.
+  # If `offset` is present, it defines the position to start the search.
+  #
+  # ```
+  # "Hello, World".index('o')     #=> 4
+  # "Hello, World".index('Z')     #=> nil
+  # "Hello, World".index("o", 5)  #=> 8
+  # "Hello, World".index("H", 2)  #=> nil
+  # ```
+  def index(search : Char, offset = 0)
     offset += size if offset < 0
     return nil if offset < 0
 
     each_char_with_index do |char, i|
-      if i >= offset && char == c
+      if i >= offset && char == search
         return i
       end
     end
@@ -1499,16 +1595,17 @@ class String
     nil
   end
 
-  def index(c : String, offset = 0)
+  # ditto
+  def index(search : String, offset = 0)
     offset += size if offset < 0
     return nil if offset < 0
 
-    end_pos = bytesize - c.bytesize
+    end_pos = bytesize - search.bytesize
 
     reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if reader.pos <= end_pos
-        if i >= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
+        if i >= offset && (cstr + reader.pos).memcmp(search.cstr, search.bytesize) == 0
           return i
         end
       else
@@ -1519,14 +1616,24 @@ class String
     nil
   end
 
-  def rindex(c : Char, offset = size - 1)
+  # Returns the index of _last_ appearance of *c* in the string,
+  # If `offset` is present, it defines the position to _end_ the search
+  # (characters beyond that point will be ignored).
+  #
+  # ```
+  # "Hello, World".index('o')     #=> 8
+  # "Hello, World".index('Z')     #=> nil
+  # "Hello, World".index("o", 5)  #=> 4
+  # "Hello, World".index("H", 2)  #=> nil
+  # ```
+  def rindex(search : Char, offset = size - 1)
     offset += size if offset < 0
     return nil if offset < 0
 
     last_index = nil
 
     each_char_with_index do |char, i|
-      if i <= offset && char == c
+      if i <= offset && char == search
         last_index = i
       end
     end
@@ -1534,17 +1641,18 @@ class String
     last_index
   end
 
-  def rindex(c : String, offset = size - c.size)
+  # ditto
+  def rindex(search : String, offset = size - search.size)
     offset += size if offset < 0
     return nil if offset < 0
 
-    end_size = size - c.size
+    end_size = size - search.size
 
     last_index = nil
 
     reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
-      if i <= end_size && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize) == 0
+      if i <= end_size && i <= offset && (cstr + reader.pos).memcmp(search.cstr, search.bytesize) == 0
         last_index = i
       end
     end
@@ -1597,14 +1705,29 @@ class String
     nil
   end
 
-  def includes?(c : Char)
-    !!index(c)
+  # Returns true if the string contains *search*.
+  #
+  # ```
+  # "Team".includes?('i')             #=> false
+  # "Dysfunctional".includes?("fun")  #=> true
+  # ```
+  def includes?(search : Char | String)
+    !!index(search)
   end
 
-  def includes?(str : String)
-    !!index(str)
-  end
-
+  # Makes an array by splitting the string on any ASCII whitespace characters (and removing that whitespace).
+  # If *limit* is present, up to *limit* new strings will be created,
+  # with the entire remainder added to the last string.
+  #
+  # ```
+  # old_pond = "
+  #   Old pond
+  #   a frog leaps in
+  #   water's sound
+  # "
+  # old_pond.split    #=> ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
+  # old_pond.split(3) #=> ["Old", "pond", "a frog leaps in\n  water's sound\n"]
+  # ```
   def split(limit = nil : Int32?)
     if limit && limit <= 1
       return [self]
@@ -1656,6 +1779,7 @@ class String
     ary
   end
 
+  # ditto
   def split(separator : Char, limit = nil)
     if separator == ' '
       return split(limit)
@@ -1690,6 +1814,20 @@ class String
     ary
   end
 
+  # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is a single space (`' '`, `" "`), it splits on any whitespace (see `#split()`).
+  #
+  # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split("ss") #=> ["Mi", "i", "ippi"]
+  # long_river_name.split('i')  #=> ["M", "ss", "ss", "pp"]
+  # long_river-name.split("")   #=> ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
   def split(separator : String, limit = nil)
     ary = Array(String).new
     byte_offset = 0
@@ -1803,6 +1941,19 @@ class String
     lines
   end
 
+  # Splits the string after each newline and yields each line to a block.
+  #
+  # ```
+  # haiku = "the first cold shower
+  # even the monkey seems to want
+  # a little coat of straw"
+  # haiku.each_line do |stanza|
+  #   puts stanza.upcase
+  # end
+  # #=> THE FIRST COLD SHOWER
+  # #=> EVEN THE MONKEY SEEMS TO want
+  # #=> A LITTLE COAT OF STRAW
+  # ```
   def each_line
     offset = 0
 
@@ -1816,10 +1967,18 @@ class String
     end
   end
 
+  # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
   def each_line
     LineIterator.new(self)
   end
 
+  # Converts camelcase boundaries to underscores.
+  #
+  # ```
+  # "DoesWhatItSaysOnTheTin".underscore #=> "does_what_it_says_on_the_tin"
+  # "PartyInTheUSA".underscore          #=> "party_in_the_usa"
+  # "HTTP_CLIENT".underscore            #=> "http_client"
+  # ```
   def underscore
     first = true
     last_is_downcase = false
@@ -1874,6 +2033,11 @@ class String
     end
   end
 
+  # Converts underscores to camelcase boundaries.
+  #
+  # ```
+  # "eiffel_tower".underscore #=> "EiffelTower"
+  # ```
   def camelcase
     first = true
     last_is_underscore = false
@@ -1895,6 +2059,12 @@ class String
     end
   end
 
+  # Reverses the order of characters in the string.
+  #
+  # ```
+  # "Argentina".reverse #=> "anitnegrA"
+  # "racecar".reverse   #=> "racecar"
+  # ```
   def reverse
     String.new(bytesize) do |buffer|
       buffer += bytesize
@@ -1911,10 +2081,24 @@ class String
     end
   end
 
+  # Adds instances of `char` to right of the string until it is at least size of `len`.
+  #
+  # ```
+  # "Purple".ljust(8)       #=> "Purple  "
+  # "Purple".ljust(8, '-')  #=> "Purple--"
+  # "Aubergine".ljust(8)    #=> "Aubergine"
+  # ```
   def ljust(len, char = ' ' : Char)
     just len, char, true
   end
 
+  # Adds instances of `char` to left of the string until it is at least size of `len`.
+  #
+  # ```
+  # "Purple".ljust(8)       #=> "  Purple"
+  # "Purple".ljust(8, '-')  #=> "--Purple"
+  # "Aubergine".ljust(8)    #=> "Aubergine"
+  # ```
   def rjust(len, char = ' ' : Char)
     just len, char, false
   end
@@ -2023,12 +2207,26 @@ class String
     end
   end
 
+  # Finds match of *regex*, starting at *pos*.
   def match(regex : Regex, pos = 0)
     match = regex.match self, pos
     $~ = match
     match
   end
 
+  # Searches the string for *regex* starting at *pos*, yielding the match if there is one.
+  #
+  # ```
+  # "Pine".match(/P/) do |match|
+  #   puts match
+  # end
+  # #=> #<Regex::MatchData "P">
+  #
+  # "Oak".match(/P/) do |match|
+  #   # This is never invoked.
+  #   puts match
+  # end
+  # ```
   def match(regex : Regex, pos = 0)
     match = self.match(regex, pos)
     if match
@@ -2036,6 +2234,7 @@ class String
     end
   end
 
+  # Searches the string for instances of *pattern*, yielding a `Regex::MatchData` for each match.
   def scan(pattern : Regex)
     byte_offset = 0
 
@@ -2051,6 +2250,8 @@ class String
     self
   end
 
+  # Searches the string for instances of *pattern*,
+  # returning an array of `Regex::MatchData` for each match.
   def scan(pattern : Regex)
     matches = [] of Regex::MatchData
     scan(pattern) do |match|
@@ -2059,6 +2260,8 @@ class String
     matches
   end
 
+  # Searches the string for instances of *pattern*,
+  # yielding the matched string for each match.
   def scan(pattern : String)
     return self if pattern.empty?
     index = 0
@@ -2069,6 +2272,8 @@ class String
     self
   end
 
+  # Searches the string for instances of *pattern*,
+  # returning an array of the matched string for each match.
   def scan(pattern : String)
     matches = [] of String
     scan(pattern) do |match|
@@ -2359,11 +2564,16 @@ class String
     true
   end
 
+  # Interpolates *other* into the string using `Kernel#sprintf`
+  #
+  # ```
+  # "Party like it's %d!!!" % 1999 #=> Party like it's 1999!!!
+  # ```
   def %(other)
     sprintf self, other
   end
 
-  # Return a hash based on this string’s size and content.
+  # Returns a hash based on this string’s size and content.
   #
   # See also `Object#hash`.
   def hash
@@ -2445,6 +2655,17 @@ class String
 
   def unsafe_byte_slice(byte_offset)
     Slice.new(cstr + byte_offset, bytesize - byte_offset)
+  end
+
+  # :nodoc:
+  def self.check_capacity_in_bounds(capacity)
+    if capacity < 0
+      raise ArgumentError.new("negative capacity")
+    end
+
+    if capacity.to_u64 > (UInt32::MAX - HEADER_SIZE - 1)
+      raise ArgumentError.new("capacity too big")
+    end
   end
 
   # :nodoc:

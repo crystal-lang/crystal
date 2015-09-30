@@ -76,6 +76,10 @@ module Benchmark
   # Main interface of the `Benchmark` module. Yields a `Job` to which
   # one can report the benchmarks. See the module's description.
   def bm
+    ifdef !release
+      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id  }}
+    end
+
     report = BM::Job.new
     yield report
     report.execute
@@ -90,6 +94,10 @@ module Benchmark
   # `Benchmark::IPS`. When the `interactive` parameter is true, results are
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+    ifdef !release
+      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id  }}
+    end
+
     job = IPS::Job.new(calculation, warmup, interactive)
     yield job
     job.execute

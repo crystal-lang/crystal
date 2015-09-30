@@ -145,7 +145,7 @@ end
 
       `bin/crystal init lib "#{__DIR__}/tmp"`.should contain("file or directory #{__DIR__}/tmp already exists")
 
-      Dir.rmdir("#{__DIR__}/tmp")
+      `rm -rf #{__DIR__}/tmp`
     end
 
     it "prints error if a file already present" do
