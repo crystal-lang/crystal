@@ -1,4 +1,8 @@
-@[Link("dl")]
+ifdef freebsd
+  #@[Link("c")] #On FreeBSD systems LibDL is contained inside LibC, which is automatically linked against.
+else
+  @[Link("dl")]
+end
 lib LibDL
   LAZY = 1
   GLOBAL = 8
