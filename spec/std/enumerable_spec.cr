@@ -517,8 +517,8 @@ describe "Enumerable" do
       end
       res.should eq([81, 64, 49, 36, 25, 16, 9, 4, 1, 0])
       delay = (Time.now - t).to_f
-      (delay > sleep_time).should eq(true)
-      (delay < sleep_time * 2).should eq(true)
+      delay.should be > sleep_time
+      delay.should be < sleep_time * 2
     end
   end
 
