@@ -216,7 +216,7 @@ Note that in the above example `T` becomes `Int32` because `Foo.new(1)` makes `U
 
 ## Generic types inheritance
 
-Generic classes and structs can be inherited. When inheriting you can specify an instance of the generic type, or delegate type varaibles:
+Generic classes and structs can be inherited. When inheriting you can specify an instance of the generic type, or delegate type variables:
 
 ```crystal
 class Parent(T)

@@ -70,7 +70,7 @@ x = 'a'
 x # :: Int32 | String | Char
 ```
 
-This is because the captured block could have been potentially stored in a global, class or instance variable and invoked in a separate thread in between the instructions. The compiler doesn't do an exahustive analysis of this: it just assumes that if a variable is captured by a proc, the time of that proc invocation is unknown.
+This is because the captured block could have been potentially stored in a global, class or instance variable and invoked in a separate thread in between the instructions. The compiler doesn't do an exhaustive analysis of this: it just assumes that if a variable is captured by a proc, the time of that proc invocation is unknown.
 
 This also happens with regular proc literals, even if it's evident that the proc wasn't invoked or stored:
 

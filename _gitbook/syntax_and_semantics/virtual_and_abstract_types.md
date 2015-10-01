@@ -41,7 +41,7 @@ If you compile the above program with the `tool hierarchy` command you will see 
             @pet : Animal+
 ```
 
-You can see that `@pet` is `Animal+`. The `+` means it's a virtual type: because a `Dog` and a `Cat` were assigned to `@pet`, instead of having the type be `Dog | Cat` the compiler simplified it to `Animal+`, meaning "any class that inhertis from `Animal`, including `Animal`".
+You can see that `@pet` is `Animal+`. The `+` means it's a virtual type: because a `Dog` and a `Cat` were assigned to `@pet`, instead of having the type be `Dog | Cat` the compiler simplified it to `Animal+`, meaning "any class that inherits from `Animal`, including `Animal`".
 
 The compiler will always do this for classes under the same hierarchy: it will find the first superclass that's not `Reference` from which all types inherit from. If it can't find one, the type union remains.
 
