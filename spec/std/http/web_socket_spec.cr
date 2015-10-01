@@ -159,15 +159,25 @@ describe HTTP::WebSocket do
        ws = HTTP::WebSocket.new(io)
        ws.send(big_string)
        bytes = io.to_slice
-       bytes.size.should eq(6 + size) # 2 bytes header, 4 bytes size, UInt16 + 1 bytes content
+       bytes.size.should eq(10 + size) # 2 bytes header, 8 bytes size, UInt16 + 1 bytes content
        bytes[1].should eq(127)
        received_size = 0
-       4.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
+       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
        received_size.should eq(size)
        size.times do |i|
-         bytes[6 + i].should eq('a'.ord)
+         bytes[10 + i].should eq('a'.ord)
        end
      end
+
+    it "sets binary opcode if used with slice" do
+      sent_bytes :: UInt8[4]
+
+      io = StringIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.send(sent_bytes.to_slice, true)
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x02)
+    end
   end
 
   describe "send_masked" do
@@ -175,7 +185,7 @@ describe HTTP::WebSocket do
       sent_string = "hello"
       io = StringIO.new
       ws = HTTP::WebSocket.new(io)
-      ws.send_masked(sent_string)
+      ws.send(sent_string, true)
       bytes = io.to_slice
       bytes.size.should eq(11) # 2 bytes header, 4 bytes mask, 5 bytes content
       bytes[1].bit(7).should eq(1) # For mask bit
@@ -192,16 +202,16 @@ describe HTTP::WebSocket do
       big_string = "a" * size
       io = StringIO.new
       ws = HTTP::WebSocket.new(io)
-      ws.send_masked(big_string)
+      ws.send(big_string, true)
       bytes = io.to_slice
-      bytes.size.should eq(size + 10) # 2 bytes header, 4 bytes size, 4 bytes mask, UInt16::MAX + 1 bytes content
+      bytes.size.should eq(size + 14) # 2 bytes header, 8 bytes size, 4 bytes mask, UInt16::MAX + 1 bytes content
       bytes[1].bit(7).should eq(1) # For mask bit
       (bytes[1] - 128).should eq(127)
       received_size = 0
-      4.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
+      8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        (bytes[10 + i] ^ bytes[6 + (i % 4)]).should eq('a'.ord)
+        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq('a'.ord)
       end
     end
   end
