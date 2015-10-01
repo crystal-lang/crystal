@@ -25,7 +25,7 @@ class Deque(T)
 
   # Creates a new empty Deque backed by a buffer that is initially `initial_capacity` big.
   #
-  # The `initial_capacity` is useful to avoid unnecesary reallocations of the internal buffer in case of growth. If you
+  # The `initial_capacity` is useful to avoid unnecessary reallocations of the internal buffer in case of growth. If you
   # have an estimate of the maxinum number of elements a deque will hold, you should initialize it with that capacity
   # for improved execution performance.
   #
