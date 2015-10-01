@@ -180,6 +180,48 @@ describe HTTP::WebSocket do
     end
   end
 
+  describe "stream" do
+    it "sends continuous data and splits it to frames" do
+      io = StringIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.stream do |io| # default frame size of 1024
+        3.times { io.write(("a" * 512).to_slice) }
+      end
+
+      bytes = io.to_slice
+      bytes.size.should eq(4 * 2 + 512 * 3) # two frames with 2 bytes header, 2 bytes size, 3 * 512 bytes content in total
+      first_frame, second_frame = { bytes[0, (4 + 1024)], bytes + (4 + 1024) }
+      (first_frame[0] & 0x80).should eq(0) # FINAL bit unset
+      (first_frame[0] & 0x0f).should eq(0x1) # TEXT frame
+      first_frame[1].should eq(126) # extended size
+      received_size = 0
+      2.times { |i| received_size <<= 8; received_size += first_frame[2 + i] }
+      received_size.should eq(1024)
+      received_size.times do |i|
+        bytes[4 + i].should eq('a'.ord)
+      end
+
+      (second_frame[0] & 0x80).should_not eq(0) # FINAL bit set
+      (second_frame[0] & 0x0f).should eq(0x0) # CONTINUATION frame
+      second_frame[1].should eq(126) # extended size
+      received_size = 0
+      2.times { |i| received_size <<= 8; received_size += second_frame[2 + i] }
+      received_size.should eq(512)
+      received_size.times do |i|
+        bytes[4 + i].should eq('a'.ord)
+      end
+    end
+
+    it "sets opcode of first frame to binary if stream is called with binary = true" do
+      io = StringIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.stream(binary: true) { |io| }
+
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x2) # BINARY frame
+    end
+  end
+
   describe "send_masked" do
     it "sends the data with a bitmask" do
       sent_string = "hello"

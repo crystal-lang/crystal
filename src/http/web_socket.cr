@@ -35,15 +35,67 @@ class HTTP::WebSocket
     @remaining = 0
   end
 
-  {% for data_type, opcode in { "String" => "Opcode::TEXT", "Slice(UInt8)" => "Opcode::BINARY" } %}
-    def send(data : {{data_type.id}}, masked = false)
-      slice = {{data_type == "Slice(UInt8)" ? "data".id : "data.to_slice".id}}
-      write_header(slice.size, {{opcode.id}}, masked)
-      write_payload(slice, masked)
-      @io.flush
-    end
-  {% end %}
+  class StreamIO
+    include IO
 
+    def initialize(@websocket, binary, @masked, frame_size)
+      @opcode = binary ? Opcode::BINARY : Opcode::TEXT
+      @buffer = Slice(UInt8).new(frame_size)
+      @pos = 0
+    end
+
+    def write(slice : Slice(UInt8))
+      count = Math.min(@buffer.size - @pos, slice.size)
+      (@buffer + @pos).copy_from(slice.pointer(count), count)
+      @pos += count
+
+      if @pos == @buffer.size
+        flush(final: false)
+      end
+
+      if count < slice.size
+        count += write(slice + count)
+      end
+
+      count
+    end
+
+    def read(slice : Slice(UInt8))
+      raise "this IO is write-only"
+    end
+
+    def flush(final = true)
+      @websocket.send(
+        @buffer + (@pos % @buffer.size),
+        @opcode,
+        @masked,
+        flags: final ? Flags::FINAL : Flags::None,
+        flush: final
+      )
+      @opcode = Opcode::CONTINUATION
+      @pos = 0
+    end
+  end
+
+  def send(data : String, masked = false)
+    send(data.to_slice, Opcode::TEXT, masked)
+  end
+
+  def send(data : Slice(UInt8), masked = false)
+    send(data, Opcode::BINARY, masked)
+  end
+
+  def stream(masked = false, binary = false, frame_size = 1024)
+    stream_io = StreamIO.new(self, binary, masked, frame_size)
+    yield(stream_io)
+    stream_io.flush
+  end
+
+  def send(data : Slice(UInt8), opcode : Opcode, masked = false, flags = Flags::FINAL, flush = true)
+    write_header(data.size, opcode, masked, flags)
+    write_payload(data, masked)
+    @io.flush if flush
+  end
 
   def receive(buffer : Slice(UInt8))
     if @remaining == 0
@@ -57,7 +109,7 @@ class HTTP::WebSocket
     PacketInfo.new(opcode, read.to_i, final? && @remaining == 0)
   end
 
-  private def write_header(size, opcode, masked = false, flags = Flags::FINAL)
+  private def write_header(size, opcode, masked, flags)
     @io.write_byte(flags.value | opcode.value)
 
     mask = masked ? MASK_BIT : 0_u8
@@ -132,13 +184,12 @@ class HTTP::WebSocket
 
   private def read_payload(buffer)
     count = Math.min(@remaining, buffer.size)
+    @io.read_fully(buffer[0, count])
     if masked?
       count.times do |i|
-        buffer[i] = @io.read_byte.not_nil! ^ @mask[@mask_offset % 4]
+        buffer[i] ^= @mask[@mask_offset % 4]
         @mask_offset += 1
       end
-    else
-      @io.read_fully(buffer[0, count])
     end
 
     count
