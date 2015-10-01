@@ -397,6 +397,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement has_instance_var_in_initialize?"
     end
 
+    def has_instance_var_initializer?(name)
+      false
+    end
+
     def has_def?(name)
       raise "Bug: #{self} doesn't implement has_def?"
     end
@@ -853,6 +857,10 @@ module Crystal
       initializer = InstanceVarInitializer.new(name, value, meta_vars)
       initializers << initializer
       initializer
+    end
+
+    def has_instance_var_initializer?(name)
+      @instance_vars_initializers.try(&.any? { |init| init.name == name })
     end
   end
 
