@@ -81,22 +81,24 @@ class HTTP::Response
     version == "HTTP/1.1"
   end
 
-  def self.from_io(io)
-    from_io(io) do |response|
+  def self.from_io(io, ignore_body = false)
+    from_io(io, ignore_body) do |response|
       response.consume_body_io
       return response
     end
   end
 
-  def self.from_io(io, &block)
+  def self.from_io(io, ignore_body = false, &block)
     line = io.gets
     if line
       http_version, status_code, status_message = line.split(3)
       status_code = status_code.to_i
       status_message = status_message.chomp
-      mandatory_body = mandatory_body?(status_code)
+      body_type = HTTP::BodyType::OnDemand
+      body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
+      body_type = HTTP::BodyType::Prohibited if ignore_body
 
-      HTTP.parse_headers_and_body(io, mandatory_body) do |headers, body|
+      HTTP.parse_headers_and_body(io, body_type) do |headers, body|
         return yield new status_code, nil, headers, status_message, http_version, body
       end
     end
