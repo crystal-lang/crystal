@@ -25,7 +25,7 @@ To specify the values of arguments that have default values you can also use the
 john.become_older by: 5
 ```
 
-When the method has many default arguments the order of the names in the invocation doesn't matter, and some names can be ommited:
+When the method has many default arguments the order of the names in the invocation doesn't matter, and some names can be omitted:
 
 ```crystal
 def some_method(x, y = 1, z = 2, w = 3)
