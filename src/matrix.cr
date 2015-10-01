@@ -205,7 +205,7 @@ class Matrix(T)
     end
   end
 
-  # Performs substraction with another matrix.
+  # Performs subtraction with another matrix.
   def -(other : Matrix)
     raise DimensionMismatch.new unless dimensions == other.dimensions
     Matrix.new(@rows, @columns) do |i|
@@ -372,7 +372,7 @@ class Matrix(T)
     nil
   end
 
-  # Returns the row and column index of the first ocurrence of the block
+  # Returns the row and column index of the first occurrence of the block
   # returning true, nil otherwise
   def index(&block : T, Int32, Int32, Int32 -> Bool)
     i = 0
