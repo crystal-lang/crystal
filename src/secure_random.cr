@@ -2,19 +2,19 @@ require "base64"
 require "openssl/lib_crypto"
 
 module SecureRandom
-  def self.base64(n = 16)
+  def self.base64(n = 16 : Int)
     Base64.strict_encode(random_bytes(n))
   end
 
-  def self.urlsafe_base64(n = 16, padding = false)
+  def self.urlsafe_base64(n = 16 : Int, padding = false)
     Base64.urlsafe_encode(random_bytes(n), padding)
   end
 
-  def self.hex(n = 16)
+  def self.hex(n = 16 : Int)
     random_bytes(n).hexstring
   end
 
-  def self.random_bytes(n = 16)
+  def self.random_bytes(n = 16 : Int)
     if n < 0
       raise ArgumentError.new "negative size: #{n}"
     end
