@@ -10,7 +10,11 @@ class Tempfile < IO::FileDescriptor
       tmpdir = "/tmp/"
     end
     @path = "#{tmpdir}#{name}.XXXXXX"
-    super(LibC.mkstemp(@path), blocking: true)
+    fileno = LibC.mkstemp(@path)
+    if fileno == -1
+      raise Errno.new("mkstemp")
+    end
+    super(fileno, blocking: true)
   end
 
   getter path
