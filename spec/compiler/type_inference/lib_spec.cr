@@ -299,7 +299,7 @@ it "errors if unknown named arg" do
       lib LibFoo
       end
       ),
-      "unkonwn link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do
