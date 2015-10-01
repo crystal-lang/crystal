@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.9.4" data-basepath=".." data-revision="Tue Sep 29 2015 14:51:21 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.9.4" data-basepath=".." data-revision="Thu Oct 01 2015 09:23:12 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2012,7 +2012,7 @@ capture { x = <span class="hljs-string">&quot;hello&quot;</span> }
 x = <span class="hljs-string">&apos;a&apos;</span>
 x <span class="hljs-comment"># :: Int32 | String | Char</span>
 </code></pre>
-<p>This is because the captured block could have been potentially stored in a global, class or instance variable and invoked in a separate thread in between the instructions. The compiler doesn&apos;t do an exahustive analysis of this: it just assumes that if a variable is captured by a proc, the time of that proc invocation is unknown.</p>
+<p>This is because the captured block could have been potentially stored in a global, class or instance variable and invoked in a separate thread in between the instructions. The compiler doesn&apos;t do an exhaustive analysis of this: it just assumes that if a variable is captured by a proc, the time of that proc invocation is unknown.</p>
 <p>This also happens with regular proc literals, even if it&apos;s evident that the proc wasn&apos;t invoked or stored:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">capture</span></span>(&amp;block)
   block
