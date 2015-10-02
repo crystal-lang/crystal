@@ -25,10 +25,6 @@ module LLVM
     LibLLVM.link_in_mc_jit
   end
 
-  def self.init_x86
-    self.init_all_targets
-  end
-
   def self.int(type, value)
     Value.new LibLLVM.const_int(type, value, 0)
   end
