@@ -65,4 +65,34 @@ describe "Code gen: generic class type" do
       Bar(Char).new.x
       )).to_i.should eq(1)
   end
+
+  it "declares instance var with virtual T (#1675)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Generic(T)
+        def initialize
+          @value :: T
+        end
+
+        def value=(@value)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      generic = Generic(Foo).new
+      generic.value = Foo.new
+      generic.value.foo
+      )).to_i.should eq(1)
+  end
 end
