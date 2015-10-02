@@ -30,6 +30,7 @@ class Scheduler
     event.add(time)
     reschedule
     event.free
+    nil
   end
 
   def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered = false : Bool)
@@ -81,9 +82,11 @@ class Scheduler
 
   def self.enqueue(fiber : Fiber)
     @@runnables << fiber
+    nil
   end
 
   def self.enqueue(fibers : Enumerable(Fiber))
     @@runnables.concat fibers
+    nil
   end
 end

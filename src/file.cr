@@ -95,6 +95,7 @@ class File < IO::FileDescriptor
     end
 
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    nil
   end
 
   # Same as `pos`.
@@ -128,6 +129,7 @@ class File < IO::FileDescriptor
   # ```
   def pos=(value)
     seek value
+    value
   end
 
   # Returns a `File::Stat` object for the named file or raises
