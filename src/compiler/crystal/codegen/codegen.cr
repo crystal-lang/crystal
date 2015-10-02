@@ -5,7 +5,7 @@ require "../semantic/type_inference"
 require "../program"
 require "./llvm_builder_helper"
 
-LLVM.init_all_targets
+LLVM.init_x86
 
 module Crystal
   MAIN_NAME = "__crystal_main"

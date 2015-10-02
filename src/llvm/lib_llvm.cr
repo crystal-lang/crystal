@@ -146,6 +146,11 @@ lib LibLLVM
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : LLVM::Type::Kind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*
+  fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
+  fun initialize_x86_asm_parser = LLVMInitializeX86AsmParser
+  fun initialize_x86_target = LLVMInitializeX86Target
+  fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
+  fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
   fun int1_type = LLVMInt1Type : TypeRef
   fun int8_type = LLVMInt8Type : TypeRef
@@ -251,21 +256,3 @@ lib LibLLVM
   fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
   fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
 end
-
-{%if true %}
-lib LibLLVM
-  {% for target in `(llvm-config-3.6 --targets-built 2>/dev/null) || (llvm-config-3.5 --targets-built 2>/dev/null) || (llvm-config --targets-built 2>/dev/null)`.chomp.split(" ") %}
-    fun initialize_{{target.downcase.id}}_target = LLVMInitialize{{target.id}}Target
-    fun initialize_{{target.downcase.id}}_target_info = LLVMInitialize{{target.id}}TargetInfo
-    fun initialize_{{target.downcase.id}}_target_mc = LLVMInitialize{{target.id}}TargetMC
-
-    {% unless ["XCore", "MSP430", "CppBackend", "NVPTX", "Hexagon"].find {|skip| target == skip } %}
-      fun initialize_{{target.downcase.id}}_asm_parser = LLVMInitialize{{target.id}}AsmParser
-    {% end %}
-
-    {% unless ["CppBackend"].find {|skip| target == skip } %}
-      fun initialize_{{target.downcase.id}}_asm_printer = LLVMInitialize{{target.id}}AsmPrinter
-    {% end %}
-  {% end %}
-end
-{% end %}
