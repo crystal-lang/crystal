@@ -234,7 +234,7 @@ The standard library usually provides a couple of methods to accomplish somethin
 
 ```crystal
 array = [1, 2, 3]
-array[4]  # raises because of IndexOutOfBounds
+array[4]  # raises because of IndexError
 array[4]? # returns nil because of index out of bounds
 ```
 
