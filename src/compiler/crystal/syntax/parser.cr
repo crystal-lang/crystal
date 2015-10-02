@@ -203,9 +203,9 @@ module Crystal
             rescue_body = parse_expression
             rescues = [Rescue.new(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
-              atomic.value = ExceptionHandler.new(atomic.value, rescues).at(location)
+              atomic.value = ExceptionHandler.new(atomic.value, rescues).at(location).tap { |e| e.suffix = true }
             else
-              atomic = ExceptionHandler.new(atomic, rescues).at(location)
+              atomic = ExceptionHandler.new(atomic, rescues).at(location).tap { |e| e.suffix = true }
             end
           when :ensure
             next_token_skip_space
@@ -1089,13 +1089,15 @@ module Crystal
       slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
-      exps2 = Expressions.new([exps] of ASTNode).at(exps)
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
+      if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
+        node = Expressions.new([node]).at(node).at_end(node)
+      end
       node
     end
 
-    def parse_exception_handler(exp)
+    def parse_exception_handler(exp, implicit = false)
       rescues = nil
       a_else = nil
       a_ensure = nil
@@ -1143,7 +1145,9 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        {ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location), end_location}
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location)
+        ex.implicit = true if implicit
+        {ex, end_location}
       else
         exp
         {exp, end_location}
@@ -1737,12 +1741,11 @@ module Crystal
     def parse_string_or_symbol_array(klass, elements_type)
       strings = [] of ASTNode
 
-      next_string_array_token
       while true
+        next_string_array_token
         case @token.type
         when :STRING
           strings << klass.new(@token.value.to_s)
-          next_string_array_token
         when :STRING_ARRAY_END
           next_token
           break
@@ -2225,7 +2228,7 @@ module Crystal
             pieces << macro_control
             skip_whitespace = check_macro_skip_whitespace
           else
-            return Expressions.from(pieces), nil
+            return new_macro_expressions(pieces), nil
           end
         when :MACRO_VAR
           macro_var_name = @token.value.to_s
@@ -2248,7 +2251,15 @@ module Crystal
 
       next_token
 
-      {Expressions.from(pieces), end_location}
+      {new_macro_expressions(pieces), end_location}
+    end
+
+    private def new_macro_expressions(pieces)
+      if pieces.empty?
+        Expressions.new
+      else
+        Expressions.from(pieces)
+      end
     end
 
     def parse_macro_var_exps
@@ -2651,7 +2662,7 @@ module Crystal
               end
               body = Expressions.from exps
             end
-            body, end_location = parse_exception_handler body
+            body, end_location = parse_exception_handler body, implicit: true
           end
         end
       end
@@ -4066,7 +4077,7 @@ module Crystal
           next_token
         else
           body = parse_expressions
-          body, end_location = parse_exception_handler body
+          body, end_location = parse_exception_handler body, implicit: true
         end
       else
         body = nil

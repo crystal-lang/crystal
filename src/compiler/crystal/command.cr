@@ -30,6 +30,7 @@ Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 Tool:
     browser                  open an http server to browse program file
     context                  show context for given location
+    format                   format source files
     hierarchy                show type hierarchy
     implementations          show implementations for given call in location
     types                    show type of main variables
@@ -121,6 +122,9 @@ USAGE
       when "context".starts_with?(tool)
         options.shift
         context
+      when "format".starts_with?(tool)
+        options.shift
+        format
       when "hierarchy".starts_with?(tool)
         options.shift
         hierarchy
@@ -178,6 +182,14 @@ USAGE
 
     result = compiler.compile sources, output_filename
     execute output_filename, program_args
+  end
+
+  private def format
+    files = options
+    files.each do |filename|
+      source = File.read(filename)
+      File.write(filename, Crystal::Formatter.format(source))
+    end
   end
 
   private def hierarchy

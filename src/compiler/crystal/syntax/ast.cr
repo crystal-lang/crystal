@@ -1409,6 +1409,8 @@ module Crystal
     property :rescues
     property :else
     property :ensure
+    property :implicit
+    property :suffix
 
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
@@ -1422,7 +1424,10 @@ module Crystal
     end
 
     def clone_without_location
-      ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+      ex = ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+      ex.implicit = implicit
+      ex.suffix = suffix
+      ex
     end
 
     def_equals_and_hash @body, @rescues, @else, @ensure

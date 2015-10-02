@@ -606,6 +606,7 @@ describe "Parser" do
   it_parses "foo[0] = 1", Call.new("foo".call, "[]=", 0.int32, 1.int32)
   it_parses "foo[0] = 1 if 2", If.new(2.int32, Call.new("foo".call, "[]=", 0.int32, 1.int32))
 
+  it_parses "begin; 1; end;", Expressions.new([1.int32] of ASTNode)
   it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode)
 
   it_parses "self", "self".var
@@ -634,7 +635,7 @@ describe "Parser" do
   it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo".path), While.new(true.bool)]
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
   it_parses "(1)\nif true; end", [Expressions.new([1.int32] of ASTNode), If.new(true.bool)]
-  it_parses "begin\n1\nend\nif true; end", [1.int32, If.new(true.bool)]
+  it_parses "begin\n1\nend\nif true; end", [Expressions.new([1.int32] of ASTNode), If.new(true.bool)]
 
   it_parses "Foo::Bar", ["Foo", "Bar"].path
 
@@ -708,7 +709,7 @@ describe "Parser" do
 
   it_parses "$foo", Global.new("$foo")
 
-  it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.from([] of ASTNode))
+  it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.new)
   it_parses %(macro foo; 1 + 2; end), Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo x; 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo x\n 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
@@ -788,8 +789,8 @@ describe "Parser" do
   it_parses "[/ /, / /]", ArrayLiteral.new([regex(" "), regex(" ")] of ASTNode)
   it_parses "{/ / => / /, / / => / /}", HashLiteral.new([HashLiteral::Entry.new(regex(" "), regex(" ")), HashLiteral::Entry.new(regex(" "), regex(" "))])
   it_parses "{/ /, / /}", TupleLiteral.new([regex(" "), regex(" ")] of ASTNode)
-  it_parses "begin; / /; end", regex(" ")
-  it_parses "begin\n/ /\nend", regex(" ")
+  it_parses "begin; / /; end", Expressions.new([regex(" ")] of ASTNode)
+  it_parses "begin\n/ /\nend", Expressions.new([regex(" ")] of ASTNode)
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
@@ -977,10 +978,10 @@ describe "Parser" do
   it_parses "[] of ->\n1", [ArrayLiteral.new([] of ASTNode, Fun.new), 1.int32]
 
   it_parses "def foo(x, *y); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y")], 1.int32, splat_index: 1)
-  it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], splat_index: 1)
+  it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], body: Expressions.new, splat_index: 1)
 
   it_parses "def foo *y; 1; end", Def.new("foo", [Arg.new("y")], 1.int32, splat_index: 0)
-  it_parses "macro foo *y;end", Macro.new("foo", [Arg.new("y")], splat_index: 0)
+  it_parses "macro foo *y;end", Macro.new("foo", [Arg.new("y")], body: Expressions.new, splat_index: 0)
 
   it_parses "def foo(x = 1, *y); 1; end", Def.new("foo", [Arg.new("x", 1.int32), Arg.new("y")], 1.int32, splat_index: 1)
   it_parses "def foo(x, *y : Int32); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y", restriction: "Int32".path)], 1.int32, splat_index: 1)
@@ -1025,7 +1026,7 @@ describe "Parser" do
   it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__FILE__))])
   it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__DIR__))])
 
-  it_parses "macro foo(x = __LINE__);end", Macro.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
+  it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
 
   it_parses "1 \\\n + 2", Call.new(1.int32, "+", 2.int32)
   it_parses "1\\\n + 2", Call.new(1.int32, "+", 2.int32)
