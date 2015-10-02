@@ -143,7 +143,7 @@ class Dir
   end
 
   # Changes the current working directory of the process to the given string.
-  def self.chdir path
+  def self.cd path
     if LibC.chdir(path) != 0
       raise Errno.new("Error while changing directory to #{path.inspect}")
     end
@@ -152,19 +152,14 @@ class Dir
   # Changes the current working directory of the process to the given string
   # and invokes the block, restoring the original working directory
   # when the block exists.
-  def self.chdir(path)
+  def self.cd(path)
     old = working_directory
     begin
-      chdir(path)
+      cd(path)
       yield
     ensure
-      chdir(old)
+      cd(old)
     end
-  end
-
-  # Alias for `chdir`.
-  def self.cd path
-    chdir(path)
   end
 
   # Calls the block once for each entry in the named directory,
