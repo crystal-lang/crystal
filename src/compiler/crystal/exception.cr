@@ -172,8 +172,12 @@ module Crystal
       super(message)
     end
 
-    def self.new(message)
+    def self.new(message : String)
       new message, nil, 0, nil, 0
+    end
+
+    def self.new(message : String, location : Location)
+      new message, location.line_number, location.column_number, location.filename, 0
     end
 
     def json_obj(ar, io)

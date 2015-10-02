@@ -8,6 +8,7 @@ module Crystal
     def infer_type(node)
       result = infer_type_intermediate(node)
       finish_types
+      check_hierarchy_errors
       result
     end
 
@@ -1635,9 +1636,10 @@ module Crystal
     end
 
     def attach_doc(type, node)
-      return unless @mod.wants_doc?
+      if @mod.wants_doc?
+        type.doc ||= node.doc
+      end
 
-      type.doc ||= node.doc
       if node_location = node.location
         type.locations << node_location
       end
@@ -3318,7 +3320,7 @@ module Crystal
               else
                 next_type = NonGenericModuleType.new(@mod, base_lookup, name)
 
-                if @mod.wants_doc? && (location = node.location)
+                if (location = node.location)
                   next_type.locations << location
                 end
 
