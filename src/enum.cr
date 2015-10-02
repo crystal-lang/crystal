@@ -359,9 +359,9 @@ struct Enum
   # Color.parse?("Yellow") #=> nil
   # ```
   macro def self.parse?(string) : self ?
-    case string.downcase
+    case string.camelcase
     {% for member in @type.constants %}
-      when {{member.stringify.downcase}}
+      when {{member.stringify.camelcase}}
         {{member}}
     {% end %}
     else
