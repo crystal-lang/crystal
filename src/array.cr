@@ -1095,7 +1095,7 @@ class Array(T)
     end
   end
 
-  def pop(n)
+  def pop(n : Int)
     if n < 0
       raise ArgumentError.new("can't pop negative count")
     end
@@ -1280,7 +1280,7 @@ class Array(T)
     end
   end
 
-  def shift(n)
+  def shift(n : Int)
     if n < 0
       raise ArgumentError.new("can't shift negative count")
     end
