@@ -1,7 +1,7 @@
 require "base64"
 require "openssl/lib_crypto"
 
-# The SecureRandom module is an interface for creating secure random values in different formats. 
+# The SecureRandom module is an interface for creating secure random values in different formats.
 # It uses the RNG (random number generator) of libcrypto (OpenSSL).
 #
 # For example:
@@ -14,7 +14,7 @@ module SecureRandom
   # Generates *n* random bytes that are encoded into Base64.
   #
   # Check `Base64#strict_encode` for details.
-  # 
+  #
   # ```crystal
   # SecureRandom.base64(4) #=> "fK1eYg=="
   # ```
@@ -25,7 +25,7 @@ module SecureRandom
   # URL-safe variant of `#base64`
   #
   # Check `Base64#urlsafe_encode` for details.
-  # 
+  #
   # ```crystal
   # SecureRandom.urlsafe_base64          #=> "MAD2bw8QaBdvITCveBNCrw"
   # SecureRandom.urlsafe_base64(8,true)  #=> "vvP1kcs841I="
@@ -36,9 +36,9 @@ module SecureRandom
   end
 
   # Generates a hexadecimal string based on *n* random bytes.
-  # 
+  #
   # The bytes are encoded into a string of a two-digit hexadecimal number (00-ff) per byte.
-  # 
+  #
   # ```crystal
   # SecureRandom.hex    #=> "05f100a1123f6bdbb427698ab664ff5f"
   # SecureRandom.hex(1) #=> "1a"
@@ -53,7 +53,7 @@ module SecureRandom
   # SecureRandom.random_bytes    #=> [145, 255, 191, 133, 132, 139, 53, 136, 93, 238, 2, 37, 138, 244, 3, 216]
   # SecureRandom.random_bytes(4) #=> [217, 118, 38, 196]
   # ```
-  def self.random_bytes(n = 16 : Int) : Slice
+  def self.random_bytes(n = 16 : Int) : Slice(UInt8)
     if n < 0
       raise ArgumentError.new "negative size: #{n}"
     end
@@ -69,10 +69,10 @@ module SecureRandom
   end
 
   # Generates a UUID (Universally Unique Identifier)
-  # 
+  #
   # It generates a random v4 UUID. Check [RFC 4122 Section 4.4](https://tools.ietf.org/html/rfc4122#section-4.4)
   # for the used algorithm and its implications.
-  # 
+  #
   # ```crystal
   # SecureRandom.uuid #=> "a4e319dd-a778-4a51-804e-66a07bc63358"
   # ```
