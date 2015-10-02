@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.12" data-basepath=".." data-revision="Tue Sep 29 2015 14:51:21 GMT+0000 (UTC)">
+    <div class="book" data-level="4.12" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1819,31 +1819,67 @@
             
         </li>
     
-        <li class="chapter " data-level="4.17" data-path="documenting_code/index.html">
-            
-                
-                    <a href="../documenting_code/index.html">
-                
-                        <i class="fa fa-check"></i>
-                        
-                            <b>4.17.</b>
-                        
-                        Documenting code
-                    </a>
-            
-            
-        </li>
-    
-        <li class="chapter " data-level="4.18" data-path="syntax_and_semantics/unsafe.html">
+        <li class="chapter " data-level="4.17" data-path="syntax_and_semantics/unsafe.html">
             
                 
                     <a href="../syntax_and_semantics/unsafe.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.18.</b>
+                            <b>4.17.</b>
                         
                         Unsafe code
+                    </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="5" data-path="conventions/index.html">
+            
+                
+                    <a href="../conventions/index.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.</b>
+                        
+                        Conventions
+                    </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="5.1" data-path="conventions/coding_style.html">
+            
+                
+                    <a href="../conventions/coding_style.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.1.</b>
+                        
+                        Coding style
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="conventions/documenting_code.html">
+            
+                
+                    <a href="../conventions/documenting_code.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>5.2.</b>
+                        
+                        Documenting code
                     </a>
             
             
@@ -2129,7 +2165,7 @@ a = <span class="hljs-number">1</span>
 <p>Although exceptions are available as one of the mechanisms for handling errors, they are not your only choice. Raising an exception involves allocating memory, and executing an exception handler is generally slow.</p>
 <p>The standard library usually provides a couple of methods to accomplish something: one raises, one returns <code>nil</code>. For example:</p>
 <pre><code class="lang-crystal">array = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]
-array[<span class="hljs-number">4</span>]  <span class="hljs-comment"># raises because of IndexOutOfBounds</span>
+array[<span class="hljs-number">4</span>]  <span class="hljs-comment"># raises because of IndexError</span>
 array[<span class="hljs-number">4</span>]? <span class="hljs-comment"># returns nil because of index out of bounds</span>
 </code></pre>
 <p>The usual convention is to provide an alternative &quot;question&quot; method to signal that this variant of the method returns <code>nil</code> instead of raising. This lets the user choose whether she wants to deal with exceptions or with <code>nil</code>. Note, however, that this is not avaialble for every method out there, as exceptions are still the preferred way because they don&apos;t pollute the code with error handling logic.</p>

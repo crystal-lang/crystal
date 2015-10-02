@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Global variables | Crystal Programming Language</title>
+        <title>Coding style | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/assignment.html" />
+    <link rel="next" href="../conventions/documenting_code.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/local_variables.html" />
+    <link rel="prev" href="../conventions/index.html" />
     
 
         
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.4" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="5.1" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -505,7 +505,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.4" data-path="syntax_and_semantics/global_variables.html">
+        <li class="chapter " data-level="4.4" data-path="syntax_and_semantics/global_variables.html">
             
                 
                     <a href="../syntax_and_semantics/global_variables.html">
@@ -1855,7 +1855,7 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="5.1" data-path="conventions/coding_style.html">
+        <li class="chapter active" data-level="5.1" data-path="conventions/coding_style.html">
             
                 
                     <a href="../conventions/coding_style.html">
@@ -1995,11 +1995,117 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="global-variables">Global variables</h1>
-<p>Global variables start with a dollar sign (<code>$</code>). They are declared when you first assign them a value.</p>
-<pre><code class="lang-crystal"><span class="hljs-variable">$year</span> = <span class="hljs-number">2014</span>
+                        <h1 id="coding-style">Coding Style</h1>
+<p>This style is used in the standard library. You can use it in your own project to make it familiar to other developers.</p>
+<h2 id="naming">Naming</h2>
+<p><strong>Type names</strong> are camelcased. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ParseError</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Exception</span></span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">HTTP</span></span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RequestHandler</span></span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">alias</span> <span class="hljs-constant">NumericValue</span> = <span class="hljs-constant">Int32</span> | <span class="hljs-constant">Int64</span> | <span class="hljs-constant">Float32</span> | <span class="hljs-constant">Float64</span>
+
+<span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">LibYAML</span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">TagDirective</span></span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">enum</span> <span class="hljs-title">Time::DayOfWeek</span></span>
+<span class="hljs-keyword">end</span>
 </code></pre>
-<p>Their type is the combined type of all expressions that were assigned to them. Additionally, if your program reads a global variable before it was ever assigned a value it will also have the <code>Nil</code> type.</p>
+<p><strong>Method names</strong> are underscore-cased. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">first_name</span></span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">date_of_birth</span></span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">homepage_url</span></span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p><strong>Variable names</strong> are underscore-cased. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-variable">$global_greeting</span> = <span class="hljs-string">&quot;Hello world&quot;</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Greeting</span></span>
+  <span class="hljs-variable">@@default_greeting</span> = <span class="hljs-string">&quot;Hello world&quot;</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@custom_greeting</span>=<span class="hljs-literal">nil</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">print_greeting</span></span>
+    greeting = <span class="hljs-variable">@custom_greeting</span> || <span class="hljs-variable">@@default_greeting</span>
+    puts greeting
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p><strong>Constants</strong> are screaming-cased. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-constant">LUCKY_NUMBERS</span> = [<span class="hljs-number">3</span>, <span class="hljs-number">7</span>, <span class="hljs-number">11</span>]
+<span class="hljs-constant">DOCUMENTATION_URL</span> = <span class="hljs-string">&quot;http://crystal-lang.org/docs&quot;</span>
+</code></pre>
+<h3 id="acronyms">Acronyms</h3>
+<p>In class names, acronyms are <em>all-uppercase</em>. For example, <code>HTTP</code>, and <code>LibXML</code>.</p>
+<p>In method names, acronyms are <em>all-lowercase</em>.  For example <code>#from_json</code>,  <code>#to_io</code>.</p>
+<h3 id="libs">Libs</h3>
+<p><code>Lib</code> names are prefixed with <code>Lib</code>. For example: <code>LibC</code>, <code>LibEvent2</code>.</p>
+<h3 id="directory-and-file-names">Directory and File Names</h3>
+<p>Within a project:</p>
+<ul>
+<li><code>/</code> contains a readme, any project configurations (eg, CI or editor configs), and any other project-level documentation (eg, changelog or contributing guide).</li>
+<li><code>src/</code> contains the project&apos;s source code.</li>
+<li><code>spec/</code> contains the project&apos;s specs, which can be run with <code>crystal spec</code>.</li>
+<li><code>bin/</code> contains any executables.</li>
+</ul>
+<p>File paths match the namespace of their contents. Files are named after the class or namespace they define, with <em>underscore-case</em>.</p>
+<p>For example, <code>HTTP::WebSocket</code> is defined in <code>src/http/web_socket.cr</code>.</p>
+<h2 id="whitespace">Whitespace</h2>
+<p>Use <strong>two spaces</strong> to indent code inside namespaces, methods, blocks or other nested contexts. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Scorecard</span>  </span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Parser</span></span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">parse</span></span>(score_text)
+      <span class="hljs-keyword">begin</span>
+        score_text.scan(<span class="hljs-constant">SCORE_PATTERN</span>) <span class="hljs-keyword">do</span> |match|
+          handle_match(match)
+        <span class="hljs-keyword">end</span>
+      <span class="hljs-keyword">rescue</span> err <span class="hljs-symbol">:</span> <span class="hljs-constant">ParseError</span>
+        <span class="hljs-comment"># handle error ...</span>
+      <span class="hljs-keyword">end</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Within a class, separate method definitions, constants and inner class definitions with <strong>one newline</strong>. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Money</span>  </span>
+  <span class="hljs-constant">CURRENCIES</span> = {
+    <span class="hljs-string">&quot;EUR&quot;</span> =&gt; <span class="hljs-number">1.0</span>,
+    <span class="hljs-string">&quot;ARS&quot;</span> =&gt; <span class="hljs-number">10.55</span>,
+    <span class="hljs-string">&quot;USD&quot;</span> =&gt; <span class="hljs-number">1.12</span>,
+    <span class="hljs-string">&quot;JPY&quot;</span> =&gt; <span class="hljs-number">134.15</span>,
+  }
+
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Amount</span></span>
+    getter <span class="hljs-symbol">:currency</span>, <span class="hljs-symbol">:value</span>
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@currency</span>, <span class="hljs-variable">@value</span>)
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CurrencyConversion</span></span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@amount</span>, <span class="hljs-variable">@target_currency</span>)
+    <span class="hljs-keyword">end</span>
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">amount</span></span>
+      <span class="hljs-comment"># implement conversion ...</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
 
                     
                     </section>
@@ -2010,10 +2116,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/local_variables.html" class="navigation navigation-prev " aria-label="Previous page: Local variables"><i class="fa fa-angle-left"></i></a>
+        <a href="../conventions/index.html" class="navigation navigation-prev " aria-label="Previous page: Conventions"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/assignment.html" class="navigation navigation-next " aria-label="Next page: Assignment"><i class="fa fa-angle-right"></i></a>
+        <a href="../conventions/documenting_code.html" class="navigation navigation-next " aria-label="Next page: Documenting code"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

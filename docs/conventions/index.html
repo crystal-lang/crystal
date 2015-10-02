@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Global variables | Crystal Programming Language</title>
+        <title>Conventions | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/assignment.html" />
+    <link rel="next" href="../conventions/coding_style.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/local_variables.html" />
+    <link rel="prev" href="../syntax_and_semantics/unsafe.html" />
     
 
         
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.4" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="5" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -505,7 +505,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.4" data-path="syntax_and_semantics/global_variables.html">
+        <li class="chapter " data-level="4.4" data-path="syntax_and_semantics/global_variables.html">
             
                 
                     <a href="../syntax_and_semantics/global_variables.html">
@@ -1839,7 +1839,7 @@
             
         </li>
     
-        <li class="chapter " data-level="5" data-path="conventions/index.html">
+        <li class="chapter active" data-level="5" data-path="conventions/index.html">
             
                 
                     <a href="../conventions/index.html">
@@ -1995,11 +1995,12 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="global-variables">Global variables</h1>
-<p>Global variables start with a dollar sign (<code>$</code>). They are declared when you first assign them a value.</p>
-<pre><code class="lang-crystal"><span class="hljs-variable">$year</span> = <span class="hljs-number">2014</span>
-</code></pre>
-<p>Their type is the combined type of all expressions that were assigned to them. Additionally, if your program reads a global variable before it was ever assigned a value it will also have the <code>Nil</code> type.</p>
+                        <h1 id="conventions">Conventions</h1>
+<p>Follow these conventions so your code will be more accessible to other developers.</p>
+<ul>
+<li>Use <a href="coding_style.html">standard coding style</a> so your project will be navigable and readable to others.</li>
+<li>Write <a href="documenting_code.html">documentation</a> to express purpose of your code and support the <code>crystal doc</code> generator.</li>
+</ul>
 
                     
                     </section>
@@ -2010,10 +2011,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/local_variables.html" class="navigation navigation-prev " aria-label="Previous page: Local variables"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/unsafe.html" class="navigation navigation-prev " aria-label="Previous page: Unsafe code"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/assignment.html" class="navigation navigation-next " aria-label="Next page: Assignment"><i class="fa fa-angle-right"></i></a>
+        <a href="../conventions/coding_style.html" class="navigation navigation-next " aria-label="Next page: Coding style"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
