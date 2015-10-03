@@ -212,4 +212,13 @@ describe "UDPSocket" do
     client.close
     server.close
   end
+
+  it "broadcast messages" do
+    client = UDPSocket.new
+    client.connect("255.255.255.255", 12348)
+    client.broadcast = true
+    client.broadcast?.should be_true
+    client.write("broadcast".to_slice).should eq(9)
+    client.close
+  end
 end
