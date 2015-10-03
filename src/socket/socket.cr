@@ -99,6 +99,14 @@ class Socket < IO::FileDescriptor
     setsockopt_bool LibC::SO_REUSEADDR, val
   end
 
+  def broadcast?
+    getsockopt_bool LibC::SO_BROADCAST
+  end
+
+  def broadcast= val : Bool
+    setsockopt_bool LibC::SO_BROADCAST, val
+  end
+
   def keepalive?
     getsockopt_bool LibC::SO_KEEPALIVE
   end
