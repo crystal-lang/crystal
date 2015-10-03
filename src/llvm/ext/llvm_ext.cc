@@ -239,7 +239,11 @@ LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef C, LLVMMetadataRef *MDs, unsi
 }
 
 void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
+#ifdef HAVE_LLVM_35
+  auto *Node = unwrap<MDNode>(MD);
+#else
   auto *Node = unwrap<MDNodeFwdDecl>(MD);
+#endif
   Node->replaceAllUsesWith(unwrap<MDNode>(New));
   MDNode::deleteTemporary(Node);
 }
