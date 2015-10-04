@@ -41,11 +41,11 @@ describe Channel::Unbuffered do
       state = 2
     end
 
-    Scheduler.yield
+    Fiber.yield
     state.should eq(1)
     ch.receive.should eq(123)
     state.should eq(1)
-    Scheduler.yield
+    Fiber.yield
     state.should eq(2)
   end
 
@@ -63,7 +63,7 @@ describe Channel::Unbuffered do
     ch.full?.should be_true
     ch.empty?.should be_true
     spawn { ch.send 123 }
-    Scheduler.yield
+    Fiber.yield
     ch.empty?.should be_false
     ch.full?.should be_true
     ch.receive.should eq(123)
@@ -79,7 +79,7 @@ describe Channel::Unbuffered do
   it "can send and receive nil" do
     ch = Channel::Unbuffered(Nil).new
     spawn { ch.send nil }
-    Scheduler.yield
+    Fiber.yield
     ch.empty?.should be_false
     ch.receive.should be_nil
     ch.empty?.should be_true
@@ -104,9 +104,9 @@ describe Channel::Unbuffered do
     ch = Channel::Unbuffered(Int32).new
     received = false
     spawn { expect_raises(Channel::ClosedError) { ch.receive }; received = true }
-    Scheduler.yield
+    Fiber.yield
     ch.close
-    Scheduler.yield
+    Fiber.yield
     received.should be_true
   end
 
@@ -160,7 +160,7 @@ describe Channel::Buffered do
     done = false
     spawn { ch.send 123; done = true }
     done.should be_false
-    Scheduler.yield
+    Fiber.yield
     done.should be_true
   end
 
@@ -181,7 +181,7 @@ describe Channel::Buffered do
   it "can send and receive nil" do
     ch = Channel::Buffered(Nil).new
     spawn { ch.send nil }
-    Scheduler.yield
+    Fiber.yield
     ch.empty?.should be_false
     ch.receive.should be_nil
     ch.empty?.should be_true
@@ -206,9 +206,9 @@ describe Channel::Buffered do
     ch = Channel::Buffered(Int32).new
     received = false
     spawn { expect_raises(Channel::ClosedError) { ch.receive }; received = true }
-    Scheduler.yield
+    Fiber.yield
     ch.close
-    Scheduler.yield
+    Fiber.yield
     received.should be_true
   end
 

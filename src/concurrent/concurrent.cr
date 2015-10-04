@@ -6,7 +6,7 @@ def sleep(seconds : Number)
     raise ArgumentError.new "sleep seconds must be positive"
   end
 
-  Scheduler.sleep(seconds)
+  Fiber.sleep(seconds)
 end
 
 def sleep(time : Time::Span)
