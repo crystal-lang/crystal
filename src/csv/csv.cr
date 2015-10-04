@@ -20,8 +20,8 @@ module CSV
   # ```
   # CSV.parse("one,two\nthree") #=> [["one", "two"], ["three"]]
   # ```
-  def self.parse(string_or_io : String | IO) : Array(Array(String))
-    Parser.new(string_or_io).parse
+  def self.parse(string_or_io : String | IO, header_row = false) : Array(Array(String)) | Array(Hash(String,String))
+    Parser.new(string_or_io, header_row).parse
   end
 
   # Yields each of a CSV's rows as an `Array(String)`.
@@ -44,6 +44,26 @@ module CSV
     end
   end
 
+  # Yields each of a CSV's rows as an `Hash(String,String)`.
+  #
+  # ```
+  # CSV.each_row_with_header("name,age\nharis,21\nbobby,35") do |row|
+  #   puts row
+  # end
+  # ```
+  #
+  # Output:
+  #
+  # ```
+  # {"name" => "haris", "age" => "21"}
+  # {"name" => "bobby", "age" => "35"}
+  # ```
+  def self.each_row_with_header(string_or_io : String | IO)
+    Parser.new(string_or_io, header_row = true).each_row_with_header do |row|
+      yield row
+    end
+  end
+
   # Returns an `Iterator` of `Array(String)` over a CSV's rows.
   #
   # ```
@@ -53,6 +73,17 @@ module CSV
   # ```
   def self.each_row(string_or_io : String | IO)
     Parser.new(string_or_io).each_row
+  end
+
+  # Returns an `Iterator` of `Hash(String,String)` over a CSV's rows.
+  #
+  # ```
+  # rows = CSV.each_row_with_header("name,age\nharis,21\nbobby,35")
+  # rows.next #=> {"name" => "haris", "age" => "21"}
+  # rows.next #=> {"name" => "bobby", "age" => "35"}
+  # ```
+  def self.each_row_with_header(string_or_io : String | IO)
+    Parser.new(string_or_io, header_row = true).each_row_with_header
   end
 
   # Builds a CSV. This yields a `CSV::Builder` to the given block.
