@@ -52,8 +52,8 @@
 # by invoking `to_json(IO)` on each of the properties (unless a converter is specified, in
 # which case `to_json(value, IO)` is invoked).
 module JSON::Mapping
-  # Defines a JSON mapping. If `strict` is true, uknown properties in the JSON
-  # document will raise a parse exception. The default is `false`, so uknown properties
+  # Defines a JSON mapping. If `strict` is true, unknown properties in the JSON
+  # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
   macro json_mapping(properties, strict = false)
     {% for key, value in properties %}
