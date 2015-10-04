@@ -80,6 +80,11 @@ class Fiber
       @@last_fiber = @prev_fiber
     end
 
+    # Delete the resume event if it was used by `yield` or `sleep`
+    if event = @resume_event
+      event.free
+    end
+
     Scheduler.reschedule
   end
 
@@ -89,6 +94,24 @@ class Fiber
 
     LibGC.stackbottom = @stack_bottom
     LibPcl.co_call(@cr)
+  end
+
+  def sleep(time)
+    event = @resume_event ||= Scheduler.create_resume_event(self)
+    event.add(time)
+    Scheduler.reschedule
+  end
+
+  def yield
+    sleep(0)
+  end
+
+  def self.sleep(time)
+    Fiber.current.sleep(time)
+  end
+
+  def self.yield
+    Fiber.current.yield
   end
 
   def self.current

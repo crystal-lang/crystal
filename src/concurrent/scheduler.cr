@@ -22,14 +22,10 @@ class Scheduler
     @@eb.reinit
   end
 
-  def self.sleep(time)
-    event = @@eb.new_event(-1, LibEvent2::EventFlags::None, Fiber.current) do |s, flags, data|
-      fiber = data as Fiber
-      fiber.resume
+  def self.create_resume_event(fiber)
+    @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+      (data as Fiber).resume
     end
-    event.add(time)
-    reschedule
-    event.free
   end
 
   def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered = false : Bool)
@@ -72,11 +68,6 @@ class Scheduler
     end
     event.add
     event
-  end
-
-  def self.yield
-    @@runnables.unshift Fiber.current
-    reschedule
   end
 
   def self.enqueue(fiber : Fiber)
