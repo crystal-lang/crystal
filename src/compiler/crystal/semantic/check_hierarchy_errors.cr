@@ -69,8 +69,11 @@ class Crystal::Program
     def check_recursive_instance_var_container(target, type, checked, path)
       checked.add type
       (type as InstanceVarContainer).instance_vars.each_value do |var|
+        var_type = var.type?
+        next unless var_type
+
         path.push var
-        check_recursive(target, var.type, checked, path)
+        check_recursive(target, var_type, checked, path)
         path.pop
       end
       checked.delete type
