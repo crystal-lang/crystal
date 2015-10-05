@@ -23,7 +23,7 @@ describe CSV do
     end
 
     it "parses two rows with a header" do
-      CSV.parse("name,age\nharis,21\nbobby,35\n", header_row = true).should eq([
+      CSV.parse("name,age\nharis,21\nbobby,35\n", header_row: true).should eq([
         {"name" => "haris", "age" => "21"},
         {"name" => "bobby", "age" => "35"}
         ])
@@ -87,7 +87,7 @@ describe CSV do
   end
 
   it "parses row by row with header" do
-    parser = CSV::Parser.new("name,age\nharis,21\nbobby,35\n", header_row = true)
+    parser = CSV::Parser.new("name,age\nharis,21\nbobby,35\n", header_row: true)
     parser.next_row_with_header.should eq({"name" => "haris", "age" => "21"})
     parser.next_row_with_header.should eq({"name" => "bobby", "age" => "35"})
     parser.next_row_with_header.should be_nil

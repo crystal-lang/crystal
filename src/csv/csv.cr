@@ -59,7 +59,7 @@ module CSV
   # {"name" => "bobby", "age" => "35"}
   # ```
   def self.each_row_with_header(string_or_io : String | IO)
-    Parser.new(string_or_io, header_row = true).each_row_with_header do |row|
+    Parser.new(string_or_io, header_row: true).each_row_with_header do |row|
       yield row
     end
   end
@@ -83,7 +83,7 @@ module CSV
   # rows.next #=> {"name" => "bobby", "age" => "35"}
   # ```
   def self.each_row_with_header(string_or_io : String | IO)
-    Parser.new(string_or_io, header_row = true).each_row_with_header
+    Parser.new(string_or_io, header_row: true).each_row_with_header
   end
 
   # Builds a CSV. This yields a `CSV::Builder` to the given block.
