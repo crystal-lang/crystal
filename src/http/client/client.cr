@@ -163,8 +163,9 @@ class HTTP::Client
     self.connect_timeout = connect_timeout.total_seconds
   end
 
-  # Sets a callback to execute before each request. This is usually
-  # used to set an authorization header. Only **one** callback is allowed.
+  # Adds a callback to execute before each request. This is usually
+  # used to set an authorization header. Any number of callbacks
+  # can be added.
   #
   #
   # ```
@@ -174,7 +175,9 @@ class HTTP::Client
   # end
   # client.get "/"
   # ```
-  def before_request(&@before_request : HTTP::Request ->)
+  def before_request(&callback : HTTP::Request ->)
+    before_request = @before_request ||= [] of (HTTP::Request ->)
+    before_request << callback
   end
 
   {% for method in %w(get post put head delete patch) %}
@@ -282,6 +285,7 @@ class HTTP::Client
   # response.body #=> "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Response
+    execute_callbacks(request)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
@@ -300,6 +304,7 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
+    execute_callbacks(request)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
@@ -379,9 +384,11 @@ class HTTP::Client
   private def new_request(method, path, headers, body)
     headers ||= HTTP::Headers.new
     headers["Host"] ||= host_header
-    request = HTTP::Request.new method, path, headers, body
-    @before_request.try &.call(request)
-    request
+    HTTP::Request.new method, path, headers, body
+  end
+
+  private def execute_callbacks(request)
+    @before_request.try &.each &.call(request)
   end
 
   private def socket
