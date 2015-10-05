@@ -22,6 +22,13 @@ describe CSV do
         ])
     end
 
+    it "parses two rows with a header" do
+      CSV.parse("name,age\nharis,21\nbobby,35\n", header_row: true).should eq([
+        {"name" => "haris", "age" => "21"},
+        {"name" => "bobby", "age" => "35"}
+        ])
+    end
+
     it "parses two rows with the last one having a newline" do
       CSV.parse("hello,world\ngood,bye\n").should eq([
         ["hello", "world"],
@@ -79,12 +86,27 @@ describe CSV do
     parser.next_row.should be_nil
   end
 
+  it "parses row by row with header" do
+    parser = CSV::Parser.new("name,age\nharis,21\nbobby,35\n", header_row: true)
+    parser.next_row_with_header.should eq({"name" => "haris", "age" => "21"})
+    parser.next_row_with_header.should eq({"name" => "bobby", "age" => "35"})
+    parser.next_row_with_header.should be_nil
+  end
+
   it "does CSV.each_row" do
     sum = 0
     CSV.each_row("1,2\n3,4\n") do |row|
       sum += row.map(&.to_i).sum
     end
     sum.should eq(10)
+  end
+
+  it "does CSV.each_row_with_header" do
+    sum = 0
+    CSV.each_row_with_header("account,balance\nhome,200\nwork,500\n") do |row|
+      sum += row["balance"].to_i
+    end
+    sum.should eq(700)
   end
 
   it "gets row iterator" do
@@ -95,5 +117,15 @@ describe CSV do
 
     iter.rewind
     iter.next.should eq(["1", "2"])
+  end
+
+  it "gets row iterator with header" do
+    iter = CSV.each_row_with_header("name,age\nharis,21\nbobby,35\n")
+    iter.next.should eq({"name" => "haris", "age" => "21"})
+    iter.next.should eq({"name" => "bobby", "age" => "35"})
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq({"name" => "haris", "age" => "21"})
   end
 end
