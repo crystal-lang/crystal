@@ -60,7 +60,8 @@ module Crystal
     # Here we store the cummulative types of variables as we traverse the nodes.
     getter meta_vars
 
-    getter is_initialize
+    property is_initialize
+    property block_nest
 
     @unreachable = false
     @is_initialize = false
@@ -843,8 +844,9 @@ module Crystal
       block_visitor.scope = @scope
       block_visitor.type_lookup = type_lookup
       block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
-      block_visitor.block_nest = @block_nest
+      block_visitor.block_nest = @block_nest + 1
       block_visitor.parent = self
+      block_visitor.is_initialize = @is_initialize
 
       node.def.body.accept block_visitor
 

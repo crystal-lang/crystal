@@ -205,4 +205,40 @@ describe "Type inference: nilable instance var" do
       Test.new.a
       )) { int32 }
   end
+
+  it "marks instance var as nilable if assigned inside captured block (#1696)" do
+    assert_type(%(
+      def capture(&block)
+        block
+      end
+
+      class Foo
+        def initialize
+          capture { @foo = 1 }
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      )) { nilable int32 }
+  end
+
+  it "marks instance var as nilable if assigned inside fun literal" do
+    assert_type(%(
+      class Foo
+        def initialize
+          ->{ @foo = 1 }
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      )) { nilable int32 }
+  end
 end
