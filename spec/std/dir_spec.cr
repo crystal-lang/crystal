@@ -131,10 +131,10 @@ describe "Dir" do
     result.any? { |path| path.ends_with? "io.cr" }.should be_true
   end
 
-  describe "chdir" do
+  describe "cd" do
     it "should work" do
       cwd = Dir.working_directory
-      Dir.chdir("..")
+      Dir.cd("..")
       Dir.working_directory.should_not eq(cwd)
       Dir.cd(cwd)
       Dir.working_directory.should eq(cwd)
@@ -142,14 +142,14 @@ describe "Dir" do
 
     it "raises" do
       expect_raises do
-        Dir.chdir("/nope")
+        Dir.cd("/nope")
       end
     end
 
     it "accepts a block" do
       cwd = Dir.working_directory
 
-      Dir.chdir("..") do
+      Dir.cd("..") do
         Dir.working_directory.should_not eq(cwd)
       end
 
