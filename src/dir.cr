@@ -151,7 +151,7 @@ class Dir
 
   # Changes the current working directory of the process to the given string
   # and invokes the block, restoring the original working directory
-  # when the block exists.
+  # when the block exits.
   def self.cd(path)
     old = working_directory
     begin
