@@ -57,6 +57,13 @@ class Array(T)
   @size :: Int32
   @capacity :: Int32
 
+  # Creates a new empty Array.
+  def initialize
+    @size = 0
+    @capacity = 0
+    @buffer = Pointer(T).null
+  end
+
   # Creates a new empty Array backed by a buffer that is initially
   # `initial_capacity` big.
   #
@@ -70,7 +77,7 @@ class Array(T)
   # ary = Array(Int32).new(5)
   # ary.size #=> 0
   # ```
-  def initialize(initial_capacity = 0 : Int)
+  def initialize(initial_capacity : Int)
     if initial_capacity < 0
       raise ArgumentError.new("negative array size: #{initial_capacity}")
     end

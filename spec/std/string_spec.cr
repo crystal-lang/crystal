@@ -1530,8 +1530,7 @@ describe "String" do
     "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
   end
 
-  # TODO: investigate why the exception raises here isn't captured, must be a bug in the type inference phase
-  pending "raises if String.build negative capacity" do
+  it "raises if String.build negative capacity" do
     expect_raises(ArgumentError, "negative capacity") do
       String.build(-1) { }
     end
