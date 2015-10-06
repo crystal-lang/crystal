@@ -70,15 +70,18 @@ class Array(T)
   # ary = Array(Int32).new(5)
   # ary.size #=> 0
   # ```
-  def initialize(initial_capacity = 3 : Int)
+  def initialize(initial_capacity = 0 : Int)
     if initial_capacity < 0
       raise ArgumentError.new("negative array size: #{initial_capacity}")
     end
 
-    initial_capacity = Math.max(initial_capacity, 3)
     @size = 0
     @capacity = initial_capacity.to_i
-    @buffer = Pointer(T).malloc(initial_capacity)
+    if initial_capacity == 0
+      @buffer = Pointer(T).null
+    else
+      @buffer = Pointer(T).malloc(initial_capacity)
+    end
   end
 
   # Creates a new Array of the given size filled with the
@@ -98,12 +101,11 @@ class Array(T)
     end
 
     @size = size.to_i
+    @capacity = size.to_i
 
     if size == 0
-      @capacity = 3
-      @buffer = Pointer(T).malloc(@capacity)
+      @buffer = Pointer(T).null
     else
-      @capacity = size.to_i
       @buffer = Pointer(T).malloc(size, value)
     end
   end
@@ -1493,12 +1495,16 @@ class Array(T)
   end
 
   private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @size == @capacity
+    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2)) if @size == @capacity
   end
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    if @buffer
+      @buffer = @buffer.realloc(@capacity)
+    else
+      @buffer = Pointer(T).malloc(@capacity)
+    end
   end
 
   protected def self.quicksort!(a, n, comp)
