@@ -2673,6 +2673,7 @@ class String
     include Iterator(Char)
 
     def initialize(@reader, @end = false)
+      check_empty
     end
 
     def next
@@ -2688,7 +2689,12 @@ class String
     def rewind
       @reader.pos = 0
       @end = false
+      check_empty
       self
+    end
+
+    private def check_empty
+      @end = true if @reader.string.bytesize == 0
     end
   end
 
