@@ -1376,6 +1376,14 @@ describe "String" do
     iter.next.should eq('a')
   end
 
+  it "gets each_char with empty string" do
+    iter = "".each_char
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should be_a(Iterator::Stop)
+  end
+
   it "cycles chars" do
     "abc".each_char.cycle.take(8).join.should eq("abcabcab")
   end
