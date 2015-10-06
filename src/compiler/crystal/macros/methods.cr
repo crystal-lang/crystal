@@ -759,8 +759,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
         interpret_argless_method(method, args) { MacroId.new(type.to_s) }
-      when "type_params"
-        interpret_argless_method(method, args) { TypeNode.type_params(type) }
+      when "type_vars"
+        interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
       when "superclass"
@@ -811,7 +811,7 @@ module Crystal
       end
     end
 
-    def self.type_params(type)
+    def self.type_vars(type)
       if type.is_a?(GenericClassInstanceType)
         if type.is_a?(TupleInstanceType)
           ArrayLiteral.map(type.tuple_types) do |tuple_type|
@@ -825,6 +825,10 @@ module Crystal
               type_var
             end
           end
+        end
+      elsif type.is_a?(GenericType)
+        ArrayLiteral.map((type as GenericType).type_vars) do |type_var|
+          MacroId.new(type_var)
         end
       else
         ArrayLiteral.new
