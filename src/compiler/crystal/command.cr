@@ -12,12 +12,12 @@ class Crystal::Command
 Usage: crystal [command] [switches] [program file] [--] [arguments]
 
 Command:
-    init                     generate new crystal project
-    build                    compile program file
+    init                     generate a new project
+    build                    compile program
     deps                     install project dependencies
     docs                     generate documentation
     eval                     eval code from args or standard input
-    run (default)            compile and run program file
+    run (default)            compile and run program
     spec                     compile and run specs (in spec directory)
     tool                     run a tool
     --help, -h               show this help
