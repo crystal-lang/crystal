@@ -539,6 +539,7 @@ describe "String" do
 
   describe "split" do
     describe "by char" do
+      assert { "".split(',').should eq([] of String) }
       assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(',').should eq(["foo"]) }
@@ -561,6 +562,7 @@ describe "String" do
     end
 
     describe "by string" do
+      assert { "".split(":-").should eq([] of String) }
       assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz"]) }
       assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(":-").should eq(["foo"]) }
@@ -573,6 +575,7 @@ describe "String" do
     end
 
     describe "by regex" do
+      assert { "".split(/\n\t/).should eq([] of String) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
       assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
