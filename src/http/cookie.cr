@@ -99,7 +99,7 @@ module HTTP
     end
 
     # Set a new cookie in the collection to the given `HTTP::Cookie`
-    # instance. The name attribute must match the given key, else
+    # instance. The name attribute must match the given *key*, else
     # `ArgumentError` is raised.
     #
     # ```
@@ -113,7 +113,7 @@ module HTTP
       @cookies[key] = value
     end
 
-    # Get the current `HTTP::Cookie` for the given key.
+    # Get the current `HTTP::Cookie` for the given *key*.
     #
     # ```
     # request.cookies["foo"].value #=> "bar"
@@ -122,7 +122,26 @@ module HTTP
       @cookies[key]
     end
 
-    # Add the given cookie to this collection, overrides an existing cookie
+    # Get the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
+    #
+    # ```
+    # request.cookies["foo"]? #=> nil
+    # request.cookies["foo"] = "bar"
+    # request.cookies["foo"]?.try &.value #> "bar"
+    # ```
+    def []?(key)
+      @cookies[key]?
+    end
+
+    # Returns `true` if a cookie with the given *key* exists.
+    #
+    # ```
+    # request.cookies.has_key?("foo") #=> true
+    def has_key?(key)
+      @cookies.has_key?(key)
+    end
+
+    # Add the given *cookie* to this collection, overrides an existing cookie
     # with the same name if present.
     #
     # ```
