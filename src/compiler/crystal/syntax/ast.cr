@@ -1062,16 +1062,19 @@ module Crystal
     property modifier
     property exp
     property doc
+    property trailing_newline
 
-    def initialize(@modifier, @exp)
+    def initialize(@modifier, @exp, @trailing_newline = false)
     end
 
     def accept_children(visitor)
-      @exp.accept visitor
+      unless @trailing_newline
+        @exp.accept visitor
+      end
     end
 
     def clone_without_location
-      VisibilityModifier.new(@modifier, @exp.clone)
+      VisibilityModifier.new(@modifier, @exp.clone, @trailing_newline)
     end
 
     def_equals_and_hash modifier, exp

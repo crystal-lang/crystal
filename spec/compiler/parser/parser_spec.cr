@@ -995,8 +995,30 @@ describe "Parser" do
   it_parses "foo[*baz]", Call.new("foo".call, "[]", "baz".call.splat)
   it_parses "foo[*baz] = 1", Call.new("foo".call, "[]=", ["baz".call.splat, 1.int32] of ASTNode)
 
-  it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
-  it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
+  context "visibility modifier" do
+    context "without trailing newline" do
+      it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
+      it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
+    end
+
+    context "with trailing newline" do
+      it "parses as an empty private modifier" do
+        exp = parse("private\n def foo; end\n def bar; end") as Expressions
+        mod = exp[0] as VisibilityModifier
+        mod.trailing_newline.should be_true
+        mod.exp.should be_a(Nop)
+        mod.modifier.should eq(:private)
+      end
+
+      it "parses as an empty protected modifier" do
+        exp = parse("protected\n def foo; end\n def bar; end") as Expressions
+        mod = exp[0] as VisibilityModifier
+        mod.trailing_newline.should be_true
+        mod.exp.should be_a(Nop)
+        mod.modifier.should eq(:protected)
+      end
+    end
+  end
 
   it_parses "`foo`", Call.new(nil, "`", "foo".string)
   it_parses "`foo\#{1}bar`", Call.new(nil, "`", StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode))
@@ -1109,66 +1131,6 @@ describe "Parser" do
   it "doesn't take instance vars inside macro expressions into account (#809)" do
     node = Parser.parse("def foo; @x = 1; {{ @y }}; @x = 3; @z; end") as Def
     node.instance_vars.should eq(Set.new(["@x", "@z"]))
-  end
-
-  context "visibility modifier with trailing newline" do
-    it "accepts multiple private methods" do
-      exps = parse("private\n def foo; end\n def bar; end") as Expressions
-      foo = exps[0] as Def
-      bar = exps[1] as Def
-      foo.visibility.should eq(:private)
-      bar.visibility.should eq(:private)
-    end
-
-    it "accepts multiple protected methods" do
-      exps = parse("protected\n def foo; end\n def bar; end") as Expressions
-      foo = exps[0] as Def
-      bar = exps[1] as Def
-      foo.visibility.should eq(:protected)
-      bar.visibility.should eq(:protected)
-    end
-
-    it "switches between private/protected methods" do
-      code = <<-CODE
-      protected
-      def foo; end
-      def bar; end
-
-      private
-      def is_private; end
-
-      protected
-      def baz; end
-      CODE
-
-      exps = parse(code) as Expressions
-      foo = exps[0] as Def
-      bar = exps[1] as Def
-      pri = exps[2] as Def
-      baz = exps[3] as Def
-      foo.visibility.should eq(:protected)
-      bar.visibility.should eq(:protected)
-      pri.visibility.should eq(:private)
-      baz.visibility.should eq(:protected)
-    end
-
-    it "resets to public after classdef" do
-      exps = parse("private\n def foo; end\n class Foo\n def bar; end\n end") as Expressions
-      foo = exps[0] as Def
-      klass = exps[1] as ClassDef
-      bar = klass.body as Def
-      foo.visibility.should eq(:private)
-      bar.visibility.should eq(nil)
-    end
-
-    it "resets to public after moduledef" do
-      exps = parse("protected\n def foo; end\n module Foo\n def self.bar; end\n end") as Expressions
-      foo = exps[0] as Def
-      klass = exps[1] as ModuleDef
-      bar = klass.body as Def
-      foo.visibility.should eq(:protected)
-      bar.visibility.should eq(nil)
-    end
   end
 
   assert_syntax_error "def foo(x = 1, y); end",

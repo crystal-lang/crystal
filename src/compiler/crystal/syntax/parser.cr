@@ -1319,7 +1319,6 @@ module Crystal
 
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
       @type_nest += 1
-      @visibility = nil
 
       doc ||= @token.doc
 
@@ -1389,7 +1388,6 @@ module Crystal
 
     def parse_module_def
       @type_nest += 1
-      @visibility = nil
 
       location = @token.location
       doc = @token.doc
@@ -3707,16 +3705,16 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :NEWLINE
-        @visibility = modifier
-        next_token_skip_space
-        parse_op_assign
-      else
-        exp = parse_op_assign
-        modifier = VisibilityModifier.new(modifier, exp)
+        modifier =  VisibilityModifier.new(modifier, Nop.new, true)
         modifier.doc = doc
-        exp.doc = doc
-        modifier
+        return modifier
       end
+
+      exp = parse_op_assign
+      modifier = VisibilityModifier.new(modifier, exp)
+      modifier.doc = doc
+      exp.doc = doc
+      modifier
     end
 
     def parse_asm

@@ -252,6 +252,46 @@ describe "Visibility modifiers" do
       "private method 'bar' called for Foo"
     end
 
+    it "resets to public after ClassDef" do
+      assert_type(%(
+        class Foo
+          private
+
+          def foo
+            "private"
+          end
+
+          class Bar
+            def num
+              1_i32
+            end
+          end
+        end
+
+        Foo::Bar.new.num
+      )) { int32 }
+    end
+
+    it "resets to public after ModuleDef" do
+      assert_type(%(
+        class Foo
+          private
+
+          def foo
+            "private"
+          end
+
+          module Bar
+            def self.test
+              1_i32
+            end
+          end
+        end
+
+        Foo::Bar.test
+      )) { int32 }
+    end
+
     it "is compatible with 'private def foo; end' syntax" do
       assert_error %(
         class Foo
@@ -307,6 +347,27 @@ describe "Visibility modifiers" do
         Foo.new.bar
       ),
       "private method 'bar' called for Foo"
+    end
+
+    it "works when code is pasted by macros" do
+      assert_error %(
+        macro build(name)
+          class {{name.id}}
+            {{yield}}
+          end
+        end
+
+        build Test do
+          private
+
+          def foo; end
+
+          def bar; end
+        end
+
+        Test.new.bar
+      ),
+      "private method 'bar' called for Test"
     end
   end
 end

@@ -42,6 +42,7 @@ module Crystal
     property types
     property block_nest
     property with_scope
+    property visibility
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -82,6 +83,7 @@ module Crystal
       @attributes  = nil
       @lib_def_pass = 0
       @exp_nest = 0
+      @visibility = nil
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -627,6 +629,7 @@ module Crystal
       node.raises = true if node.has_attribute?("Raises")
 
       target_type.add_def node
+      node.visibility ||= @visibility
       node.set_type @mod.nil
 
       if is_instance_method
@@ -644,6 +647,7 @@ module Crystal
         node.raise ex.message
       end
 
+      node.visibility ||= @visibility
       node.set_type @mod.nil
       false
     end
@@ -1525,6 +1529,7 @@ module Crystal
     end
 
     def visit(node : ClassDef)
+      @visibility = nil
       check_outside_block_or_exp node, "declare class"
 
       node_superclass = node.superclass
@@ -1671,6 +1676,7 @@ module Crystal
     end
 
     def visit(node : ModuleDef)
+      @visibility = nil
       check_outside_block_or_exp node, "declare module"
 
       scope, name = process_type_name(node.name)
@@ -3065,9 +3071,11 @@ module Crystal
     end
 
     def visit(node : VisibilityModifier)
-      node.exp.visibility = node.modifier
-      node.exp.accept self
-      node.type = @mod.nil
+      unless node.trailing_newline
+        node.exp.visibility = node.modifier
+        node.exp.accept self
+        node.type = @mod.nil
+      end
 
       # Can only apply visibility modifier to def, macro or a macro call
       case exp = node.exp
@@ -3083,6 +3091,9 @@ module Crystal
         if exp.expanded
           return false
         end
+      when Nop
+        @visibility = node.modifier
+        return false
       end
 
       node.raise "can't apply visibility modifier"
