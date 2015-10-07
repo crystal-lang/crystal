@@ -1111,6 +1111,66 @@ describe "Parser" do
     node.instance_vars.should eq(Set.new(["@x", "@z"]))
   end
 
+  context "visibility modifier with trailing newline" do
+    it "accepts multiple private methods" do
+      exps = parse("private\n def foo; end\n def bar; end") as Expressions
+      foo = exps[0] as Def
+      bar = exps[1] as Def
+      foo.visibility.should eq(:private)
+      bar.visibility.should eq(:private)
+    end
+
+    it "accepts multiple protected methods" do
+      exps = parse("protected\n def foo; end\n def bar; end") as Expressions
+      foo = exps[0] as Def
+      bar = exps[1] as Def
+      foo.visibility.should eq(:protected)
+      bar.visibility.should eq(:protected)
+    end
+
+    it "switches between private/protected methods" do
+      code = <<-CODE
+      protected
+      def foo; end
+      def bar; end
+
+      private
+      def is_private; end
+
+      protected
+      def baz; end
+      CODE
+
+      exps = parse(code) as Expressions
+      foo = exps[0] as Def
+      bar = exps[1] as Def
+      pri = exps[2] as Def
+      baz = exps[3] as Def
+      foo.visibility.should eq(:protected)
+      bar.visibility.should eq(:protected)
+      pri.visibility.should eq(:private)
+      baz.visibility.should eq(:protected)
+    end
+
+    it "resets to public after classdef" do
+      exps = parse("private\n def foo; end\n class Foo\n def bar; end\n end") as Expressions
+      foo = exps[0] as Def
+      klass = exps[1] as ClassDef
+      bar = klass.body as Def
+      foo.visibility.should eq(:private)
+      bar.visibility.should eq(nil)
+    end
+
+    it "resets to public after moduledef" do
+      exps = parse("protected\n def foo; end\n module Foo\n def self.bar; end\n end") as Expressions
+      foo = exps[0] as Def
+      klass = exps[1] as ModuleDef
+      bar = klass.body as Def
+      foo.visibility.should eq(:protected)
+      bar.visibility.should eq(nil)
+    end
+  end
+
   assert_syntax_error "def foo(x = 1, y); end",
                       "argument must have a default value"
 

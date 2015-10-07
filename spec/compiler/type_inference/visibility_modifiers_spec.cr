@@ -234,4 +234,56 @@ describe "Visibility modifiers" do
       Foo.new.foo
       )) { int32 }
   end
+
+  context "with trailing newline" do
+    it "disallows invoking private method" do
+      assert_error %(
+        class Foo
+          private
+
+          def foo; end
+
+          def bar; end
+        end
+
+        foo = Foo.new
+        foo.bar
+      ),
+      "private method 'bar' called for Foo"
+    end
+
+    it "is compatible with 'private def foo; end' syntax" do
+      assert_error %(
+        class Foo
+          protected
+
+          def bar; end
+
+          private def foo; end
+
+          def baz; end
+        end
+
+        Foo.new.baz
+      ),
+      "protected method 'baz' called for Foo"
+    end
+
+    it "is overridden by 'private def foo; end' syntax" do
+      assert_error %(
+        class Foo
+          protected
+
+          def bar; end
+
+          private def foo; end
+
+          def baz; end
+        end
+
+        Foo.new.foo
+      ),
+      "private method 'foo' called for Foo"
+    end
+  end
 end
