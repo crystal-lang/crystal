@@ -285,5 +285,28 @@ describe "Visibility modifiers" do
       ),
       "private method 'foo' called for Foo"
     end
+
+    it "sets the visibility of macros" do
+      assert_error %(
+        class Foo
+          macro def_name(name)
+            def {{name.id}}
+              {{name}}
+            end
+          end
+
+          private
+
+          def one
+            1
+          end
+
+          def_name(:bar)
+        end
+
+        Foo.new.bar
+      ),
+      "private method 'bar' called for Foo"
+    end
   end
 end
