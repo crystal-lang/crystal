@@ -32,7 +32,7 @@
 #
 # `json_mapping` must receive a hash literal whose keys will define Crystal properties.
 #
-# The value of each key can be a single type (not an union type). Primitive types (numbers, string, boolean and nil)
+# The value of each key can be a single type (not a union type). Primitive types (numbers, string, boolean and nil)
 # are supported, as well as custom objects which use `json_mapping` or define a `new` method
 # that accepts a `JSON::PullParser` and returns an object from it.
 #
