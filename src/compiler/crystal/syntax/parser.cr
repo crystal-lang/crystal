@@ -3822,7 +3822,7 @@ module Crystal
         when "intel"
           intel = true
         else
-          raise "unkown asm option: #{option}", location
+          raise "unknown asm option: #{option}", location
         end
 
         if @token.type == :","

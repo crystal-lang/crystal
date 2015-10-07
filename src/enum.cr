@@ -187,7 +187,7 @@ struct Enum
   end
 
   # Returns the enum member that results from applying a logical
-  # "or" operation betwen this enum member's value and *other*.
+  # "or" operation between this enum member's value and *other*.
   # This is mostly useful with flag enums.
   #
   # ```
@@ -198,7 +198,7 @@ struct Enum
   end
 
   # Returns the enum member that results from applying a logical
-  # "and" operation betwen this enum member's value and *other*.
+  # "and" operation between this enum member's value and *other*.
   # This is mostly useful with flag enums.
   #
   # ```
@@ -209,7 +209,7 @@ struct Enum
   end
 
   # Returns the enum member that results from applying a logical
-  # "xor" operation betwen this enum member's value and *other*.
+  # "xor" operation between this enum member's value and *other*.
   # This is mostly useful with flag enums.
   def ^(other : self)
     self.class.new(value ^ other.value)
