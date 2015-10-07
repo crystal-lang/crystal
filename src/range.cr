@@ -73,7 +73,7 @@ struct Range(B, E)
   # Returns `false` otherwise (default).
   getter? :exclusive
 
-  # Constructs a range using the given begining and end.
+  # Constructs a range using the given beginning and end.
   #
   # ```
   # Range.new(1, 10)                  #=> 1..10
