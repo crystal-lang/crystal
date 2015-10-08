@@ -83,6 +83,27 @@ struct Time
   DP100 = 36524
   DP4   = 1461
 
+  # `Kind` represents a specified time zone.
+  # 
+  # Initializing a `Time` instance with specified `Kind`:
+  # ```crystal
+  # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
+  # ```
+  #
+  # Alternatively, you can switch the `Kind` for any instance:
+  #
+  # ```crystal 
+  # time.to_utc   #=> 2016-02-15 21:00:00 UTC
+  # time.to_local #=> 2016-02-16 05:01:10 +0800
+  # ```
+  # 
+  # Inspection:
+  #
+  # ```crystal
+  # time.local? #=> true
+  # time.utc?   #=> false
+  # ```
+  #
   enum Kind : Int64
     Unspecified = 0
     Utc         = 1
@@ -253,14 +274,17 @@ struct Time
     year_month_day_day_year[3]
   end
 
+  # Returns `Kind` of the instance.
   def kind
     Kind.new((encoded.to_u64 >> KindShift).to_i64)
   end
 
+  # Returns *true* if `Kind` is set to *Utc*.
   def utc?
     kind == Kind::Utc
   end
 
+  # Returns *true* if `Kind` is set to *Local*.
   def local?
     kind == Kind::Local
   end
