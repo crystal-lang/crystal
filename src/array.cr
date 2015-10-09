@@ -67,7 +67,7 @@ class Array(T)
   # Creates a new empty Array backed by a buffer that is initially
   # `initial_capacity` big.
   #
-  # The `initial_capacity` is useful to avoid unnecesary reallocations
+  # The `initial_capacity` is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If you have an estimate
   # of the maxinum number of elements an array will hold, you should
   # initialize it with that capacity for improved execution performance.
