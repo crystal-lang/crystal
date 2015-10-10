@@ -538,6 +538,18 @@ describe Crystal::Formatter do
   assert_format %("foo" \\\n "bar" \\\n "baz"), %("foo" \\\n"bar" \\\n"baz")
   assert_format %("foo \#{bar}" \\\n "baz"), %("foo \#{bar}" \\\n"baz")
 
+  assert_format %(asm("nop"))
+  assert_format %(asm(\n"nop"\n)), %(asm(\n     "nop"\n   ))
+  assert_format %(asm("nop" : : )), %(asm("nop" : : ))
+  assert_format %(asm("nop" :: )), %(asm("nop" : : ))
+  assert_format %(asm("nop" : "a"(0) )), %(asm("nop" : "a"(0)))
+  assert_format %(asm("nop" : "a"(0) : "b"(1) )), %(asm("nop" : "a"(0) : "b"(1)))
+  assert_format %(asm("nop" : "a"(0) : "b"(1), "c"(2) )), %(asm("nop" : "a"(0) : "b"(1), "c"(2)))
+  assert_format %(asm("nop" : "a"(0)\n: "b"(1), "c"(2) )), %(asm("nop" : "a"(0)\n          : "b"(1), "c"(2)))
+  assert_format %(asm("nop" : "a"(0)\n: "b"(1),\n"c"(2) )), %(asm("nop" : "a"(0)\n          : "b"(1),\n            "c"(2)))
+  assert_format %(asm(\n"nop" : "a"(0) )), %(asm(\n     "nop" : "a"(0)\n   ))
+  assert_format %(asm("nop"\n: "a"(0) )), %(asm("nop"\n        : "a"(0)))
+
   assert_format "1   # foo", "1 # foo"
   assert_format "1  # foo\n2  # bar", "1 # foo\n2 # bar"
   assert_format "1  #foo  \n2  #bar", "1 # foo\n2 # bar"
@@ -612,4 +624,9 @@ describe Crystal::Formatter do
   assert_format "[\n  a(), # b\n]", "[\n  a(), # b\n]"
   assert_format "[\n  a(),\n]", "[\n  a(),\n]"
   assert_format "if 1\n[\n  a() # b\n]\nend", "if 1\n  [\n    a(), # b\n  ]\nend"
+  assert_format "foo(\n# x\n1,\n\n# y\nz: 2\n)", "foo(\n     # x\n     1,\n\n     # y\n     z: 2\n   )"
+  assert_format "foo(\n# x\n1,\n\n# y\nz: 2,\n\n# a\nb: 3)", "foo(\n     # x\n     1,\n\n     # y\n     z: 2,\n\n     # a\n     b: 3)"
+  assert_format "foo(\n 1, # hola\n2, # chau\n )", "foo(\n     1, # hola\n     2, # chau\n   )"
+  assert_format "def foo(\n\n#foo\nx,\n\n#bar\nz\n)\nend", "def foo(\n        # foo\n        x,\n\n        # bar\n        z)\nend"
+  assert_format "def foo(\nx, #foo\nz #bar\n)\nend", "def foo(\n        x, # foo\n        z # bar\n        )\nend"
 end
