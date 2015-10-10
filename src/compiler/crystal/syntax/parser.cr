@@ -3556,7 +3556,11 @@ module Crystal
     end
 
     def parse_type_with_suffix(types, allow_primitives)
-      if @token.keyword?(:self)
+      if @token.type == :IDENT && @token.value == "self?"
+        type = Self.new
+        type = Union.new([type, Path.global("Nil")] of ASTNode)
+        next_token_skip_space
+      elsif @token.keyword?(:self)
         type = Self.new
         next_token_skip_space
       else

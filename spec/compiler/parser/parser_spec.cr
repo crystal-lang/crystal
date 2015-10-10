@@ -277,6 +277,7 @@ describe "Parser" do
   it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", restriction: "Int".path)])
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", restriction: "Int".path)])
   it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", restriction: Self.new)])
+  it_parses "def foo(var : self?); end", Def.new("foo", [Arg.new("var", restriction: Union.new([Self.new, Path.global("Nil")] of ASTNode))])
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", restriction: Self.new)])
   it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", restriction: Metaclass.new(Self.new))])
   it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", restriction: Self.new.pointer_of)])
