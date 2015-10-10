@@ -28,6 +28,8 @@ describe Crystal::Formatter do
   assert_format "1_234", "1_234"
   assert_format "0x1234_u32", "0x1234_u32"
   assert_format "0_u64", "0_u64"
+  assert_format "0u64", "0u64"
+  assert_format "0i64", "0i64"
 
   assert_format "   1", "1"
   assert_format "\n\n1", "1"
@@ -211,6 +213,7 @@ describe Crystal::Formatter do
   assert_format "foo(1, 2,\n)", "foo(1, 2)"
   assert_format "foo(1,\n2,\n)", "foo(1,\n    2,\n   )"
   assert_format "foo(out x)", "foo(out x)"
+  assert_format "foo(\n     1,\n     a: 1,\n     b: 2,\n   )"
 
   assert_format "foo.bar\n.baz", "foo.bar\n   .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n       .qux"
@@ -401,6 +404,7 @@ describe Crystal::Formatter do
   assert_format "@[Foo( 1, 2 )]", "@[Foo(1, 2)]"
   assert_format "@[Foo( 1, 2, foo: 3 )]", "@[Foo(1, 2, foo: 3)]"
   assert_format "@[Foo]\ndef foo\nend"
+  assert_format "@[Foo(\n       1,\n     )]"
 
   assert_format "1   as   Int32", "1 as Int32"
   assert_format "foo.bar  as   Int32", "foo.bar as Int32"
@@ -467,6 +471,7 @@ describe Crystal::Formatter do
   assert_format "macro flags\n  {% if 1 %}\\\n 1 {% else %}\\\n {% end %}\\\nend"
   assert_format "macro flags\n  {% if 1 %}{{1}}a{{2}}{% end %}\\\nend"
   assert_format "  {% begin %} 2 {% end %}", "{% begin %} 2 {% end %}"
+  assert_format "macro foo\n  \\{ \nend"
 
   assert_format "def foo\na = bar do\n1\nend\nend", "def foo\n  a = bar do\n        1\n      end\nend"
   assert_format "def foo\nend\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
@@ -528,6 +533,10 @@ describe Crystal::Formatter do
   end
   assert_format ":\"foo bar\""
 
+  assert_format %("foo" \\\n "bar"), %("foo" \\\n"bar")
+  assert_format %("foo" \\\n "bar" \\\n "baz"), %("foo" \\\n"bar" \\\n"baz")
+  assert_format %("foo \#{bar}" \\\n "baz"), %("foo \#{bar}" \\\n"baz")
+
   assert_format "1   # foo", "1 # foo"
   assert_format "1  # foo\n2  # bar", "1 # foo\n2 # bar"
   assert_format "1  #foo  \n2  #bar", "1 # foo\n2 # bar"
@@ -588,6 +597,7 @@ describe Crystal::Formatter do
   assert_format "ary.size = (1).to_i"
   assert_format "b &.[c].d"
   assert_format "b &.[c]?.d"
+  assert_format "a &.b[c]?"
   assert_format "+ a + d", "+a + d"
   assert_format "  ((1) + 2)", "((1) + 2)"
   assert_format "if 1\n  ((1) + 2)\nend"
@@ -596,4 +606,9 @@ describe Crystal::Formatter do
   assert_format "def   foo  x   :  self ? \n  end", "def foo x : self ?\nend"
 
   assert_format "  macro foo\n  end\n\n  :+", "macro foo\n  end\n\n:+"
+  assert_format "[\n1, # a\n2, # b\n 3 # c\n]", "[\n  1, # a\n  2, # b\n  3, # c\n]"
+  assert_format "[\n  a() # b\n]", "[\n  a(), # b\n]"
+  assert_format "[\n  a(), # b\n]", "[\n  a(), # b\n]"
+  assert_format "[\n  a(),\n]", "[\n  a(),\n]"
+  assert_format "if 1\n[\n  a() # b\n]\nend", "if 1\n  [\n    a(), # b\n  ]\nend"
 end

@@ -8,6 +8,7 @@ module Crystal
     property? count_whitespace
     property? wants_raw
     property? slash_is_regex
+    getter reader
     getter token
 
     def initialize(string)
@@ -1345,16 +1346,19 @@ module Crystal
         @token.value = "0"
         next_char
         consume_int_suffix
+        set_token_raw_from_start(start)
       when 'f'
         @token.type = :NUMBER
         @token.value = "0"
         next_char
         consume_float_suffix
+        set_token_raw_from_start(start)
       when 'u'
         @token.type = :NUMBER
         @token.value = "0"
         next_char
         consume_uint_suffix
+        set_token_raw_from_start(start)
       when '_'
         case peek_next_char
         when 'i'
@@ -1362,6 +1366,7 @@ module Crystal
           @token.value = "0"
           next_char
           consume_int_suffix
+          set_token_raw_from_start(start)
         when 'f'
           @token.type = :NUMBER
           @token.value = "0"

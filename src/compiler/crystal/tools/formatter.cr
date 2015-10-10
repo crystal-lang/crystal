@@ -1,7 +1,9 @@
 module Crystal
   class Formatter < Visitor
-    def self.format(source)
-      nodes = Parser.parse(source)
+    def self.format(source, filename = nil)
+      parser = Parser.new(source)
+      parser.filename = filename
+      nodes = parser.parse
 
       formatter = new(source)
       formatter.skip_space_or_newline
@@ -275,7 +277,15 @@ module Crystal
 
       write @token.raw
       format_regex_modifiers if is_regex
-      next_token
+
+      if space_slash_newline?
+        write " \\"
+        write_line
+        next_token
+        visit(node)
+      else
+        next_token
+      end
 
       false
     end
@@ -292,6 +302,19 @@ module Crystal
       delimiter_state = @token.delimiter_state
 
       node.expressions.each do |exp|
+        if @token.type == :DELIMITER_END
+          # This is for " ... " \
+          #             " ... "
+          write @token.raw
+          write " \\"
+          write_line
+          next_token_skip_space_or_newline
+          check :DELIMITER_START
+          write_indent
+          write @token.raw
+          next_string_token
+        end
+
         if exp.is_a?(StringLiteral)
           # It might be #{__DIR__}, for example
           if @token.type == :INTERPOLATION_START
@@ -344,6 +367,24 @@ module Crystal
           break
         end
       end
+    end
+
+    def space_slash_newline?
+      pos = @lexer.reader.pos
+      while true
+        char = @lexer.current_char
+        case char
+        when ' ', '\t'
+          @lexer.next_char
+        when '\\'
+          @lexer.reader.pos = pos
+          return true
+        else
+          break
+        end
+      end
+      @lexer.reader.pos = pos
+      false
     end
 
     def visit(node : ArrayLiteral)
@@ -412,58 +453,78 @@ module Crystal
       has_newlines = false
       wrote_newline = false
       write_space_at_end = false
-
-      old_indent = @indent
-      @indent = 0
+      next_needs_indent = false
+      found_comment = false
 
       skip_space
       if @token.type == :NEWLINE
+        if elements.empty?
+          skip_space_or_newline
+          check suffix
+          write suffix
+          next_token
+          return false
+        end
+
         base_indent += 1
+        consume_newlines
+        skip_space_or_newline
         wrote_newline = true
+        next_needs_indent = true
+        has_newlines = true
       end
 
       elements.each_with_index do |element, i|
-        skip_space
-        if @token.type == :NEWLINE
-          @indent = base_indent
-          consume_newlines
-          has_newlines = true
-        elsif i > 0
-          write " "
-        end
-        skip_space_or_newline
-
         # This is to prevent writing `{{`
         if prefix == :"{" && i == 0 && !wrote_newline && (element.is_a?(TupleLiteral) || element.is_a?(HashLiteral))
           write " "
           write_space_at_end = true
         end
 
-        element.accept self
-        @indent = 0
-        skip_space_or_newline
+        if next_needs_indent
+          indent(base_indent, element)
+        else
+          no_indent element
+        end
+
+        last = last?(i, elements)
+
+        found_comment = skip_space(write_comma: last  && has_newlines)
 
         if @token.type == :","
-          write "," unless last?(i, elements)
+          write "," unless last || found_comment
           slash_is_regex!
           next_token
+          found_comment = skip_space(write_comma: last && has_newlines)
+          if @token.type == :NEWLINE
+            if last && !found_comment
+              write ","
+              found_comment = true
+            end
+            consume_newlines
+            skip_space_or_newline
+            next_needs_indent = true
+            has_newlines = true
+          else
+            write " " unless last || found_comment
+          end
         end
       end
 
-      @indent = old_indent
-
-      skip_space_or_newline
-      check suffix
-
       if has_newlines
-        write ","
-        write_line
+        unless found_comment
+          write ","
+          write_line
+        end
         write_indent(prefix_indent - 1)
       elsif write_space_at_end
         write " "
       end
 
+      skip_space_or_newline
+      check suffix
       write suffix
+
       next_token
     end
 
@@ -1855,7 +1916,7 @@ module Crystal
           write_indent(column)
         end
         write ")"
-        next_token_skip_space
+        next_token
       end
 
       @dot_column = current_dot_column
@@ -1922,7 +1983,7 @@ module Crystal
             indent(needed_indent) { next_token_skip_space_or_newline }
             next_needs_indent = true
             has_newlines = true
-            named_args_column = column
+            named_args_column = needed_indent
           else
             write " "
             skip_space_or_newline
@@ -2044,8 +2105,7 @@ module Crystal
           call = body
           clear_obj call
 
-          case call.name
-          when "[]", "[]?"
+          if !call.obj && (call.name == "[]") && call.name == "[]?"
             check :"["
             write "["
             next_token_skip_space_or_newline
@@ -2685,13 +2745,26 @@ module Crystal
       write @token
       next_token_skip_space
 
+      column = @column
+
       if @token.type == :"("
         has_args = !node.args.empty? || node.named_args
         if has_args
           write "("
         end
         next_token_skip_space
-        format_args node.args, true, named_args: node.named_args
+        has_newlines = format_args node.args, true, named_args: node.named_args
+        skip_space_or_newline
+
+        if @token.type == :","
+          next_token_skip_space_or_newline
+          if has_newlines
+            write ","
+            write_line
+            write_indent(column)
+          end
+        end
+
         skip_space_or_newline
         check :")"
         write ")" if has_args
@@ -3128,8 +3201,14 @@ module Crystal
     end
 
     def next_macro_token
+      char = @lexer.current_char
       @token = @lexer.next_macro_token(@macro_state, false)
       @macro_state = @token.macro_state
+
+      # Unescape
+      if char == '\\' && !@token.raw.starts_with?(char)
+        @token.raw = "\\#{@token.raw}"
+      end
     end
 
     def next_token_skip_space
@@ -3142,7 +3221,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def skip_space
+    def skip_space(write_comma = false)
       base_column = @column
       has_space = false
       while @token.type == :SPACE
@@ -3151,7 +3230,11 @@ module Crystal
       end
       if @token.type == :COMMENT
         needs_space = has_space && base_column != 0
-        write " " if needs_space
+        if write_comma
+          write ", "
+        else
+          write " " if needs_space
+        end
         write_comment(needs_indent: !needs_space)
         true
       else
