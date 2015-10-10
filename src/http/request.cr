@@ -6,6 +6,7 @@ class HTTP::Request
   getter headers
   getter body
   getter version
+  property! peer_addr
 
   def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
     if body = @body
@@ -31,14 +32,6 @@ class HTTP::Request
 
   def ignore_body?
     @method == "HEAD"
-  end
-
-  def peer_addr=(addr)
-    @peer_addr = addr
-  end
-
-  def peer_addr
-    @peer_addr.not_nil!
   end
 
   def remote_ip(trust_headers=true)
