@@ -1221,6 +1221,15 @@ describe "Parser" do
 
   assert_syntax_error "def f end", "unexpected token: end (expected ';' or newline)"
 
+  assert_syntax_error %([\n"foo"\n"bar"\n])
+  it_parses "[\n1\n]", ArrayLiteral.new([1.int32] of ASTNode)
+  it_parses "[\n1,2\n]", ArrayLiteral.new([1.int32, 2.int32] of ASTNode)
+
+  assert_syntax_error %({\n1 => 2\n3 => 4\n})
+  assert_syntax_error %({\n1 => 2, 3 => 4\n5 => 6})
+
+  assert_syntax_error %({\n"foo"\n"bar"\n})
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

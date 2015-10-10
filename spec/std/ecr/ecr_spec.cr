@@ -14,8 +14,8 @@ describe "ECR" do
     program = ECR.process_string "hello <%= 1 %> wor\nld <% while true %> 2 <% end %>", "foo.cr"
 
     pieces = [
-      %(__str__ << "hello ")
-      %((#<loc:"foo.cr",1,10> 1 ).to_s __str__)
+      %(__str__ << "hello "),
+      %((#<loc:"foo.cr",1,10> 1 ).to_s __str__),
       %(__str__ << " wor\\nld "),
       %(#<loc:"foo.cr",2,6> while true ),
         %(__str__ << " 2 "),

@@ -1782,7 +1782,13 @@ module Crystal
         while @token.type != :"]"
           exps << parse_expression
           end_location = token_end_location
-          skip_space_or_newline
+          skip_space
+          if @token.type == :NEWLINE
+            skip_space_or_newline
+            check :"]"
+            break
+          end
+
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
@@ -1837,7 +1843,7 @@ module Crystal
           end
         end
         slash_is_regex!
-        next_token_skip_space_or_newline
+        next_token_skip_space
         parse_hash_literal first_key, location, allow_of
       end
     end
@@ -1850,39 +1856,50 @@ module Crystal
       end_location = nil
 
       entries = [] of HashLiteral::Entry
+      entries << HashLiteral::Entry.new(first_key, parse_op_assign)
 
-      open("hash literal", location) do
-        entries << HashLiteral::Entry.new(first_key, parse_op_assign)
-        skip_space_or_newline
-        if @token.type == :","
-          slash_is_regex!
-          next_token_skip_space_or_newline
-        end
-
-        while @token.type != :"}"
-          if hash_symbol_key?
-            key = SymbolLiteral.new(@token.value.to_s)
-            next_token
-          else
-            key = parse_op_assign
-            skip_space_or_newline
-            if @token.type == :":" && key.is_a?(StringLiteral)
-              # Nothing: it's a string key
-            else
-              check :"=>"
-            end
-          end
-          slash_is_regex!
-          next_token_skip_space_or_newline
-          entries << HashLiteral::Entry.new(key, parse_op_assign)
+      if @token.type == :NEWLINE
+        next_token_skip_space_or_newline
+        check :"}"
+        next_token_skip_space
+      else
+        open("hash literal", location) do
           skip_space_or_newline
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
           end
+
+          while @token.type != :"}"
+            if hash_symbol_key?
+              key = SymbolLiteral.new(@token.value.to_s)
+              next_token
+            else
+              key = parse_op_assign
+              skip_space_or_newline
+              if @token.type == :":" && key.is_a?(StringLiteral)
+                # Nothing: it's a string key
+              else
+                check :"=>"
+              end
+            end
+            slash_is_regex!
+            next_token_skip_space_or_newline
+            entries << HashLiteral::Entry.new(key, parse_op_assign)
+            skip_space
+            if @token.type == :NEWLINE
+              next_token_skip_space_or_newline
+              check :"}"
+              break
+            end
+            if @token.type == :","
+              slash_is_regex!
+              next_token_skip_space_or_newline
+            end
+          end
+          end_location = token_end_location
+          next_token_skip_space
         end
-        end_location = token_end_location
-        next_token_skip_space
       end
 
       new_hash_literal entries, line, column, end_location, allow_of: allow_of

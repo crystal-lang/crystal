@@ -22,14 +22,14 @@ describe "IniFile" do
     it "parse file" do
       IniFile.load(File.read "#{__DIR__}/data/test_file.ini").should eq({
         "general" => {
-          "log_level" => "DEBUG"
+          "log_level" => "DEBUG",
         },
         "section1" => {
-          "foo" => "1"
-          "bar" => "2"
+          "foo" => "1",
+          "bar" => "2",
         },
         "section2" => {
-          "x.y.z" => "coco lala"
+          "x.y.z" => "coco lala",
         }
       })
     end

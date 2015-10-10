@@ -1,6 +1,6 @@
 module HTML
   SUBSTITUTIONS = {
-    '&'  => "&amp;"
+    '&'  => "&amp;",
     '\"' => "&quot;",
     '\'' => "&apos;",
     '<'  => "&lt;",
