@@ -139,7 +139,7 @@ class HTTP::Server
           return
         end
         break unless request
-        request.headers["REMOTE_ADDR"] = sock.peeraddr.ip_address.to_s
+        request.peer_addr = sock.peeraddr
 
         response = @handler.call(request)
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
