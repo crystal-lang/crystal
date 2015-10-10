@@ -13,6 +13,7 @@ module Crystal
     property passed_backslash_newline
     property doc_buffer
     property raw
+    property start
 
     record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields, comment) do
       def self.default
@@ -42,6 +43,7 @@ module Crystal
       @macro_state = MacroState.default
       @passed_backslash_newline = false
       @raw = ""
+      @start = 0
     end
 
     def doc

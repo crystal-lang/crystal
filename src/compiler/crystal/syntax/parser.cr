@@ -491,8 +491,15 @@ module Crystal
         when :NUMBER
           case char = @token.value.to_s[0]
           when '+', '-'
-            left = Call.new(left, char.to_s, [NumberLiteral.new(@token.value.to_s.byte_slice(1), @token.number_kind)] of ASTNode, name_column_number: @token.column_number).at(location)
-            next_token_skip_space
+            method = char.to_s
+            method_column_number = @token.column_number
+
+            # Go back to the +/-, advance one char and continue from there
+            self.current_pos = @token.start + 1
+            next_token
+
+            right = parse_mul_or_div
+            left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location)
           else
             return left
           end

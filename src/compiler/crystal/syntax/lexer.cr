@@ -184,6 +184,7 @@ module Crystal
           @token.type = :">"
         end
       when '+'
+        @token.start = start
         case next_char
         when '='
           next_char :"+="
@@ -197,6 +198,7 @@ module Crystal
           @token.type = :"+"
         end
       when '-'
+        @token.start = start
         case next_char
         when '='
           next_char :"-="

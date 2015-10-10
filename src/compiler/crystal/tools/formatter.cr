@@ -1757,10 +1757,7 @@ module Crystal
 
             # This is the case of a-1 and a+1
             if @token.type == :NUMBER
-              write " "
-              write @token.raw[1..-1]
-              next_token
-              return false
+              @lexer.current_pos = @token.start + 1
             end
 
             slash_is_regex!
