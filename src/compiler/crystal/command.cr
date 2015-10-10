@@ -236,7 +236,7 @@ USAGE
       end
       exit 1
     rescue ex
-      STDERR << "Error:".colorize(:red).toggle(@color) << ", "
+      STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
         "couldn't format STDIN, please report a bug including the contents of it: https://github.com/manastech/crystal/issues"
       STDERR.puts
       STDERR.flush
@@ -257,7 +257,7 @@ USAGE
       end
       exit 1
     rescue ex
-      STDERR << "Error:".colorize(:red).toggle(@color) << " at " << filename << ", "
+      STDERR << "Error:".colorize(:red).toggle(@color) <<
         "couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
       STDERR.puts
       STDERR.flush
@@ -287,17 +287,19 @@ USAGE
     source = File.read(filename)
 
     begin
-      File.write(filename, Crystal::Formatter.format(source, filename: filename))
-      STDERR << "Format".colorize(:green).toggle(@color) << " " << filename
-    rescue ex : Crystal::SyntaxException
-      STDERR << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number
-    rescue ex
-      STDERR << "Error:".colorize(:red).toggle(@color) << " at " <<
-        "couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
-    end
+      result = Crystal::Formatter.format(source, filename: filename)
+      return if result == source
 
-    STDERR.puts
-    STDERR.flush
+      File.write(filename, result)
+      STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
+    rescue ex : Crystal::SyntaxException
+      STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) <<
+        " couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+    end
   end
 
   private def hierarchy

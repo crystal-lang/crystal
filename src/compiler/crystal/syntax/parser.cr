@@ -456,7 +456,7 @@ module Crystal
             slash_is_regex!
             next_token_skip_space_or_newline
             right = parse_{{next_operator.id}}
-            left = ({{node.id}}).at(location)
+            left = ({{node.id}}).at(location).at_end(right)
           else
             return left
           end
@@ -487,7 +487,7 @@ module Crystal
           method_column_number = @token.column_number
           next_token_skip_space_or_newline
           right = parse_mul_or_div
-          left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location)
+          left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location).at_end(right)
         when :NUMBER
           case char = @token.value.to_s[0]
           when '+', '-'
@@ -499,7 +499,7 @@ module Crystal
             next_token
 
             right = parse_mul_or_div
-            left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location)
+            left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location).at_end(right)
           else
             return left
           end
@@ -631,13 +631,13 @@ module Crystal
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
-              next_token_skip_space
+              next_token_skip_space_or_newline
               value = parse_op_assign
               atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
               next
             when :"||="
               # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
-              next_token_skip_space
+              next_token_skip_space_or_newline
               value = parse_op_assign
 
               atomic = Or.new(
@@ -4306,7 +4306,7 @@ module Crystal
             next_token_skip_statement_end
           end
 
-          arg = Arg.new(constant_name, constant_value).at(location)
+          arg = Arg.new(constant_name, constant_value).at(location).at_end(constant_value || location)
           arg.doc = member_doc
 
           members << arg

@@ -424,6 +424,8 @@ describe "Parser" do
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
     it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, 1.int32))] of ASTNode
+    it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, 1.int32))] of ASTNode
+    it_parses "a.b #{op}=\n1", Call.new("a".call, "b=", Call.new(Call.new("a".call, "b"), op, 1.int32))
   end
 
   it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), And.new("a".var, Assign.new("a".var, 1.int32))]
