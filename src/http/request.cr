@@ -84,7 +84,7 @@ class HTTP::Request
   end
 
   private def ips_from(header)
-    if ips = headers[header]? || headers["Http-#{header.tr("_", "-")}"]?
+    if ips = headers[header]? || headers["Http-#{header}"]?
       ips.strip.split(/[,\s]+/)
     else
       [] of String
