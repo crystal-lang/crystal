@@ -17,6 +17,11 @@ class Object
     !(self == other)
   end
 
+  # TODO: uncomment after 0.8.0
+  # def !~(other)
+  #   !(self =~ other)
+  # end
+
   # Case equality.
   #
   # The `===` method is used in a `case ... when ... end` expression.

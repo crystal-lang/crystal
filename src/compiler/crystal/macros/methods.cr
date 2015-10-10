@@ -459,13 +459,12 @@ module Crystal
       when "select"
         interpret_argless_method(method, args) do
           raise "select expects a block" unless block
-
-          block_arg = block.args.first?
-
-          ArrayLiteral.new(elements.select do |elem|
-            interpreter.define_var(block_arg.name, elem) if block_arg
-            interpreter.accept(block.body).truthy?
-          end)
+          filter(block, interpreter)
+        end
+      when "reject"
+        interpret_argless_method(method, args) do
+          raise "reject expects a block" unless block
+          filter(block, interpreter, keep: false)
         end
       when "shuffle"
         ArrayLiteral.new(elements.shuffle)
@@ -510,6 +509,16 @@ module Crystal
       else
         super
       end
+    end
+
+    def filter(block, interpreter, keep = true)
+      block_arg = block.args.first?
+
+      ArrayLiteral.new(elements.select { |elem|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        block_result = interpreter.accept(block.body).truthy?
+        keep ? block_result : !block_result
+      })
     end
   end
 
@@ -750,8 +759,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
         interpret_argless_method(method, args) { MacroId.new(type.to_s) }
-      when "type_params"
-        interpret_argless_method(method, args) { TypeNode.type_params(type) }
+      when "type_vars"
+        interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
       when "superclass"
@@ -802,7 +811,7 @@ module Crystal
       end
     end
 
-    def self.type_params(type)
+    def self.type_vars(type)
       if type.is_a?(GenericClassInstanceType)
         if type.is_a?(TupleInstanceType)
           ArrayLiteral.map(type.tuple_types) do |tuple_type|
@@ -816,6 +825,10 @@ module Crystal
               type_var
             end
           end
+        end
+      elsif type.is_a?(GenericType)
+        ArrayLiteral.map((type as GenericType).type_vars) do |type_var|
+          MacroId.new(type_var)
         end
       else
         ArrayLiteral.new

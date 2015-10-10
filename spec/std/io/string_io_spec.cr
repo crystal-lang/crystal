@@ -198,4 +198,16 @@ describe "StringIO" do
     io.pos.should eq(0)
     io.gets_to_end.should eq("")
   end
+
+  it "raises if negative capacity" do
+    expect_raises(ArgumentError, "negative capacity") do
+      StringIO.new(-1)
+    end
+  end
+
+  it "raises if capacity too big" do
+    expect_raises(ArgumentError, "capacity too big") do
+      StringIO.new(UInt32::MAX)
+    end
+  end
 end

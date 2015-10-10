@@ -35,6 +35,21 @@ class CSV::Parser
     end
 
     row = Array(String).new(@max_row_size)
+    next_row_internal(token, row)
+  end
+
+  # Reads the next row into the given *array*.
+  # Returns that same array, if a row was found, or `nil`.
+  def next_row(array : Array(String)) : Array(String) | Nil
+    token = @lexer.next_token
+    if token.kind == Token::Kind::Eof
+      return nil
+    end
+
+    next_row_internal(token, array)
+  end
+
+  private def next_row_internal(token, row)
     while true
       case token.kind
       when Token::Kind::Cell

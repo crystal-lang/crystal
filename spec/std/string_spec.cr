@@ -539,6 +539,7 @@ describe "String" do
 
   describe "split" do
     describe "by char" do
+      assert { "".split(',').should eq([] of String) }
       assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(',').should eq(["foo"]) }
@@ -561,6 +562,7 @@ describe "String" do
     end
 
     describe "by string" do
+      assert { "".split(":-").should eq([] of String) }
       assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz"]) }
       assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(":-").should eq(["foo"]) }
@@ -573,6 +575,7 @@ describe "String" do
     end
 
     describe "by regex" do
+      assert { "".split(/\n\t/).should eq([] of String) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
       assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
@@ -1376,6 +1379,14 @@ describe "String" do
     iter.next.should eq('a')
   end
 
+  it "gets each_char with empty string" do
+    iter = "".each_char
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should be_a(Iterator::Stop)
+  end
+
   it "cycles chars" do
     "abc".each_char.cycle.take(8).join.should eq("abcabcab")
   end
@@ -1491,6 +1502,54 @@ describe "String" do
     it "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % { "this": 23.456 }
       res.should eq "change 23.46"
+    end
+  end
+
+  it "raises if string capacity is negative" do
+    expect_raises(ArgumentError, "negative capacity") do
+      String.new(-1) { |buf| {0, 0} }
+    end
+  end
+
+  it "raises if capacity too big on new with UInt32::MAX" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.new(UInt32::MAX) { {0, 0} }
+    end
+  end
+
+  it "raises if capacity too big on new with UInt64::MAX" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.new(UInt64::MAX) { {0, 0} }
+    end
+  end
+
+  it "compares non-case insensitive" do
+    "fo".compare("foo").should eq(-1)
+    "foo".compare("fo").should eq(1)
+    "foo".compare("foo").should eq(0)
+    "foo".compare("fox").should eq(-1)
+    "fox".compare("foo").should eq(1)
+    "foo".compare("Foo").should eq(1)
+  end
+
+  it "compares case insensitive" do
+    "fo".compare("FOO", case_insensitive: true).should eq(-1)
+    "foo".compare("FO", case_insensitive: true).should eq(1)
+    "foo".compare("FOO", case_insensitive: true).should eq(0)
+    "foo".compare("FOX", case_insensitive: true).should eq(-1)
+    "fox".compare("FOO", case_insensitive: true).should eq(1)
+    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+  end
+
+  it "raises if String.build negative capacity" do
+    expect_raises(ArgumentError, "negative capacity") do
+      String.build(-1) { }
+    end
+  end
+
+  it "raises if String.build capacity too big" do
+    expect_raises(ArgumentError, "capacity too big") do
+      String.build(UInt32::MAX) { }
     end
   end
 end

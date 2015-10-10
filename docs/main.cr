@@ -1,6 +1,6 @@
 require "../src/big_int/**"
 require "../src/crypto/**"
-require "../src/csv/**"
+require "../src/csv"
 require "../src/ecr"
 require "../src/event/**"
 require "../src/fiber/**"

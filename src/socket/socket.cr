@@ -174,14 +174,18 @@ class Socket < IO::FileDescriptor
   def self.inet_ntop(sa : LibC::SockAddrIn6)
     ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::INET6_ADDRSTRLEN)
+    if LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::INET6_ADDRSTRLEN).null?
+      raise Errno.new("inet_ntop")
+    end
     String.new(ip_address)
   end
 
   def self.inet_ntop(sa : LibC::SockAddrIn)
     ip_address = GC.malloc_atomic(LibC::INET_ADDRSTRLEN.to_u32) as UInt8*
     addr = sa.addr
-    LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::INET_ADDRSTRLEN)
+    if LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::INET_ADDRSTRLEN).null?
+      raise Errno.new("inet_ntop")
+    end
     String.new(ip_address)
   end
 

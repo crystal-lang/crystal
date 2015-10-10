@@ -107,6 +107,9 @@ module HTTP
       cookies["a"].value.should eq "b"
       cookies["c"].value.should eq "d"
       cookies["d"].value.should eq "e"
+      cookies["a"]?.should_not be_nil
+      cookies["e"]?.should be_nil
+      cookies.has_key?("a").should be_true
     end
 
     it "disallows adding inconsistent state" do

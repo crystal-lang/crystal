@@ -8,6 +8,7 @@ module Crystal
     def infer_type(node)
       result = infer_type_intermediate(node)
       finish_types
+      check_hierarchy_errors
       result
     end
 
@@ -59,7 +60,8 @@ module Crystal
     # Here we store the cummulative types of variables as we traverse the nodes.
     getter meta_vars
 
-    getter is_initialize
+    property is_initialize
+    property block_nest
 
     @unreachable = false
     @is_initialize = false
@@ -311,7 +313,7 @@ module Crystal
       var = lookup_instance_var node
       node.bind_to(var)
 
-      if @is_initialize && !@vars.has_key? node.name
+      if @is_initialize && !@vars.has_key?(node.name) && !scope.has_instance_var_initializer?(node.name)
         ivar = scope.lookup_instance_var(node.name)
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to mod.nil_var
@@ -842,8 +844,9 @@ module Crystal
       block_visitor.scope = @scope
       block_visitor.type_lookup = type_lookup
       block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
-      block_visitor.block_nest = @block_nest
+      block_visitor.block_nest = @block_nest + 1
       block_visitor.parent = self
+      block_visitor.is_initialize = @is_initialize
 
       node.def.body.accept block_visitor
 
@@ -1635,9 +1638,10 @@ module Crystal
     end
 
     def attach_doc(type, node)
-      return unless @mod.wants_doc?
+      if @mod.wants_doc?
+        type.doc ||= node.doc
+      end
 
-      type.doc ||= node.doc
       if node_location = node.location
         type.locations << node_location
       end
@@ -1869,7 +1873,7 @@ module Crystal
           end
           lib_framework = value.value
         else
-          named_arg.raise "unkonwn link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
         end
       end
 
@@ -2703,7 +2707,7 @@ module Crystal
         when "to_f32" then mod.float32
         when "chr" then mod.char
         else
-          raise "Bug: unkown cast operator #{typed_def.name}"
+          raise "Bug: unknown cast operator #{typed_def.name}"
         end
     end
 
@@ -2993,7 +2997,7 @@ module Crystal
         # if an exception was raised then we won't running the code
         # after the ensure clause, so variables don't matter. But if
         # an exception was not raised then all variables were declared
-        # successfuly.
+        # successfully.
         @vars.each do |name, var|
           unless before_body_vars[name]?
             var.nil_if_read = false
@@ -3318,7 +3322,7 @@ module Crystal
               else
                 next_type = NonGenericModuleType.new(@mod, base_lookup, name)
 
-                if @mod.wants_doc? && (location = node.location)
+                if (location = node.location)
                   next_type.locations << location
                 end
 

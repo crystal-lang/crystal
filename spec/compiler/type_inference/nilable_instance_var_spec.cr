@@ -187,4 +187,58 @@ describe "Type inference: nilable instance var" do
       ),
       "instance variable '@x' of Unreferenced was not initialized in all of the 'initialize' methods, rendering '@x' of Derived nilable (Base is the common supertype that defines it)"
   end
+
+  it "doesn't consider as nil if initialized with catch-all" do
+    assert_type(%(
+      class Test
+        @a = 0
+
+        def initialize
+          @a + 1
+        end
+
+        def a
+          @a
+        end
+      end
+
+      Test.new.a
+      )) { int32 }
+  end
+
+  it "marks instance var as nilable if assigned inside captured block (#1696)" do
+    assert_type(%(
+      def capture(&block)
+        block
+      end
+
+      class Foo
+        def initialize
+          capture { @foo = 1 }
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      )) { nilable int32 }
+  end
+
+  it "marks instance var as nilable if assigned inside fun literal" do
+    assert_type(%(
+      class Foo
+        def initialize
+          ->{ @foo = 1 }
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      )) { nilable int32 }
+  end
 end

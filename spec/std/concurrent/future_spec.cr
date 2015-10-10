@@ -40,7 +40,7 @@ describe Concurrent::Future do
       f.running?.should be_true
 
       chan.send 42
-      Scheduler.yield
+      Fiber.yield
       f.completed?.should be_true
 
       f.get.should eq(42)
@@ -62,7 +62,7 @@ describe Concurrent::Future do
       f = future { raise IndexError.new("test error") }
       f.running?.should be_true
 
-      Scheduler.yield
+      Fiber.yield
       f.completed?.should be_true
 
       expect_raises(IndexError) { f.get }
@@ -78,7 +78,7 @@ describe Concurrent::Future do
       f.idle?.should be_true
 
       chan.send 42
-      Scheduler.yield
+      Fiber.yield
       f.idle?.should be_true
 
       f.get.should eq(42)
@@ -99,7 +99,7 @@ describe Concurrent::Future do
       f = lazy { raise IndexError.new("test error") }
       f.idle?.should be_true
 
-      Scheduler.yield
+      Fiber.yield
       f.idle?.should be_true
 
       expect_raises(IndexError) { f.get }

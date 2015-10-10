@@ -57,10 +57,17 @@ class Array(T)
   @size :: Int32
   @capacity :: Int32
 
+  # Creates a new empty Array.
+  def initialize
+    @size = 0
+    @capacity = 0
+    @buffer = Pointer(T).null
+  end
+
   # Creates a new empty Array backed by a buffer that is initially
   # `initial_capacity` big.
   #
-  # The `initial_capacity` is useful to avoid unnecesary reallocations
+  # The `initial_capacity` is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If you have an estimate
   # of the maxinum number of elements an array will hold, you should
   # initialize it with that capacity for improved execution performance.
@@ -70,15 +77,18 @@ class Array(T)
   # ary = Array(Int32).new(5)
   # ary.size #=> 0
   # ```
-  def initialize(initial_capacity = 3 : Int)
+  def initialize(initial_capacity : Int)
     if initial_capacity < 0
       raise ArgumentError.new("negative array size: #{initial_capacity}")
     end
 
-    initial_capacity = Math.max(initial_capacity, 3)
     @size = 0
     @capacity = initial_capacity.to_i
-    @buffer = Pointer(T).malloc(initial_capacity)
+    if initial_capacity == 0
+      @buffer = Pointer(T).null
+    else
+      @buffer = Pointer(T).malloc(initial_capacity)
+    end
   end
 
   # Creates a new Array of the given size filled with the
@@ -98,12 +108,11 @@ class Array(T)
     end
 
     @size = size.to_i
+    @capacity = size.to_i
 
     if size == 0
-      @capacity = 3
-      @buffer = Pointer(T).malloc(@capacity)
+      @buffer = Pointer(T).null
     else
-      @capacity = size.to_i
       @buffer = Pointer(T).malloc(size, value)
     end
   end
@@ -1095,7 +1104,7 @@ class Array(T)
     end
   end
 
-  def pop(n)
+  def pop(n : Int)
     if n < 0
       raise ArgumentError.new("can't pop negative count")
     end
@@ -1280,7 +1289,7 @@ class Array(T)
     end
   end
 
-  def shift(n)
+  def shift(n : Int)
     if n < 0
       raise ArgumentError.new("can't shift negative count")
     end
@@ -1493,12 +1502,16 @@ class Array(T)
   end
 
   private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @size == @capacity
+    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2)) if @size == @capacity
   end
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    if @buffer
+      @buffer = @buffer.realloc(@capacity)
+    else
+      @buffer = Pointer(T).malloc(@capacity)
+    end
   end
 
   protected def self.quicksort!(a, n, comp)

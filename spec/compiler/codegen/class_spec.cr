@@ -698,4 +698,18 @@ describe "Code gen: class" do
       x.foo
       )).to_i.should eq(1)
   end
+
+  it "can use a Main class (#1628)" do
+    run(%(
+      require "prelude"
+
+      class Main
+        def self.foo
+          1
+        end
+      end
+
+      Main.foo
+      )).to_i.should eq(1)
+  end
 end

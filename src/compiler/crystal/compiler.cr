@@ -173,12 +173,12 @@ module Crystal
         llvm_mod.data_layout = DataLayout32
       end
 
-      if dump_ll?
-        llvm_mod.print_to_file o_name.gsub(/\.o/, ".ll")
-      end
-
       if @release
         optimize llvm_mod
+      end
+
+      if dump_ll?
+        llvm_mod.print_to_file o_name.gsub(/\.o/, ".ll")
       end
 
       target_machine.emit_obj_to_file llvm_mod, o_name
@@ -328,7 +328,7 @@ module Crystal
       getter llvm_mod
 
       def initialize(@compiler, type_name, @llvm_mod, @output_dir, @bc_flags_changed)
-        type_name = "main" if type_name == ""
+        type_name = "_main" if type_name == ""
         @name = type_name.gsub do |char|
           case char
           when 'a'..'z', 'A'..'Z', '0'..'9', '_'

@@ -597,37 +597,49 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32-Float64")
   end
 
-  it "can access type parameters" do
+  it "can access type variables" do
     run(%(
       class Foo(T)
         def foo
-          {{ @type.type_params.first.name.stringify }}
+          {{ @type.type_vars.first.name.stringify }}
         end
       end
       Foo(Int32).new.foo
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type parameters that are not types" do
+  it "can acccess type variables that are not types" do
     run(%(
       class Foo(T)
         def foo
-          {{ @type.type_params.first.is_a?(NumberLiteral) }}
+          {{ @type.type_vars.first.is_a?(NumberLiteral) }}
         end
       end
       Foo(1).new.foo
     )).to_b.should eq(true)
   end
 
-  it "can acccess type parameters of a tuple" do
+  it "can acccess type variables of a tuple" do
     run(%(
       struct Tuple
         def foo
-          {{ @type.type_params.first.name.stringify }}
+          {{ @type.type_vars.first.name.stringify }}
         end
       end
       {1, 2, 3}.foo
     )).to_string.should eq("Int32")
+  end
+
+  it "can access type variables of a generic type" do
+    run(%(
+      require "prelude"
+      class Foo(T, K)
+        macro def self.foo : String
+          {{ @type.type_vars.map(&.stringify) }}.join("-")
+        end
+      end
+      Foo.foo
+    )).to_string.should eq("T-K")
   end
 
   it "receives &block" do

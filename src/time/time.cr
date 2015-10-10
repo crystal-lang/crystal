@@ -501,7 +501,9 @@ struct Time
   # Time.local_offset_in_minutes #=> -180
   # ```
   def self.local_offset_in_minutes
-    LibC.gettimeofday(nil, out tzp)
+    if LibC.gettimeofday(nil, out tzp) != 0
+      raise Errno.new("gettimeofday")
+    end
     -tzp.tz_minuteswest.to_i32
   end
 
@@ -518,7 +520,9 @@ struct Time
   end
 
   private def self.compute_ticks
-    LibC.gettimeofday(out tp, out tzp)
+    if LibC.gettimeofday(out tp, out tzp) != 0
+      raise Errno.new("gettimeofday")
+    end
     ticks = tp.tv_sec.to_i64 * Span::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
     yield ticks, tp, tzp

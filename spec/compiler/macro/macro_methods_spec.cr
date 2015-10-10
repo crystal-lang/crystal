@@ -421,6 +421,10 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
     end
 
+    it "executes reject" do
+      assert_macro "", %({{[1, 2, 3].reject { |e| e == 1 }}}), [] of ASTNode, "[2, 3]"
+    end
+
     it "executes find (finds)" do
       assert_macro "", %({{[1, 2, 3].find { |e| e == 2 }}}), [] of ASTNode, "2"
     end
@@ -635,6 +639,12 @@ describe "macro methods" do
     it "executes size of tuple metaclass" do
       assert_macro("x", "{{x.size}}", "2") do |program|
         [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar).metaclass)] of ASTNode
+      end
+    end
+
+    it "executes type_vars" do
+      assert_macro("x", "{{x.type_vars.map &.stringify}}", %(["A", "B"])) do |program|
+        [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
       end
     end
   end

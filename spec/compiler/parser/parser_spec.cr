@@ -225,6 +225,7 @@ describe "Parser" do
   it_parses "1 || 2", Or.new(1.int32, 2.int32)
 
   it_parses "1 <=> 2", Call.new(1.int32, "<=>", 2.int32)
+  it_parses "1 !~ 2", Call.new(1.int32, "!~", 2.int32)
 
   it_parses "a = 1", Assign.new("a".var, 1.int32)
   it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
@@ -401,19 +402,19 @@ describe "Parser" do
     it_parses "f.x #{op}= 2", Call.new("f".call, "x=", Call.new(Call.new("f".call, "x"), op, 2.int32))
   end
 
-  ["/", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "!", "~", "%", "&", "|", "^", "**", "==="].each do |op|
+  ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "!", "~", "%", "&", "|", "^", "**", "==="].each do |op|
     it_parses "def #{op}; end;", Def.new(op)
   end
 
   it_parses "def %(); end;", Def.new("%")
   it_parses "def /(); end;", Def.new("/")
 
-  ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
+  ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |op|
     it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
     it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
   end
 
-  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "!"].each do |name|
+  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "!", "=~", "!~"].each do |name|
     it_parses "foo.#{name}", Call.new("foo".call, name)
     it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, 1.int32, 2.int32)
     it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
@@ -1213,6 +1214,11 @@ describe "Parser" do
   assert_syntax_error %(class Foo; require "bar"; end), "can't require inside type declarations"
   assert_syntax_error %(module Foo; require "bar"; end), "can't require inside type declarations"
   assert_syntax_error %(def foo; require "bar"; end), "can't require inside def"
+
+  assert_syntax_error "def foo(x: Int32); end", "space required before colon in type restriction"
+  assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
+
+  assert_syntax_error "def f end", "unexpected token: end (expected ';' or newline)"
 
   describe "end locations" do
     assert_end_location "nil"

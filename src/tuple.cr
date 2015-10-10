@@ -79,7 +79,7 @@ struct Tuple
   end
 
   # Returns the element at the given index. Read the type docs to understand
-  # the difference bewteen indexing with a number literal or a variable.
+  # the difference between indexing with a number literal or a variable.
   #
   # ```
   # tuple = {1, "hello", 'x'}

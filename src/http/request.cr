@@ -29,6 +29,10 @@ class HTTP::Request
     HTTP.keep_alive?(self)
   end
 
+  def ignore_body?
+    @method == "HEAD"
+  end
+
   def to_io(io)
     io << @method << " " << resource << " " << @version << "\r\n"
     cookies = @cookies

@@ -81,4 +81,58 @@ describe "Type inference: struct" do
       end
       ", "Foo is not a class, it's a struct"
   end
+
+  it "errors on recursive struct" do
+    assert_error %(
+      struct Test
+        def initialize(@test)
+        end
+      end
+
+      Test.new(Test.new(nil))
+      ),
+      "recursive struct Test detected: `@test : (Nil | Test)`"
+  end
+
+  it "errors on recursive struct inside module" do
+    assert_error %(
+      struct Foo::Test
+        def initialize(@test)
+        end
+      end
+
+      Foo::Test.new(Foo::Test.new(nil))
+      ),
+      "recursive struct Foo::Test detected: `@test : (Nil | Foo::Test)`"
+  end
+
+  it "errors on recursive generic struct inside module" do
+    assert_error %(
+      struct Foo::Test(T)
+        def initialize(@test)
+        end
+      end
+
+      Foo::Test(Int32).new(Foo::Test(Int32).new(nil))
+      ),
+      "recursive struct Foo::Test(Int32) detected: `@test : (Nil | Foo::Test(Int32))`"
+  end
+
+  it "errors on mutually recursive struct" do
+    assert_error %(
+      struct Foo
+        def initialize(@bar)
+        end
+      end
+
+      struct Bar
+        def initialize(@foo)
+        end
+      end
+
+      Foo.new(Bar.new(nil))
+      Bar.new(Foo.new(nil))
+      ),
+      "recursive struct Foo detected: `@bar : (Nil | Bar)` -> `@foo : (Nil | Foo)`"
+  end
 end

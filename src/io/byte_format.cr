@@ -21,6 +21,7 @@ module IO::ByteFormat
   end
 
   alias SystemEndian = LittleEndian
+  alias NetworkEndian = BigEndian
 
   {% for mod in %w(LittleEndian BigEndian) %}
     module {{mod.id}}

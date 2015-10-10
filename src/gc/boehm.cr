@@ -34,6 +34,13 @@ lib LibGC
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
   $stackbottom = GC_stackbottom : Void*
+
+  fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
+
+  $gc_no = GC_gc_no : LibC::ULong
+  $bytes_found = GC_bytes_found : LibC::Long
+  # GC_on_collection_event isn't exported.  Can't collect totals without it.
+  # bytes_allocd, heap_size, unmapped_bytes are macros
 end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
@@ -96,5 +103,11 @@ module GC
   def self.add_root(object : Reference)
     roots = $roots ||= [] of Pointer(Void)
     roots << Pointer(Void).new(object.object_id)
+  end
+
+  record Stats, collections, bytes_found
+
+  def self.stats
+    Stats.new LibGC.gc_no - 1, LibGC.bytes_found
   end
 end

@@ -32,8 +32,8 @@
 #
 # `json_mapping` must receive a hash literal whose keys will define Crystal properties.
 #
-# The value of each key can be a single type (never a union type). Primitive types (numbers, string, boll and nil)
-# are support, as well as custom objects which must either use `json_mapping` or define a `new` method
+# The value of each key can be a single type (not a union type). Primitive types (numbers, string, boolean and nil)
+# are supported, as well as custom objects which use `json_mapping` or define a `new` method
 # that accepts a `JSON::PullParser` and returns an object from it.
 #
 # The value can also be another hash literal with the following options:
@@ -52,8 +52,8 @@
 # by invoking `to_json(IO)` on each of the properties (unless a converter is specified, in
 # which case `to_json(value, IO)` is invoked).
 module JSON::Mapping
-  # Defines a JSON mapping. If `strict` is true, uknown properties in the JSON
-  # document will raise a parse exception. The default is `false`, so uknown properties
+  # Defines a JSON mapping. If `strict` is true, unknown properties in the JSON
+  # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
   macro json_mapping(properties, strict = false)
     {% for key, value in properties %}

@@ -58,6 +58,28 @@ struct LLVM::DIBuilder
       align_in_bits, elements, underlying_type)
   end
 
+  def create_struct_type(scope, name, file, line, size_in_bits, align_in_bits, flags, derived_from, element_types)
+    LibLLVMExt.di_builder_create_struct_type(self, scope, name, file, line, size_in_bits, align_in_bits,
+      flags, derived_from, element_types)
+  end
+
+  def create_member_type(scope, name, file, line, size_in_bits, align_in_bits, offset_in_bits, flags, ty)
+    LibLLVMExt.di_builder_create_member_type(self, scope, name, file, line, size_in_bits, align_in_bits,
+      offset_in_bits, flags, ty)
+  end
+
+  def create_pointer_type(pointee, size_in_bits, align_in_bits, name)
+    LibLLVMExt.di_builder_create_pointer_type(self, pointee, size_in_bits, align_in_bits, name)
+  end
+
+  def temporary_md_node(context)
+    LibLLVMExt.temporary_md_node(context, nil, 0) as LibLLVMExt::Metadata
+  end
+
+  def replace_all_uses(from, to)
+    LibLLVMExt.metadata_replace_all_uses_with(from, to)
+  end
+
   def finalize
     LibLLVMExt.di_builder_finalize(self)
   end

@@ -12,12 +12,12 @@ class Crystal::Command
 Usage: crystal [command] [switches] [program file] [--] [arguments]
 
 Command:
-    init                     generate new crystal project
-    build                    compile program file
+    init                     generate a new project
+    build                    compile program
     deps                     install project dependencies
     docs                     generate documentation
     eval                     eval code from args or standard input
-    run (default)            compile and run program file
+    run (default)            compile and run program
     spec                     compile and run specs (in spec directory)
     tool                     run a tool
     --help, -h               show this help
@@ -473,7 +473,15 @@ USAGE
     end
 
     sources = gather_sources(filenames)
-    original_output_filename = output_filename_from_sources(sources)
+    first_filename = sources.first.filename
+    first_file_ext = File.extname(first_filename)
+    original_output_filename = File.basename(first_filename, first_file_ext)
+
+    # Check if we'll overwrite the main source file
+    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
+      error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+    end
+
     output_filename ||= original_output_filename
     output_format ||= "text"
 
@@ -494,11 +502,6 @@ USAGE
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end
-  end
-
-  private def output_filename_from_sources(sources)
-    first_filename = sources.first.filename
-    File.basename(first_filename, File.extname(first_filename))
   end
 
   private def validate_emit_values(values)
