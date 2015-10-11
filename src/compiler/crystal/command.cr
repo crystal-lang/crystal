@@ -207,13 +207,11 @@ USAGE
 
     files = options
 
-    if files.empty? && !STDIN.tty?
-      return format_stdin
-    end
-
     if files.size == 1
       file = files.first
-      if File.file?(file)
+      if file == "-"
+        return format_stdin
+      elsif File.file?(file)
         return format_single(file)
       end
     end

@@ -10,6 +10,7 @@ module Crystal
     property? slash_is_regex
     getter reader
     getter token
+    getter line_number
 
     def initialize(string)
       @reader = Char::Reader.new(string)
