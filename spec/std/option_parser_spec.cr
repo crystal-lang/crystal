@@ -321,5 +321,12 @@ describe "OptionParser" do
         ARGV.concat old_argv
       end
     end
+
+    it "gets `-` as argument" do
+      args = %w(-)
+      OptionParser.parse(args) do |opts|
+      end
+      args.should eq(%w(-))
+    end
   end
 end
