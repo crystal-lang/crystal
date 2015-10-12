@@ -507,7 +507,7 @@ describe "Enumerable" do
     assert { [1, 2, 3, 4, 5, 6].partition(&.even?).should eq({[2, 4, 6], [1, 3, 5]}) }
   end
 
-  describe "pmap" do
+  describe "parallel_map" do
     it "should perform parallel map" do
       sleep_time = 0.001
       t = Time.now
@@ -519,6 +519,12 @@ describe "Enumerable" do
       delay = (Time.now - t).to_f
       delay.should be > sleep_time
       delay.should be < sleep_time * 3
+    end
+
+    it "should catch exceptions" do
+      expect_raises do
+        [1].parallel_map { raise "hahah" }
+      end
     end
   end
 
