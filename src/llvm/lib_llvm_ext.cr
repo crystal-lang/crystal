@@ -53,7 +53,7 @@ lib LibLLVMExt
   fun di_builder_create_subroutine_type = LLVMDIBuilderCreateSubroutineType(builder : DIBuilder, file : Metadata, parameter_types : Metadata) : Metadata
 
   fun di_builder_create_struct_type = LLVMDIBuilderCreateStructType(builder : DIBuilder,
-    scope : Metadata, name : LibC::Char*, file : Metadata, line : LibC::UInt, size_in_bits : UInt64
+    scope : Metadata, name : LibC::Char*, file : Metadata, line : LibC::UInt, size_in_bits : UInt64,
     align_in_bits : UInt64, flags : LibC::UInt, derived_from : Metadata, element_types : Metadata) : Metadata
 
   fun di_builder_create_member_type = LLVMDIBuilderCreateMemberType(builder : DIBuilder,

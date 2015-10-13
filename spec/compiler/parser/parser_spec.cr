@@ -1234,6 +1234,13 @@ describe "Parser" do
 
   assert_syntax_error %({\n"foo"\n"bar"\n})
 
+  assert_syntax_error %(
+    lib LibFoo
+      fun foo(x : Int32
+            y : Float64)
+    end
+    )
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

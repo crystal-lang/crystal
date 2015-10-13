@@ -4087,6 +4087,10 @@ module Crystal
 
           if @token.type == :","
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :")"
+            break
           end
         end
         next_token_skip_statement_end
