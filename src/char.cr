@@ -287,7 +287,7 @@ struct Char
     end
   end
 
-  # Appens this Char as a String that contains a char literal as written in Crystal to the given IO.
+  # Appends this Char as a String that contains a char literal as written in Crystal to the given IO.
   #
   # See `#inspect`.
   def inspect(io)
@@ -315,7 +315,7 @@ struct Char
     end
   end
 
-  # Appens this Char as a String that contains a char literal as written in Crystal to the given IO.
+  # Appends this Char as a String that contains a char literal as written in Crystal to the given IO.
   #
   # See `#dump`.
   def dump(io)
@@ -491,7 +491,7 @@ struct Char
     end
   end
 
-  # Appens this Char to the given IO. This appens this Char's bytes as encoded
+  # Appends this Char to the given IO. This appends this Char's bytes as encoded
   # by UTF-8 to the given IO.
   def to_s(io : IO)
     if ord <= 0x7f
