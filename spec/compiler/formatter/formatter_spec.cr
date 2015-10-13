@@ -723,4 +723,6 @@ describe Crystal::Formatter do
   assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4 # lala\n}"
   assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A      =   10\nFOO    =  123\nBARBAZ = 1234"
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
+  assert_format "1\n# hello\n\n\n", "1\n# hello"
+  assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
 end

@@ -291,7 +291,7 @@ USAGE
       File.write(filename, result)
       STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
     rescue ex : Crystal::SyntaxException
-      STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number
+      STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
     rescue ex
       STDERR << "Error:".colorize(:red).toggle(@color) <<
         " couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"

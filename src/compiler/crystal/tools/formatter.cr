@@ -142,15 +142,15 @@ module Crystal
           if needs_two_lines
             skip_semicolon_or_space_or_newline
           else
-            skip_semicolon_or_space
+            found_comment = skip_semicolon_or_space
             if @token.type == :NEWLINE
               write_line
               next_token_skip_space
               next_needs_indent = true
             else
-              write "; " unless last?(i, node.expressions)
+              write "; " unless last?(i, node.expressions) || found_comment
               skip_space_or_newline
-              next_needs_indent = false
+              next_needs_indent = found_comment
             end
           end
         else
@@ -3384,16 +3384,18 @@ module Crystal
     end
 
     def skip_semicolon_or_space
+      found_comment = false
       while true
         case @token.type
         when :";"
           next_token
         when :SPACE
-          skip_space
+          found_comment ||= skip_space
         else
           break
         end
       end
+      found_comment
     end
 
     def skip_semicolon_or_space_or_newline
@@ -3417,7 +3419,10 @@ module Crystal
 
     def write_comment(needs_indent = true)
       while @token.type == :COMMENT
-        write_indent if needs_indent
+        if @line_output.to_s.strip.empty?
+          write_indent if needs_indent
+        end
+
         value = @token.value.to_s.strip
         after_comment_value = value[1 .. -1].strip
         if after_comment_value.starts_with?("=>")
@@ -3542,7 +3547,7 @@ module Crystal
       skip_space
       write_line
       skip_space_or_newline
-      result = to_s
+      result = to_s.strip
       lines = result.split("\n")
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
