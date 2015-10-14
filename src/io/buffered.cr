@@ -247,23 +247,26 @@ module IO::Buffered
     @sync
   end
 
-  # Flushes any buffered data and the underlying IO.
+  # Flushes any buffered data and the underlying IO. Returns `self`.
   def flush
     unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
     @out_count = 0
+    self
   end
 
   # Flushes and closes the underlying IO.
   def close
     flush if @out_count > 0
     unbuffered_close
+    nil
   end
 
-  # Rewinds the underlying IO.
+  # Rewinds the underlying IO. Returns `self`.
   def rewind
     unbuffered_rewind
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    self
   end
 
   private def fill_buffer

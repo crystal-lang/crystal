@@ -26,6 +26,7 @@ abstract class Channel(T)
     @closed = true
     Scheduler.enqueue @receivers
     @receivers.clear
+    nil
   end
 
   def closed?
@@ -169,6 +170,8 @@ class Channel::Buffered(T) < Channel(T)
     @queue << value
     Scheduler.enqueue @receivers
     @receivers.clear
+
+    self
   end
 
   private def receive_impl

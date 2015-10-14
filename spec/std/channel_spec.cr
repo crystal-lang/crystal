@@ -9,6 +9,11 @@ describe Channel do
     Channel(Int32).new(32).should be_a(Channel::Buffered(Int32))
   end
 
+  it "send returns channel" do
+    channel = Channel(Int32).new(1)
+    channel.send(1).should be(channel)
+  end
+
   it "does receive_first" do
     channel = Channel(Int32).new(1)
     channel.send(1)
@@ -88,7 +93,7 @@ describe Channel::Unbuffered do
   it "can be closed" do
     ch = Channel::Unbuffered(Int32).new
     ch.closed?.should be_false
-    ch.close
+    ch.close.should be_nil
     ch.closed?.should be_true
     expect_raises(Channel::ClosedError) { ch.receive }
   end

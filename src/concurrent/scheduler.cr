@@ -14,6 +14,7 @@ class Scheduler
     else
       @@loop_fiber.resume
     end
+    nil
   end
 
   @@loop_fiber = Fiber.new { @@eb.run_loop }
