@@ -5,6 +5,14 @@ require "openssl"
 require "uri"
 
 class HTTP::WebSocket
+  @[Flags]
+  enum Flags : UInt8
+    FINAL = 0x80
+    RSV1 = 0x40
+    RSV2 = 0x20
+    RSV3 = 0x10
+  end
+
   enum Opcode : UInt8
     CONTINUATION   = 0x0
     TEXT           = 0x1
@@ -27,38 +35,66 @@ class HTTP::WebSocket
     @remaining = 0
   end
 
-  def send(data)
-    write_header(data.size)
-    @io.print data
-    @io.flush
+  class StreamIO
+    include IO
+
+    def initialize(@websocket, binary, @masked, frame_size)
+      @opcode = binary ? Opcode::BINARY : Opcode::TEXT
+      @buffer = Slice(UInt8).new(frame_size)
+      @pos = 0
+    end
+
+    def write(slice : Slice(UInt8))
+      count = Math.min(@buffer.size - @pos, slice.size)
+      (@buffer + @pos).copy_from(slice.pointer(count), count)
+      @pos += count
+
+      if @pos == @buffer.size
+        flush(final: false)
+      end
+
+      if count < slice.size
+        count += write(slice + count)
+      end
+
+      count
+    end
+
+    def read(slice : Slice(UInt8))
+      raise "this IO is write-only"
+    end
+
+    def flush(final = true)
+      @websocket.send(
+        @buffer + (@pos % @buffer.size),
+        @opcode,
+        @masked,
+        flags: final ? Flags::FINAL : Flags::None,
+        flush: final
+      )
+      @opcode = Opcode::CONTINUATION
+      @pos = 0
+    end
   end
 
-  def send_masked(data)
-    write_header(data.size, true)
-
-    mask_array = StaticArray(UInt8, 4).new { rand(256).to_u8 }
-    @io.write mask_array.to_slice
-
-    data.size.times do |index|
-      mask = mask_array[index % 4]
-      @io.write_byte (mask ^ data.byte_at(index).to_u8).to_u8
-    end
-    @io.flush
+  def send(data : String, masked = false)
+    send(data.to_slice, Opcode::TEXT, masked)
   end
 
-  private def write_header(size, masked = false)
-    @io.write_byte(0x81_u8)
+  def send(data : Slice(UInt8), masked = false)
+    send(data, Opcode::BINARY, masked)
+  end
 
-    mask = masked ? MASK_BIT : 0
-    if size <= 125
-      @io.write_byte(size.to_u8 | mask)
-    elsif size <= UInt16::MAX
-      @io.write_byte(126_u8 | mask)
-      1.downto(0) { |i| @io.write_byte((size >> i * 8).to_u8) }
-    else
-      @io.write_byte(127_u8 | mask)
-      3.downto(0) { |i| @io.write_byte((size >> i * 8).to_u8) }
-    end
+  def stream(masked = false, binary = false, frame_size = 1024)
+    stream_io = StreamIO.new(self, binary, masked, frame_size)
+    yield(stream_io)
+    stream_io.flush
+  end
+
+  def send(data : Slice(UInt8), opcode : Opcode, masked = false, flags = Flags::FINAL, flush = true)
+    write_header(data.size, opcode, masked, flags)
+    write_payload(data, masked)
+    @io.flush if flush
   end
 
   def receive(buffer : Slice(UInt8))
@@ -68,18 +104,37 @@ class HTTP::WebSocket
       opcode = @opcode
     end
 
-    read = @io.read buffer[0, Math.min(@remaining, buffer.size)]
+    read = read_payload(buffer)
     @remaining -= read
-
-    # Unmask payload, if needed
-    if masked?
-      read.times do |i|
-        buffer[i] ^= @mask[@mask_offset % 4]
-        @mask_offset += 1
-      end
-    end
-
     PacketInfo.new(opcode, read.to_i, final? && @remaining == 0)
+  end
+
+  private def write_header(size, opcode, masked, flags)
+    @io.write_byte(flags.value | opcode.value)
+
+    mask = masked ? MASK_BIT : 0_u8
+    if size <= 125
+      @io.write_byte(size.to_u8 | mask)
+    elsif size <= UInt16::MAX
+      @io.write_byte(126_u8 | mask)
+      @io.write_bytes(size.to_u16, IO::ByteFormat::NetworkEndian)
+    else
+      @io.write_byte(127_u8 | mask)
+      @io.write_bytes(size.to_u64, IO::ByteFormat::NetworkEndian)
+    end
+  end
+
+  private def write_payload(data, masked = false)
+    return @io.write(data) unless masked
+
+    key = Random::DEFAULT.next_int
+    mask_array = (pointerof(key) as Pointer(UInt8[4])).value
+    @io.write mask_array.to_slice
+
+    data.each_with_index do |byte, index|
+      mask = mask_array[index % 4]
+      @io.write_byte(byte ^ mask_array[index % 4])
+    end
   end
 
   private def read_header
@@ -125,6 +180,19 @@ class HTTP::WebSocket
       4.times { size <<= 8; size += @io.read_byte.not_nil! }
     end
     size
+  end
+
+  private def read_payload(buffer)
+    count = Math.min(@remaining, buffer.size)
+    @io.read_fully(buffer[0, count])
+    if masked?
+      count.times do |i|
+        buffer[i] ^= @mask[@mask_offset % 4]
+        @mask_offset += 1
+      end
+    end
+
+    count
   end
 
   private def control?
