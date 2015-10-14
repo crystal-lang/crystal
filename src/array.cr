@@ -641,7 +641,7 @@ class Array(T)
   def delete_at(index : Int, count : Int)
     val = self[index, count]
     count = index + count <= size ? count : size - index
-    (@buffer + index).move_from(@buffer + index + 1, count)
+    (@buffer + index).move_from(@buffer + index + count, size - index - count)
     @size -= count
     (@buffer + @size).clear(count)
     val
