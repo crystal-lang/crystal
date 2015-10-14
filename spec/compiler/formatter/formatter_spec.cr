@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-private def assert_format(input, output = input, file = __FILE__, line = __LINE__)
+private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__)
   it "formats #{input.inspect}", file, line do
-    output = "#{output}\n"
+    output = "#{output}\n" unless strict
     result = Crystal::Formatter.format(input)
     return if result == output
 
@@ -11,6 +11,8 @@ private def assert_format(input, output = input, file = __FILE__, line = __LINE_
 end
 
 describe Crystal::Formatter do
+  assert_format "", "", strict: true
+
   assert_format "nil"
 
   assert_format "true"
@@ -725,4 +727,7 @@ describe Crystal::Formatter do
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
   assert_format "1\n# hello\n\n\n", "1\n# hello"
   assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
+  assert_format "# Hello\n#\n# ```\n# puts 1+2 # bye\n# 1+2 # hello\n#\n# 1+2\n# ```\n\n# ```\n# puts 1+2\n\n# ```\n# puts 1+2\n\n# Hola\n#\n#     1+2\n#     foo do\n#     3+4\n#     end\n\n# Hey\n#\n#     1+2\n#     foo do\n#     3+4\n#     end\n#\n# ```\n# 1+2\n# ```\n#\n#     1+2\n#\n# Bye\n", "# Hello\n#\n# ```\n# puts 1 + 2 # bye\n# 1 + 2      # hello\n# \n# 1 + 2\n# ```\n\n# ```\n# puts 1+2\n\n# ```\n# puts 1+2\n\n# Hola\n#\n#     1 + 2\n#     foo do\n#       3 + 4\n#     end\n\n# Hey\n#\n#     1 + 2\n#     foo do\n#       3 + 4\n#     end\n#\n# ```\n# 1 + 2\n# ```\n#\n#     1 + 2\n#\n# Bye"
+  assert_format "macro foo\n  {% for value, i in values %}\\\n    {% if true %}\\\n    {% end %}\\\n    {{ 1 }}/\n  {% end %}\\\nend\n\n{\n  1 => 2,\n  1234 => 5,\n}\n", "macro foo\n  {% for value, i in values %}\\\n    {% if true %}\\\n    {% end %}\\\n    {{1}}/\n  {% end %}\\\nend\n\n{\n     1 => 2,\n  1234 => 5,\n}"
+  assert_format "a = \"\n\"\n1    # 1\n12 # 2\n", "a = \"\n\"\n1  # 1\n12 # 2"
 end

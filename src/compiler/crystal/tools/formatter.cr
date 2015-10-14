@@ -17,11 +17,24 @@ module Crystal
       end
     end
 
+    class CommentInfo
+      property start_line
+      property end_line
+      property kind
+      property needs_newline
+
+      def initialize(@start_line, @kind)
+        @end_line = @start_line
+        @needs_newline = true
+      end
+    end
+
     def initialize(source)
       @lexer = Lexer.new(source)
       @lexer.comments_enabled = true
       @lexer.count_whitespace = true
       @lexer.wants_raw = true
+      @comment_columns = [nil] of Int32?
       @indent = 0
       @line = 0
       @column = 0
@@ -32,6 +45,7 @@ module Crystal
       @line_output = StringIO.new
       @next_exp_column = nil
       @wrote_newline = false
+      @wrote_comment = false
       @macro_state = Token::MacroState.default
       @inside_macro = 0
       @inside_cond = 0
@@ -43,10 +57,11 @@ module Crystal
       @exp_needs_indent = true
 
       # This stores the column number (if any) of each comment in every line
-      @comment_columns = [nil] of Int32?
       @when_infos = [] of AlignInfo
       @hash_infos = [] of AlignInfo
       @assign_infos = [] of AlignInfo
+      @doc_comments = [] of CommentInfo
+      @current_doc_comment = nil
     end
 
     def visit(node : Expressions)
@@ -3267,7 +3282,7 @@ module Crystal
       current_line_number = @lexer.line_number
       @token = @lexer.next_token
       if @token.type == :DELIMITER_START
-        @line += @lexer.line_number - current_line_number
+        increment_lines(@lexer.line_number - current_line_number)
       end
       @token
     end
@@ -3275,7 +3290,7 @@ module Crystal
     def next_string_token
       current_line_number = @lexer.line_number
       @token = @lexer.next_string_token(@token.delimiter_state)
-      @line += @lexer.line_number - current_line_number
+      increment_lines(@lexer.line_number - current_line_number)
       @token
     end
 
@@ -3290,7 +3305,7 @@ module Crystal
       @token = @lexer.next_macro_token(@macro_state, false)
       @macro_state = @token.macro_state
 
-      @line += @lexer.line_number - current_line_number
+      increment_lines(@lexer.line_number - current_line_number)
 
       # Unescape
       if char == '\\' && !@token.raw.starts_with?(char)
@@ -3419,12 +3434,14 @@ module Crystal
 
     def write_comment(needs_indent = true)
       while @token.type == :COMMENT
-        if @line_output.to_s.strip.empty?
+        empty_line = @line_output.to_s.strip.empty?
+        if empty_line
           write_indent if needs_indent
         end
 
         value = @token.value.to_s.strip
-        after_comment_value = value[1 .. -1].strip
+        raw_after_comment_value = value[1 .. -1]
+        after_comment_value = raw_after_comment_value.strip
         if after_comment_value.starts_with?("=>")
           value = "\# => #{after_comment_value[2..-1].strip}"
         else
@@ -3442,6 +3459,42 @@ module Crystal
           @comment_columns[-1] = @column
         end
 
+        if empty_line
+          current_doc_comment = @current_doc_comment
+
+          if after_comment_value.starts_with?("```")
+            if current_doc_comment
+              if current_doc_comment.kind == :backticks
+                current_doc_comment.end_line = @line - 1
+                @doc_comments << current_doc_comment
+                @current_doc_comment = nil
+              else
+                current_doc_comment.end_line = @line - 1
+                @doc_comments << current_doc_comment
+                @current_doc_comment = CommentInfo.new(@line + 1, :backticks)
+              end
+            else
+              @current_doc_comment = CommentInfo.new(@line + 1, :backticks)
+            end
+          else
+            doc_comment_empty = raw_after_comment_value.strip.empty?
+            space_doc_comment = raw_after_comment_value.starts_with?("     ")
+
+            if current_doc_comment
+              if current_doc_comment.kind == :space && !space_doc_comment && !doc_comment_empty
+                current_doc_comment.end_line = @line - 1
+                @doc_comments << current_doc_comment
+                @current_doc_comment = nil
+              end
+            else
+              if space_doc_comment
+                @current_doc_comment = CommentInfo.new(@line, :space)
+              end
+            end
+          end
+        end
+
+        @wrote_comment = true
         write value
         next_token_skip_space
         consume_newlines
@@ -3525,13 +3578,31 @@ module Crystal
     end
 
     def write_line
+      unless @wrote_comment
+        if (current_doc_comment = @current_doc_comment) && current_doc_comment.kind == :space
+          current_doc_comment.end_line = @line - 1
+          current_doc_comment.needs_newline = false
+          @doc_comments << current_doc_comment
+        end
+        @current_doc_comment = nil
+      end
+      @wrote_comment = false
+
       @output.puts
       @line_output.clear
       @column = 0
       @wrote_newline = true
+      increment_line
+      @last_write = ""
+    end
+
+    def increment_line
       @line += 1
       @comment_columns << nil
-      @last_write = ""
+    end
+
+    def increment_lines(count)
+      count.times { increment_line }
     end
 
     def clear_obj(call)
@@ -3553,7 +3624,10 @@ module Crystal
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
       align_comments(lines)
-      lines.join("\n") + '\n'
+      lines = format_doc_comments(lines)
+      result = lines.join("\n") + '\n'
+      result = "" if result == "\n"
+      result
     end
 
     # Align series of succesive inline when/else (in a case),
@@ -3670,6 +3744,41 @@ module Crystal
       result
     end
 
+    def format_doc_comments(lines)
+      @doc_comments.reverse_each do |doc_comment|
+        next if doc_comment.start_line > doc_comment.end_line
+
+        first_line = lines[doc_comment.start_line]
+        sharp_index = first_line.index('#').not_nil!
+
+        comment = String.build do |str|
+          (doc_comment.start_line..doc_comment.end_line).each do |i|
+            str << lines[i].strip[1 .. -1] << "\n"
+          end
+        end
+
+        begin
+          formatted_comment = Formatter.format(comment)
+          formatted_lines = formatted_comment.split('\n')
+          formatted_lines.map! do |line|
+            String.build do |str|
+              sharp_index.times { str << " " }
+              str << "# "
+              str << "    " if doc_comment.kind == :space
+              str << line
+            end
+          end
+          formatted_lines << "#" if doc_comment.kind == :space && doc_comment.needs_newline
+          lines = lines[0 ... doc_comment.start_line] + formatted_lines + lines[doc_comment.end_line + 1 .. -1]
+        rescue Crystal::SyntaxException
+          # For now we don't care if doc comments have syntax errors,
+          # they shouldn't prevent formatting the real code
+        end
+      end
+
+      lines
+    end
+
     def write_keyword(keyword : Symbol)
       check_keyword keyword
       write keyword
@@ -3759,6 +3868,7 @@ module Crystal
         write "\\"
         write @lexer.skip_macro_whitespace
         @macro_state.whitespace = true
+        increment_line
         true
       else
         false
