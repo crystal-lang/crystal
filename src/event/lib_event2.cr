@@ -16,18 +16,18 @@ lib LibEvent2
 
   @[Flags]
   enum EventLoopFlags
-    Once = 0x01
+    Once     = 0x01
     NonBlock = 0x02
   end
 
   @[Flags]
   enum EventFlags : LibC::Short
     Timeout = 0x01
-    Read = 0x02
-    Write = 0x04
-    Signal = 0x08
+    Read    = 0x02
+    Write   = 0x04
+    Signal  = 0x08
     Persist = 0x10
-    ET = 0x20
+    ET      = 0x20
   end
 
   alias Callback = (EvutilSocketT, EventFlags, Void*) ->
@@ -38,11 +38,10 @@ lib LibEvent2
   fun event_base_loop(eb : EventBase, flags : EventLoopFlags) : Int
   fun event_base_loopbreak(eb : EventBase) : Int
   fun event_set_log_callback(callback : (Int, UInt8*) -> Nil)
-  fun event_enable_debug_mode()
+  fun event_enable_debug_mode
   fun event_reinit(eb : EventBase) : Int
   fun event_new(eb : EventBase, s : EvutilSocketT, events : EventFlags, callback : Callback, data : Void*) : Event
   fun event_free(event : Event)
-  fun event_add(event : Event, timeout : LibC::TimeVal*) : Int
   fun event_add(event : Event, timeout : LibC::TimeVal*) : Int
   fun event_del(event : Event) : Int
 
