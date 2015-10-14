@@ -1,5 +1,6 @@
 require "spec"
 require "http/request"
+require "socket"
 
 module HTTP
   describe Request do
@@ -201,6 +202,70 @@ module HTTP
         io = StringIO.new
         request.to_io(io)
         io.to_s.should eq("GET /api/v3/some/resource?q=isearchforsomething&locale=de HTTP/1.1\r\n\r\n")
+      end
+    end
+
+    describe "#peer_addr=" do
+      it "sets the peer_addr" do
+        request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
+        addr = Socket::Addr.new("AF_INET", "12345", "127.0.0.1")
+        request.peer_addr = addr
+        request.peer_addr.should eq addr
+      end
+    end
+
+    describe "#peer_addr" do
+      it "returns the peer_addr" do
+        request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
+        addr = Socket::Addr.new("AF_INET", "12345", "127.0.0.1")
+        request.peer_addr = addr
+        request.peer_addr.should eq addr
+      end
+
+      it "raises if peer_addr is nil" do
+        request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
+
+        expect_raises do
+          request.peer_addr
+        end
+      end
+    end
+
+    describe "#remote_ip" do
+      context "trusting headers" do
+        it "returns the remote ip from the Client-Ip" do
+          request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nClient-Ip: 8.8.8.8\r\n\r\n")).not_nil!
+          addr    = Socket::Addr.new("AF_INET", "12345", "127.0.0.1")
+          request.peer_addr = addr
+
+          request.remote_ip.should eq "8.8.8.8"
+        end
+
+        it "returns the remote ip from the X-Forwarded-For header" do
+          request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nX-Forwarded-For: 4.4.4.4, 10.0.0.1\r\n\r\n")).not_nil!
+          addr    = Socket::Addr.new("AF_INET", "12345", "127.0.0.1")
+          request.peer_addr = addr
+
+          request.remote_ip.should eq "4.4.4.4"
+        end
+
+        it "returns the peer addr if headers are not set" do
+          request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
+          addr    = Socket::Addr.new("AF_INET", "12345", "127.0.0.1")
+          request.peer_addr = addr
+
+          request.remote_ip.should eq "127.0.0.1"
+        end
+      end
+
+      context "without trusting headers" do
+        it "returns the peer_addr ip address" do
+          request = Request.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
+          addr = Socket::Addr.new("AF_INET", "12345", "127.0.0.1")
+          request.peer_addr = addr
+
+          request.remote_ip(false).should eq "127.0.0.1"
+        end
       end
     end
   end
