@@ -1,5 +1,6 @@
 require "./common"
 require "uri"
+require "http/params"
 
 class HTTP::Request
   getter method
@@ -21,7 +22,14 @@ class HTTP::Request
     @cookies ||= Cookies.from_headers(headers)
   end
 
+  # Returns a convenience wrapper around querying and setting query params,
+  # see `HTTP::Params`.
+  def query_params
+    @query_params ||= parse_query_params
+  end
+
   def resource
+    update_uri
     @uri.try(&.full_path) || @resource
   end
 
@@ -60,12 +68,33 @@ class HTTP::Request
   delegate "path=", uri
 
   # Lazily parses request's query component.
-  delegate "query", uri
+  def query
+    update_uri
+    uri.query
+  end
 
   # Sets request's query component.
-  delegate "query=", uri
+  def query=(value)
+    uri.query = value
+    update_query_params
+    value
+  end
 
   private def uri
     (@uri ||= URI.parse(@resource)).not_nil!
+  end
+
+  private def parse_query_params
+    HTTP::Params.parse(uri.query || "")
+  end
+
+  private def update_query_params
+    return unless @query_params
+    @query_params = parse_query_params
+  end
+
+  private def update_uri
+    return unless @query_params
+    uri.query = query_params.to_s
   end
 end
