@@ -85,7 +85,7 @@ class HTTP::WebSocket
     send(data, Opcode::BINARY, masked)
   end
 
-  def stream(masked = false, binary = false, frame_size = 1024)
+  def stream(masked = false, binary = true, frame_size = 1024)
     stream_io = StreamIO.new(self, binary, masked, frame_size)
     yield(stream_io)
     stream_io.flush

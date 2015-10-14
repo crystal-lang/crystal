@@ -192,7 +192,7 @@ describe HTTP::WebSocket do
       bytes.size.should eq(4 * 2 + 512 * 3) # two frames with 2 bytes header, 2 bytes size, 3 * 512 bytes content in total
       first_frame, second_frame = { bytes[0, (4 + 1024)], bytes + (4 + 1024) }
       (first_frame[0] & 0x80).should eq(0) # FINAL bit unset
-      (first_frame[0] & 0x0f).should eq(0x1) # TEXT frame
+      (first_frame[0] & 0x0f).should eq(0x2) # BINARY frame
       first_frame[1].should eq(126) # extended size
       received_size = 0
       2.times { |i| received_size <<= 8; received_size += first_frame[2 + i] }
