@@ -34,7 +34,7 @@ class SemanticVersion
 
   def to_s io : IO
     io << major << "." << minor << "." << patch
-    unless prerelease.empty?
+    unless prerelease.identifiers.empty?
       io << "-"
       prerelease.to_s io
     end
@@ -57,71 +57,70 @@ class SemanticVersion
     prerelease <=> other.prerelease
   end
 
-  class Prerelease < Array(String | Int32)
+  struct Prerelease
     def self.parse str : String
-      pre = Prerelease.new
+      identifiers = [] of String | Int32
       str.split(".").each do |val|
         if val.match /^\d+$/
-          pre << val.to_i32
+          identifiers << val.to_i32
         else
-          pre << val
+          identifiers << val
         end
       end
-      pre
+      Prerelease.new identifiers
     end
 
-    def to_s io: IO
-      each_with_index do |s, i|
+    getter identifiers
+
+    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32) )
+    end
+
+    def to_s io : IO
+      identifiers.each_with_index do |s, i|
         io << "." if i > 0
         io << s
       end
     end
 
     def <=>(other : self ) : Int32
-      if empty?
-        if other.empty?
-          # continue
+      if identifiers.empty?
+        if other.identifiers.empty?
+          return 0
         else
           return 1
         end
-      elsif other.empty?
+      elsif other.identifiers.empty?
         return -1
       else
         # continue
       end
 
-      each_with_index do |item, i|
-        return 1 if i >= other.size # larger = higher precedenc
+      identifiers.each_with_index do |item, i|
+        return 1 if i >= other.identifiers.size # larger = higher precedenc
 
-        oitem = other[i]
-        r = case item
-        when Int32
-          case oitem
-          when Int32
-            item <=> oitem
-          when String # numeric identifiers have lower precedence than string
-            -1
-          else
-            raise "COMPILER BUG: unknown type #{item.inspect} #{item.class}"
-          end
-        when String
-          case oitem
-          when Int32 # numeric identifiers have lower precedence than string
-            1
-          when String
-            item <=> oitem
-          else
-            raise "COMPILER BUG: unknown type #{item.inspect} #{item.class}"
-          end
-        else
-          raise "COMPILER BUG: unknown type #{item.inspect} #{item.class}"
-        end
-
+        oitem = other.identifiers[i]
+        r = compare item, oitem
         return r if r != 0
       end
 
-      return -1 if size != other.size # larger = higher precedence
+      return -1 if identifiers.size != other.identifiers.size # larger = higher precedence
       0
+    end
+
+    private def compare(x : Int32, y : String)
+      -1
+    end
+
+    private def compare(x : String, y : Int32)
+      1
+    end
+
+    private def compare(x : Int32, y : Int32)
+      x <=> y
+    end
+
+    private def compare(x : String, y : String)
+      x <=> y
     end
   end
 end
