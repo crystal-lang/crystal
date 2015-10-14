@@ -25,6 +25,8 @@ macro spawn
   end
 
   Scheduler.enqueue %fiber
+
+  %fiber
 end
 
 # TODO: this doesn't work if a Call has a block or named arguments... yet
