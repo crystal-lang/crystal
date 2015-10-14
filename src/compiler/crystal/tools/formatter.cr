@@ -1375,12 +1375,19 @@ module Crystal
         write "{% "
       end
       macro_state = @macro_state
-      next_token_skip_space_or_newline
+      next_token
+
+      has_space = @token.type == :SPACE || @token.type == :NEWLINE
+      skip_space_or_newline
+
+      write " " if node.output && has_space
+
       indent(@column, node.exp)
       skip_space_or_newline
       @macro_state = macro_state
 
       if node.output
+        write " " if has_space
         check :"}"
         next_token
         check :"}"
