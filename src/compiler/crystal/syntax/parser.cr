@@ -3296,8 +3296,10 @@ module Crystal
         skip_space
 
         if @token.type == :","
+          location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
+          raise "invalid trailing comma in call" if @token.keyword?(:end) || @token.type == :EOF
         else
           break
         end

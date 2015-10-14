@@ -1241,6 +1241,14 @@ describe "Parser" do
     end
     )
 
+  assert_syntax_error %(
+    if 1
+      foo 1,
+    end
+    ), "invalid trailing comma in call"
+
+  assert_syntax_error "foo 1,", "invalid trailing comma in call"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"
