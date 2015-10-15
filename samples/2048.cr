@@ -79,11 +79,11 @@ class Drawer
     @content_line = false
   end
 
-  def set_current_row row
+  def set_current_row(row)
     @current_row = row
   end
 
-  def draw grid
+  def draw(grid)
     @grid = grid
     @n = @grid.size
 
@@ -104,7 +104,7 @@ class Drawer
     bottom_border
   end
 
-  def tile row
+  def tile(row)
     set_current_row @grid[row]
 
     INNER_CELL_HEIGHT.times do |i|
@@ -140,7 +140,7 @@ class Drawer
     line "└", "─", "┴", "┘"
   end
 
-  def line left, fill, inner, right
+  def line(left, fill, inner, right)
     print left
 
     (@n-1).times do |cell|
@@ -154,7 +154,7 @@ class Drawer
     puts right
   end
 
-  def cell_line fill, cell
+  def cell_line(fill, cell)
     content = @current_row.at(cell) { "empty" }
     tile_value = (content == "empty" ? 0 : (content.to_i? || 0)).to_i
     content = "" if !@content_line || content == "empty"
@@ -247,7 +247,7 @@ class Game
     end
   end
 
-  def execute_action action
+  def execute_action(action)
     if [:up, :down, :left, :right].includes? action
       if can_move_in? action
         shift_grid action
@@ -264,14 +264,14 @@ class Game
     end
   end
 
-  def shift_grid direction
+  def shift_grid(direction)
     drow, dcol = offsets_for direction
     shift_tiles_to_empty_cells direction, drow, dcol
     merge_tiles direction, drow, dcol
     shift_tiles_to_empty_cells direction, drow, dcol
   end
 
-  def shift_tiles_to_empty_cells direction, drow, dcol
+  def shift_tiles_to_empty_cells(direction, drow, dcol)
     modified = true
     while modified
       modified = false
@@ -285,7 +285,7 @@ class Game
     end
   end
 
-  def merge_tiles direction, drow, dcol
+  def merge_tiles(direction, drow, dcol)
     movable_tiles(direction, drow, dcol) do |tile, row, col|
       if @grid[row+drow][col+dcol] == tile
         @grid[row][col] = nil
@@ -294,7 +294,7 @@ class Game
     end
   end
 
-  def movable_tiles direction, drow, dcol
+  def movable_tiles(direction, drow, dcol)
     max = @grid.size-1
     from_row, to_row, from_column, to_column =
       case direction
@@ -315,7 +315,7 @@ class Game
     end
   end
 
-  def can_move_in? direction
+  def can_move_in?(direction)
     drow, dcol = offsets_for direction
 
     movable_tiles(direction, drow, dcol) do |tile, row, col|
@@ -326,7 +326,7 @@ class Game
     false
   end
 
-  def offsets_for direction
+  def offsets_for(direction)
     drow = dcol = 0
 
     case direction
@@ -345,7 +345,7 @@ class Game
     {drow, dcol}
   end
 
-  def to_border? direction, row, col, drow, dcol
+  def to_border?(direction, row, col, drow, dcol)
     case direction
     when :up
       row+drow < 0
@@ -373,7 +373,7 @@ class Game
     can_move_in?(:left) || can_move_in?(:right)
   end
 
-  def end_game msg
+  def end_game(msg)
     puts msg
     exit
   end
