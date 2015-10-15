@@ -7,18 +7,18 @@
 #
 # ```crystal
 # require "yaml"
-# 
+#
 # class Employee
 #   yaml_mapping({
 #     title: String,
 #     name:  String,
 #   })
 # end
-# 
+#
 # employee = Employee.from_yaml("title: Manager\nname: John")
 # employee.title # => "Manager"
 # employee.name  # => "John"
-# 
+#
 # employee.name = "Jenny"
 # employee.name # => "Jenny"
 # ```
@@ -29,7 +29,7 @@
 # ```crystal
 # employee = Employee.from_yaml("title: Manager\nname: John\nage: 30")
 # employee.age # => undefined method 'age'.
-# 
+#
 # employee = Employee.from_yaml("title: Manager")
 # # => ParseException: missing yaml attribute: name
 # ```
@@ -73,37 +73,37 @@ module YAML::Mapping
       end
     {% end %}
 
-    def initialize(_pull : YAML::PullParser)
+    def initialize(%pull : YAML::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
       {% end %}
 
-      _pull.read_mapping_start
-      while _pull.kind != YAML::EventKind::MAPPING_END
-        _key = _pull.read_scalar.not_nil!
-        case _key
+      %pull.read_mapping_start
+      while %pull.kind != YAML::EventKind::MAPPING_END
+        key = %pull.read_scalar.not_nil!
+        case key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             %var{key.id} =
-            {% if value[:nilable] == true %} _pull.read_null_or { {% end %}
+            {% if value[:nilable] == true %} %pull.read_null_or { {% end %}
 
             {% if value[:converter] %}
-              {{value[:converter]}}.from_yaml(_pull)
+              {{value[:converter]}}.from_yaml(%pull)
             {% else %}
-              {{value[:type]}}.new(_pull)
+              {{value[:type]}}.new(%pull)
             {% end %}
 
             {% if value[:nilable] == true %} } {% end %}
         {% end %}
         else
           {% if strict %}
-            raise YAML::ParseException.new("unknown yaml attribute: #{_key}", 0, 0)
+            raise YAML::ParseException.new("unknown yaml attribute: #{key}", 0, 0)
           {% else %}
-            _pull.skip
+            %pull.skip
           {% end %}
         end
       end
-      _pull.read_next
+      %pull.read_next
 
       {% for key, value in properties %}
         {% unless value[:nilable] %}

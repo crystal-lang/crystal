@@ -70,45 +70,45 @@ module JSON::Mapping
       end
     {% end %}
 
-    def initialize(_pull : JSON::PullParser)
+    def initialize(%pull : JSON::PullParser)
       {% for key, value in properties %}
-        _{{key.id}} = nil
+        %var{key.id} = nil
       {% end %}
 
-      _pull.read_object do |_key|
-        case _key
+      %pull.read_object do |key|
+        case key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
-            _{{key.id}} =
-            {% if value[:nilable] == true %} _pull.read_null_or { {% end %}
+            %var{key.id} =
+            {% if value[:nilable] == true %} %pull.read_null_or { {% end %}
 
             {% if value[:converter] %}
-              {{value[:converter]}}.from_json(_pull)
+              {{value[:converter]}}.from_json(%pull)
             {% else %}
-              {{value[:type]}}.new(_pull)
+              {{value[:type]}}.new(%pull)
             {% end %}
 
             {% if value[:nilable] == true %} } {% end %}
         {% end %}
         else
           {% if strict %}
-            raise JSON::ParseException.new("unknown json attribute: #{_key}", 0, 0)
+            raise JSON::ParseException.new("unknown json attribute: #{key}", 0, 0)
           {% else %}
-            _pull.skip
+            %pull.skip
           {% end %}
         end
       end
 
       {% for key, value in properties %}
         {% unless value[:nilable] %}
-          if _{{key.id}}.is_a?(Nil)
+          if %var{key.id}.is_a?(Nil)
             raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
 
       {% for key, value in properties %}
-        @{{key.id}} = _{{key.id}}
+        @{{key.id}} = %var{key.id}
       {% end %}
     end
 

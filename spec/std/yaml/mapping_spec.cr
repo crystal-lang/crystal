@@ -36,6 +36,7 @@ class YAMLWithKey
   yaml_mapping({
     key:   String,
     value: Int32,
+    pull: Int32,
   })
 end
 
@@ -100,8 +101,9 @@ describe "YAML mapping" do
   end
 
   it "parses YAML with mapping key named 'key'" do
-    yaml = YAMLWithKey.from_yaml("---\nkey: foo\nvalue: 1")
+    yaml = YAMLWithKey.from_yaml("---\nkey: foo\nvalue: 1\npull: 2")
     yaml.key.should eq("foo")
     yaml.value.should eq(1)
+    yaml.pull.should eq(2)
   end
 end
