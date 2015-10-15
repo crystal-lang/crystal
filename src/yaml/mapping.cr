@@ -7,49 +7,49 @@
 #
 # ```crystal
 # require "yaml"
-#
+# 
 # class Employee
 #   yaml_mapping({
 #     title: String,
-#     name: String
+#     name:  String,
 #   })
 # end
-#
+# 
 # employee = Employee.from_yaml("title: Manager\nname: John")
-# employee.title #=> "Manager"
-# employee.name  #=> "John"
-#
+# employee.title # => "Manager"
+# employee.name  # => "John"
+# 
 # employee.name = "Jenny"
-# employee.name #=> "Jenny"
+# employee.name # => "Jenny"
 # ```
 #
-# Attributes not mapped with `#yaml_mapping` are not defined as properties. 
+# Attributes not mapped with `#yaml_mapping` are not defined as properties.
 # Also, missing attributes raise a `ParseException`.
 #
 # ```crystal
 # employee = Employee.from_yaml("title: Manager\nname: John\nage: 30")
-# employee.age #=> undefined method 'age'.
-#
-# employee = Employee.from_yaml("title: Manager")
-# #=> ParseException: missing yaml attribute: name
-# ```
+# employee.age # => undefined method 'age'.
 # 
+# employee = Employee.from_yaml("title: Manager")
+# # => ParseException: missing yaml attribute: name
+# ```
+#
 # You can also define attributes for each property.
 #
 # ```crystal
 # class Employee
 #   yaml_mapping({
 #     title: String,
-#     name: {
-#       type: String,
+#     name:  {
+#       type:    String,
 #       nilable: true,
-#       key: "firstname"
-#     }
+#       key:     "firstname",
+#     },
 #   })
 # end
 # ```
 #
-# Available attributes: 
+# Available attributes:
 #
 # * *type* (required) defines its type. In the example above, *title: String* is a shortcut to *title: {type: String}*.
 # * *nilable* defines if a property can be a `Nil`.
@@ -75,7 +75,7 @@ module YAML::Mapping
 
     def initialize(_pull : YAML::PullParser)
       {% for key, value in properties %}
-        _{{key.id}} = nil
+        %var{key.id} = nil
       {% end %}
 
       _pull.read_mapping_start
@@ -84,7 +84,7 @@ module YAML::Mapping
         case _key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
-            _{{key.id}} =
+            %var{key.id} =
             {% if value[:nilable] == true %} _pull.read_null_or { {% end %}
 
             {% if value[:converter] %}
@@ -107,14 +107,14 @@ module YAML::Mapping
 
       {% for key, value in properties %}
         {% unless value[:nilable] %}
-          if _{{key.id}}.is_a?(Nil)
+          if %var{key.id}.is_a?(Nil)
             raise YAML::ParseException.new("missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
 
       {% for key, value in properties %}
-        @{{key.id}} = _{{key.id}}
+        @{{key.id}} = %var{key.id}
       {% end %}
     end
   end
