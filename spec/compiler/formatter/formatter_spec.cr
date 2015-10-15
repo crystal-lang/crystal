@@ -131,7 +131,7 @@ describe Crystal::Formatter do
   assert_format "def foo   (   )   \n1\nend", "def foo\n  1\nend"
   assert_format "def self . foo\nend", "def self.foo\nend"
   assert_format "def   foo (  x )  \n  end", "def foo(x)\nend"
-  assert_format "def   foo   x  \n  end", "def foo x\nend"
+  assert_format "def   foo   x  \n  end", "def foo(x)\nend"
   assert_format "def   foo (  x , y )  \n  end", "def foo(x, y)\nend"
   assert_format "def   foo (  x , y , )  \n  end", "def foo(x, y)\nend"
   assert_format "def   foo (  x , y ,\n)  \n  end", "def foo(x, y)\nend"
@@ -162,7 +162,7 @@ describe Crystal::Formatter do
   assert_format "def +(x)\nend"
   assert_format "def   foo  :  Int32 \n  end", "def foo : Int32\nend"
   assert_format "def   foo ( x )  :  Int32 \n  end", "def foo(x) : Int32\nend"
-  assert_format "def   foo  x   :  Int32 \n  end", "def foo x : Int32\nend"
+  assert_format "def   foo  x   :  Int32 \n  end", "def foo(x : Int32)\nend"
   assert_format "def %(x)\n  1\nend"
   assert_format "def `(x)\n  1\nend"
   assert_format "def /(x)\n  1\nend"
@@ -448,6 +448,7 @@ describe Crystal::Formatter do
   assert_format "macro foo\nend"
   assert_format "macro foo()\nend", "macro foo\nend"
   assert_format "macro foo( x , y )\nend", "macro foo(x, y)\nend"
+  assert_format "macro foo  x , y  \nend", "macro foo(x, y)\nend"
   assert_format "macro foo( x  =   1, y  =  2,  &block)\nend", "macro foo(x = 1, y = 2, &block)\nend"
   assert_format "macro foo\n  1 + 2\nend"
   assert_format "macro foo\n  if 1\n 1 + 2 \n end \nend"
@@ -637,7 +638,7 @@ describe Crystal::Formatter do
   assert_format "if 1\n  ((1) + 2)\nend"
 
   # This case is special and must be fixed in the parser
-  assert_format "def   foo  x   :  self ? \n  end", "def foo x : self ?\nend"
+  assert_format "def   foo  x   :  self ? \n  end", "def foo(x : self ?)\nend"
 
   assert_format "  macro foo\n  end\n\n  :+", "macro foo\n  end\n\n:+"
   assert_format "[\n1, # a\n2, # b\n 3 # c\n]", "[\n  1, # a\n  2, # b\n  3, # c\n]"

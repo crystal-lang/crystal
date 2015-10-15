@@ -1205,7 +1205,7 @@ module Crystal
           end
           skip_space_or_newline
         else
-          write " "
+          write "("
         end
 
         args.each_with_index do |arg, i|
@@ -1256,6 +1256,9 @@ module Crystal
         if has_parentheses
           write_indent(prefix_size) if found_comment
           write_token :")"
+        else
+          write_indent(prefix_size) if found_comment
+          write ")"
         end
 
         @indent = old_indent
@@ -1309,7 +1312,7 @@ module Crystal
 
       check :IDENT
       write node.name
-      next_token
+      next_token_skip_space
 
       format_def_args node
       format_macro_body node
