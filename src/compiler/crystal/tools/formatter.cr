@@ -1560,6 +1560,23 @@ module Crystal
       check :MACRO_VAR
       write "%"
       write node.name
+
+      if exps = node.exps
+        next_token
+        write_token :"{"
+        skip_space_or_newline
+        exps.each_with_index do |exp, i|
+          indent(@column, exp)
+          skip_space_or_newline
+          if @token.type == :","
+            write ", " unless last?(i, exps)
+            next_token_skip_space_or_newline
+          end
+        end
+        check :"}"
+        write :"}"
+      end
+
       next_macro_token
 
       false
