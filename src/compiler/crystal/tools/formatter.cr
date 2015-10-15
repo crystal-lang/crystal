@@ -3620,7 +3620,7 @@ module Crystal
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
       align_comments(lines)
-      lines = format_doc_comments(lines)
+      format_doc_comments(lines)
       result = lines.join("\n") + '\n'
       result = "" if result == "\n"
       result
@@ -3765,14 +3765,12 @@ module Crystal
             end
           end
           formatted_lines << "#" if doc_comment.kind == :space && doc_comment.needs_newline
-          lines = lines[0 ... doc_comment.start_line] + formatted_lines + lines[doc_comment.end_line + 1 .. -1]
+          lines[doc_comment.start_line..doc_comment.end_line] = formatted_lines
         rescue Crystal::SyntaxException
           # For now we don't care if doc comments have syntax errors,
           # they shouldn't prevent formatting the real code
         end
       end
-
-      lines
     end
 
     def write_keyword(keyword : Symbol)
