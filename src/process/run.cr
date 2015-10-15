@@ -144,13 +144,13 @@ class Process
     fork_error.try &.close
   end
 
-  protected def initialize @pid
+  protected def initialize(@pid)
     @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
     @wait_count = 0
   end
 
   # See Process.kill
-  def kill sig = Signal::TERM
+  def kill(sig = Signal::TERM)
     Process.kill sig, @pid
   end
 

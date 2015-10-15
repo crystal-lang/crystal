@@ -143,7 +143,7 @@ class Dir
   end
 
   # Changes the current working directory of the process to the given string.
-  def self.cd path
+  def self.cd(path)
     if LibC.chdir(path) != 0
       raise Errno.new("Error while changing directory to #{path.inspect}")
     end

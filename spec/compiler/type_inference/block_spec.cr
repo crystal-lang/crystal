@@ -694,7 +694,7 @@ describe "Block inference" do
         fun foo(func : -> Void)
       end
 
-      def foo &block : -> Void
+      def foo(&block : -> Void)
         Fake.foo block
       end
 
@@ -706,7 +706,7 @@ describe "Block inference" do
 
   it "ignores void return type (2) (#427)" do
     assert_type(%(
-      def foo &block : Int32 -> Void
+      def foo(&block : Int32 -> Void)
         yield 1
       end
 
@@ -720,7 +720,7 @@ describe "Block inference" do
     assert_type(%(
       alias Alias = Int32 -> Void
 
-      def foo &block : Alias
+      def foo(&block : Alias)
         yield 1
       end
 

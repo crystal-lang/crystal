@@ -30,7 +30,7 @@ class IPSocket < Socket
       @fiber = Fiber.current
     end
 
-    def value= val
+    def value=(val)
       @value = val
       @fiber.resume
     end

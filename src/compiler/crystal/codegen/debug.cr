@@ -143,7 +143,7 @@ module Crystal
       }
     end
 
-    def metadata args
+    def metadata(args)
       values = args.map do |value|
         case value
         when String then LLVM::Value.new LibLLVM.md_string(value, value.bytesize)

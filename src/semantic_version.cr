@@ -5,7 +5,7 @@ class SemanticVersion
 
   getter major, minor, patch, prerelease, build
 
-  def self.parse str : String
+  def self.parse(str : String)
     m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
     if m
       major = m[1].to_i
@@ -19,7 +19,7 @@ class SemanticVersion
     end
   end
 
-  def initialize @major : Int, @minor : Int, @patch : Int, prerelease = nil: String | Prerelease | Nil, @build = nil : String?
+  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease = nil: String | Prerelease | Nil, @build = nil : String?)
     @prerelease = case prerelease
     when Prerelease
       prerelease
@@ -32,7 +32,7 @@ class SemanticVersion
     end
   end
 
-  def to_s io : IO
+  def to_s(io : IO)
     io << major << "." << minor << "." << patch
     unless prerelease.identifiers.empty?
       io << "-"
@@ -58,7 +58,7 @@ class SemanticVersion
   end
 
   struct Prerelease
-    def self.parse str : String
+    def self.parse(str : String)
       identifiers = [] of String | Int32
       str.split(".").each do |val|
         if val.match /^\d+$/
@@ -75,7 +75,7 @@ class SemanticVersion
     def initialize(@identifiers = [] of String | Int32 : Array(String | Int32) )
     end
 
-    def to_s io : IO
+    def to_s(io : IO)
       identifiers.each_with_index do |s, i|
         io << "." if i > 0
         io << s

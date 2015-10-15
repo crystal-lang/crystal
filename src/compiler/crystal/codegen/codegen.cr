@@ -1306,7 +1306,7 @@ module Crystal
       end
     end
 
-    def br_block_chain *blocks
+    def br_block_chain(*blocks)
       old_block = insert_block
 
       0.upto(blocks.size - 2) do |i|

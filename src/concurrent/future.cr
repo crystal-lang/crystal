@@ -8,7 +8,7 @@ class Concurrent::Future(R)
     Canceled
   end
 
-  def initialize run_immediately = true, delay = 0 : Number, &@block : -> R
+  def initialize(run_immediately = true, delay = 0 : Number, &@block : -> R)
     @state = State::Idle
     @value = nil
     @error = nil
@@ -52,7 +52,7 @@ class Concurrent::Future(R)
     @state == State::Idle
   end
 
-  def cancel msg = "Future canceled, you reached the [End of Time]"
+  def cancel(msg = "Future canceled, you reached the [End of Time]")
     return if @state >= State::Completed
     @state = State::Canceled
     @cancel_msg = msg
@@ -146,6 +146,6 @@ end
 # spawn { maybe_use_computation(l) }
 # spawn { maybe_use_computation(l) }
 # ```
-def lazy &block : -> R
+def lazy(&block : -> R)
   Concurrent::Future.new run_immediately: false, &block
 end

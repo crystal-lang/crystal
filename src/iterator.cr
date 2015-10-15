@@ -413,7 +413,7 @@ module Iterator(T)
       flatten value
     end
 
-    def make_rewinder iter
+    def make_rewinder(iter)
       ->{
         iter.rewind
         # Return nil to disguise the individual iterator types

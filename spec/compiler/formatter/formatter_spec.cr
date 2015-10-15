@@ -150,7 +150,6 @@ describe Crystal::Formatter do
   assert_format "def   foo (  x  =   1  :  Int32 )  \n  end", "def foo(x = 1 : Int32)\nend"
   assert_format "abstract  def   foo  \n  1", "abstract def foo\n\n1"
   assert_format "def foo( & block )\nend", "def foo(&block)\nend"
-  assert_format "def foo  & block  \nend", "def foo &block\nend"
   assert_format "def foo( x , & block )\nend", "def foo(x, &block)\nend"
   assert_format "def foo( x , & block  : Int32 )\nend", "def foo(x, &block : Int32)\nend"
   assert_format "def foo( x , & block  : Int32 ->)\nend", "def foo(x, &block : Int32 ->)\nend"

@@ -73,7 +73,7 @@ describe "Type inference: tuples" do
     assert_error %(
       require "prelude"
 
-      def foo type, *args
+      def foo(type, *args)
         foo 1, args.to_a
       end
 
@@ -87,7 +87,7 @@ describe "Type inference: tuples" do
       class Foo(T)
       end
 
-      def foo type, *args
+      def foo(type, *args)
         foo 1, Foo(typeof(args)).new
       end
 

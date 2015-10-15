@@ -33,7 +33,7 @@ class TCPSocket < IPSocket
     getsockopt_bool LibC::TCP_NODELAY, level: LibC::IPPROTO_TCP
   end
 
-  def tcp_nodelay= val : Bool
+  def tcp_nodelay=(val : Bool)
     setsockopt_bool LibC::TCP_NODELAY, val, level: LibC::IPPROTO_TCP
   end
 
@@ -42,7 +42,7 @@ class TCPSocket < IPSocket
     getsockopt LibC::TCP_KEEPIDLE, 0, level: LibC::IPPROTO_TCP
   end
 
-  def tcp_keepalive_idle= val : Int
+  def tcp_keepalive_idle=(val : Int)
     setsockopt LibC::TCP_KEEPIDLE, val, level: LibC::IPPROTO_TCP
     val
   end
@@ -52,7 +52,7 @@ class TCPSocket < IPSocket
     getsockopt LibC::TCP_KEEPINTVL, 0, level: LibC::IPPROTO_TCP
   end
 
-  def tcp_keepalive_interval= val : Int
+  def tcp_keepalive_interval=(val : Int)
     setsockopt LibC::TCP_KEEPINTVL, val, level: LibC::IPPROTO_TCP
     val
   end
@@ -62,7 +62,7 @@ class TCPSocket < IPSocket
     getsockopt LibC::TCP_KEEPCNT, 0, level: LibC::IPPROTO_TCP
   end
 
-  def tcp_keepalive_count= val : Int
+  def tcp_keepalive_count=(val : Int)
     setsockopt LibC::TCP_KEEPCNT, val, level: LibC::IPPROTO_TCP
     val
   end

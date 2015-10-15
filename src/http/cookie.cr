@@ -177,7 +177,7 @@ module HTTP
       add_headers "Set-Cookie", headers
     end
 
-    private def add_headers key, headers
+    private def add_headers(key, headers)
       headers.delete(key)
 
       each do |cookie|

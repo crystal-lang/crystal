@@ -109,7 +109,7 @@ enum Signal
     del_handler Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
   end
 
-  private def del_handler block
+  private def del_handler(block)
     Event::SignalHandler.del_handler self
     LibC.signal value, block
   end

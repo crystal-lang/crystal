@@ -55,7 +55,7 @@ class Scheduler
     event
   end
 
-  def self.create_signal_event signal : Signal, chan
+  def self.create_signal_event(signal : Signal, chan)
     flags = LibEvent2::EventFlags::Signal | LibEvent2::EventFlags::Persist
     event = @@eb.new_event(Int32.new(signal.to_i), flags, chan) do |s, flags, data|
               ch = data as Channel::Buffered(Signal)

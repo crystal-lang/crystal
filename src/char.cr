@@ -140,7 +140,7 @@ struct Char
   # '\\'.in_set? "\\A"        #=> false
   # '\\'.in_set? "X-\\w"      #=> true
   # ```
-  def in_set? *sets : String
+  def in_set?(*sets : String)
     if sets.size > 1
       return sets.all? {|set| in_set?(set) }
     end
