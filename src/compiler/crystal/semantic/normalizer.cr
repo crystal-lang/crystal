@@ -215,8 +215,10 @@ module Crystal
       # and the semantic code won't have to bother checking it
       block_arg = node.block_arg
       if !node.uses_block_arg && block_arg
-        block_arg_fun = block_arg.fun
-        if block_arg_fun.is_a?(Fun) && !block_arg_fun.inputs && !block_arg_fun.output
+        block_arg_restriction = block_arg.restriction
+        if block_arg_restriction.is_a?(Fun) && !block_arg_restriction.inputs && !block_arg_restriction.output
+          node.block_arg = nil
+        elsif !block_arg_restriction
           node.block_arg = nil
         end
       end

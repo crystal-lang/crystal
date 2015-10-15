@@ -698,10 +698,6 @@ module Macros
   # class Fun < ASTNode
   # end
 
-  # A def's block argument (&block)
-  # class BlockArg < ASTNode
-  # end
-
   # A method definition.
   class Def < ASTNode
     # Returns the name of this method.

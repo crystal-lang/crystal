@@ -2703,9 +2703,9 @@ module Crystal
     end
 
     def compute_block_arg_yields(block_arg)
-      block_arg_fun = block_arg.fun
-      if block_arg_fun.is_a?(Fun)
-        @yields = block_arg_fun.inputs.try(&.size) || 0
+      block_arg_restriction = block_arg.restriction
+      if block_arg_restriction.is_a?(Fun)
+        @yields = block_arg_restriction.inputs.try(&.size) || 0
       else
         @yields = 0
       end
@@ -2815,11 +2815,9 @@ module Crystal
         location = @token.location
 
         type_spec = parse_single_type
-      else
-        type_spec = Fun.new
       end
 
-      block_arg = BlockArg.new(arg_name, type_spec).at(name_location)
+      block_arg = Arg.new(arg_name, restriction: type_spec).at(name_location)
 
       push_var block_arg
 
@@ -4419,7 +4417,7 @@ module Crystal
       end
     end
 
-    def push_var(var : Var | Arg | BlockArg)
+    def push_var(var : Var | Arg)
       push_var_name var.name.to_s
     end
 

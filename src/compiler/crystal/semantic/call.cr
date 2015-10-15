@@ -643,12 +643,12 @@ class Crystal::Call
     block = @block.not_nil!
     ident_lookup = MatchTypeLookup.new(self, match.context)
 
-    block_arg_fun = block_arg.fun
+    block_arg_restriction = block_arg.restriction
 
     # If the block spec is &block : A, B, C -> D, we solve the argument types
-    if block_arg_fun.is_a?(Fun)
+    if block_arg_restriction.is_a?(Fun)
       # If there are input types, solve them and creating the yield vars
-      if inputs = block_arg_fun.inputs
+      if inputs = block_arg_restriction.inputs
         yield_vars = inputs.map_with_index do |input, i|
           arg_type = ident_lookup.lookup_node_type(input)
           TypeVisitor.check_type_allowed_as_proc_argument(input, arg_type)
@@ -656,20 +656,20 @@ class Crystal::Call
           Var.new("var#{i}", arg_type.virtual_type)
         end
       end
-      block_arg_fun_output = block_arg_fun.output
-    else
+      block_arg_restriction_output = block_arg_restriction.output
+    elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
-      block_arg_type = ident_lookup.lookup_node_type(block_arg_fun).remove_typedef
+      block_arg_type = ident_lookup.lookup_node_type(block_arg_restriction).remove_typedef
       unless block_arg_type.is_a?(FunInstanceType)
-        block_arg_fun.raise "expected block type to be a function type, not #{block_arg_type}"
+        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
         return nil, nil
       end
 
       yield_vars = block_arg_type.arg_types.map_with_index do |input, i|
         Var.new("var#{i}", input)
       end
-      block_arg_fun_output = block_arg_type.return_type
+      block_arg_restriction_output = block_arg_type.return_type
     end
 
     # Bind block arguments to the yield vars, if any, or to nil otherwise
@@ -704,7 +704,7 @@ class Crystal::Call
           end
 
           fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
-          fun_literal.force_void = true unless block_arg_fun_output
+          fun_literal.force_void = true unless block_arg_restriction_output
           fun_literal.accept parent_visitor
         end
         block.fun_literal = fun_literal
@@ -716,7 +716,7 @@ class Crystal::Call
       if fun_literal_type
         block_arg_type = fun_literal_type
         block_type = (fun_literal_type as FunInstanceType).return_type
-        if output = block_arg_fun_output
+        if output = block_arg_restriction_output
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
@@ -730,9 +730,9 @@ class Crystal::Call
           end
         end
       else
-        if block_arg_fun_output
-          if block_arg_fun_output.is_a?(ASTNode) && !block_arg_fun_output.is_a?(Underscore)
-            output_type = ident_lookup.lookup_node_type(block_arg_fun_output).virtual_type
+        if block_arg_restriction_output
+          if block_arg_restriction_output.is_a?(ASTNode) && !block_arg_restriction_output.is_a?(Underscore)
+            output_type = ident_lookup.lookup_node_type(block_arg_restriction_output).virtual_type
             block.body.freeze_type = output_type
             block_arg_type = mod.fun_of(fun_args, output_type)
           else
@@ -746,7 +746,7 @@ class Crystal::Call
 
       # Because the block's type might be used as a free variable, we bind
       # ourself to the block so when its type changes we recalculate ourself.
-      if block_arg_fun_output
+      if block_arg_restriction_output
         block.try &.remove_input_observer(self)
         block.try &.add_input_observer(self)
       end
@@ -755,7 +755,7 @@ class Crystal::Call
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.
-      if output = block_arg_fun_output
+      if output = block_arg_restriction_output
         if !block.body.type?
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin

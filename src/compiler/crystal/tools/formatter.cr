@@ -1616,20 +1616,6 @@ module Crystal
       false
     end
 
-    def visit(node : BlockArg)
-      write @token.value
-      next_token_skip_space
-
-      if (restriction = node.fun) && @token.type == :":"
-        skip_space_or_newline
-        write_token " ", :":", " "
-        skip_space_or_newline
-        accept restriction
-      end
-
-      false
-    end
-
     def visit(node : Fun)
       has_parentheses = false
       if @token.type == :"("

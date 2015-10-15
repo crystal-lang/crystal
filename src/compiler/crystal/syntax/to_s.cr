@@ -720,15 +720,6 @@ module Crystal
       false
     end
 
-    def visit(node : BlockArg)
-      @str << node.name
-      if a_fun = node.fun
-        @str << " : "
-        a_fun.accept self
-      end
-      false
-    end
-
     def visit(node : Fun)
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
