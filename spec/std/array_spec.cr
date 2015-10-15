@@ -230,6 +230,74 @@ describe "Array" do
       a[-1] = 4
       a[2].should eq(4)
     end
+
+    it "replaces a subrange with a single value" do
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = 6
+      a.should eq([1, 6, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 1] = 6
+      a.should eq([1, 6, 3, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 0] = 6
+      a.should eq([1, 6, 2, 3, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 10] = 6
+      a.should eq([1, 6])
+
+      a = [1, 2, 3, 4, 5]
+      a[-3, 2] = 6
+      a.should eq([1, 2, 6, 5])
+
+      a = [1, 2, 3, 4, 5, 6, 7, 8]
+      a[1, 3] = 6
+      a.should eq([1, 6, 5, 6, 7, 8])
+
+      expect_raises ArgumentError, "negative count" do
+        [1, 2, 3][0, -1]
+      end
+
+      a = [1, 2, 3, 4, 5]
+      a[1 .. 3] = 6
+      a.should eq([1, 6, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[2 .. 3] = 6
+      a.should eq([1, 2, 6, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1 ... 1] = 6
+      a.should eq([1, 6, 2, 3, 4, 5])
+    end
+
+    it "replaces a subrange with an array" do
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = [6, 7, 8]
+      a.should eq([1, 6, 7, 8, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = [6, 7]
+      a.should eq([1, 6, 7, 5])
+
+      a = [1, 2, 3, 4, 5, 6, 7, 8]
+      a[1, 3] = [6, 7]
+      a.should eq([1, 6, 7, 5, 6, 7, 8])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = [6, 7, 8, 9, 10]
+      a.should eq([1, 6, 7, 8, 9, 10, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 2] = [6, 7, 8, 9, 10]
+      a.should eq([1, 6, 7, 8, 9, 10, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1 .. 3] = [6, 7, 8]
+      a.should eq([1, 6, 7, 8, 5])
+    end
   end
 
   describe "values_at" do
