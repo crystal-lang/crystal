@@ -6,19 +6,22 @@ PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
-# Repeatedly executes the block.
+# Repeatedly executes the block, passing an incremental `Int32`
+# that starts with 0.
 #
 # ```
-# loop do
-#   print "Input: "
+# loop do |i|
+#   print "#{i}) "
 #   line = gets
 #   break unless line
 #   # ...
 # end
 # ```
 def loop
+  i = 0
   while true
-    yield
+    yield i
+    i += 1
   end
 end
 
