@@ -458,7 +458,7 @@ class Array(T)
       @size -= diff
     else
       # Need to grow
-      resize_to_capacity(@size + diff)
+      resize_to_capacity(Math.pw2ceil(@size + diff))
       (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
       (@buffer + index).copy_from(values.to_unsafe, values.size)
       @size += diff
@@ -1255,7 +1255,7 @@ class Array(T)
 
   def replace(other : Array)
     @size = other.size
-    resize_to_capacity(@size) if @size > @capacity
+    resize_to_capacity(Math.pw2ceil(@size)) if @size > @capacity
     @buffer.copy_from(other.buffer, other.size)
     self
   end
