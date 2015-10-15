@@ -214,6 +214,16 @@ struct Time::Span
     self
   end
 
+  def *(number : Number)
+    # TODO check overflow
+    Span.new(ticks * number)
+  end
+
+  def /(number : Number)
+    # TODO check overflow
+    Span.new(ticks / number)
+  end
+
   def <=>(other : self)
     ticks <=> other.ticks
   end
