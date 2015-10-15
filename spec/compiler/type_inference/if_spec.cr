@@ -70,4 +70,14 @@ describe "Type inference: if" do
       foo
       )) { int32 }
   end
+
+  it "passes bug (related to #1729)" do
+    assert_type(%(
+      n = true ? 3 : 3.2
+      if n.is_a?(Float64)
+        n
+      end
+      n
+      )) { int32 }
+  end
 end
