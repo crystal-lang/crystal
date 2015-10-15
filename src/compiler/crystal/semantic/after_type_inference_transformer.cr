@@ -5,13 +5,13 @@ require "../types"
 module Crystal
   class Program
     def after_type_inference(node)
-      node = node.transform(after_type_inference_transformer)
+      node = node.transform(AfterTypeInferenceTransformer.new(self))
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def finish_types
-      transformer = after_type_inference_transformer()
+      transformer = AfterTypeInferenceTransformer.new(self)
       after_inference_types.each do |type|
         finish_type type, transformer
       end
@@ -34,10 +34,6 @@ module Crystal
       type.instance_vars_initializers.try &.each do |initializer|
         initializer.value = initializer.value.transform(transformer)
       end
-    end
-
-    def after_type_inference_transformer
-      @after_type_inference_transformer ||= AfterTypeInferenceTransformer.new(self)
     end
   end
 
