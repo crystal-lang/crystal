@@ -20,7 +20,6 @@ module Crystal
     class CommentInfo
       property start_line
       property end_line
-      property kind
       property needs_newline
 
       def initialize(@start_line, @kind)
@@ -396,7 +395,7 @@ module Crystal
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
           # This is for " ... " \
-          #             " ... "
+          #     " ... "
           write @token.raw
           write " \\"
           write_line
@@ -1220,7 +1219,7 @@ module Crystal
 
           to_skip += 1 if at_skip?
           indent(prefix_size, arg)
-          skip_space_or_newline
+          skip_space
           if @token.type == :","
             write "," unless last?(i, args)
             next_token
@@ -1254,6 +1253,7 @@ module Crystal
         end
 
         if has_parentheses
+          skip_space_or_newline
           write_indent(prefix_size) if found_comment
           write_token :")"
         else
@@ -1620,6 +1620,13 @@ module Crystal
         write_token " ", :":", " "
         skip_space_or_newline
         accept restriction
+      end
+
+      # This is the case of an enum member
+      if 'A' <= node.name[0] <= 'Z' && @token.type == :","
+        write ", "
+        next_token
+        @exp_needs_indent = false
       end
 
       false
@@ -3453,7 +3460,7 @@ module Crystal
         end
 
         value = @token.value.to_s.strip
-        raw_after_comment_value = value[1 .. -1]
+        raw_after_comment_value = value[1..-1]
         after_comment_value = raw_after_comment_value.strip
         if after_comment_value.starts_with?("=>")
           value = "\# => #{after_comment_value[2..-1].strip}"
@@ -3477,32 +3484,11 @@ module Crystal
 
           if after_comment_value.starts_with?("```")
             if current_doc_comment
-              if current_doc_comment.kind == :backticks
-                current_doc_comment.end_line = @line - 1
-                @doc_comments << current_doc_comment
-                @current_doc_comment = nil
-              else
-                current_doc_comment.end_line = @line - 1
-                @doc_comments << current_doc_comment
-                @current_doc_comment = CommentInfo.new(@line + 1, :backticks)
-              end
+              current_doc_comment.end_line = @line - 1
+              @doc_comments << current_doc_comment
+              @current_doc_comment = nil
             else
               @current_doc_comment = CommentInfo.new(@line + 1, :backticks)
-            end
-          else
-            doc_comment_empty = raw_after_comment_value.strip.empty?
-            space_doc_comment = raw_after_comment_value.starts_with?("     ")
-
-            if current_doc_comment
-              if current_doc_comment.kind == :space && !space_doc_comment && !doc_comment_empty
-                current_doc_comment.end_line = @line - 1
-                @doc_comments << current_doc_comment
-                @current_doc_comment = nil
-              end
-            else
-              if space_doc_comment
-                @current_doc_comment = CommentInfo.new(@line, :space)
-              end
             end
           end
         end
@@ -3591,14 +3577,7 @@ module Crystal
     end
 
     def write_line
-      unless @wrote_comment
-        if (current_doc_comment = @current_doc_comment) && current_doc_comment.kind == :space
-          current_doc_comment.end_line = @line - 1
-          current_doc_comment.needs_newline = false
-          @doc_comments << current_doc_comment
-        end
-        @current_doc_comment = nil
-      end
+      @current_doc_comment = nil unless @wrote_comment
       @wrote_comment = false
 
       @output.puts
@@ -3638,6 +3617,7 @@ module Crystal
       align_infos(lines, @assign_infos)
       align_comments(lines)
       format_doc_comments(lines)
+      lines.map!(&.rstrip)
       result = lines.join("\n") + '\n'
       result = "" if result == "\n"
       result
@@ -3693,13 +3673,13 @@ module Crystal
         middle = info.middle_column
       end
 
-      before = line[0 ... middle]
-      after = line[middle .. -1]
+      before = line[0...middle]
+      after = line[middle..-1]
       result = String.build do |str|
-        str << before
-        gap.times { str << " " }
-        str << after
-      end
+                 str << before
+                 gap.times { str << " " }
+                 str << after
+               end
 
       lines[info.line] = result
 
@@ -3765,10 +3745,13 @@ module Crystal
         sharp_index = first_line.index('#').not_nil!
 
         comment = String.build do |str|
-          (doc_comment.start_line..doc_comment.end_line).each do |i|
-            str << lines[i].strip[1 .. -1] << "\n"
-          end
-        end
+                    (doc_comment.start_line..doc_comment.end_line).each do |i|
+                      line = lines[i].strip[1..-1]
+                      line = line[1..-1] if line[0]? == ' '
+                      str << line
+                      str << '\n'
+                    end
+                  end
 
         begin
           formatted_comment = Formatter.format(comment)
@@ -3777,11 +3760,9 @@ module Crystal
             String.build do |str|
               sharp_index.times { str << " " }
               str << "# "
-              str << "    " if doc_comment.kind == :space
               str << line
             end
           end
-          formatted_lines << "#" if doc_comment.kind == :space && doc_comment.needs_newline
           lines[doc_comment.start_line..doc_comment.end_line] = formatted_lines
         rescue Crystal::SyntaxException
           # For now we don't care if doc comments have syntax errors,
