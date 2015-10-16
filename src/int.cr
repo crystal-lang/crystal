@@ -345,8 +345,12 @@ struct Int
     yield ptr, count
   end
 
-  def to_io(io : IO, format : IO::ByteFormat)
-    format.encode(self, io)
+  def to_io(io : IO, format : ByteFormat)
+    io.write(bytes(format).to_slice)
+  end
+
+  def bytes(format : ByteFormat)
+    format.encode(self)
   end
 
   # :nodoc:
