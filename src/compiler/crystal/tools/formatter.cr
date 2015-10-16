@@ -41,8 +41,8 @@ module Crystal
       @token = @lexer.token
       @token = next_token
 
-      @output = StringIO.new(source.bytesize)
-      @line_output = StringIO.new
+      @output = MemoryIO.new(source.bytesize)
+      @line_output = MemoryIO.new
       @next_exp_column = nil
       @wrote_newline = false
       @wrote_comment = false

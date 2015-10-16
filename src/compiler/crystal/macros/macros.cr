@@ -213,7 +213,7 @@ module Crystal
       record MacroVarKey, name, exps
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
-        @str = StringIO.new(512)
+        @str = MemoryIO.new(512)
         @last = Nop.new
       end
 

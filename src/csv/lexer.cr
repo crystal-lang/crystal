@@ -26,7 +26,7 @@ abstract class CSV::Lexer
   # :nodoc:
   def initialize
     @token = Token.new
-    @buffer = StringIO.new
+    @buffer = MemoryIO.new
     @column_number = 1
     @line_number = 1
     @last_empty_column = false

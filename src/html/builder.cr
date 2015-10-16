@@ -25,7 +25,7 @@ require "html"
 # ```
 struct HTML::Builder
   def initialize
-    @str = StringIO.new
+    @str = MemoryIO.new
   end
 
   def build

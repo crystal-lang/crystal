@@ -35,7 +35,7 @@ class StringPool
     entry
   end
 
-  def get(str : StringIO)
+  def get(str : MemoryIO)
     get(str.buffer, str.bytesize)
   end
 

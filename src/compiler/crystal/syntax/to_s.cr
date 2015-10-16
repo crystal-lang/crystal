@@ -14,7 +14,7 @@ module Crystal
   end
 
   class ToSVisitor < Visitor
-    def initialize(@str = StringIO.new)
+    def initialize(@str = MemoryIO.new)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false

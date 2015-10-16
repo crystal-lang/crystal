@@ -25,7 +25,7 @@ module HTTP
       return if query.empty?
 
       key = nil
-      buffer = StringIO.new
+      buffer = MemoryIO.new
 
       i = 0
       bytesize = query.bytesize
@@ -263,7 +263,7 @@ module HTTP
     class Builder
       @io :: IO
 
-      def initialize(@io = StringIO.new)
+      def initialize(@io = MemoryIO.new)
         @first = true
       end
 

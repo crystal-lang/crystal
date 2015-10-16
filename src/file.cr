@@ -108,7 +108,7 @@ class File < IO::FileDescriptor
   # Returns the current position (in bytes) in this File.
   #
   # ```
-  # io = StringIO.new "hello"
+  # io = MemoryIO.new "hello"
   # io.pos     #=> 0
   # io.gets(2) #=> "he"
   # io.pos     #=> 2
@@ -125,7 +125,7 @@ class File < IO::FileDescriptor
   # Sets the current position (in bytes) in this File.
   #
   # ```
-  # io = StringIO.new "hello"
+  # io = MemoryIO.new "hello"
   # io.pos = 3
   # io.gets_to_end #=> "lo"
   # ```

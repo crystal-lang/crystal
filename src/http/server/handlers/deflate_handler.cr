@@ -13,7 +13,7 @@ class HTTP::DeflateHandler < HTTP::Handler
 
     if should_deflate?(request, response)
       body_io = if response.body?
-        StringIO.new(response.body)
+        MemoryIO.new(response.body)
       else
         response.body_io
       end

@@ -134,7 +134,7 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = StringIO.new(20)
+            here = MemoryIO.new(20)
 
             while true
               case char = next_char
@@ -1016,7 +1016,7 @@ module Crystal
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
       else
-        @token.doc_buffer = doc_buffer = StringIO.new
+        @token.doc_buffer = doc_buffer = MemoryIO.new
       end
 
       doc_buffer.write slice_range(start_pos)

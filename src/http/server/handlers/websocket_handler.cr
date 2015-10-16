@@ -31,7 +31,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
     def initialize(io)
       @ws = WebSocket.new(io)
       @buffer = Slice(UInt8).new(4096)
-      @current_message = StringIO.new
+      @current_message = MemoryIO.new
     end
 
     def on_message(&@on_message : String ->)

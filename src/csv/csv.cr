@@ -119,7 +119,7 @@ class CSV
   # that writes to the given IO.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts "HEADER"
   # CSV.build(io) do |csv|
   #   csv.row "one", "two"
