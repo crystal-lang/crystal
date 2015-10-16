@@ -13,6 +13,10 @@ def sleep(time : Time::Span)
   sleep(time.total_seconds)
 end
 
+def sleep
+  Scheduler.reschedule
+end
+
 macro spawn
   %fiber = Fiber.new do
     begin
