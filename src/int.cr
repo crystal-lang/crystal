@@ -349,6 +349,10 @@ struct Int
     format.encode(self, io)
   end
 
+  def self.from_io(io : IO, format : IO::ByteFormat)
+    format.decode(self, io)
+  end
+
   # :nodoc:
   class TimesIterator(T)
     include Iterator(T)
