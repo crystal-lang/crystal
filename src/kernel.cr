@@ -35,14 +35,9 @@ def read_line(*args)
   STDIN.read_line(*args)
 end
 
-# Prints objects to STDOUT. See `IO#print`.
+# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
 def print(*objects : _)
   STDOUT.print *objects
-end
-
-# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
-def print!(*objects : _)
-  print *objects
   STDOUT.flush
   nil
 end

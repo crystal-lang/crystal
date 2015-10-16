@@ -20,7 +20,7 @@ module Spec
   # :nodoc:
   class DotFormatter < Formatter
     def report(result)
-      print! Spec.color(LETTERS[result.kind], result.kind)
+      print Spec.color(LETTERS[result.kind], result.kind)
     end
 
     def finish
@@ -51,7 +51,7 @@ module Spec
 
     def before_example(description)
       print_ident
-      print! description
+      print description
       @last_description = description
     end
 
