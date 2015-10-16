@@ -1960,6 +1960,7 @@ module Crystal
             nest += 1 unless keyword == :abstract_def
             whitespace = true
             beginning_of_line = false
+            next
           else
             char = current_char
 

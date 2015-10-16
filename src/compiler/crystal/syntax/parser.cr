@@ -1095,7 +1095,10 @@ module Crystal
     def parse_begin
       slash_is_regex!
       next_token_skip_statement_end
-      exps = parse_expressions
+      exps, _ = preserve_last_call_has_parenthesis do
+        @last_call_has_parenthesis = true
+        parse_expressions
+      end
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
       if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
