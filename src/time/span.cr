@@ -1,3 +1,41 @@
+# `Time::Span` represents one period of time. 
+#
+# A `Time::Span` initializes with the specified period. 
+# Different numbers of arguments generates a `Time::Span` in different length. 
+# Check all `#new` methods for details.
+#
+# ```crystal
+# Time::Span.new(10000)          #=> 0:0:0.010000
+# Time::Span.new(10, 10, 10)     #=> 10:10:10
+# Time::Span.new(10, 10, 10, 10) #=> 10.10:10:10
+# ```
+# 
+# Calculation between `Time` also returns a `Time::Span`.
+#
+# ```crystal
+# span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
+# span       #=> 30.00:00:00
+# span.class #=> Time::Span
+# ```
+#
+# Inspection:
+#
+# ```crystal
+# span = Time::Span.new(20, 10, 10) 
+# span.hours   #=> 20
+# span.minutes #=> 10
+# span.seconds #=> 10
+# ```
+#
+# Calculation:
+#
+# ```crystal
+# a = Time::Span.new(20, 10, 10)   
+# b = Time::Span.new(10, 10, 10)
+# c = a - b #=> 10:00:00
+# c.hours   #=> 10
+# ```
+#
 struct Time::Span
   # *Heavily* inspired by Mono's Time::Span class:
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs

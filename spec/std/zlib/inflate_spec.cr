@@ -4,7 +4,7 @@ require "zlib"
 module Zlib
   describe Inflate do
     it "should be able to inflate" do
-      io = StringIO.new
+      io = MemoryIO.new
       "789c2bc9c82c5600a2448592d4e21285e292a2ccbc74054520e00200854f087b".scan(/../).each do |match|
         io.write_byte match[0].to_u8(16)
       end

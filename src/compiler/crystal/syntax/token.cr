@@ -12,11 +12,14 @@ module Crystal
     property macro_state
     property passed_backslash_newline
     property doc_buffer
+    property raw
+    property start
 
     record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields, comment) do
       def self.default
         MacroState.new(true, 0, nil, true, false, false)
       end
+      property whitespace
     end
 
     record DelimiterState, kind, nest, :end, open_count
@@ -39,6 +42,8 @@ module Crystal
       @delimiter_state = DelimiterState.default
       @macro_state = MacroState.default
       @passed_backslash_newline = false
+      @raw = ""
+      @start = 0
     end
 
     def doc

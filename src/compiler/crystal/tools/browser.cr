@@ -156,7 +156,7 @@ class Crystal::Browser
 
   class ToHtmlVisitor < ToSVisitor
     def initialize(@browser)
-      super(StringIO.new)
+      super(MemoryIO.new)
     end
 
     def visit(node : LibDef)
@@ -322,7 +322,7 @@ class Crystal::Browser
 
     def newline
       str = @str
-      return if str.is_a?(StringIO) && str.empty?
+      return if str.is_a?(MemoryIO) && str.empty?
       str << "<br/>"
     end
 

@@ -143,7 +143,7 @@ end
 
       Dir.mkdir_p("#{__DIR__}/tmp")
 
-      `bin/crystal init lib "#{__DIR__}/tmp"`.should contain("file or directory #{__DIR__}/tmp already exists")
+      `bin/crystal init lib "#{__DIR__}/tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
 
       `rm -rf #{__DIR__}/tmp`
     end
@@ -152,7 +152,7 @@ end
 
       File.open("#{__DIR__}/tmp", "w")
 
-      `bin/crystal init lib "#{__DIR__}/tmp"`.should contain("file or directory #{__DIR__}/tmp already exists")
+      `bin/crystal init lib "#{__DIR__}/tmp" 2>/dev/null`.should contain("file or directory #{__DIR__}/tmp already exists")
 
       File.delete("#{__DIR__}/tmp")
     end

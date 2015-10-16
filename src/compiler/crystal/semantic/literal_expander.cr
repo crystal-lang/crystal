@@ -272,7 +272,7 @@ module Crystal
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
-    # Convert an interpolation to a concatenation with a StringIO:
+    # Convert an interpolation to a concatenation with a MemoryIO:
     #
     # From:
     #
@@ -280,7 +280,7 @@ module Crystal
     #
     # To:
     #
-    #     (StringIO.new << "foo" << bar << "baz").to_s
+    #     (MemoryIO.new << "foo" << bar << "baz").to_s
     def expand(node : StringInterpolation)
       # Compute how long at least the string will be, so we
       # can allocate enough space.

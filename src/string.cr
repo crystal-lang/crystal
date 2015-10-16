@@ -103,7 +103,7 @@ end
 #
 # This ends up invoking `Object#to_s(IO)` on each expression enclosed by `#{...}`.
 #
-# If you need to dynamically build a string, use `String#build` or `StringIO`.
+# If you need to dynamically build a string, use `String#build` or `MemoryIO`.
 class String
   # :nodoc:
   TYPE_ID = 1

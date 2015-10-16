@@ -6,6 +6,11 @@ module Crystal
     property? doc_enabled
     property? comments_enabled
     property? count_whitespace
+    property? wants_raw
+    property? slash_is_regex
+    getter reader
+    getter token
+    getter line_number
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -18,6 +23,7 @@ module Crystal
       @comments_enabled = false
       @count_whitespace = false
       @slash_is_regex = true
+      @wants_raw = false
     end
 
     def filename=(filename)
@@ -128,7 +134,7 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = StringIO.new(20)
+            here = MemoryIO.new(20)
 
             while true
               case char = next_char
@@ -157,7 +163,7 @@ module Crystal
             end
 
             here = here.to_s
-            delimited_pair :heredoc, here, here
+            delimited_pair :heredoc, here, here, start
           else
             @token.type = :"<<"
           end
@@ -179,7 +185,7 @@ module Crystal
           @token.type = :">"
         end
       when '+'
-        start = current_pos
+        @token.start = start
         case next_char
         when '='
           next_char :"+="
@@ -193,7 +199,7 @@ module Crystal
           @token.type = :"+"
         end
       when '-'
-        start = current_pos
+        @token.start = start
         case next_char
         when '='
           next_char :"-="
@@ -231,11 +237,13 @@ module Crystal
         elsif @slash_is_regex
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/', 0)
+          @token.raw = "/"
         elsif char.whitespace? || char == '\0' || char == ';'
           @token.type = :"/"
         elsif @wants_regex
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/', 0)
+          @token.raw = "/"
         else
           @token.type = :"/"
         end
@@ -244,7 +252,7 @@ module Crystal
         when '='
           next_char :"%="
         when '(', '[', '{', '<'
-          delimited_pair :string, current_char, closing_char
+          delimited_pair :string, current_char, closing_char, start
         when 'i'
           case peek_next_char
           when '(', '{', '[', '<'
@@ -257,14 +265,14 @@ module Crystal
         when 'r'
           case next_char
           when '(', '[', '{', '<'
-            delimited_pair :regex, current_char, closing_char
+            delimited_pair :regex, current_char, closing_char, start
           else
             raise "unknown %r char"
           end
         when 'x'
           case next_char
           when '(', '[', '{', '<'
-            delimited_pair :command, current_char, closing_char
+            delimited_pair :command, current_char, closing_char, start
           else
             raise "unknown %x char"
           end
@@ -424,8 +432,8 @@ module Crystal
 
           @token.type = :SYMBOL
           @token.value = string_range(start)
-
           next_char
+          set_token_raw_from_start(start - 2)
         else
           if ident_start?(char)
             start = current_pos
@@ -437,6 +445,7 @@ module Crystal
             end
             @token.type = :SYMBOL
             @token.value = string_range(start)
+            set_token_raw_from_start(start - 1)
           else
             @token.type = :":"
           end
@@ -491,6 +500,7 @@ module Crystal
           @token.type = :"^"
         end
       when '\''
+        start = current_pos
         line = @line_number
         column = @column_number
         @token.type = :CHAR
@@ -527,11 +537,13 @@ module Crystal
           raise "unterminated char literal, use double quotes for strings", line, column
         end
         next_char
+        set_token_raw_from_start(start)
       when '"', '`'
         delimiter = current_char
         next_char
         @token.type = :DELIMITER_START
         @token.delimiter_state = Token::DelimiterState.new(delimiter == '`' ? :command : :string, delimiter, delimiter, 0)
+        set_token_raw_from_start(start)
       when '0'
         scan_zero_number(start)
       when '1', '2', '3', '4', '5', '6', '7', '8', '9'
@@ -1004,7 +1016,7 @@ module Crystal
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
       else
-        @token.doc_buffer = doc_buffer = StringIO.new
+        @token.doc_buffer = doc_buffer = MemoryIO.new
       end
 
       doc_buffer.write slice_range(start_pos)
@@ -1099,6 +1111,7 @@ module Crystal
     def symbol(value)
       @token.type = :SYMBOL
       @token.value = value
+      @token.raw = ":#{value}" if @wants_raw
     end
 
     def scan_number(start, negative = false)
@@ -1217,6 +1230,7 @@ module Crystal
       end
 
       @token.value = string_value
+      set_token_raw_from_start(start)
     end
 
     macro gen_check_int_fits_in_size(type, method, size)
@@ -1335,16 +1349,19 @@ module Crystal
         @token.value = "0"
         next_char
         consume_int_suffix
+        set_token_raw_from_start(start)
       when 'f'
         @token.type = :NUMBER
         @token.value = "0"
         next_char
         consume_float_suffix
+        set_token_raw_from_start(start)
       when 'u'
         @token.type = :NUMBER
         @token.value = "0"
         next_char
         consume_uint_suffix
+        set_token_raw_from_start(start)
       when '_'
         case peek_next_char
         when 'i'
@@ -1352,6 +1369,7 @@ module Crystal
           @token.value = "0"
           next_char
           consume_int_suffix
+          set_token_raw_from_start(start)
         when 'f'
           @token.type = :NUMBER
           @token.value = "0"
@@ -1463,6 +1481,7 @@ module Crystal
 
       @token.type = :NUMBER
       @token.value = string_value
+      set_token_raw_from_start(start)
     end
 
     def consume_int_suffix
@@ -1559,6 +1578,7 @@ module Crystal
     end
 
     def next_string_token(delimiter_state)
+      start = current_pos
       string_end = delimiter_state.end
       string_nest = delimiter_state.nest
       string_open_count = delimiter_state.open_count
@@ -1691,7 +1711,6 @@ module Crystal
           @token.value = "\n"
         end
       else
-        start = current_pos
         count = 0
         while current_char != string_end &&
               current_char != string_nest &&
@@ -1705,6 +1724,8 @@ module Crystal
         @token.type = :STRING
         @token.value = string_range(start)
       end
+
+      set_token_raw_from_start(start)
 
       @token
     end
@@ -1728,15 +1749,7 @@ module Crystal
       yields = false
 
       if skip_whitespace
-        while current_char.whitespace?
-          whitespace = true
-          if current_char == '\n'
-            @line_number += 1
-            @column_number = 0
-            beginning_of_line = true
-          end
-          next_char
-        end
+        skip_macro_whitespace
       end
 
       @token.location = nil
@@ -1780,6 +1793,7 @@ module Crystal
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        set_token_raw_from_start(start)
         return @token
       end
 
@@ -1790,6 +1804,7 @@ module Crystal
         @token.type = :MACRO_LITERAL
         @token.value = "%"
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.raw = "%"
         return @token
       end
 
@@ -1836,6 +1851,7 @@ module Crystal
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+        set_token_raw_from_start(start)
         return @token
       end
 
@@ -1944,6 +1960,7 @@ module Crystal
             nest += 1 unless keyword == :abstract_def
             whitespace = true
             beginning_of_line = false
+            next
           else
             char = current_char
 
@@ -1977,8 +1994,27 @@ module Crystal
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
       @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+      set_token_raw_from_start(start)
 
       @token
+    end
+
+    def skip_macro_whitespace
+      start = current_pos
+      while current_char.whitespace?
+        whitespace = true
+        if current_char == '\n'
+          @line_number += 1
+          @column_number = 0
+          beginning_of_line = true
+        end
+        next_char
+      end
+      if @wants_raw
+        string_range(start)
+      else
+        ""
+      end
     end
 
     def check_macro_opening_keyword(beginning_of_line)
@@ -2141,10 +2177,11 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind, string_nest, string_end)
+    def delimited_pair(kind, string_nest, string_end, start)
       next_char
       @token.type = :DELIMITER_START
       @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, 0)
+      set_token_raw_from_start(start)
     end
 
     def next_string_array_token
@@ -2173,6 +2210,7 @@ module Crystal
 
       @token.type = :STRING
       @token.value = string_range(start)
+      set_token_raw_from_start(start)
 
       @token
     end
@@ -2374,6 +2412,10 @@ module Crystal
 
     def unknown_token
       raise "unknown token: #{current_char.inspect}", @line_number, @column_number
+    end
+
+    def set_token_raw_from_start(start)
+      @token.raw = string_range(start) if @wants_raw
     end
 
     def raise(message, line_number = @line_number, column_number = @column_number, filename = @filename)

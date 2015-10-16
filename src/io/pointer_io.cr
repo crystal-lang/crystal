@@ -15,6 +15,6 @@ struct PointerIO
     count = slice.size
     slice.copy_to(@pointer.value, count)
     @pointer.value += count
-    count
+    nil
   end
 end

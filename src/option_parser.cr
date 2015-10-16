@@ -271,7 +271,7 @@ class OptionParser
       @args.each_with_index do |arg, index|
         return if (double_dash_index = @double_dash_index) && index >= double_dash_index
 
-        if arg.starts_with?('-')
+        if arg.starts_with?('-') && arg != "-"
           raise InvalidOption.new(arg)
         end
       end

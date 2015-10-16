@@ -1,6 +1,6 @@
 require "io"
 
-# Similar to `StringIO`, but optimized for building a single string.
+# Similar to `MemoryIO`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
 class String::Builder
@@ -43,7 +43,7 @@ class String::Builder
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
 
-    count
+    nil
   end
 
   def buffer

@@ -25,7 +25,7 @@ module HTTP
       return if query.empty?
 
       key = nil
-      buffer = StringIO.new
+      buffer = MemoryIO.new
 
       i = 0
       bytesize = query.bytesize
@@ -102,6 +102,16 @@ module HTTP
     # ```
     def [](name)
       raw_params[name].first
+    end
+
+    # Returns first value or nil for specified param name.
+    #
+    # ```
+    # params["email"]                # => "john@example.org"
+    # params["non_existent_param"]   # nil
+    # ```
+    def []?(name)
+      fetch(name) { nil }
     end
 
     # Returns true if param with provided name exists.
@@ -253,7 +263,7 @@ module HTTP
     class Builder
       @io :: IO
 
-      def initialize(@io = StringIO.new)
+      def initialize(@io = MemoryIO.new)
         @first = true
       end
 

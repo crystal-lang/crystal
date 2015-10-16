@@ -14,7 +14,7 @@ module Crystal
   end
 
   class ToSVisitor < Visitor
-    def initialize(@str = StringIO.new)
+    def initialize(@str = MemoryIO.new)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
@@ -716,15 +716,6 @@ module Crystal
       elsif restriction = node.restriction
         @str << " : "
         restriction.accept self
-      end
-      false
-    end
-
-    def visit(node : BlockArg)
-      @str << node.name
-      if a_fun = node.fun
-        @str << " : "
-        a_fun.accept self
       end
       false
     end

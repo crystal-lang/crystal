@@ -70,7 +70,7 @@ module Crystal
     end
 
     def type=(type)
-      return if type.nil? || @type.same?(type)
+      return if @type.same?(type) || (!type && !@type)
 
       set_type(type)
       notify_observers
@@ -169,7 +169,7 @@ module Crystal
     end
 
     def update(from)
-      return if @type.same? from.type
+      return if @type.same? from.type?
 
       if dependencies.size == 1 || !@type
         new_type = from.type?
@@ -178,9 +178,15 @@ module Crystal
       end
 
       return if @type.same? new_type
-      return unless new_type
 
-      set_type_from(map_type(new_type), from)
+      if new_type
+        set_type_from(map_type(new_type), from)
+      else
+        return unless @type
+
+        set_type(nil)
+      end
+
       @dirty = true
     end
 

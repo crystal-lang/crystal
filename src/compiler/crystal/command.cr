@@ -30,6 +30,7 @@ Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 Tool:
     browser                  open an http server to browse program file
     context                  show context for given location
+    format                   format project, directories and/or files
     hierarchy                show type hierarchy
     implementations          show implementations for given call in location
     types                    show type of main variables
@@ -121,6 +122,9 @@ USAGE
       when "context".starts_with?(tool)
         options.shift
         context
+      when "format".starts_with?(tool)
+        options.shift
+        format
       when "hierarchy".starts_with?(tool)
         options.shift
         hierarchy
@@ -163,8 +167,8 @@ USAGE
     else
       double_dash_index = options.index("--")
       if double_dash_index
-        program_source = options[0 ... double_dash_index].join " "
-        program_args = options[double_dash_index + 1 .. -1]
+        program_source = options[0...double_dash_index].join " "
+        program_args = options[double_dash_index + 1..-1]
       else
         program_source = options.join " "
         program_args = [] of String
@@ -178,6 +182,122 @@ USAGE
 
     result = compiler.compile sources, output_filename
     execute output_filename, program_args
+  end
+
+  private def format
+    @format = "text"
+
+    option_parser =
+      OptionParser.parse(options) do |opts|
+        opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          @format = f
+        end
+
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
+        end
+
+        opts.on("--no-color", "Disable colored output") do
+          @color = false
+        end
+      end
+
+    files = options
+
+    if files.size == 1
+      file = files.first
+      if file == "-"
+        return format_stdin
+      elsif File.file?(file)
+        return format_single(file)
+      end
+    end
+
+    files = Dir["./**/*.cr"] if files.empty?
+    format_many files
+  end
+
+  private def format_stdin
+    source = STDIN.gets_to_end
+
+    begin
+      print Crystal::Formatter.format(source)
+      STDOUT.flush
+    rescue ex : Crystal::SyntaxException
+      if @format == "json"
+        puts ex.to_json
+      else
+        puts ex
+      end
+      exit 1
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
+        "couldn't format STDIN, please report a bug including the contents of it: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+      exit 1
+    end
+  end
+
+  private def format_single(filename)
+    source = File.read(filename)
+
+    begin
+      File.write(filename, Crystal::Formatter.format(source, filename: filename))
+    rescue ex : Crystal::SyntaxException
+      if @format == "json"
+        puts ex.to_json
+      else
+        puts ex
+      end
+      exit 1
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) <<
+        "couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+      exit 1
+    end
+  end
+
+  private def format_many(files)
+    files.each do |filename|
+      format_file_or_directory filename
+    end
+  end
+
+  private def format_file_or_directory(filename)
+    if File.file?(filename)
+      format_file filename
+    elsif Dir.exists?(filename)
+      filename = filename[0...-1] if filename.ends_with?('/')
+      filenames = Dir["#{filename}/**/*.cr"]
+      format_many filenames
+    else
+      error "file or directory does not exist: #{filename}"
+    end
+  end
+
+  private def format_file(filename)
+    source = File.read(filename)
+
+    begin
+      result = Crystal::Formatter.format(source, filename: filename)
+      return if result == source
+
+      File.write(filename, result)
+      STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
+    rescue ex : Crystal::SyntaxException
+      STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) <<
+        " couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+    end
   end
 
   private def hierarchy
@@ -237,7 +357,7 @@ USAGE
   end
 
   private def run_specs
-    target_index = options.index{|o| !o.starts_with? '-'}
+    target_index = options.index { |o| !o.starts_with? '-' }
     if target_index
       target_filename_and_line_number = options[target_index]
       splitted = target_filename_and_line_number.split ':', 2
@@ -246,7 +366,7 @@ USAGE
         options.delete_at target_index
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.size .. -1]}"
+          target_filename = "#{target_filename[cwd.size..-1]}"
         end
         if splitted.size == 2
           target_line = splitted[1]
@@ -357,109 +477,109 @@ USAGE
     output_format = nil
 
     option_parser = OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
+                      opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
-      unless no_codegen
-        unless run
-          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
-            compiler.cross_compile_flags = cross_compile
-          end
-        end
-        opts.on("-d", "--debug", "Add symbolic debug info") do
-          compiler.debug = true
-        end
-      end
+                      unless no_codegen
+                        unless run
+                          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
+                            compiler.cross_compile_flags = cross_compile
+                          end
+                        end
+                        opts.on("-d", "--debug", "Add symbolic debug info") do
+                          compiler.debug = true
+                        end
+                      end
 
-      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
-        compiler.add_flag flag
-      end
+                      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+                        compiler.add_flag flag
+                      end
 
-      unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
-          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
-        end
-      end
+                      unless no_codegen
+                        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+                          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+                        end
+                      end
 
-      if hierarchy
-        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
-          hierarchy_exp = exp
-        end
-      end
+                      if hierarchy
+                        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
+                          hierarchy_exp = exp
+                        end
+                      end
 
-      if cursor_command
-        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
-          cursor_location = cursor
-        end
-      end
+                      if cursor_command
+                        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+                          cursor_location = cursor
+                        end
+                      end
 
-      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-        output_format = f
-      end
+                      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+                        output_format = f
+                      end
 
-      opts.on("-h", "--help", "Show this message") do
-        puts opts
-        exit 1
-      end
+                      opts.on("-h", "--help", "Show this message") do
+                        puts opts
+                        exit 1
+                      end
 
-      unless no_codegen
-        opts.on("--ll", "Dump ll to .crystal directory") do
-          compiler.dump_ll = true
-        end
-        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
-          link_flags << some_link_flags
-        end
-        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-          compiler.mcpu = cpu
-        end
-      end
+                      unless no_codegen
+                        opts.on("--ll", "Dump ll to .crystal directory") do
+                          compiler.dump_ll = true
+                        end
+                        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
+                          link_flags << some_link_flags
+                        end
+                        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
+                          compiler.mcpu = cpu
+                        end
+                      end
 
-      opts.on("--no-color", "Disable colored output") do
-        @color = false
-        compiler.color = false
-      end
+                      opts.on("--no-color", "Disable colored output") do
+                        @color = false
+                        compiler.color = false
+                      end
 
-      unless no_codegen
-        opts.on("--no-codegen", "Don't do code generation") do
-          compiler.no_codegen = true
-        end
-        opts.on("-o ", "Output filename") do |an_output_filename|
-          opt_output_filename = an_output_filename
-          specified_output = true
-        end
-      end
+                      unless no_codegen
+                        opts.on("--no-codegen", "Don't do code generation") do
+                          compiler.no_codegen = true
+                        end
+                        opts.on("-o ", "Output filename") do |an_output_filename|
+                          opt_output_filename = an_output_filename
+                          specified_output = true
+                        end
+                      end
 
-      opts.on("--prelude ", "Use given file as prelude") do |prelude|
-        compiler.prelude = prelude
-      end
+                      opts.on("--prelude ", "Use given file as prelude") do |prelude|
+                        compiler.prelude = prelude
+                      end
 
-      unless no_codegen
-        opts.on("--release", "Compile in release mode") do
-          compiler.release = true
-        end
-        opts.on("-s", "--stats", "Enable statistics output") do
-          compiler.stats = true
-        end
-        opts.on("--single-module", "Generate a single LLVM module") do
-          compiler.single_module = true
-        end
-        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
-          compiler.n_threads = n_threads.to_i
-        end
-        unless run
-          opts.on("--target TRIPLE", "Target triple") do |triple|
-            compiler.target_triple = triple
-          end
-        end
-        opts.on("--verbose", "Display executed commands") do
-          compiler.verbose = true
-        end
-      end
+                      unless no_codegen
+                        opts.on("--release", "Compile in release mode") do
+                          compiler.release = true
+                        end
+                        opts.on("-s", "--stats", "Enable statistics output") do
+                          compiler.stats = true
+                        end
+                        opts.on("--single-module", "Generate a single LLVM module") do
+                          compiler.single_module = true
+                        end
+                        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+                          compiler.n_threads = n_threads.to_i
+                        end
+                        unless run
+                          opts.on("--target TRIPLE", "Target triple") do |triple|
+                            compiler.target_triple = triple
+                          end
+                        end
+                        opts.on("--verbose", "Display executed commands") do
+                          compiler.verbose = true
+                        end
+                      end
 
-      opts.unknown_args do |before, after|
-        opt_filenames = before
-        opt_arguments = after
-      end
-    end
+                      opts.unknown_args do |before, after|
+                        opt_filenames = before
+                        opt_arguments = after
+                      end
+                    end
 
     compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
 

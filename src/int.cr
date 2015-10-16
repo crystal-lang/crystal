@@ -6,7 +6,7 @@
 #
 # An integer literal is an optional `+` or `-` sign, followed by
 # a sequence of digits and underscores, optionally followed by a suffix.
-# If no suffix is present, the literal's type is the lowest betwen `Int32`, `Int64` and `UInt64`
+# If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
 # in which the number fits:
 #
 # ```text
@@ -347,6 +347,10 @@ struct Int
 
   def to_io(io : IO, format : IO::ByteFormat)
     format.encode(self, io)
+  end
+
+  def self.from_io(io : IO, format : IO::ByteFormat)
+    format.decode(self, io)
   end
 
   # :nodoc:

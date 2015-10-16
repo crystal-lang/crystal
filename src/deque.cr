@@ -19,27 +19,37 @@ class Deque(T)
   # [234---01] @start = 6, size = 5, @capacity = 8
   # (this Deque has 5 items, each equal to their index)
 
-  MINIMAL_CAPACITY = 4
-
   @start = 0
+
+  # Creates a new empty Deque
+  def initialize
+    @size = 0
+    @capacity = 0
+    @buffer = Pointer(T).null
+  end
 
   # Creates a new empty Deque backed by a buffer that is initially `initial_capacity` big.
   #
   # The `initial_capacity` is useful to avoid unnecessary reallocations of the internal buffer in case of growth. If you
-  # have an estimate of the maxinum number of elements a deque will hold, you should initialize it with that capacity
+  # have an estimate of the maximum number of elements a deque will hold, you should initialize it with that capacity
   # for improved execution performance.
   #
   # ```
   # deq = Deque(Int32).new(5)
   # deq.size #=> 0
   # ```
-  def initialize(initial_capacity = MINIMAL_CAPACITY : Int)
+  def initialize(initial_capacity : Int)
     if initial_capacity < 0
       raise ArgumentError.new("negative deque capacity: #{initial_capacity}")
     end
     @size = 0
-    @capacity = Math.max(initial_capacity.to_i, MINIMAL_CAPACITY)
-    @buffer = Pointer(T).malloc(@capacity)
+    @capacity = initial_capacity.to_i
+
+    if @capacity == 0
+      @buffer = Pointer(T).null
+    else
+      @buffer = Pointer(T).malloc(@capacity)
+    end
   end
 
   # Creates a new Deque of the given size filled with the same value in each position.
@@ -52,15 +62,11 @@ class Deque(T)
       raise ArgumentError.new("negative deque size: #{size}")
     end
     @size = size.to_i
-    if @size < MINIMAL_CAPACITY
-      @capacity = MINIMAL_CAPACITY
-      @buffer = Pointer(T).malloc(@capacity)
+    @capacity = size.to_i
 
-      (0...@size).each do |i|
-        @buffer[i] = value
-      end
+    if @capacity == 0
+      @buffer = Pointer(T).null
     else
-      @capacity = @size
       @buffer = Pointer(T).malloc(@capacity, value)
     end
   end
@@ -76,11 +82,15 @@ class Deque(T)
       raise ArgumentError.new("negative deque size: #{size}")
     end
     @size = size.to_i
-    @capacity = Math.max(@size, MINIMAL_CAPACITY)
-    @buffer = Pointer(T).malloc(@capacity)
+    @capacity = size.to_i
 
-    (0...@size).each do |i|
-      @buffer[i] = yield i
+    if @capacity == 0
+      @buffer = Pointer(T).null
+    else
+      @buffer = Pointer(T).malloc(@capacity)
+      (0...@size).each do |i|
+        @buffer[i] = yield i
+      end
     end
   end
 
@@ -594,6 +604,12 @@ class Deque(T)
   end
 
   private def increase_capacity
+    unless @buffer
+      @capacity = 4
+      @buffer = Pointer(T).malloc(@capacity)
+      return
+    end
+
     old_capacity = @capacity
     @capacity *= 2
     @buffer = @buffer.realloc(@capacity)

@@ -67,7 +67,7 @@ class Array(T)
   # Creates a new empty Array backed by a buffer that is initially
   # `initial_capacity` big.
   #
-  # The `initial_capacity` is useful to avoid unnecesary reallocations
+  # The `initial_capacity` is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If you have an estimate
   # of the maxinum number of elements an array will hold, you should
   # initialize it with that capacity for improved execution performance.
@@ -370,6 +370,122 @@ class Array(T)
     @buffer[index] = value
   end
 
+  # Replaces a subrange with a single value. All elements in the range
+  # `index...index+count` are removed and replaced by a single element
+  # *value*.
+  #
+  # If *count* is zero, *value* is inserted at *index*.
+  #
+  # Negative values of *index* count from the end of the array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a[1, 3] = 6
+  # a #=> [1, 6, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[1, 0] = 6
+  # a #=> [1, 6, 2, 3, 4, 5]
+  # ```
+  def []=(index : Int, count : Int, value : T)
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
+    index = check_index_out_of_bounds index
+    count = index + count <= size ? count : size - index
+
+    case count
+    when 0
+      insert index, value
+    when 1
+      @buffer[index] = value
+    else
+      diff = count - 1
+      (@buffer + index + 1).move_from(@buffer + index + count, size - index - count)
+      (@buffer + @size - diff).clear(diff)
+      @buffer[index] = value
+      @size -= diff
+    end
+
+    value
+  end
+
+  # Replaces a subrange with a single value.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a[1 .. 3] = 6
+  # a #=> [1, 6, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[1 ... 1] = 6
+  # a #=> [1, 6, 2, 3, 4, 5]
+  # ```
+  def []=(range : Range(Int, Int), value : T)
+    self[*range_to_index_and_count(range)] = value
+  end
+
+  # Replaces a subrange with the elements of the given array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a[1, 3] = [6, 7, 8]
+  # a #=> [1, 6, 7, 8, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[1, 3] = [6, 7]
+  # a #=> [1, 6, 7, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[1, 3] = [6, 7, 8, 9, 10]
+  # a #=> [1, 6, 7, 8, 9, 10, 5]
+  # ```
+  def []=(index : Int, count : Int, values : Array(T))
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
+    index = check_index_out_of_bounds index
+    count = index + count <= size ? count : size - index
+    diff = values.size - count
+
+    if diff == 0
+      # Replace values directly
+      (@buffer + index).copy_from(values.to_unsafe, values.size)
+    elsif diff < 0
+      # Need to shrink
+      diff = -diff
+      (@buffer + index).copy_from(values.to_unsafe, values.size)
+      (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
+      (@buffer + @size - diff).clear(diff)
+      @size -= diff
+    else
+      # Need to grow
+      resize_to_capacity(Math.pw2ceil(@size + diff))
+      (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
+      (@buffer + index).copy_from(values.to_unsafe, values.size)
+      @size += diff
+    end
+
+    values
+  end
+
+  # Replaces a subrange with the elements of the given array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a[1 .. 3] = [6, 7, 8]
+  # a #=> [1, 6, 7, 8, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[1 .. 3] = [6, 7]
+  # a #=> [1, 6, 7, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[1 .. 3] = [6, 7, 8, 9, 10]
+  # a #=> [1, 6, 7, 8, 9, 10, 5]
+  # ```
+  def []=(range : Range(Int, Int), values : Array(T))
+    self[*range_to_index_and_count(range)] = values
+  end
+
   # Returns all elements that are within the given range
   #
   # Negative indices count backward from the end of the array (-1 is the last
@@ -386,17 +502,8 @@ class Array(T)
   # a[5..10] # => []
   # a[-2...-1] # => ["d"]
   # ```
-  def [](range : Range)
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
-    self[from, size]
+  def [](range : Range(Int, Int))
+    self[*range_to_index_and_count(range)]
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -617,14 +724,7 @@ class Array(T)
   # a.delete_at(99..100)  #=> IndexError
   # ```
   def delete_at(range : Range(Int, Int))
-    from = range.begin
-    from += size if from < 0
-    raise IndexError.new if from < 0
-    to = range.end
-    to += size if to < 0
-    to -= 1 if range.excludes_end?
-    size = to - from + 1
-    size = 0 if size < 0
+    from, size = range_to_index_and_count(range)
     delete_at(from, size)
   end
 
@@ -641,7 +741,7 @@ class Array(T)
   def delete_at(index : Int, count : Int)
     val = self[index, count]
     count = index + count <= size ? count : size - index
-    (@buffer + index).move_from(@buffer + index + 1, count)
+    (@buffer + index).move_from(@buffer + index + count, size - index - count)
     @size -= count
     (@buffer + @size).clear(count)
     val
@@ -737,19 +837,9 @@ class Array(T)
   end
 
   def fill(range : Range(Int, Int))
-    from = range.begin
-    to = range.end
-
-    from += size if from < 0
-    to += size if to < 0
-
-    to -= 1 if range.excludes_end?
-
-    each_index do |i|
-      @buffer[i] = yield i if i >= from && i <= to
+    fill(*range_to_index_and_count(range)) do |i|
+      yield i
     end
-
-    self
   end
 
   def fill(value : T)
@@ -1165,7 +1255,7 @@ class Array(T)
 
   def replace(other : Array)
     @size = other.size
-    resize_to_capacity(@size) if @size > @capacity
+    resize_to_capacity(Math.pw2ceil(@size)) if @size > @capacity
     @buffer.copy_from(other.buffer, other.size)
     self
   end
@@ -1577,6 +1667,20 @@ class Array(T)
         h[key] = o
       end
     end
+  end
+
+  private def range_to_index_and_count(range)
+    from = range.begin
+    from += size if from < 0
+    raise IndexError.new if from < 0
+
+    to = range.end
+    to += size if to < 0
+    to -= 1 if range.excludes_end?
+    size = to - from + 1
+    size = 0 if size < 0
+
+    {from, size}
   end
 
   # :nodoc:

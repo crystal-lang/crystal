@@ -848,28 +848,6 @@ module Crystal
     def_equals_and_hash inputs, output
   end
 
-  class BlockArg < ASTNode
-    property :name
-    property :fun
-
-    def initialize(@name, @fun = Fun.new)
-    end
-
-    def accept_children(visitor)
-      @fun.try &.accept visitor
-    end
-
-    def name_size
-      name.size
-    end
-
-    def clone_without_location
-      BlockArg.new(@name, @fun.clone)
-    end
-
-    def_equals_and_hash @name, @fun
-  end
-
   # A method definition.
   #
   #     'def' [ receiver '.' ] name
@@ -1412,6 +1390,8 @@ module Crystal
     property :rescues
     property :else
     property :ensure
+    property :implicit
+    property :suffix
 
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
@@ -1425,7 +1405,10 @@ module Crystal
     end
 
     def clone_without_location
-      ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+      ex = ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+      ex.implicit = implicit
+      ex.suffix = suffix
+      ex
     end
 
     def_equals_and_hash @body, @rescues, @else, @ensure

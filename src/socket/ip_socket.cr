@@ -49,27 +49,29 @@ class IPSocket < Socket
     hints.flags = 0
 
     dns_req = DnsRequestCbArg.new
-    dns_base = Scheduler.event_base.dns_base
 
     # may fire immediately or on the next event loop
-    req = LibEvent2.evdns_getaddrinfo(dns_base, host, port.to_s, pointerof(hints), ->(err, addr, data) {
-      dreq = data as DnsRequestCbArg
+    req = Scheduler.create_dns_request(host, port.to_s, pointerof(hints), dns_req) do |err, addr, data|
+            dreq = data as DnsRequestCbArg
 
-      if err == 0
-        dreq.value = addr
-      else
-        dreq.value = err
+            if err == 0
+              dreq.value = addr
+            else
+              dreq.value = err
+            end
+          end
+
+    if timeout && req
+      spawn do
+        sleep timeout.not_nil!
+        req.not_nil!.cancel unless dns_req.value
       end
-    }, dns_req as Void*)
-
-#    assert req != nil
-
-    dns_timeout dns_base, req, timeout
+    end
 
     success = false
 
     value = dns_req.value
-# BUG: not thread safe.  change when threads are implemented
+    # BUG: not thread safe.  change when threads are implemented
     unless value
       Scheduler.reschedule
       value = dns_req.value
@@ -88,7 +90,13 @@ class IPSocket < Socket
         LibEvent2.evutil_freeaddrinfo value
       end
     elsif value.is_a?(Int)
-      raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(value))}")
+      error_message =
+        if value == LibEvent2::EVUTIL_EAI_CANCEL
+          "Timed out"
+        else
+          String.new(LibC.gai_strerror(value))
+        end
+      raise Socket::Error.new("getaddrinfo: #{error_message}")
     else
       raise "unknown type #{value.inspect}"
     end
@@ -96,14 +104,4 @@ class IPSocket < Socket
     # shouldn't raise
     raise Socket::Error.new("getaddrinfo: unspecified error") unless success
   end
-
-  private def dns_timeout dns_base, req, timeout
-    if timeout && req
-      spawn do
-        sleep timeout.not_nil!
-        LibEvent2.evdns_cancel_request dns_base, req
-      end
-    end
-  end
 end
-

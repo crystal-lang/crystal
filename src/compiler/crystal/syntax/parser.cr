@@ -203,9 +203,9 @@ module Crystal
             rescue_body = parse_expression
             rescues = [Rescue.new(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
-              atomic.value = ExceptionHandler.new(atomic.value, rescues).at(location)
+              atomic.value = ExceptionHandler.new(atomic.value, rescues).at(location).tap { |e| e.suffix = true }
             else
-              atomic = ExceptionHandler.new(atomic, rescues).at(location)
+              atomic = ExceptionHandler.new(atomic, rescues).at(location).tap { |e| e.suffix = true }
             end
           when :ensure
             next_token_skip_space
@@ -456,7 +456,7 @@ module Crystal
             slash_is_regex!
             next_token_skip_space_or_newline
             right = parse_{{next_operator.id}}
-            left = ({{node.id}}).at(location)
+            left = ({{node.id}}).at(location).at_end(right)
           else
             return left
           end
@@ -487,12 +487,19 @@ module Crystal
           method_column_number = @token.column_number
           next_token_skip_space_or_newline
           right = parse_mul_or_div
-          left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location)
+          left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location).at_end(right)
         when :NUMBER
           case char = @token.value.to_s[0]
           when '+', '-'
-            left = Call.new(left, char.to_s, [NumberLiteral.new(@token.value.to_s.byte_slice(1), @token.number_kind)] of ASTNode, name_column_number: @token.column_number).at(location)
-            next_token_skip_space
+            method = char.to_s
+            method_column_number = @token.column_number
+
+            # Go back to the +/-, advance one char and continue from there
+            self.current_pos = @token.start + 1
+            next_token
+
+            right = parse_mul_or_div
+            left = Call.new(left, method, [right] of ASTNode, name_column_number: method_column_number).at(location).at_end(right)
           else
             return left
           end
@@ -624,13 +631,13 @@ module Crystal
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
-              next_token_skip_space
+              next_token_skip_space_or_newline
               value = parse_op_assign
               atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
               next
             when :"||="
               # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
-              next_token_skip_space
+              next_token_skip_space_or_newline
               value = parse_op_assign
 
               atomic = Or.new(
@@ -1088,14 +1095,19 @@ module Crystal
     def parse_begin
       slash_is_regex!
       next_token_skip_statement_end
-      exps = parse_expressions
-      exps2 = Expressions.new([exps] of ASTNode).at(exps)
+      exps, _ = preserve_last_call_has_parenthesis do
+        @last_call_has_parenthesis = true
+        parse_expressions
+      end
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
+      if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
+        node = Expressions.new([node]).at(node).at_end(node)
+      end
       node
     end
 
-    def parse_exception_handler(exp)
+    def parse_exception_handler(exp, implicit = false)
       rescues = nil
       a_else = nil
       a_ensure = nil
@@ -1143,7 +1155,9 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        {ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location), end_location}
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at_end(end_location)
+        ex.implicit = true if implicit
+        {ex, end_location}
       else
         exp
         {exp, end_location}
@@ -1737,12 +1751,11 @@ module Crystal
     def parse_string_or_symbol_array(klass, elements_type)
       strings = [] of ASTNode
 
-      next_string_array_token
       while true
+        next_string_array_token
         case @token.type
         when :STRING
           strings << klass.new(@token.value.to_s)
-          next_string_array_token
         when :STRING_ARRAY_END
           next_token
           break
@@ -1779,7 +1792,13 @@ module Crystal
         while @token.type != :"]"
           exps << parse_expression
           end_location = token_end_location
-          skip_space_or_newline
+          skip_space
+          if @token.type == :NEWLINE
+            skip_space_or_newline
+            check :"]"
+            break
+          end
+
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
@@ -1834,7 +1853,7 @@ module Crystal
           end
         end
         slash_is_regex!
-        next_token_skip_space_or_newline
+        next_token_skip_space
         parse_hash_literal first_key, location, allow_of
       end
     end
@@ -1847,39 +1866,50 @@ module Crystal
       end_location = nil
 
       entries = [] of HashLiteral::Entry
+      entries << HashLiteral::Entry.new(first_key, parse_op_assign)
 
-      open("hash literal", location) do
-        entries << HashLiteral::Entry.new(first_key, parse_op_assign)
-        skip_space_or_newline
-        if @token.type == :","
-          slash_is_regex!
-          next_token_skip_space_or_newline
-        end
-
-        while @token.type != :"}"
-          if hash_symbol_key?
-            key = SymbolLiteral.new(@token.value.to_s)
-            next_token
-          else
-            key = parse_op_assign
-            skip_space_or_newline
-            if @token.type == :":" && key.is_a?(StringLiteral)
-              # Nothing: it's a string key
-            else
-              check :"=>"
-            end
-          end
-          slash_is_regex!
-          next_token_skip_space_or_newline
-          entries << HashLiteral::Entry.new(key, parse_op_assign)
+      if @token.type == :NEWLINE
+        next_token_skip_space_or_newline
+        check :"}"
+        next_token_skip_space
+      else
+        open("hash literal", location) do
           skip_space_or_newline
           if @token.type == :","
             slash_is_regex!
             next_token_skip_space_or_newline
           end
+
+          while @token.type != :"}"
+            if hash_symbol_key?
+              key = SymbolLiteral.new(@token.value.to_s)
+              next_token
+            else
+              key = parse_op_assign
+              skip_space_or_newline
+              if @token.type == :":" && key.is_a?(StringLiteral)
+                # Nothing: it's a string key
+              else
+                check :"=>"
+              end
+            end
+            slash_is_regex!
+            next_token_skip_space_or_newline
+            entries << HashLiteral::Entry.new(key, parse_op_assign)
+            skip_space
+            if @token.type == :NEWLINE
+              next_token_skip_space_or_newline
+              check :"}"
+              break
+            end
+            if @token.type == :","
+              slash_is_regex!
+              next_token_skip_space_or_newline
+            end
+          end
+          end_location = token_end_location
+          next_token_skip_space
         end
-        end_location = token_end_location
-        next_token_skip_space
       end
 
       new_hash_literal entries, line, column, end_location, allow_of: allow_of
@@ -2225,7 +2255,7 @@ module Crystal
             pieces << macro_control
             skip_whitespace = check_macro_skip_whitespace
           else
-            return Expressions.from(pieces), nil
+            return new_macro_expressions(pieces), nil
           end
         when :MACRO_VAR
           macro_var_name = @token.value.to_s
@@ -2248,7 +2278,15 @@ module Crystal
 
       next_token
 
-      {Expressions.from(pieces), end_location}
+      {new_macro_expressions(pieces), end_location}
+    end
+
+    private def new_macro_expressions(pieces)
+      if pieces.empty?
+        Expressions.new
+      else
+        Expressions.from(pieces)
+      end
     end
 
     def parse_macro_var_exps
@@ -2651,7 +2689,7 @@ module Crystal
               end
               body = Expressions.from exps
             end
-            body, end_location = parse_exception_handler body
+            body, end_location = parse_exception_handler body, implicit: true
           end
         end
       end
@@ -2668,9 +2706,9 @@ module Crystal
     end
 
     def compute_block_arg_yields(block_arg)
-      block_arg_fun = block_arg.fun
-      if block_arg_fun.is_a?(Fun)
-        @yields = block_arg_fun.inputs.try(&.size) || 0
+      block_arg_restriction = block_arg.restriction
+      if block_arg_restriction.is_a?(Fun)
+        @yields = block_arg_restriction.inputs.try(&.size) || 0
       else
         @yields = 0
       end
@@ -2780,11 +2818,9 @@ module Crystal
         location = @token.location
 
         type_spec = parse_single_type
-      else
-        type_spec = Fun.new
       end
 
-      block_arg = BlockArg.new(arg_name, type_spec).at(name_location)
+      block_arg = Arg.new(arg_name, restriction: type_spec).at(name_location)
 
       push_var block_arg
 
@@ -3261,8 +3297,10 @@ module Crystal
         skip_space
 
         if @token.type == :","
+          location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
+          raise "invalid trailing comma in call" if @token.keyword?(:end) || @token.type == :EOF
         else
           break
         end
@@ -3521,7 +3559,11 @@ module Crystal
     end
 
     def parse_type_with_suffix(types, allow_primitives)
-      if @token.keyword?(:self)
+      if @token.type == :IDENT && @token.value == "self?"
+        type = Self.new
+        type = Union.new([type, Path.global("Nil")] of ASTNode)
+        next_token_skip_space
+      elsif @token.keyword?(:self)
         type = Self.new
         next_token_skip_space
       else
@@ -3827,7 +3869,7 @@ module Crystal
         when "intel"
           intel = true
         else
-          raise "unkown asm option: #{option}", location
+          raise "unknown asm option: #{option}", location
         end
 
         if @token.type == :","
@@ -4053,6 +4095,10 @@ module Crystal
 
           if @token.type == :","
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :")"
+            break
           end
         end
         next_token_skip_statement_end
@@ -4071,7 +4117,7 @@ module Crystal
           next_token
         else
           body = parse_expressions
-          body, end_location = parse_exception_handler body
+          body, end_location = parse_exception_handler body, implicit: true
         end
       else
         body = nil
@@ -4272,7 +4318,7 @@ module Crystal
             next_token_skip_statement_end
           end
 
-          arg = Arg.new(constant_name, constant_value).at(location)
+          arg = Arg.new(constant_name, constant_value).at(location).at_end(constant_value || location)
           arg.doc = member_doc
 
           members << arg
@@ -4379,7 +4425,7 @@ module Crystal
       end
     end
 
-    def push_var(var : Var | Arg | BlockArg)
+    def push_var(var : Var | Arg)
       push_var_name var.name.to_s
     end
 

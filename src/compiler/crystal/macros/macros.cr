@@ -57,13 +57,12 @@ module Crystal
       type_visitor.types << owner
       generated_nodes.accept type_visitor
 
+      target_def.body = generated_nodes
       target_def.bind_to generated_nodes
 
       unless target_def.type.covariant?(expected_type)
         target_def.raise "expected '#{target_def.name}' to return #{expected_type}, not #{target_def.type}"
       end
-
-      target_def.body = generated_nodes
     end
 
     def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)
@@ -123,7 +122,7 @@ module Crystal
       compiled_file = @cache[filename] ||= compile(filename)
 
       command = String.build do |str|
-        str << compiled_file
+        str << compiled_file.inspect
         args.each do |arg|
           str << " "
           str << arg.inspect
@@ -214,7 +213,7 @@ module Crystal
       record MacroVarKey, name, exps
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
-        @str = StringIO.new(512)
+        @str = MemoryIO.new(512)
         @last = Nop.new
       end
 

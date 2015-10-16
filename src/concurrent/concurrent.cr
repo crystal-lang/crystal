@@ -13,6 +13,10 @@ def sleep(time : Time::Span)
   sleep(time.total_seconds)
 end
 
+def sleep
+  Scheduler.reschedule
+end
+
 macro spawn
   %fiber = Fiber.new do
     begin
@@ -25,6 +29,8 @@ macro spawn
   end
 
   Scheduler.enqueue %fiber
+
+  %fiber
 end
 
 # TODO: this doesn't work if a Call has a block or named arguments... yet

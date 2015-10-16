@@ -84,9 +84,26 @@ module Event
       LibEvent2.event_base_loopbreak(@base)
     end
 
-    def dns_base
-      @dns_base ||= begin
-        LibEvent2.evdns_base_new(@base, 1)
+    def new_dns_base(init = true)
+      DnsBase.new LibEvent2.evdns_base_new(@base, init ? 1 : 0)
+    end
+  end
+
+  struct DnsBase
+    def initialize(@dns_base)
+    end
+
+    def getaddrinfo(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
+      request = LibEvent2.evdns_getaddrinfo(@dns_base, nodename, servname, hints, callback, data as Void*)
+      GetAddrInfoRequest.new request if request
+    end
+
+    struct GetAddrInfoRequest
+      def initialize(@request)
+      end
+
+      def cancel
+        LibEvent2.evdns_getaddrinfo_cancel(@request)
       end
     end
   end

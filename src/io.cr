@@ -64,7 +64,7 @@ end
 
 # The IO module is the basis for all input and output in Crystal.
 #
-# This module is included by types like `File`, `Socket` and `StringIO` and
+# This module is included by types like `File`, `Socket` and `MemoryIO` and
 # provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
@@ -92,7 +92,7 @@ end
 #   def write(slice : Slice(UInt8))
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     count
+#     nil
 #   end
 # end
 #
@@ -200,7 +200,7 @@ module IO
   # Reads at most *slice.size* bytes from this IO into *slice*. Returns the number of bytes read.
   #
   # ```
-  # io = StringIO.new "hello"
+  # io = MemoryIO.new "hello"
   # slice = Slice(UInt8).new(4)
   # io.read(slice) #=> 4
   # slice #=> [104, 101, 108, 108]
@@ -209,14 +209,14 @@ module IO
   # ```
   abstract def read(slice : Slice(UInt8))
 
-  # Writes at most *slice.size* bytes from *slice* into this IO. Returns the number of bytes written.
+  # Writes the contents of *slice* into this IO.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
-  # io.write(slice) #=> 4
+  # io.write(slice)
   # io.to_s #=> "abcd"
-  abstract def write(slice : Slice(UInt8))
+  abstract def write(slice : Slice(UInt8)) : Nil
 
   # Flushes buffered data, if any.
   #
@@ -274,7 +274,7 @@ module IO
   # This ends up calling `to_s(io)` on the object.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io << 1
   # io << '-'
   # io << "Crystal"
@@ -288,7 +288,7 @@ module IO
   # Same as `<<`
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.print 1
   # io.print '-'
   # io.print "Crystal"
@@ -303,7 +303,7 @@ module IO
   # on each of the objects.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.print 1, '-', "Crystal"
   # io.to_s #=> "1-Crystal"
   # ```
@@ -318,7 +318,7 @@ module IO
   # unless the string already ends with one.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts "hello\n"
   # io.puts "world"
   # io.to_s #=> "hello\nworld\n"
@@ -332,7 +332,7 @@ module IO
   # Writes the given object to this IO followed by a newline character.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts 1
   # io.puts "Crystal"
   # io.to_s #=> "1\nCrystal\n"
@@ -345,7 +345,7 @@ module IO
   # Writes a newline character.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts
   # io.to_s #=> "\n"
   # ```
@@ -357,7 +357,7 @@ module IO
   # Writes the given objects, each followed by a newline character.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts 1, '-', "Crystal"
   # io.to_s #=> "1\n-\nCrystal\n"
   # ```
@@ -382,7 +382,7 @@ module IO
   # data to read.
   #
   # ```
-  # io = StringIO.new "a"
+  # io = MemoryIO.new "a"
   # io.read_byte #=> 97
   # io.read_byte #=> nil
   # ```
@@ -399,7 +399,7 @@ module IO
   # more data to read.
   #
   # ```
-  # io = StringIO.new "あ"
+  # io = MemoryIO.new "あ"
   # io.read_char #=> 'あ'
   # io.read_char #=> nil
   # ```
@@ -436,7 +436,7 @@ module IO
   # Raises `EOFError` if there aren't `slice.size` bytes of data.
   #
   # ```
-  # io = StringIO.new "123451234"
+  # io = MemoryIO.new "123451234"
   # slice = Slice(UInt8).new(5)
   # io.read_fully(slice)
   # slice #=> [49, 50, 51, 52, 53]
@@ -455,7 +455,7 @@ module IO
   # Reads the rest of this IO data as a `String`.
   #
   # ```
-  # io = StringIO.new "hello world"
+  # io = MemoryIO.new "hello world"
   # io.read #=> "hello world"
   # io.read #=> ""
   # ```
@@ -472,7 +472,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
+  # io = MemoryIO.new "hello\nworld"
   # io.gets #=> "hello\n"
   # io.gets #=> "world"
   # io.gets #=> nil
@@ -485,7 +485,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
+  # io = MemoryIO.new "hello\nworld"
   # io.gets(3) #=> "hel"
   # io.gets(3) #=> "lo\n"
   # io.gets(3) #=> "wor"
@@ -500,7 +500,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
+  # io = MemoryIO.new "hello\nworld"
   # io.gets('o') #=> "hello"
   # io.gets('r') #=> "\nwor"
   # io.gets('z') #=> "ld"
@@ -514,7 +514,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
+  # io = MemoryIO.new "hello\nworld"
   # io.gets('o', 3) #=> "hel"
   # io.gets('r', 10) #=> "lo\nwor"
   # io.gets('z', 10) #=> "ld"
@@ -546,7 +546,7 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
+  # io = MemoryIO.new "hello\nworld"
   # io.gets("wo") #=> "hello\nwo"
   # io.gets("wo") #=> "rld"
   # io.gets("wo") #=> nil
@@ -595,7 +595,7 @@ module IO
   # Reads and discards *bytes_count* bytes.
   #
   # ```
-  # io = StringIO.new "hello world"
+  # io = MemoryIO.new "hello world"
   # io.skip(6)
   # io.gets #=> "world"
   # ```
@@ -608,16 +608,10 @@ module IO
     nil
   end
 
-  # Writes the bytes in the given array to this IO.
-  def write(array : Array(UInt8))
-    # TODO: maybe we should remove this method? Array is heavy for IO
-    write Slice.new(array.buffer, array.size)
-  end
-
   # Writes a single byte into this IO.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.write_byte 97_u8
   # io.to_s #=> "a"
   # ```
@@ -630,13 +624,17 @@ module IO
     object.to_io(self, format)
   end
 
+  def read_bytes(type, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+    type.from_io(self, format)
+  end
+
   # Returns `true` if this IO is associated with a terminal device (tty), `false` otherwise.
   #
   # IO returns `false`, but including types may override.
   #
   # ```
   # STDIN.tty?        #=> true
-  # StringIO.new.tty? #=> false
+  # MemoryIO.new.tty? #=> false
   # ```
   def tty? : Bool
     false
@@ -647,7 +645,7 @@ module IO
   # ones as in the `gets` methods.
   #
   # ```
-  # io = StringIO.new("hello\nworld")
+  # io = MemoryIO.new("hello\nworld")
   # io.each_line do |line|
   #   puts line.chomp.reverse
   # end
@@ -670,7 +668,7 @@ module IO
   # ones as in the `gets` methods.
   #
   # ```
-  # io = StringIO.new("hello\nworld")
+  # io = MemoryIO.new("hello\nworld")
   # iter = io.each_line
   # iter.next #=> "hello\n"
   # iter.next #=> "world"
@@ -682,7 +680,7 @@ module IO
   # Inovkes the given block with each `Char` in this IO.
   #
   # ```
-  # io = StringIO.new("あめ")
+  # io = MemoryIO.new("あめ")
   # io.each_char do |char|
   #   puts char
   # end
@@ -703,7 +701,7 @@ module IO
   # Returns an `Iterator` for the chars in this IO.
   #
   # ```
-  # io = StringIO.new("あめ")
+  # io = MemoryIO.new("あめ")
   # iter = io.each_char
   # iter.next #=> 'あ'
   # iter.next #=> 'め'
@@ -715,7 +713,7 @@ module IO
   # Inovkes the given block with each byte (`UInt8`) in this IO.
   #
   # ```
-  # io = StringIO.new("aあ")
+  # io = MemoryIO.new("aあ")
   # io.each_byte do |byte|
   #   puts byte
   # end
@@ -738,7 +736,7 @@ module IO
   # Returns an `Iterator` for the bytes in this IO.
   #
   # ```
-  # io = StringIO.new("aあ")
+  # io = MemoryIO.new("aあ")
   # iter = io.each_byte
   # iter.next #=> 97
   # iter.next #=> 227
@@ -752,8 +750,8 @@ module IO
   # Copy all contents from *src* to *dst*.
   #
   # ```
-  # io = StringIO.new "hello"
-  # io2 = StringIO.new
+  # io = MemoryIO.new "hello"
+  # io2 = MemoryIO.new
   #
   # IO.copy io, io2
   #

@@ -4,7 +4,7 @@ require "yaml"
 class YAMLPerson
   yaml_mapping({
     name: String,
-    age: {type: Int32, nilable: true},
+    age:  {type: Int32, nilable: true},
   })
 
   def_equals name, age
@@ -16,7 +16,7 @@ end
 class StrictYAMLPerson
   yaml_mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true},
+    age:  {type: Int32, nilable: true},
   }, true)
 end
 
@@ -29,6 +29,14 @@ end
 class YAMLWithTime
   yaml_mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
+  })
+end
+
+class YAMLWithKey
+  yaml_mapping({
+    key:   String,
+    value: Int32,
+    pull: Int32,
   })
 end
 
@@ -87,8 +95,15 @@ describe "YAML mapping" do
     yaml.value.should be_false
   end
 
-  it "parses json with Time::Format converter" do
-    json = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
-    json.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+  it "parses yaml with Time::Format converter" do
+    yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
+    yaml.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+  end
+
+  it "parses YAML with mapping key named 'key'" do
+    yaml = YAMLWithKey.from_yaml("---\nkey: foo\nvalue: 1\npull: 2")
+    yaml.key.should eq("foo")
+    yaml.value.should eq(1)
+    yaml.pull.should eq(2)
   end
 end

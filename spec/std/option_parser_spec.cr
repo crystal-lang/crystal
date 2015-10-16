@@ -147,8 +147,8 @@ describe "OptionParser" do
     end
     parser.to_s.should eq([
       "Usage: foo",
-      "    -f, --flag                       some flag"
-      "    -g[FLAG]                         some other flag"
+      "    -f, --flag                       some flag",
+      "    -g[FLAG]                         some other flag",
     ].join "\n")
   end
 
@@ -168,10 +168,10 @@ describe "OptionParser" do
       "Usage: foo",
       "",
       "Type F flags:",
-      "    -f, --flag                       some flag"
+      "    -f, --flag                       some flag",
       "",
       "Type G flags:",
-      "    -g[FLAG]                         some other flag"
+      "    -g[FLAG]                         some other flag",
     ].join "\n")
   end
 
@@ -320,6 +320,13 @@ describe "OptionParser" do
         ARGV.clear
         ARGV.concat old_argv
       end
+    end
+
+    it "gets `-` as argument" do
+      args = %w(-)
+      OptionParser.parse(args) do |opts|
+      end
+      args.should eq(%w(-))
     end
   end
 end

@@ -230,6 +230,74 @@ describe "Array" do
       a[-1] = 4
       a[2].should eq(4)
     end
+
+    it "replaces a subrange with a single value" do
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = 6
+      a.should eq([1, 6, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 1] = 6
+      a.should eq([1, 6, 3, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 0] = 6
+      a.should eq([1, 6, 2, 3, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 10] = 6
+      a.should eq([1, 6])
+
+      a = [1, 2, 3, 4, 5]
+      a[-3, 2] = 6
+      a.should eq([1, 2, 6, 5])
+
+      a = [1, 2, 3, 4, 5, 6, 7, 8]
+      a[1, 3] = 6
+      a.should eq([1, 6, 5, 6, 7, 8])
+
+      expect_raises ArgumentError, "negative count" do
+        [1, 2, 3][0, -1]
+      end
+
+      a = [1, 2, 3, 4, 5]
+      a[1 .. 3] = 6
+      a.should eq([1, 6, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[2 .. 3] = 6
+      a.should eq([1, 2, 6, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1 ... 1] = 6
+      a.should eq([1, 6, 2, 3, 4, 5])
+    end
+
+    it "replaces a subrange with an array" do
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = [6, 7, 8]
+      a.should eq([1, 6, 7, 8, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = [6, 7]
+      a.should eq([1, 6, 7, 5])
+
+      a = [1, 2, 3, 4, 5, 6, 7, 8]
+      a[1, 3] = [6, 7]
+      a.should eq([1, 6, 7, 5, 6, 7, 8])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 3] = [6, 7, 8, 9, 10]
+      a.should eq([1, 6, 7, 8, 9, 10, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1, 2] = [6, 7, 8, 9, 10]
+      a.should eq([1, 6, 7, 8, 9, 10, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[1 .. 3] = [6, 7, 8]
+      a.should eq([1, 6, 7, 8, 5])
+    end
   end
 
   describe "values_at" do
@@ -328,19 +396,41 @@ describe "Array" do
       a = [1, 2, 3]
       a.delete_at(1).should eq(2)
       a.should eq([1, 3])
+
       a = [1, 2, 3]
       a.delete_at(-1).should eq(3)
       a.should eq([1, 2])
+
       a = [1, 2, 3]
       a.delete_at(-2..-1).should eq([2,3])
       a.should eq([1])
+
       a = [1, 2, 3]
       a.delete_at(1, 2).should eq([2,3])
       a.should eq([1])
+
       a = [1, 2, 3]
       a.delete_at(1..5).should eq([2,3])
       a.should eq([1])
       a.size.should eq(1)
+
+      a = [1, 2, 3, 4, 5]
+      a.delete_at(1 .. 2)
+      a.should eq([1, 4, 5])
+
+      a = [1, 2, 3, 4, 5, 6, 7]
+      a.delete_at(1 .. 2)
+      a.should eq([1, 4, 5, 6, 7])
+    end
+
+    it "deletes with index and count" do
+      a = [1, 2, 3, 4, 5]
+      a.delete_at(1, 2)
+      a.should eq([1, 4, 5])
+
+      a = [1, 2, 3, 4, 5, 6, 7]
+      a.delete_at(1, 2)
+      a.should eq([1, 4, 5, 6, 7])
     end
 
     it "returns empty if at end" do
@@ -1062,7 +1152,7 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
-  it "returns nil when using select! and no changes were made" do 
+  it "returns nil when using select! and no changes were made" do
     ary1 = [1, 2, 3, 4, 5]
 
     ary2 = ary1.select!{ true }
@@ -1078,7 +1168,7 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
-  it "returns nil when using reject! and no changes were made" do 
+  it "returns nil when using reject! and no changes were made" do
     ary1 = [1, 2, 3, 4, 5]
 
     ary2 = ary1.reject!{ false }

@@ -26,6 +26,7 @@ class OpenSSL::SSL::Socket
   def write(slice : Slice(UInt8))
     count = slice.size
     LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    nil
   end
 
   def close

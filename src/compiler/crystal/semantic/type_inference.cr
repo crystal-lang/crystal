@@ -14,9 +14,18 @@ module Crystal
 
     def infer_type_intermediate(node)
       node.accept TypeVisitor.new(self)
-      expand_macro_defs
-      fix_empty_types node
-      after_type_inference node
+
+      loop do
+        expand_macro_defs
+        fix_empty_types node
+        node = after_type_inference node
+
+        # The above might have produced more macro def expansions,
+        # so we need to take care of these too
+        break if @def_macros.empty?
+      end
+
+      node
     end
   end
 

@@ -76,6 +76,7 @@ class File < IO::FileDescriptor
   getter path
 
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  # Returns `self`.
   #
   # ```
   # file = File.new("testfile")
@@ -95,6 +96,8 @@ class File < IO::FileDescriptor
     end
 
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+
+    self
   end
 
   # Same as `pos`.
@@ -105,7 +108,7 @@ class File < IO::FileDescriptor
   # Returns the current position (in bytes) in this File.
   #
   # ```
-  # io = StringIO.new "hello"
+  # io = MemoryIO.new "hello"
   # io.pos     #=> 0
   # io.gets(2) #=> "he"
   # io.pos     #=> 2
@@ -122,12 +125,13 @@ class File < IO::FileDescriptor
   # Sets the current position (in bytes) in this File.
   #
   # ```
-  # io = StringIO.new "hello"
+  # io = MemoryIO.new "hello"
   # io.pos = 3
   # io.gets_to_end #=> "lo"
   # ```
   def pos=(value)
     seek value
+    value
   end
 
   # Returns a `File::Stat` object for the named file or raises
@@ -174,7 +178,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns true if given path exists and is a file
-  # 
+  #
   # ```crystal
   # # touch foo
   # # mkdir bar
@@ -194,7 +198,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns true if given path exists and is a directory
-  # 
+  #
   # ```crystal
   # # touch foo
   # # mkdir bar
@@ -256,7 +260,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns a file's extension, or an empty string if the file has no extension.
-  # 
+  #
   # ```crystal
   # File.extname("foo.cr")
   # #=> .cr
@@ -347,9 +351,9 @@ class File < IO::FileDescriptor
       file.close
     end
   end
-  
+
   # Returns the content of the given file as a string.
-  # 
+  #
   # ```crystal
   # # echo "foo" >> bar
   # File.read("./bar")
@@ -366,7 +370,7 @@ class File < IO::FileDescriptor
   end
 
   # Yields each line of the given file to the given block.
-  # 
+  #
   # ```crystal
   # File.each_line("./foo") do |line|
   #   # loop
@@ -381,7 +385,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns all lines of the given file as an array of strings.
-  # 
+  #
   # ```crystal
   # # echo "foo" >> foobar
   # # echo "bar" >> foobar

@@ -155,27 +155,79 @@ describe HTTP::WebSocket do
      it "sends long data with correct header" do
        size = UInt16::MAX.to_u64 + 1
        big_string = "a" * size
-       io = StringIO.new
+       io = MemoryIO.new
        ws = HTTP::WebSocket.new(io)
        ws.send(big_string)
        bytes = io.to_slice
-       bytes.size.should eq(6 + size) # 2 bytes header, 4 bytes size, UInt16 + 1 bytes content
+       bytes.size.should eq(10 + size) # 2 bytes header, 8 bytes size, UInt16 + 1 bytes content
        bytes[1].should eq(127)
        received_size = 0
-       4.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
+       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
        received_size.should eq(size)
        size.times do |i|
-         bytes[6 + i].should eq('a'.ord)
+         bytes[10 + i].should eq('a'.ord)
        end
      end
+
+    it "sets binary opcode if used with slice" do
+      sent_bytes :: UInt8[4]
+
+      io = MemoryIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.send(sent_bytes.to_slice, true)
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x02)
+    end
+  end
+
+  describe "stream" do
+    it "sends continuous data and splits it to frames" do
+      io = MemoryIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.stream do |io| # default frame size of 1024
+        3.times { io.write(("a" * 512).to_slice) }
+      end
+
+      bytes = io.to_slice
+      bytes.size.should eq(4 * 2 + 512 * 3) # two frames with 2 bytes header, 2 bytes size, 3 * 512 bytes content in total
+      first_frame, second_frame = { bytes[0, (4 + 1024)], bytes + (4 + 1024) }
+      (first_frame[0] & 0x80).should eq(0) # FINAL bit unset
+      (first_frame[0] & 0x0f).should eq(0x2) # BINARY frame
+      first_frame[1].should eq(126) # extended size
+      received_size = 0
+      2.times { |i| received_size <<= 8; received_size += first_frame[2 + i] }
+      received_size.should eq(1024)
+      received_size.times do |i|
+        bytes[4 + i].should eq('a'.ord)
+      end
+
+      (second_frame[0] & 0x80).should_not eq(0) # FINAL bit set
+      (second_frame[0] & 0x0f).should eq(0x0) # CONTINUATION frame
+      second_frame[1].should eq(126) # extended size
+      received_size = 0
+      2.times { |i| received_size <<= 8; received_size += second_frame[2 + i] }
+      received_size.should eq(512)
+      received_size.times do |i|
+        bytes[4 + i].should eq('a'.ord)
+      end
+    end
+
+    it "sets opcode of first frame to binary if stream is called with binary = true" do
+      io = MemoryIO.new
+      ws = HTTP::WebSocket.new(io)
+      ws.stream(binary: true) { |io| }
+
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x2) # BINARY frame
+    end
   end
 
   describe "send_masked" do
     it "sends the data with a bitmask" do
       sent_string = "hello"
-      io = StringIO.new
+      io = MemoryIO.new
       ws = HTTP::WebSocket.new(io)
-      ws.send_masked(sent_string)
+      ws.send(sent_string, true)
       bytes = io.to_slice
       bytes.size.should eq(11) # 2 bytes header, 4 bytes mask, 5 bytes content
       bytes[1].bit(7).should eq(1) # For mask bit
@@ -190,18 +242,18 @@ describe HTTP::WebSocket do
     it "sends long data with correct header" do
       size = UInt16::MAX.to_u64 + 1
       big_string = "a" * size
-      io = StringIO.new
+      io = MemoryIO.new
       ws = HTTP::WebSocket.new(io)
-      ws.send_masked(big_string)
+      ws.send(big_string, true)
       bytes = io.to_slice
-      bytes.size.should eq(size + 10) # 2 bytes header, 4 bytes size, 4 bytes mask, UInt16::MAX + 1 bytes content
+      bytes.size.should eq(size + 14) # 2 bytes header, 8 bytes size, 4 bytes mask, UInt16::MAX + 1 bytes content
       bytes[1].bit(7).should eq(1) # For mask bit
       (bytes[1] - 128).should eq(127)
       received_size = 0
-      4.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
+      8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        (bytes[10 + i] ^ bytes[6 + (i % 4)]).should eq('a'.ord)
+        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq('a'.ord)
       end
     end
   end
