@@ -1,8 +1,8 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
-# ### Parsing and generating with `JSON::Mapping`
+# ### Parsing and generating with `JSON#mapping`
 #
-# Use `JSON::Mapping` to define how an object is mapped to JSON, making it
+# Use `JSON#mapping` to define how an object is mapped to JSON, making it
 # the recommended easy, type-safe and efficient option for parsing and generating
 # JSON. Refer to that module's documentation to learn about it.
 #
@@ -32,7 +32,7 @@
 #
 # `to_json` and `to_json(IO)` methods are provided for primitive types, but you
 # need to define `to_json(IO)` for custom objects, either manually or using
-# `JSON::Mapping`.
+# `JSON#mapping`.
 module JSON
   # Exception thrown on a JSON parse error.
   class ParseException < Exception

@@ -2,6 +2,7 @@
 
 * **(breaking change)** The `CGI` module's funcionality has been moved to `URI` and `HTTP::Params`
 * **(breaking change)** `IO#read()` is now `IO#gets_to_end`. Removed `IO#read(count)`, added `IO#skip(count)`
+* **(breaking change)** `json_mapping` is now `JSON.mapping`. `yaml_mapping` is now `YAML.mapping`.
 * Added `crystal tool format` that automatically formats your code
 * `protected` methods can now be invoked between types inside a same namespace
 * Removed `curses`, you can use `https://github.com/jreinert/ncurses-crystal`

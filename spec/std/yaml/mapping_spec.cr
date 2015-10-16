@@ -2,7 +2,7 @@ require "spec"
 require "yaml"
 
 class YAMLPerson
-  yaml_mapping({
+  YAML.mapping({
     name: String,
     age:  {type: Int32, nilable: true},
   })
@@ -14,26 +14,26 @@ class YAMLPerson
 end
 
 class StrictYAMLPerson
-  yaml_mapping({
+  YAML.mapping({
     name: {type: String},
     age:  {type: Int32, nilable: true},
   }, true)
 end
 
 class YAMLWithBool
-  yaml_mapping({
+  YAML.mapping({
     value: {type: Bool},
   })
 end
 
 class YAMLWithTime
-  yaml_mapping({
+  YAML.mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
 class YAMLWithKey
-  yaml_mapping({
+  YAML.mapping({
     key:   String,
     value: Int32,
     pull: Int32,

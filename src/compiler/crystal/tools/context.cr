@@ -29,7 +29,7 @@ module Crystal
   end
 
   class ContextResult
-    json_mapping({
+    JSON.mapping({
       status:           {type: String},
       message:          {type: String},
       contexts:         {type: Array(HashStringType), nilable: true},

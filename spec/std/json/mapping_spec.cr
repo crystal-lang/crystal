@@ -2,7 +2,7 @@ require "spec"
 require "json"
 
 class JSONPerson
-  json_mapping({
+  JSON.mapping({
     name: {type: String},
     age: {type: Int32, nilable: true},
   })
@@ -14,33 +14,33 @@ class JSONPerson
 end
 
 class StrictJSONPerson
-  json_mapping({
+  JSON.mapping({
     name: {type: String},
     age: {type: Int32, nilable: true},
   }, true)
 end
 
 class JSONPersonEmittingNull
-  json_mapping({
+  JSON.mapping({
     name: {type: String},
     age: {type: Int32, nilable: true, emit_null: true},
   })
 end
 
 class JSONWithBool
-  json_mapping({
+  JSON.mapping({
     value: {type: Bool},
   })
 end
 
 class JSONWithTime
-  json_mapping({
+  JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
 class JSONWithNilableTime
-  json_mapping({
+  JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F")},
   })
 
@@ -49,7 +49,7 @@ class JSONWithNilableTime
 end
 
 class JSONWithNilableTimeEmittingNull
-  json_mapping({
+  JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F"), emit_null: true},
   })
 
@@ -58,19 +58,19 @@ class JSONWithNilableTimeEmittingNull
 end
 
 class JSONWithSimpleMapping
-  json_mapping({name: String, age: Int32})
+  JSON.mapping({name: String, age: Int32})
 end
 
 class JSONWithKeywordsMapping
-  json_mapping({end: Int32, abstract: Int32})
+  JSON.mapping({end: Int32, abstract: Int32})
 end
 
 class JSONWithAny
-  json_mapping({name: String, any: JSON::Any})
+  JSON.mapping({name: String, any: JSON::Any})
 end
 
 class JsonWithProblematicKeys
-  json_mapping({
+  JSON.mapping({
     key:  Int32,
     pull: Int32,
   })

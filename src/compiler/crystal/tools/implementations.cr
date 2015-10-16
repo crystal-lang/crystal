@@ -4,7 +4,7 @@ require "json"
 
 module Crystal
   class ImplementationResult
-    json_mapping({
+    JSON.mapping({
       status:           {type: String},
       message:          {type: String},
       implementations:  {type: Array(ImplementationTrace), nilable: true},
@@ -32,7 +32,7 @@ module Crystal
   # It keeps track of macro expansion in a human friendly way and
   # pointing to the exact line an expansion and method definition occurs.
   class ImplementationTrace
-    json_mapping({
+    JSON.mapping({
       line:     {type: Int32},
       column:   {type: Int32},
       filename: {type: String},

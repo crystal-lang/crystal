@@ -7,17 +7,17 @@ require "./*"
 # Deserializes a YAML document into a `Type`.
 # A `Type` is a union of all possible YAML types, so casting to a specific type is necessary
 # before the value is practically usable.
-# 
+#
 # ```crystal
 # require "yaml"
 #
-# data = YAML.load("foo: bar")  
+# data = YAML.load("foo: bar")
 # (data as Hash)["foo"] #=> "bar"
 # ```
 #
-# ### Parsing with `Mapping`
+# ### Parsing with `YAML#mapping`
 #
-# `Mapping` defines how an object is mapped to YAML. Mapped data is accessible
+# `YAML#mapping` defines how an object is mapped to YAML. Mapped data is accessible
 # through generated properties like *Foo#bar*. It is more type-safe and efficient.
 #
 module YAML
@@ -50,14 +50,14 @@ module YAML
   #     bar
   # ```
   #
-  # ```crystal 
+  # ```crystal
   # require "yaml"
   # YAML.load(File.read("./foo.yml"))
   # #=> {
   # #=>  "data" => {
-  # #=>    "string" => "foobar", 
-  # #=>    "array" => ["John", "Sarah"], 
-  # #=>    "hash" => {"key" => "value"}, 
+  # #=>    "string" => "foobar",
+  # #=>    "array" => ["John", "Sarah"],
+  # #=>    "hash" => {"key" => "value"},
   # #=>    "paragraph" => "foo\nbar\n"
   # #=> }
   # ```
