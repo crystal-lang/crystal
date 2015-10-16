@@ -1,3 +1,44 @@
+## Next
+
+* **(breaking change)** The `CGI` module's funcionality has been moved to `URI` and `HTTP::Params`
+* **(breaking change)** `IO#read()` is now `IO#gets_to_end`. Removed `IO#read(count)`, added `IO#skip(count)`
+* Added `crystal tool format` that automatically formats your code
+* `protected` methods can now be invoked between types inside a same namespace
+* Removed `curses`, you can use `https://github.com/jreinert/ncurses-crystal`
+* `to_unsafe` and numeric conversions are now also automatically performed in C struct and union fields
+* Added `{% begin %} ... {% end %}` as an alternative to `{% if true %} ... {% end %}`
+* Added `~!` operator
+* Added debug metadata for char, float, bool and enums. Also for classes and structs (experimental)
+* `Dir.glob` now works well with recursive patterns like `**` (thanks @pgkos)
+* Added `read_timeout` and `connect_timeout` to `HTTP::Client` (thanks @benoist)
+* Added `Zlib` (thanks @datanoise and @bcardiff)
+* Added `HTTP::DeflateHandler` (thanks @bcardiff)
+* Added `ENV#fetch` (thanks @tristil)
+* `Hash#new` now accepts an initialize capacity argument
+* `HTTP::Request` provides access and mutation of `query`, `path` and `query_params` (thanks @waterlink)
+* Added `XML::Node#content=` and `#name=`
+* Allow passing handlers and a block to an `HTTP::Server` (thanks @RX14)
+* `crystal init` now tries to use your github username if available (thanks @jreinert)
+* Added `Hash#select`, `Hash#reject` and their bang variant, and `Hash#each_with_object` (thanks @devdazed)
+* Added `Hash#select(*keys)` and `Hash#reject(*keys)` and their bang variant (thanks @sdogruyol)
+* Added `Set#-`, `Set#^`, and `Set#subtract` (thanks @js-ojus)
+* Allow running specs without colors (thanks @rhysd)
+* Added `TypeNode#has_constant?` and `TypeNode#type_vars` in macros (thanks @jreinert)
+* Added `String#compare` that allows case insensitive comparisons
+* Added `File#truncate` (thanks @porras)
+* `CSV` is now a class for iterating rows, optionally with headers access
+* Allow setting multiple `before_request` callbacks to an `HTTP::Client`
+* Added `Dir.cd(&block)` (thanks @rhysd)
+* Added `Class#cast` (thanks @will)
+* Fixes and additions to WebSocket, like the possibility of streaming data (thanks @jreinert)
+* Added `SemanticVersion` class (thanks @technorama)
+* `loop` now yields a counter
+* Added `Array#[]=(index, count, value)` and `Array#[]=(range, value)`
+* Added argless `sleep`
+* `IO#write(slice)` now writes the full slice or raises on error
+* Added some docs for ECR, Markdown, Hash, File, Time, Time::Span, Colorize, String, SecureRandom, YAML (thanks @adlerhsieh, @chdorner, @vjdhama, @rmosolgo)
+* Many bug fixes
+
 ## 0.8.0 (2015-09-19)
 
 * **(breaking change)** Renamed a couple of types: `ChannelClosed` -> `Channel::ClosedError`,
