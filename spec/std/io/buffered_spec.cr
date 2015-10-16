@@ -191,8 +191,7 @@ describe "IO::Buffered" do
     end
     strio = StringIO.new(s)
     io = IO::BufferedWrapper.new(strio)
-    count = io.write(s.to_slice)
-    count.should eq(s.bytesize)
+    io.write(s.to_slice)
     strio.rewind.gets_to_end.should eq(s)
   end
 

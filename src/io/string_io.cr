@@ -56,7 +56,7 @@ class StringIO
 
     count = slice.size
 
-    return count if count < 0
+    return if count == 0
 
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
@@ -72,7 +72,7 @@ class StringIO
     @pos += count
     @bytesize = @pos if @pos > @bytesize
 
-    count
+    nil
   end
 
   # :nodoc:

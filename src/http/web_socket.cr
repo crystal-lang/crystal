@@ -54,10 +54,10 @@ class HTTP::WebSocket
       end
 
       if count < slice.size
-        count += write(slice + count)
+        write(slice + count)
       end
 
-      count
+      nil
     end
 
     def read(slice : Slice(UInt8))

@@ -40,7 +40,7 @@ class SimpleStringIO
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
 
-    count
+    nil
   end
 
   private def check_needs_resize
@@ -351,12 +351,6 @@ describe IO do
       io = SimpleStringIO.new
       10_000.times { io.write_byte 'a'.ord.to_u8 }
       io.gets_to_end.should eq("a" * 10_000)
-    end
-
-    it "writes an array of bytes" do
-      io = SimpleStringIO.new
-      io.write ['a'.ord.to_u8, 'b'.ord.to_u8]
-      io.gets_to_end.should eq("ab")
     end
 
     it "writes with printf" do

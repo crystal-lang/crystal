@@ -177,7 +177,7 @@ module IO::Buffered
     count = slice.size
 
     if sync?
-      return unbuffered_write(slice).to_i
+      return unbuffered_write(slice)
     end
 
     if flush_on_newline?
@@ -202,7 +202,7 @@ module IO::Buffered
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
-    count
+    nil
   end
 
   # :nodoc:

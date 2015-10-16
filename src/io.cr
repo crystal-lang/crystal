@@ -92,7 +92,7 @@ end
 #   def write(slice : Slice(UInt8))
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     count
+#     nil
 #   end
 # end
 #
@@ -209,14 +209,14 @@ module IO
   # ```
   abstract def read(slice : Slice(UInt8))
 
-  # Writes at most *slice.size* bytes from *slice* into this IO. Returns the number of bytes written.
+  # Writes the contents of *slice* into this IO.
   #
   # ```
   # io = StringIO.new
   # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
-  # io.write(slice) #=> 4
+  # io.write(slice)
   # io.to_s #=> "abcd"
-  abstract def write(slice : Slice(UInt8))
+  abstract def write(slice : Slice(UInt8)) : Nil
 
   # Flushes buffered data, if any.
   #
@@ -606,12 +606,6 @@ module IO
       bytes_count -= read_count
     end
     nil
-  end
-
-  # Writes the bytes in the given array to this IO.
-  def write(array : Array(UInt8))
-    # TODO: maybe we should remove this method? Array is heavy for IO
-    write Slice.new(array.buffer, array.size)
   end
 
   # Writes a single byte into this IO.

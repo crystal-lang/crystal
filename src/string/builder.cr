@@ -43,7 +43,7 @@ class String::Builder
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
 
-    count
+    nil
   end
 
   def buffer

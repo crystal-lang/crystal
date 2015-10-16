@@ -86,13 +86,13 @@ class IO::FileDescriptor
     arg
   end
 
-  def self.fcntl fd, cmd, arg = 0
+  def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg
     raise Errno.new("fcntl() failed") if r == -1
     r
   end
 
-  def fcntl cmd, arg = 0
+  def fcntl(cmd, arg = 0)
     self.class.fcntl @fd, cmd, arg
   end
 
@@ -216,12 +216,12 @@ class IO::FileDescriptor
     nil
   end
 
-  private def wait_writable timeout = @write_timeout
+  private def wait_writable(timeout = @write_timeout)
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
   # msg/timeout are overridden in nonblock_connect
-  private def wait_writable msg = "write timed out", timeout = @write_timeout
+  private def wait_writable(msg = "write timed out", timeout = @write_timeout)
     writers << Fiber.current
     add_write_event timeout
     Scheduler.reschedule
@@ -234,7 +234,7 @@ class IO::FileDescriptor
     nil
   end
 
-  private def add_write_event timeout = @write_timeout
+  private def add_write_event(timeout = @write_timeout)
     return if @edge_triggerable
     event = @write_event ||= Scheduler.create_fd_write_event(self)
     event.add timeout
