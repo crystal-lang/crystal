@@ -1,4 +1,4 @@
-## Next
+## 0.9.0 (2015-10-16)
 
 * **(breaking change)** The `CGI` module's funcionality has been moved to `URI` and `HTTP::Params`
 * **(breaking change)** `IO#read()` is now `IO#gets_to_end`. Removed `IO#read(count)`, added `IO#skip(count)`
