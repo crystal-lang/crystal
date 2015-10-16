@@ -33,29 +33,6 @@ macro spawn
   %fiber
 end
 
-# TODO: this doesn't work if a Call has a block or named arguments... yet
-macro spawn(exp)
-  {% if exp.is_a?(Call) %}
-    ->(
-      {% for arg, i in exp.args %}
-        __arg{{i}} : typeof({{arg}}),
-      {% end %}
-      ) {
-      spawn do
-        {{exp.name}}(
-          {% for arg, i in exp.args %}
-            __arg{{i}},
-          {% end %}
-        )
-      end
-    }.call({{*exp.args}})
-  {% else %}
-    spawn do
-      {{exp}}
-    end
-  {% end %}
-end
-
 macro parallel(*jobs)
   %channel = Channel(Bool).new
 
