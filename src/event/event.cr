@@ -95,15 +95,15 @@ module Event
 
     def getaddrinfo(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
       request = LibEvent2.evdns_getaddrinfo(@dns_base, nodename, servname, hints, callback, data as Void*)
-      Request.new @dns_base, request if request
+      GetAddrInfoRequest.new request if request
     end
 
-    struct Request
-      def initialize(@dns_base, @request)
+    struct GetAddrInfoRequest
+      def initialize(@request)
       end
 
       def cancel
-        LibEvent2.evdns_cancel_request(@dns_base, @request)
+        LibEvent2.evdns_getaddrinfo_cancel(@request)
       end
     end
   end
