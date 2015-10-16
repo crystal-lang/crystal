@@ -743,7 +743,8 @@ module IO
     ByteIterator.new(self)
   end
 
-  # Copy all contents from *src* to *dst*.
+  # Copy all contents from *src* to *dst*. Returns the number of bytes written.
+  # This can be less than *src* has bytes if *dst* will not accept more data.
   #
   # ```
   # io = StringIO.new "hello"
@@ -756,11 +757,12 @@ module IO
   def self.copy(src, dst)
     buffer :: UInt8[1024]
     count = 0
-    while (len = src.read(buffer.to_slice).to_i32) > 0
-      dst.write buffer.to_slice[0, len]
-      count += len
+    while (read_len = src.read(buffer.to_slice).to_i32) > 0
+      write_len = dst.write buffer.to_slice[0, read_len]
+      break unless write_len > 0
+      count += write_len
     end
-    len < 0 ? len : count
+    read_len < 0 ? read_len : count
   end
 
   # :nodoc:

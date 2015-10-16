@@ -1,5 +1,40 @@
 require "spec"
 
+class SimpleSliceIO
+  include IO
+
+  def initialize(size)
+    @slice = Slice(UInt8).new(size)
+    @pos = 0
+  end
+
+  def rewind
+    @pos = 0
+  end
+
+  def write(src : Slice(UInt8))
+    dst = @slice + @pos
+    copy(src, dst)
+  end
+
+  def read(dst : Slice(UInt8))
+    src = @slice + @pos
+    copy(src, dst)
+  end
+
+  def to_s
+    rewind
+    String.new(@slice)
+  end
+
+  private def copy(src, dst)
+    count = Math.min(src.size, dst.size)
+    dst.copy_from(src[0, count].pointer(count), count)
+    @pos += count
+    count
+  end
+end
+
 # This is a non-optimized version of StringIO so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
@@ -136,6 +171,11 @@ describe IO do
     dst = StringIO.new
     IO.copy(src, dst).should eq(string.bytesize)
     dst.to_s.should eq(string)
+
+    src.rewind
+    dst = SimpleSliceIO.new(2)
+    IO.copy(src, dst).should eq(2)
+    dst.to_s.should eq("ab")
   end
 
   it "reopens" do
