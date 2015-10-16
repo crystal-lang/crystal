@@ -122,7 +122,7 @@ module Crystal
       compiled_file = @cache[filename] ||= compile(filename)
 
       command = String.build do |str|
-        str << compiled_file
+        str << compiled_file.inspect
         args.each do |arg|
           str << " "
           str << arg.inspect
