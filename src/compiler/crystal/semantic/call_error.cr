@@ -389,9 +389,36 @@ class Crystal::Call
         raise "private method '#{match.def.name}' called for #{match.def.owner}"
       end
     when :protected
-      unless scope.instance_type.implements?(match.def.owner.instance_type)
-        raise "protected method '#{match.def.name}' called for #{match.def.owner}"
-      end
+      scope_type = scope.instance_type
+      owner_type = match.def.owner.instance_type
+
+      # OK if in the same hierarchy
+      return if scope_type.implements?(owner_type)
+
+      # OK if both types are in the same namespace
+      return if in_same_namespace?(scope_type, owner_type)
+
+      raise "protected method '#{match.def.name}' called for #{match.def.owner}"
+    end
+  end
+
+  def in_same_namespace?(scope : ContainedType, target : ContainedType)
+    top_container(scope) == top_container(target) ||
+      scope.parents.try &.any? { |parent| in_same_namespace?(parent, target) }
+  end
+
+  def in_same_namespace?(scope, target)
+    false
+  end
+
+  def top_container(type)
+    case container = type.container
+    when Program
+      type
+    when ContainedType
+      top_container(container)
+    else
+      type
     end
   end
 
