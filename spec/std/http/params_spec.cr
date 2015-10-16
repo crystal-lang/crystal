@@ -73,6 +73,19 @@ module HTTP
       end
     end
 
+    describe "#[]?(name)" do
+      it "returns first value for provided param name" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        params["foo"]?.should eq("bar")
+        params["baz"]?.should eq("qux")
+      end
+
+      it "return nil when there is no such param" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        params["non_existent_param"]?.should eq(nil)
+      end
+    end
+
     describe "#has_key?(name)" do
       it "returns true if param with provided name exists" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")

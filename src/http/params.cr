@@ -104,6 +104,16 @@ module HTTP
       raw_params[name].first
     end
 
+    # Returns first value or nil for specified param name.
+    #
+    # ```
+    # params["email"]                # => "john@example.org"
+    # params["non_existent_param"]   # nil
+    # ```
+    def []?(name)
+      fetch(name) { nil }
+    end
+
     # Returns true if param with provided name exists.
     #
     # ```
