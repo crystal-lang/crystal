@@ -286,6 +286,10 @@ class HTTP::Client
   # ```
   def exec(request : HTTP::Request) : HTTP::Response
     execute_callbacks(request)
+    exec_internal(request)
+  end
+
+  private def exec_internal(request)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
@@ -305,6 +309,12 @@ class HTTP::Client
   # ```
   def exec(request : HTTP::Request, &block)
     execute_callbacks(request)
+    exec_internal(request) do |response|
+      yield response
+    end
+  end
+
+  private def exec_internal(request, &block)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
