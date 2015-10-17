@@ -903,7 +903,9 @@ module Crystal
         # Suffix if/unless
         accept node.then
         write_keyword " ", keyword, " "
-        accept node.cond
+        inside_cond do
+          indent(@column, node.cond)
+        end
         return false
       end
 
