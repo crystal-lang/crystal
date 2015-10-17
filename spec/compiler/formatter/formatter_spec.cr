@@ -4,9 +4,15 @@ private def assert_format(input, output = input, strict = false, file = __FILE__
   it "formats #{input.inspect}", file, line do
     output = "#{output}\n" unless strict
     result = Crystal::Formatter.format(input)
-    return if result == output
+    unless result == output
+      fail "Expected\n\n~~~\n#{input}\n~~~\nto format to:\n\n~~~\n#{output}\n~~~\n\nbut got:\n\n~~~\n#{result}\n~~~\n\n  assert_format #{input.inspect}, #{result.chomp.inspect}"
+    end
 
-    fail "Expected\n\n~~~\n#{input}\n~~~\nto format to:\n\n~~~\n#{output}\n~~~\n\nbut got:\n\n~~~\n#{result}\n~~~\n\n  assert_format #{input.inspect}, #{result.chomp.inspect}"
+    # Check idempotency
+    result2 = Crystal::Formatter.format(result)
+    unless result == result2
+      fail "Idempotency failed:\nBefore: #{result.inspect}\nAfter:  #{result2.inspect}"
+    end
   end
 end
 
@@ -243,8 +249,8 @@ describe Crystal::Formatter do
   assert_format "yield 1\n2", "yield 1\n2"
   assert_format "yield 1 , \n2", "yield 1,\n      2"
   assert_format "yield 1 , \n2", "yield 1,\n      2"
-  assert_format "yield(1 , \n2)", "yield(1,\n      2,\n     )"
-  assert_format "yield(\n1 , \n2)", "yield(\n  1,\n  2,\n)"
+  assert_format "yield(1 , \n2)", "yield(1,\n      2)"
+  assert_format "yield(\n1 , \n2)", "yield(\n  1,\n  2)"
 
   assert_format "with foo yield bar"
 
@@ -726,7 +732,7 @@ describe Crystal::Formatter do
   assert_format "p = Foo[1, 2, 3,\n        4, 5, 6,\n       ]"
   assert_format "p = Foo[\n  1, 2, 3,\n  4, 5, 6\n]\n", "p = Foo[\n      1, 2, 3,\n      4, 5, 6,\n    ]"
   assert_format "[1, 2,\n  3, 4]\n", "[1, 2,\n 3, 4]"
-  assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4 # lala\n}"
+  assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4, # lala\n}"
   assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A      =   10\nFOO    =  123\nBARBAZ = 1234"
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
   assert_format "1\n# hello\n\n\n", "1\n# hello"
@@ -739,4 +745,5 @@ describe Crystal::Formatter do
   assert_format "class Foo\n  # ```\n  # 1\n  # ```\nend\n", "class Foo\n  # ```\n  # 1\n  # ```\nend"
   assert_format "def foo x, y\n  # bar\nend\n", "def foo(x, y)\n  # bar\nend"
   assert_format "# Here is the doc of a method, and contains an example:\n#\n# ```\n# result = foo\n#\n# puts result\n# ```\ndef foo\n  # ...\nend\n", "# Here is the doc of a method, and contains an example:\n#\n# ```\n# result = foo\n#\n# puts result\n# ```\ndef foo\n  # ...\nend"
+  assert_format "foo(\n  a: 1,\n  b: 2,\n  )\n", "foo(\n  a: 1,\n  b: 2,\n)"
 end
