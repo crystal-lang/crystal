@@ -746,4 +746,5 @@ describe Crystal::Formatter do
   assert_format "def foo x, y\n  # bar\nend\n", "def foo(x, y)\n  # bar\nend"
   assert_format "# Here is the doc of a method, and contains an example:\n#\n# ```\n# result = foo\n#\n# puts result\n# ```\ndef foo\n  # ...\nend\n", "# Here is the doc of a method, and contains an example:\n#\n# ```\n# result = foo\n#\n# puts result\n# ```\ndef foo\n  # ...\nend"
   assert_format "foo(\n  a: 1,\n  b: 2,\n  )\n", "foo(\n  a: 1,\n  b: 2,\n)"
+  assert_format "  case 1\n  when 2\n    3\n  else #:newline, :eof\n    1 if 2\n    return 3\n  end\n", "case 1\nwhen 2\n  3\nelse # :newline, :eof\n  1 if 2\n  return 3\nend"
 end

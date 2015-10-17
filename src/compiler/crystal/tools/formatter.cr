@@ -2608,10 +2608,13 @@ module Crystal
       if a_else = node.else
         write_indent(prefix_indent)
         write_keyword :else
-        skip_space
-        if @token.type == :NEWLINE
-          write_line
-          next_token_skip_space_or_newline
+        found_comment = skip_space
+        if @token.type == :NEWLINE || found_comment
+          unless found_comment
+            write_line
+            next_token
+          end
+          skip_space_or_newline
           write_indent(prefix_indent + 2, a_else)
           write_line
           indent(prefix_indent + 2) { skip_space_or_newline }
