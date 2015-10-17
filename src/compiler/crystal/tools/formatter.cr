@@ -58,8 +58,11 @@ module Crystal
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
       @hash_infos = [] of AlignInfo
+      @const_assign_infos = [] of AlignInfo
       @assign_infos = [] of AlignInfo
       @doc_comments = [] of CommentInfo
+      @begin_anchors = Set(Int32).new
+      @end_anchors = Set(Int32).new
       @current_doc_comment = nil
     end
 
@@ -991,6 +994,7 @@ module Crystal
       else
         if write_indent
           indent(indent + 2) do
+            @begin_anchors << @line
             skip_space_write_line
             skip_space_or_newline
             write_indent(indent + 2, node)
@@ -1783,6 +1787,8 @@ module Crystal
                 return false
               end
 
+              add_assign_info(base_column)
+
               write " = "
               next_token_skip_space_or_newline
               accept last_arg
@@ -1895,6 +1901,8 @@ module Crystal
           skip_space_or_newline
           write_token :")"
         else
+          add_assign_info(base_column)
+
           write " ="
           skip_space
 
@@ -2324,12 +2332,15 @@ module Crystal
     end
 
     def visit(node : Assign)
+      start_column = @column
+
       accept node.target
       skip_space_or_newline
 
       if @token.type == :"="
         check_align = check_assign_length node.target
         slash_is_regex!
+        middle_column = @column
         write_token " ", :"="
         skip_space
         if @token.type == :NEWLINE
@@ -2337,6 +2348,10 @@ module Crystal
           write_line
           write_indent(@indent + 2, node.value)
         else
+          unless check_align
+            add_assign_info(start_column, middle_column)
+          end
+
           write " "
           before_column = @column
           indent(@column, node.value)
@@ -2369,7 +2384,7 @@ module Crystal
 
     def check_assign_align(before_column, exp)
       if exp.is_a?(NumberLiteral)
-        @assign_infos << AlignInfo.new(0, @line, before_column, @column, @column, true)
+        @const_assign_infos << AlignInfo.new(object_id, @line, before_column, @column, @column, true)
       end
     end
 
@@ -3361,6 +3376,8 @@ module Crystal
       while @token.type == :COMMENT
         empty_line = @line_output.to_s.strip.empty?
         if empty_line
+          @begin_anchors << @line
+          @end_anchors << @line
           write_indent if needs_indent
         end
 
@@ -3482,7 +3499,13 @@ module Crystal
     end
 
     def write_line
-      @current_doc_comment = nil unless @wrote_comment
+      unless @wrote_comment
+        if @line_output.to_s.strip.empty?
+          @begin_anchors << @line
+          @end_anchors << @line
+        end
+        @current_doc_comment = nil
+      end
       @wrote_comment = false
 
       @output.puts
@@ -3514,12 +3537,14 @@ module Crystal
     def finish
       skip_space
       write_line
+      @end_anchors << @line
       skip_space_or_newline
       result = to_s.strip
       lines = result.split("\n")
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
-      align_infos(lines, @assign_infos)
+      align_infos(lines, @const_assign_infos)
+      align_infos(lines, @assign_infos, check_anchors: true)
       align_comments(lines)
       format_doc_comments(lines)
       lines.map!(&.rstrip)
@@ -3530,7 +3555,7 @@ module Crystal
 
     # Align series of succesive inline when/else (in a case),
     # or hash literals (the left side of the =>)
-    def align_infos(lines, align_infos)
+    def align_infos(lines, align_infos, check_anchors = false)
       max_size = nil
       last_info = nil
 
@@ -3538,7 +3563,7 @@ module Crystal
         if max_size
           align_info lines, align_info, max_size
         else
-          last_info, max_size = find_last_info(align_infos, align_info, i + 1)
+          last_info, max_size = find_last_info(align_infos, align_info, i + 1, check_anchors)
           align_info lines, align_info, max_size
         end
 
@@ -3549,8 +3574,14 @@ module Crystal
       end
     end
 
-    def find_last_info(align_infos, base, i)
-      max_size = base.size
+    def find_last_info(align_infos, base, i, check_anchors)
+      original_base = base
+      original_max_size = base.size
+      max_size = original_max_size
+
+      if check_anchors && base.line > 0 && !@begin_anchors.includes?(base.line - 1)
+        return original_base, original_max_size
+      end
 
       while i < align_infos.size
         current = align_infos[i]
@@ -3561,6 +3592,10 @@ module Crystal
         max_size = base.size if base.size > 0 && base.size > max_size
 
         i += 1
+      end
+
+      if check_anchors && !@end_anchors.includes?(base.line + 1)
+        return original_base, original_max_size
       end
 
       {base, max_size}
@@ -3735,6 +3770,7 @@ module Crystal
       if @token.type == :";"
         next_token_skip_space_or_newline
       end
+      @end_anchors << @line
       check_keyword :end
     end
 
@@ -3776,6 +3812,12 @@ module Crystal
       @inside_cond += 1
       yield
       @inside_cond -= 1
+    end
+
+    def add_assign_info(base_column, end_column = @column)
+      if @line_output.to_s[0 ... base_column].strip.empty?
+        @assign_infos << AlignInfo.new(object_id, @line, base_column, end_column, end_column, false)
+      end
     end
   end
 end
