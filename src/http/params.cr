@@ -107,8 +107,8 @@ module HTTP
     # Returns first value or nil for specified param name.
     #
     # ```
-    # params["email"]                # => "john@example.org"
-    # params["non_existent_param"]   # nil
+    # params["email"]?                # => "john@example.org"
+    # params["non_existent_param"]?   # nil
     # ```
     def []?(name)
       fetch(name) { nil }
