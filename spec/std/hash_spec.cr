@@ -147,6 +147,45 @@ describe "Hash" do
     end
   end
 
+  describe "key" do
+    it "returns the first key with the given value" do
+      hash = {"foo": "bar", "baz": "qux"}
+      hash.key("bar").should eq("foo")
+      hash.key("qux").should eq("baz")
+    end
+
+    it "raises when no key pairs with the given value" do
+      expect_raises KeyError do
+        {"foo": "bar"}.key("qux")
+      end
+    end
+
+    describe "if block is given," do
+      it "returns the first key with the given value" do
+        hash = {"foo": "bar", "baz": "bar"}
+        hash.key("bar") { |value| value.upcase }.should eq("foo")
+      end
+
+      it "yields the argument if no hash key pairs with the value" do
+        hash = {"foo": "bar"}
+        hash.key("qux") { |value| value.upcase }.should eq("QUX")
+      end
+    end
+  end
+
+  describe "key?" do
+    it "returns the first key with the given value" do
+      hash = {"foo": "bar", "baz": "qux"}
+      hash.key?("bar").should eq("foo")
+      hash.key?("qux").should eq("baz")
+    end
+
+    it "returns nil if no key pairs with the given value" do
+      hash = {"foo": "bar", "baz": "qux"}
+      hash.key?("foobar").should eq nil
+      hash.key?("bazqux").should eq nil
+    end
+  end
 
   describe "has_key?" do
     it "doesn't have key" do
