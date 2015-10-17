@@ -1088,6 +1088,7 @@ describe "Parser" do
   it_parses %(asm("nop" :::: "volatile")), Asm.new("nop", volatile: true)
 
   it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
+  it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     assert_syntax_error "def foo\n#{keyword}\nend"

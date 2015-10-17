@@ -141,7 +141,7 @@ class Crystal::Call
       end
       all_arguments_sizes.uniq!.sort!
 
-      raise String.build do |str|
+      raise(String.build do |str|
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
         str << "' ("
@@ -154,7 +154,7 @@ class Crystal::Call
         str << ")\n"
         str << "Overloads are:"
         append_matches(owner, defs, str)
-      end
+      end)
     end
 
     if defs_matchin_args_size.size > 0

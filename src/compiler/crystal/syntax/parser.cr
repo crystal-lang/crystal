@@ -667,7 +667,7 @@ module Crystal
               end
             end
 
-            block = parse_block(block)
+            block = parse_block(block, stop_on_do: space_consumed && !@last_call_has_parenthesis)
             if block || block_arg
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_column_number: name_column_number
             else
@@ -3108,8 +3108,10 @@ module Crystal
       {value, last_call_has_parenthesis}
     end
 
-    def parse_block(block)
+    def parse_block(block, stop_on_do = false)
       if @token.keyword?(:do)
+        return block if stop_on_do
+
         raise "block already specified with &" if block
         parse_block2 { check_ident :end }
       elsif @token.type == :"{"
