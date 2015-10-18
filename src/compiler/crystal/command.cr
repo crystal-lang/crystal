@@ -20,8 +20,8 @@ Command:
     run (default)            compile and run program
     spec                     compile and run specs (in spec directory)
     tool                     run a tool
-    --help, -h               show this help
-    --version, -v            show version
+    help, --help, -h         show this help
+    version, --version, -v   show version
 USAGE
 
   COMMANDS_USAGE = <<-USAGE
@@ -78,10 +78,10 @@ USAGE
       when "tool".starts_with?(command)
         options.shift
         tool
-      when "--help" == command, "-h" == command
+      when "help".starts_with?(command), "--help" == command, "-h" == command
         puts USAGE
         exit
-      when "--version" == command, "-v" == command
+      when "version".starts_with?(command), "--version" == command, "-v" == command
         puts "Crystal #{Crystal.version_string}"
         exit
       else
