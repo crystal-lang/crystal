@@ -1,6 +1,11 @@
 require "spec"
 
 describe "MemoryIO" do
+  it "can be created from slice" do
+    io = MemoryIO.new(Slice(UInt8).new(3) { |i| (i + 1).to_u8 })
+    io.gets(2).should eq("\u{1}\u{2}")
+  end
+
   it "writes" do
     io = MemoryIO.new
     io.bytesize.should eq(0)
