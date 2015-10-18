@@ -1579,8 +1579,8 @@ module Crystal
       # This is the case of an enum member
       if 'A' <= node.name[0] <= 'Z' && @token.type == :","
         write ", "
-        next_token
-        @exp_needs_indent = false
+        next_token_skip_space
+        @exp_needs_indent = @token.type == :NEWLINE
       end
 
       false

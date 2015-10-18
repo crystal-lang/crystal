@@ -749,4 +749,5 @@ describe Crystal::Formatter do
   assert_format "  case 1\n  when 2\n    3\n  else #:newline, :eof\n    1 if 2\n    return 3\n  end\n", "case 1\nwhen 2\n  3\nelse # :newline, :eof\n  1 if 2\n  return 3\nend"
   assert_format "a = 1 if 1 == 2 ||\n  3 == 4\n", "a = 1 if 1 == 2 ||\n         3 == 4"
   assert_format "{ A: 1 }\n", "{A: 1}"
+  assert_format "class Foo\n  enum Bar\n  A, B, C,\n  D, E, F\nend\nend\n", "class Foo\n  enum Bar\n    A, B, C,\n    D, E, F\n  end\nend"
 end
