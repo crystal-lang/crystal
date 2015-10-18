@@ -660,7 +660,7 @@ module Crystal
       start_line = @line
       start_column = @column
 
-      if entry.key.is_a?(SymbolLiteral) && @token.type == :IDENT
+      if entry.key.is_a?(SymbolLiteral) && (@token.type == :IDENT || @token.type == :CONST)
         write @token
         next_token
         slash_is_regex!
