@@ -2235,7 +2235,7 @@ module Crystal
     def visit(node : IsA)
       format_special_call(node, :is_a?) do
         accept node.const
-        skip_space_or_newline
+        skip_space
       end
     end
 

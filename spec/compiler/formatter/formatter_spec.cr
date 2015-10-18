@@ -750,4 +750,5 @@ describe Crystal::Formatter do
   assert_format "a = 1 if 1 == 2 ||\n  3 == 4\n", "a = 1 if 1 == 2 ||\n         3 == 4"
   assert_format "{ A: 1 }\n", "{A: 1}"
   assert_format "class Foo\n  enum Bar\n  A, B, C,\n  D, E, F\nend\nend\n", "class Foo\n  enum Bar\n    A, B, C,\n    D, E, F\n  end\nend"
+  assert_format "x.is_a? T\n3\n", "x.is_a? T\n3"
 end
